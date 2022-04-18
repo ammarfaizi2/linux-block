@@ -7,6 +7,7 @@
  *	Patrik Jakobsson <patrik.r.jakobsson@gmail.com>
  */
 
+#include <linux/highmem_extra.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/device_api.h>
