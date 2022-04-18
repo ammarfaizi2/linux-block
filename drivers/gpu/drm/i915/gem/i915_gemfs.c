@@ -4,6 +4,7 @@
  * Copyright © 2017 Intel Corporation
  */
 
+#include <linux/fs_types_sb.h>
 #include <linux/fs_api.h>
 #include <linux/fs.h>
 #include <linux/mount.h>

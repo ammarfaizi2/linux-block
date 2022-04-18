@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/fs_api_sb.h>
 #include <linux/uio_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>

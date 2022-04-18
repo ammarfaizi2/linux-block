@@ -9,6 +9,7 @@
  *              Michael C. Thompson <mcthomps@us.ibm.com>
  */
 
+#include <linux/fs_api_sb.h>
 #include <linux/mutex_api.h>
 #include <linux/mm.h>
 #include <linux/mm_api_truncate.h>

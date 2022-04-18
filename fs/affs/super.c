@@ -11,6 +11,7 @@
  *  (C) 1991  Linus Torvalds - minix filesystem
  */
 
+#include <linux/fs_api_sb.h>
 #include <linux/writeback_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>

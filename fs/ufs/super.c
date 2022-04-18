@@ -66,6 +66,7 @@
  * Evgeniy Dushistov <dushistov@mail.ru>, 2007
  */
 
+#include <linux/fs_api_sb.h>
 #include <linux/writeback_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>

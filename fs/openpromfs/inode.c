@@ -5,6 +5,7 @@
  * Copyright (C) 1998      Eddie C. Dost  (ecd@skynet.be)
  */
 
+#include <linux/fs_api_sb.h>
 #include <linux/rcupdate.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

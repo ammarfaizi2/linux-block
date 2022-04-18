@@ -3,6 +3,7 @@
  *  Copyright (C) 2012-2013 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/fs_api_sb.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

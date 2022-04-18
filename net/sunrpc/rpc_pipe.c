@@ -9,6 +9,7 @@
  * Copyright (c) 2002, Trond Myklebust <trond.myklebust@fys.uio.no>
  *
  */
+#include <linux/fs_api_sb.h>
 #include <net/net_namespace_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

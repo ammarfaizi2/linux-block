@@ -9,6 +9,7 @@
 #include "orangefs-kernel.h"
 #include "orangefs-bufmap.h"
 
+#include <linux/fs_api_sb.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rwsem_api.h>

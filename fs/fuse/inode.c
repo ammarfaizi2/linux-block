@@ -8,6 +8,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/fs_api_sb.h>
 #include <linux/wait_api.h>
 #include <linux/time64_api.h>
 #include <linux/sysfs.h>

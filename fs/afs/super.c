@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/fs_api_sb.h>
 #include <net/net_namespace_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/seqlock_api.h>
