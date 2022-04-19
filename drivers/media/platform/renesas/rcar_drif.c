@@ -42,6 +42,7 @@
  * like lsb/msb first, syncdl, dtdl etc. are exposed via DT and I2S defaults
  * are used. These can be exposed later if needed after testing.
  */
+#include <linux/property.h>
 #include <linux/bitmap.h>
 #include <linux/spinlock_api.h>
 #include <linux/mm_api.h>

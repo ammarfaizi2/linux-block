@@ -5,6 +5,7 @@
  * Copyright 2022 Analog Devices Inc.
  */
 
+#include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/bitfield.h>

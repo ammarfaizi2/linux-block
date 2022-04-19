@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
+#include <linux/property.h>
 #include <linux/slab.h>
 #include <linux/fs_api.h>
 #include <linux/jiffies.h>

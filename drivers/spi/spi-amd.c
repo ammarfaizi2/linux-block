@@ -6,6 +6,7 @@
 //
 // Author: Sanjay R Mehta <sanju.mehta@amd.com>
 
+#include <linux/property.h>
 #include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/acpi.h>

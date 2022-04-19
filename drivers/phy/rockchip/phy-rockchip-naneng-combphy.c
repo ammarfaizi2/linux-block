@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Rockchip Electronics Co., Ltd.
  */
 
+#include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <dt-bindings/phy/phy.h>
 #include <linux/clk.h>

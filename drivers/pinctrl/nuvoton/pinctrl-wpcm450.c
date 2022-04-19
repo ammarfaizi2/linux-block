@@ -9,6 +9,7 @@
 // - GPIO event (interrupt) registers, located centrally in the GPIO register
 //   block, shared between all GPIO banks
 
+#include <linux/property.h>
 #include <linux/bitmap.h>
 #include <linux/bitops.h>
 #include <linux/string.h>

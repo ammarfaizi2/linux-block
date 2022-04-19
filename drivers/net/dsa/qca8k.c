@@ -6,6 +6,7 @@
  * Copyright (c) 2016 John Crispin <john@phrozen.org>
  */
 
+#include <linux/property.h>
 #include <linux/jiffies.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/sched/cond_resched.h>

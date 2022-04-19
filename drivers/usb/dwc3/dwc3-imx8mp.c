@@ -5,6 +5,7 @@
  * Copyright (c) 2020 NXP.
  */
 
+#include <linux/property.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>

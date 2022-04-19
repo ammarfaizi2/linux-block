@@ -7,6 +7,7 @@
  * Author: Robert Marko <robert.marko@sartura.hr>
  */
 
+#include <linux/property.h>
 #include <linux/device.h>
 #include <linux/gpio/driver.h>
 #include <linux/gpio/regmap.h>

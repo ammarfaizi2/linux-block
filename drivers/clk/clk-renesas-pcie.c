@@ -10,6 +10,7 @@
  * Copyright (C) 2022 Marek Vasut <marex@denx.de>
  */
 
+#include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk-provider.h>
 #include <linux/i2c.h>
