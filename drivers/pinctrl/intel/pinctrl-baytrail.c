@@ -6,6 +6,7 @@
  * Author: Mathias Nyman <mathias.nyman@linux.intel.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/device_api_lock.h>

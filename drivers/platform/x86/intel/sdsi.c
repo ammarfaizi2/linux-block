@@ -8,6 +8,7 @@
  * Author: "David E. Box" <david.e.box@linux.intel.com>
  */
 
+#include <linux/io_extra.h>
 #include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/auxiliary_bus.h>

@@ -9,6 +9,7 @@
 //
 // Based on code originally by Andrey Volkov <avolkov@varma-el.com>
 
+#include <linux/io_extra.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/netdevice_api.h>

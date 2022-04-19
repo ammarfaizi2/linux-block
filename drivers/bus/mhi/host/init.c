@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/io_extra.h>
 #include <linux/atomic_api.h>
 #include <linux/idr_api.h>
 #include <linux/string.h>

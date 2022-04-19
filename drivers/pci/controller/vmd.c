@@ -4,6 +4,7 @@
  * Copyright (c) 2015, Intel Corporation.
  */
 
+#include <linux/io_extra.h>
 #include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

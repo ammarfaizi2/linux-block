@@ -8,6 +8,7 @@
  *	Copyright (C) 2006,2008 David Brownell
  */
 
+#include <linux/io_extra.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/delay.h>

@@ -8,6 +8,7 @@
 // Author: Keyon Jie <yang.jie@linux.intel.com>
 //
 
+#include <linux/io_extra.h>
 #include <linux/io-64-nonatomic-lo-hi.h>
 #include <linux/platform_device.h>
 #include <asm/unaligned.h>
