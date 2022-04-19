@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/module.h>
 #include <linux/xarray_api.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
