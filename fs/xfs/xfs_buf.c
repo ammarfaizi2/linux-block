@@ -4,6 +4,7 @@
  * All Rights Reserved.
  */
 #include "xfs.h"
+#include <linux/dax.h>
 #include <linux/semaphore.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

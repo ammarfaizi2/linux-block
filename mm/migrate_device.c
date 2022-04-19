@@ -4,6 +4,7 @@
  *
  * Originally written by Jérôme Glisse.
  */
+#include <linux/dax.h>
 #include <linux/pagemap.h>
 #include <linux/spinlock_api.h>
 #include <linux/mm_api.h>

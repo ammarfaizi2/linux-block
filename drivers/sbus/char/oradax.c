@@ -21,6 +21,7 @@
  * See Documentation/sparc/oradax/oracle-dax.rst for more details.
  */
 
+#include <linux/dax.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
