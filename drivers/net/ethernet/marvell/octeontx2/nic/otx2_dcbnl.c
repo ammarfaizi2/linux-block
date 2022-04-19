@@ -5,6 +5,7 @@
  *
  */
 
+#include <net/dcbnl.h>
 #include <linux/minmax.h>
 #include <linux/netdevice_api.h>
 #include <linux/device_api_lock.h>

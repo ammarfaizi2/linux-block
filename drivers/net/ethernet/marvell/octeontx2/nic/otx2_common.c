@@ -5,6 +5,7 @@
  *
  */
 
+#include <uapi/linux/dcbnl.h>
 #include <linux/minmax.h>
 #include <linux/log2.h>
 #include <net/xdp_api.h>
