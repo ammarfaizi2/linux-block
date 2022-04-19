@@ -4,6 +4,7 @@
  * Copyright (c) 2008-2009 Marvell Semiconductor
  */
 
+#include <net/sch_generic_api.h>
 #include <uapi/linux/sockios.h>
 #include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
