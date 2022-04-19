@@ -3,6 +3,7 @@
  * Copyright(c) 1999 - 2004 Intel Corporation. All rights reserved.
  */
 
+#include <net/ndisc_api.h>
 #include <linux/icmpv6.h>
 #include <linux/string.h>
 #include <linux/rcupdate.h>
