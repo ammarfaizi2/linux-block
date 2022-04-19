@@ -5,6 +5,7 @@
  * All rights reserved.
  *
  */
+#include <linux/device/bus.h>
 #include <linux/string.h>
 #include <linux/kobject_api.h>
 #include <linux/mutex_api.h>
