@@ -14,6 +14,7 @@
  * Author: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
  */
 
+#include <linux/cpuhotplug.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/module.h>
