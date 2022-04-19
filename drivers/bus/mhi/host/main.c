@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/atomic_api.h>
 #include <linux/string.h>

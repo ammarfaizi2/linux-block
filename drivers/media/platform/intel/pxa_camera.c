@@ -7,6 +7,7 @@
  * Copyright (C) 2016, Robert Jarzmik <robert.jarzmik@free.fr>
  */
 
+#include <linux/tasklet_api.h>
 #include <linux/of_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
