@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <net/ipv6.h>
 #include <net/ipv6_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

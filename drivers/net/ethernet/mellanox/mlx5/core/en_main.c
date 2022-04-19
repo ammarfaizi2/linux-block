@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <net/xdp_api.h>

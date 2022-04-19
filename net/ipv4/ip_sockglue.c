@@ -16,6 +16,7 @@
  *		Mike McLagan	:	Routing by source
  */
 
+#include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/sock_api_extra.h>

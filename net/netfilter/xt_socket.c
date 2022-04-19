@@ -6,6 +6,7 @@
  * Author: Krisztian Kovacs
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <net/ipv6.h>
 #include <net/sock_api.h>
 #include <net/ipv6_api.h>
 #include <linux/module.h>

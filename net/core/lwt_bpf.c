@@ -2,6 +2,7 @@
 /* Copyright (c) 2016 Thomas Graf <tgraf@tgraf.ch>
  */
 
+#include <net/ipv6.h>
 #include <linux/preempt.h>
 #include <net/sock_api.h>
 #include <net/sch_generic_api.h>

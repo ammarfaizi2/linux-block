@@ -5,6 +5,7 @@
  * Copyright (c) 2017-19 David Ahern <dsa@cumulusnetworks.com>
  */
 
+#include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <net/rtnetlink_api.h>
 #include <net/route_api.h>

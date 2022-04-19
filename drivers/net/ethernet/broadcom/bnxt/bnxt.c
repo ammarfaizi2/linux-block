@@ -8,6 +8,7 @@
  * the Free Software Foundation.
  */
 
+#include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <linux/netdevice_api_extra.h>
 #include <net/xdp_api.h>

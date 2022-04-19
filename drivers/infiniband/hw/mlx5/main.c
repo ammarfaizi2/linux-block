@@ -4,6 +4,7 @@
  * Copyright (c) 2020, Intel Corporation. All rights reserved.
  */
 
+#include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <linux/semaphore.h>
 #include <net/ipv6_api.h>

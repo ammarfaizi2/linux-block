@@ -50,6 +50,7 @@
  * granted us permission to leverage.
  */
 
+#include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <net/sch_generic_api.h>
 #include <net/netlink_api.h>

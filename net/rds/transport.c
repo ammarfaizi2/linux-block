@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <net/ipv6.h>
 #include <net/ipv6_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/kmod.h>

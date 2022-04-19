@@ -9,6 +9,7 @@
  * Authors:	See the TCP sources
  */
 
+#include <net/ipv6.h>
 #include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <net/sock_api.h>

@@ -10,6 +10,7 @@
  * Split from fs/nfs/super.c by David Howells <dhowells@redhat.com>
  */
 
+#include <net/ipv6.h>
 #include <net/net_namespace_api.h>
 #include <net/ipv6_api.h>
 #include <linux/uaccess.h>

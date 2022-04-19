@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <net/route_api.h>
 #include <net/netlink_api.h>

@@ -7,6 +7,7 @@
  *		 Frank Blaschka <frank.blaschka@de.ibm.com>
  */
 
+#include <net/ipv6.h>
 #include <net/ipv6_api.h>
 #include <linux/mutex_api.h>
 #include <linux/hashtable_api.h>

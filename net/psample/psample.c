@@ -4,6 +4,7 @@
  * Copyright (c) 2017 Yotam Gigi <yotamg@mellanox.com>
  */
 
+#include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <net/netlink_api.h>
 #include <net/ipv6_api.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2013 - 2018 Intel Corporation. */
 
+#include <net/ipv6.h>
 #include <linux/page_ref.h>
 #include <net/ipv6_api.h>
 #include <net/checksum.h>

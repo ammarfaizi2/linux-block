@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <net/route_api.h>
 #include <net/neighbour_api.h>

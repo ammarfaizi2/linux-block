@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <linux/ipv6.h>
 #include <net/sock_api.h>

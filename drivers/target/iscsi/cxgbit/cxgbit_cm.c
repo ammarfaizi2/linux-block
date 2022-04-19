@@ -3,6 +3,7 @@
  * Copyright (c) 2016 Chelsio Communications, Inc.
  */
 
+#include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <net/neighbour_api.h>
 #include <net/ipv6_api.h>

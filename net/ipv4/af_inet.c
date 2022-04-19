@@ -63,6 +63,7 @@
 
 #define pr_fmt(fmt) "IPv4: " fmt
 
+#include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <net/tcp_bpf.h>
 #include <net/sock_api.h>

@@ -11,6 +11,7 @@
  * For more information, please see http://nath323.sourceforge.net/
  */
 
+#include <net/ipv6.h>
 #include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <net/route_api.h>

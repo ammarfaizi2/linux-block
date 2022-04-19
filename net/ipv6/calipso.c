@@ -13,6 +13,7 @@
  * (c) Copyright Huw Davies <huw@codeweavers.com>, 2015
  */
 
+#include <net/ipv6.h>
 #include <net/ipv6_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>

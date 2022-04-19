@@ -7,6 +7,7 @@
  * Tao Peng <bergwolf@primarydata.com>
  */
 
+#include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <net/ipv6_api.h>
 #include <linux/timekeeping.h>

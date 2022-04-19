@@ -9,6 +9,7 @@
  * Based on dummy, team and ipvlan drivers
  */
 
+#include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <linux/jhash.h>
 #include <net/sock_api.h>

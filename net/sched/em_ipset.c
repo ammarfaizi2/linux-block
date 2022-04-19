@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Florian Westphal <fw@strlen.de>
  */
 
+#include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <net/ipv6_api.h>
 #include <linux/slab.h>

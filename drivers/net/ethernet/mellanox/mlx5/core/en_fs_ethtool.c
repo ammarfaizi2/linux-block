@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <net/ipv6.h>
 #include <net/ipv6_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/route_api.h>

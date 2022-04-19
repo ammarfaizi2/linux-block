@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <net/ipv6.h>
 #include <net/route_api.h>
 #include <net/neighbour_api.h>
 #include <net/ipv6_api.h>

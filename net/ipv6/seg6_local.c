@@ -7,6 +7,7 @@
  *  eBPF support: Mathieu Xhonneux <m.xhonneux@gmail.com>
  */
 
+#include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <linux/preempt.h>
 #include <net/route_api.h>

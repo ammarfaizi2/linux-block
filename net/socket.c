@@ -52,6 +52,7 @@
  *	Based upon Swansea University Computer Society NET3.039
  */
 
+#include <net/ipv6.h>
 #include <linux/fs_api_sb.h>
 #include <net/tcp_bpf.h>
 #include <net/socket_alloc.h>

@@ -17,6 +17,7 @@
  * - scnprintf and vscnprintf
  */
 
+#include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <linux/preempt.h>
 #include <net/ipv6_api.h>
