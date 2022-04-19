@@ -4,6 +4,7 @@
  * Copyright (c) 2011 Jiri Pirko <jpirko@redhat.com>
  */
 
+#include <linux/if_ether_api.h>
 #include <net/sch_generic_api.h>
 #include <net/rtnetlink_api.h>
 #include <net/netlink_api.h>
