@@ -9,6 +9,7 @@
  * Copyright (C) 2000 Serguei Miridonov <mirsev@cicese.mx>
  */
 
+#include <linux/seq_file.h>
 #include <linux/debugfs.h>
 #include <linux/vmalloc.h>
 #include <linux/mutex_api.h>

@@ -12,6 +12,7 @@
  *
  */
 
+#include <linux/seq_file.h>
 #include <linux/of_api.h>
 #include <linux/property.h>
 #include <linux/spinlock_api.h>

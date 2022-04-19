@@ -3,6 +3,7 @@
  * Copyright 2020-2021 NXP
  */
 
+#include <linux/seq_file.h>
 #include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/device.h>

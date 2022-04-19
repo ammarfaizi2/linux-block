@@ -6,6 +6,7 @@
  *   Beau Belgrave <beaub@linux.microsoft.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/rcupdate.h>
 #include <linux/pgtable_api.h>
 #include <linux/perf_event_api.h>

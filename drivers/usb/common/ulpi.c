@@ -7,6 +7,7 @@
  * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
 
+#include <linux/seq_file.h>
 #include <linux/device/bus.h>
 #include <linux/sysfs.h>
 #include <linux/of_api.h>

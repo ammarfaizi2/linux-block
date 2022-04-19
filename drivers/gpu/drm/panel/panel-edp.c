@@ -21,6 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/seq_file.h>
 #include <linux/i2c.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>
