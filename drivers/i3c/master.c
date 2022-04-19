@@ -5,6 +5,7 @@
  * Author: Boris Brezillon <boris.brezillon@bootlin.com>
  */
 
+#include <linux/notifier_types.h>
 #include <linux/i2c.h>
 #include <linux/device/bus.h>
 #include <linux/workqueue_api.h>
