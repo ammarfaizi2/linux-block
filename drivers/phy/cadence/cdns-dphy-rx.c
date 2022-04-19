@@ -3,6 +3,7 @@
  * Copyright (C) 2022 Texas Instruments Incorporated - https://www.ti.com/
  */
 
+#include <linux/string.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>

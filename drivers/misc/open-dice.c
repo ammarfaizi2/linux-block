@@ -19,6 +19,7 @@
  *     close(fd);
  */
 
+#include <linux/string.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

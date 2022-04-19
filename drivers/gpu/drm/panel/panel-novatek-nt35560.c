@@ -13,6 +13,7 @@
  * Based on code and know-how from Johan Olson and Joakim Wesslen
  * Copyright (C) Sony Ericsson Mobile Communications 2010
  */
+#include <linux/string.h>
 #include <linux/device_api_lock.h>
 #include <linux/backlight.h>
 #include <linux/delay.h>

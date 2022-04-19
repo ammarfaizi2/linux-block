@@ -10,6 +10,7 @@
 #undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME " L" __stringify(__LINE__) ": " fmt
 
+#include <linux/string.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/topology.h>

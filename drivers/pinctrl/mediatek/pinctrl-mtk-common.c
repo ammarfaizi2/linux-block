@@ -5,6 +5,7 @@
  * Author: Hongzhou.Yang <hongzhou.yang@mediatek.com>
  */
 
+#include <linux/string.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/io.h>
