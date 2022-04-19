@@ -5,6 +5,7 @@
  * Copyright (C) 1996, 1997, 1998 Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/kdev_t.h>
 #include <linux/slab.h>
 #include <linux/mm_page_address.h>
 #include <linux/fs.h>

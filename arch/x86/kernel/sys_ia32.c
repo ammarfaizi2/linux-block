@@ -21,6 +21,7 @@
  * hopefully all marked.  This should be fixed.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/syscalls_api.h>
 #include <linux/fs_api.h>
 #include <linux/cred.h>

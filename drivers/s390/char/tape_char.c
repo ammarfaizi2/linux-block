@@ -13,6 +13,7 @@
 #define KMSG_COMPONENT "tape"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/kdev_t.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/module.h>

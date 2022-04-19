@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/kdev_t.h>
 #include <linux/sysctl.h>
 #include <linux/sched/task.h>
 #include <linux/idr_api.h>

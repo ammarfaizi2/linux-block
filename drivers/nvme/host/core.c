@@ -4,6 +4,7 @@
  * Copyright (c) 2011-2014, Intel Corporation.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

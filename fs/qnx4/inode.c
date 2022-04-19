@@ -13,6 +13,7 @@
  * 30-06-1998 by Frank Denis : first step to write inodes.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

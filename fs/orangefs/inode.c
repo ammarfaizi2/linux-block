@@ -10,6 +10,7 @@
  *  Linux VFS inode operations.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/writeback_api.h>
 #include <linux/wait_bit.h>
 #include <linux/uio_api.h>

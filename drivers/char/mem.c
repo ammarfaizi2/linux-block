@@ -9,6 +9,7 @@
  *  Shared /dev/zero mmapping support, Feb 2000, Kanoj Sarcar <kanoj@sgi.com>
  */
 
+#include <linux/kdev_t.h>
 #include <linux/uio_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/signal.h>

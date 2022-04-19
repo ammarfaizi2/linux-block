@@ -7,6 +7,7 @@
  *	Made endianness-clean by Andrew Stribblehill <ads@wompom.org>, 2005.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/writeback_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_truncate.h>

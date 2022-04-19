@@ -34,6 +34,7 @@
  *             fileset vfs     -> vp(1) <-> ... <-> vp(n) <->vproot;
  */
 
+#include <linux/kdev_t.h>
 #include <linux/uuid_api.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/fs.h>

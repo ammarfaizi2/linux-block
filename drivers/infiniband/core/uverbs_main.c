@@ -34,6 +34,7 @@
  * SOFTWARE.
  */
 
+#include <linux/kdev_t.h>
 #include <uapi/linux/signal.h>
 #include <net/netlink_api.h>
 #include <linux/wait_api.h>

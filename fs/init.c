@@ -3,6 +3,7 @@
  * Routines that mimic syscalls, but don't use the user address space or file
  * descriptors.  Only for init/ and related early init code.
  */
+#include <linux/kdev_t.h>
 #include <linux/thread_info.h>
 #include <linux/sched/user.h>
 #include <linux/sched.h>

@@ -8,6 +8,7 @@
  *              and from work (c) 1998 Mike Shaver.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/buffer_head.h>

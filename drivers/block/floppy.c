@@ -163,6 +163,7 @@
 
 /* do print messages for unexpected interrupts */
 static int print_unex = 1;
+#include <linux/kdev_t.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/topology.h>

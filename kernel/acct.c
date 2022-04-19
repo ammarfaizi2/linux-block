@@ -44,6 +44,7 @@
  * a struct file opened for write. Fixed. 2/6/2000, AV.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/syscalls_api.h>

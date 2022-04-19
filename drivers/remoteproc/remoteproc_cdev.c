@@ -5,6 +5,7 @@
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/fs_api.h>
 #include <linux/cdev.h>
 #include <linux/compat.h>

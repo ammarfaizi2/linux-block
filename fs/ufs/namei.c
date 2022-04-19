@@ -28,6 +28,7 @@
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  */
 
+#include <linux/kdev_t.h>
 #include <linux/mm_api.h>
 #include <linux/highmem.h>
 #include <linux/fs_api.h>

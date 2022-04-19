@@ -109,6 +109,7 @@
 #define PT_NAME		"pt"
 #define PT_UNITS	4
 
+#include <linux/kdev_t.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

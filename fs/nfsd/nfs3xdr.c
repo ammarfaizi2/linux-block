@@ -7,6 +7,7 @@
  * 2003-08-09 Jamie Lokier: Use htonl() for nanoseconds, not htons()!
  */
 
+#include <linux/kdev_t.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/namei.h>

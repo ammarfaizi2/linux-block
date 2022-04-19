@@ -7,6 +7,7 @@
  * Authors: Michael Weiß <michael.weiss@aisec.fraunhofer.de>
  */
 
+#include <linux/kdev_t.h>
 #include <linux/audit.h>
 #include <linux/module.h>
 #include <linux/device-mapper.h>

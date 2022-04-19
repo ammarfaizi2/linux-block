@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/kdev_t.h>
 #include <linux/string.h>
 #include <linux/wait_bit.h>
 #include <linux/fs_api.h>

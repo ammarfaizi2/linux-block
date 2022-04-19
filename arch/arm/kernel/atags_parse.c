@@ -14,6 +14,7 @@
  * is not parsed in any way).
  */
 
+#include <linux/kdev_t.h>
 #include <linux/init.h>
 #include <linux/initrd.h>
 #include <linux/kernel.h>

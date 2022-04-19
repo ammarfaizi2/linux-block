@@ -29,6 +29,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/kdev_t.h>
 #include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/sched.h>

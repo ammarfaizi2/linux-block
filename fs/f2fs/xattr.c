@@ -15,6 +15,7 @@
  * xattr consolidation Copyright (c) 2004 James Morris <jmorris@redhat.com>,
  *  Red Hat Inc.
  */
+#include <linux/kdev_t.h>
 #include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/mm_page_address.h>

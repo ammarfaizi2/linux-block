@@ -21,6 +21,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/fs_api_sb.h>
 #include <linux/xarray_api.h>
 #include <linux/wait_bit.h>

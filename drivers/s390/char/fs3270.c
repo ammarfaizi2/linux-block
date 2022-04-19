@@ -8,6 +8,7 @@
  *     Copyright IBM Corp. 2003, 2009
  */
 
+#include <linux/kdev_t.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/sched.h>

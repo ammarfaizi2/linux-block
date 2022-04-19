@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/kdev_t.h>
 #include <linux/wait_bit.h>
 #include <linux/uuid_api.h>
 #include <linux/sysfs.h>

@@ -49,6 +49,7 @@
  *
  */
 
+#include <linux/kdev_t.h>
 #include <uapi/linux/signal.h>
 #include <linux/wait_api.h>
 #include <linux/syscalls_api.h>

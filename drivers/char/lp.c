@@ -112,6 +112,7 @@
  * Copyright (C) 2000 by Tim Waugh (added LPSETTIMEOUT ioctl)
  */
 
+#include <linux/kdev_t.h>
 #include <linux/wait_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/task_stack.h>

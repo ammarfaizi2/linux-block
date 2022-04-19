@@ -7,6 +7,7 @@
  *  Copyright (C) 1999  Niibe Yutaka
  *  Copyright (C) 2002 - 2010 Paul Mundt
  */
+#include <linux/kdev_t.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>

@@ -4,6 +4,7 @@
  *   Portions Copyright (C) Christoph Hellwig, 2001-2002
  */
 
+#include <linux/kdev_t.h>
 #include <linux/stringhash.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

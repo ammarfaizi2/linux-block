@@ -33,6 +33,7 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/time64_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mm_page_address.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2019 Haren Myneni, IBM Corp
  */
 
+#include <linux/kdev_t.h>
 #include <linux/mutex_api.h>
 #include <linux/sched/task.h>
 #include <linux/sched/mm.h>

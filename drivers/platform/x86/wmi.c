@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/kdev_t.h>
 #include <linux/uuid_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>

@@ -11,6 +11,7 @@
  *	Max Cohan: Fixed invalid FSINFO offset when info_sector is 0
  */
 
+#include <linux/kdev_t.h>
 #include <linux/fs_api_sb.h>
 #include <linux/writeback.h>
 #include <linux/uio_api.h>

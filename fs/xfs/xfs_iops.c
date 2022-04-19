@@ -23,6 +23,7 @@
 #include "xfs_error.h"
 #include "xfs_ioctl.h"
 
+#include <linux/kdev_t.h>
 #include <linux/slab.h>
 #include <linux/pagemap.h>
 #include <linux/mm_api_truncate.h>

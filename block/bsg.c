@@ -2,6 +2,7 @@
 /*
  * bsg.c - block layer implementation of the sg v4 interface
  */
+#include <linux/kdev_t.h>
 #include <linux/uaccess.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

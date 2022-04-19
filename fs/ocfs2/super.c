@@ -7,6 +7,7 @@
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/fs_api_sb.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "LoadPin: " fmt
 
+#include <linux/kdev_t.h>
 #include <linux/sysctl.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

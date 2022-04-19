@@ -6,6 +6,7 @@
  * Copyright 2007 Sony Corp.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/bvec_api.h>

@@ -7,6 +7,7 @@
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
  */
+#include <linux/kdev_t.h>
 #include <linux/syscalls_api.h>
 #include <linux/stringhash.h>
 #include <linux/spinlock_api.h>

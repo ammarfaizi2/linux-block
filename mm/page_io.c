@@ -11,6 +11,7 @@
  *  Always use brw_page, life becomes simpler. 12 May 1998 Eric Biederman
  */
 
+#include <linux/kdev_t.h>
 #include <linux/writeback_api.h>
 #include <linux/vmstat.h>
 #include <linux/uio_api.h>

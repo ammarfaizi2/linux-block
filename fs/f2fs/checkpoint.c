@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/kdev_t.h>
 #include <linux/writeback_api.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>

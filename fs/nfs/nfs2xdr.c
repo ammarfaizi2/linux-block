@@ -10,6 +10,7 @@
  * 		FIFO's need special handling in NFSv2
  */
 
+#include <linux/kdev_t.h>
 #include <linux/fs_entry_types.h>
 #include <linux/param.h>
 #include <linux/time.h>

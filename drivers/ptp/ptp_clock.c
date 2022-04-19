@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2010 OMICRON electronics GmbH
  */
+#include <linux/kdev_t.h>
 #include <linux/wait_api.h>
 #include <linux/timex.h>
 #include <linux/spinlock_api.h>

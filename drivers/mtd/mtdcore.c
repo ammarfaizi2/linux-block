@@ -7,6 +7,7 @@
  * Copyright © 2006      Red Hat UK Limited 
  */
 
+#include <linux/kdev_t.h>
 #include <linux/sysfs.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>

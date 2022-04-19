@@ -33,6 +33,7 @@
  * are rare we hope to get away with this. This avoids impacting the core 
  * VM.
  */
+#include <linux/kdev_t.h>
 #include <linux/sched/task_flags.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmstat.h>

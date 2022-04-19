@@ -5,6 +5,7 @@
  * Driver for the Xillybus class
  */
 
+#include <linux/kdev_t.h>
 #include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/kobject_api.h>

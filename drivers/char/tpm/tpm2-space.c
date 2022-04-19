@@ -11,6 +11,7 @@
  * used by the kernel internally.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/string.h>
 #include <linux/device_api_lock.h>
 #include <linux/slab.h>

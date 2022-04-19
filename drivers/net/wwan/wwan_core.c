@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2021, Linaro Ltd <loic.poulain@linaro.org> */
 
+#include <linux/kdev_t.h>
 #include <net/rtnetlink_api.h>
 #include <net/netlink_api.h>
 #include <linux/wait_api.h>

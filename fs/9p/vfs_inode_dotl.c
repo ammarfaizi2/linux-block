@@ -6,6 +6,7 @@
  *  Copyright (C) 2002 by Ron Minnich <rminnich@lanl.gov>
  */
 
+#include <linux/kdev_t.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/fs_api.h>

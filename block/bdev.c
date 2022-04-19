@@ -5,6 +5,7 @@
  *  Copyright (C) 2016 - 2020 Christoph Hellwig
  */
 
+#include <linux/kdev_t.h>
 #include <linux/fs_api_sb.h>
 #include <linux/wait_bit.h>
 #include <linux/wait_api.h>

@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/kdev_t.h>
 #include <linux/prefetch.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mm_page_address.h>

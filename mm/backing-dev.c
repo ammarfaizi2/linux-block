@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <linux/kdev_t.h>
 #include <linux/writeback_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

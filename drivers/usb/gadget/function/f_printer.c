@@ -11,6 +11,7 @@
  * Copyright (C) 2006 Craig W. Nadler
  */
 
+#include <linux/kdev_t.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

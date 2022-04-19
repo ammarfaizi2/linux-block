@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/kdev_t.h>
 #include <linux/mm_page_address.h>
 #include <linux/writeback_api.h>
 #include <linux/uio_api.h>

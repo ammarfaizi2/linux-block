@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/kdev_t.h>
 #include <linux/preempt.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>

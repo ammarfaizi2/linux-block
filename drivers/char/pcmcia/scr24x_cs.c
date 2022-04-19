@@ -8,6 +8,7 @@
  * Derived from "scr24x_v4.2.6_Release.tar.gz" driver by TL Sudheendran.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>
 #include <linux/ioport.h>

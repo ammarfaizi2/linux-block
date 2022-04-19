@@ -5,6 +5,7 @@
  * Copyright 2016 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/wait_api.h>
 #include <linux/seq_file.h>
 #include <linux/sched/task.h>

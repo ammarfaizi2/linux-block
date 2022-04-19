@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0-only)
 /* Copyright(c) 2014 - 2020 Intel Corporation */
+#include <linux/kdev_t.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

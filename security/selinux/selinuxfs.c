@@ -12,6 +12,7 @@
  * Copyright (C) 2004 Red Hat, Inc., James Morris <jmorris@redhat.com>
  */
 
+#include <linux/kdev_t.h>
 #include <linux/sysfs.h>
 #include <linux/ratelimit.h>
 #include <linux/mutex_api.h>

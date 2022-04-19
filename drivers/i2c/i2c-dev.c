@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/kdev_t.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/fs_api.h>

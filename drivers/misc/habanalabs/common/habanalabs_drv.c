@@ -10,6 +10,7 @@
 
 #include "habanalabs.h"
 
+#include <linux/kdev_t.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/pid.h>

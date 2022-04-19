@@ -13,6 +13,7 @@
  *              Copyright (c) 1997 Carnegie-Mellon University
  */
 
+#include <linux/kdev_t.h>
 #include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

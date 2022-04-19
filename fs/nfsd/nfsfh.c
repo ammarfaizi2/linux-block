@@ -8,6 +8,7 @@
  * ... and again Southern-Winter 2001 to support export_operations
  */
 
+#include <linux/kdev_t.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>
 #include <linux/cred.h>

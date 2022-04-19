@@ -11,6 +11,7 @@
  * their supports.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/uaccess.h>
 #include <linux/sched/signal.h>
 #include <linux/pgtable_api.h>

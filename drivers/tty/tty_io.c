@@ -65,6 +65,7 @@
  *			 -- Andrew Morton <andrewm@uow.edu.eu> 17Mar01
  */
 
+#include <linux/kdev_t.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/vmalloc.h>

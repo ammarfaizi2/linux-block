@@ -53,6 +53,7 @@
  *			 :  base.c too.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/sched/task_flags.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>

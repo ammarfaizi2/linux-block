@@ -6,6 +6,7 @@
 
    Copyright (c) 2001,2002 Christer Weinigel <wingel@nano-system.com> */
 
+#include <linux/kdev_t.h>
 #include <linux/fs_api.h>
 #include <linux/device.h>
 #include <linux/fs.h>

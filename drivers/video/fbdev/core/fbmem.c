@@ -11,6 +11,7 @@
  * for more details.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/uaccess.h>
 #include <linux/refcount_api.h>
 #include <linux/pgtable_api.h>

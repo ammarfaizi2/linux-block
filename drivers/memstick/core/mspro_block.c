@@ -8,6 +8,7 @@
  * that made this driver possible.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>

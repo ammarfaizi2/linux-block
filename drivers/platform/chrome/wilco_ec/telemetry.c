@@ -27,6 +27,7 @@
  * returned.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

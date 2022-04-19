@@ -33,6 +33,7 @@
  *	check resource allocation in sr_init and some cleanups
  */
 
+#include <linux/kdev_t.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

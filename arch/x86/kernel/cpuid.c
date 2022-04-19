@@ -20,6 +20,7 @@
  * an SMP box will direct the access to CPU %d.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/smp_api.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>

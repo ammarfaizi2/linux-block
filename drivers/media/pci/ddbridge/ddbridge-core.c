@@ -16,6 +16,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/kdev_t.h>
 #include <media/dvbdev.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

@@ -23,6 +23,7 @@
 
 #include "udf_i.h"
 #include "udf_sb.h"
+#include <linux/kdev_t.h>
 #include <linux/rwsem_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2019 Chao Yu <chao@kernel.org>
  */
 
+#include <linux/kdev_t.h>
 #include <linux/writeback_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>

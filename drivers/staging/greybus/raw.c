@@ -5,6 +5,7 @@
  * Copyright 2015 Google Inc.
  * Copyright 2015 Linaro Ltd.
  */
+#include <linux/kdev_t.h>
 #include <linux/mutex_api.h>
 #include <linux/idr_api.h>
 #include <linux/fs_api.h>

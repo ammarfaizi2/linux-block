@@ -5,6 +5,7 @@
  */
 
 #include "dm.h"
+#include <linux/kdev_t.h>
 #include <linux/workqueue_api.h>
 #include <linux/string.h>
 #include <linux/atomic_api.h>

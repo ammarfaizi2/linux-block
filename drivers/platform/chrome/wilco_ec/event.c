@@ -30,6 +30,7 @@
  * and then create an event by plugging/unplugging the battery.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

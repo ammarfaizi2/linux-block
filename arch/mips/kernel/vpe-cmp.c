@@ -6,6 +6,7 @@
  * Copyright (C) 2004, 2005 MIPS Technologies, Inc.  All rights reserved.
  * Copyright (C) 2013 Imagination Technologies Ltd.
  */
+#include <linux/kdev_t.h>
 #include <linux/fs_api.h>
 #include <linux/device/class.h>
 #include <linux/device_api_lock.h>

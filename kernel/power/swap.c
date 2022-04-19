@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "PM: " fmt
 
+#include <linux/kdev_t.h>
 #include <linux/wait_api.h>
 #include <linux/vmstat.h>
 #include <linux/timekeeping.h>

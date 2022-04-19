@@ -7,6 +7,7 @@
  *  Rock Ridge Extensions to iso9660
  */
 
+#include <linux/kdev_t.h>
 #include <linux/mm_page_address.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>

@@ -26,6 +26,7 @@
  *	 - making it shorter - scr_readw are macros which expand in PRETTY long code
  */
 
+#include <linux/kdev_t.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/notifier_api.h>

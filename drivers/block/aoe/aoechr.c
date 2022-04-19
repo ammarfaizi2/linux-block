@@ -4,6 +4,7 @@
  * AoE character device driver
  */
 
+#include <linux/kdev_t.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>

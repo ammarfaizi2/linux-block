@@ -5,6 +5,7 @@
  * Userspace programs can register with the driver to mirror their own address
  * space and can use the device to read/write any valid virtual address.
  */
+#include <linux/kdev_t.h>
 #include <linux/xarray_api.h>
 #include <linux/uaccess.h>
 #include <linux/topology.h>

@@ -7,6 +7,7 @@
  *  Copyright (C) 1997, Olaf Kirch
  */
 
+#include <linux/kdev_t.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched/signal.h>
 #include <linux/jiffies.h>

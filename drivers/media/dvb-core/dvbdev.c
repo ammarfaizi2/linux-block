@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "dvbdev: " fmt
 
+#include <linux/kdev_t.h>
 #include <linux/uaccess.h>
 #include <linux/sysfs.h>
 #include <linux/rwsem_api.h>

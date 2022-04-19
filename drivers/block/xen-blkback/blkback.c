@@ -36,6 +36,7 @@
 
 #define pr_fmt(fmt) "xen-blkback: " fmt
 
+#include <linux/kdev_t.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>

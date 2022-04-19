@@ -7,6 +7,7 @@
 
 #include "dm-core.h"
 #include "dm-ima.h"
+#include <linux/kdev_t.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>

@@ -12,6 +12,7 @@
  *  Multiple device nodes: Harald Freudenberger <freude@linux.ibm.com>
  */
 
+#include <linux/kdev_t.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

@@ -16,6 +16,7 @@
  */
 #define MTD_DEFAULT_TIMEOUT	3
 
+#include <linux/kdev_t.h>
 #include <linux/writeback_api.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/kdev_t.h>
 #include <net/netlink_api.h>
 #include <linux/atomic_api.h>
 #include <linux/cred.h>

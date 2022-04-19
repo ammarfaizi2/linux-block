@@ -25,6 +25,7 @@
  * information has to be stored.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/fs.h>

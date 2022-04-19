@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/kdev_t.h>
 #include <linux/rwsem_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/fs_api.h>

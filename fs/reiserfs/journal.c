@@ -35,6 +35,7 @@
  *		        within kupdate, it will ignore the immediate flag
  */
 
+#include <linux/kdev_t.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>
 #include <linux/wait_api.h>

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Copyright 2017 IBM Corp.
+#include <linux/kdev_t.h>
 #include <linux/wait_api.h>
 #include <linux/slab.h>
 #include <linux/sched/thread.h>

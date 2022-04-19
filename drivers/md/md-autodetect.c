@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/kdev_t.h>
 #include <linux/device/driver.h>
 #include <linux/kernel.h>
 #include <linux/blkdev.h>

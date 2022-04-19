@@ -35,6 +35,7 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/kdev_t.h>
 #include <linux/sched/task_flags.h>
 #include <linux/wait_bit.h>
 #include <linux/wait_api.h>
