@@ -1,6 +1,12 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef MM_SLAB_H
 #define MM_SLAB_H
+
+#include <linux/list_lru_api.h>
+#include <linux/mm_api_extra.h>
+#include <linux/mm_page_address.h>
+#include <linux/gfp_api.h>
+
 /*
  * Internal slab definitions
  */
