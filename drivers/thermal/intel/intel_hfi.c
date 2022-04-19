@@ -45,6 +45,7 @@
 #include <linux/workqueue.h>
 
 #include <asm/msr.h>
+#include <asm/processor_api.h>
 
 #include "../thermal_core.h"
 #include "intel_hfi.h"
