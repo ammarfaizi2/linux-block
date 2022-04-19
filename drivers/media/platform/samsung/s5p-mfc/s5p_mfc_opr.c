@@ -9,6 +9,8 @@
  * http://www.samsung.com/
  */
 
+#include <linux/bitmap.h>
+
 #include "s5p_mfc_debug.h"
 #include "s5p_mfc_opr.h"
 #include "s5p_mfc_opr_v5.h"

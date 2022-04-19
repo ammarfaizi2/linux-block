@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2019-2021, Intel Corporation. */
 
+#include <linux/bitmap.h>
 #include <linux/device_api_lock.h>
 
 #include "ice_common.h"

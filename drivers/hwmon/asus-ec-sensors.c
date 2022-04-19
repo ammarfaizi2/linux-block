@@ -21,6 +21,7 @@
  * - CPU core voltage
  */
 
+#include <linux/bitmap.h>
 #include <linux/device_api_lock.h>
 #include <linux/acpi.h>
 #include <linux/bitops.h>

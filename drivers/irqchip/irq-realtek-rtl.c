@@ -5,6 +5,7 @@
  * Copyright (C) 2020 John Crispin <john@phrozen.org>
  */
 
+#include <linux/bitmap.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/irqdesc.h>

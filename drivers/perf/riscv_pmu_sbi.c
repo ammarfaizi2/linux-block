@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "riscv-pmu-sbi: " fmt
 
+#include <linux/bitmap.h>
 #include <linux/slab.h>
 #include <linux/mod_devicetable.h>
 #include <linux/perf/riscv_pmu.h>

@@ -6,6 +6,7 @@
  * Kamil Debski, <k.debski@samsung.com>
  */
 
+#include <linux/bitmap.h>
 #include <linux/spinlock_api.h>
 #include <linux/fs_api.h>
 #include <linux/jiffies.h>

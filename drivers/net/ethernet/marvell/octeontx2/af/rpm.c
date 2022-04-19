@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/bitmap.h>
 #include <linux/mutex_api.h>
 
 #include "cgx.h"

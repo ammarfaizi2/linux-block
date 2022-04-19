@@ -3,6 +3,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/bitmap.h>
 #include <linux/preempt.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>

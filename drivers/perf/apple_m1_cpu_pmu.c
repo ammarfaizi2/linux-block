@@ -10,6 +10,7 @@
  * Asahi Linux project. The rest was experimentally discovered.
  */
 
+#include <linux/bitmap.h>
 #include <linux/of.h>
 #include <linux/perf/arm_pmu.h>
 #include <linux/platform_device.h>
