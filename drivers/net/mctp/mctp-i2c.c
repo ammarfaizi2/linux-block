@@ -17,6 +17,7 @@
  * Copyright (c) 2022 Google
  */
 
+#include <linux/nsproxy.h>
 #include <linux/string.h>
 #include <linux/device/bus.h>
 #include <linux/sched.h>
