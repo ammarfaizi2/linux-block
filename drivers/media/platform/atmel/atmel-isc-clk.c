@@ -8,6 +8,7 @@
  * Author: Eugen Hristev <eugen.hristev@microchip.com>
  *
  */
+#include <linux/delay.h>
 #include <linux/of_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>

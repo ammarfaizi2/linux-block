@@ -2,6 +2,8 @@
 /* Copyright(c) 2019-2022  Realtek Corporation
  */
 
+#include <linux/delay.h>
+
 #include "debug.h"
 #include "fw.h"
 #include "mac.h"

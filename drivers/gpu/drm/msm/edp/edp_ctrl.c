@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/delay.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>

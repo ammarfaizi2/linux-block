@@ -23,6 +23,8 @@
  *
  */
 
+#include <linux/delay.h>
+
 #include "core_types.h"
 #include "clk_mgr_internal.h"
 #include "reg_helper.h"

@@ -12,6 +12,7 @@
  * Copyright (C) 2011 Colin Leitner <colin.leitner@googlemail.com>
  */
 
+#include <linux/delay.h>
 #include <linux/of_api.h>
 #include <linux/bitops.h>
 #include <linux/etherdevice.h>

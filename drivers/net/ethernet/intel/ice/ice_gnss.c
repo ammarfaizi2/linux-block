@@ -3,6 +3,7 @@
 
 #include "ice.h"
 #include "ice_lib.h"
+#include <linux/delay.h>
 #include <linux/gfp_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

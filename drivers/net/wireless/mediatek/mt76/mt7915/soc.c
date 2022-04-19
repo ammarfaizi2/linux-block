@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: ISC
 /* Copyright (C) 2022 MediaTek Inc. */
 
+#include <linux/delay.h>
 #include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

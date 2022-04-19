@@ -90,6 +90,7 @@
  * one of the simpler chips.
  */
 
+#include <linux/delay.h>
 #include <linux/of_api.h>
 #include <linux/bitmap.h>
 #include <linux/spinlock_api.h>

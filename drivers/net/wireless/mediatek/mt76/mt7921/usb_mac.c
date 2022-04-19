@@ -4,6 +4,7 @@
  * Author: Lorenzo Bianconi <lorenzo@kernel.org>
  */
 
+#include <linux/delay.h>
 #include <linux/mutex_api.h>
 #include <linux/wait_api.h>
 #include <linux/kernel.h>
