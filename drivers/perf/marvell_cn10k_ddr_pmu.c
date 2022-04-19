@@ -4,6 +4,7 @@
  * Copyright (C) 2021 Marvell.
  */
 
+#include <asm/local64_api.h>
 #include <linux/hrtimer_api.h>
 #include <linux/perf_event_api.h>
 #include <linux/ktime_api.h>
