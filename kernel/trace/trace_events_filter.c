@@ -5,6 +5,7 @@
  * Copyright (C) 2009 Tom Zanussi <tzanussi@gmail.com>
  */
 
+#include <linux/percpu.h>
 #include <linux/preempt.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

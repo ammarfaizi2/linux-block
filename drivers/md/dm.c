@@ -10,6 +10,7 @@
 #include "dm-uevent.h"
 #include "dm-ima.h"
 
+#include <linux/percpu.h>
 #include <linux/kdev_t.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>
