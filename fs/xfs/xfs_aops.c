@@ -4,6 +4,7 @@
  * Copyright (c) 2016-2018 Christoph Hellwig.
  * All Rights Reserved.
  */
+#include <linux/writeback_api.h>
 #include <linux/string.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
