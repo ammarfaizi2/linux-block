@@ -5,6 +5,7 @@
 // Author: Cezary Rojewski <cezary.rojewski@intel.com>
 //
 
+#include <linux/string.h>
 #include <linux/jiffies.h>
 #include <linux/workqueue_api.h>
 #include <linux/pci.h>

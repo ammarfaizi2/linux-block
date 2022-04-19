@@ -6,6 +6,7 @@
 // Copyright (c) 2007 Michel Ludwig (michel.ludwig@gmail.com)
 //       - frontend interface
 
+#include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/i2c.h>
 #include <asm/div64.h>

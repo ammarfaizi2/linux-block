@@ -33,6 +33,7 @@
  *
  */
 
+#include <linux/string.h>
 #include <linux/rcupdate.h>
 #include <linux/vmalloc.h>
 #include <linux/slab.h>
