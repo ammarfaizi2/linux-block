@@ -3,6 +3,7 @@
  * Patrick McHardy (c) 2006-2012
  */
 
+#include <linux/refcount_api.h>
 #include <net/sock_api.h>
 #include <net/dst_api.h>
 #include <linux/netdevice_api.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/refcount_api.h>
 #include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>

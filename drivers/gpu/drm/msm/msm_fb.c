@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <drm/drm_crtc.h>

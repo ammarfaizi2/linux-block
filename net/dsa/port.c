@@ -6,6 +6,7 @@
  *	Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rcupdate.h>
 #include <linux/mutex_api.h>
 #include <linux/slab.h>

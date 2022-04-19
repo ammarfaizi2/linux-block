@@ -3,6 +3,7 @@
  * Copyright (c) 2010 Patrick McHardy <kaber@trash.net>
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/refcount_api.h>
 #include <linux/netfilter/nf_conntrack_common_api.h>
 #include <linux/atomic_api.h>
 #include <linux/module.h>

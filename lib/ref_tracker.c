@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <linux/refcount_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/export.h>
 #include <linux/ref_tracker.h>

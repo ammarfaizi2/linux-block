@@ -4,6 +4,7 @@
  * Copyright (c) Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/kmod.h>

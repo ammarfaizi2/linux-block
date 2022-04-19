@@ -3,6 +3,7 @@
  *
  * Copyright (C) Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  */
+#include <linux/refcount_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/errno.h>

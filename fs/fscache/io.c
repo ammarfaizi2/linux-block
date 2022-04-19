@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 #define FSCACHE_DEBUG_LEVEL OPERATION
+#include <linux/refcount_api.h>
 #include <linux/rcupdate.h>
 #include <linux/writeback_api.h>
 #include <linux/xarray_api.h>

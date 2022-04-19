@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2020-2021 Marvell International Ltd. All rights reserved */
 
+#include <linux/refcount_api.h>
 #include <linux/rculist.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>

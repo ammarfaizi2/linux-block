@@ -6,6 +6,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <linux/refcount_api.h>
 #include <linux/rcupdate.h>
 #include <net/netlink_api.h>
 #include <linux/slab.h>

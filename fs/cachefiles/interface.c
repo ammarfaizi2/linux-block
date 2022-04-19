@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/refcount_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/fs_api.h>

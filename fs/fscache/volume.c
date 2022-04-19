@@ -6,6 +6,7 @@
  */
 
 #define FSCACHE_DEBUG_LEVEL COOKIE
+#include <linux/refcount_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>
 #include <linux/seq_file.h>

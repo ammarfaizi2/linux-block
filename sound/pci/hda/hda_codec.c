@@ -5,6 +5,7 @@
  * Copyright (c) 2004 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>

@@ -2,6 +2,7 @@
 /* Copyright 2017 Microsemi Corporation
  * Copyright 2018-2019 NXP
  */
+#include <linux/refcount_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>

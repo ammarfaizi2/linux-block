@@ -9,6 +9,7 @@
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/refcount_api.h>
 #include <linux/log2.h>
 #include <net/sock_api.h>
 #include <net/netlink_api.h>
