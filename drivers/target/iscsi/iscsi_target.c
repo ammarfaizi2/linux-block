@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/semaphore.h>
 #include <net/sock_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>

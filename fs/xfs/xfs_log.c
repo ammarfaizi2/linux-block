@@ -3,6 +3,7 @@
  * Copyright (c) 2000-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
+#include <linux/semaphore.h>
 #include <linux/wait_bit.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

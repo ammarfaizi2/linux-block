@@ -3,6 +3,7 @@
 
 #define _RTW_XMIT_C_
 
+#include <linux/semaphore.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

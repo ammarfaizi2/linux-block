@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "mux-core: " fmt
 
+#include <linux/semaphore.h>
 #include <linux/timekeeping.h>
 #include <linux/of_api.h>
 #include <linux/ktime_api.h>

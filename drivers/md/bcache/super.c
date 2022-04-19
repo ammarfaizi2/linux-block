@@ -15,6 +15,7 @@
 #include "writeback.h"
 #include "features.h"
 
+#include <linux/semaphore.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/vmalloc.h>

@@ -7,6 +7,7 @@
  *
  * Copyright (C) 2012-2017 Cavium Inc.
  */
+#include <linux/semaphore.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>

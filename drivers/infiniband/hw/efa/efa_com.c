@@ -3,6 +3,7 @@
  * Copyright 2018-2021 Amazon.com, Inc. or its affiliates. All rights reserved.
  */
 
+#include <linux/semaphore.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
