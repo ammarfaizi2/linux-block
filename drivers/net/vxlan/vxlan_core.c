@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <net/netlink_api.h>
 #include <linux/jiffies.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api_extra.h>

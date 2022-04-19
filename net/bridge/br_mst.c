@@ -6,6 +6,7 @@
  *	Tobias Waldekranz		<tobias@waldekranz.com>
  */
 
+#include <net/netlink_api.h>
 #include <linux/kernel.h>
 #include <net/switchdev.h>
 
