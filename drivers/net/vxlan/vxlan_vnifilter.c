@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/netdevice_api_pcpu_stats.h>
 #include <linux/string.h>
 #include <net/rtnetlink_api.h>
 #include <linux/u64_stats_sync_api.h>

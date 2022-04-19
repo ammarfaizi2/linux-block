@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/netdevice_api_pcpu_stats.h>
 #include <net/ip_tunnels_ecn.h>
 #include <linux/string.h>
 #include <linux/etherdevice_api.h>
