@@ -5,6 +5,8 @@
 #include <linux/skbuff_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/skbuff.h>
+
+#include <net/rtnetlink_api.h>
 #include <net/ip_tunnels.h>
 
 struct gre_base_hdr {
