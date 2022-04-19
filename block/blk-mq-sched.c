@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2016 Jens Axboe
  */
+#include <linux/jiffies.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/percpu-refcount-api.h>

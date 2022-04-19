@@ -3,6 +3,7 @@
  * Copyright (c) 2015 MediaTek Inc.
  */
 
+#include <linux/jiffies.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

@@ -6,6 +6,8 @@
  *		http://www.samsung.com/
  */
 
+#include <linux/jiffies.h>
+
 #include "regs-mfc.h"
 #include "s5p_mfc_cmd.h"
 #include "s5p_mfc_common.h"

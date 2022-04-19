@@ -8,6 +8,7 @@
  * Copyright (C) 2012-2014 Philipp Zabel, Pengutronix
  */
 
+#include <linux/jiffies.h>
 #include <linux/mutex_api.h>
 #include <linux/clk.h>
 #include <linux/irqreturn.h>

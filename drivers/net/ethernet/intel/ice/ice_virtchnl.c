@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2022, Intel Corporation. */
 
+#include <linux/jiffies.h>
 #include <linux/mutex_api.h>
 
 #include "ice_virtchnl.h"

@@ -3,6 +3,7 @@
  * Copyright(c) 2020, Analogix Semiconductor. All rights reserved.
  *
  */
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/workqueue_api.h>
 #include <linux/of_api.h>

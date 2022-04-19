@@ -8,6 +8,7 @@
  * Lad, Prabhakar <prabhakar.csengg@gmail.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>

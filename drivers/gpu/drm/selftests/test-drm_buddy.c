@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "drm_buddy: " fmt
 
+#include <linux/jiffies.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/prime_numbers.h>

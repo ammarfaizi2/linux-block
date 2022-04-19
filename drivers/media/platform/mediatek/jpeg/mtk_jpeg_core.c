@@ -6,6 +6,7 @@
  *         Xia Jiang <xia.jiang@mediatek.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/workqueue_api.h>

@@ -7,6 +7,7 @@
  * Author: Brendan Higgins <brendanhiggins@google.com>
  */
 
+#include <linux/jiffies.h>
 #include <linux/sched.h>
 #include <linux/numa.h>
 #include <kunit/test.h>

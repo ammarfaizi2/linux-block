@@ -20,6 +20,8 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/jiffies.h>
+#include <linux/bitmap.h>
 #include <linux/mutex_api.h>
 #include <linux/wait_api.h>
 #include <linux/workqueue_api.h>

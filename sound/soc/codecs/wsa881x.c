@@ -2,6 +2,7 @@
 // Copyright (c) 2015-2017, The Linux Foundation.
 // Copyright (c) 2019, Linaro Limited
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>
 #include <linux/bitops.h>

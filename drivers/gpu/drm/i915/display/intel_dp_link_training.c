@@ -21,6 +21,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <linux/jiffies.h>
 #include <linux/workqueue_api.h>
 #include <linux/delay.h>
 

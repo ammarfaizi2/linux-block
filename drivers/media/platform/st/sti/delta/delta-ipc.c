@@ -4,6 +4,7 @@
  * Author: Hugues Fruchet <hugues.fruchet@st.com> for STMicroelectronics.
  */
 
+#include <linux/jiffies.h>
 #include <linux/rpmsg.h>
 
 #include "delta.h"

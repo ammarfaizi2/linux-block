@@ -2,6 +2,7 @@
 // Copyright (c) 2021 Sunplus Inc.
 // Author: Li-hao Kuo <lhjeff911@gmail.com>
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/bitfield.h>

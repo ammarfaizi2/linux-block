@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/wait_api.h>
 #include <linux/delay.h>
 #include <linux/device.h>

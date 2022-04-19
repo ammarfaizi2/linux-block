@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/jiffies.h>
 #include <linux/mutex_api.h>
 #include <linux/iopoll.h>
 #include <linux/pm_runtime.h>

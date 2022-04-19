@@ -6,6 +6,7 @@
 //          Amadeusz Slawinski <amadeuszx.slawinski@linux.intel.com>
 //
 
+#include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/slab.h>
