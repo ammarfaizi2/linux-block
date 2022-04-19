@@ -3,6 +3,7 @@
 #ifndef _FUNETH_TXRX_H
 #define _FUNETH_TXRX_H
 
+#include <linux/cpumask_api.h>
 #include <linux/topology.h>
 #include <linux/interrupt.h>
 #include <linux/netdevice.h>
