@@ -3,6 +3,8 @@
  * Routines that mimic syscalls, but don't use the user address space or file
  * descriptors.  Only for init/ and related early init code.
  */
+#include <asm/elf_api.h>
+
 #include <linux/kdev_t.h>
 #include <linux/thread_info.h>
 #include <linux/sched/user.h>
@@ -13,7 +15,6 @@
 #include <linux/fs_api_f_count.h>
 #include <linux/cred.h>
 #include <linux/capability.h>
-#include <asm/elf_api.h>
 #include <linux/elfcore.h>
 #include <linux/init.h>
 #include <linux/mount.h>
