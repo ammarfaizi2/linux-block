@@ -4,6 +4,7 @@
  * Author: Cosmin Tanislav <cosmin.tanislav@analog.com>
  */
 
+#include <linux/module.h>
 #include <linux/string.h>
 #include <linux/delay.h>
 #include <linux/bitmap.h>
