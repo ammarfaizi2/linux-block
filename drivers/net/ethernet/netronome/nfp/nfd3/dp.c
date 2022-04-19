@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2015-2019 Netronome Systems, Inc. */
 
+#include <linux/dim.h>
 #include <linux/mm_api_extra.h>
 #include <linux/spinlock_api.h>
 #include <linux/mm_page_address.h>
