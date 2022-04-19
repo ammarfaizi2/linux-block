@@ -14,6 +14,7 @@
  * Author: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
  */
 
+#include <asm/msr.h>
 #include <linux/string.h>
 #include <linux/topology.h>
 #include <linux/cpuhotplug.h>
