@@ -17,7 +17,6 @@
 #include "pgtable.h"
 #include "../string.h"
 #include "../voffset.h"
-#include <linux/io.h>
 #include <linux/align.h>
 #include <asm/bootparam_utils.h>
 

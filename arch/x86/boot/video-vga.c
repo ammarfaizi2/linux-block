@@ -11,8 +11,6 @@
  * Common all-VGA modes
  */
 
-#include <linux/io.h>
-
 #include "boot.h"
 #include "video.h"
 

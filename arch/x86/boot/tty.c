@@ -11,8 +11,6 @@
  * Very simple screen and serial I/O
  */
 
-#include <linux/io.h>
-
 #include "boot.h"
 
 int early_serial_base;

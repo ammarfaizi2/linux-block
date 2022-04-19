@@ -11,8 +11,6 @@
  * Enable A20 gate (return -1 on failure)
  */
 
-#include <linux/io.h>
-
 #include "boot.h"
 
 #define MAX_8042_LOOPS	100000

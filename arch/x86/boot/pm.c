@@ -11,7 +11,6 @@
  */
 
 #include "boot.h"
-#include <linux/io.h>
 #include <asm/segment.h>
 
 /*

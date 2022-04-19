@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-#include <linux/io.h>
-
 #include "wakeup.h"
 #include "boot.h"
 
