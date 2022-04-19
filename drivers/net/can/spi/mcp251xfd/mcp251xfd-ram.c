@@ -6,6 +6,7 @@
 //               Marc Kleine-Budde <kernel@pengutronix.de>
 //
 
+#include <linux/minmax.h>
 #include <linux/log2.h>
 
 #include "mcp251xfd-ram.h"

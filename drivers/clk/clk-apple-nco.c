@@ -6,6 +6,7 @@
  * Copyright (C) The Asahi Linux Contributors
  */
 
+#include <linux/minmax.h>
 #include <linux/mod_devicetable.h>
 #include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
