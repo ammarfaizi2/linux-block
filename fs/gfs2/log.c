@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2007 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/string.h>
 #include <linux/writeback_api.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>

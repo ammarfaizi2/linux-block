@@ -5,6 +5,7 @@
  * Copyright (C) 2006-2018 Oracle Corporation
  */
 
+#include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_api.h>

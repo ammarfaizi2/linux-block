@@ -5,6 +5,7 @@
  * Author: SeongJae Park <sj@kernel.org>
  */
 
+#include <linux/string.h>
 #include <linux/mm_api.h>
 #include <linux/mmu_notifier.h>
 #include <linux/page_idle.h>
