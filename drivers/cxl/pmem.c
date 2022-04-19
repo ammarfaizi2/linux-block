@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright(c) 2021 Intel Corporation. All rights reserved. */
+#include <linux/device/bus.h>
 #include <linux/workqueue_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/device_api_lock.h>

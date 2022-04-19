@@ -3,6 +3,7 @@
  * ti-sysc.c - Texas Instruments sysc interconnect target driver
  */
 
+#include <linux/device/bus.h>
 #include <linux/irqflags.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>

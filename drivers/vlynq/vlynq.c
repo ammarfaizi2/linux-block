@@ -6,6 +6,7 @@
  * http://www.ti.com/litv/pdf/sprue36a
  */
 
+#include <linux/device/bus.h>
 #include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

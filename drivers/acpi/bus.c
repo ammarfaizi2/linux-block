@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <linux/device/bus.h>
 #include <linux/workqueue_api.h>
 #include <linux/uuid_api.h>
 #include <linux/of_api.h>

@@ -3,6 +3,7 @@
  * PCI detection and setup code
  */
 
+#include <linux/device/bus.h>
 #include <linux/topology.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2019 Intel Corporation. All rights rsvd. */
+#include <linux/device/bus.h>
 #include <linux/log2.h>
 #include <linux/topology.h>
 #include <linux/sysfs.h>

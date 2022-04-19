@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2018-2021 Intel Corporation
 
+#include <linux/device/bus.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>

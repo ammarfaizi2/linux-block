@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/device/bus.h>
 #include <linux/irqflags.h>
 #include <linux/workqueue_api.h>
 #include <linux/of_api.h>

@@ -10,6 +10,7 @@
  * Dynamic DMA mapping support, pSeries-specific parts, both SMP and LPAR.
  */
 
+#include <linux/device/bus.h>
 #include <linux/log2.h>
 #include <linux/irqflags.h>
 #include <linux/vmalloc.h>

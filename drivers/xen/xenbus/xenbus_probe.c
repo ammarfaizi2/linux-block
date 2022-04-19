@@ -37,6 +37,7 @@
 	pr_debug("xenbus_probe (%s:%d) " fmt ".\n",	\
 		 __func__, __LINE__, ##args)
 
+#include <linux/device/bus.h>
 #include <linux/semaphore.h>
 #include <linux/wait_api.h>
 #include <linux/sysfs.h>

@@ -4,6 +4,7 @@
  * Copyright 2016-2017,2019-2020 NXP
  */
 
+#include <linux/device/bus.h>
 #include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/pgtable_api.h>

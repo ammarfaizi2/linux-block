@@ -10,6 +10,7 @@
  *     Robert Jennings <rcjenn@us.ibm.com>
  */
 
+#include <linux/device/bus.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

@@ -6,6 +6,7 @@
  *  Copyright 2006 Sony Corp.
  */
 
+#include <linux/device/bus.h>
 #include <linux/vmalloc.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>

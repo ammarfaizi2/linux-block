@@ -11,6 +11,7 @@
 
 #define DEBUG
 
+#include <linux/device/bus.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>

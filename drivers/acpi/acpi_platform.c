@@ -8,6 +8,7 @@
  *          Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  */
 
+#include <linux/device/bus.h>
 #include <linux/slab.h>
 #include <linux/notifier_api.h>
 #include <linux/device_api_lock.h>

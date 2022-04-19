@@ -5,6 +5,7 @@
  * Copyright (C) 2013 MEN Mikroelektronik GmbH (www.men.de)
  * Author: Johannes Thumshirn <johannes.thumshirn@men.de>
  */
+#include <linux/device/bus.h>
 #include <linux/kobject_api.h>
 #include <linux/ioport.h>
 #include <linux/idr_api.h>

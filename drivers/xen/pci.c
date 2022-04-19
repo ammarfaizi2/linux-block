@@ -5,6 +5,7 @@
  * Author: Weidong Han <weidong.han@intel.com>
  */
 
+#include <linux/device/bus.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/notifier_api.h>

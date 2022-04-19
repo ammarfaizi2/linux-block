@@ -14,6 +14,7 @@
 #define KMSG_COMPONENT "ap"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/device/bus.h>
 #include <linux/timer.h>
 #include <linux/bitmap.h>
 #include <linux/workqueue_api.h>

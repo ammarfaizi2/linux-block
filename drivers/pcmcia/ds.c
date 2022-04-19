@@ -10,6 +10,7 @@
  * (C) 2003 - 2010	Dominik Brodowski
  */
 
+#include <linux/device/bus.h>
 #include <linux/sysfs.h>
 #include <linux/string.h>
 #include <linux/mutex_api.h>

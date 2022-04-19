@@ -7,6 +7,7 @@
  * SDIO function driver model
  */
 
+#include <linux/device/bus.h>
 #include <linux/of_api.h>
 #include <linux/kobject_api.h>
 #include <linux/device_api_lock.h>

@@ -5,6 +5,7 @@
  * Copyright 2002 Adam Belay <ambx1@neo.rr.com>
  */
 
+#include <linux/device/bus.h>
 #include <linux/pm_wakeup.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

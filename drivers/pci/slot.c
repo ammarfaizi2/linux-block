@@ -5,6 +5,7 @@
  *	Alex Chiang <achiang@hp.com>
  */
 
+#include <linux/device/bus.h>
 #include <linux/sysfs.h>
 #include <linux/string.h>
 #include <linux/rwsem_api.h>

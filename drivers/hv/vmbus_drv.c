@@ -9,6 +9,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/device/bus.h>
 #include <linux/rcupdate.h>
 #include <linux/property.h>
 #include <linux/workqueue_api.h>

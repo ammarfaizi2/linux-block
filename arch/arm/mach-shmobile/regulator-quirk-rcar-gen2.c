@@ -19,6 +19,7 @@
  * Copyright (C) 2015 Glider bvba
  */
 
+#include <linux/device/bus.h>
 #include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>

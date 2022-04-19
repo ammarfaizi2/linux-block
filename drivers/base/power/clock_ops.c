@@ -5,6 +5,7 @@
  * Copyright (c) 2011 Rafael J. Wysocki <rjw@sisk.pl>, Renesas Electronics Corp.
  */
 
+#include <linux/device/bus.h>
 #include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/string.h>

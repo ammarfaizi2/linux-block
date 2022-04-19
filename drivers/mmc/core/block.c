@@ -18,6 +18,7 @@
  * Author:  Andrew Christian
  *          28 May 2002
  */
+#include <linux/device/bus.h>
 #include <linux/align.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

@@ -23,6 +23,7 @@
  *    before parents in some cases.
  */
 
+#include <linux/device/bus.h>
 #include <linux/kobject_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

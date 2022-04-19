@@ -10,6 +10,7 @@
  *   Wu Hao <hao.wu@intel.com>
  *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
  */
+#include <linux/device/bus.h>
 #include <linux/kdev_t.h>
 #include <linux/vmalloc.h>
 #include <linux/slab.h>

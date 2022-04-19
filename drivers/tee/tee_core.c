@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/device/bus.h>
 #include <linux/kdev_t.h>
 #include <linux/uuid_api.h>
 #include <linux/spinlock_api.h>

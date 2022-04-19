@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/device/bus.h>
 #include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/mm_page_address.h>

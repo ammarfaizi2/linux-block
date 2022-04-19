@@ -8,6 +8,7 @@
  * Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/device/bus.h>
 #include <linux/device_api.h>
 #include <linux/acpi.h>
 #include <linux/device.h>

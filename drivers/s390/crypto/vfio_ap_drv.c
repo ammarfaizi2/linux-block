@@ -8,6 +8,7 @@
  *	      Pierre Morel <pmorel@linux.ibm.com>
  */
 
+#include <linux/device/bus.h>
 #include <linux/sysfs.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

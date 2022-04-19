@@ -6,6 +6,7 @@
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
+#include <linux/device/bus.h>
 #include <linux/log2.h>
 #include <linux/string.h>
 #include <linux/mutex_api.h>

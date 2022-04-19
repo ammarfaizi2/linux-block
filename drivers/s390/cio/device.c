@@ -11,6 +11,7 @@
 #define KMSG_COMPONENT "cio"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/device/bus.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/sysfs.h>

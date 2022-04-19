@@ -4,6 +4,7 @@
 // Copyright (C) 2005 David Brownell
 // Copyright (C) 2008 Secret Lab Technologies Ltd.
 
+#include <linux/device/bus.h>
 #include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/sysfs.h>

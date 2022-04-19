@@ -3,6 +3,7 @@
  * Copyright (c) 2012, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/device/bus.h>
 #include <linux/uuid_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>

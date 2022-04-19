@@ -9,6 +9,7 @@
  */
 
 #define pr_fmt(fmt) "pci-p2pdma: " fmt
+#include <linux/device/bus.h>
 #include <linux/rcupdate.h>
 #include <linux/xarray_api.h>
 #include <linux/sysfs.h>

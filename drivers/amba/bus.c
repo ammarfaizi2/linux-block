@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2003 Deep Blue Solutions Ltd, All Rights Reserved.
  */
+#include <linux/device/bus.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/mutex_api.h>

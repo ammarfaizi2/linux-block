@@ -4,6 +4,7 @@
 //
 // Copyright (C) 2017 Finn Thain
 
+#include <linux/device/bus.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>
 #include <linux/device.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2012 Russell King
  */
 
+#include <linux/device/bus.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

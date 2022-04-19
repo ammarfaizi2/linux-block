@@ -23,6 +23,7 @@
 #define KMSG_COMPONENT "iucv"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/device/bus.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/topology.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2019 Mellanox Technologies. All rights reserved
  */
 
+#include <linux/device/bus.h>
 #include <linux/uaccess.h>
 #include <linux/sched.h>
 #include <linux/nsproxy.h>

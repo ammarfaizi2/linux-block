@@ -6,6 +6,7 @@
  */
 #define pr_fmt(fmt) "PM: " fmt
 
+#include <linux/device/bus.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/stat.h>

@@ -17,6 +17,7 @@
  * Michael A. Griffith <grif@acm.org>
  */
 
+#include <linux/device/bus.h>
 #include <linux/mutex_api.h>
 #include <linux/gfp_api.h>
 #include <linux/fs_api.h>

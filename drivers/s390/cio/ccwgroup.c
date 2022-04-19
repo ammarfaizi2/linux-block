@@ -7,6 +7,7 @@
  *  Author(s): Arnd Bergmann (arndb@de.ibm.com)
  *	       Cornelia Huck (cornelia.huck@de.ibm.com)
  */
+#include <linux/device/bus.h>
 #include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

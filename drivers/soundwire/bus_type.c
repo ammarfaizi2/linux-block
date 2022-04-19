@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright(c) 2015-17 Intel Corporation.
 
+#include <linux/device/bus.h>
 #include <linux/kobject_api.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

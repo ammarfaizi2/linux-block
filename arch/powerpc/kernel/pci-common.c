@@ -12,6 +12,7 @@
  * Common pmac/prep/chrp pci routines. -- Cort
  */
 
+#include <linux/device/bus.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>

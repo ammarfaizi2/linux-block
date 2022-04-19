@@ -3,6 +3,7 @@
  * Copyright (c) 2012, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/device/bus.h>
 #include <linux/property.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>

@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2012-2015, The Linux Foundation. All rights reserved.
  */
+#include <linux/device/bus.h>
 #include <linux/of_api.h>
 #include <linux/idr_api.h>
 #include <linux/device_api_lock.h>

@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)     "DMAR: " fmt
 
+#include <linux/device/bus.h>
 #include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/align.h>

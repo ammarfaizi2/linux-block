@@ -8,6 +8,7 @@
  * Copyright (c) 2006 Novell, Inc.
  */
 
+#include <linux/device/bus.h>
 #include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/srcu.h>

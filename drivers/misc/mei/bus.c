@@ -4,6 +4,7 @@
  * Intel Management Engine Interface (Intel MEI) Linux driver
  */
 
+#include <linux/device/bus.h>
 #include <linux/align.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

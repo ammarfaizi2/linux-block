@@ -3,6 +3,7 @@
  * Copyright (c) 2015, Linaro Limited, Shannon Zhao
  */
 
+#include <linux/device/bus.h>
 #include <linux/slab.h>
 #include <linux/notifier_api.h>
 #include <linux/ioport.h>

@@ -21,6 +21,7 @@
  * resources like i/o port are passed via snd_seq_device argument.
  */
 
+#include <linux/device/bus.h>
 #include <linux/workqueue_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/device_api.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Marek Behún <kabel@kernel.org>
  */
 
+#include <linux/device/bus.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/of_api.h>

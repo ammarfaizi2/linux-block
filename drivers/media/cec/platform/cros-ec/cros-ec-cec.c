@@ -6,6 +6,7 @@
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  */
 
+#include <linux/device/bus.h>
 #include <linux/pm_wakeup.h>
 #include <linux/notifier_api.h>
 #include <linux/device_api_lock.h>

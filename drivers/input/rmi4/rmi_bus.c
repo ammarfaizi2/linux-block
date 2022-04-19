@@ -4,6 +4,7 @@
  * Copyright (c) 2011 Unixphere
  */
 
+#include <linux/device/bus.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/device_api_lock.h>

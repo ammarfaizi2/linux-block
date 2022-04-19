@@ -13,6 +13,7 @@
  */
 
 
+#include <linux/device/bus.h>
 #include <linux/sysfs.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>

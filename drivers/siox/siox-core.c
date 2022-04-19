@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2015-2017 Pengutronix, Uwe Kleine-König <kernel@pengutronix.de>
  */
+#include <linux/device/bus.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/kthread.h>

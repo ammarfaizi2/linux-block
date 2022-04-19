@@ -5,6 +5,7 @@
  * Copyright 2006 Johannes Berg <johannes@sipsolutions.net>
  */
 
+#include <linux/device/bus.h>
 #include <linux/of_api.h>
 #include <linux/kobject_api.h>
 #include <linux/device_api_lock.h>

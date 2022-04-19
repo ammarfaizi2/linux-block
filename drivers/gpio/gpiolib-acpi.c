@@ -7,6 +7,7 @@
  *          Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+#include <linux/device/bus.h>
 #include <linux/slab.h>
 #include <linux/property.h>
 #include <linux/mutex_api.h>

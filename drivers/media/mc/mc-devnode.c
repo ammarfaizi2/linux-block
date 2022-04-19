@@ -20,6 +20,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/device/bus.h>
 #include <linux/kdev_t.h>
 #include <linux/poll.h>
 #include <linux/mutex_api.h>

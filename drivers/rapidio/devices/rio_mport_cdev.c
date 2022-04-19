@@ -10,6 +10,7 @@
  * Copyright (C) 2014 Texas Instruments Incorporated
  *    Aurelien Jacquiot <a-jacquiot@ti.com>
  */
+#include <linux/device/bus.h>
 #include <linux/kdev_t.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>

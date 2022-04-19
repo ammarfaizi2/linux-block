@@ -9,6 +9,7 @@
 #define pr_fmt(fmt) "ipmi_platform: " fmt
 #define dev_fmt pr_fmt
 
+#include <linux/device/bus.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/kmod.h>

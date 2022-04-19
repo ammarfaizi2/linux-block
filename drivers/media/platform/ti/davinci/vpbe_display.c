@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2010 Texas Instruments Incorporated - https://www.ti.com/
  */
+#include <linux/device/bus.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/align.h>

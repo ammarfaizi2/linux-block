@@ -24,6 +24,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/device/bus.h>
 #include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

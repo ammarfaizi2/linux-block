@@ -6,6 +6,7 @@
  * Copyright (C) 2018, Intel Corporation
  */
 
+#include <linux/device/bus.h>
 #include <linux/align.h>
 #include <linux/uuid_api.h>
 #include <linux/timekeeping.h>

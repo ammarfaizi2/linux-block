@@ -17,6 +17,7 @@
 
 #undef PARPORT_DEBUG_SHARING		/* undef for production */
 
+#include <linux/device/bus.h>
 #include <linux/semaphore.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>

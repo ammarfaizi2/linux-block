@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/device/bus.h>
 #include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/notifier.h>

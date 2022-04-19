@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2013, NVIDIA Corporation.
  */
 
+#include <linux/device/bus.h>
 #include <linux/mutex_api.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>

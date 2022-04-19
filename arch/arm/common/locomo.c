@@ -12,6 +12,7 @@
  * Based on sa1111.c
  */
 
+#include <linux/device/bus.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>

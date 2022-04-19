@@ -7,6 +7,7 @@
  *          Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  */
 
+#include <linux/device/bus.h>
 #include <linux/vmalloc.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

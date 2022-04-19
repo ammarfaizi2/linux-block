@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "fsl-mc: " fmt
 
+#include <linux/device/bus.h>
 #include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/notifier_types.h>

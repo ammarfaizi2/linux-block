@@ -21,6 +21,7 @@
 
 /*****************************************************************************/
 
+#include <linux/device/bus.h>
 #include <linux/kdev_t.h>
 #include <linux/wait_api.h>
 #include <linux/sysctl.h>

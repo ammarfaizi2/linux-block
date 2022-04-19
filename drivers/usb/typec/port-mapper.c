@@ -6,6 +6,7 @@
  * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
 
+#include <linux/device/bus.h>
 #include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

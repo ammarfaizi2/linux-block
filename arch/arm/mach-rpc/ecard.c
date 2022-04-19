@@ -24,6 +24,7 @@
  */
 #define ECARD_C
 
+#include <linux/device/bus.h>
 #include <linux/wait_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>

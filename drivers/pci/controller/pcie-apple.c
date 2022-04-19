@@ -18,6 +18,7 @@
  * Author: Marc Zyngier <maz@kernel.org>
  */
 
+#include <linux/device/bus.h>
 #include <linux/log2.h>
 #include <linux/property.h>
 #include <linux/of_api.h>

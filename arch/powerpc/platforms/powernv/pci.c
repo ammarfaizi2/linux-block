@@ -5,6 +5,7 @@
  * Copyright 2011 Benjamin Herrenschmidt, IBM Corp.
  */
 
+#include <linux/device/bus.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>

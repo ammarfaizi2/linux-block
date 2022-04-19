@@ -5,6 +5,7 @@
  * (C) 2002, 2003 Marc Zyngier <maz@wild-wind.fr.eu.org>
  */
 
+#include <linux/device/bus.h>
 #include <linux/string.h>
 #include <linux/stat.h>
 #include <linux/kobject_api.h>
