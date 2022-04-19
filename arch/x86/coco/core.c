@@ -7,6 +7,7 @@
  * Author: Tom Lendacky <thomas.lendacky@amd.com>
  */
 
+#include <linux/init.h>
 #include <linux/export.h>
 #include <linux/cc_platform.h>
 
