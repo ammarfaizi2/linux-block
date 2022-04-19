@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2019-2021, Intel Corporation. */
 
+#include <linux/netdevice_api.h>
 #include <linux/slab.h>
 
 #include "ice_vsi_vlan_lib.h"

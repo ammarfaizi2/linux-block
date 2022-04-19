@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 
+#include <linux/netdevice_api.h>
 #include <linux/log2.h>
 #include <linux/atomic_api.h>
 #include <linux/ethtool.h>

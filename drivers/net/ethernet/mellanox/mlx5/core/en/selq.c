@@ -2,6 +2,7 @@
 /* Copyright (c) 2021, NVIDIA CORPORATION & AFFILIATES. All rights reserved. */
 
 #include "selq.h"
+#include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
 #include <linux/lockdep_api.h>
 #include <linux/mm_api_kvmalloc.h>

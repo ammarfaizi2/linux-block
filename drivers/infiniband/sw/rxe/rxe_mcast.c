@@ -19,6 +19,7 @@
  * mcast packets in the rxe receive path.
  */
 
+#include <linux/netdevice_api.h>
 #include <linux/kref_api.h>
 #include <linux/atomic_api.h>
 #include <linux/rbtree_api.h>

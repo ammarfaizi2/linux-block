@@ -2,6 +2,7 @@
 /* Copyright (C) 2018 Netronome Systems, Inc */
 /* Copyright (C) 2021 Corigine, Inc */
 
+#include <linux/netdevice_api.h>
 #include <linux/dma-direction.h>
 #include <linux/dma-mapping.h>
 #include <linux/slab.h>

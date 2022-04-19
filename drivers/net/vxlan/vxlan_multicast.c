@@ -3,6 +3,7 @@
  *	Vxlan multicast group handling
  *
  */
+#include <linux/netdevice_api.h>
 #include <linux/kernel.h>
 #include <net/net_namespace.h>
 #include <net/sock.h>
