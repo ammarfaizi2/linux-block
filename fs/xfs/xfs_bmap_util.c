@@ -4,6 +4,7 @@
  * Copyright (c) 2012 Red Hat, Inc.
  * All Rights Reserved.
  */
+#include <linux/pagemap.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/math64.h>

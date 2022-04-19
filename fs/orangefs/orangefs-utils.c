@@ -5,6 +5,7 @@
  *
  * See COPYING in top-level directory.
  */
+#include <linux/pagemap.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/fs_api.h>

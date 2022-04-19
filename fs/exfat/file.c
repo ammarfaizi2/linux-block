@@ -3,6 +3,7 @@
  * Copyright (C) 2012-2013 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/pagemap.h>
 #include <linux/string.h>
 #include <linux/uaccess.h>
 #include <linux/sched.h>

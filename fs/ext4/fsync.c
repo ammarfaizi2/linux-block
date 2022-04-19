@@ -23,6 +23,7 @@
  * we can depend on generic_block_fdatasync() to sync the data blocks.
  */
 
+#include <linux/pagemap.h>
 #include <linux/syscalls_api.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

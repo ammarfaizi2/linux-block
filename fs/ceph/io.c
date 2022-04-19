@@ -8,6 +8,7 @@
  * Heavily borrowed from equivalent code in fs/nfs/io.c
  */
 
+#include <linux/pagemap.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/mm_api.h>

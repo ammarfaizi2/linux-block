@@ -5,6 +5,7 @@
  * Copyright (C) 2006-2018 Oracle Corporation
  */
 
+#include <linux/writeback_api.h>
 #include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
