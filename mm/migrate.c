@@ -13,6 +13,7 @@
  * Christoph Lameter
  */
 
+#include <linux/huge_mm.h>
 #include <linux/sched/task_flags.h>
 #include <linux/cacheflush.h>
 #include <linux/xarray_api.h>

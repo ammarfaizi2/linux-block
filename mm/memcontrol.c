@@ -25,6 +25,7 @@
  * Copyright (C) 2020 Alibaba, Inc, Alex Shi
  */
 
+#include <linux/huge_mm.h>
 #include <linux/sched/task_flags.h>
 #include <linux/preempt.h>
 #include <linux/writeback_api.h>

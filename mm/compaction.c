@@ -8,6 +8,7 @@
  *
  * Copyright IBM Corp. 2007-2010 Mel Gorman <mel@csn.ul.ie>
  */
+#include <linux/huge_mm.h>
 #include <linux/align.h>
 #include <linux/wait_api.h>
 #include <linux/vmstat.h>

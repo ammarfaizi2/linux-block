@@ -4,6 +4,7 @@
  *
  * Originally written by Jérôme Glisse.
  */
+#include <linux/huge_mm.h>
 #include <linux/dax.h>
 #include <linux/pagemap.h>
 #include <linux/spinlock_api.h>

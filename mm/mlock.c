@@ -6,6 +6,7 @@
  *  (C) Copyright 2002 Christoph Hellwig
  */
 
+#include <linux/huge_mm.h>
 #include <linux/cpumask_api.h>
 #include <linux/vmstat.h>
 #include <linux/spinlock_api.h>

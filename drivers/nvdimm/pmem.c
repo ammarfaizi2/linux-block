@@ -7,6 +7,7 @@
  * Copyright (c) 2015, Boaz Harrosh <boaz@plexistor.com>.
  */
 
+#include <linux/huge_mm.h>
 #include <linux/uio_api.h>
 #include <linux/uaccess.h>
 #include <linux/sysfs.h>

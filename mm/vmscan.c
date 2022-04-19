@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/huge_mm.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api_extra.h>
 #include <linux/xarray_api.h>

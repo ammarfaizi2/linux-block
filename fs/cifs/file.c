@@ -8,6 +8,7 @@
  *              Jeremy Allison (jra@samba.org)
  *
  */
+#include <linux/huge_mm.h>
 #include <linux/mm_page_address.h>
 #include <net/sock_api.h>
 #include <linux/writeback_api.h>

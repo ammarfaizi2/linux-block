@@ -13,6 +13,7 @@
  *	Hugh Dickins
  */
 
+#include <linux/huge_mm.h>
 #include <linux/wait_bit.h>
 #include <linux/wait_api.h>
 #include <linux/sysfs.h>

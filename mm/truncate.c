@@ -8,6 +8,7 @@
  *		Initial version.
  */
 
+#include <linux/huge_mm.h>
 #include <linux/xarray_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mm_page_address.h>

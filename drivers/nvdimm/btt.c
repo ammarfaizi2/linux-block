@@ -3,6 +3,7 @@
  * Block Translation Table
  * Copyright (c) 2014-2015, Intel Corporation.
  */
+#include <linux/huge_mm.h>
 #include <linux/bvec_api.h>
 #include <linux/align.h>
 #include <linux/uuid_api.h>

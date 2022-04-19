@@ -39,6 +39,7 @@
  * Aug/Sep 2004 Changed to four level page tables (Andi Kleen)
  */
 
+#include <linux/huge_mm.h>
 #include <linux/preempt.h>
 #include <linux/writeback_api.h>
 #include <linux/vmstat.h>

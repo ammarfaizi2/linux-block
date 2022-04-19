@@ -8,6 +8,7 @@
  *	(C) Copyright 2002 Red Hat Inc, All Rights Reserved
  */
 
+#include <linux/huge_mm.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/signal.h>
 #include <linux/pgtable_api.h>

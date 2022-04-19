@@ -12,6 +12,7 @@
  * management can be a bitch. See 'mm/memory.c': 'copy_page_range()'
  */
 
+#include <linux/huge_mm.h>
 #include <linux/sched/task_flags.h>
 #include <net/sock.h>
 #include <linux/workqueue_api.h>

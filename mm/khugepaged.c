@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/huge_mm.h>
 #include <linux/align.h>
 #include <linux/xarray_api.h>
 #include <linux/wait_api.h>

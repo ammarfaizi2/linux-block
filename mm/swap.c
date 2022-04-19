@@ -14,6 +14,7 @@
  * Buffermem limits added 12.3.98, Rik van Riel.
  */
 
+#include <linux/huge_mm.h>
 #include <linux/preempt.h>
 #include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>

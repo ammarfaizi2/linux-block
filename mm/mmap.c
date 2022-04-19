@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/huge_mm.h>
 #include <uapi/linux/unistd.h>
 #include <linux/vmstat.h>
 #include <linux/vmalloc.h>
