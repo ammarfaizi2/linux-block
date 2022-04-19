@@ -5,6 +5,7 @@
  * Copyright (c) 2022 SeongJae Park <sj@kernel.org>
  */
 
+#include <linux/kobject_api.h>
 #include <linux/mutex_api.h>
 #include <linux/sysfs.h>
 #include <linux/damon.h>
