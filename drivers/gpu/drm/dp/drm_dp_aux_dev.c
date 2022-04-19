@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/wait_api.h>
 #include <linux/device/class.h>
 #include <linux/kref_api.h>
 #include <linux/atomic_api.h>
