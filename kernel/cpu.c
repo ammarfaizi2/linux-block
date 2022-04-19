@@ -3,6 +3,7 @@
  *
  * This code is licenced under the GPL.
  */
+#include <linux/irqflags.h>
 #include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/sysfs.h>

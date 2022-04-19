@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"SEV: " fmt
 
+#include <linux/irqflags.h>
 #include <linux/pagefault_ctrl.h>
 #include <linux/uaccess.h>
 #include <linux/sched/signal.h>

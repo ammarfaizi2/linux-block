@@ -3,6 +3,7 @@
  * Test module for unwind_for_each_frame
  */
 
+#include <linux/irqflags.h>
 #include <linux/wait_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>

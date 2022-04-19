@@ -8,6 +8,7 @@
 * or the maintainer
 */
 
+#include <linux/irqflags.h>
 #include <linux/workqueue_api.h>
 #include <linux/ioport.h>
 #include <linux/init.h>

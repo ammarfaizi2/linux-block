@@ -6,6 +6,7 @@
  *
  *  DMA functions specific to RiscPC architecture
  */
+#include <linux/irqflags.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mman.h>
 #include <linux/init.h>

@@ -6,6 +6,7 @@
 //
 // Audio setup for various Simtec S3C24XX implementations
 
+#include <linux/irqflags.h>
 #include <linux/kernel.h>
 #include <linux/interrupt.h>
 #include <linux/init.h>

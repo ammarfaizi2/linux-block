@@ -5,6 +5,7 @@
  * Copyright (c) 2009, Intel Corporation.
  */
 
+#include <linux/irqflags.h>
 #include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitfield.h>

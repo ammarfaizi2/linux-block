@@ -8,6 +8,7 @@
  *
  * Copyright (C) 2002 Hewlett-Packard Company
  */
+#include <linux/irqflags.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/device.h>

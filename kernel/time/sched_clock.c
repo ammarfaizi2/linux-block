@@ -3,6 +3,7 @@
  * Generic sched_clock() support, to extend low level hardware time
  * counters to full 64-bit ns values.
  */
+#include <linux/irqflags.h>
 #include <linux/seqlock_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>

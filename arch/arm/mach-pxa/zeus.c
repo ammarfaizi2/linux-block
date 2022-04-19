@@ -8,6 +8,7 @@
  *  Maintained by Marc Zyngier <maz@misterjones.org>
  */
 
+#include <linux/irqflags.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

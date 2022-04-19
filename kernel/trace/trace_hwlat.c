@@ -37,6 +37,7 @@
  * Includes useful feedback from Clark Williams <williams@redhat.com>
  *
  */
+#include <linux/irqflags.h>
 #include <linux/workqueue_api.h>
 #include <linux/trace_clock.h>
 #include <linux/timekeeping.h>

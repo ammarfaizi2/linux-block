@@ -11,6 +11,7 @@
  * execptions.
  */
 
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/perf_event_api.h>
 #include <linux/mmap_lock.h>

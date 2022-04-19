@@ -8,6 +8,7 @@
  * Copyright (c) 2008 Freescale Semiconductor, Inc.
  */
 
+#include <linux/irqflags.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/atomic_api.h>

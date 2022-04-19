@@ -7,6 +7,7 @@
  * Based on Sharp's 2.4 kernel patches and pxa2xx_mainstone.c
  */
 
+#include <linux/irqflags.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

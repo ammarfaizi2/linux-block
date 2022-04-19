@@ -25,6 +25,7 @@
  * would need to have a per core workqueue to do the actual GPIO manipulation.
  */
 
+#include <linux/irqflags.h>
 #include <linux/err.h>
 #include <linux/module.h>
 #include <linux/gpio/driver.h>

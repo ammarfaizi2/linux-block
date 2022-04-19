@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/irqflags.h>
 #include <linux/kdev_t.h>
 #include <linux/preempt.h>
 #include <linux/slab.h>

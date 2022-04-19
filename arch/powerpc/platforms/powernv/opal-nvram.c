@@ -7,6 +7,7 @@
 
 #define DEBUG
 
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/of_api.h>
 #include <linux/delay.h>

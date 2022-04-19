@@ -3,6 +3,7 @@
  * linux/arch/arm/mach-sa1100/simpad.c
  */
 
+#include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/gpio/machine.h>

@@ -160,6 +160,7 @@
  *	- Add patch 681/1 and clean up stork definitions.
  */
 
+#include <linux/irqflags.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/pgtable_api.h>

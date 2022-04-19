@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2004-2008, 2009, 2010 Cavium Networks
  */
+#include <linux/irqflags.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/affinity.h>
 #include <linux/cpumask_api.h>

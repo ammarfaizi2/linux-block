@@ -7,6 +7,7 @@
  *	      Jan Glauber <jang@linux.vnet.ibm.com>
  * 2.6 cio integration by Cornelia Huck <cornelia.huck@de.ibm.com>
  */
+#include <linux/irqflags.h>
 #include <linux/align.h>
 #include <linux/wait_api.h>
 #include <linux/tasklet_api.h>

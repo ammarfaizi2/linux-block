@@ -4,6 +4,7 @@
 //	http://armlinux.simtec.co.uk/
 //	Ben Dooks <ben@simtec.co.uk>
 
+#include <linux/irqflags.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/types.h>

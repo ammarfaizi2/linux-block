@@ -3,6 +3,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/irqflags.h>
 #include <linux/bitmap.h>
 #include <linux/preempt.h>
 #include <linux/tasklet_api.h>

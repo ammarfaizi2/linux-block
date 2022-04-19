@@ -3,6 +3,7 @@
  * machine_kexec.c - handle transition of Linux booting another kernel
  */
 
+#include <linux/irqflags.h>
 #include <linux/uaccess.h>
 #include <linux/mm_page_address.h>
 #include <linux/irqdesc.h>

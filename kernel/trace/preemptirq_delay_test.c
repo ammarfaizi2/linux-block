@@ -5,6 +5,7 @@
  * Copyright (C) 2018 Joel Fernandes (Google) <joel@joelfernandes.org>
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched.h>
 #include <linux/preempt.h>
 #include <linux/kobject_api.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2021 Marvell.
  */
 
+#include <linux/irqflags.h>
 #include <linux/cpuhotplug.h>
 #include <linux/of_api.h>
 #include <linux/cpumask_api.h>

@@ -8,6 +8,7 @@
  * Martin Bligh, Andi Kleen, James Bottomley, John Stultz, and
  * James Cleverdon.
  */
+#include <linux/irqflags.h>
 #include <linux/smp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/bitmap.h>

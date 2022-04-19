@@ -5,6 +5,7 @@
  * (C) Copyright 2009, Steven King <sfking@fdwdc.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

@@ -16,6 +16,7 @@
  * done signal, then proceed next write command. It is no need to do a read
  * before write.
  */
+#include <linux/irqflags.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/spinlock_api.h>

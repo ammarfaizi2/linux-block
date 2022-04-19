@@ -4,6 +4,7 @@
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/timekeeping.h>
 #include <linux/sched.h>
 #include <linux/rcuwait_api.h>

@@ -5,6 +5,7 @@
  *
  * Setting up the clock on the MIPS boards.
  */
+#include <linux/irqflags.h>
 #include <linux/timekeeping.h>
 #include <linux/of_api.h>
 #include <asm/cpu-type.h>

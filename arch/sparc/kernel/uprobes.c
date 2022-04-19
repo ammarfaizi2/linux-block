@@ -9,6 +9,7 @@
  *	Eric Saint Etienne <eric.saint.etienne@oracle.com>
  */
 
+#include <linux/irqflags.h>
 #include <uapi/asm/signal.h>
 #include <linux/notifier_api.h>
 #include <linux/kernel.h>

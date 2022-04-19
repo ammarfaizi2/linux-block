@@ -4,6 +4,7 @@
  *  Copyright (C) 2010 John Crispin <john@phrozen.org>
  */
 
+#include <linux/irqflags.h>
 #include <linux/cpu.h>
 #include <lantiq_soc.h>
 #include <asm/setup.h>

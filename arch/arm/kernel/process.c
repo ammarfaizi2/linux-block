@@ -5,6 +5,7 @@
  *  Copyright (C) 1996-2000 Russell King - Converted to ARM.
  *  Original Copyright (C) 1995  Linus Torvalds
  */
+#include <linux/irqflags.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>

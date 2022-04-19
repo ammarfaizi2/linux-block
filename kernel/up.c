@@ -3,6 +3,7 @@
  * Uniprocessor-only support functions.  The counterpart to kernel/smp.c
  */
 
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/cpumask_api.h>
 #include <linux/interrupt.h>

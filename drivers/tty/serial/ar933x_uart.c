@@ -7,6 +7,7 @@
  *  Based on drivers/char/serial.c, by Linus Torvalds, Theodore Ts'o.
  */
 
+#include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>

@@ -10,6 +10,7 @@
  * archive for more details.
  */
 
+#include <linux/irqflags.h>
 #include <asm/cacheflush.h>
 #include <linux/cache.h>
 #include <asm/cpuinfo.h>

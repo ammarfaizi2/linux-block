@@ -7,6 +7,7 @@
  *     Alexander Graf <agraf@suse.de>
  */
 
+#include <linux/irqflags.h>
 #include <linux/kvm_host.h>
 #include <linux/init.h>
 #include <linux/export.h>

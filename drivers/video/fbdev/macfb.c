@@ -20,6 +20,7 @@
  * http://rajsky.psych.nyu.edu/Tips/VideoBugs.html
  */
 
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/module.h>

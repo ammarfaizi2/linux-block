@@ -4,6 +4,7 @@
  * Copyright (C) 1997, 2007, 2008 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/irqflags.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>

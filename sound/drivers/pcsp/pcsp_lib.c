@@ -7,6 +7,7 @@
  * Copyright (C) 2001-2008  Stas Sergeev
  */
 
+#include <linux/irqflags.h>
 #include <linux/workqueue_api.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>

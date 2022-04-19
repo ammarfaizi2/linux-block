@@ -8,6 +8,7 @@
  * Copyright (C) 2013 Pali Rohár <pali@kernel.org>
  */
 
+#include <linux/irqflags.h>
 #include <linux/of_api.h>
 #include <linux/arm-smccc.h>
 #include <linux/cpu_pm.h>

@@ -6,6 +6,7 @@
  */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/irqflags.h>
 #include <linux/align.h>
 #include <uapi/linux/in.h>
 #include <net/rtnetlink_api.h>

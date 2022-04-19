@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/jiffies.h>
 #include <linux/cpumask_api.h>

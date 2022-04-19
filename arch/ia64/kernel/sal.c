@@ -8,6 +8,7 @@
  * Copyright (C) 1999 Walt Drummond <drummond@valinux.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

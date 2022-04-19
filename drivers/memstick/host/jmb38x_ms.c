@@ -5,6 +5,7 @@
  *  Copyright (C) 2008 Alex Dubov <oakad@yahoo.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>

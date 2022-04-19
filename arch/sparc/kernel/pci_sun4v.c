@@ -4,6 +4,7 @@
  * Copyright (C) 2006, 2007, 2008 David S. Miller (davem@davemloft.net)
  */
 
+#include <linux/irqflags.h>
 #include <linux/topology.h>
 #include <linux/scatterlist_api.h>
 #include <linux/of_api.h>

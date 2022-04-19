@@ -4,6 +4,7 @@
  *  Copyright (C) 2001, 2002 Andi Kleen, SuSE Labs.
  *  Copyright (C) 2008-2009, Red Hat Inc., Ingo Molnar
  */
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>

@@ -11,6 +11,7 @@
  * state in 'asm.s'.
  */
 
+#include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>

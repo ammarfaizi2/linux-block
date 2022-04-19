@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2003, 2004, 2007  Maciej W. Rozycki
  */
+#include <linux/irqflags.h>
 #include <linux/context_tracking.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

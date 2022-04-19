@@ -7,6 +7,7 @@
  * Author: Claudiu Beznea <claudiu.beznea@microchip.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/io.h>
 #include <linux/cpumask_api.h>
 #include <linux/clk.h>

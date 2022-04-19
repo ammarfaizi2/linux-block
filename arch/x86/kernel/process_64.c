@@ -15,6 +15,7 @@
  * This file handles the architecture-dependent parts of process handling..
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>
 #include <linux/ptrace_api.h>

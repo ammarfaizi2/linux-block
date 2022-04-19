@@ -16,6 +16,7 @@
  * Copyright (C) 2021 Daniel Bristot de Oliveira, Red Hat, Inc. <bristot@redhat.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/trace_clock.h>

@@ -9,6 +9,7 @@
  *                        of people at Linux Expo.
  */
 
+#include <linux/irqflags.h>
 #include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>

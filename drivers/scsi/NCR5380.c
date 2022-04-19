@@ -34,6 +34,7 @@
 
 /* Adapted for the Sun 3 by Sam Creasey. */
 
+#include <linux/irqflags.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

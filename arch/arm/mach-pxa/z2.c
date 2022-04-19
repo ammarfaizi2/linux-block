@@ -10,6 +10,7 @@
  *  Based on mainstone.c as modified for the Zipit Z2.
  */
 
+#include <linux/irqflags.h>
 #include <linux/ioport.h>
 #include <linux/platform_device.h>
 #include <linux/mtd/mtd.h>

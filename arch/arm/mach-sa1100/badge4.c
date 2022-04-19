@@ -9,6 +9,7 @@
  *
  * Copyright (C) 2002 Hewlett-Packard Company
  */
+#include <linux/irqflags.h>
 #include <linux/ioport.h>
 #include <linux/module.h>
 #include <linux/init.h>

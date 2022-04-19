@@ -9,6 +9,7 @@
  * 2007-09-02: eric miao <eric.miao@marvell.com>
  *             initial version
  */
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>

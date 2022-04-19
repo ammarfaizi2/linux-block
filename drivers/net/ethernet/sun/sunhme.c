@@ -14,6 +14,7 @@
  *     argument : macaddr=0x00,0x10,0x20,0x30,0x40,0x50
  */
 
+#include <linux/irqflags.h>
 #include <net/checksum.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>

@@ -9,6 +9,7 @@
  * This file initializes the trap entry points
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/mmap_lock.h>

@@ -26,6 +26,7 @@
 
 #undef DEBUG
 
+#include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/softirq.h>
 #include <linux/sched/thread_info_api.h>

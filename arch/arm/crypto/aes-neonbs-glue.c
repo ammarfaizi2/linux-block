@@ -5,6 +5,7 @@
  * Copyright (C) 2017 Linaro Ltd <ard.biesheuvel@linaro.org>
  */
 
+#include <linux/irqflags.h>
 #include <asm/neon.h>
 #include <asm/simd.h>
 #include <crypto/aes.h>

@@ -23,6 +23,7 @@
  * Apple's "ADB Analyzer" bus sniffer is invaluable:
  *   ftp://ftp.apple.com/developer/Tool_Chest/Devices_-_Hardware/Apple_Desktop_Bus/
  */
+#include <linux/irqflags.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/kernel.h>

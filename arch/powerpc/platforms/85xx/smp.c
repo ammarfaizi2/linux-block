@@ -6,6 +6,7 @@
  * Copyright 2006-2008, 2011-2012, 2015 Freescale Semiconductor Inc.
  */
 
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/io.h>

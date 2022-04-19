@@ -9,6 +9,7 @@
  *
  * Copyright 2001 - 2004 Tensilica Inc.
  */
+#include <linux/irqflags.h>
 #include <linux/ioport.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>

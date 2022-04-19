@@ -32,6 +32,7 @@
  *
  */
 
+#include <linux/irqflags.h>
 #include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/sysfs.h>

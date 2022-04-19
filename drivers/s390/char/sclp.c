@@ -8,6 +8,7 @@
  *	      Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/spinlock_api.h>
 #include <linux/gfp_api.h>

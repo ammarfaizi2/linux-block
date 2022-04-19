@@ -7,6 +7,7 @@
  * Created by: Haren Myneni
  */
 
+#include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>

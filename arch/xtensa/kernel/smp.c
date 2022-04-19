@@ -12,6 +12,7 @@
  * Pete Delaney <piet@tensilica.com
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched.h>
 #include <linux/sched/affinity.h>
 #include <linux/ptrace_api.h>

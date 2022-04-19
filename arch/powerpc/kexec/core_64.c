@@ -8,6 +8,7 @@
  */
 
 
+#include <linux/irqflags.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/of_api.h>
 #include <linux/mm_page_address.h>

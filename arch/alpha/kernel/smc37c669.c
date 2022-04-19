@@ -1,6 +1,7 @@
 /*
  * SMC 37C669 initialization code
  */
+#include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

@@ -10,6 +10,7 @@
  * for more details.
  */
 
+#include <linux/irqflags.h>
 #include <asm/cacheflush.h>
 #include <linux/mm.h>
 

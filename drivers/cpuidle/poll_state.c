@@ -3,6 +3,7 @@
  * poll_state.c - Polling idle state
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/kernel.h>
 #include <asm/vdso/processor.h>

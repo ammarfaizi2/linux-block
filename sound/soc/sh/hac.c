@@ -13,6 +13,7 @@
  * to edit the code a bit to use the other AC97 unit.		--mlau
  */
 
+#include <linux/irqflags.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

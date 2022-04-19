@@ -4,6 +4,7 @@
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/timekeeping.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/preempt.h>

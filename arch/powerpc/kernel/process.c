@@ -10,6 +10,7 @@
  *    Copyright (C) 1995-1996 Gary Thomas (gdt@linuxppc.org)
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/thread.h>

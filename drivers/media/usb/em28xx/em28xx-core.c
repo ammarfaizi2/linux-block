@@ -20,6 +20,7 @@
 
 #include "em28xx.h"
 
+#include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/delay.h>

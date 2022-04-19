@@ -15,6 +15,7 @@
  * the clock source, and match comparator #1 used as clock event device.
  */
 
+#include <linux/irqflags.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

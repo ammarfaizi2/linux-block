@@ -8,6 +8,7 @@
  * This code is covered by the GPL.
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/module.h>
 #include <linux/types.h>

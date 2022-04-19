@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/irqflags.h>
 #include <linux/timex.h>
 #include <linux/smp_api.h>
 #include <linux/notifier_api.h>

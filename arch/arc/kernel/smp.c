@@ -9,6 +9,7 @@
  *    -- Initial Write (Borrowed heavily from ARM)
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched/affinity.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>

@@ -9,6 +9,7 @@
  *   Copyright (c) 2003 - 2006 Zultys Technologies
  */
 
+#include <linux/irqflags.h>
 #include <linux/of_api.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>

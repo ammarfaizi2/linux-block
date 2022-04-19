@@ -12,6 +12,7 @@
  *
  * This file is released under the GPL.
  */
+#include <linux/irqflags.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/smp_api.h>

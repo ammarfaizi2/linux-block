@@ -20,6 +20,7 @@
  *	Skip non-WB memory and ignore empty memory ranges.
  */
 
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/io.h>

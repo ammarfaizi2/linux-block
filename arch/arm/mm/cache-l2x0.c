@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2007 ARM Limited
  */
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

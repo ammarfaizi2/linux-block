@@ -19,6 +19,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

@@ -9,6 +9,7 @@
 #define DRV_MODULE_NAME "wii"
 #define pr_fmt(fmt) DRV_MODULE_NAME ": " fmt
 
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

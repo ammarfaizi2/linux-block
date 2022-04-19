@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/irqflags.h>
 #include <linux/vmstat.h>
 #include <linux/uaccess.h>
 #include <linux/sched/thread_info_api.h>

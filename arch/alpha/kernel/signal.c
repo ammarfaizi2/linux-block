@@ -7,6 +7,7 @@
  *  1997-11-02  Modified for POSIX.1b signals by Richard Henderson
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>
 #include <linux/ptrace_api.h>

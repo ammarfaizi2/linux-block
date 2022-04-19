@@ -6,6 +6,7 @@
  * Copyright (C) 2002 Paul Mundt
  */
 
+#include <linux/irqflags.h>
 #include <linux/init.h>
 #include <linux/mman.h>
 #include <linux/mm.h>

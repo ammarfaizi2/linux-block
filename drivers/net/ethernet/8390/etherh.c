@@ -23,6 +23,7 @@
  *  03-01-2002	RMK	1.09	Always enable IRQs if we're in the nic slot.
  */
 
+#include <linux/irqflags.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/etherdevice_api.h>

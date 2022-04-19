@@ -11,6 +11,7 @@
  *	code written by Sharp/Lineo for 2.4 kernels
  */
 
+#include <linux/irqflags.h>
 #include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/sched.h>

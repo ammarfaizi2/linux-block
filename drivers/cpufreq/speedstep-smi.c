@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "cpufreq: " fmt
 
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/io_extra.h>
 #include <linux/kernel.h>

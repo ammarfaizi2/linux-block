@@ -3,6 +3,7 @@
  * Copyright (C) 2001, 2002, 2003 Broadcom Corporation
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/affinity.h>
 #include <linux/hardirq.h>

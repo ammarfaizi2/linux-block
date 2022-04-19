@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <linux/irqflags.h>
 #include <linux/hardirq.h>
 #include <linux/vtime.h>
 #include <linux/acpi.h>

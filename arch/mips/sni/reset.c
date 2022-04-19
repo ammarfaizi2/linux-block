@@ -4,6 +4,7 @@
  *
  *  Reset a SNI machine.
  */
+#include <linux/irqflags.h>
 #include <linux/delay.h>
 
 #include <asm/io.h>

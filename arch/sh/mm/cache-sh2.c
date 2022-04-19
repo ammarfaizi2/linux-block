@@ -6,6 +6,7 @@
  * Copyright (C) 2008 Yoshinori Sato
  */
 
+#include <linux/irqflags.h>
 #include <linux/init.h>
 #include <linux/mm.h>
 

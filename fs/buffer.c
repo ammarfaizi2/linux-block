@@ -19,6 +19,7 @@
  * async buffer flushing, 1999 Andrea Arcangeli <andrea@suse.de>
  */
 
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/writeback_api.h>
 #include <linux/workqueue_api.h>

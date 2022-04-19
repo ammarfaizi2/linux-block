@@ -2,6 +2,7 @@
 // Copyright (C) 2016-2020 Arm Limited
 // CMN-600 Coherent Mesh Network PMU driver
 
+#include <linux/irqflags.h>
 #include <linux/topology.h>
 #include <linux/sysfs.h>
 #include <linux/seq_file.h>

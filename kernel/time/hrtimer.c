@@ -22,6 +22,7 @@
  *	et. al.
  */
 
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/timerqueue_api.h>

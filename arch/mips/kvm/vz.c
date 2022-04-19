@@ -9,6 +9,7 @@
  * Authors: Yann Le Du <ledu@kymasys.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched/task_flags.h>
 #include <linux/uaccess.h>
 #include <linux/timekeeping.h>

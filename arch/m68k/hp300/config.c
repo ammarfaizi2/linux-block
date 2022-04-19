@@ -8,6 +8,7 @@
  *  called by setup.c.
  */
 
+#include <linux/irqflags.h>
 #include <linux/io.h>
 #include <linux/module.h>
 #include <linux/init.h>

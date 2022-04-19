@@ -11,6 +11,7 @@
 
 /* #define VERBOSE_DEBUG */
 
+#include <linux/irqflags.h>
 #include <linux/device.h>
 #include <linux/gpio.h>
 #include <linux/module.h>

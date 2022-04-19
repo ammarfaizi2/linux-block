@@ -2,6 +2,7 @@
 /*
  * Driver for the ADB controller in the Mac I/O (Hydra) chip.
  */
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>

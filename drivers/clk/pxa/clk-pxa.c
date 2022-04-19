@@ -6,6 +6,7 @@
  *
  * Common clock code for PXA clocks ("CKEN" type clocks + DT)
  */
+#include <linux/irqflags.h>
 #include <linux/slab.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>

@@ -10,6 +10,7 @@
  * for more details.
  */
 
+#include <linux/irqflags.h>
 #include <linux/irqdesc.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

@@ -2,6 +2,7 @@
 /* Copyright (c) 2011-2015 PLUMgrid, http://plumgrid.com
  * Copyright (c) 2016 Facebook
  */
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/spinlock_api.h>

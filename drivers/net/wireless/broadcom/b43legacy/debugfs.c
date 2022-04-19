@@ -10,6 +10,7 @@
 
 */
 
+#include <linux/irqflags.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

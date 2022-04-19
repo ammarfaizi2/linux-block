@@ -24,6 +24,7 @@
  * Miscellaneous atari stuff
  */
 
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/prefetch.h>
 #include <linux/io.h>

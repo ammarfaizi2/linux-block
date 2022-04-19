@@ -8,6 +8,7 @@
  * Carsten Langgaard, carstenl@mips.com
  * Copyright (C) 2002 MIPS Technologies, Inc.  All rights reserved.
  */
+#include <linux/irqflags.h>
 #include <linux/pgtable_api.h>
 #include <linux/cpu_pm.h>
 #include <linux/init.h>

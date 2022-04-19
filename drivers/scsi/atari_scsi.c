@@ -32,6 +32,7 @@
  * the default is can_queue == 1.
  */
 
+#include <linux/irqflags.h>
 #include <linux/prefetch.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

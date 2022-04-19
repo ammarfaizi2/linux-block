@@ -6,6 +6,7 @@
  *
  * Copyright (C) 1998, 1999 Russell King, Phil Blundell
  */
+#include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/ioport.h>

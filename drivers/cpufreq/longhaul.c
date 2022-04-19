@@ -23,6 +23,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/cpumask_api.h>
 #include <asm/halt.h>

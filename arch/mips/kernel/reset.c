@@ -6,6 +6,7 @@
  * Copyright (C) 2001, 06 by Ralf Baechle (ralf@linux-mips.org)
  * Copyright (C) 2001 MIPS Technologies, Inc.
  */
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/kernel.h>
 #include <linux/export.h>

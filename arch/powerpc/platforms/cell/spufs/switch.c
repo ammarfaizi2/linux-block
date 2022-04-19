@@ -18,6 +18,7 @@
  * program executing on an SPE.
  */
 
+#include <linux/irqflags.h>
 #include <linux/timex.h>
 #include <linux/spinlock_api.h>
 #include <linux/export.h>

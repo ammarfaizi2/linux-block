@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/irqflags.h>
 #include <linux/timekeeping.h>
 #include <linux/irqdesc.h>
 #include <linux/interrupt.h>

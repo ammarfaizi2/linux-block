@@ -33,6 +33,7 @@
  * End of serial driver configuration section.
  */
 
+#include <linux/irqflags.h>
 #include <linux/wait_api.h>
 #include <linux/sched/signal.h>
 #include <linux/jiffies.h>

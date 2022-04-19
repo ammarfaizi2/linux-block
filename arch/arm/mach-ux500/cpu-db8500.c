@@ -4,6 +4,7 @@
  *
  * Author: Srinidhi KASAGAR <srinidhi.kasagar@stericsson.com>
  */
+#include <linux/irqflags.h>
 #include <linux/of_api.h>
 #include <linux/types.h>
 #include <linux/init.h>

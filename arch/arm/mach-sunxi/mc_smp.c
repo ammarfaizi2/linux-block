@@ -11,6 +11,7 @@
  * Cluster cache enable trampoline code adapted from MCPM framework
  */
 
+#include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>

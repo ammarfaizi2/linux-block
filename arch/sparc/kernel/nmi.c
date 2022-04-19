@@ -6,6 +6,7 @@
  * The NMI watchdog support and infrastructure is based almost
  * entirely upon the x86 NMI support code.
  */
+#include <linux/irqflags.h>
 #include <uapi/asm/signal.h>
 #include <linux/hardirq.h>
 #include <linux/cpumask_api.h>

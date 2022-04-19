@@ -10,6 +10,7 @@
  * Authors: Sanjay Lal <sanjayl@kymasys.com>
  */
 
+#include <linux/irqflags.h>
 #include <asm/cpu-type.h>
 #include <linux/sched.h>
 #include <linux/smp.h>

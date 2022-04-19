@@ -10,6 +10,7 @@
  * License.  See the file "COPYING" in the main directory of this archive
  * for more details.
  */
+#include <linux/irqflags.h>
 #include <linux/syscalls_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>

@@ -23,6 +23,7 @@
  *						Setup cpu_sibling_map and cpu_core_map
  */
 
+#include <linux/irqflags.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>

@@ -4,6 +4,7 @@
  *  Nick Kossifidis <mick@ics.forth.gr>
  */
 
+#include <linux/irqflags.h>
 #include <linux/uaccess.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

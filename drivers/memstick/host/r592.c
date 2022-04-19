@@ -4,6 +4,7 @@
  * driver for Ricoh memstick readers
  */
 
+#include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/pci-dma-compat.h>

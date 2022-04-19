@@ -11,6 +11,7 @@
  * for more details.
  */
 
+#include <linux/irqflags.h>
 #include <linux/topology.h>
 #include <linux/sched/topology.h>
 #include <linux/math64.h>

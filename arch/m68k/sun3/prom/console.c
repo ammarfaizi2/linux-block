@@ -6,6 +6,7 @@
  * Copyright (C) 1995 David S. Miller (davem@caip.rutgers.edu)
  */
 
+#include <linux/irqflags.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>

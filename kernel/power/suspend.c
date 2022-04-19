@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "PM: " fmt
 
+#include <linux/irqflags.h>
 #include <linux/wait_api.h>
 #include <linux/swait_api.h>
 #include <linux/spinlock_api.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2012 John Crispin <john@phrozen.org>
  */
 
+#include <linux/irqflags.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/pm.h>

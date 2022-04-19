@@ -7,6 +7,7 @@
 //
 // S3C64XX CPU PM support.
 
+#include <linux/irqflags.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/init.h>

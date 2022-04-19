@@ -6,6 +6,7 @@
  * Copyright (C) 2011 Becky Bruce, Freescale Semiconductor
  *
  */
+#include <linux/irqflags.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm.h>
 #include <linux/hugetlb.h>

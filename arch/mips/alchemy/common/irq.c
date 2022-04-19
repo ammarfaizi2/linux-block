@@ -25,6 +25,7 @@
  *  675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <linux/irqflags.h>
 #include <linux/irqdesc.h>
 #include <linux/export.h>
 #include <linux/init.h>

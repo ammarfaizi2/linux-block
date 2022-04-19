@@ -10,6 +10,7 @@
  * and 1 input status line (BUSY) able to cause an interrupt.
  */
 
+#include <linux/irqflags.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/parport.h>

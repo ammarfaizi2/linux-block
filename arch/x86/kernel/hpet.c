@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/timex.h>
 #include <linux/spinlock_api.h>

@@ -9,6 +9,7 @@
  * Copyright (C) 2006-2009 Felix Fietkau <nbd@openwrt.org>
  */
 
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/io.h>

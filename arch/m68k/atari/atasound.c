@@ -16,6 +16,7 @@
  */
 
 
+#include <linux/irqflags.h>
 #include <linux/sched.h>
 #include <linux/timer.h>
 #include <linux/major.h>

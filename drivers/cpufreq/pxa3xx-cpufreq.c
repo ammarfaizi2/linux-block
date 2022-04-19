@@ -3,6 +3,7 @@
  * Copyright (C) 2008 Marvell International Ltd.
  */
 
+#include <linux/irqflags.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/sched.h>

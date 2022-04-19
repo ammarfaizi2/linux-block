@@ -7,6 +7,7 @@
  * Copyright (C) 2008, 2009 Wind River Systems
  *   written by Ralf Baechle <ralf@linux-mips.org>
  */
+#include <linux/irqflags.h>
 #include <linux/prefetch.h>
 #include <linux/pgtable_api.h>
 #include <linux/of_api.h>

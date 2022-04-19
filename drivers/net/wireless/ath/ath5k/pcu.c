@@ -24,6 +24,7 @@
 * Protocol Control Unit Functions *
 \*********************************/
 
+#include <linux/irqflags.h>
 #include <linux/capability.h>
 #include <asm/unaligned.h>
 

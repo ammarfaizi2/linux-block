@@ -5,6 +5,7 @@
  * Copyright (C) 2013-2014 Jens Axboe
  * Copyright (C) 2013-2014 Christoph Hellwig
  */
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/xarray_api.h>
 #include <linux/writeback_api.h>

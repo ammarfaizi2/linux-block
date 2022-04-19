@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Wolfgang Grandegger <wg@denx.de>
  */
 
+#include <linux/irqflags.h>
 #include <linux/ioport.h>
 #include <linux/delay.h>
 #include <linux/init.h>

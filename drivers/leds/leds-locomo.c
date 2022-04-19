@@ -5,6 +5,7 @@
  * Copyright (C) 2005 John Lenz <lenz@cs.wisc.edu>
  */
 
+#include <linux/irqflags.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

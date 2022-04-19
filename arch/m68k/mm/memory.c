@@ -5,6 +5,7 @@
  *  Copyright (C) 1995  Hamish Macdonald
  */
 
+#include <linux/irqflags.h>
 #include <linux/module.h>
 #include <linux/mm.h>
 #include <linux/kernel.h>

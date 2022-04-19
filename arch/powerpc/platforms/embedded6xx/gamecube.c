@@ -7,6 +7,7 @@
  * Copyright (C) 2007,2008,2009 Albert Herranz
  */
 
+#include <linux/irqflags.h>
 #include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

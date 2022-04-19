@@ -12,6 +12,7 @@
  *		Initial version
  */
 
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/xarray_api.h>
 #include <linux/writeback_api.h>

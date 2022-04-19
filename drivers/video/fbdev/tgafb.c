@@ -12,6 +12,7 @@
  *  more details.
  */
 
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/io.h>

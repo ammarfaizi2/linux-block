@@ -3,6 +3,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/timekeeping.h>
 #include <linux/math64.h>

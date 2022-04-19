@@ -15,6 +15,7 @@
  * 32-bit and 64-bit versions merged by Paul Mackerras <paulus@samba.org>
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>
 #include <linux/smp.h>

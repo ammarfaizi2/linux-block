@@ -10,6 +10,7 @@
  * Copyright (c) 2020, 2021 Vincent Mailhol <mailhol.vincent@wanadoo.fr>
  */
 
+#include <linux/irqflags.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/net.h>

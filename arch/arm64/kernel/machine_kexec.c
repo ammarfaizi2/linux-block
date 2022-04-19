@@ -6,6 +6,7 @@
  * Copyright (C) Huawei Futurewei Technologies.
  */
 
+#include <linux/irqflags.h>
 #include <linux/syscalls_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>

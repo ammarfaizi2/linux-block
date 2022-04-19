@@ -8,6 +8,7 @@
  * Based on Sharp's 2.4 kernel patches/lubbock.c
  */
 
+#include <linux/irqflags.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 #include <linux/module.h>	/* symbol_get ; symbol_put */

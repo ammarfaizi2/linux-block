@@ -9,6 +9,7 @@
  * Copyright (C) 2014 Johan Hovold <johan@kernel.org>
  */
 
+#include <linux/irqflags.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>

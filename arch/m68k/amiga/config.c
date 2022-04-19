@@ -12,6 +12,7 @@
  * Miscellaneous Amiga stuff
  */
 
+#include <linux/irqflags.h>
 #include <linux/timekeeping.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

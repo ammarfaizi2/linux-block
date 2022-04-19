@@ -15,6 +15,7 @@
  *	Mikael Pettersson	:	PM converted to driver model.
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched.h>
 #include <linux/profile.h>
 #include <linux/math64.h>

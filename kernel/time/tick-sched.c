@@ -8,6 +8,7 @@
  *
  *  Started by: Thomas Gleixner and Ingo Molnar
  */
+#include <linux/irqflags.h>
 #include <linux/sched/task_flags.h>
 #include <linux/preempt.h>
 #include <linux/vmstat.h>

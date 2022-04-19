@@ -9,6 +9,7 @@
  * Authors: Sanjay Lal <sanjayl@kymasys.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/srcu.h>
 #include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>

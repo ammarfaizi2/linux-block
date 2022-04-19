@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) "kprobes: " fmt
 
+#include <linux/irqflags.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/kernel.h>
 #include <linux/kprobes.h>

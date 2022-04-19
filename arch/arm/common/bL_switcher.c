@@ -6,6 +6,7 @@
  * Copyright:	(C) 2012-2013  Linaro Limited
  */
 
+#include <linux/irqflags.h>
 #include <linux/wait_api.h>
 #include <linux/topology.h>
 #include <linux/timekeeping.h>

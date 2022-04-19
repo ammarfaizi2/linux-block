@@ -6,6 +6,7 @@
  * Copyright (C) 2004-2012 Cavium Networks
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched/thread.h>
 #include <linux/preempt.h>
 #include <asm/cop2.h>

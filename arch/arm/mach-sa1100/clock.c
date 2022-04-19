@@ -2,6 +2,7 @@
 /*
  *  linux/arch/arm/mach-sa1100/clock.c
  */
+#include <linux/irqflags.h>
 #include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>

@@ -8,6 +8,7 @@
 #define KMSG_COMPONENT	"perf"
 #define pr_fmt(fmt)	KMSG_COMPONENT ": " fmt
 
+#include <linux/irqflags.h>
 #include <linux/perf_event_api.h>
 #include <linux/kernel.h>
 #include <linux/perf_event.h>

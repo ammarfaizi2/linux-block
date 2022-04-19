@@ -6,6 +6,7 @@
  *    Author(s): Jan Glauber <jan.glauber@de.ibm.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched/task_flags.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread.h>

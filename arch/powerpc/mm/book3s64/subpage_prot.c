@@ -3,6 +3,7 @@
  * Copyright 2007-2008 Paul Mackerras, IBM Corp.
  */
 
+#include <linux/irqflags.h>
 #include <linux/huge_mm.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>

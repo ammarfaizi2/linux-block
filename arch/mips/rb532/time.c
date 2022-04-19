@@ -6,6 +6,7 @@
  *  Setting up the clock on the MIPS boards.
  */
 
+#include <linux/irqflags.h>
 #include <linux/init.h>
 #include <linux/kernel_stat.h>
 #include <linux/ptrace.h>

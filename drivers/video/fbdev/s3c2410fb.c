@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>

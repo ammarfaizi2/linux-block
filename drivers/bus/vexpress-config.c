@@ -4,6 +4,7 @@
  * Copyright (C) 2014 ARM Limited
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

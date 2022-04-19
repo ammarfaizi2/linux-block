@@ -7,6 +7,7 @@
 
 #undef DEBUG
 
+#include <linux/irqflags.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/bitops.h>

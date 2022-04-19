@@ -6,6 +6,7 @@
  * Copyright (C) 2000 - 2001 by Kanoj Sarcar (kanoj@sgi.com)
  * Copyright (C) 2000 - 2001 by Silicon Graphics, Inc.
  */
+#include <linux/irqflags.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/init.h>

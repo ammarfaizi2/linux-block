@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/irqflags.h>
 #include <linux/timex.h>
 #include <linux/timekeeping.h>
 #include <linux/of_api.h>

@@ -24,6 +24,7 @@
  * a temporary VBR and a vector table for the duration of the test.
  */
 
+#include <linux/irqflags.h>
 #include <linux/module.h>
 
 int hwreg_present(volatile void *regp)

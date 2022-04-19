@@ -8,6 +8,7 @@
  * Copyright (C) 2021 Allied Telesis Labs
  */
 
+#include <linux/irqflags.h>
 #include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>

@@ -14,6 +14,7 @@
  * Platform devices for Atheros AR5312 SoCs
  */
 
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>

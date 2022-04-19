@@ -3,6 +3,7 @@
    (C) 2000 Red Hat. GPL'd.
 */
 
+#include <linux/irqflags.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

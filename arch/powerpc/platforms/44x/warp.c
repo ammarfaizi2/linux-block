@@ -5,6 +5,7 @@
  * Copyright (c) 2008-2009 PIKA Technologies
  *   Sean MacLennan <smaclennan@pikatech.com>
  */
+#include <linux/irqflags.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>
 #include <linux/io.h>

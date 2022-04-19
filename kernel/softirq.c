@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/irqflags.h>
 #include <linux/sched/task_flags.h>
 #include <linux/preempt.h>
 #include <linux/wait_api.h>

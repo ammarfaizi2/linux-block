@@ -5,6 +5,7 @@
  *  Copyright (C) 2011 Rafael J. Wysocki <rjw@sisk.pl>, Novell Inc.
  */
 
+#include <linux/irqflags.h>
 #include <linux/mutex_api.h>
 #include <linux/syscore_ops.h>
 #include <linux/mutex.h>

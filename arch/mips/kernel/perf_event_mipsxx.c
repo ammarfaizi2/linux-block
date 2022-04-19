@@ -12,6 +12,7 @@
  * support references the code of MIPS stacktrace.c.
  */
 
+#include <linux/irqflags.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/prefetch.h>

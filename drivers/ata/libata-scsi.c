@@ -13,6 +13,7 @@
  *  - http://www.t13.org/
  */
 
+#include <linux/irqflags.h>
 #include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/stat.h>

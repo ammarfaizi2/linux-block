@@ -3,6 +3,7 @@
  * Miscellaneous Mac68K-specific stuff
  */
 
+#include <linux/irqflags.h>
 #include <linux/math64.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

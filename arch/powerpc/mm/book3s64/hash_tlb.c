@@ -17,6 +17,7 @@
  *      Rework for PPC64 port.
  */
 
+#include <linux/irqflags.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/kernel.h>

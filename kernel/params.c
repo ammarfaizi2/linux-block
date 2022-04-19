@@ -3,6 +3,7 @@
    Copyright (C) 2001 Rusty Russell.
 
 */
+#include <linux/irqflags.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

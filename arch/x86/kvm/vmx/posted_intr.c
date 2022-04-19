@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/irqflags.h>
 #include <linux/srcu.h>
 #include <linux/spinlock_api.h>
 #include <linux/atomic_api.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/irqflags.h>
 #include <linux/mm.h>
 #include <asm/cacheflush.h>
 #include <asm/hexagon_vm.h>

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/irqflags.h>
 #include <linux/huge_mm.h>
 #include <linux/vmstat.h>
 #include <linux/uaccess.h>

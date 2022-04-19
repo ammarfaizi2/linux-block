@@ -15,6 +15,7 @@
  *		Vitaly Bordug <vbordug@ru.mvista.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/of_api.h>

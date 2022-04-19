@@ -10,6 +10,7 @@
  * for more details.
  */
 
+#include <linux/irqflags.h>
 #include <linux/kernel.h>
 #include <linux/rtc.h>
 

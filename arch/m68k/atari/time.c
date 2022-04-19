@@ -10,6 +10,7 @@
  * for more details.
  */
 
+#include <linux/irqflags.h>
 #include <linux/timekeeping.h>
 #include <linux/sched.h>
 #include <linux/preempt.h>

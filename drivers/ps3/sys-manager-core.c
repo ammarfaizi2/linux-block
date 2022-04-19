@@ -6,6 +6,7 @@
  *  Copyright 2007 Sony Corp.
  */
 
+#include <linux/irqflags.h>
 #include <linux/kernel.h>
 #include <linux/export.h>
 #include <asm/lv1call.h>

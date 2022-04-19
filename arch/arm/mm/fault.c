@@ -5,6 +5,7 @@
  *  Copyright (C) 1995  Linus Torvalds
  *  Modifications for ARM processor (c) 1995-2004 Russell King
  */
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/sched/thread.h>
 #include <linux/rwsem_api.h>

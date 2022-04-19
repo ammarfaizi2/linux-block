@@ -9,6 +9,7 @@
  * Author: Andi Kleen
  */
 
+#include <linux/irqflags.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/smp_api.h>

@@ -12,6 +12,7 @@
  * Author : Michael Kelley <mikelley@microsoft.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/percpu.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

@@ -6,6 +6,7 @@
  *     Anup Patel <anup.patel@wdc.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/srcu.h>
 #include <linux/bitops.h>
 #include <linux/errno.h>

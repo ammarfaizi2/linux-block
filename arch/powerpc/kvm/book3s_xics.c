@@ -4,6 +4,7 @@
  * Copyright 2012 Benjamin Herrenschmidt, IBM Corporation.
  */
 
+#include <linux/irqflags.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/bitmap.h>

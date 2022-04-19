@@ -6,6 +6,7 @@
  * GameCube/ppc32 port Copyright (C) 2004 Albert Herranz
  * LANDISK/sh4 supported by kogiidena
  */
+#include <linux/irqflags.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>

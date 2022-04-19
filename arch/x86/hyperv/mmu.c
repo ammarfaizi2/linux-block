@@ -1,5 +1,6 @@
 #define pr_fmt(fmt)  "Hyper-V: " fmt
 
+#include <linux/irqflags.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/cpumask_api.h>

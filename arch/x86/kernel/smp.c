@@ -9,6 +9,7 @@
  *	i386 and x86_64 integration by Glauber Costa <gcosta@redhat.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/cpumask_api.h>
 #include <linux/atomic_api.h>
 #include <asm/processor_api.h>

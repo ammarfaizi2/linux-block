@@ -8,6 +8,7 @@
  * Vitaly Bordug <vbordug@ru.mvista.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/of_api.h>
 #include <linux/stddef.h>
 #include <linux/kernel.h>

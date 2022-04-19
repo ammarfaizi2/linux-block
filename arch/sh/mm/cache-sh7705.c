@@ -9,6 +9,7 @@
  * for more details.
  *
  */
+#include <linux/irqflags.h>
 #include <linux/syscalls_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/fs_api.h>

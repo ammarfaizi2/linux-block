@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/irqflags.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/io.h>

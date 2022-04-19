@@ -9,6 +9,7 @@
  *  Created:	Nov 05, 2002
  *  Copyright:	MontaVista Software Inc.
  */
+#include <linux/irqflags.h>
 #include <linux/gpio.h>
 #include <linux/gpio/gpio-reg.h>
 #include <linux/gpio/machine.h>

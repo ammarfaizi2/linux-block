@@ -14,6 +14,7 @@
  *  Copyright (C) 2004 Nadia Yvette Chambers
  */
 
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/smp_api.h>
 #include <linux/sched.h>

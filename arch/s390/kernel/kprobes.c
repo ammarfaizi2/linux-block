@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "kprobes: " fmt
 
+#include <linux/irqflags.h>
 #include <linux/mutex_api.h>
 #include <linux/kallsyms.h>
 #include <linux/atomic_api.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 1999  Niibe Yutaka
  * Copyright (C) 2002 - 2007 Paul Mundt
  */
+#include <linux/irqflags.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/io.h>

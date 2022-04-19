@@ -10,6 +10,7 @@
 /*
  */
 
+#include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/ktime_api.h>
 #include <linux/delay.h>

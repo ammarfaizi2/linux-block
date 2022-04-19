@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2008 Steven Rostedt <srostedt@redhat.com>
  */
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

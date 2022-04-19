@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "watchdog: " fmt
 
+#include <linux/irqflags.h>
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/hrtimer_api.h>

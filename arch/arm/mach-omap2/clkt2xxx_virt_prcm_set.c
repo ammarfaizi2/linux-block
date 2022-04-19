@@ -23,6 +23,7 @@
  */
 #undef DEBUG
 
+#include <linux/irqflags.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
 #include <linux/clk.h>

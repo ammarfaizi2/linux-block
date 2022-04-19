@@ -3,6 +3,7 @@
  * Copyright (c) 2016, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/irqflags.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>

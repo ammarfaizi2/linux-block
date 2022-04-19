@@ -17,6 +17,7 @@
  * Copyright (C) 1999 Ingo Molnar <mingo@redhat.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/wait_api.h>
 #include <linux/vmstat.h>

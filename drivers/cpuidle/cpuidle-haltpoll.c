@@ -10,6 +10,7 @@
  * Authors: Marcelo Tosatti <mtosatti@redhat.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/percpu.h>
 #include <linux/cpuhotplug.h>
 #include <asm/processor_api.h>

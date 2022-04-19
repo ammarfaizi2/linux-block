@@ -24,6 +24,7 @@
  * Version 2.  See the file COPYING for more details.
  */
 
+#include <linux/irqflags.h>
 #include <linux/timekeeping.h>
 #include <linux/ktime_api.h>
 #include <linux/sched/cond_resched.h>

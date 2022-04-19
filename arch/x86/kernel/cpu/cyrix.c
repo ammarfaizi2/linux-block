@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/irqflags.h>
 #include <linux/timex.h>
 #include <linux/string.h>
 #include <asm/special_insns.h>

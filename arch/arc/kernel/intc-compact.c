@@ -3,6 +3,7 @@
  * Copyright (C) 2011-12 Synopsys, Inc. (www.synopsys.com)
  */
 
+#include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>

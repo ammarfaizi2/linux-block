@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/irqflags.h>
 #include <linux/sysfs.h>
 #include <linux/smp_api.h>
 #include <linux/mutex_api.h>

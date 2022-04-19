@@ -4,6 +4,7 @@
  * Copyright (C) 2005 Mips Technologies, Inc
  */
 
+#include <linux/irqflags.h>
 #include <linux/device/class.h>
 #include <linux/device.h>
 #include <linux/kernel.h>

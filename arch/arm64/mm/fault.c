@@ -7,6 +7,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched/thread.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

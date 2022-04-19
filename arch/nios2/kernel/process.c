@@ -12,6 +12,7 @@
  * for more details.
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched/thread.h>
 #include <linux/ptrace_api.h>

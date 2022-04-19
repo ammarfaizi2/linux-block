@@ -6,6 +6,7 @@
  * Copyright (C) 2013 John Crispin <john@phrozen.org>
  */
 
+#include <linux/irqflags.h>
 #include <linux/of_api.h>
 #include <linux/pm.h>
 #include <linux/io.h>

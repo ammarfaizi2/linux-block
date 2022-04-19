@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Prom access routines for the sun3x */
 
+#include <linux/irqflags.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/tty.h>

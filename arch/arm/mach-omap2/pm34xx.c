@@ -15,6 +15,7 @@
  * Based on pm.c for omap1
  */
 
+#include <linux/irqflags.h>
 #include <linux/of_api.h>
 #include <linux/cpu_pm.h>
 #include <linux/pm.h>

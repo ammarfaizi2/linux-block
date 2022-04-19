@@ -9,6 +9,7 @@
  *  Copyright:	Jürgen Schindele
  */
 
+#include <linux/irqflags.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>

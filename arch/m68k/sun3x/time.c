@@ -5,6 +5,7 @@
  *  Sun3x-specific time handling
  */
 
+#include <linux/irqflags.h>
 #include <linux/timekeeping.h>
 #include <linux/types.h>
 #include <linux/kd.h>

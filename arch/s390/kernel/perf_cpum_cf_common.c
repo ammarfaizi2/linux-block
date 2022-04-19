@@ -8,6 +8,7 @@
 #define KMSG_COMPONENT	"cpum_cf_common"
 #define pr_fmt(fmt)	KMSG_COMPONENT ": " fmt
 
+#include <linux/irqflags.h>
 #include <linux/cpuhotplug.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

@@ -6,6 +6,7 @@
  *  Copyright (C) 2000  Anton Blanchard (anton@samba.org)
  */
 
+#include <linux/irqflags.h>
 #include <linux/syscalls_api.h>
 #include <linux/sched/task_flags.h>
 #include <linux/pgtable_api.h>

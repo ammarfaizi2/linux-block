@@ -5,6 +5,7 @@
  *	Ben Dooks <ben@simtec.co.uk>
 */
 
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/string.h>
 #include <linux/ioport.h>

@@ -8,6 +8,7 @@
  * Copyright 2003 by Hans-Joerg Frieden and Thomas Frieden
  */
 
+#include <linux/irqflags.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>

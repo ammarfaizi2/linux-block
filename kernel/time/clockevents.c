@@ -7,6 +7,7 @@
  * Copyright(C) 2006-2007, Timesys Corp., Thomas Gleixner
  */
 
+#include <linux/irqflags.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

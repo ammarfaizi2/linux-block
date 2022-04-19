@@ -13,6 +13,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/uaccess.h>
 #include <linux/topology.h>
 #include <linux/timex.h>

@@ -6,6 +6,7 @@
  * test source files.
  */
 #include "lkdtm.h"
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/spinlock_api.h>
 #include <linux/list.h>

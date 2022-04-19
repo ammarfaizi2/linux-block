@@ -9,6 +9,7 @@
  * by Yu Liu <yu.liu@freescale.com>.
  */
 
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/gfp_api.h>
 #include <linux/kvm_host.h>

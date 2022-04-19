@@ -82,6 +82,7 @@
  *
  */
 
+#include <linux/irqflags.h>
 #include <linux/syscalls_api.h>
 #include <linux/numa_types.h>
 #include <linux/kernel.h>

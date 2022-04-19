@@ -7,6 +7,7 @@
  * Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/seqlock_api.h>
 #include <linux/kernel.h>
 #include <linux/kernel_stat.h>

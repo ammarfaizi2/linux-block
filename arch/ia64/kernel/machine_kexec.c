@@ -8,6 +8,7 @@
  * Copyright (C) 2006 Intel Corp, Zou Nan hai <nanhai.zou@intel.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched/thread.h>
 #include <linux/mm_page_address.h>
 #include <linux/ioport.h>

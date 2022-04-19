@@ -5,6 +5,7 @@
  *	Copyright (C) 2013 Andrew Lunn <andrew@lunn.ch>
  */
 
+#include <linux/irqflags.h>
 #include <linux/of_api.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

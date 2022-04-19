@@ -12,6 +12,7 @@
  * which are suitable for UP and SMP based clocksources respectively
  */
 
+#include <linux/irqflags.h>
 #include <linux/smp_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpuhotplug.h>

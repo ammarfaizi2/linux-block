@@ -13,6 +13,7 @@
  */
 
 #define __EXTERN_INLINE inline
+#include <linux/irqflags.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

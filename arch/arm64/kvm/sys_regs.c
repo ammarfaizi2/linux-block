@@ -9,6 +9,7 @@
  *          Christoffer Dall <c.dall@virtualopensystems.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/bitfield.h>
 #include <linux/bsearch.h>
 #include <linux/kvm_host.h>

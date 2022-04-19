@@ -12,6 +12,7 @@
  * we allow the resending of IRQs via a tasklet.
  */
 
+#include <linux/irqflags.h>
 #include <linux/tasklet_api.h>
 #include <linux/irqdesc.h>
 #include <linux/bitmap.h>

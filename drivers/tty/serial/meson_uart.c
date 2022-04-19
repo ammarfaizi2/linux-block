@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Carlo Caione <carlo@caione.org>
  */
 
+#include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

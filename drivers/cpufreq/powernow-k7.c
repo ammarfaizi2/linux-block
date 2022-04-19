@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/irqflags.h>
 #include <linux/io_extra.h>
 #include <linux/cpumask_api.h>
 #include <asm/processor_api.h>

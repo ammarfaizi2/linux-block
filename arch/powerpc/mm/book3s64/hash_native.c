@@ -8,6 +8,7 @@
 
 #undef DEBUG_LOW
 
+#include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/spinlock.h>
 #include <linux/bitops.h>

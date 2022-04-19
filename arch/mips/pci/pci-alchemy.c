@@ -8,6 +8,7 @@
  * Support for all devices (greater than 16) added by David Gathright.
  */
 
+#include <linux/irqflags.h>
 #include <linux/slab.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

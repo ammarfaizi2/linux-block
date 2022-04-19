@@ -15,6 +15,7 @@
  *  things.
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched/signal.h>
 #include <linux/init.h>
 #include <linux/sched.h>

@@ -3,6 +3,7 @@
  * machine_kexec.c for kexec
  * Created by <nschichan@corp.free.fr> on Thu Oct 12 15:15:06 2006
  */
+#include <linux/irqflags.h>
 #include <linux/uaccess.h>
 #include <linux/string.h>
 #include <linux/mm_page_address.h>

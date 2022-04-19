@@ -9,6 +9,7 @@
 
 /***************************************************************************/
 
+#include <linux/irqflags.h>
 #include <linux/timekeeping.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

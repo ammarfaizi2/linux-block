@@ -6,6 +6,7 @@
  *     Alexander Graf <agraf@suse.de>
  */
 
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/kvm_host.h>
 

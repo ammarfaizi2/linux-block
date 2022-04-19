@@ -9,6 +9,7 @@
  *  'linux/arch/arm/lib/traps.S'.  Mostly a debugging aid, but will probably
  *  kill the offending process.
  */
+#include <linux/irqflags.h>
 #include <linux/atomic_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/gfp_api.h>

@@ -17,6 +17,7 @@
  * 	- auto unlock sectors on resume for auto locking flash on power up
  */
 
+#include <linux/irqflags.h>
 #include <linux/wait_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

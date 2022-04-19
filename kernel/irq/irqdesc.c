@@ -7,6 +7,7 @@
  * information is available in Documentation/core-api/genericirq.rst
  *
  */
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>

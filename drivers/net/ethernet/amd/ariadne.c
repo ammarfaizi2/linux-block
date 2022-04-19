@@ -37,6 +37,7 @@
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 /*#define DEBUG*/
 
+#include <linux/irqflags.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>

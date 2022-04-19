@@ -12,6 +12,7 @@
  * Richard Woodruff <r-woodruff2@ti.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/device.h>

@@ -6,6 +6,7 @@
  * (TTY driver and console driver)
  */
 
+#include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>

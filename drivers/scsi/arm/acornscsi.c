@@ -109,6 +109,7 @@
 #define DBG(cmd,xxx...) xxx
 #endif
 
+#include <linux/irqflags.h>
 #include <linux/seq_file.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>

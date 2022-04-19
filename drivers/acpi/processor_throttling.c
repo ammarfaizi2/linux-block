@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "ACPI: " fmt
 
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 1999  Niibe Yutaka
  * Copyright (C) 2002  Paul Mundt
  */
+#include <linux/irqflags.h>
 #include <linux/signal.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>

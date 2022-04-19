@@ -10,6 +10,7 @@
 //	http://armlinux.simtec.co.uk/
 //	Ben Dooks <ben@simtec.co.uk>
 
+#include <linux/irqflags.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/clk.h>

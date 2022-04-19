@@ -10,6 +10,7 @@
  * Copyright (c) 2006 MontaVista Software, Inc.
  */
 
+#include <linux/irqflags.h>
 #include <linux/of_api.h>
 #include <linux/kprobes.h>
 

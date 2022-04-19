@@ -25,6 +25,7 @@
  * Copyright (C) 2020 Alibaba, Inc, Alex Shi
  */
 
+#include <linux/irqflags.h>
 #include <linux/huge_mm.h>
 #include <linux/sched/task_flags.h>
 #include <linux/preempt.h>

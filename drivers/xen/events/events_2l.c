@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
 
+#include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>
 #include <linux/irqdesc.h>

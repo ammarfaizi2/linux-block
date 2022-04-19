@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/irqflags.h>
 #include <linux/topology.h>
 #include <linux/static_call.h>
 #include <linux/stat.h>

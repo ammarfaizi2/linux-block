@@ -28,6 +28,7 @@
 
 #include "bcm47xx_private.h"
 
+#include <linux/irqflags.h>
 #include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/dma-mapping.h>

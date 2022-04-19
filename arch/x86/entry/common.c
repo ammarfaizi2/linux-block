@@ -7,6 +7,7 @@
  * in ptrace.c and signal.c.
  */
 
+#include <linux/irqflags.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/preempt.h>
 #include <linux/kernel.h>

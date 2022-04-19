@@ -6,6 +6,7 @@
  * Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/percpu.h>
 #define CREATE_TRACE_POINTS
 #include <asm/trace/diag.h>

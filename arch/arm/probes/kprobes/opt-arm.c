@@ -7,6 +7,7 @@
  * Copyright (C) Huawei Inc., 2014
  */
 
+#include <linux/irqflags.h>
 #include <linux/kprobes.h>
 #include <linux/jump_label.h>
 #include <asm/kprobes.h>

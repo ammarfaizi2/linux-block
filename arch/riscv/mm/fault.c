@@ -7,6 +7,7 @@
  */
 
 
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/sched/thread.h>
 #include <linux/sched/signal.h>

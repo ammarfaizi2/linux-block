@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

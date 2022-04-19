@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 2003-2007  Yoichi Yuasa <yuasa@linux-mips.org>
  */
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/io.h>

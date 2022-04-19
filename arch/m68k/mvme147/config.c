@@ -13,6 +13,7 @@
  * for more details.
  */
 
+#include <linux/irqflags.h>
 #include <linux/timekeeping.h>
 #include <linux/types.h>
 #include <linux/kernel.h>

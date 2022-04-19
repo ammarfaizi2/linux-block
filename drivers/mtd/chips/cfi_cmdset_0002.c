@@ -20,6 +20,7 @@
  * This code is GPL
  */
 
+#include <linux/irqflags.h>
 #include <linux/wait_api.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/of_api.h>

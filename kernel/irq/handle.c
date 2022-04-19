@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>
 #include <linux/hardirq.h>

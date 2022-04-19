@@ -12,6 +12,7 @@
  * realview smp platform.
  * * Copyright (c) 2002 ARM Limited.
  */
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>

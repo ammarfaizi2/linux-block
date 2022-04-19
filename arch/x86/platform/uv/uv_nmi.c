@@ -7,6 +7,7 @@
  * Copyright (c) Mike Travis
  */
 
+#include <linux/irqflags.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>

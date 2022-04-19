@@ -87,6 +87,7 @@
  *	All object allocations for a node occur from node specific slab lists.
  */
 
+#include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <net/sock_api.h>
 #include <linux/workqueue_api.h>

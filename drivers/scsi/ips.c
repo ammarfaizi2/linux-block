@@ -161,6 +161,7 @@
  * ioctlsize            - Initial size of the IOCTL buffer
  */
 
+#include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2020, Broadcom */
 
+#include <linux/irqflags.h>
 #include <linux/pm_wakeup.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

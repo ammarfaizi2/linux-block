@@ -8,6 +8,7 @@
  *   Avi Kivity   <avi@redhat.com>
  *   Gleb Natapov <gleb@redhat.com>
  */
+#include <linux/irqflags.h>
 #include <linux/sched.h>
 #include <linux/perf_event_api.h>
 #include <linux/bitmap.h>

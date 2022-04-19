@@ -8,6 +8,7 @@
  * for more details.
  */
 
+#include <linux/irqflags.h>
 #include <linux/jiffies.h>
 #include <linux/timer.h>
 #include <linux/init.h>

@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "PM: hibernation: " fmt
 
+#include <linux/irqflags.h>
 #include <linux/kdev_t.h>
 #include <linux/sysfs.h>
 #include <linux/slab.h>

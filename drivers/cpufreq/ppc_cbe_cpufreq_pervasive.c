@@ -10,6 +10,7 @@
  * Author: Christian Krafft <krafft@de.ibm.com>
  */
 
+#include <linux/irqflags.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/kernel.h>

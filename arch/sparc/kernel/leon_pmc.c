@@ -4,6 +4,7 @@
  * Copyright (C) 2011 Daniel Hellstrom (daniel@gaisler.com) Aeroflex Gaisler AB
  */
 
+#include <linux/irqflags.h>
 #include <linux/init.h>
 #include <linux/pm.h>
 

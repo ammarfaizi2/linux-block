@@ -9,6 +9,7 @@
  * version 2.  This program is licensed "as is" without any warranty of
  * any kind, whether express or implied.
  */
+#include <linux/irqflags.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/of_api.h>

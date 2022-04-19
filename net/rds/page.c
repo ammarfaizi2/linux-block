@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/irqflags.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mm_api.h>
 #include <linux/gfp_api.h>

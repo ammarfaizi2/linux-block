@@ -17,6 +17,7 @@
  *  Copyright:	MontaVista Software Inc.
  */
 
+#include <linux/irqflags.h>
 #include <linux/irqdesc.h>
 #include <linux/ioport.h>
 #include <linux/types.h>
