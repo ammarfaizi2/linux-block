@@ -10,6 +10,7 @@
  */
 #ifndef _ATMEL_ISC_H_
 
+#include <linux/interrupt.h>
 #include <linux/clk-provider.h>
 #include <linux/platform_device.h>
 
