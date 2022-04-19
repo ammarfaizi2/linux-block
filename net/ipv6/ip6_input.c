@@ -15,6 +15,7 @@
  *	YOSHIFUJI Hideaki @USAGI: Remove ipv6_parse_exthdrs().
  */
 
+#include <linux/atomic_api.h>
 #include <net/sock_api.h>
 #include <net/l3mdev.h>
 #include <net/ipv6_api.h>

@@ -3,6 +3,7 @@
  * Copyright 2020-2021 NXP
  */
 
+#include <linux/atomic_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>
 #include <linux/wait_api.h>

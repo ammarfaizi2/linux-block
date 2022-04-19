@@ -6,6 +6,7 @@
  *		http://www.samsung.com/
  */
 
+#include <linux/atomic_api.h>
 #include <linux/clk.h>
 #include <linux/err.h>
 #include <linux/platform_device.h>

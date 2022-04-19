@@ -5,6 +5,7 @@
  *                   Abramo Bagnara <abramo@alsa-project.org>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/time64_api.h>

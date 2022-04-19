@@ -3,6 +3,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/atomic_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

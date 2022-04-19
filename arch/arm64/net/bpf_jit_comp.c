@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "bpf_jit: " fmt
 
+#include <linux/atomic_api.h>
 #include <linux/vmalloc.h>
 #include <linux/filter_api.h>
 #include <linux/bitfield.h>

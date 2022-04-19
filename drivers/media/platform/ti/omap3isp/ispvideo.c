@@ -10,6 +10,7 @@
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mm_api.h>
 #include <linux/align.h>

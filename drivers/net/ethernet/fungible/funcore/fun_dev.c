@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 
+#include <linux/atomic_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/mm_api_kvmalloc.h>

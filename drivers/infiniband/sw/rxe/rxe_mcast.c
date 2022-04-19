@@ -19,6 +19,7 @@
  * mcast packets in the rxe receive path.
  */
 
+#include <linux/atomic_api.h>
 #include <linux/rbtree_api.h>
 #include <linux/slab.h>
 #include <linux/spinlock_api.h>

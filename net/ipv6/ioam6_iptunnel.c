@@ -6,6 +6,7 @@
  *  Justin Iurman <justin.iurman@uliege.be>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/preempt.h>
 #include <net/netlink_api.h>
 #include <net/ipv6_types.h>

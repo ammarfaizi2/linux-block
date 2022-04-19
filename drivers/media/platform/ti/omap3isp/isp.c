@@ -39,6 +39,7 @@
  *	Troy Laramy <t-laramy@ti.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

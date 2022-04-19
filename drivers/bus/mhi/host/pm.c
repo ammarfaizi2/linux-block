@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/bitmap.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>

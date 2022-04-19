@@ -10,6 +10,7 @@
  * Pawel Osciak, <pawel@osciak.com>
  * Marek Szyprowski, <m.szyprowski@samsung.com>
  */
+#include <linux/atomic_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>

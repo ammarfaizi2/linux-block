@@ -4,6 +4,7 @@
  * Author: Quentin Perret <qperret@google.com>
  */
 
+#include <linux/atomic_api.h>
 #include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

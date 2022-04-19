@@ -26,6 +26,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/align.h>
 #include <linux/lockdep_api.h>
 #include <linux/sched/cond_resched.h>

@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/atomic_api.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/workqueue_api.h>
 

@@ -8,6 +8,7 @@
 // Copyright (c) 2017-2019 Pengutronix,
 //                         Oleksij Rempel <kernel@pengutronix.de>
 
+#include <linux/atomic_api.h>
 #include <net/sock_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

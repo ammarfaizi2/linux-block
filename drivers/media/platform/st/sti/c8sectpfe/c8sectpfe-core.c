@@ -8,6 +8,7 @@
  *	    Peter Griffin <peter.griffin@linaro.org>
  *
  */
+#include <linux/atomic_api.h>
 #include <linux/bitmap.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
