@@ -2,6 +2,7 @@
 // Copyright (c) 2021 Sunplus Inc.
 // Author: Li-hao Kuo <lhjeff911@gmail.com>
 
+#include <linux/io.h>
 #include <linux/of_api.h>
 #include <linux/property.h>
 #include <linux/spinlock_api.h>

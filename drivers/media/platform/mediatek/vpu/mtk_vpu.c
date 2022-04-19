@@ -3,6 +3,7 @@
 * Copyright (c) 2016 MediaTek Inc.
 * Author: Andrew-CT Chen <andrew-ct.chen@mediatek.com>
 */
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>

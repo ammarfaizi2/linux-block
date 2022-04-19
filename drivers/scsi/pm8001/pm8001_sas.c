@@ -38,6 +38,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>

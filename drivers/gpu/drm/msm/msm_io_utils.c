@@ -5,6 +5,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/io.h>
 #include <linux/kthread.h>
 
 #include "msm_drv.h"

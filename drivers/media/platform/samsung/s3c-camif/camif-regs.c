@@ -7,6 +7,7 @@
 */
 #define pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
 
+#include <linux/io.h>
 #include <linux/delay.h>
 #include "camif-regs.h"
 

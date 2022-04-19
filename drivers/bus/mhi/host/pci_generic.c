@@ -8,6 +8,7 @@
  * Copyright (C) 2020 Linaro Ltd <loic.poulain@linaro.org>
  */
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

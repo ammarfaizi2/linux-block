@@ -3,6 +3,7 @@
  * Copyright 2020-2021 NXP
  */
 
+#include <linux/io.h>
 #include <linux/init.h>
 #include <linux/interconnect.h>
 #include <linux/ioctl.h>

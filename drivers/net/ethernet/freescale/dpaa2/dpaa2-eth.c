@@ -2,6 +2,7 @@
 /* Copyright 2014-2016 Freescale Semiconductor Inc.
  * Copyright 2016-2020 NXP
  */
+#include <linux/io.h>
 #include <net/xdp_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/uaccess.h>

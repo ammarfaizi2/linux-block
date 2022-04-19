@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/spinlock_api.h>
 #include <linux/preempt.h>

@@ -4,6 +4,7 @@
  * Copyright (C) Sunplus Tech / Tibbo Tech.
  */
 
+#include <linux/io.h>
 #include <linux/of_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>

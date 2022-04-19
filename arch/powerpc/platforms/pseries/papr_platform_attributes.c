@@ -20,6 +20,7 @@
  * Copyright 2022 IBM Corp.
  */
 
+#include <linux/io.h>
 #include <linux/kobject_api.h>
 #include <linux/io_extra.h>
 #include <linux/slab.h>

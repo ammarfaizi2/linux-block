@@ -9,6 +9,7 @@
  */
 #define pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
 
+#include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/of_api.h>
 #include <linux/spinlock_api.h>
