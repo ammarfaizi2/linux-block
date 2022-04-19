@@ -2,6 +2,9 @@
 #ifndef _LINUX_FS_H
 #define _LINUX_FS_H
 
+#include <linux/workqueue_types.h>
+#include <linux/mutex_types.h>
+#include <linux/rbtree_types.h>
 #include <linux/rwsem_api.h>
 #include <linux/wait_bit.h>
 #include <linux/kdev_t.h>
@@ -64,6 +67,7 @@ struct fs_context;
 struct fs_parameter_spec;
 struct fileattr;
 struct delayed_call;
+struct folio;
 
 extern void __init inode_init(void);
 extern void __init inode_init_early(void);

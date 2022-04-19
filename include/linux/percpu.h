@@ -3,7 +3,7 @@
 #define __LINUX_PERCPU_H
 
 #include <linux/pfn.h>
-#include <linux/smp.h>
+#include <linux/smp_api.h>
 
 #include <asm/percpu.h>
 

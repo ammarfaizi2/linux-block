@@ -18,6 +18,7 @@
 
 #include <linux/cdev.h>
 #include <linux/device.h>
+#include <linux/bitops.h>
 
 struct media_device;
 struct poll_table_struct;

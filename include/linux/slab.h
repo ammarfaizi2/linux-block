@@ -12,10 +12,12 @@
 #ifndef _LINUX_SLAB_H
 #define	_LINUX_SLAB_H
 
+#include <linux/numa_types.h>
 #include <linux/gfp_types.h>
 #include <linux/overflow.h>
 #include <linux/init.h>
 #include <linux/bug.h>
+#include <linux/cache.h>
 
 #include <asm/page_types.h>
 #include <asm-generic/getorder.h>
