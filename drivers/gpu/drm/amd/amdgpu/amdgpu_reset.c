@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/rwsem_api.h>
 #include <linux/kref_api.h>
 #include <linux/atomic_api.h>
 #include <linux/mm_api_kvmalloc.h>
