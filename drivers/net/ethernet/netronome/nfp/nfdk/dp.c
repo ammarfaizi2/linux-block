@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2015-2019 Netronome Systems, Inc. */
 
+#include <linux/ipv6.h>
 #include <linux/filter_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/dim.h>
