@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0-only)
 /* Copyright(c) 2022 Intel Corporation */
+#include <linux/slab.h>
 #include <linux/workqueue_api.h>
 #include <linux/bitfield.h>
 #include <linux/iopoll.h>

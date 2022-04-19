@@ -29,6 +29,7 @@
 #include "amdgpu_dpm.h"
 #include "kv_dpm.h"
 #include "gfx_v7_0.h"
+#include <linux/slab.h>
 #include <linux/workqueue_api.h>
 #include <linux/seq_file.h>
 

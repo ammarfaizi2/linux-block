@@ -7,6 +7,7 @@
   * Copyright 2022 Bytedance CO., LTD.
   */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/mpi.h>
 #include <linux/scatterlist.h>

@@ -6,6 +6,7 @@
   * Copyright 2016 HUAWEI TECHNOLOGIES CO., LTD.
   */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/scatterlist.h>
 #include <crypto/algapi.h>

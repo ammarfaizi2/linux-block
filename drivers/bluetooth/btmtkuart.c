@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>
 #include <linux/timekeeping.h>

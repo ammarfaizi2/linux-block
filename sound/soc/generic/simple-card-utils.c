@@ -4,6 +4,7 @@
 //
 // Copyright (c) 2016 Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
 
+#include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

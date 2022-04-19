@@ -4,6 +4,7 @@
  * Author: Yunfei Dong <yunfei.dong@mediatek.com>
  */
 
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/wait_api.h>
 #include <linux/workqueue_api.h>

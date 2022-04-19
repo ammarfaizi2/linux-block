@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2021, NVIDIA CORPORATION & AFFILIATES. */
 
+#include <linux/slab.h>
+
 #include "en_tc.h"
 #include "en/tc_ct.h"
 #include "en/tc/ct_fs.h"

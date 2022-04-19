@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/slab.h>
 #include <linux/init.h>
 #include <linux/sysctl.h>
 #include <net/net_namespace.h>

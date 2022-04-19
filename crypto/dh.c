@@ -5,6 +5,7 @@
  * Authors: Salvatore Benedetto <salvatore.benedetto@intel.com>
  */
 
+#include <linux/slab.h>
 #include <linux/string.h>
 #include <linux/fips.h>
 #include <linux/module.h>

@@ -3,6 +3,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/interval_tree_generic.h>

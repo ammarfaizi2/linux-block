@@ -5,6 +5,7 @@
  * Copyright (C) 2022 Google, Inc
  */
 
+#include <linux/slab.h>
 #include <linux/device_api_lock.h>
 #include <linux/export.h>
 #include <linux/hid.h>

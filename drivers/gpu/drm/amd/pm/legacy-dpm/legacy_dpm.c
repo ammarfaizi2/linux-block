@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/slab.h>
+
 #include "amdgpu.h"
 #include "amdgpu_i2c.h"
 #include "amdgpu_atombios.h"

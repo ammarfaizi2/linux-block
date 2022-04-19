@@ -6,6 +6,7 @@
  *  Copyright (c) 2021 Jelle van der Waa <jvanderwaa@redhat.com>
  */
 
+#include <linux/slab.h>
 #include <linux/device.h>
 #include <linux/hid.h>
 #include <linux/module.h>

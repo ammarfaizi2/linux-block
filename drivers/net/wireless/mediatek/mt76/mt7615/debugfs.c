@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: ISC
 
+#include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/uaccess.h>
 #include <linux/seq_file.h>

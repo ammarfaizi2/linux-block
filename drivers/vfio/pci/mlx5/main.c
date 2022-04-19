@@ -3,6 +3,7 @@
  * Copyright (c) 2021-2022, NVIDIA CORPORATION & AFFILIATES. All rights reserved
  */
 
+#include <linux/slab.h>
 #include <linux/fs_api_f_count.h>
 #include <linux/fs_api.h>
 #include <linux/mutex_api.h>

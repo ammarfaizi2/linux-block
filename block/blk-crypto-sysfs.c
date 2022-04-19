@@ -6,6 +6,7 @@
  * crypto capabilities of devices via /sys/block/$disk/queue/crypto/.
  */
 
+#include <linux/slab.h>
 #include <linux/sysfs.h>
 #include <linux/blk-crypto-profile.h>
 

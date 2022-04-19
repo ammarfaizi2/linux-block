@@ -5,6 +5,7 @@
  * Copyright (c) 2021 Oleksij Rempel <kernel@pengutronix.de>, Pengutronix
  */
 
+#include <linux/slab.h>
 #include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/mutex_api.h>

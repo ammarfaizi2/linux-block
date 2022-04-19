@@ -5,6 +5,7 @@
  * Jesse Taube <Mr.Bossman075@gmail.com>
  * Giulio Benetti <giulio.benetti@benettiengineering.com>
  */
+#include <linux/slab.h>
 #include <linux/clk.h>
 #include <linux/of_address.h>
 #include <linux/of_irq.h>

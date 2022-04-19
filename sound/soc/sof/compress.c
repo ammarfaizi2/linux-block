@@ -4,6 +4,7 @@
 //
 // Author: Daniel Baluta <daniel.baluta@nxp.com>
 
+#include <linux/slab.h>
 #include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <sound/soc.h>

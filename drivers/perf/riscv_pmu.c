@@ -8,6 +8,7 @@
  * which are in turn based on sparc64 and x86 code.
  */
 
+#include <linux/slab.h>
 #include <linux/cpumask.h>
 #include <linux/irq.h>
 #include <linux/irqdesc.h>

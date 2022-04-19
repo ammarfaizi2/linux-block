@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 
+#include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/bpf_trace.h>

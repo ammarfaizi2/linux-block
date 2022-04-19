@@ -13,6 +13,7 @@
 #define pr_fmt(fmt)     "DMAR: " fmt
 #define dev_fmt(fmt)    pr_fmt(fmt)
 
+#include <linux/slab.h>
 #include <asm/cacheflush.h>
 #include <linux/align.h>
 #include <linux/spinlock_api.h>

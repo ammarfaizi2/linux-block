@@ -24,6 +24,8 @@
  *
  */
 
+#include <linux/slab.h>
+
 #include "resource.h"
 #include "clk_mgr.h"
 #include "dc_link_dp.h"
