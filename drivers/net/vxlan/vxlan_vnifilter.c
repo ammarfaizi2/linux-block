@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <net/netlink_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/netdevice_api_extra.h>

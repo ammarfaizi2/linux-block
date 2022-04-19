@@ -4,6 +4,7 @@
  *
  * Originally written by Jérôme Glisse.
  */
+#include <linux/spinlock_api.h>
 #include <linux/mm_api.h>
 #include <asm/cacheflush.h>
 #include <linux/mm_api_extra.h>

@@ -19,6 +19,7 @@
  *			 ksz9477
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/of_api.h>

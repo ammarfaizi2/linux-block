@@ -90,6 +90,7 @@
  * one of the simpler chips.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/bitfield.h>

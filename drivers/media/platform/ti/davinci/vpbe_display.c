@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2010 Texas Instruments Incorporated - https://www.ti.com/
  */
+#include <linux/spinlock_api.h>
 #include <linux/align.h>
 #include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>

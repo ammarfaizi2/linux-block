@@ -9,6 +9,7 @@
  * Kamil Debski		<k.debski@samsung.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/clk.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

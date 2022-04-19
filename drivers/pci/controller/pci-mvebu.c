@@ -5,6 +5,7 @@
  * Author: Thomas Petazzoni <thomas.petazzoni@free-electrons.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

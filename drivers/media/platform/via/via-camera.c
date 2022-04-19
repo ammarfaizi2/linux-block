@@ -6,6 +6,7 @@
  *
  * This work was supported by the One Laptop Per Child project
  */
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>

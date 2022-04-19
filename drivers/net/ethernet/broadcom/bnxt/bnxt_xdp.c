@@ -6,6 +6,7 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
+#include <linux/spinlock_api.h>
 #include <net/xdp_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/pci-dma-compat.h>

@@ -22,6 +22,7 @@
  * Authors: Alex Deucher
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/firmware.h>
 
 #include "amdgpu.h"

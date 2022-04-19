@@ -5,6 +5,7 @@
 *	Tiffany Lin <tiffany.lin@mediatek.com>
 */
 
+#include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/of_device.h>

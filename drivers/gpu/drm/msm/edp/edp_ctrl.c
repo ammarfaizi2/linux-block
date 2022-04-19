@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

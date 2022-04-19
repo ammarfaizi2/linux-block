@@ -18,6 +18,7 @@
  * The architecture is expected to provide a vmemmap_populate() function
  * to instantiate the mapping.
  */
+#include <linux/spinlock_api.h>
 #include <linux/align.h>
 #include <linux/topology.h>
 #include <linux/pgtable_api.h>

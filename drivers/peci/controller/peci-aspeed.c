@@ -2,6 +2,7 @@
 // Copyright (c) 2012-2017 ASPEED Technology Inc.
 // Copyright (c) 2018-2021 Intel Corporation
 
+#include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <asm/unaligned.h>
 

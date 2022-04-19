@@ -8,6 +8,7 @@
  * Author: Eugen Hristev <eugen.hristev@microchip.com>
  *
  */
+#include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/clk.h>
 #include <linux/clkdev.h>

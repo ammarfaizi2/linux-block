@@ -21,6 +21,7 @@
 
 #define pr_fmt(fmt)  "intel-hfi: " fmt
 
+#include <linux/spinlock_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/gfp_api.h>
 #include <linux/io_extra.h>

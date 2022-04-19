@@ -9,6 +9,7 @@
  */
 #define pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
 
+#include <linux/spinlock_api.h>
 #include <linux/bitops.h>
 #include <linux/bug.h>
 #include <linux/device.h>
