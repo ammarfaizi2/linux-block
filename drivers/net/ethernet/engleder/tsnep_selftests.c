@@ -3,6 +3,7 @@
 
 #include "tsnep.h"
 
+#include <linux/ktime_api.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>

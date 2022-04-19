@@ -5,6 +5,7 @@
  * Author: Danilo Krummrich <danilokrummrich@dk-develop.de>
  */
 
+#include <linux/ktime_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

@@ -106,6 +106,7 @@
  * preemption, but just sampling the new tail pointer).
  *
  */
+#include <linux/ktime_api.h>
 #include <linux/irqflags.h>
 #include <linux/dma-fence-api.h>
 #include <linux/preempt.h>
