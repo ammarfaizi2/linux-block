@@ -4,6 +4,7 @@
  * Davicom DM9051 SPI Fast Ethernet Linux driver
  */
 
+#include <linux/etherdevice_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/delay.h>
