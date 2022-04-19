@@ -7,6 +7,7 @@
 //
 //
 
+#include <linux/uuid_api.h>
 #include <linux/slab.h>
 #include <uapi/sound/sof/tokens.h>
 #include <sound/pcm_params.h>
