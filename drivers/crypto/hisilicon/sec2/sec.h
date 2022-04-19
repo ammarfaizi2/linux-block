@@ -4,6 +4,7 @@
 #ifndef __HISI_SEC_V2_H
 #define __HISI_SEC_V2_H
 
+#include <linux/idr_types.h>
 #include <linux/hisi_acc_qm.h>
 #include "sec_crypto.h"
 
