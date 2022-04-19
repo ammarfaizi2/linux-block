@@ -7,6 +7,7 @@
 #ifndef _VXLAN_PRIVATE_H
 #define _VXLAN_PRIVATE_H
 
+#include <linux/hash.h>
 #include <linux/rhashtable.h>
 
 extern unsigned int vxlan_net_id;
