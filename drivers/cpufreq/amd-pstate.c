@@ -22,6 +22,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <asm/tsc.h>
 #include <linux/string.h>
 #include <linux/irqflags.h>
 #include <linux/sched/topology.h>
