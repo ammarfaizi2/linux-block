@@ -39,6 +39,7 @@
  * Copyright (C) 2018-2019 Jens Axboe
  * Copyright (c) 2018-2019 Christoph Hellwig
  */
+#include <linux/prefetch.h>
 #include <linux/log2.h>
 #include <linux/sched/task_flags.h>
 #include <linux/mm_page_address.h>

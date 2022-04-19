@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 
+#include <linux/prefetch.h>
 #include <linux/page_ref.h>
 #include <linux/netdevice_api.h>
 #include <linux/log2.h>

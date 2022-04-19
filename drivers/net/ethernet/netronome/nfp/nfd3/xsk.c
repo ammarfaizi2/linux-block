@@ -2,6 +2,7 @@
 /* Copyright (C) 2018 Netronome Systems, Inc */
 /* Copyright (C) 2021 Corigine, Inc */
 
+#include <linux/prefetch.h>
 #include <linux/netdevice_api.h>
 #include <linux/filter_api.h>
 #include <linux/bpf_trace.h>
