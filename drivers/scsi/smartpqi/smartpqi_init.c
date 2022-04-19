@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/ioprio.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/vmalloc.h>
