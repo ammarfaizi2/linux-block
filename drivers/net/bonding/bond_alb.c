@@ -3,6 +3,7 @@
  * Copyright(c) 1999 - 2004 Intel Corporation. All rights reserved.
  */
 
+#include <linux/icmpv6.h>
 #include <linux/string.h>
 #include <linux/rcupdate.h>
 #include <net/ipv6_api.h>

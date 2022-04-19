@@ -3,6 +3,7 @@
  * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
  */
 
+#include <linux/icmpv6.h>
 #include <net/l3mdev.h>
 #include <net/ipv6_api.h>
 #include <net/dst_api.h>

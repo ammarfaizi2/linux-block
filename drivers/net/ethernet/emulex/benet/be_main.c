@@ -11,6 +11,7 @@
  * Costa Mesa, CA 92626
  */
 
+#include <linux/icmpv6.h>
 #include <linux/jhash.h>
 #include <net/netlink_api.h>
 #include <net/ndisc_api.h>

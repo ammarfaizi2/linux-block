@@ -3,6 +3,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/icmpv6.h>
 #include <net/rtnetlink_api.h>
 #include <linux/rcupdate.h>
 #include <net/sock_api.h>
