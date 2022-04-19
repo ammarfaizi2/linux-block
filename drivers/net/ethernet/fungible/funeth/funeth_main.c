@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 
+#include <linux/etherdevice_api_addr.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/uaccess.h>
 #include <linux/topology.h>
