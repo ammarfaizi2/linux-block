@@ -68,6 +68,7 @@
  *				        - netif_rx() feedback
  */
 
+#include <linux/timekeeping.h>
 #include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <net/xdp_api.h>

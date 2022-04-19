@@ -2,6 +2,7 @@
 // Copyright 2020 IBM Corp.
 // Copyright (c) 2019-2020 Intel Corporation
 
+#include <linux/timekeeping.h>
 #include <linux/ktime_api.h>
 #include <linux/io.h>
 #include <linux/spinlock_api.h>

@@ -6,6 +6,7 @@
  * Copyright 2011 Jonathan Corbet corbet@lwn.net
  * Copyright 2018 Lubomir Rintel <lkundrak@v3.sk>
  */
+#include <linux/timekeeping.h>
 #include <linux/tasklet_api.h>
 #include <linux/of_api.h>
 #include <linux/spinlock_api.h>

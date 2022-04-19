@@ -5,6 +5,7 @@
  * Copyright (C) 2014 Philipp Zabel, Pengutronix
  */
 
+#include <linux/timekeeping.h>
 #include <linux/ktime_api.h>
 #include <linux/mutex_api.h>
 #include <asm/unaligned.h>

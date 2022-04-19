@@ -10,6 +10,7 @@
 */
 #define pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
 
+#include <linux/timekeeping.h>
 #include <linux/sched.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>

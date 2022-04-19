@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/timekeeping.h>
 #include <linux/slab.h>
 
 #include "amdgpu.h"

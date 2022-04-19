@@ -7,6 +7,7 @@
  *	  add static buffer allocation
  */
 
+#include <linux/timekeeping.h>
 #include <linux/of_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/align.h>

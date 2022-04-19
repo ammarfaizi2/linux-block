@@ -4,6 +4,7 @@
  * Authors: Fabien Dessenne <fabien.dessenne@st.com> for STMicroelectronics.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/io.h>

@@ -7,6 +7,7 @@
  */
 #define pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
 
+#include <linux/timekeeping.h>
 #include <linux/dma-mapping.h>
 #include <linux/of_api.h>
 #include <linux/atomic_api.h>

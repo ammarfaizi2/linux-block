@@ -16,6 +16,7 @@
  * Copyright (C) 2021 Daniel Bristot de Oliveira, Red Hat, Inc. <bristot@redhat.com>
  */
 
+#include <linux/timekeeping.h>
 #include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/preempt.h>

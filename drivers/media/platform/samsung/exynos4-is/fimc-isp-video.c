@@ -11,6 +11,7 @@
  * Younghwan Joo <yhwan.joo@samsung.com>.
  */
 
+#include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/bitops.h>

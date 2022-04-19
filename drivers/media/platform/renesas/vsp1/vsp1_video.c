@@ -7,6 +7,7 @@
  * Contact: Laurent Pinchart (laurent.pinchart@ideasonboard.com)
  */
 
+#include <linux/timekeeping.h>
 #include <linux/kref_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
