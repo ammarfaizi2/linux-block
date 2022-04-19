@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/ioport.h>
 #include <linux/time64_api.h>
 #include <linux/slab.h>
 #include <linux/percpu.h>

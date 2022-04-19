@@ -17,6 +17,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/ioport.h>
 #include <linux/string.h>
 #include <linux/of_api.h>
 #include <linux/slab.h>

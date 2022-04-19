@@ -6,6 +6,7 @@
  * Copyright (C) The Asahi Linux Contributors
  */
 
+#include <linux/ioport.h>
 #include <linux/string.h>
 #include <linux/minmax.h>
 #include <linux/mod_devicetable.h>

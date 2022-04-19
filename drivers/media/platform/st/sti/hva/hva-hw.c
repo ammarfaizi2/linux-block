@@ -5,6 +5,7 @@
  *          Hugues Fruchet <hugues.fruchet@st.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/jiffies.h>
 #include <linux/mutex_api.h>
 #include <linux/clk.h>

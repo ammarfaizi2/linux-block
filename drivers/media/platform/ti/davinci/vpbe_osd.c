@@ -8,6 +8,7 @@
  * Murali Karicheri (mkaricheri@gmail.com), Texas Instruments Ltd.
  * - ported to sub device interface
  */
+#include <linux/ioport.h>
 #include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
