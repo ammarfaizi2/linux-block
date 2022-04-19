@@ -9,6 +9,7 @@
  *	Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/of_api.h>
 #include <linux/bitmap.h>
 #include <linux/spinlock_api.h>

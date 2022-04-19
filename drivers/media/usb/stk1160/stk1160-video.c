@@ -10,6 +10,7 @@
  *	<rmthomas--a.t--sciolus.org>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/highmem_extra.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

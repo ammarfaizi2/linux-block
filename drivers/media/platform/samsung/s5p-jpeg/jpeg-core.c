@@ -8,6 +8,7 @@
  * Author: Jacek Anaszewski <j.anaszewski@samsung.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/of_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>

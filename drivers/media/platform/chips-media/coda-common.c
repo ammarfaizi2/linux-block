@@ -7,6 +7,7 @@
  *    Xavier Duret
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/of_api.h>
 #include <linux/idr_api.h>
 #include <linux/spinlock_api.h>

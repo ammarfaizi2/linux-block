@@ -6,6 +6,7 @@
  * Kamil Debski, <k.debski@samsung.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/of_api.h>
 #include <linux/atomic_api.h>
 #include <linux/spinlock_api.h>

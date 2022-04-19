@@ -5,6 +5,7 @@
  *          Hugues Fruchet <hugues.fruchet@st.com>
  */
 
+#include <linux/dma-mapping.h>
 #include <linux/device_api_lock.h>
 
 #include "hva.h"
