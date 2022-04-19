@@ -17,6 +17,7 @@
  *    Copyright (C) 2001-2014 Helge Deller <deller@gmx.de>
  *    Copyright (C) 2002 Randolph Chung <tausq with parisc-linux.org>
  */
+#include <linux/sched/task_flags.h>
 #include <linux/syscalls_api.h>
 #include <linux/sched/thread.h>
 #include <linux/mm_api.h>

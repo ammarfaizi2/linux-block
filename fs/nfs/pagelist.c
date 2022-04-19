@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/wait_bit.h>
 #include <linux/wait_api.h>
 #include <linux/refcount_api.h>

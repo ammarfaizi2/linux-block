@@ -19,6 +19,7 @@
  *   <gilles.quillard@bull.net>
  */
 
+#include <linux/sched/task_flags.h>
 #include <net/sock_api.h>
 #include <net/ipv6_api_sock.h>
 #include <linux/workqueue_api.h>

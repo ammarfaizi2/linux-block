@@ -23,6 +23,7 @@
  * This file handles the architecture-dependent parts of process handling..
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/syscalls_api.h>
 #include <linux/sched/thread.h>
 #include <linux/ptrace_api.h>

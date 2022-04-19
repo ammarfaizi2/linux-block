@@ -8,6 +8,7 @@
  *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/align.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>

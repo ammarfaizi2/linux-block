@@ -15,6 +15,7 @@
  *          (lots of bits borrowed from Ingo Molnar & Andrew Morton)
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/align.h>
 #include <linux/preempt.h>
 #include <linux/writeback_api.h>

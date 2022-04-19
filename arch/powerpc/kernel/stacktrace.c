@@ -8,6 +8,7 @@
  * Copyright 2018 Nick Piggin, Michael Ellerman, IBM Corp.
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/sched/thread.h>
 #include <linux/sched/task.h>
 #include <linux/preempt.h>

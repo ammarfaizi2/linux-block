@@ -10,6 +10,7 @@
  * Copyright (C) 1999-2000 Walt Drummond <drummond@valinux.com>
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/timekeeping.h>
 #include <linux/seqlock_api.h>
 #include <linux/sched/thread_info_api.h>

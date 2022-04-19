@@ -27,6 +27,7 @@
  *             "A Kernel Model for Precision Timekeeping" by Dave Mills
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/preempt.h>

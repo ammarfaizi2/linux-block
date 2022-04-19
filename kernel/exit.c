@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/preempt.h>
 #include <net/sock_api.h>
 #include <linux/wait_api.h>

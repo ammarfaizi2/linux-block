@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/sched/task.h>
 #include <linux/sched.h>
 #include <linux/notifier_api.h>

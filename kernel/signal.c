@@ -11,6 +11,7 @@
  *		to allow signals to be sent reliably.
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/preempt.h>
 #include <linux/wait_bit.h>
 #include <linux/wait_api.h>

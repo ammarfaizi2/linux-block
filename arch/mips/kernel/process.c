@@ -9,6 +9,7 @@
  * Copyright (C) 2004 Thiemo Seufer
  * Copyright (C) 2013  Imagination Technologies Ltd.
  */
+#include <linux/sched/task_flags.h>
 #include <linux/workqueue_api.h>
 #include <linux/string.h>
 #include <linux/sched/thread_info_api.h>

@@ -10,6 +10,7 @@
  * (C) 1999 Dave Airlie, University of Limerick, Ireland <airlied@linux.ie>
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>
 #include <linux/wait_api.h>

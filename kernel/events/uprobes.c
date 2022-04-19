@@ -9,6 +9,7 @@
  * Copyright (C) 2011-2012 Red Hat, Inc., Peter Zijlstra
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/align.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>

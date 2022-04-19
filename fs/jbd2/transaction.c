@@ -14,6 +14,7 @@
  * filesystem).
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/mm_api.h>
 #include <linux/pagemap.h>
 #include <linux/wait_bit.h>

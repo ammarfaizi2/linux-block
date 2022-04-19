@@ -5,6 +5,7 @@
  * Originally from kernel/power/process.c
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched/signal.h>

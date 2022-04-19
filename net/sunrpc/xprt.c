@@ -38,6 +38,7 @@
  *  Transport switch API copyright (C) 2005, Chuck Lever <cel@netapp.com>
  */
 
+#include <linux/sched/task_flags.h>
 #include <net/net_namespace_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>

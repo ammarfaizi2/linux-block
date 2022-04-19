@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/gfp_api.h>
 #include <linux/align.h>
 #include <linux/uio_api.h>

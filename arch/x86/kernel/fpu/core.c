@@ -6,6 +6,7 @@
  *  General FPU state handling cleanups
  *	Gareth Hughes <gareth@valinux.com>, May 2000
  */
+#include <linux/sched/task_flags.h>
 #include <linux/sched/signal.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>

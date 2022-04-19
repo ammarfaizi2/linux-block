@@ -28,6 +28,7 @@
  *  incomplete struct).
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/slab.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

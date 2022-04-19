@@ -5,6 +5,7 @@
  * Copyright (C) 2019 ARM Ltd.
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/mm_api.h>
 #include <linux/lockdep_api.h>

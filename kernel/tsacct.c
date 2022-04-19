@@ -5,6 +5,7 @@
  * Copyright (C) Jay Lan,	<jlan@sgi.com>
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/timekeeping.h>
 #include <linux/sched.h>
 #include <linux/mm_api.h>

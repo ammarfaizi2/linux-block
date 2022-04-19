@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1995-2005 Russell King
  */
+#include <linux/sched/task_flags.h>
 #include <linux/align.h>
 #include <linux/pgtable_api.h>
 #include <linux/mmzone_api.h>

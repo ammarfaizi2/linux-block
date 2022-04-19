@@ -11,6 +11,7 @@
  * Copyright 2007 Jiri Kosina, SUSE Labs.
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mmzone_api.h>

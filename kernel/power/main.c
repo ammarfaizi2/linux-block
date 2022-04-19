@@ -6,6 +6,7 @@
  * Copyright (c) 2003 Open Source Development Lab
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/sysfs.h>

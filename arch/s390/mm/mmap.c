@@ -8,6 +8,7 @@
  * Started by Ingo Molnar <mingo@elte.hu>
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>
 #include <linux/elf-randomize.h>

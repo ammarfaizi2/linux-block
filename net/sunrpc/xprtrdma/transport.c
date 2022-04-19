@@ -49,6 +49,7 @@
  * transport switch. All others are RPC RDMA internal.
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/sysctl.h>

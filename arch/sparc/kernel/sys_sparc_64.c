@@ -6,6 +6,7 @@
  * platform.
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/syscalls_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/sched.h>

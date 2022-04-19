@@ -22,6 +22,7 @@
  *  distribution for more details.
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

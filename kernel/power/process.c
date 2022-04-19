@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/sched/task_flags.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>

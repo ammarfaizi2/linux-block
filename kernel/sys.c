@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/topology.h>
 #include <linux/timekeeping.h>
 #include <linux/syscalls_api.h>
