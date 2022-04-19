@@ -22,6 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/device_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

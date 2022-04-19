@@ -7,6 +7,7 @@
  *
  * Based on driver/iommu/mtk_iommu.c
  */
+#include <linux/device_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>

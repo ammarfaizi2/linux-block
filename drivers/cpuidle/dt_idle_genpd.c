@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "dt-idle-genpd: " fmt
 
+#include <linux/device_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/device.h>
