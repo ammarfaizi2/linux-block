@@ -3,6 +3,7 @@
 #ifndef _FUNETH_TXRX_H
 #define _FUNETH_TXRX_H
 
+#include <linux/interrupt.h>
 #include <linux/netdevice.h>
 #include <linux/u64_stats_sync.h>
 
