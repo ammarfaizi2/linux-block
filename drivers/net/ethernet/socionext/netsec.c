@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 
+#include <linux/skbuff_api_page_pool.h>
 #include <linux/rcupdate.h>
 #include <net/xdp_api.h>
 #include <linux/vmalloc.h>
