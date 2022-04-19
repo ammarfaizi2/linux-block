@@ -13,6 +13,8 @@
 #include <linux/socket.h>
 #include <linux/netdevice.h>
 
+#include <uapi/linux/sockios.h>
+
 typedef __u8			mctp_eid_t;
 
 struct mctp_addr {
