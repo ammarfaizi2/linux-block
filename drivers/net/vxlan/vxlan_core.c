@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/skbuff_api.h>
 #include <net/sock_api.h>
 #include <net/rtnetlink_api.h>
 #include <net/route_api.h>
