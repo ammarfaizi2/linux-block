@@ -6,6 +6,7 @@
  * Copyright (c) 2014 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/capability.h>
 #include <linux/device_api_lock.h>
 #include <linux/timekeeping.h>
 #include <linux/of_api.h>
