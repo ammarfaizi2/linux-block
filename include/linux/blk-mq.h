@@ -2,6 +2,7 @@
 #ifndef BLK_MQ_H
 #define BLK_MQ_H
 
+#include <linux/xarray_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/blkdev.h>
 #include <linux/sbitmap.h>
