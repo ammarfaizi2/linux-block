@@ -17,7 +17,7 @@ static inline int ras_add_daemon_trace(void) { return 0; }
 #endif
 
 #ifdef CONFIG_RAS_CEC
-int __init parse_cec_param(char *str);
+int parse_cec_param(char *str);
 #endif
 
 #ifdef CONFIG_RAS
