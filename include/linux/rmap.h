@@ -5,6 +5,10 @@
  * Declarations for Reverse Mapping functions in mm/rmap.c
  */
 
+#include <linux/mm_api_extra.h>
+#include <linux/pgtable_api.h>
+#include <linux/mm_page_address.h>
+#include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/list.h>
 #include <linux/slab.h>
