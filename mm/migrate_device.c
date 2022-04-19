@@ -4,6 +4,7 @@
  *
  * Originally written by Jérôme Glisse.
  */
+#include <linux/mmap_lock.h>
 #include <linux/huge_mm.h>
 #include <linux/dax.h>
 #include <linux/pagemap.h>

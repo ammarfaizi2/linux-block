@@ -4,6 +4,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/uaccess.h>

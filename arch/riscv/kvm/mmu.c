@@ -6,6 +6,7 @@
  *     Anup Patel <anup.patel@wdc.com>
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/preempt.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/cond_resched.h>

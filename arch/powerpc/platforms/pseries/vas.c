@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "vas: " fmt
 
+#include <linux/mmap_lock.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/sched/cond_resched.h>

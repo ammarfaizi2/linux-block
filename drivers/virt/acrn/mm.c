@@ -9,6 +9,7 @@
  *	Shuo Liu <shuo.a.liu@intel.com>
  */
 
+#include <linux/mmap_lock.h>
 #include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
