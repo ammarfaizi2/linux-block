@@ -16,6 +16,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/swap.h>
 #include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/log2.h>

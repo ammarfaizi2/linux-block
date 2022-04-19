@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/swap.h>
 #include <linux/xarray_api.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>

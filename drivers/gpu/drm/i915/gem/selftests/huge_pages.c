@@ -4,6 +4,7 @@
  * Copyright © 2017 Intel Corporation
  */
 
+#include <linux/swap.h>
 #include <linux/log2.h>
 #include <linux/align.h>
 #include <linux/slab.h>
