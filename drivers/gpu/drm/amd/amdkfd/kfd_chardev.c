@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/pid.h>
 #include <linux/mmap_lock.h>
 #include <linux/log2.h>
 #include <linux/idr_api.h>
