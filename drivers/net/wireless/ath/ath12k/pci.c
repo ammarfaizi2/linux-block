@@ -169,6 +169,12 @@ static inline u32 ath12k_pci_get_window_start(struct ath12k_base *ab,
 	/* If offset lies within CE register range, use 2nd window */
 	else if ((offset ^ HAL_CE_WFSS_CE_REG_BASE) < WINDOW_RANGE_MASK)
 		window_start = 2 * WINDOW_START;
+	/* If offset lies within PCI_BAR_WINDOW0_BASE and within PCI_SOC_PCI_REG_BASE
+	 * use 0th window
+	 */
+	else if (((offset ^ PCI_BAR_WINDOW0_BASE) < WINDOW_RANGE_MASK) &&
+		 !((offset ^ PCI_SOC_PCI_REG_BASE) < PCI_SOC_RANGE_MASK))
+		window_start = 0;
 	else
 		window_start = WINDOW_START;
 
@@ -1091,6 +1097,11 @@ u32 ath12k_pci_read32(struct ath12k_base *ab, u32 offset)
 				       (offset & WINDOW_RANGE_MASK));
 			spin_unlock_bh(&ab_pci->window_lock);
 		} else {
+			if ((!window_start) &&
+			    (offset >= PCI_MHIREGLEN_REG &&
+			     offset <= PCI_MHI_REGION_END))
+				offset = offset - PCI_MHIREGLEN_REG;
+
 			val = ioread32(ab->mem + window_start +
 				       (offset & WINDOW_RANGE_MASK));
 		}
@@ -1116,7 +1127,7 @@ void ath12k_pci_write32(struct ath12k_base *ab, u32 offset, u32 value)
 		mhi_device_get_sync(ab_pci->mhi_ctrl->mhi_dev);
 
 	if (offset < WINDOW_START) {
-		iowrite32(value, ab->mem  + offset);
+		iowrite32(value, ab->mem + offset);
 	} else {
 		if (ab->bus_params.static_window_map)
 			window_start = ath12k_pci_get_window_start(ab, offset);
@@ -1130,6 +1141,11 @@ void ath12k_pci_write32(struct ath12k_base *ab, u32 offset, u32 value)
 				  (offset & WINDOW_RANGE_MASK));
 			spin_unlock_bh(&ab_pci->window_lock);
 		} else {
+			if ((!window_start) &&
+			    (offset >= PCI_MHIREGLEN_REG &&
+			     offset <= PCI_MHI_REGION_END))
+				offset = offset - PCI_MHIREGLEN_REG;
+
 			iowrite32(value, ab->mem + window_start +
 				  (offset & WINDOW_RANGE_MASK));
 		}
