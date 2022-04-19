@@ -18,6 +18,7 @@
  *  IRQ's are in fact implemented a bit like signal handlers for the kernel.
  *  Naturally it's not a 1:1 relation, but there are similarities.
  */
+#include <linux/gfp_api.h>
 #include <linux/irqdesc.h>
 #include <linux/hardirq.h>
 #include <linux/signal.h>
