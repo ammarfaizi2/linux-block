@@ -448,6 +448,7 @@ struct kvm_run {
 #define KVM_SYSTEM_EVENT_NDATA_VALID    (1u << 31)
 			__u32 type;
 			__u32 ndata;
+			__u64 flags;
 			__u64 data[16];
 		} system_event;
 		/* KVM_EXIT_S390_STSI */
