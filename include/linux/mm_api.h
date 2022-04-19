@@ -27,7 +27,10 @@
 #include <linux/gfp_types.h>
 #include <linux/bug.h>
 #include <linux/list.h>
-#include <linux/mmzone_api.h>
+#include <linux/mmzone_types.h>
+#include <asm/mmzone.h>
+#include <linux/nodemask.h>
+#include <linux/string.h>
 #include <linux/rbtree.h>
 #include <linux/atomic.h>
 #include <linux/debug_locks.h>

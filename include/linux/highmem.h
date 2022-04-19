@@ -12,6 +12,10 @@
 #include <linux/mm.h>
 #include <linux/uaccess.h>
 
+#ifdef CONFIG_HIGHMEM
+# include <asm/highmem.h>
+#endif
+
 /* This memory layout mode's definitions are full of layering violations & require this header: */
 #ifdef CONFIG_SPARSEMEM
 #include <linux/mm_api.h>

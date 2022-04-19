@@ -2,12 +2,14 @@
 #ifndef _LINUX_VMSTAT_H
 #define _LINUX_VMSTAT_H
 
+#include <linux/mmzone_api.h>
 #include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/cpumask_api.h>
 #include <linux/mm_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/vm_event_item.h>
+#include <linux/smp_api.h>
 
 extern int sysctl_stat_interval;
 
