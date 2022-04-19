@@ -2,6 +2,7 @@
 /* Copyright (C) 2018 Netronome Systems, Inc */
 /* Copyright (C) 2021 Corigine, Inc */
 
+#include <linux/if_vlan_api.h>
 #include <linux/netdevice_api_prefetch.h>
 #include <net/xdp_api.h>
 #include <linux/u64_stats_sync_api.h>
