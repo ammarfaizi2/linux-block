@@ -2,6 +2,7 @@
 #define KMSG_COMPONENT "zpci"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/io_extra.h>
 #include <linux/slab.h>
 #include <linux/irqdesc.h>
 #include <linux/io.h>
