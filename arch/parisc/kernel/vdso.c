@@ -7,6 +7,7 @@
  *  Author(s): Martin Schwidefsky (schwidefsky@de.ibm.com)
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>
 #include <linux/kernel.h>

@@ -9,6 +9,7 @@
 
 #define DISABLE_BRANCH_PROFILING
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <asm/processor_api.h>
 #include <linux/linkage.h>

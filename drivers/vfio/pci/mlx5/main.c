@@ -3,6 +3,7 @@
  * Copyright (c) 2021-2022, NVIDIA CORPORATION & AFFILIATES. All rights reserved
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/highmem.h>
 #include <linux/mm_page_address.h>

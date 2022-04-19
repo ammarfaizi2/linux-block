@@ -9,6 +9,7 @@
  * firmware with the help of the Platform Firmware Runtime Telemetry
  * interface.
  */
+#include <linux/pgtable_api.h>
 #include <linux/slab.h>
 #include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>

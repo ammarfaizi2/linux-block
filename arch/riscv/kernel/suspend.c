@@ -4,6 +4,7 @@
  * Copyright (c) 2022 Ventana Micro Systems Inc.
  */
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/ftrace.h>
 #include <asm/csr.h>
