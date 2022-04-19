@@ -8,6 +8,7 @@
  * which are in turn based on sparc64 and x86 code.
  */
 
+#include <linux/perf_event_api.h>
 #include <linux/percpu.h>
 #include <linux/cpumask_api.h>
 #include <linux/slab.h>

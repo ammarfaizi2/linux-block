@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "nvdimm_pmu: " fmt
 
+#include <linux/perf_event_api.h>
 #include <linux/cpuhotplug.h>
 #include <linux/cpumask_api.h>
 #include <linux/slab.h>

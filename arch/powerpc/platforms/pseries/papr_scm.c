@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt)	"papr-scm: " fmt
 
+#include <linux/perf_event_api.h>
 #include <linux/uuid_api.h>
 #include <linux/topology.h>
 #include <linux/sysfs.h>
