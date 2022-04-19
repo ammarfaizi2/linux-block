@@ -5,6 +5,7 @@
  * Copyright (c) 2015 Measurement-Specialties
  */
 
+#include <linux/i2c.h>
 #include <linux/sysfs.h>
 #include <linux/printk.h>
 #include <linux/mutex_api.h>

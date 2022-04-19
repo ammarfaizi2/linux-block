@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/i2c.h>
 #include <linux/sysfs.h>
 #include <linux/kmod.h>
 #include <linux/module.h>

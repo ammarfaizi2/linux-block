@@ -10,6 +10,7 @@
  * for more details.
  */
 
+#include <linux/i2c.h>
 #include <linux/io.h>
 #include <linux/device_api.h>
 #include <linux/module.h>

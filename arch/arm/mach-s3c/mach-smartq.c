@@ -2,6 +2,7 @@
 //
 // Copyright (C) 2010 Maurus Cuelenaere
 
+#include <linux/i2c.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/fb.h>

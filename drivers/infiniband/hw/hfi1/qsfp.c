@@ -3,6 +3,7 @@
  * Copyright(c) 2015, 2016 Intel Corporation.
  */
 
+#include <linux/i2c.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>

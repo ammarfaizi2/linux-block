@@ -9,6 +9,7 @@
  *  Copyright:	Jürgen Schindele
  */
 
+#include <linux/i2c.h>
 #include <linux/irqflags.h>
 #include <linux/init.h>
 #include <linux/kernel.h>

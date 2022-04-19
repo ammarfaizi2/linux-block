@@ -14,6 +14,7 @@
  *  http://www.meas-spec.com/downloads/MS8607-02BA01.pdf
  */
 
+#include <linux/i2c.h>
 #include <linux/mutex_api.h>
 #include <linux/init.h>
 #include <linux/device.h>

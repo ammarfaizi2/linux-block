@@ -4,6 +4,7 @@
  * Copyright 2007-2012 Solarflare Communications Inc.
  */
 
+#include <linux/i2c.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api.h>
 #include <linux/device_api_lock.h>

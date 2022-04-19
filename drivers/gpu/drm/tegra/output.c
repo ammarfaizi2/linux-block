@@ -4,6 +4,7 @@
  * Copyright (C) 2012 NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/i2c.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>

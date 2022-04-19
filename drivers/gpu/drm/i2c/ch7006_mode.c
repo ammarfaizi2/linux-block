@@ -24,6 +24,8 @@
  *
  */
 
+#include <linux/i2c.h>
+
 #include "ch7006_priv.h"
 
 const char * const ch7006_tv_norm_names[] = {

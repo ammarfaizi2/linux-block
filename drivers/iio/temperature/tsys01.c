@@ -8,6 +8,7 @@
  *  http://www.meas-spec.com/downloads/TSYS01_Digital_Temperature_Sensor.pdf
  */
 
+#include <linux/i2c.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/iio/iio.h>

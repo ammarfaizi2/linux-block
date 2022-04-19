@@ -5,6 +5,7 @@
  * Copyright (C) 2008 Robert Jarzmik
  */
 
+#include <linux/i2c.h>
 #include <linux/ioport.h>
 #include <linux/io_extra.h>
 #include <linux/kernel.h>

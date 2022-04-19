@@ -23,6 +23,7 @@
  */
 #include "mxms.h"
 
+#include <linux/i2c.h>
 #include <linux/slab.h>
 #include <core/option.h>
 #include <subdev/bios.h>

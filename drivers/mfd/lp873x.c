@@ -13,6 +13,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/i2c.h>
 #include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/mfd/core.h>

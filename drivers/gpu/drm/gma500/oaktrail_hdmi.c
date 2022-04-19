@@ -24,6 +24,7 @@
  *	Li Peng <peng.li@intel.com>
  */
 
+#include <linux/i2c.h>
 #include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/io.h>

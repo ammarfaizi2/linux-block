@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/i2c.h>
 #include <linux/mutex_api.h>
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"

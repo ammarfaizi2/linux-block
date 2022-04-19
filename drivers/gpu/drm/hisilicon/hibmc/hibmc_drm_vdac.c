@@ -11,6 +11,7 @@
  *	Jianhua Li <lijianhua@huawei.com>
  */
 
+#include <linux/i2c.h>
 #include <linux/slab.h>
 #include <linux/io.h>
 #include <linux/device_api.h>

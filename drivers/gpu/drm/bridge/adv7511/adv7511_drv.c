@@ -5,6 +5,7 @@
  * Copyright 2012 Analog Devices Inc.
  */
 
+#include <linux/i2c.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/sched.h>

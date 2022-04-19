@@ -21,6 +21,7 @@
  *
  * Authors: Ben Skeggs
  */
+#include <linux/i2c.h>
 #include <linux/delay.h>
 #include <subdev/bios.h>
 #include <subdev/bios/bit.h>

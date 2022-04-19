@@ -5,6 +5,7 @@
  * Copyright (C) 2010-2011 Marek Vasut <marek.vasut@gmail.com>
  */
 
+#include <linux/i2c.h>
 #include <linux/io_extra.h>
 #include <linux/platform_device.h>
 #include <linux/delay.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2008      Janne Grunau (j@jannau.net)
  */
 
+#include <linux/i2c.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/sched.h>

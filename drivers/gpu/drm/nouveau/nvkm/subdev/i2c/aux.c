@@ -22,6 +22,7 @@
  * Authors: Ben Skeggs
  */
 
+#include <linux/i2c.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/string_helpers.h>

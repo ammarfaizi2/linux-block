@@ -8,6 +8,7 @@
 //
 // This driver is based on max8997.c
 
+#include <linux/i2c.h>
 #include <linux/pm_wakeup.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>

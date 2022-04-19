@@ -7,6 +7,7 @@
  *		  2007-2008 Stefan Schmidt <stefan@datenfreihafen.org>
  */
 
+#include <linux/i2c.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>

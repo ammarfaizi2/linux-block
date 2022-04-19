@@ -4,6 +4,7 @@
  *
  * Modified from board-generic.c
  */
+#include <linux/i2c.h>
 #include <linux/ioport.h>
 #include <linux/clkdev.h>
 #include <linux/irq.h>

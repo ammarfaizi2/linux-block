@@ -4,6 +4,7 @@
  * Copyright (c) 2019-2020. Linaro Limited.
  */
 
+#include <linux/i2c.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/sysfs.h>

@@ -18,6 +18,7 @@
  */
 
 
+#include <linux/i2c.h>
 #include <media/dvbdev.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>

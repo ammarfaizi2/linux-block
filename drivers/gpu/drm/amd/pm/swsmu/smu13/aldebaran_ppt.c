@@ -23,6 +23,7 @@
 
 #define SWSMU_CODE_LAYER_L2
 
+#include <linux/i2c.h>
 #include <linux/timekeeping.h>
 #include <linux/sysfs.h>
 #include <linux/slab.h>

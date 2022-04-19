@@ -8,6 +8,7 @@
  *
  * Author: Andrey Smirnov <andrew.smirnov@gmail.com>
  */
+#include <linux/i2c.h>
 #include <linux/module.h>
 
 #include <linux/mfd/si476x-core.h>

@@ -6,6 +6,8 @@
  *
  * This file contains functions for (de-)initializing an I2C adapter.
  */
+#include <linux/i2c.h>
+
 #include "dvb-usb-common.h"
 
 int dvb_usb_i2c_init(struct dvb_usb_device *d)

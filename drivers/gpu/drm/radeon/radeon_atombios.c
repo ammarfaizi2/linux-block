@@ -24,6 +24,7 @@
  *          Alex Deucher
  */
 
+#include <linux/i2c.h>
 #include <linux/slab.h>
 #include <linux/pci.h>
 

@@ -6,6 +6,7 @@
  *
  * Kuninori Morimoto <morimoto.kuninori@renesas.com>
  */
+#include <linux/i2c.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <asm/clock.h>

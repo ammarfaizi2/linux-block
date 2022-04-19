@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2010 Texas Instruments Inc
  */
+#include <linux/i2c.h>
 #include <linux/device/bus.h>
 #include <linux/mutex_api.h>
 #include <linux/kernel.h>

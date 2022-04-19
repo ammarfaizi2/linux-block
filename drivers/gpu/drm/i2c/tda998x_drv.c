@@ -4,6 +4,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/i2c.h>
 #include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/workqueue_api.h>

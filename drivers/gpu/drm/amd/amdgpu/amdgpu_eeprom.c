@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/i2c.h>
 #include <linux/delay.h>
 
 #include "amdgpu_eeprom.h"

@@ -16,6 +16,7 @@
  *             rework for upstream merge
  */
 
+#include <linux/i2c.h>
 #include <linux/ioport.h>
 #include <linux/serial_8250.h>
 #include <linux/dm9000.h>

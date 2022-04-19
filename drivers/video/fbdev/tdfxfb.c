@@ -64,6 +64,7 @@
  *
  */
 
+#include <linux/i2c.h>
 #include <linux/vmalloc.h>
 #include <linux/math.h>
 #include <linux/jiffies.h>

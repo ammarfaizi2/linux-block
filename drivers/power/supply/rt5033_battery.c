@@ -6,6 +6,7 @@
  * Author: Beomho Seo <beomho.seo@samsung.com>
  */
 
+#include <linux/i2c.h>
 #include <linux/device_api_lock.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>

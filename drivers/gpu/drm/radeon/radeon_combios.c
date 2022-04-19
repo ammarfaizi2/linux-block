@@ -25,6 +25,7 @@
  *          Alex Deucher
  */
 
+#include <linux/i2c.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/delay.h>

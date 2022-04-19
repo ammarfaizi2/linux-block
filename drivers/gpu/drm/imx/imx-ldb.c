@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Sascha Hauer, Pengutronix
  */
 
+#include <linux/i2c.h>
 #include <linux/align.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>

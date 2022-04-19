@@ -9,6 +9,7 @@
  * Based on hx4700.c, spitz.c and others.
  */
 
+#include <linux/i2c.h>
 #include <linux/vmalloc.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

@@ -11,6 +11,7 @@
  */
 
 
+#include <linux/i2c.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
