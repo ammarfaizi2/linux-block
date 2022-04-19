@@ -7,6 +7,8 @@
 #ifndef _MHI_INT_H
 #define _MHI_INT_H
 
+#include <linux/tasklet_types.h>
+
 #include "../common.h"
 
 extern struct bus_type mhi_bus_type;
