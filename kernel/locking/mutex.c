@@ -18,6 +18,7 @@
  *
  * Also see Documentation/locking/mutex-design.rst.
  */
+#include <linux/semaphore.h>
 #include <linux/preempt.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/thread_info_api.h>
