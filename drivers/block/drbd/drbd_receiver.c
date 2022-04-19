@@ -11,6 +11,7 @@
  */
 
 
+#include <linux/bvec_api.h>
 #include <linux/align.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

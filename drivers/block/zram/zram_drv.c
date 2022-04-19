@@ -15,6 +15,7 @@
 #define KMSG_COMPONENT "zram"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/bvec_api.h>
 #include <linux/align.h>
 #include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
