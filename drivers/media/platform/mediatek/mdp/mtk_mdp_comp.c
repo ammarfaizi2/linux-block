@@ -4,6 +4,7 @@
  * Author: Ming Hsiu Tsai <minghsiu.tsai@mediatek.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/device.h>
 #include <linux/of.h>

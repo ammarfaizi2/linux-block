@@ -4,6 +4,7 @@
  * Author: Yunfei Dong <yunfei.dong@mediatek.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>

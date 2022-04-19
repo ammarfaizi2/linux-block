@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright Axis Communications AB
 
+#include <linux/of_api.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/module.h>

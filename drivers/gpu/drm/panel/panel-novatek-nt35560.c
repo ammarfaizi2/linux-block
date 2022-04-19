@@ -13,6 +13,7 @@
  * Based on code and know-how from Johan Olson and Joakim Wesslen
  * Copyright (C) Sony Ericsson Mobile Communications 2010
  */
+#include <linux/of_api.h>
 #include <linux/minmax.h>
 #include <linux/string.h>
 #include <linux/device_api_lock.h>

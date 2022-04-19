@@ -7,6 +7,7 @@
  * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
  */
 
+#include <linux/of_api.h>
 #include <linux/string.h>
 #include <linux/sysfs.h>
 #include <linux/mutex_api.h>

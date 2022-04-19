@@ -7,6 +7,7 @@
  */
 #define pr_fmt(fmt) "%s:%d " fmt, __func__, __LINE__
 
+#include <linux/of_api.h>
 #include <linux/atomic_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>

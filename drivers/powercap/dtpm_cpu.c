@@ -16,6 +16,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/of_api.h>
 #include <linux/sched/topology.h>
 #include <linux/sched/cpufreq.h>
 #include <linux/percpu.h>

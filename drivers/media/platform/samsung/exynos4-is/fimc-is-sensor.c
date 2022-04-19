@@ -6,6 +6,8 @@
  * Author: Sylwester Nawrocki <s.nawrocki@samsung.com>
  */
 
+#include <linux/of_api.h>
+
 #include "fimc-is-sensor.h"
 
 static const struct sensor_drv_data s5k6a3_drvdata = {

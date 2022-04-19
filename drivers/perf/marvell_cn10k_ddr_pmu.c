@@ -4,6 +4,7 @@
  * Copyright (C) 2021 Marvell.
  */
 
+#include <linux/of_api.h>
 #include <linux/cpumask_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/sysfs.h>

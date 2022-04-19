@@ -4,6 +4,7 @@
  * Copyright (c) 2010-2020, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/of_api.h>
 #include <linux/bitmap.h>
 #include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>

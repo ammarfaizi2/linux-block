@@ -30,6 +30,7 @@
  * authorization from the copyright holder(s) and author(s).
  */
 
+#include <linux/of_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>

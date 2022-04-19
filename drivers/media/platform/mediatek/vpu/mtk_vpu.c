@@ -3,6 +3,7 @@
 * Copyright (c) 2016 MediaTek Inc.
 * Author: Andrew-CT Chen <andrew-ct.chen@mediatek.com>
 */
+#include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/fs_api.h>
 #include <linux/jiffies.h>

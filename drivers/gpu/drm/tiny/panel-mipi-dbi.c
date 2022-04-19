@@ -5,6 +5,7 @@
  * Copyright 2022 Noralf Trønnes
  */
 
+#include <linux/of_api.h>
 #include <linux/string.h>
 #include <linux/device_api_lock.h>
 #include <linux/backlight.h>

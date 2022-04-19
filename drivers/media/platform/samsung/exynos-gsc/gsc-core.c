@@ -6,6 +6,7 @@
  * Samsung EXYNOS5 SoC series G-Scaler driver
  */
 
+#include <linux/of_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/mutex_api.h>

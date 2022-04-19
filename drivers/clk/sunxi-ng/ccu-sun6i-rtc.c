@@ -3,6 +3,7 @@
 // Copyright (c) 2021 Samuel Holland <samuel@sholland.org>
 //
 
+#include <linux/of_api.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/io.h>

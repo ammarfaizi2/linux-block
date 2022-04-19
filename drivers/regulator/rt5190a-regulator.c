@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 
+#include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <dt-bindings/regulator/richtek,rt5190a-regulator.h>
 #include <linux/bits.h>
