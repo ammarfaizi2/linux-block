@@ -4,6 +4,7 @@
  * Author: Christoffer Dall <c.dall@virtualopensystems.com>
  */
 
+#include <linux/rbtree_api.h>
 #include <linux/vmalloc.h>
 #include <linux/srcu.h>
 #include <linux/spinlock_api.h>
