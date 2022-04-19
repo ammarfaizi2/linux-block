@@ -4,6 +4,7 @@
 #ifndef _NFP_NET_DP_
 #define _NFP_NET_DP_
 
+#include <linux/skbuff_api.h>
 #include "nfp_net.h"
 
 static inline dma_addr_t nfp_net_dma_map_rx(struct nfp_net_dp *dp, void *frag)
