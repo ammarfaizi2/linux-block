@@ -7,6 +7,7 @@
  * Author: Peter Griffin <peter.griffin@linaro.org>
  *
  */
+#include <linux/stat.h>
 #include <linux/string.h>
 #include <linux/device_api_lock.h>
 #include <linux/debugfs.h>
