@@ -19,6 +19,7 @@
  *  Assorted race fixes, rewrite of ext4_get_block() by Al Viro, 2000
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/xarray_api.h>
 #include <linux/writeback_api.h>
 #include <linux/wait_bit.h>

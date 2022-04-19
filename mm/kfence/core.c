@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "kfence: " fmt
 
+#include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

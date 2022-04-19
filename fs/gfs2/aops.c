@@ -4,6 +4,7 @@
  * Copyright (C) 2004-2008 Red Hat, Inc.  All rights reserved.
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/writeback_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pagemap_api_readahead.h>

@@ -38,6 +38,7 @@
  */
 
 #include "ubifs.h"
+#include <linux/mm_page_address.h>
 #include <linux/writeback_api.h>
 #include <linux/time64_api.h>
 #include <linux/syscalls_api.h>

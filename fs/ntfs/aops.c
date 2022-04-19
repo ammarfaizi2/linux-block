@@ -6,6 +6,7 @@
  * Copyright (c) 2002 Richard Russon
  */
 
+#include <linux/mm_page_address.h>
 #include <linux/writeback_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
