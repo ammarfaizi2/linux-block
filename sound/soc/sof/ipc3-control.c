@@ -7,6 +7,8 @@
 //
 //
 
+#include <linux/uaccess.h>
+
 #include "sof-priv.h"
 #include "sof-audio.h"
 #include "ipc3-ops.h"

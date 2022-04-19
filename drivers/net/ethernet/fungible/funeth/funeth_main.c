@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 
+#include <linux/uaccess.h>
 #include <linux/topology.h>
 #include <linux/seqlock_api.h>
 #include <linux/rcupdate.h>

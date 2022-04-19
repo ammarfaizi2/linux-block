@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2017 - 2018 Covalent IO, Inc. http://covalent.io */
 
+#include <linux/uaccess.h>
 #include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/preempt.h>

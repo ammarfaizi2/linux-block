@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #define pr_fmt(fmt) "SMP alternatives: " fmt
 
+#include <linux/uaccess.h>
 #include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/pgtable_api.h>

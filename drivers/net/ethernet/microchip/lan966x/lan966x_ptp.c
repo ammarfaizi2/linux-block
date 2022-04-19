@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 
+#include <linux/uaccess.h>
 #include <linux/time64_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ktime_api.h>
