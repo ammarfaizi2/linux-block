@@ -8,6 +8,7 @@
  * Copyright (C) 2021 Tianjia Zhang <tianjia.zhang@linux.alibaba.com>
  */
 
+#include <linux/string.h>
 #include <linux/module.h>
 #include <asm/unaligned.h>
 #include <crypto/sm3.h>
