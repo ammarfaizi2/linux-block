@@ -6,6 +6,7 @@
 //          Amadeusz Slawinski <amadeuszx.slawinski@linux.intel.com>
 //
 
+#include <linux/idr_api.h>
 #include <linux/mutex_api.h>
 #include <linux/firmware.h>
 #include <linux/slab.h>

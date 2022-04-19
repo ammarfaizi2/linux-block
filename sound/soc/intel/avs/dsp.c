@@ -6,6 +6,7 @@
 //          Amadeusz Slawinski <amadeuszx.slawinski@linux.intel.com>
 //
 
+#include <linux/idr_api.h>
 #include <linux/module.h>
 #include <sound/hdaudio_ext.h>
 #include "avs.h"

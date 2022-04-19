@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/idr_api.h>
 #include <linux/string.h>
 #include <linux/kobject_api.h>
 #include <linux/device_api_lock.h>
