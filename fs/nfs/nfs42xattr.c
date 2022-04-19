@@ -7,6 +7,7 @@
  *
  * Author: Frank van der Linden <fllinden@amazon.com>
  */
+#include <linux/jhash.h>
 #include <linux/vfs_pressure.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

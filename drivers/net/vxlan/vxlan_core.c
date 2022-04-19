@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/jhash.h>
 #include <linux/ipv6.h>
 #include <linux/if_ether_api.h>
 #include <linux/spinlock_api.h>

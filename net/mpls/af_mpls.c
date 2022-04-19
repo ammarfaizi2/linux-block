@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/jhash.h>
 #include <net/rtnetlink_api.h>
 #include <net/route_api.h>
 #include <net/net_namespace_api.h>

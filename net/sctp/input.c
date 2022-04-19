@@ -26,6 +26,7 @@
  *    Ardelle Fan <ardelle.fan@intel.com>
  */
 
+#include <linux/jhash.h>
 #include <net/sock_api.h>
 #include <net/sock_api_extra.h>
 #include <linux/spinlock_api.h>

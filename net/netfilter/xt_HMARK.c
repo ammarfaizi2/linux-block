@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/jhash.h>
 #include <net/ipv6_api.h>
 #include <linux/ratelimit.h>
 #include <linux/module.h>

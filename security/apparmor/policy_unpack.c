@@ -13,6 +13,7 @@
  * All policy is validated before it is used.
  */
 
+#include <linux/jhash.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

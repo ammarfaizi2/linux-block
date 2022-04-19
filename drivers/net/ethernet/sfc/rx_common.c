@@ -9,6 +9,7 @@
  */
 
 #include "net_driver.h"
+#include <linux/jhash.h>
 #include <net/xdp_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
