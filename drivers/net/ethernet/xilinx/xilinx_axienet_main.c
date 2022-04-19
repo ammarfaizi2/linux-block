@@ -22,6 +22,7 @@
  *  - Add support for extended VLAN support.
  */
 
+#include <linux/hardirq.h>
 #include <linux/workqueue_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/rtnetlink.h>
