@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: ISC
 /* Copyright (C) 2020 MediaTek Inc. */
 
+#include <linux/rcupdate.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/etherdevice_api.h>
 #include <asm/unaligned.h>

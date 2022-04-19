@@ -7,6 +7,7 @@
  * Copyrignt (C) 2006 Michael Ellerman, IBM Corp
  */
 
+#include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/timekeeping.h>
 #include <linux/sched/thread_info_api.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/siphash_api.h>
 #include <linux/rculist.h>

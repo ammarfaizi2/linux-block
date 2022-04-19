@@ -25,6 +25,7 @@
  * Please read Documentation/core-api/workqueue.rst for details.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/sched/task_flags.h>
 #include <linux/preempt.h>

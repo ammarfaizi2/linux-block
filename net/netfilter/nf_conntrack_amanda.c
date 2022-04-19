@@ -5,6 +5,7 @@
  * based on HW's ip_conntrack_irc.c as well as other modules
  * (C) 2006 Patrick McHardy <kaber@trash.net>
  */
+#include <linux/rcupdate.h>
 #include <linux/net.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

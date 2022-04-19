@@ -77,6 +77,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <net/socket_alloc.h>
 #include <net/sock_api.h>

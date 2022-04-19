@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Tom Herbert <tom@herbertland.com>
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <linux/workqueue_api.h>

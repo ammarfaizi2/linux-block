@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <linux/refcount_api.h>
 #include <kunit/test.h>

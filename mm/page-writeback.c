@@ -12,6 +12,7 @@
  *		Initial version
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/irqflags.h>
 #include <linux/preempt.h>

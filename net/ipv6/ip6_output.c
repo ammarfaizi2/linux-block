@@ -22,6 +22,7 @@
  *				for datagram xmit
  */
 
+#include <linux/rcupdate.h>
 #include <linux/atomic_api.h>
 #include <net/sock_api.h>
 #include <net/sock_api_extra.h>

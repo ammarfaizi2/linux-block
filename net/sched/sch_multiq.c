@@ -5,6 +5,7 @@
  * Author: Alexander Duyck <alexander.h.duyck@intel.com>
  */
 
+#include <linux/rcupdate.h>
 #include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <linux/netdevice_api.h>

@@ -11,6 +11,7 @@
  *  Copyright (C) 1999 Paul `Rusty' Russell & Michael J. Neuling
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/rcupdate.h>
 #include <net/net_namespace_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>

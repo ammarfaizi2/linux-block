@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <linux/rcupdate.h>
 #include <net/route_api.h>
 #include <net/netlink_api.h>
 #include <net/neighbour_api_seqlock.h>

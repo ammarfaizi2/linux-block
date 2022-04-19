@@ -5,6 +5,7 @@
  * Copyright (c) 2020, Linaro Ltd.
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>

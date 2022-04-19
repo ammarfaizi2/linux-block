@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rcupdate.h>
 #include <uapi/linux/stat.h>
 #include <net/sock_api.h>
 #include <net/net_namespace_api.h>

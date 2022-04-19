@@ -38,6 +38,7 @@
  *
  */
 
+#include <linux/rcupdate.h>
 #include <linux/uaccess.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

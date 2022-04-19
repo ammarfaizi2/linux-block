@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/rcupdate.h>
 #include <linux/kdev_t.h>
 #include <linux/fs_api_sb.h>
 #include <linux/workqueue_api.h>

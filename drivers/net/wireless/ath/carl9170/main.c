@@ -37,6 +37,7 @@
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/device_api_lock.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>

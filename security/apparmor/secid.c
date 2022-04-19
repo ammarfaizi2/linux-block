@@ -10,6 +10,7 @@
  * is replaced it receives the secid of the label it is replacing.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/idr_api.h>
 #include <linux/errno.h>

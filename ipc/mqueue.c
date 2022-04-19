@@ -13,6 +13,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/fs_api_sb.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>

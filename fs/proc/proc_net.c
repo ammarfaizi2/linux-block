@@ -9,6 +9,7 @@
  *  proc net directory handling functions
  */
 
+#include <linux/rcupdate.h>
 #include <net/net_namespace_api.h>
 #include <linux/seq_file_net.h>
 #include <linux/pid.h>

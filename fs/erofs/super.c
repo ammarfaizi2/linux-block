@@ -4,6 +4,7 @@
  *             https://www.huawei.com/
  * Copyright (C) 2021, Alibaba Cloud
  */
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/kdev_t.h>
 #include <linux/mm_page_address.h>

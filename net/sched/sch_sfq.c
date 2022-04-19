@@ -5,6 +5,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <net/sch_generic_api.h>
 #include <net/netlink_api.h>

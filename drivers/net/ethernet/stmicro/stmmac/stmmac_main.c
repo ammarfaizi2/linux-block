@@ -14,6 +14,7 @@
 	https://bugzilla.stlinux.com/
 *******************************************************************************/
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <net/xdp_api.h>
 #include <linux/workqueue_api.h>

@@ -6,6 +6,7 @@
  */
 
 
+#include <linux/rcupdate.h>
 #include <net/udp_api_table.h>
 #include <net/udp_api_sock.h>
 #include <net/sock_api.h>

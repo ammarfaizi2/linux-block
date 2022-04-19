@@ -6,6 +6,7 @@
  * Copyright (C) 2002  Christoph Hellwig
  */
 
+#include <linux/rcupdate.h>
 #include <linux/huge_mm.h>
 #include <linux/xarray_api.h>
 #include <linux/uio_api.h>

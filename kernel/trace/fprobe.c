@@ -4,6 +4,7 @@
  */
 #define pr_fmt(fmt) "fprobe: " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/cpumask_api.h>
 #include <linux/err.h>
 #include <linux/fprobe.h>

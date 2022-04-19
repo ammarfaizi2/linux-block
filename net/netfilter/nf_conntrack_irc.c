@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/net.h>
 #include <linux/module.h>

@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/rcupdate.h>
 #include <linux/timekeeping.h>
 #include <linux/refcount_api.h>
 #include <linux/slab.h>

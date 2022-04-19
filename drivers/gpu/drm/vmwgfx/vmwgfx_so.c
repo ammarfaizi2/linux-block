@@ -24,6 +24,7 @@
  *
  **************************************************************************/
 
+#include <linux/rcupdate.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep.h>

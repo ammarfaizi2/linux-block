@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2017-2018 Mellanox Technologies. All rights reserved */
 
+#include <linux/rcupdate.h>
 #include <linux/jhash.h>
 #include <linux/refcount_api.h>
 #include <linux/idr_api.h>

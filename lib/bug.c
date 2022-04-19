@@ -41,6 +41,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/rcupdate.h>
 #include <linux/list.h>
 #include <linux/module.h>
 #include <linux/kernel.h>

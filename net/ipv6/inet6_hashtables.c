@@ -10,6 +10,7 @@
  *		by Arnaldo Carvalho de Melo <acme@mandriva.com>
  */
 
+#include <linux/rcupdate.h>
 #include <net/timewait_sock.h>
 #include <net/sock_api.h>
 #include <net/l3mdev.h>

@@ -9,6 +9,7 @@
 #include "pwrseqcmd.h"
 
 #include "btcoexist/rtl_btc.h"
+#include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

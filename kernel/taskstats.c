@@ -6,6 +6,7 @@
  *           (C) Balbir Singh,   IBM Corp. 2006
  */
 
+#include <linux/rcupdate.h>
 #include <net/netlink_api.h>
 #include <linux/topology.h>
 #include <linux/timekeeping.h>

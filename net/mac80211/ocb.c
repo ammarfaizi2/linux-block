@@ -8,6 +8,7 @@
  * Funded by: Volkswagen Group Research
  */
 
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>

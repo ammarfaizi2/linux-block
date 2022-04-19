@@ -8,6 +8,7 @@
  *   Author(s): Michael A. Halcrow <mahalcro@us.ibm.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/dcache.h>
 #include <linux/namei.h>
 #include <linux/mount.h>

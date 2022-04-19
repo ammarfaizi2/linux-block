@@ -5,6 +5,7 @@
  * Copyright (c) 2015 David Ahern <dsa@cumulusnetworks.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>

@@ -2,6 +2,7 @@
 /*
  * Functions related to sysfs handling
  */
+#include <linux/rcupdate.h>
 #include <linux/srcu.h>
 #include <linux/workqueue_api.h>
 #include <linux/sysfs.h>

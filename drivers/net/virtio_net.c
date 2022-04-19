@@ -4,6 +4,7 @@
  * Copyright 2007 Rusty Russell <rusty@rustcorp.com.au> IBM Corporation
  */
 //#define DEBUG
+#include <linux/rcupdate.h>
 #include <net/xdp_api.h>
 #include <net/sock_types.h>
 #include <linux/workqueue_api.h>

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/rcupdate.h>
 #include <net/net_namespace_api.h>
 #include <linux/timekeeping.h>
 #include <linux/seq_file_net.h>

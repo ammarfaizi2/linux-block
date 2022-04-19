@@ -21,6 +21,7 @@
  *			fixed requeue routine
  *		and many others. thanks.
  */
+#include <linux/rcupdate.h>
 #include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <linux/workqueue_api.h>

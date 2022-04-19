@@ -19,6 +19,7 @@
  *  Assorted race fixes, rewrite of ext4_get_block() by Al Viro, 2000
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/kdev_t.h>
 #include <linux/mm_page_address.h>

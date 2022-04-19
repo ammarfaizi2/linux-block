@@ -12,6 +12,7 @@
  *
  */
 
+#include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/workqueue_api.h>
 #include <linux/rculist.h>

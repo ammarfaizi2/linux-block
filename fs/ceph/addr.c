@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/rcupdate.h>
 #include <linux/huge_mm.h>
 #include <linux/writeback_api.h>
 #include <linux/wait_api.h>

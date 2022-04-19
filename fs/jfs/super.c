@@ -4,6 +4,7 @@
  *   Portions Copyright (C) Christoph Hellwig, 2001-2002
  */
 
+#include <linux/rcupdate.h>
 #include <linux/fs_api_sb.h>
 #include <linux/rwsem_api.h>
 #include <linux/pagemap.h>

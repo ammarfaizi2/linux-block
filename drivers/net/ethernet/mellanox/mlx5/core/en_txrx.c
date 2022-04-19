@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/netdevice_api.h>
 #include <linux/dim.h>
 #include <linux/cpumask_api.h>

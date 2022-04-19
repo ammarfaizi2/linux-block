@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <asm/unwind_hints.h>
 #include <linux/sched/thread_info_api.h>

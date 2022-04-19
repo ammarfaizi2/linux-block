@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/rcupdate.h>
 #include <linux/skbuff_api_frag.h>
 #include <net/xdp_api.h>
 #include <net/sock_api.h>

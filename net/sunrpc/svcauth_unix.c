@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/rcupdate.h>
 #include <net/ipv6_api.h>
 #include <linux/sunrpc/debug.h>
 #include <linux/spinlock_api.h>

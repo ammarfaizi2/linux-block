@@ -4,6 +4,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/rcupdate.h>
 #include <net/sch_generic_api.h>
 #include <net/neighbour_api_seqlock.h>
 #include <net/neighbour_api.h>

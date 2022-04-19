@@ -10,6 +10,7 @@
  *
  ******************************************************************************/
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/uio_api.h>
 #include <linux/scatterlist_api.h>

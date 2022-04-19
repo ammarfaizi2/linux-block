@@ -6,6 +6,7 @@
  * Copyright 2017	Intel Deutschland GmbH
  */
 
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_api.h>

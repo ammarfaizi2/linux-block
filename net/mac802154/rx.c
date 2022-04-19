@@ -9,6 +9,7 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/preempt.h>
 #include <linux/tasklet_api.h>
 #include <linux/rculist.h>

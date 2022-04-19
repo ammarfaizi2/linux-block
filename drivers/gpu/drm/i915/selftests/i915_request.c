@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/rcupdate.h>
 #include <linux/preempt.h>
 #include <linux/wait_bit.h>
 #include <linux/wait_api.h>

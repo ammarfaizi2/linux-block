@@ -8,6 +8,7 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/preempt.h>
 #include <net/sock_api.h>
 #include <net/net_namespace_api.h>

@@ -11,6 +11,7 @@
 #include "messages.h"
 #include "cookie.h"
 
+#include <linux/rcupdate.h>
 #include <net/ip_tunnels_ecn.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>

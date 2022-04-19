@@ -7,6 +7,7 @@
  * information is available in Documentation/core-api/genericirq.rst
  *
  */
+#include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/topology.h>

@@ -4,6 +4,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>

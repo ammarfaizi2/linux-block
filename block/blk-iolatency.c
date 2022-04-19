@@ -64,6 +64,7 @@
  *
  * Copyright (C) 2018 Josef Bacik
  */
+#include <linux/rcupdate.h>
 #include <linux/preempt.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>

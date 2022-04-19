@@ -12,6 +12,7 @@
  * Copyright (C) 2018-2021 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <net/sch_generic_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/sched.h>

@@ -6,6 +6,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <linux/rcupdate.h>
 #include <net/netlink_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

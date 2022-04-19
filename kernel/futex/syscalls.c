@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/rcupdate.h>
 #include <linux/uaccess.h>
 #include <linux/timekeeping.h>
 #include <linux/time64_api.h>

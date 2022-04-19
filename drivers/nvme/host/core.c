@@ -4,6 +4,7 @@
  * Copyright (c) 2011-2014, Intel Corporation.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/kdev_t.h>
 #include <linux/xarray_api.h>

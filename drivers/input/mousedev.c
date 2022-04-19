@@ -12,6 +12,7 @@
 #define MOUSEDEV_MINORS		31
 #define MOUSEDEV_MIX		63
 
+#include <linux/rcupdate.h>
 #include <linux/kdev_t.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>

@@ -7,6 +7,7 @@
  *
  * Highly modified by Steven Rostedt (VMware).
  */
+#include <linux/rcupdate.h>
 #include <linux/trace_clock.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>

@@ -4,6 +4,7 @@
  *
  *      (c) 2011 Jiri Olsa <jolsa@redhat.com>
  */
+#include <linux/rcupdate.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>

@@ -3,6 +3,7 @@
  * Copyright (c) 2015 Jiri Pirko <jiri@resnulli.us>
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/sch_generic_api.h>
 #include <net/netlink_api.h>

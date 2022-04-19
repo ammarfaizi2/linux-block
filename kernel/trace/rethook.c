@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt) "rethook: " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/sched.h>
 #include <linux/lockdep_api.h>
 #include <linux/llist_api.h>

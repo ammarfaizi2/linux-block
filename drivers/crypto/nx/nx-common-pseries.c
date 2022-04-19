@@ -8,6 +8,7 @@
  *          Seth Jennings <sjenning@linux.vnet.ibm.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/align.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

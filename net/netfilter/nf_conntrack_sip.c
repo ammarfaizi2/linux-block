@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rcupdate.h>
 #include <net/dst_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>

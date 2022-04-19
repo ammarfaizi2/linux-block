@@ -19,6 +19,7 @@
 #define KMSG_COMPONENT "smc"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/rcupdate.h>
 #include <net/netlink_api.h>
 #include <uapi/linux/sockios.h>
 #include <net/socket_alloc.h>

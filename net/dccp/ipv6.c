@@ -8,6 +8,7 @@
  *	Arnaldo Carvalho de Melo <acme@ghostprotocols.net>
  */
 
+#include <linux/rcupdate.h>
 #include <net/timewait_sock.h>
 #include <net/sock_api.h>
 #include <net/sock_api_extra.h>

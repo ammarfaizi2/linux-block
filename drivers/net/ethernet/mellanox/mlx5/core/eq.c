@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2021, Mellanox Technologies inc.  All rights reserved.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/topology.h>
 #include <linux/tasklet_api.h>

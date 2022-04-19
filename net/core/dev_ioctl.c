@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/rcupdate.h>
 #include <uapi/linux/sockios.h>
 #include <uapi/linux/net.h>
 #include <linux/uaccess.h>

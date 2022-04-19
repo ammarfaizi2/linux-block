@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/rcupdate.h>
 #include <linux/wait_bit.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

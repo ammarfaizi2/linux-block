@@ -11,6 +11,7 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
+#include <linux/rcupdate.h>
 #include <net/netlink_api.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>

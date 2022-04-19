@@ -6,6 +6,7 @@
  * Added /proc/sys/net/core directory entry (empty =) ). [MS]
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <net/net_namespace_api.h>
 #include <linux/topology.h>

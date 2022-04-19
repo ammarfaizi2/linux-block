@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2017-2018 Netronome Systems, Inc. */
 
+#include <linux/rcupdate.h>
 #include <net/route_api.h>
 #include <net/neighbour_api_seqlock.h>
 #include <net/neighbour_api.h>

@@ -12,6 +12,7 @@
  *  Copyright (C) 2004-2006 Ingo Molnar
  *  Copyright (C) 2004 Nadia Yvette Chambers
  */
+#include <linux/rcupdate.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/trace_clock.h>

@@ -13,6 +13,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/uaccess.h>
 #include <linux/topology.h>

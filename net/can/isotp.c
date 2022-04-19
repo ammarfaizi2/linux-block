@@ -52,6 +52,7 @@
  * DAMAGE.
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>

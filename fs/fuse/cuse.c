@@ -34,6 +34,7 @@
 
 #define pr_fmt(fmt) "CUSE: " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/mutex_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mm_api.h>

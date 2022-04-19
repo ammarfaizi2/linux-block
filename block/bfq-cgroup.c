@@ -2,6 +2,7 @@
 /*
  * cgroups support for the BFQ I/O scheduler.
  */
+#include <linux/rcupdate.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>

@@ -2,6 +2,7 @@
 /* Copyright (c) 2014 Mahesh Bandewar <maheshb@google.com>
  */
 
+#include <linux/rcupdate.h>
 #include <net/rtnetlink_api.h>
 #include <net/netlink_api.h>
 #include <linux/workqueue_api.h>

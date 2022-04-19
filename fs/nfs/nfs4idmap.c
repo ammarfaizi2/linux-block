@@ -33,6 +33,7 @@
  *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <linux/rcupdate.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

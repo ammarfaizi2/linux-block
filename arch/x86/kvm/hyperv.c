@@ -25,6 +25,7 @@
 #include "hyperv.h"
 #include "xen.h"
 
+#include <linux/rcupdate.h>
 #include <linux/uaccess.h>
 #include <linux/timekeeping.h>
 #include <linux/srcu.h>

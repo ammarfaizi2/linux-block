@@ -3,6 +3,7 @@
  * (C) 1997 Linus Torvalds
  * (C) 1999 Andrea Arcangeli <andrea@suse.de> (dynamic inode allocation)
  */
+#include <linux/rcupdate.h>
 #include <linux/xarray_api.h>
 #include <linux/writeback_api.h>
 #include <linux/wait_bit.h>

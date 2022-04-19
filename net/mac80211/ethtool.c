@@ -7,6 +7,7 @@
  * Copyright 2014	Intel Corporation (Author: Johannes Berg)
  * Copyright (C) 2018 Intel Corporation
  */
+#include <linux/rcupdate.h>
 #include <linux/mutex_api.h>
 #include <linux/types.h>
 #include <net/cfg80211.h>

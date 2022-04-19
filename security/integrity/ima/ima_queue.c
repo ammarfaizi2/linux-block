@@ -15,6 +15,7 @@
  *       ever removed or changed during the boot-cycle.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/mutex_api.h>
 #include <linux/atomic_api.h>
 #include <linux/rculist.h>

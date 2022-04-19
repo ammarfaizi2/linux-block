@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2017 Intel Corporation. All rights reserved.
  */
+#include <linux/rcupdate.h>
 #include <linux/kdev_t.h>
 #include <linux/fs_api_sb.h>
 #include <linux/xarray_api.h>

@@ -14,6 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+#include <linux/rcupdate.h>
 #include <linux/seq_file.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>

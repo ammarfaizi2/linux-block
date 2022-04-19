@@ -3,6 +3,7 @@
  * Copyright(c) 2015-2018 Intel Corporation.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>

@@ -14,6 +14,7 @@
  *		Additions for address_space-based writeback
  */
 
+#include <linux/rcupdate.h>
 #include <linux/xarray_api.h>
 #include <linux/writeback_api.h>
 #include <linux/workqueue_api.h>

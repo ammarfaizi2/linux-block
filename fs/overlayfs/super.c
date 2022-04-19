@@ -4,6 +4,7 @@
  * Copyright (C) 2011 Novell Inc.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/uuid_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2019-2020 Marvell International Ltd. All rights reserved */
 
+#include <linux/rcupdate.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/etherdevice_api.h>

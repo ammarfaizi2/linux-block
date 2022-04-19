@@ -21,6 +21,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/rcupdate.h>
 #include <linux/uaccess.h>
 #include <linux/seq_file.h>
 #include <linux/rculist.h>

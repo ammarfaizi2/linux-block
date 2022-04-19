@@ -9,6 +9,7 @@
  *  Copyright (c) 2010-2011 Ericsson AB
  */
 
+#include <linux/rcupdate.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

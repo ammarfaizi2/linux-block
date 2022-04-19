@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2020 Anna Schumaker <Anna.Schumaker@Netapp.com>
  */
+#include <linux/rcupdate.h>
 #include <net/inet_sock_api.h>
 #include <linux/wait_bit.h>
 #include <linux/sysfs.h>

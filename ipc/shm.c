@@ -25,6 +25,7 @@
  * Davidlohr Bueso <davidlohr.bueso@hp.com>, June 2013.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/timekeeping.h>
 #include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>

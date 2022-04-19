@@ -26,6 +26,7 @@
  * Copyright 2005 (C) Jes Sorensen <jes@trained-monkey.org>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/preempt.h>
 #include <linux/spinlock_api.h>

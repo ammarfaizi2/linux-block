@@ -2,6 +2,7 @@
 /* Copyright (c) 2014 Mahesh Bandewar <maheshb@google.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/jhash.h>
 #include <net/route_api.h>
 #include <net/ndisc_api.h>

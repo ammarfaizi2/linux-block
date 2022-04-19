@@ -6,6 +6,7 @@
  *  David Lebrun <david.lebrun@uclouvain.be>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/topology.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api.h>

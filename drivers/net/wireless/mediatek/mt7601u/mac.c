@@ -6,6 +6,7 @@
 
 #include "mt7601u.h"
 #include "trace.h"
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/etherdevice_api.h>
 #include <linux/atomic_api.h>

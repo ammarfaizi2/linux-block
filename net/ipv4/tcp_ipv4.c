@@ -47,6 +47,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <linux/rcupdate.h>
 #include <net/tcp_bpf.h>
 #include <net/sock_batch.h>
 #include <net/sock_api.h>

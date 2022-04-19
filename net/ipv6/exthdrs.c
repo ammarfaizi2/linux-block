@@ -17,6 +17,7 @@
  *				  handlers as inet6_protocol{}.
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/ipv6_api.h>
 #include <net/dst_api_tunnel.h>

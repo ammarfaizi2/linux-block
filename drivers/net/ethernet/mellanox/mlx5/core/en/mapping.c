@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2018 Mellanox Technologies */
 
+#include <linux/rcupdate.h>
 #include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/string.h>

@@ -7,6 +7,7 @@
  * Copyright (C) 2006 by Ole Andre Vadla Ravnas (ActiveSync)
  */
 
+#include <linux/rcupdate.h>
 #include <linux/sysfs.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/percpu.h>

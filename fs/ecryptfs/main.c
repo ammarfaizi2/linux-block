@@ -10,6 +10,7 @@
  *              Tyler Hicks <code@tyhicks.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/sysfs.h>
 #include <linux/sched.h>
 #include <linux/rwsem_api.h>

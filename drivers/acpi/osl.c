@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) "ACPI: OSL: " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/timekeeping.h>

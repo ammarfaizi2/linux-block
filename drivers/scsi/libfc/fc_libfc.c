@@ -5,6 +5,7 @@
  * Maintained at www.Open-FCoE.org
  */
 
+#include <linux/rcupdate.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/scatterlist_api.h>
 #include <linux/rwsem_api.h>

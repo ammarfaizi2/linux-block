@@ -8,6 +8,7 @@
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/jhash.h>
 #include <net/sock_api.h>
 #include <net/sch_generic_api.h>

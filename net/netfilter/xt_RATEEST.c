@@ -2,6 +2,7 @@
 /*
  * (C) 2007 Patrick McHardy <kaber@trash.net>
  */
+#include <linux/rcupdate.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <linux/u64_stats_sync_api.h>

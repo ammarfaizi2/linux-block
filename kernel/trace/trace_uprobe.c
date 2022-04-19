@@ -7,6 +7,7 @@
  */
 #define pr_fmt(fmt)	"trace_uprobe: " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/preempt.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>

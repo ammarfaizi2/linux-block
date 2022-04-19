@@ -8,6 +8,7 @@
  * to continually duplicate across every architecture.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/sched/task_flags.h>
 #include <linux/wait_bit.h>
 #include <linux/spinlock_api.h>

@@ -5,6 +5,7 @@
  * Written by: Atul Gupta (atul.gupta@chelsio.com)
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/sock_api_extra.h>
 #include <net/neighbour_api.h>

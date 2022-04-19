@@ -6,6 +6,7 @@
  *  Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/route_api.h>
 #include <net/net_namespace_api.h>

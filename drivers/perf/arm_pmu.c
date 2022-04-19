@@ -12,6 +12,7 @@
  */
 #define pr_fmt(fmt) "hw perfevents: " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/perf_event_api.h>
 #include <linux/percpu.h>
 #include <linux/notifier_api.h>

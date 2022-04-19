@@ -4,6 +4,7 @@
  * Copyright 2020 Google LLC.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/preempt.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/task.h>

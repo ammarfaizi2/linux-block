@@ -18,6 +18,7 @@
  *              Designed by David S. Miller, Alexey Kuznetsov and Ingo Molnar
  */
 
+#include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>

@@ -36,6 +36,7 @@
  * Description: Main component of the bnxt_re driver
  */
 
+#include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/sysfs.h>
 #include <linux/slab.h>

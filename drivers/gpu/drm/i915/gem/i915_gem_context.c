@@ -64,6 +64,7 @@
  *
  */
 
+#include <linux/rcupdate.h>
 #include <linux/align.h>
 #include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>

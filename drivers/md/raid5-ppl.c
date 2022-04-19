@@ -4,6 +4,7 @@
  * Copyright (c) 2017, Intel Corporation.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/irqflags.h>
 #include <linux/wait_api.h>

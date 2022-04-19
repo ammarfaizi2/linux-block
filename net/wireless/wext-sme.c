@@ -6,6 +6,7 @@
  * Copyright (C) 2009, 2020-2021 Intel Corporation.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/rtnetlink.h>
 #include <linux/netdevice_api.h>
 #include <linux/etherdevice_api.h>

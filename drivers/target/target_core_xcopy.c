@@ -12,6 +12,7 @@
  *
  ******************************************************************************/
 
+#include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/string.h>
 #include <linux/percpu-refcount-api.h>

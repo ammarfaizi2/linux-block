@@ -8,6 +8,7 @@
  * This code is licenced under the GPL.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/mutex_api.h>

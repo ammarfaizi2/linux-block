@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt)	"LOGIC PIO: " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/mutex.h>
 #include <linux/mutex_api.h>
 #include <linux/of.h>

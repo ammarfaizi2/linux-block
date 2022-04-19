@@ -7,6 +7,7 @@
  * Copyright (c) 2016 Jiri Pirko <jiri@mellanox.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <net/rtnetlink_api.h>
 #include <net/net_namespace_api.h>

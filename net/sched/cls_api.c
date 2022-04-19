@@ -9,6 +9,7 @@
  * Eduardo J. Blanco <ejbs@netlabs.com.uy> :990222: kmod support
  */
 
+#include <linux/rcupdate.h>
 #include <linux/preempt.h>
 #include <net/sch_generic_api.h>
 #include <net/rtnetlink_api.h>

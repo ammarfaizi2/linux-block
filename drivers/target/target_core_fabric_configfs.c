@@ -11,6 +11,7 @@
 *
  ****************************************************************************/
 
+#include <linux/rcupdate.h>
 #include <linux/sysfs.h>
 #include <linux/cpumask_api.h>
 #include <linux/module.h>

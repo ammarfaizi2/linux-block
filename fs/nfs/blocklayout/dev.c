@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2014-2016 Christoph Hellwig.
  */
+#include <linux/rcupdate.h>
 #include <linux/kdev_t.h>
 #include <linux/slab.h>
 #include <linux/math64.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /* Copyright(c) 2019-2020  Realtek Corporation
  */
+#include <linux/rcupdate.h>
 #include <uapi/linux/in.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>

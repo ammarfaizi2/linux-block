@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/page_ref.h>
 #include <linux/huge_mm.h>
 #include <linux/mm_page_address.h>

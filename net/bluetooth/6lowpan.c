@@ -4,6 +4,7 @@
 
 */
 
+#include <linux/rcupdate.h>
 #include <net/neighbour_api.h>
 #include <net/ndisc_api.h>
 #include <net/ipv6_api.h>

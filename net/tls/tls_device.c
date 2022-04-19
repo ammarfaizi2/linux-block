@@ -29,6 +29,7 @@
  * SOFTWARE.
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/dst_api.h>
 #include <linux/workqueue_api.h>

@@ -6,6 +6,7 @@
  *  Swap reorganised 29.12.95, Stephen Tweedie
  */
 
+#include <linux/rcupdate.h>
 #include <linux/huge_mm.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

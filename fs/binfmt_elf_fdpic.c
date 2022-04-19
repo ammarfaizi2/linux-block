@@ -6,6 +6,7 @@
  * Derived from binfmt_elf.c
  */
 
+#include <linux/rcupdate.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched/signal.h>
 #include <linux/ptrace_api.h>

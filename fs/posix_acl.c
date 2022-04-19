@@ -11,6 +11,7 @@
  *  POSIX 1003.1e draft standard 17 ACLs.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/string.h>
 #include <linux/refcount_api.h>
 #include <linux/fs_types_sb.h>

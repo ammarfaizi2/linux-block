@@ -28,6 +28,7 @@
  *  such damages.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/slab.h>
 #include <linux/gfp_api.h>
 #include <linux/nfs_fs.h>

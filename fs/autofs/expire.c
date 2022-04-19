@@ -5,6 +5,7 @@
  * Copyright 2001-2006 Ian Kent <raven@themaw.net>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

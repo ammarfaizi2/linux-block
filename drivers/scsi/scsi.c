@@ -38,6 +38,7 @@
  *  out_of_space hacks, D. Gilbert (dpg) 990608
  */
 
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

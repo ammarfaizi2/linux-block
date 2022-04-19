@@ -36,6 +36,7 @@
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/rcupdate.h>
 #include <asm/unaligned.h>
 
 #include "carl9170.h"

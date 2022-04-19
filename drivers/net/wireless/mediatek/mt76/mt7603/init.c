@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: ISC
 
+#include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/mm_api.h>

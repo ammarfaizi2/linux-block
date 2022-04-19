@@ -39,6 +39,7 @@
 #include "xfs_ag.h"
 #include "xfs_defer.h"
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/kdev_t.h>
 #include <linux/writeback_api.h>

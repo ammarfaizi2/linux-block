@@ -7,6 +7,7 @@
  * Portions derived from work (c) 1995,1996 Christian Vogelgsang.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/kdev_t.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>

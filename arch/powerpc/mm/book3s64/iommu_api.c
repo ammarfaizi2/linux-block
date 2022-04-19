@@ -5,6 +5,7 @@
  *  Copyright (C) 2015 IBM Corp. <aik@ozlabs.ru>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/mutex_api.h>
 #include <linux/mmap_lock.h>
 #include <linux/mm_api.h>

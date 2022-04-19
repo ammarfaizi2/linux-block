@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt)	"DMAR: " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/intel-iommu.h>
 #include "cap_audit.h"
 

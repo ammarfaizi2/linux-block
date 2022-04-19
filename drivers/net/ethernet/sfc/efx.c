@@ -5,6 +5,7 @@
  * Copyright 2005-2013 Solarflare Communications Inc.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/slab.h>
 #include <linux/rwsem_api.h>
 #include <linux/rtnetlink.h>

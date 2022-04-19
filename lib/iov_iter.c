@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/rcupdate.h>
 #include <linux/xarray_api.h>
 #include <linux/uio_api.h>
 #include <linux/uaccess.h>

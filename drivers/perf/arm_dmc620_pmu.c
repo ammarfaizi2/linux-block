@@ -9,6 +9,7 @@
 #define DMC620_DRVNAME		DMC620_PMUNAME "_pmu"
 #define pr_fmt(fmt)		DMC620_DRVNAME ": " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/refcount_api.h>

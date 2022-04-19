@@ -5,6 +5,7 @@
  * Copyright (C) Jay Lan,	<jlan@sgi.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/sched/task_flags.h>
 #include <linux/timekeeping.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/page_ref.h>
 #include <net/xdp_api.h>
 #include <net/checksum.h>

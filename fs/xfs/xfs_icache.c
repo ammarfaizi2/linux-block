@@ -25,6 +25,7 @@
 #include "xfs_ag.h"
 #include "xfs_log_priv.h"
 
+#include <linux/rcupdate.h>
 #include <linux/pagemap.h>
 #include <linux/fs_api_sb.h>
 #include <linux/xarray_api.h>

@@ -64,6 +64,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <uapi/linux/fs.h>
 #include <net/tcp_bpf.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2012 Samsung Electronics Co., Ltd.
  *             http://www.samsung.com/
  */
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/kdev_t.h>
 #include <linux/writeback_api.h>

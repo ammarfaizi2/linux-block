@@ -4,6 +4,7 @@
  * Copyright © 2014-2016 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <linux/xarray_api.h>
 #include <linux/mutex_api.h>
 #include <linux/kref_api.h>

@@ -21,6 +21,7 @@
 	Abstract: rt2800 generic device routines.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>

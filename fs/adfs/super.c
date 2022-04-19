@@ -4,6 +4,7 @@
  *
  *  Copyright (C) 1997-1999 Russell King
  */
+#include <linux/rcupdate.h>
 #include <linux/kdev_t.h>
 #include <linux/fs_api_sb.h>
 #include <linux/sched.h>

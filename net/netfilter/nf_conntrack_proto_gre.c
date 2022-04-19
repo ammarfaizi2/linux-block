@@ -23,6 +23,7 @@
  * (C) 2006-2012 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/rcupdate.h>
 #include <net/netlink_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/rculist.h>

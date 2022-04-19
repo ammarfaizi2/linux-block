@@ -7,6 +7,7 @@
  *		Merged in additions from Greg Page's psnap.c.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>

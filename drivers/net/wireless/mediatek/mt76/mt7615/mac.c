@@ -7,6 +7,7 @@
  *         Lorenzo Bianconi <lorenzo@kernel.org>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/mutex_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

@@ -8,6 +8,7 @@
  * Author : Etienne Basset, <etienne.basset@ensta.org>
  */
 
+#include <linux/rcupdate.h>
 #include <net/ipv6_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2021 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 
 #include "ieee80211_i.h"

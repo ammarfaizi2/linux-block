@@ -9,6 +9,7 @@
   linux/lib/rbtree.c
 */
 
+#include <linux/rcupdate.h>
 #include <linux/rbtree_api.h>
 #include <linux/rbtree_augmented.h>
 #include <linux/export.h>

@@ -10,6 +10,7 @@
 
 /* Note that BB means BUGBUG (ie something to fix eventually) */
 
+#include <linux/rcupdate.h>
 #include <linux/rbtree_api.h>
 #include <linux/string.h>
 #include <linux/fs_api_sb.h>

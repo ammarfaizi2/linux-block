@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/sched/task_flags.h>
 #include <linux/preempt.h>

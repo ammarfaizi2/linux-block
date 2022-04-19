@@ -3,6 +3,7 @@
 //
 // Copyright (C) 2018 Sean Young <sean@mess.org>
 
+#include <linux/rcupdate.h>
 #include <linux/uaccess.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

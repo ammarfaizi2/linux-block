@@ -4,6 +4,7 @@
  * Copyright (C) 2018 Stanislaw Gruszka <stf_xl@wp.pl>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>

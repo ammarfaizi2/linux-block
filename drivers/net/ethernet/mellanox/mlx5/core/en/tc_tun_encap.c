@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2021 Mellanox Technologies. */
 
+#include <linux/rcupdate.h>
 #include <linux/jhash.h>
 #include <net/neighbour_api.h>
 #include <net/arp.h>

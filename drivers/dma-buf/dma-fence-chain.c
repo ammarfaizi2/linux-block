@@ -7,6 +7,7 @@
  *	Christian König <christian.koenig@amd.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/minmax.h>
 #include <linux/kref_api.h>
 #include <linux/dma-fence-api.h>

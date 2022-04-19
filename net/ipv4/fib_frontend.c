@@ -9,6 +9,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/rtnetlink_api.h>
 #include <net/route_api.h>

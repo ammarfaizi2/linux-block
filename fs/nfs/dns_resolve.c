@@ -7,6 +7,7 @@
  * Resolves DNS hostnames into valid ip addresses
  */
 
+#include <linux/rcupdate.h>
 #include <net/net_namespace_api.h>
 #include <linux/slab.h>
 #include <linux/types.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  *
  */
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/uio_api.h>

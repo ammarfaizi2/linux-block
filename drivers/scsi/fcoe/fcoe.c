@@ -5,6 +5,7 @@
  * Maintained at www.Open-FCoE.org
  */
 
+#include <linux/rcupdate.h>
 #include <uapi/linux/pkt_sched.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>

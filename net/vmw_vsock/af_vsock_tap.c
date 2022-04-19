@@ -5,6 +5,7 @@
  * Code based on net/netlink/af_netlink.c tap functions.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>

@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/rcupdate.h>
 #include <net/inet_ecn.h>
 #include <net/dst_api.h>
 #include <net/checksum.h>

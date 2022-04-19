@@ -5,6 +5,7 @@
  * This software has been sponsored by Sophos Astaro <http://www.sophos.com>
  */
 
+#include <linux/rcupdate.h>
 #include <net/netlink_api.h>
 #include <linux/slab.h>
 #include <linux/kmod.h>

@@ -9,6 +9,7 @@
  * Authors:    See the TCPv6 sources
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/ipv6_api.h>
 #include <linux/module.h>

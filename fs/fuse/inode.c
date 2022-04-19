@@ -8,6 +8,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/kdev_t.h>
 #include <linux/fs_api_sb.h>

@@ -4,6 +4,7 @@
  * Copyright © 2014-2016 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <linux/seqlock_api.h>
 #include <linux/dma-fence-array.h>
 

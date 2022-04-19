@@ -18,6 +18,7 @@
  *		- added multicast source filtering API for MLDv2
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/sock_api_extra.h>
 #include <net/l3mdev.h>

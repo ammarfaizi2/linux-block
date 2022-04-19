@@ -5,6 +5,7 @@
  * Author: Tom Tucker <tom@opengridcomputing.com>
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <linux/timekeeping.h>

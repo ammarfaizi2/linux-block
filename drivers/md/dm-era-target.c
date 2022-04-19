@@ -4,6 +4,7 @@
 #include "persistent-data/dm-bitset.h"
 #include "persistent-data/dm-space-map.h"
 
+#include <linux/rcupdate.h>
 #include <linux/kdev_t.h>
 #include <linux/workqueue_api.h>
 #include <linux/string.h>

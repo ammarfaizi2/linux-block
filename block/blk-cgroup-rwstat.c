@@ -3,6 +3,7 @@
  * Legacy blkg rwstat helpers enabled by CONFIG_BLK_CGROUP_RWSTAT.
  * Do not use in new code.
  */
+#include <linux/rcupdate.h>
 #include <linux/seq_file.h>
 #include <linux/percpu_counter_api.h>
 #include <linux/lockdep_api.h>

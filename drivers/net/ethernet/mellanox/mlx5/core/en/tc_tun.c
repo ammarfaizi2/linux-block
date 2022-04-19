@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2018 Mellanox Technologies. */
 
+#include <linux/rcupdate.h>
 #include <net/route_api.h>
 #include <net/neighbour_api.h>
 #include <net/ipv6_api.h>

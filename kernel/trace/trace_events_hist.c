@@ -5,6 +5,7 @@
  * Copyright (C) 2015 Tom Zanussi <tom.zanussi@linux.intel.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/tracepoint.h>
 #include <linux/smp_api.h>

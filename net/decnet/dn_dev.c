@@ -25,6 +25,7 @@
  *                             devices. All mtu based now.
  */
 
+#include <linux/rcupdate.h>
 #include <uapi/linux/sockios.h>
 #include <net/sock_api.h>
 #include <net/rtnetlink_api.h>

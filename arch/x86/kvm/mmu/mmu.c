@@ -26,6 +26,7 @@
 #include "cpuid.h"
 #include "spte.h"
 
+#include <linux/rcupdate.h>
 #include <linux/page_ref.h>
 #include <linux/irqflags.h>
 #include <linux/spinlock_api.h>

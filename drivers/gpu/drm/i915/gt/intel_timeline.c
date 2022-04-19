@@ -3,6 +3,7 @@
  * Copyright © 2016-2018 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/refcount_api.h>

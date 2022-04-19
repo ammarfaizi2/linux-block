@@ -12,6 +12,7 @@
  *	Vitaly E. Lavrov		RTA_OK arithmetic was wrong.
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/sch_generic_api.h>
 #include <net/rtnetlink_api.h>

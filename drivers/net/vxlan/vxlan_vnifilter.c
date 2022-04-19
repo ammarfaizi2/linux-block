@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/rcupdate.h>
 #include <linux/rculist.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api.h>

@@ -38,6 +38,7 @@
  * subsequent patch.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/wait_api.h>
 #include <linux/wait_bit.h>
 #include <linux/timekeeping.h>

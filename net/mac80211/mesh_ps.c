@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/rculist.h>
 #include <linux/etherdevice_api.h>

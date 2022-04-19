@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/rcupdate.h>
 #include <linux/jhash.h>
 #include <net/route_api.h>
 #include <net/net_namespace_api.h>

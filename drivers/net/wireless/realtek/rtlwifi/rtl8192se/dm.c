@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
+#include <linux/rcupdate.h>
+
 #include "../wifi.h"
 #include "../base.h"
 #include "../core.h"

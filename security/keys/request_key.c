@@ -7,6 +7,7 @@
  * See Documentation/security/keys/request-key.rst
  */
 
+#include <linux/rcupdate.h>
 #include <linux/wait_bit.h>
 #include <linux/sched/thread_info_api.h>
 #include <linux/rwsem_api.h>

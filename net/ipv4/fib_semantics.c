@@ -9,6 +9,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <net/route_api.h>

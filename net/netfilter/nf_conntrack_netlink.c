@@ -15,6 +15,7 @@
  * of the GNU General Public License, incorporated herein by reference.
  */
 
+#include <linux/rcupdate.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <net/ipv6_api.h>

@@ -4,6 +4,7 @@
  *
  * (C) 2012 Christoph Lameter <cl@linux.com>
  */
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>

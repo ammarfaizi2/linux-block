@@ -28,6 +28,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rcupdate.h>
 #include <uapi/linux/if_addr.h>
 #include <net/if_inet6.h>
 #include <linux/workqueue_api.h>

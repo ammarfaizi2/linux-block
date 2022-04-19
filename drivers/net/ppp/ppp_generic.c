@@ -18,6 +18,7 @@
  * ==FILEVERSION 20041108==
  */
 
+#include <linux/rcupdate.h>
 #include <linux/kdev_t.h>
 #include <net/rtnetlink_api.h>
 #include <net/net_namespace_api.h>

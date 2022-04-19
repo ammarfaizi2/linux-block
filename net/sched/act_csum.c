@@ -5,6 +5,7 @@
  * Copyright (c) 2010 Gregoire Baron <baronchon@n7mm.org>
  */
 
+#include <linux/rcupdate.h>
 #include <net/netlink_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

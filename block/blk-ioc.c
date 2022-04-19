@@ -2,6 +2,7 @@
 /*
  * Functions related to io context handling
  */
+#include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/radix-tree-api.h>

@@ -3,6 +3,7 @@
  * Copyright © 2014 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <linux/mm_page_address.h>
 
 #include "gen8_engine_cs.h"

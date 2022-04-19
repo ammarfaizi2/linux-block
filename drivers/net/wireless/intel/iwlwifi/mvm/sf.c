@@ -3,6 +3,8 @@
  * Copyright (C) 2013-2014, 2018-2019 Intel Corporation
  * Copyright (C) 2013-2014 Intel Mobile Communications GmbH
  */
+#include <linux/rcupdate.h>
+
 #include "mvm.h"
 
 /* For counting bound interfaces */

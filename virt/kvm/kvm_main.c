@@ -13,6 +13,7 @@
  *   Yaniv Kamay  <yaniv@qumranet.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/page_ref.h>
 #include <linux/rbtree_api.h>
 #include <linux/preempt.h>

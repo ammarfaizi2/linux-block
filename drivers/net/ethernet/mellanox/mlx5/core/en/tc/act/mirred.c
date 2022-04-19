@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 // Copyright (c) 2021, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 
+#include <linux/rcupdate.h>
 #include <linux/netdevice_api.h>
 #include <linux/if_vlan_api.h>
 #include <linux/if_macvlan.h>

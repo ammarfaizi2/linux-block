@@ -5,6 +5,7 @@
  * Copyright (C) 2021 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <linux/rculist.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

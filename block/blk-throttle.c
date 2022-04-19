@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Vivek Goyal <vgoyal@redhat.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>

@@ -7,6 +7,7 @@
  * Author: Stefano Brivio <sbrivio@redhat.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/module.h>

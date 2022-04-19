@@ -7,6 +7,7 @@
  * 		From code originally in include/net/tcp.h
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/sock_api_extra.h>
 #include <net/inet_connection_sock_api.h>

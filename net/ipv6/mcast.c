@@ -22,6 +22,7 @@
  *		- MLDv2 support
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <net/ndisc_api.h>

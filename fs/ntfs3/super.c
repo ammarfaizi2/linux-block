@@ -23,6 +23,7 @@
  *
  */
 
+#include <linux/rcupdate.h>
 #include <linux/fs_api_sb.h>
 #include <linux/vmstat.h>
 #include <linux/spinlock_api.h>

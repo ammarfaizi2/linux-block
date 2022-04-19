@@ -3,6 +3,7 @@
 
 #ifdef CONFIG_DEBUG_FS
 
+#include <linux/rcupdate.h>
 #include <net/dcbnl.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>

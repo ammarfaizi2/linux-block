@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Red Hat, Inc., Johannes Weiner
  */
 
+#include <linux/rcupdate.h>
 #include <linux/page_ref.h>
 #include <linux/xarray_api.h>
 #include <linux/vmstat.h>

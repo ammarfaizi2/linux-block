@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) "LSM: " fmt
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>

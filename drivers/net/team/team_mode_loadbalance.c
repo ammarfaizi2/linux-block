@@ -4,6 +4,7 @@
  * Copyright (c) 2012 Jiri Pirko <jpirko@redhat.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/slab.h>

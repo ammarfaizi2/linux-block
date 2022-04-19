@@ -25,6 +25,7 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
+#include <linux/rcupdate.h>
 #include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/timekeeping.h>

@@ -15,6 +15,7 @@
 /* [Feb-Apr 2000, AV] Rewrite to the new namespace architecture.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/kdev_t.h>
 #include <linux/sysctl.h>
 #include <linux/stringhash.h>

@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Chinamobile, Inc.
  */
 
+#include <linux/rcupdate.h>
 #include <net/netlink_api.h>
 #include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>

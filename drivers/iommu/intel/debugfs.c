@@ -8,6 +8,7 @@
  *	    Lu Baolu <baolu.lu@linux.intel.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>

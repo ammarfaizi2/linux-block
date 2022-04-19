@@ -4,6 +4,7 @@
  *   Copyright (C) 2018 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/rcupdate.h>
 #include <uapi/linux/magic.h>
 #include <uapi/linux/if_arp.h>
 #include <linux/wait_api.h>

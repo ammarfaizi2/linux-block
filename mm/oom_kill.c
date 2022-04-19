@@ -18,6 +18,7 @@
  *  kernel subsystems and hints as to where to find out what things do.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/sched/task_flags.h>
 #include <linux/wait_api.h>
 #include <linux/vmstat.h>

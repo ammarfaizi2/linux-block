@@ -1,3 +1,4 @@
+#include <linux/rcupdate.h>
 #include <net/net_namespace_api.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>

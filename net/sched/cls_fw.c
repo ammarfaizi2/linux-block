@@ -10,6 +10,7 @@
  * Alex <alex@pilotsoft.com> : 2004xxyy: Added Action extension
  */
 
+#include <linux/rcupdate.h>
 #include <net/pkt_cls_api_tcf_filter.h>
 #include <net/netlink_api.h>
 #include <linux/workqueue_api.h>

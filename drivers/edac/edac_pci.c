@@ -9,6 +9,7 @@
  * or implied.
  *
  */
+#include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>

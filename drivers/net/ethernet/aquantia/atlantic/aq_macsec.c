@@ -5,6 +5,7 @@
 
 #include "aq_macsec.h"
 #include "aq_nic.h"
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>

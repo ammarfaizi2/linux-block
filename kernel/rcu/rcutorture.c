@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>

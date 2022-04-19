@@ -4,6 +4,7 @@
  * (C) 2012 by Vyatta Inc. <http://www.vyatta.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/ratelimit.h>
 #include <linux/types.h>
 #include <linux/netfilter.h>

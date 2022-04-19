@@ -6,6 +6,7 @@
  * Copyright 2016 Alexey Kardashevskiy, IBM Corporation <aik@au1.ibm.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/uaccess.h>
 #include <linux/srcu.h>
 #include <linux/sched/cond_resched.h>

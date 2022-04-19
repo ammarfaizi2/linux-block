@@ -7,6 +7,7 @@
  * Copyright (C) ST-Ericsson 2010-2012
  */
 
+#include <linux/rcupdate.h>
 #include <net/ndisc_api.h>
 #include <net/ipv6_api.h>
 #include <linux/spinlock_api.h>

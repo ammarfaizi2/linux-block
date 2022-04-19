@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/rcupdate.h>
 #include <net/ipv6_api.h>
 #include <net/inet_ecn.h>
 #include <linux/spinlock_api.h>

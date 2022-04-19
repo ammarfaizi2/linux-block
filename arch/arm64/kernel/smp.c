@@ -6,6 +6,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/sched.h>
 #include <linux/pgtable_api.h>

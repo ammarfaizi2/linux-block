@@ -10,6 +10,7 @@
  * Copyright 1993, 1994: Eric Youngdale (ericy@cais.com).
  */
 
+#include <linux/rcupdate.h>
 #include <linux/sched/thread.h>
 #include <linux/time32.h>
 #include <linux/sched/signal.h>

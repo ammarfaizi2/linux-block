@@ -21,6 +21,7 @@
  *  Heavily rewritten for 'one fs - one tree' dcache architecture. AV, Mar 2000
  */
 
+#include <linux/rcupdate.h>
 #include <linux/kdev_t.h>
 #include <linux/writeback_api.h>
 #include <linux/workqueue_api.h>

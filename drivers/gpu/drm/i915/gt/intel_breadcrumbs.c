@@ -3,6 +3,7 @@
  * Copyright © 2015-2021 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

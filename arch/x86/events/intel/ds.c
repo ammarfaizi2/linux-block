@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/rcupdate.h>
 #include <uapi/linux/signal.h>
 #include <linux/topology.h>
 #include <linux/smp_api.h>

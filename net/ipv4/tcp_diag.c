@@ -5,6 +5,7 @@
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/netlink_api.h>
 #include <linux/rculist.h>

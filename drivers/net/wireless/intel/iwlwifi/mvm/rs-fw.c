@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Intel Deutschland GmbH
  * Copyright (C) 2018-2022 Intel Corporation
  */
+#include <linux/rcupdate.h>
 #include <linux/bitmap.h>
 
 #include "rs.h"

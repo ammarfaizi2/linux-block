@@ -6,6 +6,7 @@
  *  Arnaldo Carvalho de Melo <acme@conectiva.com.br>
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <linux/signal.h>
 #include <linux/sched.h>

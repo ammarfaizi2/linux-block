@@ -75,6 +75,7 @@
  * (i.e. _enter_* function).
  */
 
+#include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/scatterlist_api.h>
 #include <linux/mutex_api.h>

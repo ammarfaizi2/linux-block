@@ -9,6 +9,7 @@
 
 */
 
+#include <linux/rcupdate.h>
 #include <linux/lockdep_api.h>
 #include <linux/blkdev.h>
 #include <linux/raid/md_u.h>

@@ -6,6 +6,7 @@
  *  Based on ideas by D.J.Bernstein and Eric Schenk.
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/route_api.h>
 #include <net/dst_api.h>

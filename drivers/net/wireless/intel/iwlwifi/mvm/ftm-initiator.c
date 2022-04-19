@@ -3,6 +3,7 @@
  * Copyright (C) 2015-2017 Intel Deutschland GmbH
  * Copyright (C) 2018-2021 Intel Corporation
  */
+#include <linux/rcupdate.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/lockdep_api.h>

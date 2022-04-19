@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)    "%s: " fmt, __func__
 
+#include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/pm_wakeup.h>

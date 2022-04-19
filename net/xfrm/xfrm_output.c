@@ -5,6 +5,7 @@
  * Copyright (c) 2007 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/rcupdate.h>
 #include <net/route_api.h>
 #include <net/ipv6_api.h>
 #include <net/ip_extra.h>

@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <net/xdp_api.h>
 #include <net/netlink_api.h>

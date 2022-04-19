@@ -5,6 +5,7 @@
  * (c) 2018 Eyal Birger <eyal.birger@gmail.com>
  */
 
+#include <linux/rcupdate.h>
 #include <net/netlink_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>

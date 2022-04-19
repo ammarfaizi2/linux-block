@@ -9,6 +9,7 @@
  * of their respective owners.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/kdev_t.h>
 #include <linux/spinlock_api.h>
 #include <linux/radix-tree-api.h>

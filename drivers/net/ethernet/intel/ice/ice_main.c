@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/hashtable_api.h>
 #include <net/netlink_api.h>

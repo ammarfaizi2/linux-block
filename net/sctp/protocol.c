@@ -26,6 +26,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <net/sock_api.h>
 #include <net/route_api.h>

@@ -4,6 +4,7 @@
  * (C) Copyright 2016 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/notifier_api.h>

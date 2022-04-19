@@ -7,6 +7,7 @@
  * (c) 2005-2012 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/siphash_api.h>
 #include <linux/seq_file_net.h>

@@ -12,6 +12,7 @@
  * See the GNU General Public License for more details.
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>

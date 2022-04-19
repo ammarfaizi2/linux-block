@@ -5,6 +5,7 @@
  *
  * Generic LRU infrastructure
  */
+#include <linux/rcupdate.h>
 #include <linux/xarray_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>

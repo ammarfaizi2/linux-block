@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Daniel Mack
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/uaccess.h>

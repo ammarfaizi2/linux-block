@@ -20,6 +20,7 @@
  * 	   (needs netfilter tuple reservation)
  */
 
+#include <linux/rcupdate.h>
 #include <linux/module.h>
 #include <linux/tcp.h>
 

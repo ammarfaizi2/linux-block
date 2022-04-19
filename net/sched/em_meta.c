@@ -54,6 +54,7 @@
  * 	      only available if that subsystem is enabled in the kernel.
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/route_api.h>
 #include <net/netlink_api.h>

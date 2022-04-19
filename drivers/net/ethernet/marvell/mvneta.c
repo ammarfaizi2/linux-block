@@ -11,6 +11,7 @@
  * warranty of any kind, whether express or implied.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/align.h>
 #include <net/xdp_api.h>

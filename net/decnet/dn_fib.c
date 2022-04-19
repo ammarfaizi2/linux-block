@@ -18,6 +18,7 @@
  *                                 this code was copied from it.
  *
  */
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/rtnetlink_api.h>
 #include <net/netlink_api.h>

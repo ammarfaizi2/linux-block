@@ -3,6 +3,7 @@
 /* Authors: Bernard Metzler <bmt@zurich.ibm.com> */
 /* Copyright (c) 2008-2019, IBM Corporation */
 
+#include <linux/rcupdate.h>
 #include <linux/xarray_api.h>
 #include <linux/sched/signal.h>
 #include <linux/random.h>

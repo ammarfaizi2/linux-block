@@ -23,6 +23,7 @@
  *	 - testing of incoming PPTP calls
  */
 
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>

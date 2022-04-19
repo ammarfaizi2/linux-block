@@ -6,6 +6,7 @@
  * 	       Javier Cardona <javier@cozybit.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>
 #include <linux/lockdep_api.h>

@@ -17,6 +17,7 @@
 
 #ifdef DEBUG
 
+#include <linux/rcupdate.h>
 #include <linux/slab.h>
 #include <linux/siphash_api.h>
 #include <linux/mutex_api.h>

@@ -10,6 +10,7 @@
  * 19-Apr-2000 Chris Evans      - Security fix
  */
 
+#include <linux/rcupdate.h>
 #include <linux/sunrpc/debug.h>
 #include <linux/spinlock_api.h>
 #include <linux/rculist.h>

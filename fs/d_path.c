@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
+#include <linux/rcupdate.h>
 #include <linux/syscalls_api.h>
 #include <linux/seqlock_api.h>
 #include <linux/sched.h>

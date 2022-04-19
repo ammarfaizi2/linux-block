@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2017, Mellanox Technologies inc.  All rights reserved.
  */
+#include <linux/rcupdate.h>
 #include <linux/srcu.h>
 #include <linux/slab.h>
 #include <linux/radix-tree-api.h>

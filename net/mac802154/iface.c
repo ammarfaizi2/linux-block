@@ -9,6 +9,7 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
+#include <linux/rcupdate.h>
 #include <uapi/linux/sockios.h>
 #include <linux/rtnetlink.h>
 #include <linux/rculist.h>

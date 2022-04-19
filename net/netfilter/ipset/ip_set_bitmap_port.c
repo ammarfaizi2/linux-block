@@ -3,6 +3,7 @@
 
 /* Kernel module implementing an IP set type: the bitmap:port type */
 
+#include <linux/rcupdate.h>
 #include <net/netlink_api.h>
 #include <linux/bitmap.h>
 #include <linux/module.h>

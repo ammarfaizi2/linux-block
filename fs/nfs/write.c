@@ -7,6 +7,7 @@
  * Copyright (C) 1996, 1997, Olaf Kirch <okir@monad.swb.de>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/sched/task_flags.h>
 #include <linux/xarray_api.h>
 #include <linux/writeback_api.h>

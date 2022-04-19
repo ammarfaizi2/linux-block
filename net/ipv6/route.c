@@ -22,6 +22,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/rtnetlink_api.h>
 #include <net/net_namespace_api.h>

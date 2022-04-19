@@ -5,6 +5,7 @@
 
 /* Kernel module implementing an IP set type: the hash:net type */
 
+#include <linux/rcupdate.h>
 #include <net/netlink_api.h>
 #include <net/ipv6_api.h>
 #include <linux/jhash.h>

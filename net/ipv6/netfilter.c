@@ -4,6 +4,7 @@
  * Rusty Russell (C) 2000 -- This code is GPL.
  * Patrick McHardy (C) 2006-2012
  */
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/ipv6_api.h>
 #include <net/dst_api.h>

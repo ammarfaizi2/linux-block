@@ -6,6 +6,7 @@
  * Author: Asias He <asias@redhat.com>
  *         Stefan Hajnoczi <stefanha@redhat.com>
  */
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <linux/uio_api.h>
 #include <linux/uaccess.h>

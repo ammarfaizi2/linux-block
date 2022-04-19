@@ -48,6 +48,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rcupdate.h>
 #include <uapi/linux/sockios.h>
 #include <uapi/linux/if_arp.h>
 #include <net/sock_api.h>

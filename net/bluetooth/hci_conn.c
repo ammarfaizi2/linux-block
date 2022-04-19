@@ -24,6 +24,7 @@
 
 /* Bluetooth HCI connection handling. */
 
+#include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>

@@ -8,6 +8,7 @@
 #include "ice_fltr.h"
 #include "ice_lib.h"
 #include "ice_dcb_lib.h"
+#include <linux/rcupdate.h>
 #include <linux/slab.h>
 #include <linux/pm_wakeup.h>
 #include <linux/netdevice_api.h>

@@ -11,6 +11,7 @@
  *  Updated to filesystem version 3 by Daniel Aragones
  */
 
+#include <linux/rcupdate.h>
 #include <linux/kdev_t.h>
 #include <linux/mm_api_truncate.h>
 #include <linux/mm_api.h>

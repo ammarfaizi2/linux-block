@@ -4,6 +4,7 @@
  * Copyright 2020 - 2021 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>

@@ -11,6 +11,7 @@
 
 #include "ext4_jbd2.h"
 #include "mballoc.h"
+#include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/timex.h>
 #include <linux/spinlock_api.h>

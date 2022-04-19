@@ -8,6 +8,7 @@
  * This file contains interrupt related functions.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/sched/thread.h>
 #include <linux/spinlock_api.h>

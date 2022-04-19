@@ -4,6 +4,7 @@
  * Copyright(c) 2015 - 2018 Intel Corporation.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/srcu.h>

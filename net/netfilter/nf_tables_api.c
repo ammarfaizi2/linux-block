@@ -5,6 +5,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <linux/rcupdate.h>
 #include <linux/jhash.h>
 #include <linux/preempt.h>
 #include <net/sock_api.h>

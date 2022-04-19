@@ -15,6 +15,7 @@
  *  Copyright (C) 2011 Intel Corporation.
  */
 
+#include <linux/rcupdate.h>
 #include <uapi/linux/sem.h>
 #include <net/socket_alloc.h>
 #include <net/sock_api.h>

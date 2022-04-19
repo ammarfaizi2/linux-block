@@ -7,6 +7,7 @@
  * Author(s): David Hildenbrand <david@redhat.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/page_ref.h>
 #include <linux/align.h>
 #include <linux/workqueue_api.h>

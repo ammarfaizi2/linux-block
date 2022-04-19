@@ -7,6 +7,7 @@
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
 
+#include <linux/rcupdate.h>
 #include <uapi/linux/sockios.h>
 #include <linux/spinlock_api.h>
 #include <linux/rtnetlink.h>

@@ -11,6 +11,7 @@
  * NO WARRANTY
  */
 
+#include <linux/rcupdate.h>
 #include <linux/fs_api_sb.h>
 #include <linux/writeback_api.h>
 #include <linux/workqueue_api.h>

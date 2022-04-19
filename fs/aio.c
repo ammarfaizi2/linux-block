@@ -11,6 +11,7 @@
  */
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/rcupdate.h>
 #include <linux/page_ref.h>
 #include <linux/irqflags.h>
 #include <linux/workqueue_api.h>

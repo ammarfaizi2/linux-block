@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2017 Jesper Dangaard Brouer, Red Hat Inc.
  */
+#include <linux/rcupdate.h>
 #include <net/xdp_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/pgtable_api.h>

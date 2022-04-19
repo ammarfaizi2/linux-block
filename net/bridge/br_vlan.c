@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/rcupdate.h>
 #include <net/rtnetlink_api.h>
 #include <net/netlink_api.h>
 #include <linux/u64_stats_sync_api.h>

@@ -10,6 +10,7 @@
  *
  ******************************************************************************/
 
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/rculist.h>
 #include <linux/percpu-refcount-api.h>

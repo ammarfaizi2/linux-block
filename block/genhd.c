@@ -5,6 +5,7 @@
  * Portions Copyright (C) 2020 Christoph Hellwig
  */
 
+#include <linux/rcupdate.h>
 #include <linux/lockdep_api.h>
 #include <linux/xarray_api.h>
 #include <linux/sysfs.h>

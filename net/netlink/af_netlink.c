@@ -18,6 +18,7 @@
  * 				   mandatory if CONFIG_NET=y these days
  */
 
+#include <linux/rcupdate.h>
 #include <net/socket_alloc.h>
 #include <net/sock_api.h>
 #include <net/net_namespace_api.h>

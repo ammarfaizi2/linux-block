@@ -5,6 +5,7 @@
  * Copyright (C) 2020-2021 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>

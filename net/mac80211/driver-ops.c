@@ -2,6 +2,7 @@
 /*
  * Copyright 2015 Intel Deutschland GmbH
  */
+#include <linux/rcupdate.h>
 #include <linux/tasklet_api.h>
 #include <net/mac80211.h>
 #include "ieee80211_i.h"

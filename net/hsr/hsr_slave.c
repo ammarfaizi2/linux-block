@@ -8,6 +8,7 @@
  */
 
 #include "hsr_slave.h"
+#include <linux/rcupdate.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/netlink.h>

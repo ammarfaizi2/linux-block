@@ -4,6 +4,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

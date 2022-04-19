@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/page_ref.h>
 #include <linux/irqflags.h>
 #include <linux/huge_mm.h>

@@ -9,6 +9,7 @@
  * Re-worked by Ben Greear <greearb@candelatech.com>
  * ---
  */
+#include <linux/rcupdate.h>
 #include <net/rtnetlink_api.h>
 #include <net/netlink_api.h>
 #include <linux/workqueue_api.h>

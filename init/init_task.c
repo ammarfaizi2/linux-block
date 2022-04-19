@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/rcupdate.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sched/signal.h>
 #include <linux/pid.h>

@@ -8,6 +8,7 @@
  * Tom Haynes <loghyr@primarydata.com>
  */
 
+#include <linux/rcupdate.h>
 #include <net/ipv6_api.h>
 #include <linux/wait_bit.h>
 #include <linux/spinlock_api.h>

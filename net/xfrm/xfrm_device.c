@@ -8,6 +8,7 @@
  * Steffen Klassert <steffen.klassert@secunet.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/netdevice_api_extra.h>
 #include <net/dst_api.h>

@@ -8,6 +8,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/rcupdate.h>
 #include <linux/writeback_api.h>
 #include <linux/wait_api.h>
 #include <linux/vmstat.h>

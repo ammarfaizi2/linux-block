@@ -23,6 +23,7 @@
  * - completely modularize elevator setup and teardown
  *
  */
+#include <linux/rcupdate.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/rbtree_api.h>

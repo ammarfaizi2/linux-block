@@ -12,6 +12,7 @@
  *	2004  Paul Serice - NFS Export Operations
  */
 
+#include <linux/rcupdate.h>
 #include <linux/kdev_t.h>
 #include <linux/fs_api_sb.h>
 #include <linux/stringhash.h>

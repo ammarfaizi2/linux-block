@@ -7,6 +7,7 @@
  * Copyright (c) 2010 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <linux/wait_api.h>
 #include <linux/uio_api.h>

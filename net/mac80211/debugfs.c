@@ -7,6 +7,7 @@
  * Copyright (C) 2018 - 2019, 2021 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

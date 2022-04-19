@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2016 Jens Axboe
  */
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/percpu.h>

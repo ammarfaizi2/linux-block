@@ -14,6 +14,7 @@
  * - RX filtering based on filter configuration (data->rx_filter)
  */
 
+#include <linux/rcupdate.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <net/dst_api.h>

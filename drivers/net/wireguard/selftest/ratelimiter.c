@@ -5,6 +5,7 @@
 
 #ifdef DEBUG
 
+#include <linux/rcupdate.h>
 #include <uapi/linux/ipv6.h>
 #include <linux/delay.h>
 #include <linux/atomic_api.h>

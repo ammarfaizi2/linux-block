@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/rcupdate.h>
 #include <linux/slab.h>
 #include <linux/refcount_api.h>
 #include <linux/kref_api.h>

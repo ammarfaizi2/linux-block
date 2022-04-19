@@ -21,6 +21,7 @@
  *					Relax this requirement to work with older peers.
  */
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/rtnetlink_api.h>
 #include <net/route_api.h>

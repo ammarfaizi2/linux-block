@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2020 Facebook */
 
+#include <linux/rcupdate.h>
 #include <linux/seq_file.h>
 #include <linux/sched/task.h>
 #include <linux/sched/signal.h>

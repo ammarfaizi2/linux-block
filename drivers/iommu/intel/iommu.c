@@ -13,6 +13,7 @@
 #define pr_fmt(fmt)     "DMAR: " fmt
 #define dev_fmt(fmt)    pr_fmt(fmt)
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/io.h>
 #include <linux/bitmap.h>

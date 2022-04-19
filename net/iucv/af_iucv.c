@@ -13,6 +13,7 @@
 #define KMSG_COMPONENT "af_iucv"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>

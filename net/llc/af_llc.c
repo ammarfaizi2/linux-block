@@ -20,6 +20,7 @@
  *
  * See the GNU General Public License for more details.
  */
+#include <linux/rcupdate.h>
 #include <uapi/asm/fcntl.h>
 #include <net/sock_api.h>
 #include <linux/wait_api.h>

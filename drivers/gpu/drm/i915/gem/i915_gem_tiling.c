@@ -4,6 +4,7 @@
  * Copyright © 2008 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/align.h>
 #include <linux/spinlock_api.h>

@@ -9,6 +9,7 @@
  * Authors:	Lotsa people, from code originally in tcp
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <net/timewait_sock.h>
 #include <net/sock_api.h>

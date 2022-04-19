@@ -8,6 +8,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>

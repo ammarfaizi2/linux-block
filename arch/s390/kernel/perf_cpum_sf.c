@@ -8,6 +8,7 @@
 #define KMSG_COMPONENT	"cpum_sf"
 #define pr_fmt(fmt)	KMSG_COMPONENT ": " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/sched.h>
 #include <linux/perf_event_api.h>

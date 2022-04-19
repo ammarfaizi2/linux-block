@@ -4,6 +4,7 @@
  * Copyright © 2014-2016 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 
 #include "display/intel_frontbuffer.h"

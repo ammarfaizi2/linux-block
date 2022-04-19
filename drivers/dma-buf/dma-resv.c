@@ -33,6 +33,7 @@
  * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/slab.h>
 #include <linux/seqlock_api.h>

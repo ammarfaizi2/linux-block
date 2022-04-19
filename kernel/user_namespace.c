@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>

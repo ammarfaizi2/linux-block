@@ -8,6 +8,7 @@
  *		Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/seq_file.h>
 #include <linux/rculist.h>

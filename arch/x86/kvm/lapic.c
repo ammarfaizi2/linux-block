@@ -16,6 +16,7 @@
  * Based on Xen 3.1 code, Copyright (c) 2004, Intel Corporation.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/align.h>
 #include <linux/workqueue_api.h>

@@ -5,6 +5,7 @@
  *	      Cornelia Huck <cornelia.huck@de.ibm.com>
  *	      Jan Glauber <jang@linux.vnet.ibm.com>
  */
+#include <linux/rcupdate.h>
 #include <linux/mutex_api.h>
 #include <linux/io_extra.h>
 #include <linux/atomic_api.h>

@@ -49,6 +49,7 @@
  * This file contains OPA VNIC encapsulation/decapsulation function.
  */
 
+#include <linux/rcupdate.h>
 #include <uapi/linux/in.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

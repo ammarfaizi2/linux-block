@@ -5,6 +5,7 @@
  * Copyright (C) 2019 Cong Wang <cwang@twitter.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/mutex_api.h>
 #include <linux/module.h>
 #include <linux/ctype.h>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /* Copyright 2017-2019 Qiang Yu <yuq825@gmail.com> */
 
+#include <linux/rcupdate.h>
 #include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/pgtable_api.h>

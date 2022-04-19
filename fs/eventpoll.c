@@ -6,6 +6,7 @@
  *  Davide Libenzi <davidel@xmailserver.org>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/time64_api.h>

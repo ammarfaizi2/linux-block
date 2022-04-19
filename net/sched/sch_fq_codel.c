@@ -5,6 +5,7 @@
  *  Copyright (C) 2012,2015 Eric Dumazet <edumazet@google.com>
  */
 
+#include <linux/rcupdate.h>
 #include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <linux/rtnetlink.h>

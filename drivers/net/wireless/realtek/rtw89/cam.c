@@ -2,6 +2,7 @@
 /* Copyright(c) 2019-2020  Realtek Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/etherdevice_api.h>

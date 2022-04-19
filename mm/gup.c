@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/rcupdate.h>
 #include <linux/page_ref.h>
 #include <linux/page_ref_api_extra.h>
 #include <linux/irqflags.h>

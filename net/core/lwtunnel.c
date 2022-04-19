@@ -5,6 +5,7 @@
  * Authors:	Roopa Prabhu, <roopa@cumulusnetworks.com>
  */
 
+#include <linux/rcupdate.h>
 #include <net/netlink_api.h>
 #include <linux/sysfs.h>
 #include <linux/rtnetlink.h>

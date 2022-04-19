@@ -16,6 +16,7 @@
  *   Ben-Ami Yassour <benami@il.ibm.com>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/irqflags.h>
 #include <linux/workqueue_api.h>

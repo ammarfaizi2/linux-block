@@ -11,6 +11,7 @@
  *
  *  Copyright (C) 2006 Red Hat, Inc., Ingo Molnar <mingo@redhat.com>
  */
+#include <linux/rcupdate.h>
 #include <linux/preempt.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>

@@ -8,6 +8,7 @@
  * Copyright (C) 2018-2022 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>
 #include <linux/workqueue_api.h>

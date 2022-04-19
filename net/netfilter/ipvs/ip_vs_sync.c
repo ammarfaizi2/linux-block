@@ -35,6 +35,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <net/sock_api.h>
 #include <net/ipv6_api_sock.h>

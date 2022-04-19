@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/rcupdate.h>
 #include <linux/module.h>
 #include <linux/errno.h>
 #include <linux/socket.h>

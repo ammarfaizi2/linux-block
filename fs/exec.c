@@ -23,6 +23,7 @@
  * formats.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/irqflags.h>
 #include <linux/sched/task_flags.h>
 #include <linux/sysctl.h>

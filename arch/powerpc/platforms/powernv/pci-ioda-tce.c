@@ -10,6 +10,7 @@
  * 2 of the License, or (at your option) any later version.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>

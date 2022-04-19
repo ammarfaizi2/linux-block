@@ -11,6 +11,7 @@
  */
 #define pr_fmt(fmt)	"trace_probe: " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>
 #include <linux/kallsyms.h>

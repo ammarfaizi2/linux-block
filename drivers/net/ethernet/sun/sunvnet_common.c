@@ -5,6 +5,7 @@
  * Copyright (C) 2016-2017 Oracle. All rights reserved.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/skbuff_api_frag.h>

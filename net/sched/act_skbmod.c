@@ -5,6 +5,7 @@
  * Copyright (c) 2016 Jamal Hadi Salim <jhs@mojatatu.com>
 */
 
+#include <linux/rcupdate.h>
 #include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <net/act_api.h>

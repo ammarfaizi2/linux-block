@@ -23,6 +23,7 @@
  * Pavel Emelianov <xemul@openvz.org>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/timekeeping.h>
 #include <linux/syscalls_api.h>
 #include <linux/stat.h>

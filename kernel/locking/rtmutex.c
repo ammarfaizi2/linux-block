@@ -16,6 +16,7 @@
  *
  *  See Documentation/locking/rt-mutex-design.rst for details.
  */
+#include <linux/rcupdate.h>
 #include <linux/preempt.h>
 #include <linux/syscalls_api.h>
 #include <linux/spinlock_api.h>

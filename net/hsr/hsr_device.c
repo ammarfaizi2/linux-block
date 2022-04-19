@@ -7,6 +7,7 @@
  * virtual HSR or PRP devices.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/random.h>
 #include <linux/netdevice_api_extra.h>
 #include <linux/spinlock_api.h>

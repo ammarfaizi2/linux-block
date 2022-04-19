@@ -3,6 +3,7 @@
  * Copyright(c) 2015-2017 Intel Corporation.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/sysfs.h>
 #include <linux/kobject_api.h>
 #include <linux/capability.h>

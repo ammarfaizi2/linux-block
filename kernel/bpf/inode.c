@@ -8,6 +8,7 @@
  *	Daniel Borkmann <daniel@iogearbox.net>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>

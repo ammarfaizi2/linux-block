@@ -17,6 +17,7 @@
  * - scnprintf and vscnprintf
  */
 
+#include <linux/rcupdate.h>
 #include <linux/preempt.h>
 #include <net/ipv6_api.h>
 #include <linux/workqueue_api.h>

@@ -29,6 +29,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <linux/rcupdate.h>
 #include <net/route_api.h>
 #include <net/neighbour_api.h>
 #include <net/dst_api.h>

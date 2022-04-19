@@ -6,6 +6,7 @@
  *	Stephen Hemminger		<shemminger@osdl.org>
  */
 
+#include <linux/rcupdate.h>
 #include <net/rtnetlink_api.h>
 #include <net/netlink_api.h>
 #include <linux/spinlock_api.h>

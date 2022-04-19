@@ -6,6 +6,7 @@
  * Copyright (c) 2005-2006 Intel Corporation.  All rights reserved.
  */
 
+#include <linux/rcupdate.h>
 #include <net/route_api.h>
 #include <net/net_namespace_api.h>
 #include <net/ipv6_api.h>

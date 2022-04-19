@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  * - Derived from security/selinux/hooks.c
  */
+#include <linux/rcupdate.h>
 #include <linux/sched/task_flags.h>
 #include <linux/atomic_api.h>
 #include <linux/sched/signal.h>

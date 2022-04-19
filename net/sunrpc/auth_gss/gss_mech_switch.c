@@ -8,6 +8,7 @@
  *  J. Bruce Fields   <bfields@umich.edu>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/sunrpc/debug.h>
 #include <linux/spinlock_api.h>
 #include <linux/rculist.h>

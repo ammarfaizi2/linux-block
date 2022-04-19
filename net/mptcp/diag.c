@@ -6,6 +6,7 @@
  * Author: Davide Caratti <dcaratti@redhat.com>
  */
 
+#include <linux/rcupdate.h>
 #include <net/netlink_api.h>
 #include <linux/kernel.h>
 #include <linux/net.h>

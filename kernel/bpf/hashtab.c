@@ -2,6 +2,7 @@
 /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
  * Copyright (c) 2016 Facebook
  */
+#include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/preempt.h>
 #include <linux/uaccess.h>

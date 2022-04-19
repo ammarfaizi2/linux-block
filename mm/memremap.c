@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2015 Intel Corporation. All rights reserved. */
+#include <linux/rcupdate.h>
 #include <linux/page_ref.h>
 #include <linux/xarray_api.h>
 #include <linux/topology.h>

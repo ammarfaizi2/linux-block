@@ -3,6 +3,7 @@
  * Copyright (c) 2007-2012 Nicira, Inc.
  */
 
+#include <linux/rcupdate.h>
 #include <net/rtnetlink_api.h>
 #include <net/dst_api.h>
 #include <linux/skbuff_api_nf.h>

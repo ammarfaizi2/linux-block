@@ -3,6 +3,7 @@
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/fs_api_sb.h>
 #include <linux/align.h>
 #include <linux/wait_api.h>

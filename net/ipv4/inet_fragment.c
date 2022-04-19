@@ -7,6 +7,7 @@
  *				ipv6/reassembly. and ipv6 nf conntrack reassembly
  */
 
+#include <linux/rcupdate.h>
 #include <net/checksum.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>

@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt)	"NFP net bpf: " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/topology.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>

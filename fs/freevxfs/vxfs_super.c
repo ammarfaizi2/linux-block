@@ -31,6 +31,7 @@
 /*
  * Veritas filesystem driver - superblock related routines.
  */
+#include <linux/rcupdate.h>
 #include <linux/fs_api_sb.h>
 #include <linux/fs_api.h>
 #include <linux/dcache.h>

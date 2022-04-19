@@ -55,6 +55,7 @@
  * cancelled as soon as busyness is detected.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/kref_api.h>

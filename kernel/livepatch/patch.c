@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/rcupdate.h>
 #include <linux/livepatch.h>
 #include <linux/list.h>
 #include <linux/ftrace.h>

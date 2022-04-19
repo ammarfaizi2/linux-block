@@ -21,6 +21,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/pid.h>
 #include <linux/mmap_lock.h>
 #include <linux/log2.h>

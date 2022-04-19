@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/atomic_api.h>
 #include <rdma/ib_smi.h>

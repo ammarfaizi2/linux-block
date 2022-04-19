@@ -8,6 +8,7 @@
  * This file contains HFI1 support for ipoib functionality
  */
 
+#include <linux/rcupdate.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api_pcpu_stats.h>
 #include <linux/netdevice_api.h>

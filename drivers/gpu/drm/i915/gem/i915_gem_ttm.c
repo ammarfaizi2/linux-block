@@ -3,6 +3,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/rcupdate.h>
 #include <linux/file.h>
 #include <linux/pagemap.h>
 #include <linux/spinlock_api.h>

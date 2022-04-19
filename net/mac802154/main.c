@@ -6,6 +6,7 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
+#include <linux/rcupdate.h>
 #include <net/rtnetlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>

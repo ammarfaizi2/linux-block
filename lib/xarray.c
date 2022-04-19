@@ -6,6 +6,7 @@
  * Author: Matthew Wilcox <willy@infradead.org>
  */
 
+#include <linux/rcupdate.h>
 #include <linux/xarray_api.h>
 #include <linux/sched.h>
 #include <linux/minmax.h>

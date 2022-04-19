@@ -4,6 +4,7 @@
  * Re-organised Feb 1998 Russell King
  * Copyright (C) 2020 Christoph Hellwig
  */
+#include <linux/rcupdate.h>
 #include <linux/kdev_t.h>
 #include <linux/xarray_api.h>
 #include <linux/spinlock_api.h>

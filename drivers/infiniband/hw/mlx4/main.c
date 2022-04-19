@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/rcupdate.h>
 #include <net/ipv6_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
