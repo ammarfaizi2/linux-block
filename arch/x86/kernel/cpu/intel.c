@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <asm/elf_api.h>
 #include <linux/kernel.h>
 #include <linux/pgtable.h>
 

@@ -8,6 +8,7 @@
  * Copyright © 2011-2013 Jussi Kivilinna <jussi.kivilinna@iki.fi>
  */
 
+#include <asm/elf_api.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/crypto.h>

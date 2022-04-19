@@ -5,6 +5,7 @@
  * Copyright (C) 2002, Rohit Seth <rohit.seth@intel.com>
  */
 
+#include <asm/elf_api.h>
 #include <linux/init.h>
 #include <linux/fs.h>
 #include <linux/mm.h>

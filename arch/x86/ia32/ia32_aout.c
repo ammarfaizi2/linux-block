@@ -6,6 +6,7 @@
  *  Hacked together by Andi Kleen
  */
 
+#include <asm/elf_api.h>
 #include <linux/module.h>
 
 #include <linux/time.h>

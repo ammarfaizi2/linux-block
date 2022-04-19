@@ -12,6 +12,7 @@
  *   Copyright (c) 2006 Herbert Xu <herbert@gondor.apana.org.au>
  */
 
+#include <asm/elf_api.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/crypto.h>
