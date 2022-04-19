@@ -11,6 +11,7 @@
  * the privacy-screen.
  */
 
+#include <linux/string.h>
 #include <linux/acpi.h>
 #include <drm/drm_privacy_screen_driver.h>
 

@@ -5,6 +5,7 @@
  * All rights reserved.
  *
  */
+#include <linux/string.h>
 #include <linux/kobject_api.h>
 #include <linux/mutex_api.h>
 #include <linux/sysfs.h>
