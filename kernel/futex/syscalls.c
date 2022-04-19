@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/sched.h>
 #include <linux/rcupdate.h>
 #include <linux/uaccess.h>
 #include <linux/timekeeping.h>

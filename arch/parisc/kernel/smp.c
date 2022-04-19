@@ -13,6 +13,7 @@
 ** -grant (1/12/2001)
 **
 */
+#include <linux/sched.h>
 #include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/spinlock_api.h>

@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "ACPI: AGDI: " fmt
 
+#include <linux/sched.h>
 #include <linux/acpi.h>
 #include <linux/arm_sdei.h>
 #include <linux/io.h>

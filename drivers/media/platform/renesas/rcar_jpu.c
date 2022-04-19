@@ -14,6 +14,7 @@
  *      3) V4L2_CID_JPEG_ACTIVE_MARKER
  */
 
+#include <linux/sched.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>
