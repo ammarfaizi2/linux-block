@@ -5,6 +5,7 @@
  * Copyright 2018 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <linux/minmax.h>
 #include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/workqueue_api.h>
