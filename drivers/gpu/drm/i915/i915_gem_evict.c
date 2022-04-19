@@ -26,6 +26,7 @@
  *
  */
 
+#include <linux/kref_api.h>
 #include <linux/atomic_api.h>
 #include <linux/align.h>
 #include <linux/lockdep_api.h>

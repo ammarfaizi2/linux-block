@@ -6,6 +6,7 @@
 #include "qla_def.h"
 #include "qla_target.h"
 
+#include <linux/kref_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>

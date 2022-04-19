@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/kref_api.h>
 #include <linux/of_api.h>
 #include <linux/string.h>
 #include <linux/device_api_lock.h>

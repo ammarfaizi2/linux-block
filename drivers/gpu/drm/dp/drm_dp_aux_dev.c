@@ -25,6 +25,7 @@
  *
  */
 
+#include <linux/kref_api.h>
 #include <linux/atomic_api.h>
 #include <linux/idr_api.h>
 #include <linux/kdev_t.h>
