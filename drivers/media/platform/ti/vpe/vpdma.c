@@ -9,6 +9,7 @@
  * Archit Taneja, <archit@ti.com>
  */
 
+#include <linux/ioport.h>
 #include <linux/spinlock_api.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>

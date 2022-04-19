@@ -16,6 +16,7 @@
  *	 4) investigate if enum used for user space type definition
  *	    to be replaced by #defines or integer
  */
+#include <linux/ioport.h>
 #include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/platform_device.h>

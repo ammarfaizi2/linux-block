@@ -8,6 +8,7 @@
  *	    Peter Griffin <peter.griffin@linaro.org>
  *
  */
+#include <linux/ioport.h>
 #include <linux/i2c.h>
 #include <linux/timer.h>
 #include <linux/tasklet_api.h>
