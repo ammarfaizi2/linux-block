@@ -5,6 +5,7 @@
  * Copyright(c) 2021 Intel Corporation.
  */
 
+#include <linux/fs_api.h>
 #include <linux/xarray_api.h>
 #include <linux/preempt.h>
 #include <linux/mutex_api.h>
