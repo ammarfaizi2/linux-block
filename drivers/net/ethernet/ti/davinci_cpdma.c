@@ -5,6 +5,7 @@
  * Copyright (C) 2010 Texas Instruments
  *
  */
+#include <linux/log2.h>
 #include <linux/vmalloc.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>

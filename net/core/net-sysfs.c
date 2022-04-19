@@ -5,6 +5,7 @@
  * Copyright (c) 2003 Stephen Hemminger <shemminger@osdl.org>
  */
 
+#include <linux/log2.h>
 #include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <linux/sysfs.h>

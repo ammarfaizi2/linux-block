@@ -4,6 +4,7 @@
  * Copyright (c) 2009-2013 QLogic Corporation
  */
 
+#include <linux/log2.h>
 #include <linux/vmalloc.h>
 #include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>

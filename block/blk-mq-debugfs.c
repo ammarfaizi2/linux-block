@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Facebook
  */
 
+#include <linux/log2.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>

@@ -4,6 +4,7 @@
  *
  * Copyright 2013,2014 IBM Corp.
  */
+#include <linux/log2.h>
 #include <linux/kobject_api.h>
 #include <linux/kernel.h>
 #include <linux/init.h>

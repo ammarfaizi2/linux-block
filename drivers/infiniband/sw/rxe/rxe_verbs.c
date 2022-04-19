@@ -4,6 +4,7 @@
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
+#include <linux/log2.h>
 #include <linux/uaccess.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>

@@ -12,6 +12,8 @@
  * Maintained by: QLogic-Storage-Upstream@qlogic.com
  */
 
+#include <linux/log2.h>
+
 #include "bnx2i.h"
 
 /**

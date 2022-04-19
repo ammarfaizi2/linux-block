@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt)	"AT91: PIT: " fmt
 
+#include <linux/log2.h>
 #include <linux/irqflags.h>
 #include <linux/cpumask_api.h>
 #include <linux/clk.h>

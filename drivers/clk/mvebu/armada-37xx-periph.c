@@ -17,6 +17,7 @@
  * xtal clock as parent.
  */
 
+#include <linux/log2.h>
 #include <linux/ioport.h>
 #include <linux/device_api_lock.h>
 #include <linux/delay.h>

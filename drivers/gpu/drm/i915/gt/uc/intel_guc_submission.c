@@ -3,6 +3,7 @@
  * Copyright © 2014 Intel Corporation
  */
 
+#include <linux/log2.h>
 #include <linux/ktime_api.h>
 #include <linux/dma-fence-api.h>
 #include <linux/xarray_api.h>

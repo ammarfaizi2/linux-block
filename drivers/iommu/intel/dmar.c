@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt)     "DMAR: " fmt
 
+#include <linux/log2.h>
 #include <linux/align.h>
 #include <linux/vmalloc.h>
 #include <linux/timex.h>

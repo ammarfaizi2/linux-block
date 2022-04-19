@@ -6,6 +6,7 @@
 
 #include "dm.h"
 
+#include <linux/log2.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 

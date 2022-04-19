@@ -7,6 +7,7 @@
 
 #include "dm-exception-store.h"
 
+#include <linux/log2.h>
 #include <linux/spinlock_api.h>
 #include <linux/kmod.h>
 #include <linux/ctype.h>

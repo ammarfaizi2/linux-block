@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 #define CREATE_TRACE_POINTS
+#include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

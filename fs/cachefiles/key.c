@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/log2.h>
 #include <linux/slab.h>
 #include "internal.h"
 

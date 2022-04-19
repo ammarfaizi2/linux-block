@@ -14,6 +14,7 @@
  *  - Optionally support the FIFO
  */
 
+#include <linux/log2.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>
 #include <linux/device_api_lock.h>

@@ -12,6 +12,7 @@
 #define EVDEV_MIN_BUFFER_SIZE	64U
 #define EVDEV_BUF_PACKETS	8
 
+#include <linux/log2.h>
 #include <linux/kdev_t.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>

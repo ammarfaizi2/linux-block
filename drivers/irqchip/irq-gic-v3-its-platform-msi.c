@@ -4,6 +4,7 @@
  * Author: Marc Zyngier <marc.zyngier@arm.com>
  */
 
+#include <linux/log2.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/acpi_iort.h>

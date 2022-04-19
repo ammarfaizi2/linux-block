@@ -3,6 +3,7 @@
  * Copyright © 2014-2018 Intel Corporation
  */
 
+#include <linux/log2.h>
 #include <linux/align.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

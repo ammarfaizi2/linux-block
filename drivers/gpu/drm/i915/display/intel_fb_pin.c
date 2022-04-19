@@ -7,6 +7,7 @@
  * DOC: display pinning helpers
  */
 
+#include <linux/log2.h>
 #include <linux/atomic_api.h>
 
 #include "gem/i915_gem_domain.h"

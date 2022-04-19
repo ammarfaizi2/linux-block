@@ -4,6 +4,7 @@
  * Copyright (C) 2021 Western Digital Corporation or its affiliates.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/log2.h>
 #include <linux/mutex_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>

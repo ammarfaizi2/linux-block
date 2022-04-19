@@ -35,6 +35,7 @@
  *		Paul E. McKenney <paulmck@us.ibm.com>
  *		Patrick McHardy <kaber@trash.net>
  */
+#include <linux/log2.h>
 #include <net/route_api.h>
 #include <net/netlink_api.h>
 #include <net/ip_fib_api.h>

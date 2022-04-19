@@ -10,6 +10,7 @@
  * ARM PCI Host generic driver.
  */
 
+#include <linux/log2.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

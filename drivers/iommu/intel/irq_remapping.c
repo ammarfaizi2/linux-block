@@ -2,6 +2,7 @@
 
 #define pr_fmt(fmt)     "DMAR-IR: " fmt
 
+#include <linux/log2.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/mm_page_address.h>

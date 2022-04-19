@@ -10,6 +10,7 @@
 #include "queueing.h"
 #include "peerlookup.h"
 
+#include <linux/log2.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/rwsem_api.h>

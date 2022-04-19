@@ -6,6 +6,7 @@
  * Author: Phil Edworthy <phil.edworthy@renesas.com>
  */
 
+#include <linux/log2.h>
 #include <linux/ioport.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>

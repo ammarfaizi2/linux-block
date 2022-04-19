@@ -7,6 +7,7 @@
  * Copyright (c) 2004 Takashi Iwai <tiwai@suse.de>
  */
 
+#include <linux/log2.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <sound/core.h>

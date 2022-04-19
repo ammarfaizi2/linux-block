@@ -15,6 +15,7 @@
  * using the CPU's debug registers.
  */
 
+#include <linux/log2.h>
 #include <linux/sched/thread.h>
 #include <linux/perf_event_api.h>
 #include <linux/notifier_api.h>

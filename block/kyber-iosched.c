@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Facebook
  */
 
+#include <linux/log2.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

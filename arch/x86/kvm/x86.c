@@ -16,6 +16,7 @@
  *   Ben-Ami Yassour <benami@il.ibm.com>
  */
 
+#include <linux/log2.h>
 #include <linux/irqflags.h>
 #include <linux/workqueue_api.h>
 #include <linux/timex.h>

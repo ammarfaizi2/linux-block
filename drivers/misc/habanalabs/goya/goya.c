@@ -11,6 +11,7 @@
 #include "../include/goya/asic_reg/goya_masks.h"
 #include "../include/goya/goya_reg_map.h"
 
+#include <linux/log2.h>
 #include <linux/ktime_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>

@@ -8,6 +8,7 @@
  * Modified by: Shaun Tancheff <shaun.tancheff@seagate.com>
  */
 
+#include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

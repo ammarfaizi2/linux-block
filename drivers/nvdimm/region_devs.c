@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
+#include <linux/log2.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/smp_api.h>

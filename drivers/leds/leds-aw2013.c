@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 // Driver for Awinic AW2013 3-channel LED driver
 
+#include <linux/log2.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/minmax.h>

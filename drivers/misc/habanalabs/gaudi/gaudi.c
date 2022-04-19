@@ -13,6 +13,7 @@
 #include "../include/gaudi/gaudi_reg_map.h"
 #include "../include/gaudi/gaudi_async_ids_map_extended.h"
 
+#include <linux/log2.h>
 #include <linux/ktime_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

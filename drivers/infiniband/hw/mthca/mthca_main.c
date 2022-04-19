@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/log2.h>
 #include <linux/vmalloc.h>
 #include <linux/pci-dma-compat.h>
 #include <linux/mutex_api.h>

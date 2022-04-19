@@ -11,6 +11,7 @@
 #include "cookie.h"
 #include "socket.h"
 
+#include <linux/log2.h>
 #include <net/inet_ecn.h>
 #include <linux/workqueue_api.h>
 #include <linux/u64_stats_sync_api.h>

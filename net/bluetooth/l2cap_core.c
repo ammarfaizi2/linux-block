@@ -28,6 +28,7 @@
 
 /* Bluetooth L2CAP core. */
 
+#include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/uio_api.h>
 #include <linux/spinlock_api.h>

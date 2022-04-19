@@ -9,6 +9,7 @@
  * Handling of HFS wrappers around HFS+ volumes
  */
 
+#include <linux/log2.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>

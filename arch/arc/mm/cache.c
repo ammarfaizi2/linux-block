@@ -6,6 +6,7 @@
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
+#include <linux/log2.h>
 #include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>

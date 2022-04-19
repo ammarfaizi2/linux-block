@@ -5,6 +5,7 @@
  * (c) 2014 Daniel Mack <linux@zonque.org>
  */
 
+#include <linux/log2.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

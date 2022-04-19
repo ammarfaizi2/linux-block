@@ -16,6 +16,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/log2.h>
 #include <net/route_api.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>

@@ -15,6 +15,7 @@
 #include "aq_filters.h"
 #include "aq_hw_utils.h"
 
+#include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/netdevice_api.h>

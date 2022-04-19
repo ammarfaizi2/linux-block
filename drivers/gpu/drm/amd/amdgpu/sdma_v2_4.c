@@ -22,6 +22,7 @@
  * Authors: Alex Deucher
  */
 
+#include <linux/log2.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

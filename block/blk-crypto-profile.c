@@ -24,6 +24,7 @@
 
 #define pr_fmt(fmt) "blk-crypto: " fmt
 
+#include <linux/log2.h>
 #include <linux/wait_api.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>

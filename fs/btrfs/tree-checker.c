@@ -15,6 +15,7 @@
  * carefully reviewed otherwise so it does not prevent mount of valid images.
  */
 
+#include <linux/log2.h>
 #include <linux/align.h>
 #include <linux/types.h>
 #include <linux/stddef.h>

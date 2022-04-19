@@ -6,6 +6,7 @@
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
+#include <linux/log2.h>
 #include <linux/align.h>
 #include <net/netlink_api.h>
 #include <net/checksum.h>

@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/log2.h>
 #include <linux/timekeeping.h>
 #include <linux/time64_api.h>
 #include <linux/seqlock_api.h>

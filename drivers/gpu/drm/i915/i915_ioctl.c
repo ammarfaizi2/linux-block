@@ -3,6 +3,8 @@
  * Copyright © 2022 Intel Corporation
  */
 
+#include <linux/log2.h>
+
 #include "gt/intel_engine_regs.h"
 
 #include "i915_drv.h"

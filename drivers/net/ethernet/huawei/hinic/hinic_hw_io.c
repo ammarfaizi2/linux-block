@@ -4,6 +4,7 @@
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  */
 
+#include <linux/log2.h>
 #include <linux/mm_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/kernel.h>

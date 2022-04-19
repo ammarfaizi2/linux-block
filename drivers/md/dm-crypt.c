@@ -7,6 +7,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/log2.h>
 #include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 1994, 1995 by Waldorf Electronics, written by Ralf Baechle.
  * Copyright (C) 1999 by Silicon Graphics, Inc.
  */
+#include <linux/log2.h>
 #include <asm/cpu-type.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>

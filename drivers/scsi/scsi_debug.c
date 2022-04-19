@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/log2.h>
 #include <linux/mutex_api.h>
 #include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>

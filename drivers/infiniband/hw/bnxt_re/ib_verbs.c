@@ -36,6 +36,7 @@
  * Description: IB Verbs interpreter
  */
 
+#include <linux/log2.h>
 #include <net/ipv6_api.h>
 #include <linux/xarray_api.h>
 #include <linux/spinlock_api.h>

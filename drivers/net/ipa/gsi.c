@@ -4,6 +4,7 @@
  * Copyright (C) 2018-2021 Linaro Ltd.
  */
 
+#include <linux/log2.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>

@@ -15,6 +15,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/log2.h>
 #include <linux/of_api.h>
 #include <linux/clk-provider.h>
 #include <linux/slab.h>

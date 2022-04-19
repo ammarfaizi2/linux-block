@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/log2.h>
 #include <linux/seq_file.h>
 #include <linux/printk.h>
 #include <linux/slab.h>

@@ -5,6 +5,7 @@
  * All rights reserved.
  */
 
+#include <linux/log2.h>
 #include <linux/vmalloc.h>
 #include <linux/netdevice_api.h>
 #include <linux/types.h>

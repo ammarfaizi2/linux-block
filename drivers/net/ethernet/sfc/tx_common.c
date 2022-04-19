@@ -8,6 +8,7 @@
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
+#include <linux/log2.h>
 #include <net/xdp_api.h>
 #include <linux/tcp.h>
 #include <linux/slab.h>

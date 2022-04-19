@@ -7,6 +7,7 @@
 
 #include "fsverity_private.h"
 
+#include <linux/log2.h>
 #include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>

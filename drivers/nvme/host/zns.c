@@ -3,6 +3,7 @@
  * Copyright (C) 2020 Western Digital Corporation or its affiliates.
  */
 
+#include <linux/log2.h>
 #include <linux/slab.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/device_api.h>

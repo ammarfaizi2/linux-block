@@ -47,6 +47,7 @@
  * Contact Information:
  * Jon Mason <jon.mason@intel.com>
  */
+#include <linux/log2.h>
 #include <linux/align.h>
 #include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>

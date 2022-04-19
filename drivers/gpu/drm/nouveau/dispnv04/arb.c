@@ -21,6 +21,8 @@
  * SOFTWARE.
  */
 
+#include <linux/log2.h>
+
 #include "nouveau_drv.h"
 #include "nouveau_reg.h"
 #include "hw.h"

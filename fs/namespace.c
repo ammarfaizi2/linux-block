@@ -8,6 +8,7 @@
  * Heavily rewritten.
  */
 
+#include <linux/log2.h>
 #include <linux/preempt.h>
 #include <uapi/linux/unistd.h>
 #include <net/sock_api.h>

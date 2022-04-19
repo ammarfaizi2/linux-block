@@ -3,6 +3,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/log2.h>
 #include <linux/mutex_api.h>
 #include <linux/slab.h>
 

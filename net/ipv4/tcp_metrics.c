@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/log2.h>
 #include <net/sock_api.h>
 #include <net/net_namespace_api.h>
 #include <net/netlink_api.h>

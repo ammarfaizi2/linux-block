@@ -18,6 +18,7 @@
 #include "aq_ptp.h"
 #include "aq_filters.h"
 
+#include <linux/log2.h>
 #include <net/ipv6_api_sock.h>
 #include <linux/workqueue_api.h>
 #include <linux/skbuff_api_frag.h>

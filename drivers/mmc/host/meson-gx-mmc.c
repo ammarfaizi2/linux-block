@@ -5,6 +5,7 @@
  * Copyright (c) 2016 BayLibre, SAS.
  * Author: Kevin Hilman <khilman@baylibre.com>
  */
+#include <linux/log2.h>
 #include <linux/align.h>
 #include <linux/scatterlist_api.h>
 #include <linux/property.h>

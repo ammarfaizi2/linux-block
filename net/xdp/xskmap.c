@@ -3,6 +3,7 @@
  * Copyright(c) 2018 Intel Corporation.
  */
 
+#include <linux/log2.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
 #include <linux/net.h>

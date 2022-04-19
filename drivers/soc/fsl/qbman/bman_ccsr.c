@@ -28,6 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/log2.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

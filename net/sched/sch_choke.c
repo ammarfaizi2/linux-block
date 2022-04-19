@@ -6,6 +6,7 @@
  * Copyright (c) 2011 Eric Dumazet <eric.dumazet@gmail.com>
  */
 
+#include <linux/log2.h>
 #include <net/sch_generic_api.h>
 #include <net/netlink_api.h>
 #include <linux/skbuff_api_extra.h>

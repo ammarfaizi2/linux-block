@@ -6,6 +6,7 @@
  * adapted from Remy Card's ext2/ioctl.c
  */
 
+#include <linux/log2.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/fs_api.h>

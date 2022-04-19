@@ -3,6 +3,7 @@
  * Copyright 2020-2021 NXP
  */
 
+#include <linux/log2.h>
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/of_api.h>

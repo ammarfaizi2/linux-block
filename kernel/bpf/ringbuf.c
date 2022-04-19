@@ -1,3 +1,4 @@
+#include <linux/log2.h>
 #include <linux/preempt.h>
 #include <linux/wait_api.h>
 #include <linux/topology.h>

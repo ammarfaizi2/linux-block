@@ -8,6 +8,7 @@
  * Copyright (C) 2018-2021 Intel Corporation
  */
 
+#include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/log2.h>
 #include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>

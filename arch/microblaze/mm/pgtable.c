@@ -26,6 +26,7 @@
  *
  */
 
+#include <linux/log2.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>
 #include <linux/mm_api.h>

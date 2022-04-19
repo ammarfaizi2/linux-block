@@ -14,6 +14,7 @@
  * corresponding subsystems, but most of it is here.
  */
 
+#include <linux/log2.h>
 #include <linux/kdev_t.h>
 #include <linux/vmalloc.h>
 #include <linux/uuid_api.h>

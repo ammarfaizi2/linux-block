@@ -12,6 +12,7 @@
   Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
+#include <linux/log2.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>
 #include <linux/crc32.h>

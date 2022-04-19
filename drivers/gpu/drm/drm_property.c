@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE.
  */
 
+#include <linux/log2.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/mm.h>

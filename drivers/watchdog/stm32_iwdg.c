@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/log2.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

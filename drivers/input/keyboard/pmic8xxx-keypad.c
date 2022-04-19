@@ -2,6 +2,7 @@
 /* Copyright (c) 2009-2011, Code Aurora Forum. All rights reserved.
  */
 
+#include <linux/log2.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

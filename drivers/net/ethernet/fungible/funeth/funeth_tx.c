@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 
+#include <linux/log2.h>
 #include <linux/io.h>
 #include <linux/gfp_api.h>
 #include <linux/slab.h>

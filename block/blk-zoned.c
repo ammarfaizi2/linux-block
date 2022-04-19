@@ -9,6 +9,7 @@
  * Copyright (c) 2016, Western Digital
  */
 
+#include <linux/log2.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/fs_api.h>

@@ -22,6 +22,7 @@
  * Authors: Christian König <christian.koenig@amd.com>
  */
 
+#include <linux/log2.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>

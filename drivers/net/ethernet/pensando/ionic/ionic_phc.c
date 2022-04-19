@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2017 - 2021 Pensando Systems, Inc */
 
+#include <linux/log2.h>
 #include <linux/uaccess.h>
 #include <linux/timekeeping.h>
 #include <linux/time64_api.h>

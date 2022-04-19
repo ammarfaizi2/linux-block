@@ -18,6 +18,7 @@
  * Author: Marc Zyngier <maz@kernel.org>
  */
 
+#include <linux/log2.h>
 #include <linux/property.h>
 #include <linux/of_api.h>
 #include <linux/notifier_api.h>

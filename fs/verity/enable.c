@@ -7,6 +7,7 @@
 
 #include "fsverity_private.h"
 
+#include <linux/log2.h>
 #include <linux/slab.h>
 #include <linux/pagemap_api_readahead.h>
 #include <linux/mm_api.h>

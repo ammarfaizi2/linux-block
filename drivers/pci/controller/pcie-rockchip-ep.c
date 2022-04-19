@@ -8,6 +8,7 @@
  *         Simon Xue <xxm@rock-chips.com>
  */
 
+#include <linux/log2.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

@@ -24,6 +24,7 @@
  *
  */
 
+#include <linux/log2.h>
 #include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>

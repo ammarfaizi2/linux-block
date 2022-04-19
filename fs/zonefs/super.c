@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2019 Western Digital Corporation or its affiliates.
  */
+#include <linux/log2.h>
 #include <linux/writeback_api.h>
 #include <linux/string.h>
 #include <linux/uuid_api.h>

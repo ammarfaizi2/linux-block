@@ -4,6 +4,7 @@
  *
  * Copyright (C) 2005-2007 Atmel Corporation
  */
+#include <linux/log2.h>
 #include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

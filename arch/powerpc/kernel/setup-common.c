@@ -8,6 +8,7 @@
 
 #undef DEBUG
 
+#include <linux/log2.h>
 #include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>

@@ -43,6 +43,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/log2.h>
 #include <linux/spinlock_api.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>

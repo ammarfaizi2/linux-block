@@ -3,6 +3,7 @@
 
 #include "ice_common.h"
 #include "ice_flow.h"
+#include <linux/log2.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/device_api_lock.h>

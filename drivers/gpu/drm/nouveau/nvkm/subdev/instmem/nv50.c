@@ -24,6 +24,7 @@
 #define nv50_instmem(p) container_of((p), struct nv50_instmem, base)
 #include "priv.h"
 
+#include <linux/log2.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

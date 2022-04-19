@@ -9,6 +9,7 @@
  *	Jinyoung Choi <j-young.choi@samsung.com>
  */
 
+#include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/sysfs.h>

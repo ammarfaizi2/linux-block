@@ -8,6 +8,7 @@
  * All rights reserved
  * www.qlogic.com
  */
+#include <linux/log2.h>
 #include <linux/mm_api.h>
 #include <linux/etherdevice_api.h>
 

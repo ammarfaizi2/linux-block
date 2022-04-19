@@ -13,6 +13,7 @@
  * Author: Thierry Reding <treding@nvidia.com>
  */
 
+#include <linux/log2.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>

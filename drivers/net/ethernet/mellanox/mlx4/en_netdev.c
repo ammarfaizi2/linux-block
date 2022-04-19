@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/log2.h>
 #include <net/pkt_sched.h>
 #include <linux/workqueue_api.h>
 #include <linux/uaccess.h>

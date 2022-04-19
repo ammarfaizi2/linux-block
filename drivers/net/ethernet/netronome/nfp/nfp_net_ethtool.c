@@ -10,6 +10,7 @@
  *          Brad Petrus <brad.petrus@netronome.com>
  */
 
+#include <linux/log2.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/io.h>

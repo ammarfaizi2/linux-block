@@ -11,6 +11,7 @@
  * SPARSEMEM should be contained here, or in mm/memory_hotplug.c.
  */
 
+#include <linux/log2.h>
 #include <linux/align.h>
 #include <linux/xarray_api.h>
 #include <linux/sysfs.h>

@@ -6,6 +6,7 @@
  * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
  */
 
+#include <linux/log2.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/bitops.h>

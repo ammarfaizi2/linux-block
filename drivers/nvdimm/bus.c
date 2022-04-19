@@ -3,6 +3,7 @@
  * Copyright(c) 2013-2015 Intel Corporation. All rights reserved.
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/log2.h>
 #include <linux/kdev_t.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

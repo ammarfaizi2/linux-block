@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/log2.h>
 #include <linux/mm_api.h>
 #include <linux/slab.h>
 

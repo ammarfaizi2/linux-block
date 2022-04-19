@@ -4,6 +4,7 @@
  * Copyright © 2014-2016 Intel Corporation
  */
 
+#include <linux/log2.h>
 #include <linux/xarray_api.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>

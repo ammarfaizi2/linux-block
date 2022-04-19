@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/log2.h>
 #include <linux/etherdevice_api.h>
 #include <linux/capability.h>
 #include <linux/bitmap.h>

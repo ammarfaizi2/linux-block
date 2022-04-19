@@ -10,6 +10,7 @@
 
 */
 
+#include <linux/log2.h>
 #include <linux/blkdev.h>
 #include <linux/seq_file.h>
 #include <linux/module.h>

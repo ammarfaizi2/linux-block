@@ -3,6 +3,7 @@
 // Copyright (C) 2017-2018 Socionext Inc.
 //   Author: Masahiro Yamada <yamada.masahiro@socionext.com>
 
+#include <linux/log2.h>
 #include <linux/align.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>

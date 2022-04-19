@@ -34,6 +34,7 @@
  * SOFTWARE.
  */
 
+#include <linux/log2.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>

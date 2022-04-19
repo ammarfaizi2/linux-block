@@ -2,6 +2,7 @@
 /*
  * Disk events - monitor disk events like media change and eject request.
  */
+#include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

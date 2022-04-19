@@ -8,6 +8,7 @@
  *  Improving global KVA allocator, Uladzislau Rezki, Sony, May 2019
  */
 
+#include <linux/log2.h>
 #include <linux/align.h>
 #include <linux/preempt.h>
 #include <linux/xarray_api.h>

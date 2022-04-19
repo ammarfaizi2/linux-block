@@ -22,6 +22,7 @@
  * Authors: Christian König
  */
 
+#include <linux/log2.h>
 #include <linux/sysfs.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

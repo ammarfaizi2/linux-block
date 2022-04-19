@@ -9,6 +9,7 @@
 #include "dm-cache-policy.h"
 #include "dm.h"
 
+#include <linux/log2.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

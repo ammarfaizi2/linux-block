@@ -5,6 +5,7 @@
  *
  */
 
+#include <linux/log2.h>
 #include <linux/percpu.h>
 #include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>

@@ -18,6 +18,7 @@
  * Matt Porter <mporter@kernel.crashing.org>
  */
 
+#include <linux/log2.h>
 #include <linux/align.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>

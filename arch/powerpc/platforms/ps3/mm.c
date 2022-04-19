@@ -6,6 +6,7 @@
  *  Copyright 2006 Sony Corp.
  */
 
+#include <linux/log2.h>
 #include <linux/spinlock_api.h>
 #include <linux/mm_api.h>
 #include <linux/dma-mapping.h>

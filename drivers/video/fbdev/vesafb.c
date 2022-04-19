@@ -9,6 +9,7 @@
  *
  */
 
+#include <linux/log2.h>
 #include <linux/vmalloc.h>
 #include <linux/io_extra.h>
 #include <linux/device_api.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/log2.h>
 #include <linux/of_api.h>
 #include <linux/ioport.h>
 #include <linux/io.h>

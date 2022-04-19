@@ -23,6 +23,7 @@
 #include "bnx2x_init.h"
 #include "bnx2x_cmn.h"
 #include "bnx2x_sp.h"
+#include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

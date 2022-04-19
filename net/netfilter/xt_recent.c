@@ -10,6 +10,7 @@
  * Copyright 2002-2003, Stephen Frost, 2.5.x port by laforge@netfilter.org
  */
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/log2.h>
 #include <net/net_namespace_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

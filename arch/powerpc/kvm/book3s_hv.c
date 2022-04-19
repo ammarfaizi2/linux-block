@@ -15,6 +15,7 @@
  * by Alexander Graf <agraf@suse.de>.
  */
 
+#include <linux/log2.h>
 #include <linux/irqflags.h>
 #include <linux/wait_api.h>
 #include <linux/topology.h>

@@ -8,6 +8,7 @@
 
 #include "fuse_i.h"
 
+#include <linux/log2.h>
 #include <linux/kdev_t.h>
 #include <linux/wait_api.h>
 #include <linux/syscalls_api.h>

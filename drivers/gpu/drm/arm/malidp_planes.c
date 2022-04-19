@@ -6,6 +6,7 @@
  * ARM Mali DP plane manipulation routines.
  */
 
+#include <linux/log2.h>
 #include <linux/slab.h>
 #include <linux/scatterlist_api.h>
 #include <linux/prefetch.h>

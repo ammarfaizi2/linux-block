@@ -113,6 +113,7 @@
  * ->readpage() which may be less efficient.
  */
 
+#include <linux/log2.h>
 #include <linux/xarray_api.h>
 #include <linux/syscalls_api.h>
 #include <linux/pagemap_api_readahead.h>

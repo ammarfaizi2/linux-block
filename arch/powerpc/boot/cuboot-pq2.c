@@ -8,6 +8,7 @@
  * Copyright (c) 2007 Freescale Semiconductor, Inc.
  */
 
+#include <linux/log2.h>
 #include <linux/prefetch.h>
 
 #include "ops.h"

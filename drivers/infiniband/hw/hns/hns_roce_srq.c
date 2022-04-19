@@ -3,6 +3,7 @@
  * Copyright (c) 2018 Hisilicon Limited.
  */
 
+#include <linux/log2.h>
 #include <linux/xarray_api.h>
 #include <linux/slab.h>
 #include <linux/refcount_api.h>

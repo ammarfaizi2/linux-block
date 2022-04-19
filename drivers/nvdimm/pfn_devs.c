@@ -2,6 +2,7 @@
 /*
  * Copyright(c) 2013-2016 Intel Corporation. All rights reserved.
  */
+#include <linux/log2.h>
 #include <linux/align.h>
 #include <linux/pgtable_api.h>
 #include <linux/mmzone_api.h>

@@ -3,6 +3,7 @@
  * Copyright © 2020 Intel Corporation
  */
 
+#include <linux/log2.h>
 #include <linux/align.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>

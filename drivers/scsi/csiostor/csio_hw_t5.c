@@ -31,6 +31,8 @@
  * SOFTWARE.
  */
 
+#include <linux/log2.h>
+
 #include "csio_hw.h"
 #include "csio_init.h"
 

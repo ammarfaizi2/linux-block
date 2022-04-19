@@ -19,6 +19,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/log2.h>
 #include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/wait_api.h>

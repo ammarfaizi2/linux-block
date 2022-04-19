@@ -13,6 +13,7 @@
  *
  */
 
+#include <linux/log2.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

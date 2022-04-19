@@ -7,6 +7,7 @@
 
 #undef DEBUG
 
+#include <linux/log2.h>
 #include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>

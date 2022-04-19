@@ -4,6 +4,7 @@
  * Copyright © 2014-2016 Intel Corporation
  */
 
+#include <linux/log2.h>
 #include <linux/align.h>
 #include <linux/scatterlist_api.h>
 #include <linux/gfp_api.h>

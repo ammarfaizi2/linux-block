@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
+#include <linux/log2.h>
 #include <linux/dma-mapping.h>
 #include <linux/capability.h>
 #include <linux/acpi.h>

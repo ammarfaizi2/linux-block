@@ -16,6 +16,7 @@
  * for proper decoding. Biggest suspect is "VP8 probs update" trigger.
  */
 
+#include <linux/log2.h>
 #include <linux/dma-mapping.h>
 #include <linux/delay.h>
 #include <linux/types.h>

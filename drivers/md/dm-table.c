@@ -7,6 +7,7 @@
 
 #include "dm-core.h"
 
+#include <linux/log2.h>
 #include <linux/kdev_t.h>
 #include <linux/refcount_api.h>
 #include <linux/mutex_api.h>

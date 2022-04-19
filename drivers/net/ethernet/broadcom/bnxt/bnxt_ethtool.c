@@ -8,6 +8,7 @@
  * the Free Software Foundation.
  */
 
+#include <linux/log2.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/rculist.h>

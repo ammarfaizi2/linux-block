@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2020 Facebook Inc.
 
+#include <linux/log2.h>
 #include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/rtnetlink.h>

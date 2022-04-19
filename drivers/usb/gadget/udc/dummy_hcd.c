@@ -23,6 +23,7 @@
  * Note: The emulation does not include isochronous transfers!
  */
 
+#include <linux/log2.h>
 #include <linux/irqflags.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

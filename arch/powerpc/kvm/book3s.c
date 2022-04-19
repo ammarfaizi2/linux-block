@@ -11,6 +11,7 @@
  * by Hollis Blanchard <hollisb@us.ibm.com>.
  */
 
+#include <linux/log2.h>
 #include <linux/srcu.h>
 #include <linux/rculist.h>
 #include <linux/mutex_api.h>

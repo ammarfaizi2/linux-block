@@ -7,6 +7,7 @@
  *
  */
 
+#include <linux/log2.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>

@@ -6,6 +6,7 @@
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
+#include <linux/log2.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device/class.h>

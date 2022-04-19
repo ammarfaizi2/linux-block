@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/log2.h>
 #include <linux/xarray_api.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>

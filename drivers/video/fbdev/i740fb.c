@@ -12,6 +12,7 @@
  *  i740fb by Patrick LERDA, v0.9
  */
 
+#include <linux/log2.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/device_api.h>

@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) "drm_buddy: " fmt
 
+#include <linux/log2.h>
 #include <linux/slab.h>
 #include <linux/align.h>
 #include <linux/jiffies.h>

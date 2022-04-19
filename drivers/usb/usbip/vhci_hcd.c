@@ -4,6 +4,7 @@
  * Copyright (C) 2015-2016 Nobuo Iwata
  */
 
+#include <linux/log2.h>
 #include <linux/irqflags.h>
 #include <linux/wait_api.h>
 #include <linux/sysfs.h>

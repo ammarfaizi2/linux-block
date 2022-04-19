@@ -3,6 +3,7 @@
  * Copyright © 2008-2015 Intel Corporation
  */
 
+#include <linux/log2.h>
 #include <linux/align.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>

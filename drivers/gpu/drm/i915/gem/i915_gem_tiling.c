@@ -4,6 +4,7 @@
  * Copyright © 2008 Intel Corporation
  */
 
+#include <linux/log2.h>
 #include <linux/align.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

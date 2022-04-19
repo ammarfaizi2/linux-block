@@ -3,6 +3,7 @@
  * Copyright(c) 2018 Intel Corporation.
  */
 
+#include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/sched/user.h>
 #include <linux/refcount_api.h>

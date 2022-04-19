@@ -5,6 +5,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/log2.h>
 #include <linux/slab.h>
 #include <linux/bitmap.h>
 #include <drm/drm_fourcc.h>

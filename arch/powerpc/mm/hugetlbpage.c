@@ -8,6 +8,7 @@
  * Copyright (C) 2002, Rohit Seth <rohit.seth@intel.com>
  */
 
+#include <linux/log2.h>
 #include <linux/spinlock_api.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>

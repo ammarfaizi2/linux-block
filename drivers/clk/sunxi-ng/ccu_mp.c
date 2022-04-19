@@ -4,6 +4,7 @@
  * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
+#include <linux/log2.h>
 #include <linux/spinlock_api.h>
 #include <linux/minmax.h>
 #include <linux/limits.h>

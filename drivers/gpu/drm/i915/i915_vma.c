@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/log2.h>
 #include <linux/align.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>

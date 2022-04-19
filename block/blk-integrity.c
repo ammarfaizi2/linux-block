@@ -6,6 +6,7 @@
  * Written by: Martin K. Petersen <martin.petersen@oracle.com>
  */
 
+#include <linux/log2.h>
 #include <linux/scatterlist_api.h>
 #include <linux/kobject_api.h>
 #include <linux/capability.h>

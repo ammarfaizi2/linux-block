@@ -9,6 +9,7 @@
  * Base on code in raid1.c.  See raid1.c for further copyright information.
  */
 
+#include <linux/log2.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

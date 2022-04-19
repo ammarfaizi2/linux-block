@@ -28,6 +28,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/log2.h>
 #include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>

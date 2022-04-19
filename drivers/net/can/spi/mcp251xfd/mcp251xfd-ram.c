@@ -6,6 +6,8 @@
 //               Marc Kleine-Budde <kernel@pengutronix.de>
 //
 
+#include <linux/log2.h>
+
 #include "mcp251xfd-ram.h"
 
 static inline u8 can_ram_clamp(const struct can_ram_config *config,

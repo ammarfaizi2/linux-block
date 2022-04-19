@@ -8,6 +8,7 @@
  * Author: Hezi Shahmoon <hezi.shahmoon@marvell.com>
  */
 
+#include <linux/log2.h>
 #include <linux/property.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>

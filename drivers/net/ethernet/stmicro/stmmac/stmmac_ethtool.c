@@ -8,6 +8,7 @@
   Author: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
+#include <linux/log2.h>
 #include <linux/pm_wakeup.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>

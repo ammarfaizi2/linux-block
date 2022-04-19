@@ -8,6 +8,7 @@
  * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
  */
 
+#include <linux/log2.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/pm_wakeup.h>

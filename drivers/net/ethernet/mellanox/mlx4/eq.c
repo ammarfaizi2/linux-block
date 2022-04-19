@@ -31,6 +31,7 @@
  * SOFTWARE.
  */
 
+#include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/tasklet_api.h>

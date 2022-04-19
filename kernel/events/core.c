@@ -8,6 +8,7 @@
  *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/log2.h>
 #include <linux/irqflags.h>
 #include <linux/kdev_t.h>
 #include <linux/sched/task_flags.h>

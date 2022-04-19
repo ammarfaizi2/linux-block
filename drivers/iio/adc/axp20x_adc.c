@@ -5,6 +5,7 @@
  *	Quentin Schulz <quentin.schulz@free-electrons.com>
  */
 
+#include <linux/log2.h>
 #include <linux/completion.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>

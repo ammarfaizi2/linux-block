@@ -4,6 +4,7 @@
  * Copyright © 2018 Intel Corporation
  */
 
+#include <linux/log2.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
 #include <linux/rbtree_api.h>

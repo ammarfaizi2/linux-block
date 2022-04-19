@@ -1,4 +1,5 @@
 
+#include <linux/log2.h>
 #include <linux/gfp_api.h>
 #include <linux/atomic_api.h>
 #include <linux/export.h>

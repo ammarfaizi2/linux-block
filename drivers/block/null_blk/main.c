@@ -3,6 +3,7 @@
  * Add configfs and memory store: Kyungchan Koh <kkc6196@fb.com> and
  * Shaohua Li <shli@fb.com>
  */
+#include <linux/log2.h>
 #include <linux/wait_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>

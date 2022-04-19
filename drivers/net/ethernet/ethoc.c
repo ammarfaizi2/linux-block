@@ -8,6 +8,7 @@
  * Written by Thierry Reding <thierry.reding@avionic-design.de>
  */
 
+#include <linux/log2.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>
 #include <linux/net.h>

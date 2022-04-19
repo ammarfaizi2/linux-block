@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Philipp Zabel, Pengutronix
  */
 
+#include <linux/log2.h>
 #include <linux/stat.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

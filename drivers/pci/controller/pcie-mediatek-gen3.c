@@ -6,6 +6,7 @@
  * Author: Jianjun Wang <jianjun.wang@mediatek.com>
  */
 
+#include <linux/log2.h>
 #include <linux/spinlock_api.h>
 #include <linux/resource_ext_api.h>
 #include <linux/of_api.h>

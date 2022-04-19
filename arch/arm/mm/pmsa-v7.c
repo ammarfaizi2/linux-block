@@ -4,6 +4,7 @@
  * ARM PMSAv7 supporting functions.
  */
 
+#include <linux/log2.h>
 #include <linux/bitops.h>
 #include <linux/memblock.h>
 #include <linux/string.h>

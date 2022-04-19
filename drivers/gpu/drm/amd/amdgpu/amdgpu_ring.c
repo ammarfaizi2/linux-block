@@ -26,6 +26,7 @@
  *          Jerome Glisse
  *          Christian König
  */
+#include <linux/log2.h>
 #include <linux/timekeeping.h>
 #include <linux/ktime_api.h>
 #include <linux/fs_api.h>

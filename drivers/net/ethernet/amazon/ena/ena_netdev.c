@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/log2.h>
 #include <net/xdp_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/u64_stats_sync_api.h>

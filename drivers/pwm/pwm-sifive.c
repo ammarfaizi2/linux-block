@@ -11,6 +11,7 @@
  * - The hardware cannot generate a 100% duty cycle.
  * - The hardware generates only inverted output.
  */
+#include <linux/log2.h>
 #include <linux/mutex_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/math64.h>

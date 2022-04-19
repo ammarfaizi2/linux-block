@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/log2.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/bitops.h>

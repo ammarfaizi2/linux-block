@@ -22,6 +22,7 @@
  * Authors: Alex Deucher
  */
 
+#include <linux/log2.h>
 #include <linux/jiffies.h>
 #include <linux/dma-fence-api.h>
 

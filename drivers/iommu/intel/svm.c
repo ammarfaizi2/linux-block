@@ -5,6 +5,7 @@
  * Authors: David Woodhouse <dwmw2@infradead.org>
  */
 
+#include <linux/log2.h>
 #include <linux/xarray_api.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

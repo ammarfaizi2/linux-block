@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/log2.h>
 #include <net/xdp_api.h>
 #include <net/checksum.h>
 #include <linux/topology.h>

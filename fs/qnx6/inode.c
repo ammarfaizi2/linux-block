@@ -11,6 +11,7 @@
  *
  */
 
+#include <linux/log2.h>
 #include <linux/kdev_t.h>
 #include <linux/prefetch.h>
 #include <linux/pagemap_api_readahead.h>

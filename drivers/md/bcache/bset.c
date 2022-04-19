@@ -11,6 +11,7 @@
 #include "util.h"
 #include "bset.h"
 
+#include <linux/log2.h>
 #include <linux/timekeeping.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>

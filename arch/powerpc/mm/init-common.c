@@ -16,6 +16,7 @@
 
 #undef DEBUG
 
+#include <linux/log2.h>
 #include <linux/slab.h>
 #include <linux/pgtable_api.h>
 #include <linux/string.h>

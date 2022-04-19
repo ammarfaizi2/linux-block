@@ -6,6 +6,7 @@
  * Author: Yue Wang <yue.wang@amlogic.com>
  */
 
+#include <linux/log2.h>
 #include <linux/io.h>
 #include <linux/device_api_lock.h>
 #include <linux/clk.h>

@@ -3,6 +3,7 @@
  * Copyright (C) 2015 Broadcom Corporation
  */
 
+#include <linux/log2.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>
 #include <linux/irqdesc.h>

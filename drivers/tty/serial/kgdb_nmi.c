@@ -9,6 +9,7 @@
  *		  Anton Vorontsov <anton.vorontsov@linaro.org>
  */
 
+#include <linux/log2.h>
 #include <linux/jiffies.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>

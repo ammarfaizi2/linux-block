@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) "bmp280: " fmt
 
+#include <linux/log2.h>
 #include <linux/mutex_api.h>
 #include <linux/math64.h>
 #include <linux/jiffies.h>

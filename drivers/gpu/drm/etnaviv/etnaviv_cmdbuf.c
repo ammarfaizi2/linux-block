@@ -3,6 +3,7 @@
  * Copyright (C) 2017-2018 Etnaviv Project
  */
 
+#include <linux/log2.h>
 #include <linux/wait_api.h>
 #include <linux/slab.h>
 #include <linux/sched.h>

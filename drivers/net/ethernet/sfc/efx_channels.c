@@ -9,6 +9,7 @@
  */
 
 #include "net_driver.h"
+#include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/topology.h>
 #include <linux/slab.h>

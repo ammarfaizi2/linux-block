@@ -2,6 +2,7 @@
 /*
  * Copyright © 2020 Intel Corporation
  */
+#include <linux/log2.h>
 #include <linux/irqflags.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>

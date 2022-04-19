@@ -7,6 +7,7 @@
  *         Jason McMullan <jason.mcmullan@netronome.com>
  */
 
+#include <linux/log2.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>
 #include <linux/dma-mapping.h>

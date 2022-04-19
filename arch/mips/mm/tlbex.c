@@ -21,6 +21,7 @@
  * (Condolences to Napoleon XIV)
  */
 
+#include <linux/log2.h>
 #include <linux/vmalloc.h>
 #include <linux/pgtable_api.h>
 #include <linux/cpumask_api.h>

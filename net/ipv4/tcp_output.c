@@ -37,6 +37,7 @@
 
 #define pr_fmt(fmt) "TCP: " fmt
 
+#include <linux/log2.h>
 #include <linux/irqflags.h>
 #include <net/tcp_bpf.h>
 #include <net/sock_api.h>

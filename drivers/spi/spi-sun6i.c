@@ -7,6 +7,7 @@
  * Maxime Ripard <maxime.ripard@free-electrons.com>
  */
 
+#include <linux/log2.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>
 #include <linux/bitfield.h>

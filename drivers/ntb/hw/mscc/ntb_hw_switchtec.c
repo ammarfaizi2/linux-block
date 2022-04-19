@@ -4,6 +4,7 @@
  * Copyright (c) 2017, Microsemi Corporation
  */
 
+#include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>

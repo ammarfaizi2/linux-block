@@ -6,6 +6,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>
 #include <linux/wait_api.h>

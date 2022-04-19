@@ -44,6 +44,7 @@
  * ifindexes. The setup and packet enqueue/send code is shared between the two
  * types of devmap; only the lookup and insertion is different.
  */
+#include <linux/log2.h>
 #include <net/xdp_api.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>

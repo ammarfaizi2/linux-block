@@ -25,6 +25,7 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
+#include <linux/log2.h>
 #include <linux/align.h>
 #include <linux/slab.h>
 #include <linux/delay.h>

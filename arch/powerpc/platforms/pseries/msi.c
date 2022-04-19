@@ -4,6 +4,7 @@
  * Copyright 2006-2007 Michael Ellerman, IBM Corp.
  */
 
+#include <linux/log2.h>
 #include <linux/of_api.h>
 #include <linux/interrupt.h>
 #include <linux/crash_dump.h>

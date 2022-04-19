@@ -22,6 +22,7 @@
 #include "changk104.h"
 #include "cgrp.h"
 
+#include <linux/log2.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <core/client.h>

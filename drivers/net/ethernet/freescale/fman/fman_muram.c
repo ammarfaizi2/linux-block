@@ -32,6 +32,7 @@
 
 #include "fman_muram.h"
 
+#include <linux/log2.h>
 #include <linux/vmalloc.h>
 #include <linux/io_extra.h>
 #include <linux/io.h>

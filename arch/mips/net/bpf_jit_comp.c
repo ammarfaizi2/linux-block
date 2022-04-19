@@ -102,6 +102,7 @@
  *    if the branch was converted.
  */
 
+#include <linux/log2.h>
 #include <linux/filter_api.h>
 #include <linux/limits.h>
 #include <linux/bitops.h>

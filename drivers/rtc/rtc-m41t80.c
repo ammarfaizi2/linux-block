@@ -11,6 +11,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/log2.h>
 #include <linux/uaccess.h>
 #include <linux/seq_file.h>
 #include <linux/pm_wakeup.h>

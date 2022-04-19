@@ -6,6 +6,7 @@
  * Author: Lad Prabhakar <prabhakar.mahadev-lad.rj@bp.renesas.com>
  */
 
+#include <linux/log2.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>
 #include <linux/ioport.h>

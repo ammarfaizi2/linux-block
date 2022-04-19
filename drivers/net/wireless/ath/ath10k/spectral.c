@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2017 Qualcomm Atheros, Inc.
  */
 
+#include <linux/log2.h>
 #include <linux/uaccess.h>
 #include <linux/mutex_api.h>
 #include <linux/lockdep_api.h>

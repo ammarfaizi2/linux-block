@@ -5,6 +5,7 @@
  * Copyright (C) 2016 Xilinx, Inc. All rights reserved.
  */
 
+#include <linux/log2.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>

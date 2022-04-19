@@ -53,6 +53,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/log2.h>
 #include <linux/sched/task_flags.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

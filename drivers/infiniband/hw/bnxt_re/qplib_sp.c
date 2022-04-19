@@ -38,6 +38,7 @@
 
 #define dev_fmt(fmt) "QPLIB: " fmt
 
+#include <linux/log2.h>
 #include <linux/string.h>
 #include <linux/device_api.h>
 #include <linux/align.h>

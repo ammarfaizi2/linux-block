@@ -3,6 +3,7 @@
  * Copyright (C) 2012-2013 Samsung Electronics Co., Ltd.
  */
 
+#include <linux/log2.h>
 #include <linux/string.h>
 #include <linux/mutex_api.h>
 #include <linux/fs_entry_types.h>

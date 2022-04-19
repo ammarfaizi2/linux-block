@@ -4,6 +4,7 @@
  * Copyright(c) 2021 Cornelis Networks.
  */
 
+#include <linux/log2.h>
 #include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/topology.h>
