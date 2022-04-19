@@ -4,6 +4,7 @@
 #ifndef _ICE_VF_LIB_H_
 #define _ICE_VF_LIB_H_
 
+#include <linux/hashtable_api.h>
 #include <linux/types.h>
 #include <linux/hashtable.h>
 #include <linux/bitmap.h>
