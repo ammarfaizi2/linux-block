@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/device/bus.h>
 #include <linux/tasklet_api.h>
 #include <linux/pm_wakeup.h>

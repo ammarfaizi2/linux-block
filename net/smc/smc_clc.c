@@ -10,6 +10,7 @@
  *  Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <net/ipv6.h>
 #include <linux/rcupdate.h>
 #include <net/sock_api.h>

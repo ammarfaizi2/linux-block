@@ -5,6 +5,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/slab.h>
