@@ -5,6 +5,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/hashtable_api.h>
 #include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
