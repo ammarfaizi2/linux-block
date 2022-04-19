@@ -5,6 +5,7 @@
  * Copyright (C) 2022 Samuel Holland <samuel@sholland.org>
  */
 
+#include <linux/interrupt.h>
 #include <linux/property.h>
 #include <linux/device_api_lock.h>
 #include <linux/i2c.h>

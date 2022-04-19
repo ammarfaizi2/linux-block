@@ -6,6 +6,7 @@
 //
 // Author: Codrin Ciubotariu <codrin.ciubotariu@microchip.com>
 
+#include <linux/interrupt.h>
 #include <linux/uaccess.h>
 #include <linux/of_api.h>
 #include <linux/slab.h>
