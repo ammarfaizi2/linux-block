@@ -9,6 +9,7 @@
 #ifndef __SOUND_SOC_INTEL_AVS_H
 #define __SOUND_SOC_INTEL_AVS_H
 
+#include <linux/idr_types.h>
 #include <linux/device.h>
 #include <linux/firmware.h>
 #include <sound/hda_codec.h>
