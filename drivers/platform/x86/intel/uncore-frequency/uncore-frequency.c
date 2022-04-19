@@ -14,6 +14,7 @@
  * Author: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/cpu.h>
 #include <linux/module.h>
 #include <linux/slab.h>

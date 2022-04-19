@@ -21,6 +21,7 @@
 
 #define pr_fmt(fmt)  "intel-hfi: " fmt
 
+#include <linux/cpumask_api.h>
 #include <linux/gfp_api.h>
 #include <linux/io_extra.h>
 #include <linux/mutex_api.h>

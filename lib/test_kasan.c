@@ -5,6 +5,7 @@
  * Author: Andrey Ryabinin <a.ryabinin@samsung.com>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/preempt.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_page_address.h>

@@ -40,6 +40,7 @@
 **       for PCI drivers devices which implement/use MMIO registers.
 */
 
+#include <linux/cpumask_api.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/irqdesc.h>

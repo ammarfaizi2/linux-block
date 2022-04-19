@@ -4,6 +4,7 @@
  * Author: Shannon Zhao <shannon.zhao@linaro.org>
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/slab.h>
 #include <linux/preempt.h>
 #include <linux/perf_event_api.h>

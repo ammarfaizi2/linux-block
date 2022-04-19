@@ -10,6 +10,7 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
+#include <linux/cpumask_api.h>
 #include <linux/slab.h>
 #include <linux/bitfield.h>
 #include <linux/bitops.h>

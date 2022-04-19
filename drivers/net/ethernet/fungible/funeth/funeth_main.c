@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 
+#include <linux/cpumask_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>
 #include <linux/xarray_api.h>
