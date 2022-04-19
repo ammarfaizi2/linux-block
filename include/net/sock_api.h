@@ -2,11 +2,56 @@
 #ifndef _SOCK_API_H
 #define _SOCK_API_H
 
-#include <net/sock.h>
+#include <net/sock_types.h>
+
+#include <net/net_namespace_types.h>
+#include <net/neighbour_api.h>
+#include <net/dst_api.h>
+#include <linux/uio_api.h>
+#include <linux/mutex_api.h>
+#include <linux/sched/types.h>
+#include <linux/smp_api.h>
+#include <linux/net.h>
+#include <linux/ratelimit.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
+#include <linux/list_nulls.h>
+#include <linux/timer.h>
+#include <linux/cache.h>
+#include <linux/bitops.h>
+#include <linux/lockdep.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>	/* struct sk_buff */
+#include <linux/mm.h>
+#include <linux/debug_locks.h>
+#include <linux/security.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/page_counter.h>
+#include <linux/static_key.h>
+#include <linux/wait_types.h>
+#include <linux/cgroup_types.h>
+#include <linux/rbtree.h>
+#include <linux/prandom.h>
+#include <linux/rculist_nulls.h>
+#include <linux/sockptr.h>
+#include <linux/indirect_call_wrapper.h>
+#include <linux/atomic.h>
+#include <linux/refcount.h>
+#include <net/dst.h>
+#include <net/checksum.h>
+#include <net/tcp_states.h>
+#include <linux/percpu_counter.h>
+#include <linux/net_tstamp.h>
+#include <net/l3mdev.h>
 
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/lockdep_api.h>
+
+#if BITS_PER_LONG==32
+#include <linux/seqlock_api.h>
+#endif
 
 /* Pointer stored in sk_user_data might not be suitable for copying
  * when cloning the socket. For instance, it can point to a reference
@@ -1676,6 +1721,8 @@ static inline void sk_stream_moderate_sndbuf(struct sock *sk)
 
 	WRITE_ONCE(sk->sk_sndbuf, max_t(u32, val, SOCK_MIN_SNDBUF));
 }
+
+DECLARE_PER_TASK(struct page_frag, task_frag);
 
 /**
  * sk_page_frag - return an appropriate page_frag

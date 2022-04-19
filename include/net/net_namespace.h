@@ -178,13 +178,6 @@ static inline void put_net_track(struct net *net, netns_tracker *tracker)
 	put_net(net);
 }
 
-static inline void write_pnet(possible_net_t *pnet, struct net *net)
-{
-#ifdef CONFIG_NET_NS
-	pnet->net = net;
-#endif
-}
-
 /* Protected by net_rwsem */
 #define for_each_net(VAR)				\
 	list_for_each_entry(VAR, &net_namespace_list, list)

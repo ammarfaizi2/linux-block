@@ -3,6 +3,7 @@
 #ifndef _NET_ETHTOOL_NETLINK_H
 #define _NET_ETHTOOL_NETLINK_H
 
+#include <linux/netdevice_api.h>
 #include <linux/ethtool_netlink.h>
 #include <linux/netdevice.h>
 #include <net/genetlink.h>

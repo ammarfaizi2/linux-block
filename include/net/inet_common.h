@@ -59,11 +59,12 @@ int inet_gro_complete(struct sk_buff *skb, int nhoff);
 struct sk_buff *inet_gso_segment(struct sk_buff *skb,
 				 netdev_features_t features);
 
-static inline void inet_ctl_sock_destroy(struct sock *sk)
-{
-	if (sk)
-		sock_release(sk->sk_socket);
-}
+#define inet_ctl_sock_destroy(sk)				\
+do {								\
+								\
+	if (sk)							\
+		sock_release((sk)->sk_socket);			\
+} while (0)
 
 #define indirect_call_gro_receive(f2, f1, cb, head, skb)	\
 ({								\
