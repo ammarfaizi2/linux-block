@@ -6,6 +6,7 @@
  *	Tobias Waldekranz		<tobias@waldekranz.com>
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/rculist.h>
 #include <net/netlink_api.h>
 #include <linux/kernel.h>

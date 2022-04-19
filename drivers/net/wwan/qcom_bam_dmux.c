@@ -4,6 +4,7 @@
  * Copyright (c) 2020, Stephan Gerhold <stephan@gerhold.net>
  */
 
+#include <linux/rtnetlink.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
