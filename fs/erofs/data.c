@@ -5,6 +5,7 @@
  * Copyright (C) 2021, Alibaba Cloud
  */
 #include "internal.h"
+#include <linux/highmem.h>
 #include <linux/uio_api.h>
 #include <linux/rwsem_api.h>
 #include <linux/pagemap.h>

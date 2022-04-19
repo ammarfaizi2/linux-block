@@ -13,6 +13,7 @@
  * Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
+#include <linux/highmem.h>
 #include <linux/uio_api.h>
 #include <net/sock_api.h>
 #include <linux/workqueue_api.h>
