@@ -4,6 +4,7 @@
  *
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/io_extra.h>
 #include <linux/atomic_api.h>
 #include <linux/idr_api.h>

@@ -10,6 +10,7 @@
  *
  */
 
+#include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>
