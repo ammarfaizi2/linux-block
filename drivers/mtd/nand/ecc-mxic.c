@@ -7,6 +7,7 @@
  * Author: Miquel Raynal <miquel.raynal@bootlin.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

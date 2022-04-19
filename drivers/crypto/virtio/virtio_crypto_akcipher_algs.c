@@ -7,6 +7,7 @@
   * Copyright 2022 Bytedance CO., LTD.
   */
 
+#include <linux/scatterlist_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

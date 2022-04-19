@@ -3,6 +3,7 @@
  * Copyright (c) 2021-2022, NVIDIA CORPORATION & AFFILIATES. All rights reserved
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/dma-mapping.h>
 #include <linux/slab.h>
 #include <linux/mutex_api.h>

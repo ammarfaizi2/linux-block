@@ -9,6 +9,7 @@
  * Copyright (C) 2020-2022 Gabriel Somlo <gsomlo@gmail.com>
  */
 
+#include <linux/scatterlist_api.h>
 #include <linux/log2.h>
 #include <linux/io_extra.h>
 #include <linux/jiffies.h>
