@@ -6,6 +6,7 @@
 #ifndef _AMPHION_VPU_H
 #define _AMPHION_VPU_H
 
+#include <linux/jiffies.h>
 #include <media/v4l2-device.h>
 #include <media/v4l2-ctrls.h>
 #include <media/v4l2-mem2mem.h>
