@@ -1206,6 +1206,8 @@ static inline void mas_alloc_nodes(struct ma_state *mas, gfp_t gfp)
 	unsigned long success = allocated;
 	unsigned int requested = mas_alloc_req(mas);
 	unsigned int count;
+	void **slots = NULL;
+	unsigned int max_req = 0;
 
 	if (!requested)
 		return;
@@ -1214,7 +1216,7 @@ static inline void mas_alloc_nodes(struct ma_state *mas, gfp_t gfp)
 	if (!allocated || mas->alloc->node_count == MAPLE_ALLOC_SLOTS - 1) {
 		node = (struct maple_alloc *)mt_alloc_one(gfp);
 		if (!node)
-			goto nomem;
+			goto nomem_one;
 
 		if (allocated)
 			node->slot[0] = mas->alloc;
@@ -1226,20 +1228,20 @@ static inline void mas_alloc_nodes(struct ma_state *mas, gfp_t gfp)
 
 	node = mas->alloc;
 	while (requested) {
-		void **slots = (void **)&node->slot;
-		unsigned int max_req = MAPLE_NODE_SLOTS - 1;
-
+		max_req = MAPLE_NODE_SLOTS - 1;
 		if (node->slot[0]) {
 			unsigned int offset = node->node_count + 1;
 
 			slots = (void **)&node->slot[offset];
 			max_req -= offset;
+		} else {
+			slots = (void **)&node->slot;
 		}
 
-		count = mt_alloc_bulk(gfp, min(requested, max_req),
-				      slots);
+		max_req = min(requested, max_req);
+		count = mt_alloc_bulk(gfp, max_req, slots);
 		if (!count)
-			goto nomem;
+			goto nomem_bulk;
 
 		node->node_count += count;
 		/* zero indexed. */
@@ -1253,7 +1255,11 @@ static inline void mas_alloc_nodes(struct ma_state *mas, gfp_t gfp)
 	}
 	mas->alloc->total = success;
 	return;
-nomem:
+
+nomem_bulk:
+	/* Clean up potential freed allocations on bulk failure */
+	memset(slots, 0, max_req * sizeof(unsigned long));
+nomem_one:
 	mas_set_alloc_req(mas, requested);
 	if (mas->alloc && !(((unsigned long)mas->alloc & 0x1)))
 		mas->alloc->total = success;
