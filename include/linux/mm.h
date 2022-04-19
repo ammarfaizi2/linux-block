@@ -2,6 +2,7 @@
 #ifndef _LINUX_MM_H
 #define _LINUX_MM_H
 
+#include <linux/pgtable_api.h>
 #include <linux/spinlock_types.h>
 #include <linux/mm_page_address.h>
 #include <linux/gfp_api.h>
