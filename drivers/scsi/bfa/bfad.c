@@ -11,6 +11,7 @@
 /*
  *  bfad.c Linux driver PCI interface module.
  */
+#include <linux/timer.h>
 #include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>

@@ -37,6 +37,7 @@
  * QLogic_IB 7220 chip (except that specific to the SerDes)
  */
 
+#include <linux/timer.h>
 #include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

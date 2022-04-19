@@ -34,6 +34,7 @@
  * the same DMA mappings?
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>

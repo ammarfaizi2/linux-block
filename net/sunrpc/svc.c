@@ -11,6 +11,7 @@
  * by Greg Banks <gnb@melbourne.sgi.com>
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/topology.h>
 #include <linux/sunrpc/debug.h>

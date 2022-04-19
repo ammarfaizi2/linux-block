@@ -4,6 +4,7 @@
  * Copyright(c) 2004 - 2015 Intel Corporation.
  */
 
+#include <linux/timer.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pci-dma-compat.h>

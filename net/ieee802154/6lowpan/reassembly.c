@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) "6LoWPAN: " fmt
 
+#include <linux/timer.h>
 #include <net/net_namespace_api.h>
 #include <net/ipv6_api.h>
 #include <net/dst_api.h>

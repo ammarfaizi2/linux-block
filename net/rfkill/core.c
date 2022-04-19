@@ -5,6 +5,7 @@
  * Copyright 2009 Johannes Berg <johannes@sipsolutions.net>
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>

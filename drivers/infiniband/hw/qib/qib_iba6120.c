@@ -37,6 +37,7 @@
  * QLogic_IB 6120 PCIe chip.
  */
 
+#include <linux/timer.h>
 #include <linux/log2.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>

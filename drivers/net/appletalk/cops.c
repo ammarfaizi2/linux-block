@@ -48,6 +48,7 @@ static const char *version =
  *	  the driver figure it out.
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/netdevice_api_lock.h>

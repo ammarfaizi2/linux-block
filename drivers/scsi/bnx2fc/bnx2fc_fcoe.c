@@ -16,6 +16,7 @@
 
 #include "bnx2fc.h"
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

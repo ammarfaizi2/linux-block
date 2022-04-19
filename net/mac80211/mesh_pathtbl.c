@@ -4,6 +4,7 @@
  * Author:     Luis Carlos Cobo <luisca@cozybit.com>
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/jhash.h>
 #include <linux/spinlock_api.h>

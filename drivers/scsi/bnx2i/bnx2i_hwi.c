@@ -14,6 +14,7 @@
  * Maintained by: QLogic-Storage-Upstream@qlogic.com
  */
 
+#include <linux/timer.h>
 #include <linux/log2.h>
 #include <linux/wait_api.h>
 #include <linux/vmalloc.h>

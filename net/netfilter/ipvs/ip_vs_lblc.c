@@ -37,6 +37,7 @@
 #define KMSG_COMPONENT "IPVS"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <net/net_namespace_api.h>
 #include <linux/spinlock_api.h>

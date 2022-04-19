@@ -3,6 +3,7 @@
  * Copyright (c) 2017 Hisilicon Limited.
  */
 
+#include <linux/timer.h>
 #include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/uuid_api.h>

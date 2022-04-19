@@ -3,6 +3,7 @@
  * Copyright (c) 2010 Broadcom Corporation
  */
 
+#include <linux/timer.h>
 #include <linux/align.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

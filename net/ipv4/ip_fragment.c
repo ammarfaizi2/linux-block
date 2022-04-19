@@ -23,6 +23,7 @@
 
 #define pr_fmt(fmt) "IPv4: " fmt
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <net/route_api.h>
 #include <net/net_namespace_api.h>

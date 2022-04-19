@@ -10,6 +10,7 @@
  *		Mark Brown <markb@marvell.com>
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>

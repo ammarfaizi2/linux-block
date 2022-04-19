@@ -38,6 +38,7 @@
 
 #include "common.h"
 
+#include <linux/timer.h>
 #include <linux/timekeeping.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>

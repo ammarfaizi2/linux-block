@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/page_ref.h>
 #include <linux/log2.h>

@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/timer.h>
 #include <linux/delay.h>
 #include <linux/jiffies.h>
 #include <linux/string.h>

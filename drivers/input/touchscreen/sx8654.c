@@ -24,6 +24,7 @@
  *      Copyright (C) 2005 Dirk Behme
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>

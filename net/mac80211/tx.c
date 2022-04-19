@@ -10,6 +10,7 @@
  * Transmit and frame generation functions.
  */
 
+#include <linux/timer.h>
 #include <linux/preempt.h>
 #include <net/sock_api.h>
 #include <linux/tasklet_api.h>

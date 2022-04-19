@@ -16,6 +16,7 @@
 
 #define _RTL871X_IOCTL_SET_C_
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>

@@ -19,6 +19,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/timer.h>
 #include <uapi/linux/pkt_sched.h>
 #include <net/checksum.h>
 #include <linux/workqueue_api.h>

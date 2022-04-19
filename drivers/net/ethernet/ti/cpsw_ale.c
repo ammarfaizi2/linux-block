@@ -5,6 +5,7 @@
  * Copyright (C) 2012 Texas Instruments
  *
  */
+#include <linux/timer.h>
 #include <linux/log2.h>
 #include <linux/jiffies.h>
 #include <linux/etherdevice_api.h>

@@ -54,6 +54,7 @@
 
 #include "radeonfb.h"
 
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/timekeeping.h>
 #include <linux/sysfs.h>

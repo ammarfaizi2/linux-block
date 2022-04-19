@@ -27,6 +27,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/timer.h>
 #include <net/sock_api.h>
 #include <net/inet_sock_api.h>
 #include <linux/wait_api.h>

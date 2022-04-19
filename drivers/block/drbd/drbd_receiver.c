@@ -11,6 +11,7 @@
  */
 
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/bvec_api.h>
 #include <linux/align.h>

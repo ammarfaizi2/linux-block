@@ -16,6 +16,7 @@
  * rendering can return quickly.
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/uaccess.h>

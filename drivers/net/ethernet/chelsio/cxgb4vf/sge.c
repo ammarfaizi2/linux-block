@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <linux/timer.h>
 #include <linux/log2.h>
 #include <net/checksum.h>
 #include <linux/spinlock_api.h>

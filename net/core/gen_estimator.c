@@ -10,6 +10,7 @@
  *              names to make it usable in general net subsystem.
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <net/netlink.h>
 #include <net/netlink_api.h>

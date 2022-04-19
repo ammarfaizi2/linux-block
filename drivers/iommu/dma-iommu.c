@@ -8,6 +8,7 @@
  * Copyright (C) 2000-2004 Russell King
  */
 
+#include <linux/timer.h>
 #include <linux/percpu.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

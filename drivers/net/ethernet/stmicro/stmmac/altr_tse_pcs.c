@@ -4,6 +4,7 @@
  * Author: Tien Hock Loh <thloh@altera.com>
  */
 
+#include <linux/timer.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
 #include <linux/mfd/syscon.h>

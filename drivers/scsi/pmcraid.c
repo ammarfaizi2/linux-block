@@ -7,6 +7,7 @@
  *
  * Copyright (C) 2008, 2009 PMC Sierra Inc
  */
+#include <linux/timer.h>
 #include <linux/kdev_t.h>
 #include <net/netlink_api.h>
 #include <linux/workqueue_api.h>

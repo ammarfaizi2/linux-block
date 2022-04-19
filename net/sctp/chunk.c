@@ -17,6 +17,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/timer.h>
 #include <linux/uio_api.h>
 #include <linux/refcount_api.h>
 #include <linux/jiffies.h>

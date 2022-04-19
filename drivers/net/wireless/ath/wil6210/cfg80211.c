@@ -4,6 +4,7 @@
  * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/timer.h>
 #include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>

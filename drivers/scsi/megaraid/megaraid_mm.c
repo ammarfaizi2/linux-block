@@ -10,6 +10,7 @@
  *
  * Common management module
  */
+#include <linux/timer.h>
 #include <linux/semaphore.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>

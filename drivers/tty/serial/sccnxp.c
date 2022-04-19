@@ -7,6 +7,7 @@
  *  Based on sc26xx.c, by Thomas Bogendörfer (tsbogend@alpha.franken.de)
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

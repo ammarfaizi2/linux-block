@@ -11,6 +11,7 @@
  * This file is part of the Inventra Controller Driver for Linux.
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/of_api.h>

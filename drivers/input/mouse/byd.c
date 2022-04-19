@@ -9,6 +9,7 @@
  * Copyright (C) 2015 Jay Kuri
  */
 
+#include <linux/timer.h>
 #include <linux/string.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>

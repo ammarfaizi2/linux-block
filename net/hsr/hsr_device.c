@@ -7,6 +7,7 @@
  * virtual HSR or PRP devices.
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/random.h>
 #include <linux/netdevice_api_extra.h>

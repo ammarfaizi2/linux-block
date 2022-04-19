@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (c) 2019, Vladimir Oltean <olteanv@gmail.com>
  */
+#include <linux/timer.h>
 #include <linux/uaccess.h>
 #include <linux/time64_api.h>
 #include <linux/spinlock_api.h>

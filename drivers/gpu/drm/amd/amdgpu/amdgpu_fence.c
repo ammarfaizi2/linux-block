@@ -28,6 +28,7 @@
  *    Jerome Glisse <glisse@freedesktop.org>
  *    Dave Airlie
  */
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/sched.h>

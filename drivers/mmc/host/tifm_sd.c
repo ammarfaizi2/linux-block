@@ -8,6 +8,7 @@
  */
 
 
+#include <linux/timer.h>
 #include <linux/log2.h>
 #include <linux/irqflags.h>
 #include <linux/tasklet_api.h>

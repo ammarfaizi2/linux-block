@@ -22,6 +22,7 @@
 #include "../dccp.h"
 #include "ccid3.h"
 
+#include <linux/timer.h>
 #include <net/sock_api.h>
 #include <linux/uaccess.h>
 #include <linux/timekeeping.h>

@@ -16,6 +16,7 @@
  *   Copyright (C) 2007 David Sterba
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/string.h>

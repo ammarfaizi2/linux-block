@@ -3,6 +3,7 @@
  * Copyright(c) 2016 - 2020 Intel Corporation.
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/wait_api.h>

@@ -4,6 +4,7 @@
  * Copyright (C) 2007, 2008 David S. Miller <davem@davemloft.net>
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

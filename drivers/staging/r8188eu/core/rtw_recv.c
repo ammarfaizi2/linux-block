@@ -3,6 +3,7 @@
 
 #define _RTW_RECV_C_
 
+#include <linux/timer.h>
 #include <linux/semaphore.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>

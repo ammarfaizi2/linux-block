@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/sched.h>
 #include <linux/ktime_api.h>

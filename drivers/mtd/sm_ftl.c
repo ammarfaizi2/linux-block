@@ -4,6 +4,7 @@
  * SmartMedia/xD translation layer
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/log2.h>

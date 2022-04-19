@@ -6,6 +6,7 @@
  * Kamil Debski, <k.debski@samsung.com>
  */
 
+#include <linux/timer.h>
 #include <linux/dma-mapping.h>
 #include <linux/atomic_api.h>
 #include <linux/bitmap.h>

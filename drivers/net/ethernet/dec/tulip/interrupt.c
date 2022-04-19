@@ -10,6 +10,7 @@
         Please submit bugs to http://bugzilla.kernel.org/ .
 */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>

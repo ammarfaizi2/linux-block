@@ -10,6 +10,7 @@
  *		Wingman Kwok <w-kwok2@ti.com>
  */
 
+#include <linux/timer.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>

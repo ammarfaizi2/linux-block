@@ -8,6 +8,7 @@
  * Copyright (C) 2003 Guido Guenther <agx@sigxcpu.org>
  */
 
+#include <linux/timer.h>
 #include <linux/notifier_api.h>
 #include <linux/kmod.h>
 #include <linux/jiffies.h>

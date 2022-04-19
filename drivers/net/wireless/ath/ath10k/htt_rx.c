@@ -13,6 +13,7 @@
 #include "trace.h"
 #include "mac.h"
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/align.h>
 #include <linux/spinlock_api.h>

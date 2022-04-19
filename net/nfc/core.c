@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
+#include <linux/timer.h>
 #include <net/sock_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>

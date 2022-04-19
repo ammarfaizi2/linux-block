@@ -8,6 +8,7 @@
  * Some code borrowed from the Linux EHCI driver.
  */
 
+#include <linux/timer.h>
 #include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/radix-tree-api.h>

@@ -16,6 +16,7 @@
 
 #define _RTL871X_PWRCTRL_C_
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 

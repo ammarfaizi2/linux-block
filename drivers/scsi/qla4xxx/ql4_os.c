@@ -3,6 +3,7 @@
  * QLogic iSCSI HBA Driver
  * Copyright (c)  2003-2013 QLogic Corporation
  */
+#include <linux/timer.h>
 #include <net/netlink_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>

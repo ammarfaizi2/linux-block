@@ -40,6 +40,7 @@
  *
  */
 
+#include <linux/timer.h>
 #include <linux/seq_file.h>
 #include <linux/rculist.h>
 #include <linux/netdevice_api.h>

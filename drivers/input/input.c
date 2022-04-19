@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) KBUILD_BASENAME ": " fmt
 
+#include <linux/timer.h>
 #include <linux/kdev_t.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>

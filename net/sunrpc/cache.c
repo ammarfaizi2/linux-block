@@ -8,6 +8,7 @@
  * Copyright (C) 2002 Neil Brown <neilb@cse.unsw.edu.au>
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

@@ -19,6 +19,7 @@
  *  Author: Manjunatha Halli <manjunatha_halli@ti.com>
  */
 
+#include <linux/timer.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/tasklet_api.h>

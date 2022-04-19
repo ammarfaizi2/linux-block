@@ -15,6 +15,7 @@
  *	Arun R Murthy <arun.murthy@stericsson.com>
  */
 
+#include <linux/timer.h>
 #include <linux/of_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>

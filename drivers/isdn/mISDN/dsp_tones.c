@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/timer.h>
 #include <linux/jiffies.h>
 #include <linux/gfp.h>
 #include <linux/mISDNif.h>

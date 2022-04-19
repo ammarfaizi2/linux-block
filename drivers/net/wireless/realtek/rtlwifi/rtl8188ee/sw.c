@@ -13,6 +13,7 @@
 #include "led.h"
 #include "table.h"
 
+#include <linux/timer.h>
 #include <linux/vmalloc.h>
 #include <linux/module.h>
 

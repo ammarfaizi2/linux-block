@@ -13,6 +13,7 @@
 #include "ivtv-mailbox.h"
 #include "ivtv-vbi.h"
 #include "ivtv-yuv.h"
+#include <linux/timer.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

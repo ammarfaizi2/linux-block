@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/jiffies.h>
 

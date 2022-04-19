@@ -5,6 +5,7 @@
  * Copyright 2005-2013 Solarflare Communications Inc.
  */
 
+#include <linux/timer.h>
 #include <linux/page_ref.h>
 #include <linux/log2.h>
 #include <linux/spinlock_api.h>

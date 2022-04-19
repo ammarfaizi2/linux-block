@@ -17,6 +17,7 @@
 
 #include "radeonfb.h"
 
+#include <linux/timer.h>
 #include <linux/of_api.h>
 #include <linux/io.h>
 #include <linux/delay.h>

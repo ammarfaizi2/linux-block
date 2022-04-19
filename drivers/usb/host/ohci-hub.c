@@ -8,6 +8,7 @@
  * This file is licenced under GPL
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/pm_wakeup.h>

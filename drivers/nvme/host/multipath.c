@@ -3,6 +3,7 @@
  * Copyright (c) 2017-2018 Christoph Hellwig.
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/mm_api_kvmalloc.h>
 #include <linux/workqueue_api.h>

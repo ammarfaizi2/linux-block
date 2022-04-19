@@ -12,6 +12,7 @@
  *    Sridhar Samudrala <sri@us.ibm.com>
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/ip_extra.h>

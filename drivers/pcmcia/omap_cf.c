@@ -5,6 +5,7 @@
  * Copyright (c) 2005 David Brownell
  */
 
+#include <linux/timer.h>
 #include <linux/vmalloc.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

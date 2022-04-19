@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <linux/timer.h>
 #include <net/dst_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>

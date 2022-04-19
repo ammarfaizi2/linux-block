@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/timer.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

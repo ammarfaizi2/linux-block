@@ -49,6 +49,7 @@
  *      v0.011: Converted the PMAD to the driver model. macro
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api_lock.h>
 #include <linux/netdevice_api.h>

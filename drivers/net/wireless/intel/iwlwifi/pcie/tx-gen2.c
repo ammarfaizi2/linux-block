@@ -3,6 +3,7 @@
  * Copyright (C) 2017 Intel Deutschland GmbH
  * Copyright (C) 2018-2020 Intel Corporation
  */
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>

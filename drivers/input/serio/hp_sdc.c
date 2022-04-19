@@ -61,6 +61,7 @@
  * sure it doesn't freeze up and to allow for bad reads to time out.
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/tasklet_api.h>

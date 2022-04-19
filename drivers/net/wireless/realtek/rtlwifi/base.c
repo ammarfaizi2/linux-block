@@ -9,6 +9,7 @@
 #include "ps.h"
 #include "regd.h"
 #include "pci.h"
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <uapi/linux/in.h>
 #include <linux/workqueue_api.h>

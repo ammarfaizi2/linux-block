@@ -49,6 +49,7 @@
  *
  */
 
+#include <linux/timer.h>
 #include <linux/kdev_t.h>
 #include <linux/sched/task_flags.h>
 #include <linux/workqueue_api.h>

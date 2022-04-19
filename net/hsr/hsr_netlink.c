@@ -8,6 +8,7 @@
  */
 
 #include "hsr_netlink.h"
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <net/rtnetlink_api.h>
 #include <net/netlink_api.h>

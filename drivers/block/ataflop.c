@@ -62,6 +62,7 @@
  *     know one?)
  */
 
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/kdev_t.h>
 #include <linux/uaccess.h>

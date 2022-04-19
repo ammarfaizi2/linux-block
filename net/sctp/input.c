@@ -26,6 +26,7 @@
  *    Ardelle Fan <ardelle.fan@intel.com>
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/jhash.h>
 #include <net/sock_api.h>

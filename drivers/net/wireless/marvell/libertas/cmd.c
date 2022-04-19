@@ -4,6 +4,7 @@
  * It prepares command and sends it to firmware when it is ready.
  */
 
+#include <linux/timer.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>

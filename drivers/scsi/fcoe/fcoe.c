@@ -5,6 +5,7 @@
  * Maintained at www.Open-FCoE.org
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <uapi/linux/pkt_sched.h>
 #include <linux/workqueue_api.h>

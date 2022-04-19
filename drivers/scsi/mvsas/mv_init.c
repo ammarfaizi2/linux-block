@@ -8,6 +8,7 @@
 */
 
 
+#include <linux/timer.h>
 #include <linux/sysfs.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>

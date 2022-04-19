@@ -8,6 +8,7 @@
  * Copyright (C) 2008 Mistral Solutions
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/gpio/consumer.h>

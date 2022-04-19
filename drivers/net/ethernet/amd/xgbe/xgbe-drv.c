@@ -114,6 +114,7 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/timer.h>
 #include <net/pkt_sched.h>
 #include <linux/workqueue_api.h>
 #include <linux/uaccess.h>

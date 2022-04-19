@@ -8,6 +8,7 @@
  * Functions to build and send ELS/CT/BLS commands and responses.
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/kref_api.h>
 #include <linux/jiffies.h>

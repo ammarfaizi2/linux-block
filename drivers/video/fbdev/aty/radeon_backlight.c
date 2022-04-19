@@ -8,6 +8,7 @@
  */
 
 #include "radeonfb.h"
+#include <linux/timer.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>
 #include <linux/backlight.h>

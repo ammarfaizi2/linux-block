@@ -8,6 +8,7 @@
  * that made this driver possible.
  */
 
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>

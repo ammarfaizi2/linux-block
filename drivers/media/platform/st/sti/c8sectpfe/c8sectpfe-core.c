@@ -8,6 +8,7 @@
  *	    Peter Griffin <peter.griffin@linaro.org>
  *
  */
+#include <linux/timer.h>
 #include <linux/tasklet_api.h>
 #include <linux/io_extra.h>
 #include <linux/of_api.h>

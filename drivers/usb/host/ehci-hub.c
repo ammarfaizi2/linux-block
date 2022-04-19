@@ -3,6 +3,7 @@
  * Copyright (C) 2001-2004 by David Brownell
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

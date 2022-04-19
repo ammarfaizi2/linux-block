@@ -36,6 +36,7 @@
  * on the QLogic_IB 7220 chip.
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>

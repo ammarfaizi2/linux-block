@@ -10,6 +10,7 @@
  * (c) 2011-12 liran <jli11@intersil.com> [Intersil|Techwell China]
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/jiffies.h>

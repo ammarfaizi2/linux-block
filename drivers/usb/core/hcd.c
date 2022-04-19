@@ -9,6 +9,7 @@
  * (C) Copyright David Brownell 2000-2002
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/tasklet_api.h>

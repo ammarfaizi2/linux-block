@@ -7,6 +7,7 @@
  * and Measurements PIAP
  */
 
+#include <linux/timer.h>
 #include <linux/vmalloc.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

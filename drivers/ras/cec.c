@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2017-2019 Borislav Petkov, SUSE Labs.
  */
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/seq_file.h>
 #include <linux/notifier_api.h>

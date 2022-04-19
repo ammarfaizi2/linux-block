@@ -14,6 +14,7 @@
  *
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/jhash.h>
 #include <net/route_api.h>

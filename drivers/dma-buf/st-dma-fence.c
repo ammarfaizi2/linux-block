@@ -4,6 +4,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched/task.h>

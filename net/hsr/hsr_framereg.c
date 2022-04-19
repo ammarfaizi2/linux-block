@@ -11,6 +11,7 @@
  * Same code handles filtering of duplicates for PRP as well.
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/net.h>

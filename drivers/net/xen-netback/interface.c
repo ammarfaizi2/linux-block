@@ -30,6 +30,7 @@
 
 #include "common.h"
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/wait_api.h>
 #include <linux/netdevice_api.h>

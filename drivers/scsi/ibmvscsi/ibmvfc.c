@@ -7,6 +7,7 @@
  * Copyright (C) IBM Corporation, 2008
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/tasklet_api.h>

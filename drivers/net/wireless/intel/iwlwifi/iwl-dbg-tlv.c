@@ -2,6 +2,7 @@
 /*
  * Copyright (C) 2018-2022 Intel Corporation
  */
+#include <linux/timer.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>
 #include <linux/dma-mapping.h>

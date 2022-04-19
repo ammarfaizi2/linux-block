@@ -3,6 +3,7 @@
  * Copyright (C) 2014  STMicroelectronics SAS. All rights reserved.
  */
 
+#include <linux/timer.h>
 #include <linux/string.h>
 #include <linux/skbuff_api.h>
 #include <linux/jiffies.h>

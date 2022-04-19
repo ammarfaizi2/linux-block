@@ -9,6 +9,7 @@
  */
 
 #include "net_driver.h"
+#include <linux/timer.h>
 #include <linux/page_ref.h>
 #include <linux/log2.h>
 #include <linux/jhash.h>

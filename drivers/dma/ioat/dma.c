@@ -9,6 +9,7 @@
  * copy operations.
  */
 
+#include <linux/timer.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>

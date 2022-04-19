@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>

@@ -11,6 +11,7 @@
 #include "msm_gpu_trace.h"
 #include "adreno/adreno_gpu.h"
 
+#include <linux/timer.h>
 #include <linux/refcount_api.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>

@@ -5,6 +5,7 @@
  * Copyright (C) 2015, Marvell International Ltd.
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/jiffies.h>

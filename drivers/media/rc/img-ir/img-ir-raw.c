@@ -8,6 +8,7 @@
  * signal edges are reported and decoded by generic software decoders.
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/spinlock.h>

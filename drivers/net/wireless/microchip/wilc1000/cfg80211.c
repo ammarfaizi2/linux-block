@@ -4,6 +4,7 @@
  * All rights reserved.
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/srcu.h>
 #include <linux/slab.h>

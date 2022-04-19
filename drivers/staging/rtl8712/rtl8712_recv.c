@@ -16,6 +16,7 @@
 
 #define _RTL8712_RECV_C_
 
+#include <linux/timer.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

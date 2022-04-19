@@ -50,6 +50,7 @@
  *   v.0.01 -- 30-NOV-1999 -- Initial release
  */
 
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api.h>

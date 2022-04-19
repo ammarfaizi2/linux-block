@@ -32,6 +32,7 @@
  * s1 > 1, s2 > 7, s3 > 15, s4 > 127.
  */
 
+#include <linux/timer.h>
 #include <linux/timex.h>
 #include <linux/cpumask_api.h>
 #include <linux/sched/cond_resched.h>

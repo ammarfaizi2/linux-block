@@ -9,6 +9,7 @@
  * Copyright (C) 2014 Abylay Ospan <aospan@netup.ru>
  */
 
+#include <linux/timer.h>
 #include <media/dvbdev.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>

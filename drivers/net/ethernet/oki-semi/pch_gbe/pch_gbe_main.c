@@ -9,6 +9,7 @@
 #include "pch_gbe.h"
 #include "pch_gbe_phy.h"
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/uaccess.h>

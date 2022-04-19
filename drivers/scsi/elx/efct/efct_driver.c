@@ -4,6 +4,7 @@
  * “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
  */
 
+#include <linux/timer.h>
 #include <linux/vmalloc.h>
 #include <linux/topology.h>
 #include <linux/slab.h>

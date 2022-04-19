@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>

@@ -32,6 +32,7 @@
  * SOFTWARE.
  */
 
+#include <linux/timer.h>
 #include <linux/log2.h>
 #include <net/checksum.h>
 #include <linux/tasklet_api.h>

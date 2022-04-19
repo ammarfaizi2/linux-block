@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2021, Intel Corporation. */
 
+#include <linux/timer.h>
 #include <linux/mutex_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

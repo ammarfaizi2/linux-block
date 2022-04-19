@@ -13,6 +13,7 @@
 */
 
 
+#include <linux/timer.h>
 #include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/skbuff_api.h>

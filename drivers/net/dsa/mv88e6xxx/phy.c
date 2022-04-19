@@ -7,6 +7,7 @@
  * Copyright (c) 2017 Andrew Lunn <andrew@lunn.ch>
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

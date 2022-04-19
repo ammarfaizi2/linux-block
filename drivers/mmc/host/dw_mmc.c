@@ -7,6 +7,7 @@
  * Copyright (C) 2009, 2010 Imagination Technologies Ltd.
  */
 
+#include <linux/timer.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>

@@ -3,6 +3,7 @@
 
 #define _MLME_OSDEP_C_
 
+#include <linux/timer.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>
 

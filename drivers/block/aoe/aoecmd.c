@@ -4,6 +4,7 @@
  * Filesystem request handling methods
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/bvec_api.h>
 #include <linux/workqueue_api.h>

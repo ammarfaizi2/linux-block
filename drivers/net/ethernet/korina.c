@@ -33,6 +33,7 @@
  *  should stick to this procedure.
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/of_api.h>

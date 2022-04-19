@@ -46,6 +46,7 @@
  *						use seq_file
  */
 
+#include <linux/timer.h>
 #include <uapi/linux/sockios.h>
 #include <uapi/linux/route.h>
 #include <net/sock_api.h>

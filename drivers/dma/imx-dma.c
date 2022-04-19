@@ -8,6 +8,7 @@
 // Copyright 2010 Sascha Hauer, Pengutronix <s.hauer@pengutronix.de>
 // Copyright 2012 Javier Martin, Vista Silicon <javier.martin@vista-silicon.com>
 
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>

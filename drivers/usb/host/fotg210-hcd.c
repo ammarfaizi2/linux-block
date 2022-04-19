@@ -9,6 +9,7 @@
  *
  * Most of code borrowed from the Linux-3.7 EHCI driver
  */
+#include <linux/timer.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/scatterlist_api.h>

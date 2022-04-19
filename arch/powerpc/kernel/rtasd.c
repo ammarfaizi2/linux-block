@@ -5,6 +5,7 @@
  * Communication to userspace based on kernel/printk.c
  */
 
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

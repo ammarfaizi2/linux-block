@@ -11,6 +11,7 @@
 
 #include "cna.h"
 
+#include <linux/timer.h>
 #include <linux/log2.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

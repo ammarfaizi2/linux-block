@@ -7,6 +7,7 @@
  * Author : Yoshihiro Shimoda <yoshihiro.shimoda.uh@renesas.com>
  */
 
+#include <linux/timer.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>

@@ -17,6 +17,7 @@
  *   Copyright (C) 2008 Nokia Corporation and/or its subsidiary(-ies).
  */
 
+#include <linux/timer.h>
 #include <linux/semaphore.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

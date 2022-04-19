@@ -19,6 +19,7 @@
  * journaling (ext2 can use a reserved inode for storing the log).
  */
 
+#include <linux/timer.h>
 #include <linux/wait_bit.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>

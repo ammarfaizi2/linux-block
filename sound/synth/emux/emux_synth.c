@@ -8,6 +8,7 @@
  *  Contains code based on awe_wave.c by Takashi Iwai
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/export.h>

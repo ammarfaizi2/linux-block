@@ -5,6 +5,7 @@
  *  Copyright (C) 2008 Alex Dubov <oakad@yahoo.com>
  */
 
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/vmalloc.h>
 #include <linux/tasklet_api.h>

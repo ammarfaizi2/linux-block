@@ -46,6 +46,7 @@
  *
  ************************************************************************
  */
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>

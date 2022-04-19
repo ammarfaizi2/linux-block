@@ -3,6 +3,7 @@
  * Copyright 2020 Noralf Trønnes
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/slab.h>

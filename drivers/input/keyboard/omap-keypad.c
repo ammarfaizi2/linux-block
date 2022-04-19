@@ -11,6 +11,7 @@
  * Copyright (C) 2004 Texas Instruments
  */
 
+#include <linux/timer.h>
 #include <linux/tasklet_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

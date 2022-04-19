@@ -8,6 +8,7 @@
  * Author: Noboru Iwamatsu <n_iwamatsu@jp.fujitsu.com>
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/sched/cond_resched.h>

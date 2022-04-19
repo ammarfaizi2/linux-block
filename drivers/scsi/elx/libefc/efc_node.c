@@ -4,6 +4,7 @@
  * “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
  */
 
+#include <linux/timer.h>
 #include <linux/xarray_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/kref_api.h>

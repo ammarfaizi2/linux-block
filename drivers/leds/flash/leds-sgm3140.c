@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (C) 2020 Luca Weiss <luca@z3ntu.xyz>
 
+#include <linux/timer.h>
 #include <linux/property.h>
 #include <linux/jiffies.h>
 #include <linux/device_api_lock.h>

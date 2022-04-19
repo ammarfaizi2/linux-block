@@ -20,6 +20,7 @@
 
 #define pr_fmt(fmt) "acerhdf: " fmt
 
+#include <linux/timer.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

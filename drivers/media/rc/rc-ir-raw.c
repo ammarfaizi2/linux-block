@@ -3,6 +3,7 @@
 //
 // Copyright (C) 2010 by Mauro Carvalho Chehab
 
+#include <linux/timer.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

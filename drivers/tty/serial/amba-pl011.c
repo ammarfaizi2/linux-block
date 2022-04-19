@@ -16,6 +16,7 @@
  * and hooked into this driver.
  */
 
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>

@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/xarray_api.h>
 #include <linux/wait_api.h>

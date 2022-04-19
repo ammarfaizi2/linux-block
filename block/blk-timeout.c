@@ -2,6 +2,7 @@
 /*
  * Functions related to generic timeout handling of requests.
  */
+#include <linux/timer.h>
 #include <linux/log2.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>

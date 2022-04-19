@@ -4,6 +4,7 @@
  *
  * Contact Information: wlanfae <wlanfae@realtek.com>
  */
+#include <linux/timer.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

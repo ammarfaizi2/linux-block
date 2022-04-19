@@ -10,6 +10,7 @@
 #define KMSG_COMPONENT "qeth"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/page_ref.h>
 #include <net/sch_generic_api.h>

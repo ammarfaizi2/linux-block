@@ -15,6 +15,7 @@
  *
  ******************************************************************************/
 
+#include <linux/timer.h>
 #include <net/net_namespace_types.h>
 #include <linux/seq_file.h>
 #include <linux/netdevice_api.h>

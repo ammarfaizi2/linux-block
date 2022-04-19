@@ -6,6 +6,7 @@
  * Copyright (C) 2011-2013 Texas Instruments Inc.
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>

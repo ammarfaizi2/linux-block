@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt) "dmxdev: " fmt
 
+#include <linux/timer.h>
 #include <media/dvbdev.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>

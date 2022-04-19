@@ -10,6 +10,7 @@
  *		Christoph Lameter <christoph@lameter.com>
  *  Copyright (C) 2008-2014 Christoph Lameter
  */
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/preempt.h>
 #include <linux/writeback_api.h>

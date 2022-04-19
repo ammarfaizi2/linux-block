@@ -4,6 +4,7 @@
  * Copyright (C) 2007 David S. Miller <davem@davemloft.net>
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>

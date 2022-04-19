@@ -3,6 +3,7 @@
  * Support for polling mode for input devices.
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <linux/device.h>

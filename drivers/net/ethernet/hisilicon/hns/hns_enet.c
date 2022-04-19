@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2015 Hisilicon Limited.
  */
 
+#include <linux/timer.h>
 #include <linux/page_ref.h>
 #include <linux/workqueue_api.h>
 #include <linux/topology.h>

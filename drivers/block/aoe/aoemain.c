@@ -4,6 +4,7 @@
  * Module initialization routines, discover timer
  */
 
+#include <linux/timer.h>
 #include <linux/jiffies.h>
 #include <linux/hdreg.h>
 #include <linux/blkdev.h>

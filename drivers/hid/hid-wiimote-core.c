@@ -7,6 +7,7 @@
 /*
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/string.h>
 #include <linux/stat.h>

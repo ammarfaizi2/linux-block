@@ -8,6 +8,7 @@
  *	-- Copyright IBM Corp. 2003
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>

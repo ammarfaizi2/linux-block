@@ -21,6 +21,7 @@
 #include "../pwrseqcmd.h"
 #include "pwrseq.h"
 #include "../btcoexist/rtl_btc.h"
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

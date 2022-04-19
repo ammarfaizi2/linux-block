@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/timer.h>
 #include <linux/string.h>
 #include <linux/spinlock_api.h>
 #include <linux/bitops.h>

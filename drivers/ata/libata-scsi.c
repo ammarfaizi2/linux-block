@@ -13,6 +13,7 @@
  *  - http://www.t13.org/
  */
 
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/workqueue_api.h>
 #include <linux/sysfs.h>

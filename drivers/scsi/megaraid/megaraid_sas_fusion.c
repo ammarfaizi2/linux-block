@@ -17,6 +17,7 @@
  *  Send feedback to: megaraidlinux.pdl@broadcom.com
  */
 
+#include <linux/timer.h>
 #include <linux/log2.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>

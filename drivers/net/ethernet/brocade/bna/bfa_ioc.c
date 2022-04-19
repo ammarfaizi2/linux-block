@@ -9,6 +9,7 @@
  * www.qlogic.com
  */
 
+#include <linux/timer.h>
 #include <linux/timekeeping.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>

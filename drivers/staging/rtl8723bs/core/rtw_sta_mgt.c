@@ -4,6 +4,7 @@
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
+#include <linux/timer.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <drv_types.h>

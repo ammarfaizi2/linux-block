@@ -6,6 +6,7 @@
  * Copyright (C) 2017 Facebook
  */
 
+#include <linux/timer.h>
 #include <linux/log2.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>

@@ -3,6 +3,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/irqflags.h>

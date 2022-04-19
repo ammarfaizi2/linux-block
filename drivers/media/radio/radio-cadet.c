@@ -31,6 +31,7 @@
  *		Changed API to V4L2
  */
 
+#include <linux/timer.h>
 #include <linux/wait_api.h>
 #include <linux/uaccess.h>
 #include <linux/poll.h>

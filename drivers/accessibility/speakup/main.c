@@ -9,6 +9,7 @@
  *  Copyright (C) 2003  David Borowski.
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/notifier_api.h>
 #include <linux/mutex_api.h>

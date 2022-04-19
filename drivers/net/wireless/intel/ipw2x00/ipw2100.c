@@ -119,6 +119,7 @@ that only one external action is invoked at a time.
 
 */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/vmalloc.h>

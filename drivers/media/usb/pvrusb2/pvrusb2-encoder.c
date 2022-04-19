@@ -5,6 +5,7 @@
  *  Copyright (C) 2004 Aurelien Alleaume <slts@free.fr>
  */
 
+#include <linux/timer.h>
 #include <linux/device.h>   // for linux/firmware.h
 #include <linux/firmware.h>
 #include "pvrusb2-util.h"

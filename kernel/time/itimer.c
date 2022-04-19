@@ -5,6 +5,7 @@
 
 /* These are all the functions necessary to implement itimers */
 
+#include <linux/timer.h>
 #include <linux/time64_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/ktime_api.h>

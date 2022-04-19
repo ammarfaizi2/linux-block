@@ -32,6 +32,7 @@
  */
 
 
+#include <linux/timer.h>
 #include <linux/log2.h>
 #include <linux/xarray_api.h>
 #include <linux/workqueue_api.h>

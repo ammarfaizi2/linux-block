@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/timer.h>
 #include <linux/page_ref.h>
 #include <linux/workqueue_api.h>
 #include <linux/sysfs.h>

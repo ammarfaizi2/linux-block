@@ -65,6 +65,7 @@
  * For history of changes, see Documentation/scsi/ChangeLog.megaraid
  */
 
+#include <linux/timer.h>
 #include <linux/wait_api.h>
 #include <linux/vmalloc.h>
 #include <linux/tasklet_api.h>

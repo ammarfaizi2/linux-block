@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/timer.h>
 #include <linux/rtnetlink.h>
 #include <linux/refcount_api.h>
 #include <linux/rcupdate.h>

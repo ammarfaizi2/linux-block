@@ -24,6 +24,7 @@
 #include "cx18-controls.h"
 #include "cx18-cards.h"
 #include "cx18-av-core.h"
+#include <linux/timer.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>

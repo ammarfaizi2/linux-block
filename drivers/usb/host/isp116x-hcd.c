@@ -56,6 +56,7 @@
 /* enqueuing/finishing log of urbs */
 //#define URB_TRACE
 
+#include <linux/timer.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

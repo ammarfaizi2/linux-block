@@ -11,6 +11,7 @@
  *   interface.
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>

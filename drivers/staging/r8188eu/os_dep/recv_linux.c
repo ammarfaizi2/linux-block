@@ -3,6 +3,7 @@
 
 #define _RECV_OSDEP_C_
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

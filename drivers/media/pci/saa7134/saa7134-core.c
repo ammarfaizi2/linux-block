@@ -10,6 +10,7 @@
 #include "saa7134.h"
 #include "saa7134-reg.h"
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/vmalloc.h>
 #include <linux/timekeeping.h>

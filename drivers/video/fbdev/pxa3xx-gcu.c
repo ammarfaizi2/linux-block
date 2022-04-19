@@ -17,6 +17,7 @@
  * your bootloader for now.
  */
 
+#include <linux/timer.h>
 #include <linux/wait_api.h>
 #include <linux/timekeeping.h>
 #include <linux/time64_api.h>

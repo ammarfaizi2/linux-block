@@ -8,6 +8,7 @@
  *  Created:	Jun 15, 2001
  *  Copyright:	MontaVista Software Inc.
  */
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

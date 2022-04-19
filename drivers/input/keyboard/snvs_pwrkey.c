@@ -3,6 +3,7 @@
 // Driver for the IMX SNVS ON/OFF Power Key
 // Copyright (C) 2015 Freescale Semiconductor, Inc. All Rights Reserved.
 
+#include <linux/timer.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>
 #include <linux/device_api_lock.h>

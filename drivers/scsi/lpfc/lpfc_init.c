@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/align.h>
 #include <linux/workqueue_api.h>

@@ -39,6 +39,7 @@
  * This file contains the core HCD code, and implements the Linux hc_driver
  * API
  */
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

@@ -5,6 +5,7 @@
  */
 #include "qla_def.h"
 
+#include <linux/timer.h>
 #include <linux/kref_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

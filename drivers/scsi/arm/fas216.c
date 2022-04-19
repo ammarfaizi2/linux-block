@@ -31,6 +31,7 @@
  *			automatically request sense data upon check
  *			condition status from targets.
  */
+#include <linux/timer.h>
 #include <linux/wait_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>

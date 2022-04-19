@@ -209,6 +209,7 @@
 
 #define L1OIP_VERSION	0	/* 0...3 */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/uio_api.h>
 #include <linux/spinlock_api.h>

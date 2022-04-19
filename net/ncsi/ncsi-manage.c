@@ -3,6 +3,7 @@
  * Copyright Gavin Shan, IBM Corporation 2016.
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <net/inet_sock_api.h>
 #include <linux/workqueue_api.h>

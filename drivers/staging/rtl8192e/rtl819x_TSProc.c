@@ -5,6 +5,7 @@
  * Contact Information: wlanfae <wlanfae@realtek.com>
  */
 #include "rtllib.h"
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/netdevice_api.h>

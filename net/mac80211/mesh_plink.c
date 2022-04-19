@@ -4,6 +4,7 @@
  * Copyright (C) 2019, 2021 Intel Corporation
  * Author:     Luis Carlos Cobo <luisca@cozybit.com>
  */
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

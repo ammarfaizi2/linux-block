@@ -7,6 +7,7 @@
 
 #define pr_fmt(fmt) "shdlc: %s: " fmt, __func__
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>
 #include <linux/skbuff_api.h>

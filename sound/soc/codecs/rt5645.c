@@ -6,6 +6,7 @@
  * Author: Bard Liao <bardliao@realtek.com>
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/property.h>
 #include <linux/of_api.h>

@@ -9,6 +9,7 @@
  *		From code orinally in TCP
  */
 
+#include <linux/timer.h>
 #include <net/timewait_sock.h>
 #include <net/sock_api.h>
 #include <linux/spinlock_api.h>

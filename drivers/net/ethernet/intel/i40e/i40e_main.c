@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2013 - 2021 Intel Corporation. */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <net/xdp_api.h>

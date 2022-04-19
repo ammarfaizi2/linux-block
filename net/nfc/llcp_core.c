@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "llcp: %s: " fmt, __func__
 
+#include <linux/timer.h>
 #include <net/sock_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>

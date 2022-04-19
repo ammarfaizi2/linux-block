@@ -5,6 +5,7 @@
  * Copyright (C) 2013-2014 Jens Axboe
  * Copyright (C) 2013-2014 Christoph Hellwig
  */
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/log2.h>
 #include <linux/irqflags.h>

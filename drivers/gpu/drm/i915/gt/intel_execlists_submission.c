@@ -106,6 +106,7 @@
  * preemption, but just sampling the new tail pointer).
  *
  */
+#include <linux/timer.h>
 #include <linux/seqlock_api.h>
 #include <linux/rcupdate.h>
 #include <linux/log2.h>

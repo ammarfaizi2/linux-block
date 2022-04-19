@@ -8,6 +8,7 @@
  * Copyright 2009  by Karsten Keil <keil@isdn4linux.de>
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>

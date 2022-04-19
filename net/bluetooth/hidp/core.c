@@ -21,6 +21,7 @@
    SOFTWARE IS DISCLAIMED.
 */
 
+#include <linux/timer.h>
 #include <net/sock_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

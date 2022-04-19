@@ -4,6 +4,7 @@
  * Copyright (c) 2015 Hisilicon Limited.
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/semaphore.h>

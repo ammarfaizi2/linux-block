@@ -3,6 +3,7 @@
 
 #define _RTW_MLME_C_
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/vmalloc.h>
 #include <linux/spinlock_api.h>

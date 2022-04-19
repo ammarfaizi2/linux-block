@@ -4,6 +4,7 @@
  * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

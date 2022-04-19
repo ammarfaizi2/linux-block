@@ -3,6 +3,7 @@
 
 #define _RTW_P2P_C_
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>

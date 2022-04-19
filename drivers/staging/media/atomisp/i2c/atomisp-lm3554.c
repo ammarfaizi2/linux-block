@@ -15,6 +15,7 @@
  *
  *
  */
+#include <linux/timer.h>
 #include <linux/mutex_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>

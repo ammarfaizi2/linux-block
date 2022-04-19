@@ -15,6 +15,7 @@
 
 #define pr_fmt(fmt) "rcu: " fmt
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>

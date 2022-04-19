@@ -43,6 +43,7 @@
  * 1.17	RMK	13/05/2000	Updated for 2.3.99-pre8
  */
 
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

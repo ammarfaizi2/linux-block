@@ -19,6 +19,7 @@
  *		Jorge Cwik, <jorge@laser.satlink.net>
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <net/tcp_bpf.h>
 #include <net/sock_api.h>

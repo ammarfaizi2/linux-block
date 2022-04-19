@@ -12,6 +12,7 @@
  * Copyright (C) 2018 - 2022 Intel Corporation
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_extra.h>

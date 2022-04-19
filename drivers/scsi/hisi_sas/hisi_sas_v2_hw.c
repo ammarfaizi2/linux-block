@@ -4,6 +4,7 @@
  * Copyright (c) 2016 Hisilicon Limited.
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

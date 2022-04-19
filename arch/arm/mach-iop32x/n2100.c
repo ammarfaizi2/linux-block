@@ -10,6 +10,7 @@
  * Copyright (C) 2004 Intel Corp.
  */
 
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/jiffies.h>
 #include <linux/ioport.h>

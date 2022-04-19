@@ -31,6 +31,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <net/xdp_api.h>
 #include <linux/wait_api.h>

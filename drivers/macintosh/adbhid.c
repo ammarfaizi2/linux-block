@@ -35,6 +35,7 @@
  * Move to syfs
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/notifier_api.h>
 #include <linux/module.h>

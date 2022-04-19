@@ -12,6 +12,7 @@
 /*
  * This handles all read/write requests to block devices
  */
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/srcu.h>
 #include <linux/writeback_api.h>

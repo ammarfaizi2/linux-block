@@ -9,6 +9,7 @@
  *     - JMicron (hardware and technical support)
  */
 
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_api.h>

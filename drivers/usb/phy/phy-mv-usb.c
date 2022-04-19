@@ -5,6 +5,7 @@
  *	   Neil Zhang <zhangwm@marvell.com>
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>

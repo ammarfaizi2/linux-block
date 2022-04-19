@@ -6,6 +6,7 @@
  * Copyright (c) 2021 Google
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/netdevice_api.h>
 #include <net/sock_api.h>

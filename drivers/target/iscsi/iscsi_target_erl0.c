@@ -9,6 +9,7 @@
  *
  ******************************************************************************/
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/ptrace_api.h>
 #include <linux/lockdep_api.h>

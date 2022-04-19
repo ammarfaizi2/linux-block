@@ -3,6 +3,7 @@
  * Copyright © 2019 Intel Corporation
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/sched.h>
 #include <linux/mutex_api.h>

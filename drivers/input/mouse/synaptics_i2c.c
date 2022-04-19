@@ -10,6 +10,7 @@
  * more details.
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/of_api.h>
 #include <linux/jiffies.h>

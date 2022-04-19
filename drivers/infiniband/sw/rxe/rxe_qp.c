@@ -4,6 +4,7 @@
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
+#include <linux/timer.h>
 #include <linux/log2.h>
 #include <net/sock_api.h>
 #include <net/sock_api_extra.h>

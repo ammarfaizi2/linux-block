@@ -13,6 +13,7 @@
 // #define	DEBUG			// error path messages, extra info
 // #define	VERBOSE			// more; success messages
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/random.h>
 #include <linux/netdevice_api_lock.h>

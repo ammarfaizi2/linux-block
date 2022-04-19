@@ -3,6 +3,7 @@
  * Copyright (c) 2015-2020, NVIDIA CORPORATION.  All rights reserved.
  */
 
+#include <linux/timer.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/seq_file.h>

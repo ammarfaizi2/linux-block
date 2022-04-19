@@ -7,6 +7,7 @@
  *	Lennert Buytenhek		<buytenh@gnu.org>
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/spinlock_api.h>
 #include <linux/netdevice_api.h>

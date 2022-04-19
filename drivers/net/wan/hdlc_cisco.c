@@ -6,6 +6,7 @@
  * Copyright (C) 2000 - 2006 Krzysztof Halasa <khc@pm.waw.pl>
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

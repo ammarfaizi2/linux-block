@@ -8,6 +8,7 @@
  * Copyright (C) 2018-2021 Intel Corporation
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>

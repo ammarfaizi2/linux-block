@@ -14,6 +14,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ":%s:%d: " fmt, __func__, __LINE__
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/of_api.h>
 #include <linux/mutex_api.h>

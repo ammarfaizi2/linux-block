@@ -13,6 +13,7 @@
 #define KMSG_COMPONENT		"lcs"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>

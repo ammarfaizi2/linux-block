@@ -9,6 +9,7 @@
 #undef DEBUG_MIDI
 
 #include "opl3_voice.h"
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <sound/asoundef.h>

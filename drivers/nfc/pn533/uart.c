@@ -7,6 +7,7 @@
  * All rights reserved.
  */
 
+#include <linux/timer.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api.h>
 #include <linux/sched/types.h>

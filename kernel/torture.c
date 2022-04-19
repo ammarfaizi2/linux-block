@@ -10,6 +10,7 @@
 
 #define pr_fmt(fmt) fmt
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/timekeeping.h>
 #include <linux/notifier_api.h>

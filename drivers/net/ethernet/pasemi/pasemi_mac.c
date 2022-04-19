@@ -5,6 +5,7 @@
  * Driver for the PA Semi PWRficient onchip 1G/10G Ethernet MACs
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/sched/cond_resched.h>

@@ -6,6 +6,7 @@
  * Copyright (c) 2014-2016 Jiri Pirko <jiri@mellanox.com>
  */
 
+#include <linux/timer.h>
 #include <net/neighbour_api.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>

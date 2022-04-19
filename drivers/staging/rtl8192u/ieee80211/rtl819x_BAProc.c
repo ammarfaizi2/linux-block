@@ -5,6 +5,7 @@
  * ADDBAREQ ADDBARSP and DELBA packet is still on consideration. Temporarily use MANAGE QUEUE instead of Normal Queue.
  * WB 2008-05-27
  * *****************************************************************************************************************************/
+#include <linux/timer.h>
 #include <linux/net.h>
 #include <linux/netdevice_api.h>
 #include <linux/jiffies.h>

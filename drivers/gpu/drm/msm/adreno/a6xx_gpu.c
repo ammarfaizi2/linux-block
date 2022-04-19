@@ -8,6 +8,7 @@
 #include "a6xx_gpu.h"
 #include "a6xx_gmu.xml.h"
 
+#include <linux/timer.h>
 #include <linux/refcount_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

@@ -5,6 +5,7 @@
  * Copyright (c) 2007, 2008 Patrick McHardy <kaber@trash.net>
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/netlink_api.h>

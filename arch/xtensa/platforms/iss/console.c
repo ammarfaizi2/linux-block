@@ -9,6 +9,7 @@
  *   Authors	Christian Zankel, Joe Taylor
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/module.h>

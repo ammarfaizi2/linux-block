@@ -27,6 +27,7 @@
  *  Imre Kaloz <kaloz@openwrt.org>
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>

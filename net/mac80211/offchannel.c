@@ -10,6 +10,7 @@
  * Copyright 2009	Johannes Berg <johannes@sipsolutions.net>
  * Copyright (C) 2019 Intel Corporation
  */
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>

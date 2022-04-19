@@ -9,6 +9,7 @@
 
 #undef DEBUG
 
+#include <linux/timer.h>
 #include <linux/wait_api.h>
 #include <linux/topology.h>
 #include <linux/timekeeping.h>

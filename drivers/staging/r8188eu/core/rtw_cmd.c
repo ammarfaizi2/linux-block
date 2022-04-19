@@ -3,6 +3,7 @@
 
 #define _RTW_CMD_C_
 
+#include <linux/timer.h>
 #include <linux/semaphore.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>

@@ -9,6 +9,7 @@
  *	     Anatolij Gustschin <agust@denx.de>
  */
 
+#include <linux/timer.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>

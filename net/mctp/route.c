@@ -10,6 +10,7 @@
  * Copyright (c) 2021 Google
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/rtnetlink_api.h>

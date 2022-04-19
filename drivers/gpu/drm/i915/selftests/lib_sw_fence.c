@@ -22,6 +22,7 @@
  *
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/slab.h>
 #include <linux/refcount_api.h>

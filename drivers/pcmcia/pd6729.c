@@ -7,6 +7,7 @@
  * the GNU General Public License, incorporated herein by reference.
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>
 #include <linux/kernel.h>

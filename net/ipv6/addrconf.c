@@ -36,6 +36,7 @@
 
 #define pr_fmt(fmt) "IPv6: " fmt
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <net/sock_api.h>
 #include <net/sch_generic_api.h>

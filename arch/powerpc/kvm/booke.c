@@ -10,6 +10,7 @@
  *          Varun Sethi <varun.sethi@freescale.com>
  */
 
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/srcu.h>
 #include <linux/spinlock_api.h>

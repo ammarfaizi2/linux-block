@@ -3,6 +3,7 @@
  * Copyright 2018-2020 Broadcom.
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <linux/sched/signal.h>

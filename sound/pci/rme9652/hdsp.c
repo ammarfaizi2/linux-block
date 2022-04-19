@@ -7,6 +7,7 @@
  *                          Thomas Charbonnel
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/uaccess.h>
 #include <linux/spinlock_api.h>

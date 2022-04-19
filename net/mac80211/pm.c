@@ -3,6 +3,7 @@
  * Portions
  * Copyright (C) 2020-2021 Intel Corporation
  */
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/mutex_api.h>
 #include <net/mac80211.h>

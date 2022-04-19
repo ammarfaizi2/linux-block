@@ -7,6 +7,7 @@
  *	        Imre Deak     <imre.deak@nokia.com>
  * YUV support: Jussi Laako   <jussi.laako@nokia.com>
  */
+#include <linux/timer.h>
 #include <linux/semaphore.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>

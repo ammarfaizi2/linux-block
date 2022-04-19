@@ -40,6 +40,7 @@
  * $Id: //depot/aic7xxx/aic7xxx/aic79xx.c#250 $
  */
 
+#include <linux/timer.h>
 #include <linux/slab.h>
 #include <linux/prefetch.h>
 #include <linux/jiffies.h>

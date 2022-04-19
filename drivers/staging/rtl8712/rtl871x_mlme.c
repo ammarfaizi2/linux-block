@@ -16,6 +16,7 @@
 
 #define _RTL871X_MLME_C_
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>
 #include <linux/jiffies.h>

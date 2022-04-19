@@ -2,6 +2,7 @@
 /* Copyright (c) 2017 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/kthread.h>
 #include <linux/jiffies.h>

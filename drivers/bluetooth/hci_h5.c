@@ -6,6 +6,7 @@
  *  Copyright (C) 2012  Intel Corporation
  */
 
+#include <linux/timer.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

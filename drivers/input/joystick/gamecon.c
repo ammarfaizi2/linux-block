@@ -16,6 +16,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/string.h>
 #include <linux/mutex_api.h>

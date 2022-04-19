@@ -3,6 +3,7 @@
  * Copyright(c) 2015-2018 Intel Corporation.
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/timekeeping.h>
 #include <linux/spinlock_api.h>

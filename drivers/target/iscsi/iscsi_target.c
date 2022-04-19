@@ -8,6 +8,7 @@
  *
  ******************************************************************************/
 
+#include <linux/timer.h>
 #include <linux/semaphore.h>
 #include <net/sock_api.h>
 #include <linux/wait_api.h>

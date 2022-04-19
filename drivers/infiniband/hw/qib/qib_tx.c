@@ -30,6 +30,7 @@
  * SOFTWARE.
  */
 
+#include <linux/timer.h>
 #include <linux/stat.h>
 #include <linux/spinlock_api.h>
 #include <linux/jiffies.h>

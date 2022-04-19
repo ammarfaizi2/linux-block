@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <net/rtnetlink_api.h>
 #include <net/net_namespace_api.h>

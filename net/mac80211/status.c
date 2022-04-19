@@ -8,6 +8,7 @@
  * Copyright 2021-2022  Intel Corporation
  */
 
+#include <linux/timer.h>
 #include <linux/rcupdate.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>

@@ -23,6 +23,7 @@
   * All rights reserved. Licensed under dual BSD/GPL license.
   */
 
+#include <linux/timer.h>
 #include <linux/kdev_t.h>
 #include <linux/wait_api.h>
 #include <linux/sched.h>

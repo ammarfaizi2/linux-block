@@ -54,6 +54,7 @@
  * - fixed some race conditions (who finds the next may send it to me ;-)
  */
 
+#include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/kdev_t.h>
 #include <linux/wait_api.h>

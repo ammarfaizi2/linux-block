@@ -6,6 +6,7 @@
  * Copyright (c) 2009-2011, NVIDIA Corporation.
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/pm_wakeup.h>
 #include <linux/of_api.h>

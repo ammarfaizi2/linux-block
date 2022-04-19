@@ -53,6 +53,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <linux/timer.h>
 #include <linux/spinlock_api.h>
 #include <linux/prefetch.h>
 #include <linux/io.h>
