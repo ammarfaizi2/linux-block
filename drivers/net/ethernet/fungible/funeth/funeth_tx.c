@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/topology.h>
 #include <linux/rcupdate.h>
 #include <linux/netdevice_api.h>

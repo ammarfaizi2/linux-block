@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/rtnetlink.h>
 #include <linux/rcupdate.h>
 #include <linux/rculist.h>

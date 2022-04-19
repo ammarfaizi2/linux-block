@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2015-2019 Netronome Systems, Inc. */
 
+#include <linux/u64_stats_sync_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/page_ref.h>
 #include <linux/netdevice_api.h>
