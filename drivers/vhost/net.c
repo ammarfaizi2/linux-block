@@ -5,6 +5,7 @@
  * virtio-net server in host kernel.
  */
 
+#include <linux/if_vlan_api.h>
 #include <linux/rcupdate.h>
 #include <linux/page_ref.h>
 #include <linux/preempt.h>

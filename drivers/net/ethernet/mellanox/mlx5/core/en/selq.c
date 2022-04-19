@@ -2,6 +2,7 @@
 /* Copyright (c) 2021, NVIDIA CORPORATION & AFFILIATES. All rights reserved. */
 
 #include "selq.h"
+#include <linux/if_vlan_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/ipv6.h>
