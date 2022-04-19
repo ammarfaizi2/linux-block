@@ -9,6 +9,7 @@
 //  Peter Ujfalusi <peter.ujfalusi@linux.intel.com>
 //
 
+#include <linux/math64.h>
 #include <linux/slab.h>
 #include <linux/fs_api.h>
 #include <linux/device_api_lock.h>

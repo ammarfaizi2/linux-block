@@ -11,6 +11,7 @@
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/math64.h>
 #include <linux/atomic_api.h>
 #include <linux/mm_api.h>
 #include <linux/delay.h>

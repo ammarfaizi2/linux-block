@@ -19,6 +19,7 @@
  *			 ksz9477
  */
 
+#include <linux/math64.h>
 #include <linux/ktime_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

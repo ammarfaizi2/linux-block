@@ -21,6 +21,7 @@
  *
  * Authors: AMD
  */
+#include <linux/math64.h>
 #include <linux/delay.h>
 #include <linux/backlight.h>
 

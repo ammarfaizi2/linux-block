@@ -8,6 +8,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
+#include <linux/math64.h>
 #include <linux/spinlock_api.h>
 #include <linux/mod_devicetable.h>
 #include <linux/device_api_lock.h>

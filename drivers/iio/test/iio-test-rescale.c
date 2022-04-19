@@ -5,6 +5,7 @@
  * Copyright (c) 2021 Liam Beguin <liambeguin@gmail.com>
  */
 
+#include <linux/math64.h>
 #include <linux/gcd.h>
 #include <linux/overflow.h>
 

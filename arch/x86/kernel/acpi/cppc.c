@@ -4,6 +4,7 @@
  * Copyright (c) 2016, Intel Corporation.
  */
 
+#include <linux/math64.h>
 #include <linux/mutex_api.h>
 #include <asm/processor_api.h>
 #include <linux/sched/topology.h>

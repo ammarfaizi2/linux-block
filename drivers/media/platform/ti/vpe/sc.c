@@ -9,6 +9,7 @@
  * Archit Taneja, <archit@ti.com>
  */
 
+#include <linux/math64.h>
 #include <linux/device_api_lock.h>
 #include <linux/err.h>
 #include <linux/io.h>

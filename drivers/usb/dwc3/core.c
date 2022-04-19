@@ -8,6 +8,7 @@
  *	    Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  */
 
+#include <linux/math64.h>
 #include <linux/workqueue_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/property.h>
