@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright(c) 2022 Intel Corporation. All rights reserved. */
+#include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/mm_api.h>
 #include <linux/device_api_lock.h>
