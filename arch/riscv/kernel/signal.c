@@ -6,6 +6,7 @@
  * Copyright (C) 2012 Regents of the University of California
  */
 
+#include <linux/sched/rseq_api.h>
 #include <linux/sched/thread.h>
 #include <linux/sched/signal.h>
 #include <linux/sched.h>
