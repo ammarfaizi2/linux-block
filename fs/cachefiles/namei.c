@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/file.h>
 #include <linux/workqueue_api.h>
 #include <linux/wait_bit.h>
 #include <linux/wait_api.h>
