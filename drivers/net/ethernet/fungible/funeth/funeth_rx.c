@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
 
+#include <linux/topology.h>
 #include <linux/rcupdate.h>
 #include <linux/prefetch.h>
 #include <linux/page_ref.h>
