@@ -34,6 +34,7 @@
  * Copyright (C) 2021 Hans de Goede <hdegoede@redhat.com>
  */
 
+#include <linux/minmax.h>
 #include <linux/string.h>
 #include <linux/property.h>
 #include <linux/device_api_lock.h>
