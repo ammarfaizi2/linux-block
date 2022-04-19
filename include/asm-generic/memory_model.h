@@ -11,6 +11,8 @@
  */
 #if defined(CONFIG_FLATMEM)
 
+#include <linux/mm_page_address.h>
+
 #ifndef ARCH_PFN_OFFSET
 #define ARCH_PFN_OFFSET		(0UL)
 #endif
