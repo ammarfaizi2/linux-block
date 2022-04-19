@@ -7,6 +7,7 @@
  * the information ethtool needs.
  */
 
+#include <net/rtnetlink_api.h>
 #include <linux/sched.h>
 #include <linux/random.h>
 #include <linux/netdevice_api.h>

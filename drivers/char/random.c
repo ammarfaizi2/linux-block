@@ -27,6 +27,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/local_lock.h>
 #include <linux/timer.h>
 #include <linux/irqflags.h>
 #include <linux/notifier_api.h>
