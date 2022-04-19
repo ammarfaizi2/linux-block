@@ -7,6 +7,7 @@
  * Author: Tom Lendacky <thomas.lendacky@amd.com>
  */
 
+#include <asm/msr.h>
 #include <asm/mem_encrypt.h>
 #include <linux/cache.h>
 #include <linux/init.h>
