@@ -6,6 +6,7 @@
  * are exposed through to BPF programs is explicitly unstable.
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/bpf.h>
 #include <linux/btf.h>
 #include <linux/types.h>

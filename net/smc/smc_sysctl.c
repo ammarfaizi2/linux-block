@@ -10,6 +10,7 @@
  *
  */
 
+#include <net/net_namespace_api.h>
 #include <linux/slab.h>
 #include <linux/init.h>
 #include <linux/sysctl.h>
