@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0+
 
+#include <uapi/linux/net_tstamp.h>
 #include <linux/workqueue_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/mutex_api.h>
