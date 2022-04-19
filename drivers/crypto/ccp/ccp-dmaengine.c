@@ -7,6 +7,7 @@
  * Author: Gary R Hook <gary.hook@amd.com>
  */
 
+#include <linux/rculist.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/slab.h>

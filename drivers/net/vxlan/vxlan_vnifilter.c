@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/rculist.h>
 #include <linux/percpu.h>
 #include <linux/netdevice_api.h>
 #include <linux/spinlock_api.h>

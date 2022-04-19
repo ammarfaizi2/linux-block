@@ -8,6 +8,7 @@
  *
  */
 
+#include <linux/rculist.h>
 #include <linux/spinlock_api.h>
 #include <linux/srcu.h>
 #include <linux/workqueue_api.h>
