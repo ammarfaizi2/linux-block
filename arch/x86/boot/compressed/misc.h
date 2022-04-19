@@ -22,7 +22,6 @@
 #include <linux/linkage.h>
 #include <linux/screen_info.h>
 #include <linux/elf.h>
-#include <linux/efi.h>
 
 #include <asm/page.h>
 #include <asm/boot.h>
@@ -37,6 +36,8 @@
 #define BOOT_BOOT_H
 #include "../ctype.h"
 #include "../io.h"
+
+#include "efi.h"
 
 #ifdef CONFIG_X86_64
 #define memptr long
