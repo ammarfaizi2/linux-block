@@ -4,6 +4,7 @@
  * Copyright (C) 2022 Advanced Micro Devices, Inc.
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/dma-fence-unwrap.h>
 #if 0
 #include <linux/kernel.h>

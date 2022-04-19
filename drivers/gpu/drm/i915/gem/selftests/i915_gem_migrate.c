@@ -3,6 +3,8 @@
  * Copyright © 2020-2021 Intel Corporation
  */
 
+#include <linux/dma-fence-api.h>
+
 #include "gt/intel_migrate.h"
 #include "gt/intel_gpu_commands.h"
 #include "gem/i915_gem_ttm_move.h"

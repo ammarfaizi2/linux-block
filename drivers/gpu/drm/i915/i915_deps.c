@@ -3,6 +3,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/dma-fence.h>
 #include <linux/slab.h>
 

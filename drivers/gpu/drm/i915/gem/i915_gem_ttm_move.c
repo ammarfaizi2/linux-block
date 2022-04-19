@@ -3,6 +3,7 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <linux/dma-fence-api.h>
 #include <linux/workqueue_api.h>
 #include <linux/slab.h>
 #include <drm/ttm/ttm_bo_driver.h>
