@@ -6,6 +6,7 @@
  *   Beau Belgrave <beaub@linux.microsoft.com>
  */
 
+#include <linux/mm_api.h>
 #include <linux/hashtable_api.h>
 #include <linux/slab.h>
 #include <linux/pagefault_ctrl.h>

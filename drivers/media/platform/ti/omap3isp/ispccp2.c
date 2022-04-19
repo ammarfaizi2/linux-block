@@ -11,6 +11,7 @@
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/mm_api.h>
 #include <linux/delay.h>
 #include <linux/device.h>
 #include <linux/mm.h>

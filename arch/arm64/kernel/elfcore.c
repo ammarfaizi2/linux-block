@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <linux/mm_api.h>
 #include <linux/coredump.h>
 #include <linux/elfcore.h>
 #include <linux/kernel.h>

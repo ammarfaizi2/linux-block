@@ -11,6 +11,7 @@
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/mm_api.h>
 #include <linux/jiffies.h>
 #include <linux/mutex_api.h>
 #include <linux/wait_api.h>

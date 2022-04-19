@@ -5,6 +5,7 @@
  * lpass-platform.c -- ALSA SoC platform driver for QTi LPASS
  */
 
+#include <linux/mm_api.h>
 #include <linux/mm_api_extra.h>
 #include <linux/slab.h>
 #include <linux/interrupt.h>

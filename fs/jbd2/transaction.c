@@ -14,6 +14,7 @@
  * filesystem).
  */
 
+#include <linux/mm_api.h>
 #include <linux/pagemap.h>
 #include <linux/wait_bit.h>
 #include <linux/wait_api.h>

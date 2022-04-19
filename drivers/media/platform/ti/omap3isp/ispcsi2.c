@@ -10,6 +10,7 @@
  * Contacts: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
+#include <linux/mm_api.h>
 #include <linux/delay.h>
 #include <media/v4l2-common.h>
 #include <linux/v4l2-mediabus.h>

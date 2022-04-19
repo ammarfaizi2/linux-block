@@ -10,6 +10,7 @@
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
+#include <linux/mm_api.h>
 #include <linux/align.h>
 #include <linux/mutex_api.h>
 #include <linux/clk.h>
