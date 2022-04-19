@@ -14,6 +14,7 @@
  * Author: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
  */
 
+#include <linux/notifier_api.h>
 #include <asm/msr.h>
 #include <linux/string.h>
 #include <linux/topology.h>
