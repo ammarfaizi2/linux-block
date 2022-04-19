@@ -5,6 +5,7 @@
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
+#include <linux/hrtimer_api.h>
 #include <linux/io.h>
 #include <linux/kthread.h>
 
