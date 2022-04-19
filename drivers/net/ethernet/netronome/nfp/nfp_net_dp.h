@@ -4,6 +4,7 @@
 #ifndef _NFP_NET_DP_
 #define _NFP_NET_DP_
 
+#include <linux/skbuff_api_frag.h>
 #include <linux/skbuff_api.h>
 #include "nfp_net.h"
 
