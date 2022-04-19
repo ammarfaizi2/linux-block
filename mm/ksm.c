@@ -13,6 +13,7 @@
  *	Hugh Dickins
  */
 
+#include <linux/page_ref.h>
 #include <linux/log2.h>
 #include <linux/huge_mm.h>
 #include <linux/wait_bit.h>

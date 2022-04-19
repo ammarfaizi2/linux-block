@@ -7,6 +7,7 @@
  *     Author: Muchun Song <songmuchun@bytedance.com>
  *
  */
+#include <linux/page_ref.h>
 #include <linux/pgtable_api.h>
 #include <linux/mmzone_api.h>
 #include <linux/mm_api.h>

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/page_ref.h>
 #include <linux/mm_types.h>
 #include <linux/tracepoint.h>
 

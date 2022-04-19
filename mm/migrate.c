@@ -13,6 +13,7 @@
  * Christoph Lameter
  */
 
+#include <linux/page_ref.h>
 #include <linux/irqflags.h>
 #include <linux/huge_mm.h>
 #include <linux/sched/task_flags.h>

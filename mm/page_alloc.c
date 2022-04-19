@@ -15,6 +15,7 @@
  *          (lots of bits borrowed from Ingo Molnar & Andrew Morton)
  */
 
+#include <linux/page_ref.h>
 #include <linux/log2.h>
 #include <linux/huge_mm.h>
 #include <linux/sched/task_flags.h>

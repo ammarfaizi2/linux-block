@@ -57,6 +57,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/page_ref.h>
 #include <linux/mmzone_api.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>

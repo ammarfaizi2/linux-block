@@ -7,6 +7,7 @@
  * Page recycling code is mostly taken from gianfar driver.
  */
 
+#include <linux/page_ref.h>
 #include <linux/spinlock_api.h>
 #include <linux/skbuff_api_frag.h>
 #include <linux/net.h>

@@ -5,6 +5,7 @@
  *	Copyright (C) 2016 Red Hat, Inc.
  */
 
+#include <linux/page_ref.h>
 #include <linux/cpumask_api.h>
 #include <linux/preempt.h>
 #include <linux/workqueue_api.h>

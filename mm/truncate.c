@@ -8,6 +8,7 @@
  *		Initial version.
  */
 
+#include <linux/page_ref.h>
 #include <linux/huge_mm.h>
 #include <linux/xarray_api.h>
 #include <linux/spinlock_api.h>

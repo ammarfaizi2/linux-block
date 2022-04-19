@@ -21,6 +21,7 @@
  * This file is released under the GPL.
  */
 
+#include <linux/page_ref.h>
 #include <linux/huge_mm.h>
 #include <linux/kdev_t.h>
 #include <linux/fs_api_sb.h>

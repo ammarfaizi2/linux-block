@@ -9,6 +9,7 @@
  *  (C) Copyright 2002 Red Hat Inc, All Rights Reserved
  */
 
+#include <linux/page_ref.h>
 #include <linux/huge_mm.h>
 #include <linux/vmstat.h>
 #include <linux/topology.h>

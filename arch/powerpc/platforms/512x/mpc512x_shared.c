@@ -8,6 +8,7 @@
  * MPC512x Shared code
  */
 
+#include <linux/page_ref.h>
 #include <linux/vmalloc.h>
 #include <linux/of_api.h>
 #include <linux/mm_api.h>

@@ -4,6 +4,7 @@
  *             https://www.huawei.com/
  */
 #include "internal.h"
+#include <linux/page_ref.h>
 #include <linux/xarray_api.h>
 #include <linux/spinlock_api.h>
 #include <linux/mutex_api.h>

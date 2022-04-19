@@ -8,6 +8,7 @@
 #include "gve_dqo.h"
 #include "gve_adminq.h"
 #include "gve_utils.h"
+#include <linux/page_ref.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/prefetch.h>
 #include <linux/net.h>

@@ -13,6 +13,7 @@
  * Giuseppe De Robertis <Giuseppe.DeRobertis@ba.infn.it>
  * Gary Chen & Ch Hsu Storlink Semiconductor
  */
+#include <linux/page_ref.h>
 #include <linux/log2.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/spinlock_api.h>

@@ -6,6 +6,7 @@
  *
  */
 
+#include <linux/page_ref.h>
 #include <linux/uaccess.h>
 #include <linux/tracepoint.h>
 #include <linux/pagemap.h>

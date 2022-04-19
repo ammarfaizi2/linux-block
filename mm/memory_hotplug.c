@@ -5,6 +5,7 @@
  *  Copyright (C)
  */
 
+#include <linux/page_ref.h>
 #include <linux/huge_mm.h>
 #include <linux/align.h>
 #include <linux/writeback_api.h>

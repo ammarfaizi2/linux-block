@@ -4,6 +4,7 @@
  * Copyright (C) 2015-2021 Google, Inc.
  */
 
+#include <linux/page_ref.h>
 #include <linux/skbuff_api.h>
 #include <linux/skbuff_api_extra.h>
 #include <linux/netdevice_api.h>

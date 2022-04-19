@@ -7,6 +7,7 @@
  *
  *  Rewritten to use page cache, (C) 1998 Stephen Tweedie
  */
+#include <linux/page_ref.h>
 #include <linux/xarray_api.h>
 #include <linux/vmstat.h>
 #include <linux/sysfs.h>

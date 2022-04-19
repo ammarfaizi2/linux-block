@@ -13,6 +13,7 @@
 
 #define pr_fmt(fmt)	KBUILD_MODNAME ":%s: " fmt, __func__
 
+#include <linux/page_ref.h>
 #include <linux/log2.h>
 #include <net/route_api.h>
 #include <net/neighbour_api.h>

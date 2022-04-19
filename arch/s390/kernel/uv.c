@@ -7,6 +7,7 @@
 #define KMSG_COMPONENT "prot_virt"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#include <linux/page_ref.h>
 #include <linux/sysfs.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_ptlock.h>

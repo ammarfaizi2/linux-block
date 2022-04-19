@@ -3,6 +3,7 @@
  * Generic hugetlb support.
  * (C) Nadia Yvette Chambers, April 2004
  */
+#include <linux/page_ref.h>
 #include <linux/log2.h>
 #include <linux/sched/task_flags.h>
 #include <linux/workqueue_api.h>

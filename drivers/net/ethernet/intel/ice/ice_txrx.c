@@ -3,6 +3,7 @@
 
 /* The driver transmit and receive code */
 
+#include <linux/page_ref.h>
 #include <net/xdp_api.h>
 #include <net/ipv6_api.h>
 #include <net/checksum.h>

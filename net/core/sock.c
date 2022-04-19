@@ -85,6 +85,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/page_ref.h>
 #include <net/timewait_sock.h>
 #include <net/socket_alloc.h>
 #include <net/sock_batch.h>

@@ -13,6 +13,7 @@
 #include "aq_hw_utils.h"
 #include "aq_ptp.h"
 
+#include <linux/page_ref.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/slab.h>
 #include <linux/skbuff_api_frag.h>

@@ -3,6 +3,7 @@
  *  Copyright (c) 2014 Realtek Semiconductor Corp. All rights reserved.
  */
 
+#include <linux/page_ref.h>
 #include <linux/workqueue_api.h>
 #include <linux/tasklet_api.h>
 #include <linux/spinlock_api.h>

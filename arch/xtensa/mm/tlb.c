@@ -14,6 +14,7 @@
  * Marc Gauthier
  */
 
+#include <linux/page_ref.h>
 #include <linux/irqflags.h>
 #include <linux/pgtable_api.h>
 #include <linux/mm_api.h>

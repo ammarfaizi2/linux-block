@@ -6,6 +6,7 @@
  *
  *    Author(s): David Hildenbrand <dahi@linux.vnet.ibm.com>
  */
+#include <linux/page_ref.h>
 #include <linux/irqflags.h>
 #include <linux/srcu.h>
 #include <linux/sched/thread_info_api.h>

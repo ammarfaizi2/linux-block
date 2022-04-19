@@ -6,6 +6,7 @@
  * Author: Ross Zwisler <ross.zwisler@linux.intel.com>
  */
 
+#include <linux/page_ref.h>
 #include <linux/huge_mm.h>
 #include <linux/align.h>
 #include <linux/xarray_api.h>

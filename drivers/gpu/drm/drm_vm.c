@@ -33,6 +33,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <linux/page_ref.h>
 #include <linux/sched.h>
 #include <linux/pgtable_api.h>
 #include <linux/mutex_api.h>
