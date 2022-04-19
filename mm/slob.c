@@ -57,6 +57,7 @@
  * in order to prevent random node placement.
  */
 
+#include <linux/mm_api_extra.h>
 #include <linux/vmstat.h>
 #include <linux/topology.h>
 #include <linux/spinlock_api.h>
