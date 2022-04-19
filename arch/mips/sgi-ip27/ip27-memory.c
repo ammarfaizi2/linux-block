@@ -10,6 +10,7 @@
  * On SGI IP27 the ARC memory configuration data is completely bogus but
  * alternate easier to use mechanisms are available.
  */
+#include <linux/memory_hotplug.h>
 #include <linux/topology.h>
 #include <linux/string.h>
 #include <linux/pgtable_api.h>

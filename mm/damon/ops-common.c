@@ -5,6 +5,7 @@
  * Author: SeongJae Park <sj@kernel.org>
  */
 
+#include <linux/memory_hotplug.h>
 #include <linux/string.h>
 #include <linux/mm_api.h>
 #include <linux/mmu_notifier.h>
