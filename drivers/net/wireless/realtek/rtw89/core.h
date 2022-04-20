@@ -117,6 +117,8 @@ enum rtw89_core_rx_type {
 	RTW89_CORE_RX_TYPE_C2H		= 10,
 	RTW89_CORE_RX_TYPE_CSI		= 11,
 	RTW89_CORE_RX_TYPE_CQI		= 12,
+	RTW89_CORE_RX_TYPE_H2C		= 13,
+	RTW89_CORE_RX_TYPE_FWDL		= 14,
 };
 
 enum rtw89_txq_flags {
@@ -446,6 +448,7 @@ enum rtw89_regulation_type {
 	RTW89_UKRAINE	= 11,
 	RTW89_CN	= 12,
 	RTW89_QATAR	= 13,
+	RTW89_UK	= 14,
 	RTW89_REGD_NUM,
 };
 
@@ -575,7 +578,7 @@ enum rtw89_ps_mode {
 #define RTW89_2G_BW_NUM (RTW89_CHANNEL_WIDTH_40 + 1)
 #define RTW89_5G_BW_NUM (RTW89_CHANNEL_WIDTH_160 + 1)
 #define RTW89_6G_BW_NUM (RTW89_CHANNEL_WIDTH_160 + 1)
-#define RTW89_PPE_BW_NUM (RTW89_CHANNEL_WIDTH_80 + 1)
+#define RTW89_PPE_BW_NUM (RTW89_CHANNEL_WIDTH_160 + 1)
 
 enum rtw89_ru_bandwidth {
 	RTW89_RU26 = 0,
@@ -637,6 +640,17 @@ struct rtw89_txwd_body {
 	__le32 dword3;
 	__le32 dword4;
 	__le32 dword5;
+} __packed;
+
+struct rtw89_txwd_body_v1 {
+	__le32 dword0;
+	__le32 dword1;
+	__le32 dword2;
+	__le32 dword3;
+	__le32 dword4;
+	__le32 dword5;
+	__le32 dword6;
+	__le32 dword7;
 } __packed;
 
 struct rtw89_txwd_info {
@@ -718,8 +732,11 @@ struct rtw89_tx_desc_info {
 	u8 ampdu_density;
 	u8 ampdu_num;
 	bool sec_en;
+	u8 addr_info_nr;
+	u8 sec_keyid;
 	u8 sec_type;
 	u8 sec_cam_idx;
+	u8 sec_seq[6];
 	u16 data_rate;
 	u16 data_retry_lowest_rate;
 	bool fw_dl;
@@ -2025,6 +2042,13 @@ struct rtw89_hci_ops {
 	int (*mac_lv1_rcvy)(struct rtw89_dev *rtwdev, enum rtw89_lv1_rcvy_step step);
 	void (*dump_err_status)(struct rtw89_dev *rtwdev);
 	int (*napi_poll)(struct napi_struct *napi, int budget);
+
+	/* Deal with locks inside recovery_start and recovery_complete callbacks
+	 * by hci instance, and handle things which need to consider under SER.
+	 * e.g. turn on/off interrupts except for the one for halt notification.
+	 */
+	void (*recovery_start)(struct rtw89_dev *rtwdev);
+	void (*recovery_complete)(struct rtw89_dev *rtwdev);
 };
 
 struct rtw89_hci_info {
@@ -2035,6 +2059,8 @@ struct rtw89_hci_info {
 };
 
 struct rtw89_chip_ops {
+	int (*enable_bb_rf)(struct rtw89_dev *rtwdev);
+	void (*disable_bb_rf)(struct rtw89_dev *rtwdev);
 	void (*bb_reset)(struct rtw89_dev *rtwdev,
 			 enum rtw89_phy_idx phy_idx);
 	void (*bb_sethw)(struct rtw89_dev *rtwdev);
@@ -2068,12 +2094,21 @@ struct rtw89_chip_ops {
 				       s8 pw_ofst, enum rtw89_mac_idx mac_idx);
 	int (*pwr_on_func)(struct rtw89_dev *rtwdev);
 	int (*pwr_off_func)(struct rtw89_dev *rtwdev);
+	void (*fill_txdesc)(struct rtw89_dev *rtwdev,
+			    struct rtw89_tx_desc_info *desc_info,
+			    void *txdesc);
+	void (*fill_txdesc_fwcmd)(struct rtw89_dev *rtwdev,
+				  struct rtw89_tx_desc_info *desc_info,
+				  void *txdesc);
 	int (*cfg_ctrl_path)(struct rtw89_dev *rtwdev, bool wl);
 	int (*mac_cfg_gnt)(struct rtw89_dev *rtwdev,
 			   const struct rtw89_mac_ax_coex_gnt *gnt_cfg);
 	int (*stop_sch_tx)(struct rtw89_dev *rtwdev, u8 mac_idx,
 			   u32 *tx_en, enum rtw89_sch_tx_sel sel);
 	int (*resume_sch_tx)(struct rtw89_dev *rtwdev, u8 mac_idx, u32 tx_en);
+	int (*h2c_dctl_sec_cam)(struct rtw89_dev *rtwdev,
+				struct rtw89_vif *rtwvif,
+				struct rtw89_sta *rtwsta);
 
 	void (*btc_set_rfe)(struct rtw89_dev *rtwdev);
 	void (*btc_init_cfg)(struct rtw89_dev *rtwdev);
@@ -2261,6 +2296,51 @@ struct rtw89_page_regs {
 	u32 wp_page_info1;
 };
 
+struct rtw89_imr_info {
+	u32 wdrls_imr_set;
+	u32 wsec_imr_reg;
+	u32 wsec_imr_set;
+	u32 mpdu_tx_imr_set;
+	u32 mpdu_rx_imr_set;
+	u32 sta_sch_imr_set;
+	u32 txpktctl_imr_b0_reg;
+	u32 txpktctl_imr_b0_clr;
+	u32 txpktctl_imr_b0_set;
+	u32 txpktctl_imr_b1_reg;
+	u32 txpktctl_imr_b1_clr;
+	u32 txpktctl_imr_b1_set;
+	u32 wde_imr_clr;
+	u32 wde_imr_set;
+	u32 ple_imr_clr;
+	u32 ple_imr_set;
+	u32 host_disp_imr_clr;
+	u32 host_disp_imr_set;
+	u32 cpu_disp_imr_clr;
+	u32 cpu_disp_imr_set;
+	u32 other_disp_imr_clr;
+	u32 other_disp_imr_set;
+	u32 bbrpt_chinfo_err_imr_reg;
+	u32 bbrpt_err_imr_set;
+	u32 bbrpt_dfs_err_imr_reg;
+	u32 ptcl_imr_clr;
+	u32 ptcl_imr_set;
+	u32 cdma_imr_0_reg;
+	u32 cdma_imr_0_clr;
+	u32 cdma_imr_0_set;
+	u32 cdma_imr_1_reg;
+	u32 cdma_imr_1_clr;
+	u32 cdma_imr_1_set;
+	u32 phy_intf_imr_reg;
+	u32 phy_intf_imr_clr;
+	u32 phy_intf_imr_set;
+	u32 rmac_imr_reg;
+	u32 rmac_imr_clr;
+	u32 rmac_imr_set;
+	u32 tmac_imr_reg;
+	u32 tmac_imr_clr;
+	u32 tmac_imr_set;
+};
+
 struct rtw89_chip_info {
 	enum rtw89_core_chip_id chip_id;
 	const struct rtw89_chip_ops *ops;
@@ -2268,11 +2348,13 @@ struct rtw89_chip_info {
 	u32 fifo_size;
 	u16 max_amsdu_limit;
 	bool dis_2g_40m_ul_ofdma;
+	u32 rsvd_ple_ofst;
 	const struct rtw89_hfc_param_ini *hfc_param_ini;
 	const struct rtw89_dle_mem *dle_mem;
 	u32 rf_base_addr[2];
 	u8 support_bands;
 	bool support_bw160;
+	bool hw_sec_hdr;
 	u8 rf_path_num;
 	u8 tx_nss;
 	u8 rx_nss;
@@ -2334,7 +2416,10 @@ struct rtw89_chip_info {
 	const struct rtw89_btc_rf_trx_para *rf_para_dlink;
 	u8 ps_mode_supported;
 
+	u32 h2c_cctl_func_id;
 	u32 hci_func_en_addr;
+	u32 h2c_desc_size;
+	u32 txwd_body_size;
 	u32 h2c_ctrl_reg;
 	const u32 *h2c_regs;
 	u32 c2h_ctrl_reg;
@@ -2342,6 +2427,7 @@ struct rtw89_chip_info {
 	const struct rtw89_page_regs *page_regs;
 	const struct rtw89_reg_def *dcfo_comp;
 	u8 dcfo_comp_sft;
+	const struct rtw89_imr_info *imr_info;
 };
 
 union rtw89_bus_info {
@@ -2388,6 +2474,13 @@ enum rtw89_fw_type {
 	RTW89_FW_WOWLAN = 3,
 };
 
+enum rtw89_fw_feature {
+	RTW89_FW_FEATURE_OLD_HT_RA_FORMAT,
+	RTW89_FW_FEATURE_SCAN_OFFLOAD,
+	RTW89_FW_FEATURE_TX_WAKE,
+	RTW89_FW_FEATURE_CRASH_TRIGGER,
+};
+
 struct rtw89_fw_suit {
 	const u8 *data;
 	u32 size;
@@ -2417,10 +2510,14 @@ struct rtw89_fw_info {
 	struct rtw89_fw_suit normal;
 	struct rtw89_fw_suit wowlan;
 	bool fw_log_enable;
-	bool old_ht_ra_format;
-	bool scan_offload;
-	bool tx_wake;
+	u32 feature_map;
 };
+
+#define RTW89_CHK_FW_FEATURE(_feat, _fw) \
+	(!!((_fw)->feature_map & BIT(RTW89_FW_FEATURE_ ## _feat)))
+
+#define RTW89_SET_FW_FEATURE(_fw_feature, _fw) \
+	((_fw)->feature_map |= BIT(_fw_feature))
 
 struct rtw89_cam_info {
 	DECLARE_BITMAP(addr_cam_map, RTW89_MAX_ADDR_CAM_NUM);
@@ -2469,6 +2566,7 @@ struct rtw89_hal {
 	u8 tx_nss;
 	u8 rx_nss;
 	bool support_cckpd;
+	bool support_igi;
 };
 
 #define RTW89_MAX_MAC_ID_NUM 128
@@ -2484,6 +2582,7 @@ enum rtw89_flags {
 	RTW89_FLAG_LEISURE_PS,
 	RTW89_FLAG_LOW_POWER_MODE,
 	RTW89_FLAG_INACTIVE_PS,
+	RTW89_FLAG_RESTART_TRIGGER,
 
 	NUM_OF_RTW89_FLAGS,
 };
@@ -2853,8 +2952,8 @@ struct rtw89_ser {
 
 	struct work_struct ser_hdl_work;
 	struct delayed_work ser_alarm_work;
-	struct state_ent *st_tbl;
-	struct event_ent *ev_tbl;
+	const struct state_ent *st_tbl;
+	const struct event_ent *ev_tbl;
 	struct list_head msg_q;
 	spinlock_t msg_q_lock; /* lock when read/write ser msg */
 	DECLARE_BITMAP(flags, RTW89_NUM_OF_SER_FLAGS);
@@ -3031,6 +3130,18 @@ static inline void rtw89_hci_flush_queues(struct rtw89_dev *rtwdev, u32 queues,
 {
 	if (rtwdev->hci.ops->flush_queues)
 		return rtwdev->hci.ops->flush_queues(rtwdev, queues, drop);
+}
+
+static inline void rtw89_hci_recovery_start(struct rtw89_dev *rtwdev)
+{
+	if (rtwdev->hci.ops->recovery_start)
+		rtwdev->hci.ops->recovery_start(rtwdev);
+}
+
+static inline void rtw89_hci_recovery_complete(struct rtw89_dev *rtwdev)
+{
+	if (rtwdev->hci.ops->recovery_complete)
+		rtwdev->hci.ops->recovery_complete(rtwdev);
 }
 
 static inline u8 rtw89_read8(struct rtw89_dev *rtwdev, u32 addr)
@@ -3474,6 +3585,26 @@ static inline void rtw89_ctrl_btg(struct rtw89_dev *rtwdev, bool btg)
 }
 
 static inline
+void rtw89_chip_fill_txdesc(struct rtw89_dev *rtwdev,
+			    struct rtw89_tx_desc_info *desc_info,
+			    void *txdesc)
+{
+	const struct rtw89_chip_info *chip = rtwdev->chip;
+
+	chip->ops->fill_txdesc(rtwdev, desc_info, txdesc);
+}
+
+static inline
+void rtw89_chip_fill_txdesc_fwcmd(struct rtw89_dev *rtwdev,
+				  struct rtw89_tx_desc_info *desc_info,
+				  void *txdesc)
+{
+	const struct rtw89_chip_info *chip = rtwdev->chip;
+
+	chip->ops->fill_txdesc_fwcmd(rtwdev, desc_info, txdesc);
+}
+
+static inline
 void rtw89_chip_mac_cfg_gnt(struct rtw89_dev *rtwdev,
 			    const struct rtw89_mac_ax_coex_gnt *gnt_cfg)
 {
@@ -3506,6 +3637,18 @@ int rtw89_chip_resume_sch_tx(struct rtw89_dev *rtwdev, u8 mac_idx, u32 tx_en)
 	return chip->ops->resume_sch_tx(rtwdev, mac_idx, tx_en);
 }
 
+static inline
+int rtw89_chip_h2c_dctl_sec_cam(struct rtw89_dev *rtwdev,
+				struct rtw89_vif *rtwvif,
+				struct rtw89_sta *rtwsta)
+{
+	const struct rtw89_chip_info *chip = rtwdev->chip;
+
+	if (!chip->ops->h2c_dctl_sec_cam)
+		return 0;
+	return chip->ops->h2c_dctl_sec_cam(rtwdev, rtwvif, rtwsta);
+}
+
 static inline u8 *get_hdr_bssid(struct ieee80211_hdr *hdr)
 {
 	__le16 fc = hdr->frame_control;
@@ -3520,10 +3663,12 @@ static inline u8 *get_hdr_bssid(struct ieee80211_hdr *hdr)
 
 static inline bool rtw89_sta_has_beamformer_cap(struct ieee80211_sta *sta)
 {
-	if ((sta->vht_cap.cap & IEEE80211_VHT_CAP_MU_BEAMFORMER_CAPABLE) ||
-	    (sta->vht_cap.cap & IEEE80211_VHT_CAP_SU_BEAMFORMER_CAPABLE) ||
-	    (sta->he_cap.he_cap_elem.phy_cap_info[3] & IEEE80211_HE_PHY_CAP3_SU_BEAMFORMER) ||
-	    (sta->he_cap.he_cap_elem.phy_cap_info[4] & IEEE80211_HE_PHY_CAP4_MU_BEAMFORMER))
+	if ((sta->deflink.vht_cap.cap & IEEE80211_VHT_CAP_MU_BEAMFORMER_CAPABLE) ||
+	    (sta->deflink.vht_cap.cap & IEEE80211_VHT_CAP_SU_BEAMFORMER_CAPABLE) ||
+	    (sta->deflink.he_cap.he_cap_elem.phy_cap_info[3] &
+			IEEE80211_HE_PHY_CAP3_SU_BEAMFORMER) ||
+	    (sta->deflink.he_cap.he_cap_elem.phy_cap_info[4] &
+			IEEE80211_HE_PHY_CAP4_MU_BEAMFORMER))
 		return true;
 	return false;
 }
@@ -3546,6 +3691,12 @@ void rtw89_core_tx_kick_off(struct rtw89_dev *rtwdev, u8 qsel);
 void rtw89_core_fill_txdesc(struct rtw89_dev *rtwdev,
 			    struct rtw89_tx_desc_info *desc_info,
 			    void *txdesc);
+void rtw89_core_fill_txdesc_v1(struct rtw89_dev *rtwdev,
+			       struct rtw89_tx_desc_info *desc_info,
+			       void *txdesc);
+void rtw89_core_fill_txdesc_fwcmd_v1(struct rtw89_dev *rtwdev,
+				     struct rtw89_tx_desc_info *desc_info,
+				     void *txdesc);
 void rtw89_core_rx(struct rtw89_dev *rtwdev,
 		   struct rtw89_rx_desc_info *desc_info,
 		   struct sk_buff *skb);
