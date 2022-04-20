@@ -522,9 +522,9 @@ static void pci_device_shutdown(struct device *dev)
 		pci_clear_master(pci_dev);
 }
 
-#ifdef CONFIG_PM
+#ifdef CONFIG_PM_SLEEP
 
-/* Auxiliary functions used for system resume and run-time resume. */
+/* Auxiliary functions used for system resume */
 
 /**
  * pci_restore_standard_config - restore standard config registers of PCI device
@@ -544,6 +544,11 @@ static int pci_restore_standard_config(struct pci_dev *pci_dev)
 	pci_pme_restore(pci_dev);
 	return 0;
 }
+#endif /* CONFIG_PM_SLEEP */
+
+#ifdef CONFIG_PM
+
+/* Auxiliary functions used for system resume and run-time resume */
 
 static void pci_pm_default_resume(struct pci_dev *pci_dev)
 {
@@ -575,7 +580,7 @@ static void pci_pm_bridge_power_up_actions(struct pci_dev *pci_dev)
 	pci_resume_bus(pci_dev->subordinate);
 }
 
-#endif
+#endif /* CONFIG_PM */
 
 #ifdef CONFIG_PM_SLEEP
 
