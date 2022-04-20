@@ -37,7 +37,6 @@
 #include <linux/flat.h>
 #include <linux/uaccess.h>
 #include <linux/vmalloc.h>
-#include <linux/coredump.h>
 
 #include <asm/byteorder.h>
 #include <asm/unaligned.h>
@@ -98,33 +97,12 @@ static int load_flat_shared_library(int id, struct lib_info *p);
 #endif
 
 static int load_flat_binary(struct linux_binprm *);
-#ifdef CONFIG_COREDUMP
-static int flat_core_dump(struct coredump_params *cprm);
-#endif
 
 static struct linux_binfmt flat_format = {
 	.module		= THIS_MODULE,
 	.load_binary	= load_flat_binary,
-#ifdef CONFIG_COREDUMP
-	.core_dump	= flat_core_dump,
-	.min_coredump	= PAGE_SIZE
-#endif
 };
 
-/****************************************************************************/
-/*
- * Routine writes a core dump image in the current directory.
- * Currently only a stub-function.
- */
-
-#ifdef CONFIG_COREDUMP
-static int flat_core_dump(struct coredump_params *cprm)
-{
-	pr_warn("Process %s:%d received signr %d and should have core dumped\n",
-		current->comm, current->pid, cprm->siginfo->si_signo);
-	return 1;
-}
-#endif
 
 /****************************************************************************/
 /*
@@ -439,6 +417,30 @@ static void old_reloc(unsigned long rl)
 #endif /* CONFIG_BINFMT_FLAT_OLD */
 
 /****************************************************************************/
+
+static inline u32 __user *skip_got_header(u32 __user *rp)
+{
+	if (IS_ENABLED(CONFIG_RISCV)) {
+		/*
+		 * RISC-V has a 16 byte GOT PLT header for elf64-riscv
+		 * and 8 byte GOT PLT header for elf32-riscv.
+		 * Skip the whole GOT PLT header, since it is reserved
+		 * for the dynamic linker (ld.so).
+		 */
+		u32 rp_val0, rp_val1;
+
+		if (get_user(rp_val0, rp))
+			return rp;
+		if (get_user(rp_val1, rp + 1))
+			return rp;
+
+		if (rp_val0 == 0xffffffff && rp_val1 == 0xffffffff)
+			rp += 4;
+		else if (rp_val0 == 0xffffffff)
+			rp += 2;
+	}
+	return rp;
+}
 
 static int load_flat_file(struct linux_binprm *bprm,
 		struct lib_info *libinfo, int id, unsigned long *extra_stack)
@@ -789,7 +791,8 @@ static int load_flat_file(struct linux_binprm *bprm,
 	 * image.
 	 */
 	if (flags & FLAT_FLAG_GOTPIC) {
-		for (rp = (u32 __user *)datapos; ; rp++) {
+		rp = skip_got_header((u32 __user *) datapos);
+		for (; ; rp++) {
 			u32 addr, rp_val;
 			if (get_user(rp_val, rp))
 				return -EFAULT;
