@@ -2894,7 +2894,7 @@ static int mas_spanning_rebalance(struct ma_state *mas,
 	mast->free = &free;
 	mast->destroy = &destroy;
 	l_mas.node = r_mas.node = m_mas.node = MAS_NONE;
-	if (!mas_is_root_limits(mas) &&
+	if (!mas_is_root_limits(mast->orig_l) &&
 	    unlikely(mast->bn->b_end <= mt_min_slots[mast->bn->type])) {
 		/*
 		 * Do not free the current node as it may be freed in a bulk
