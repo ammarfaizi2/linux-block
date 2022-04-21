@@ -104,6 +104,7 @@
 #include <linux/swapops.h>
 
 #include <asm/tlbflush.h>
+#include <asm/tlb.h>
 #include <linux/uaccess.h>
 
 #include "internal.h"
@@ -440,12 +441,11 @@ static inline bool queue_pages_required(struct page *page,
 }
 
 /*
- * queue_pages_pmd() has four possible return values:
+ * queue_pages_pmd() has three possible return values:
  * 0 - pages are placed on the right node or queued successfully, or
  *     special page is met, i.e. huge zero page.
  * 1 - there is unmovable page, and MPOL_MF_MOVE* & MPOL_MF_STRICT were
  *     specified.
- * 2 - THP was split.
  * -EIO - is migration entry or only MPOL_MF_STRICT was specified and an
  *        existing page was already on a node that does not follow the
  *        policy.
@@ -507,18 +507,13 @@ static int queue_pages_pte_range(pmd_t *pmd, unsigned long addr,
 	struct page *page;
 	struct queue_pages *qp = walk->private;
 	unsigned long flags = qp->flags;
-	int ret;
 	bool has_unmovable = false;
 	pte_t *pte, *mapped_pte;
 	spinlock_t *ptl;
 
 	ptl = pmd_trans_huge_lock(pmd, vma);
-	if (ptl) {
-		ret = queue_pages_pmd(pmd, ptl, addr, end, walk);
-		if (ret != 2)
-			return ret;
-	}
-	/* THP was split, fall through to pte walk */
+	if (ptl)
+		return queue_pages_pmd(pmd, ptl, addr, end, walk);
 
 	if (pmd_trans_unstable(pmd))
 		return 0;
@@ -636,11 +631,17 @@ unlock:
 unsigned long change_prot_numa(struct vm_area_struct *vma,
 			unsigned long addr, unsigned long end)
 {
+	struct mmu_gather tlb;
 	int nr_updated;
 
-	nr_updated = change_protection(vma, addr, end, PAGE_NONE, MM_CP_PROT_NUMA);
+	tlb_gather_mmu(&tlb, vma->vm_mm);
+
+	nr_updated = change_protection(&tlb, vma, addr, end, PAGE_NONE,
+				       MM_CP_PROT_NUMA);
 	if (nr_updated)
 		count_vm_numa_events(NUMA_PTE_UPDATES, nr_updated);
+
+	tlb_finish_mmu(&tlb);
 
 	return nr_updated;
 }
