@@ -1339,6 +1339,11 @@ static inline void req_ref_get(struct io_kiocb *req)
 	atomic_inc(&req->refs);
 }
 
+static inline bool io_should_fail_tw(struct io_kiocb *req)
+{
+	return unlikely(req->task->flags & PF_EXITING);
+}
+
 static inline void io_submit_flush_completions(struct io_ring_ctx *ctx)
 {
 	if (!wq_list_empty(&ctx->submit_state.compl_reqs))
@@ -2689,8 +2694,8 @@ static void io_req_task_cancel(struct io_kiocb *req, bool *locked)
 static void io_req_task_submit(struct io_kiocb *req, bool *locked)
 {
 	io_tw_lock(req->ctx, locked);
-	/* req->task == current here, checking PF_EXITING is safe */
-	if (likely(!(req->task->flags & PF_EXITING)))
+
+	if (!io_should_fail_tw(req))
 		io_queue_sqe(req);
 	else
 		io_req_complete_failed(req, -EFAULT);
@@ -5939,8 +5944,7 @@ static int io_poll_check_events(struct io_kiocb *req, bool locked)
 	struct io_ring_ctx *ctx = req->ctx;
 	int v;
 
-	/* req->task == current here, checking PF_EXITING is safe */
-	if (unlikely(req->task->flags & PF_EXITING))
+	if (io_should_fail_tw(req))
 		return -ECANCELED;
 
 	do {
@@ -7596,7 +7600,7 @@ static void io_req_task_link_timeout(struct io_kiocb *req, bool *locked)
 	int ret = -ENOENT;
 
 	if (prev) {
-		if (!(req->task->flags & PF_EXITING)) {
+		if (!io_should_fail_tw(req)) {
 			struct io_cancel_data cd = {
 				.ctx		= req->ctx,
 				.data		= prev->cqe.user_data,
