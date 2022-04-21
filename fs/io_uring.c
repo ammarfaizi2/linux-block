@@ -2510,7 +2510,6 @@ static void ctx_flush_and_put(struct io_ring_ctx *ctx, bool *locked)
 		mutex_unlock(&ctx->uring_lock);
 		*locked = false;
 	}
-	percpu_ref_put(&ctx->refs);
 }
 
 static inline void ctx_commit_and_unlock(struct io_ring_ctx *ctx)
@@ -2541,7 +2540,6 @@ static void handle_prev_tw_list(struct io_wq_work_node *node,
 			*ctx = req->ctx;
 			/* if not contended, grab and improve batching */
 			*uring_locked = mutex_trylock(&(*ctx)->uring_lock);
-			percpu_ref_get(&(*ctx)->refs);
 			if (unlikely(!*uring_locked))
 				spin_lock(&(*ctx)->completion_lock);
 		}
@@ -2572,7 +2570,6 @@ static void handle_tw_list(struct io_wq_work_node *node,
 			*ctx = req->ctx;
 			/* if not contended, grab and improve batching */
 			*locked = mutex_trylock(&(*ctx)->uring_lock);
-			percpu_ref_get(&(*ctx)->refs);
 		}
 		req->io_task_work.func(req, locked);
 		node = next;
