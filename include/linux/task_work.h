@@ -27,6 +27,9 @@ static inline bool task_work_pending(struct task_struct *task)
 int task_work_add(struct task_struct *task, struct callback_head *twork,
 			enum task_work_notify_mode mode);
 
+void task_work_notify(struct task_struct *task,
+			enum task_work_notify_mode notify);
+
 struct callback_head *task_work_cancel_match(struct task_struct *task,
 	bool (*match)(struct callback_head *, void *data), void *data);
 struct callback_head *task_work_cancel(struct task_struct *, task_work_func_t);

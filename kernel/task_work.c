@@ -5,6 +5,24 @@
 
 static struct callback_head work_exited; /* all we need is ->next == NULL */
 
+void task_work_notify(struct task_struct *task,
+		     enum task_work_notify_mode notify)
+{
+	switch (notify) {
+	case TWA_NONE:
+		break;
+	case TWA_RESUME:
+		set_notify_resume(task);
+		break;
+	case TWA_SIGNAL:
+		set_notify_signal(task);
+		break;
+	default:
+		WARN_ON_ONCE(1);
+		break;
+	}
+}
+
 /**
  * task_work_add - ask the @task to execute @work->func()
  * @task: the task which should run the callback
@@ -44,20 +62,7 @@ int task_work_add(struct task_struct *task, struct callback_head *work,
 		work->next = head;
 	} while (cmpxchg(&task->task_works, head, work) != head);
 
-	switch (notify) {
-	case TWA_NONE:
-		break;
-	case TWA_RESUME:
-		set_notify_resume(task);
-		break;
-	case TWA_SIGNAL:
-		set_notify_signal(task);
-		break;
-	default:
-		WARN_ON_ONCE(1);
-		break;
-	}
-
+	task_work_notify(task, notify);
 	return 0;
 }
 
