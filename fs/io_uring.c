@@ -2501,6 +2501,13 @@ static void ctx_flush_and_put(struct io_ring_ctx *ctx, bool *locked)
 {
 	if (!ctx)
 		return;
+	if (ctx->flags & IORING_SETUP_TW_FLAG &&
+	    ctx->rings->sq_flags & IORING_SQ_TW) {
+		spin_lock(&ctx->completion_lock);
+		WRITE_ONCE(ctx->rings->sq_flags,
+				ctx->rings->sq_flags & ~IORING_SQ_TW);
+		spin_unlock(&ctx->completion_lock);
+	}
 	if (*locked) {
 		io_submit_flush_completions(ctx);
 		mutex_unlock(&ctx->uring_lock);
@@ -2586,6 +2593,7 @@ void io_uring_task_work_run(void)
 static void io_req_task_work_add(struct io_kiocb *req, bool priority)
 {
 	struct task_struct *tsk = req->task;
+	struct io_ring_ctx *ctx = req->ctx;
 	struct io_uring_task *tctx = tsk->io_uring;
 	struct io_task_work *head;
 
@@ -2606,6 +2614,14 @@ static void io_req_task_work_add(struct io_kiocb *req, bool priority)
 		req->io_task_work.next = head;
 	} while (cmpxchg(&tctx->task_list, head, &req->io_task_work) != head);
 
+	if (ctx->flags & IORING_SETUP_TW_FLAG &&
+	    !(ctx->rings->sq_flags & IORING_SQ_TW)) {
+		spin_lock(&ctx->completion_lock);
+		WRITE_ONCE(ctx->rings->sq_flags,
+				ctx->rings->sq_flags | IORING_SQ_TW);
+		spin_unlock(&ctx->completion_lock);
+	}
+
 	if (!head) {
 		/*
 		 * SQPOLL kernel thread doesn't need notification, just a wakeup. For
@@ -2613,8 +2629,10 @@ static void io_req_task_work_add(struct io_kiocb *req, bool priority)
 		 * processing task_work. There's no reliable way to tell if TWA_RESUME
 		 * will do the job.
 		 */
-		if (req->ctx->flags & IORING_SETUP_SQPOLL)
+		if (ctx->flags & IORING_SETUP_SQPOLL)
 			wake_up_process(tsk);
+		else if (ctx->flags & IORING_SETUP_NOIPI)
+			task_work_notify(tsk, TWA_SIGNAL_NOIPI);
 		else
 			task_work_notify(tsk, TWA_SIGNAL);
 	}
@@ -11364,7 +11382,8 @@ static long io_uring_setup(u32 entries, struct io_uring_params __user *params)
 	if (p.flags & ~(IORING_SETUP_IOPOLL | IORING_SETUP_SQPOLL |
 			IORING_SETUP_SQ_AFF | IORING_SETUP_CQSIZE |
 			IORING_SETUP_CLAMP | IORING_SETUP_ATTACH_WQ |
-			IORING_SETUP_R_DISABLED | IORING_SETUP_SUBMIT_ALL))
+			IORING_SETUP_R_DISABLED | IORING_SETUP_SUBMIT_ALL |
+			IORING_SETUP_NOIPI | IORING_SETUP_TW_FLAG))
 		return -EINVAL;
 
 	return  io_uring_create(entries, &p, params);

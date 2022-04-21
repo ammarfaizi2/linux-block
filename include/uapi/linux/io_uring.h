@@ -102,6 +102,8 @@ enum {
 #define IORING_SETUP_ATTACH_WQ	(1U << 5)	/* attach to existing wq */
 #define IORING_SETUP_R_DISABLED	(1U << 6)	/* start with ring disabled */
 #define IORING_SETUP_SUBMIT_ALL	(1U << 7)	/* continue submit on error */
+#define IORING_SETUP_NOIPI	(1U << 8)	/* no IPI needed */
+#define IORING_SETUP_TW_FLAG	(1U << 9)	/* set IORING_SQ_TW */
 
 enum {
 	IORING_OP_NOP,
@@ -248,6 +250,7 @@ struct io_sqring_offsets {
  */
 #define IORING_SQ_NEED_WAKEUP	(1U << 0) /* needs io_uring_enter wakeup */
 #define IORING_SQ_CQ_OVERFLOW	(1U << 1) /* CQ ring is overflown */
+#define IORING_SQ_TW		(1U << 2)
 
 struct io_cqring_offsets {
 	__u32 head;
