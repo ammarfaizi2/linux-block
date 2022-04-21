@@ -527,7 +527,6 @@ struct io_uring_task {
 	spinlock_t		task_lock;
 	struct io_wq_work_list	task_list;
 	struct io_wq_work_list	prior_task_list;
-	struct callback_head	task_work;
 	struct file		**registered_rings;
 	bool			task_running;
 };
@@ -2576,12 +2575,14 @@ static void handle_tw_list(struct io_wq_work_node *node,
 	} while (node);
 }
 
-static void tctx_task_work(struct callback_head *cb)
+void io_uring_task_work_run(void)
 {
-	bool uring_locked = false;
+	struct io_uring_task *tctx = current->io_uring;
 	struct io_ring_ctx *ctx = NULL;
-	struct io_uring_task *tctx = container_of(cb, struct io_uring_task,
-						  task_work);
+	bool uring_locked = false;
+
+	if (!tctx)
+		return;
 
 	while (1) {
 		struct io_wq_work_node *node1, *node2;
@@ -2616,7 +2617,6 @@ static void io_req_task_work_add(struct io_kiocb *req, bool priority)
 	struct io_wq_work_list *list;
 	struct task_struct *tsk = req->task;
 	struct io_uring_task *tctx = tsk->io_uring;
-	enum task_work_notify_mode notify;
 	struct io_wq_work_node *node;
 	unsigned long flags;
 	bool running;
@@ -2637,21 +2637,19 @@ static void io_req_task_work_add(struct io_kiocb *req, bool priority)
 	spin_unlock_irqrestore(&tctx->task_lock, flags);
 
 	/* task_work already pending, we're done */
-	if (running)
-		return;
-
-	/*
-	 * SQPOLL kernel thread doesn't need notification, just a wakeup. For
-	 * all other cases, use TWA_SIGNAL unconditionally to ensure we're
-	 * processing task_work. There's no reliable way to tell if TWA_RESUME
-	 * will do the job.
-	 */
-	notify = (req->ctx->flags & IORING_SETUP_SQPOLL) ? TWA_NONE : TWA_SIGNAL;
-	if (likely(!task_work_add(tsk, &tctx->task_work, notify))) {
-		if (notify == TWA_NONE)
+	if (!running) {
+		/*
+		 * SQPOLL kernel thread doesn't need notification, just a wakeup. For
+		 * all other cases, use TWA_SIGNAL unconditionally to ensure we're
+		 * processing task_work. There's no reliable way to tell if TWA_RESUME
+		 * will do the job.
+		 */
+		if (req->ctx->flags & IORING_SETUP_SQPOLL)
 			wake_up_process(tsk);
-		return;
+		else
+			task_work_notify(tsk, TWA_SIGNAL);
 	}
+	return;
 
 	spin_lock_irqsave(&tctx->task_lock, flags);
 cancel_locked:
@@ -2843,7 +2841,9 @@ static inline unsigned int io_sqring_entries(struct io_ring_ctx *ctx)
 
 static inline bool io_run_task_work(void)
 {
-	if (test_thread_flag(TIF_NOTIFY_SIGNAL) || task_work_pending(current)) {
+	struct io_uring_task *tctx = current->io_uring;
+
+	if (test_thread_flag(TIF_NOTIFY_SIGNAL) || (tctx && tctx->task_running)) {
 		__set_current_state(TASK_RUNNING);
 		clear_notify_signal();
 		io_uring_task_work_run();
@@ -8172,6 +8172,7 @@ static bool io_sqd_handle_event(struct io_sq_data *sqd)
 
 static int io_sq_thread(void *data)
 {
+	struct io_uring_task *tctx = current->io_uring;
 	struct io_sq_data *sqd = data;
 	struct io_ring_ctx *ctx;
 	unsigned long timeout = 0;
@@ -8206,8 +8207,10 @@ static int io_sq_thread(void *data)
 			if (!sqt_spin && (ret > 0 || !wq_list_empty(&ctx->iopoll_list)))
 				sqt_spin = true;
 		}
-		if (io_run_task_work())
+		if (tctx->task_running) {
+			io_uring_task_work_run();
 			sqt_spin = true;
+		}
 
 		if (sqt_spin || !time_after(jiffies, timeout)) {
 			cond_resched();
@@ -8217,7 +8220,7 @@ static int io_sq_thread(void *data)
 		}
 
 		prepare_to_wait(&sqd->wait, &wait, TASK_INTERRUPTIBLE);
-		if (!io_sqd_events_pending(sqd) && !task_work_pending(current)) {
+		if (!io_sqd_events_pending(sqd) && !tctx->task_running) {
 			bool needs_sched = true;
 
 			list_for_each_entry(ctx, &sqd->ctx_list, sqd_list) {
@@ -8258,7 +8261,6 @@ static int io_sq_thread(void *data)
 	sqd->thread = NULL;
 	list_for_each_entry(ctx, &sqd->ctx_list, sqd_list)
 		io_ring_set_wakeup_flag(ctx);
-	io_run_task_work();
 	mutex_unlock(&sqd->lock);
 
 	audit_free(current);
@@ -9322,7 +9324,6 @@ static __cold int io_uring_alloc_task_context(struct task_struct *task,
 	spin_lock_init(&tctx->task_lock);
 	INIT_WQ_LIST(&tctx->task_list);
 	INIT_WQ_LIST(&tctx->prior_task_list);
-	init_task_work(&tctx->task_work, tctx_task_work);
 	return 0;
 }
 
@@ -10543,6 +10544,7 @@ static __cold void io_uring_cancel_generic(bool cancel_all,
 
 	do {
 		io_uring_drop_tctx_refs(current);
+		io_run_task_work();
 		/* read completions before cancelations */
 		inflight = tctx_inflight(tctx, !cancel_all);
 		if (!inflight)
