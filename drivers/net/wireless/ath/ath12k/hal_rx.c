@@ -410,6 +410,13 @@ int ath12k_hal_wbm_desc_parse_err(struct ath12k_base *ab, void *desc,
 	rel_info->err_rel_src = rel_src;
 	rel_info->hw_cc_done = hw_cc_done;
 
+	rel_info->first_msdu = FIELD_GET(HAL_WBM_RELEASE_INFO3_FIRST_MSDU,
+					 wbm_desc->info3);
+	rel_info->last_msdu = FIELD_GET(HAL_WBM_RELEASE_INFO3_LAST_MSDU,
+					wbm_desc->info3);
+	rel_info->continuation = FIELD_GET(HAL_WBM_RELEASE_INFO3_CONTINUATION,
+					   wbm_desc->info3);
+
 	if (rel_info->err_rel_src == HAL_WBM_REL_SRC_MODULE_REO) {
 		rel_info->push_reason =
 			FIELD_GET(HAL_WBM_RELEASE_INFO0_REO_PUSH_REASON,

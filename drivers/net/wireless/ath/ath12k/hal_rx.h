@@ -14,6 +14,7 @@ struct hal_rx_wbm_rel_info {
 	u32 err_code;
 	bool first_msdu;
 	bool last_msdu;
+	bool continuation;
 	void *rx_desc;
 	bool hw_cc_done;
 };

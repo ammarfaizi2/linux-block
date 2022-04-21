@@ -3601,13 +3601,20 @@ static int ath12k_dp_rx_h_null_q_desc(struct ath12k *ar, struct sk_buff *msdu,
 				      struct sk_buff_head *msdu_list)
 {
 	struct ath12k_base *ab = ar->ab;
-	u16 msdu_len;
+	u16 msdu_len, peer_id;
 	struct hal_rx_desc *desc = (struct hal_rx_desc *)msdu->data;
 	u8 l3pad_bytes;
 	struct ath12k_skb_rxcb *rxcb = ATH12K_SKB_RXCB(msdu);
 	u32 hal_rx_desc_sz = ar->ab->hw_params.hal_desc_sz;
 
 	msdu_len = ath12k_dp_rx_h_msdu_len(ab, desc);
+	peer_id = ath12k_dp_rx_h_peer_id(ab, desc);
+
+	if (!ath12k_peer_find_by_id(ab, peer_id)) {
+		ath12k_dbg(ab, ATH12K_DBG_DATA, "invalid peer id received in wbm err pkt%d\n",
+			   peer_id);
+		return -EINVAL;
+	}
 
 	if (!rxcb->is_frag && ((msdu_len + hal_rx_desc_sz) > DP_RX_BUFFER_SIZE)) {
 		/* First buffer will be freed by the caller, so deduct it's length */
@@ -3615,6 +3622,13 @@ static int ath12k_dp_rx_h_null_q_desc(struct ath12k *ar, struct sk_buff *msdu,
 		ath12k_dp_rx_null_q_desc_sg_drop(ar, msdu_len, msdu_list);
 		return -EINVAL;
 	}
+
+	/* Even after cleaning up the sg buffers in the msdu list with above check
+	 * any msdu received with continuation flag needs to be dropped as invalid.
+	 * This protects against some random err frame with continuation flag.
+	 */
+	if (rxcb->is_continuation)
+		return -EINVAL;
 
 	if (!ath12k_dp_rx_h_msdu_done(desc)) {
 		ath12k_warn(ar->ab,
@@ -3631,9 +3645,6 @@ static int ath12k_dp_rx_h_null_q_desc(struct ath12k *ar, struct sk_buff *msdu,
 	 * non-QOS TID queue, in the absence of any other default TID queue.
 	 * This error can show up both in a REO destination or WBM release ring.
 	 */
-
-	rxcb->is_first_msdu = ath12k_dp_rx_h_first_msdu(ab, desc);
-	rxcb->is_last_msdu = ath12k_dp_rx_h_last_msdu(ab, desc);
 
 	if (rxcb->is_frag) {
 		skb_pull(msdu, hal_rx_desc_sz);
@@ -3838,7 +3849,9 @@ int ath12k_dp_rx_process_wbm_err(struct ath12k_base *ab,
 
 		num_buffs_reaped++;
 		total_num_buffs_reaped++;
-		budget--;
+
+		if (!err_info.continuation)
+			budget--;
 
 		if (err_info.push_reason !=
 		    HAL_REO_DEST_RING_PUSH_REASON_ERR_DETECTED) {
@@ -3850,6 +3863,10 @@ int ath12k_dp_rx_process_wbm_err(struct ath12k_base *ab,
 		rxcb->err_code = err_info.err_code;
 		rxcb->rx_desc = (struct hal_rx_desc *)msdu->data;
 		__skb_queue_tail(&msdu_list[mac_id], msdu);
+
+		rxcb->is_first_msdu = err_info.first_msdu;
+		rxcb->is_last_msdu = err_info.last_msdu;
+		rxcb->is_continuation = err_info.continuation;
 	}
 
 	ath12k_hal_srng_access_end(ab, srng);
