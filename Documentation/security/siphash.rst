@@ -121,21 +121,21 @@ even scarier, uses an easily brute-forcable 64-bit key (with a 32-bit output)
 instead of SipHash's 128-bit key. However, this may appeal to some
 high-performance `jhash` users.
 
-Danger!
-
-Do not ever use HalfSipHash except for as a hashtable key function, and only
-then when you can be absolutely certain that the outputs will never be
-transmitted out of the kernel. This is only remotely useful over `jhash` as a
-means of mitigating hashtable flooding denial of service attacks.
+.. warning::
+   Do not ever use HalfSipHash except for as a hashtable key function, and
+   only then when you can be absolutely certain that the outputs will never
+   be transmitted out of the kernel. This is only remotely useful over
+   `jhash` as a means of mitigating hashtable flooding denial of service
+   attacks.
 
 Generating a HalfSipHash key
 ============================
 
 Keys should always be generated from a cryptographically secure source of
-random numbers, either using get_random_bytes or get_random_once:
+random numbers, either using get_random_bytes or get_random_once::
 
-hsiphash_key_t key;
-get_random_bytes(&key, sizeof(key));
+        hsiphash_key_t key;
+        get_random_bytes(&key, sizeof(key));
 
 If you're not deriving your key from here, you're doing it wrong.
 
