@@ -2615,6 +2615,7 @@ static void tctx_task_work(struct callback_head *cb)
 
 static void io_req_task_work_add(struct io_kiocb *req, bool priority)
 {
+	struct io_wq_work_list *list;
 	struct task_struct *tsk = req->task;
 	struct io_uring_task *tctx = tsk->io_uring;
 	enum task_work_notify_mode notify;
@@ -2627,10 +2628,8 @@ static void io_req_task_work_add(struct io_kiocb *req, bool priority)
 	io_drop_inflight_file(req);
 
 	spin_lock_irqsave(&tctx->task_lock, flags);
-	if (priority)
-		wq_list_add_tail(&req->io_task_work.node, &tctx->prior_task_list);
-	else
-		wq_list_add_tail(&req->io_task_work.node, &tctx->task_list);
+	list = priority ? &tctx->prior_task_list : &tctx->task_list;
+	wq_list_add_tail(&req->io_task_work.node, list);
 	running = tctx->task_running;
 	if (!running)
 		tctx->task_running = true;
