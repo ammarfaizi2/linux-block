@@ -5,6 +5,10 @@
 #include <linux/sched.h>
 #include <linux/xarray.h>
 
+static inline void io_uring_task_work_run(void)
+{
+}
+
 #if defined(CONFIG_IO_URING)
 struct sock *io_uring_get_socket(struct file *file);
 void __io_uring_cancel(bool cancel_all);
