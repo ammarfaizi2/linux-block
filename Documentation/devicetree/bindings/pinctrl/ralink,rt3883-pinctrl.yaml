@@ -1,21 +1,23 @@
 # SPDX-License-Identifier: GPL-2.0-only OR BSD-2-Clause
 %YAML 1.2
 ---
-$id: http://devicetree.org/schemas/pinctrl/ralink,rt2880-pinmux.yaml#
+$id: http://devicetree.org/schemas/pinctrl/ralink,rt3883-pinctrl.yaml#
 $schema: http://devicetree.org/meta-schemas/core.yaml#
 
-title: Ralink rt2880 pinmux controller
+title: Ralink RT3883 Pin Controller
 
 maintainers:
+  - Arınç ÜNAL <arinc.unal@arinc9.com>
   - Sergio Paracuellos <sergio.paracuellos@gmail.com>
 
 description:
-  The rt2880 pinmux can only set the muxing of pin groups. Muxing indiviual pins
+  Ralink RT3883 pin controller for RT3883 SoC.
+  The pin controller can only set the muxing of pin groups. Muxing indiviual pins
   is not supported. There is no pinconf support.
 
 properties:
   compatible:
-    const: ralink,rt2880-pinmux
+    const: ralink,rt3883-pinctrl
 
 patternProperties:
   '-pins$':
@@ -28,14 +30,13 @@ patternProperties:
 
         properties:
           groups:
-            description: Name of the pin group to use for the functions.
-            enum: [i2c, jtag, mdio, pcie, rgmii1, rgmii2, sdhci, spi,
-                   uart1, uart2, uart3, wdt]
+            description: The pin group to select.
+            enum: [ge1, ge2, i2c, jtag, lna a, lna g, mdio, pci, spi, uartf, uartlite]
+
           function:
-            description: The mux function to select
-            enum: [gpio, i2c, i2s, jtag, mdio, nand1, nand2, pcie refclk,
-                   pcie rst, pcm, rgmii1, rgmii2, sdhci, spdif2, spdif3,
-                   spi, uart1, uart2, uart3, wdt refclk, wdt rst]
+            description: The mux function to select.
+            enum: [ge1, ge2, gpio, gpio i2s, gpio uartf, i2c, i2s uartf, jtag, lna a, lna g, mdio, pci-dev,
+                   pci-fnc, pci-host1, pci-host2, pcm gpio, pcm i2s, pcm uartf, spi, uartf, uartlite]
 
         required:
           - groups
@@ -57,7 +58,7 @@ examples:
   # Pinmux controller node
   - |
     pinctrl {
-      compatible = "ralink,rt2880-pinmux";
+      compatible = "ralink,rt3883-pinctrl";
 
       i2c_pins: i2c0-pins {
         pinmux {
