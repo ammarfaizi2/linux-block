@@ -2841,9 +2841,7 @@ static inline unsigned int io_sqring_entries(struct io_ring_ctx *ctx)
 
 static inline bool io_run_task_work(void)
 {
-	struct io_uring_task *tctx = current->io_uring;
-
-	if (test_thread_flag(TIF_NOTIFY_SIGNAL) || (tctx && tctx->task_running)) {
+	if (test_thread_flag(TIF_NOTIFY_SIGNAL)) {
 		__set_current_state(TASK_RUNNING);
 		clear_notify_signal();
 		io_uring_task_work_run();
@@ -10569,6 +10567,10 @@ static __cold void io_uring_cancel_generic(bool cancel_all,
 
 		prepare_to_wait(&tctx->wait, &wait, TASK_INTERRUPTIBLE);
 		io_run_task_work();
+		if (tctx->task_running) {
+			__set_current_state(TASK_RUNNING);
+			io_uring_task_work_run();
+		}
 		io_uring_drop_tctx_refs(current);
 
 		/*
