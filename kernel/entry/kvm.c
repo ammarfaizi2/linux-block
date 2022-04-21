@@ -10,6 +10,7 @@ static int xfer_to_guest_mode_work(struct kvm_vcpu *vcpu, unsigned long ti_work)
 
 		if (ti_work & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL)) {
 			clear_notify_signal();
+			io_uring_task_work_run();
 			if (task_work_pending(current))
 				task_work_run();
 		}

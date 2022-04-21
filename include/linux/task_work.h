@@ -4,6 +4,7 @@
 
 #include <linux/list.h>
 #include <linux/sched.h>
+#include <linux/io_uring.h>
 
 typedef void (*task_work_func_t)(struct callback_head *);
 

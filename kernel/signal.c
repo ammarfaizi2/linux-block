@@ -2357,6 +2357,7 @@ int ptrace_notify(int exit_code, unsigned long message)
 	int signr;
 
 	BUG_ON((exit_code & (0x7f | ~0xffff)) != SIGTRAP);
+	io_uring_task_work_run();
 	if (unlikely(task_work_pending(current)))
 		task_work_run();
 
@@ -2637,6 +2638,7 @@ bool get_signal(struct ksignal *ksig)
 	int signr;
 
 	clear_notify_signal();
+	io_uring_task_work_run();
 	if (unlikely(task_work_pending(current)))
 		task_work_run();
 
