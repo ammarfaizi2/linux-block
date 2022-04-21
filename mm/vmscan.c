@@ -797,7 +797,10 @@ static unsigned long do_shrink_slab(struct shrink_control *shrinkctl,
 	 * move the unused scan count back into the shrinker in a
 	 * manner that handles concurrent updates.
 	 */
-	new_nr = add_nr_deferred(next_deferred, shrinker, shrinkctl);
+	if (next_deferred)
+		new_nr = add_nr_deferred(next_deferred, shrinker, shrinkctl);
+	else
+		new_nr = nr;
 
 	trace_mm_shrink_slab_end(shrinker, shrinkctl->nid, freed, nr, new_nr, total_scan);
 	return freed;
