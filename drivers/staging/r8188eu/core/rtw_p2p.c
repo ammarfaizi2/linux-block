@@ -951,7 +951,7 @@ u32 process_p2p_devdisc_req(struct wifidirect_info *pwdinfo, u8 *pframe, uint le
 	/* issue Device Discoverability Response */
 	issue_p2p_devdisc_resp(pwdinfo, GetAddr2Ptr(pframe), status, dialogToken);
 
-	return (status == P2P_STATUS_SUCCESS) ? true : false;
+	return status == P2P_STATUS_SUCCESS;
 }
 
 u32 process_p2p_devdisc_resp(struct wifidirect_info *pwdinfo, u8 *pframe, uint len)
@@ -1602,7 +1602,7 @@ void p2p_ps_wk_hdl(struct adapter *padapter, u8 p2p_ps_state)
 	case P2P_PS_DISABLE:
 		pwdinfo->p2p_ps_state = p2p_ps_state;
 
-		SetHwReg8188EU(padapter, HW_VAR_H2C_FW_P2P_PS_OFFLOAD, (u8 *)(&p2p_ps_state));
+		rtl8188e_set_p2p_ps_offload_cmd(padapter, p2p_ps_state);
 
 		pwdinfo->noa_index = 0;
 		pwdinfo->ctwindow = 0;
@@ -1612,7 +1612,7 @@ void p2p_ps_wk_hdl(struct adapter *padapter, u8 p2p_ps_state)
 		if (padapter->pwrctrlpriv.bFwCurrentInPSMode) {
 			if (pwrpriv->smart_ps == 0) {
 				pwrpriv->smart_ps = 2;
-				SetHwReg8188EU(padapter, HW_VAR_H2C_FW_PWRMODE, (u8 *)(&padapter->pwrctrlpriv.pwr_mode));
+				rtw_set_firmware_ps_mode(padapter, pwrpriv->pwr_mode);
 			}
 		}
 		break;
@@ -1623,10 +1623,10 @@ void p2p_ps_wk_hdl(struct adapter *padapter, u8 p2p_ps_state)
 			if (pwdinfo->ctwindow > 0) {
 				if (pwrpriv->smart_ps != 0) {
 					pwrpriv->smart_ps = 0;
-					SetHwReg8188EU(padapter, HW_VAR_H2C_FW_PWRMODE, (u8 *)(&padapter->pwrctrlpriv.pwr_mode));
+					rtw_set_firmware_ps_mode(padapter, pwrpriv->pwr_mode);
 				}
 			}
-			SetHwReg8188EU(padapter, HW_VAR_H2C_FW_P2P_PS_OFFLOAD, (u8 *)(&p2p_ps_state));
+			rtl8188e_set_p2p_ps_offload_cmd(padapter, p2p_ps_state);
 		}
 		break;
 	case P2P_PS_SCAN:
@@ -1634,7 +1634,7 @@ void p2p_ps_wk_hdl(struct adapter *padapter, u8 p2p_ps_state)
 	case P2P_PS_ALLSTASLEEP:
 		if (pwdinfo->p2p_ps_mode > P2P_PS_NONE) {
 			pwdinfo->p2p_ps_state = p2p_ps_state;
-			SetHwReg8188EU(padapter, HW_VAR_H2C_FW_P2P_PS_OFFLOAD, (u8 *)(&p2p_ps_state));
+			rtl8188e_set_p2p_ps_offload_cmd(padapter, p2p_ps_state);
 		}
 		break;
 	default:

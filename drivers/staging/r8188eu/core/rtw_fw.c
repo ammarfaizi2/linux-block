@@ -4,7 +4,7 @@
 #include <linux/firmware.h>
 #include "../include/rtw_fw.h"
 
-#define MAX_REG_BOLCK_SIZE	196
+#define MAX_REG_BLOCK_SIZE	196
 #define FW_8188E_START_ADDRESS	0x1000
 #define MAX_PAGE_SIZE		4096
 
@@ -71,53 +71,55 @@ static void fw_download_enable(struct adapter *padapter, bool enable)
 	}
 }
 
-static int block_write(struct adapter *padapter, void *buffer, u32 buffSize)
+static int block_write(struct adapter *padapter, u8 *buffer, u32 size)
 {
 	int ret = _SUCCESS;
-	u32	blockSize_p1 = 4;	/*  (Default) Phase #1 : PCI muse use 4-byte write to download FW */
-	u32	blockSize_p2 = 8;	/*  Phase #2 : Use 8-byte, if Phase#1 use big size to write FW. */
-	u32	blockSize_p3 = 1;	/*  Phase #3 : Use 1-byte, the remnant of FW image. */
-	u32	blockCount_p1 = 0, blockCount_p2 = 0, blockCount_p3 = 0;
-	u32	remainSize_p1 = 0, remainSize_p2 = 0;
-	u8 *bufferPtr	= (u8 *)buffer;
-	u32	i = 0, offset = 0;
+	u32 blocks, block_size, remain;
+	u32 i, offset, addr;
+	u8 *data;
 
-	blockSize_p1 = MAX_REG_BOLCK_SIZE;
+	block_size = MAX_REG_BLOCK_SIZE;
 
-	/* 3 Phase #1 */
-	blockCount_p1 = buffSize / blockSize_p1;
-	remainSize_p1 = buffSize % blockSize_p1;
+	blocks = size / block_size;
+	remain = size % block_size;
 
-	for (i = 0; i < blockCount_p1; i++) {
-		ret = rtw_writeN(padapter, (FW_8188E_START_ADDRESS + i * blockSize_p1), blockSize_p1, (bufferPtr + i * blockSize_p1));
+	for (i = 0; i < blocks; i++) {
+		addr = FW_8188E_START_ADDRESS + i * block_size;
+		data = buffer + i * block_size;
+
+		ret = rtw_writeN(padapter, addr, block_size, data);
 		if (ret == _FAIL)
 			goto exit;
 	}
 
-	/* 3 Phase #2 */
-	if (remainSize_p1) {
-		offset = blockCount_p1 * blockSize_p1;
+	if (remain) {
+		offset = blocks * block_size;
+		block_size = 8;
 
-		blockCount_p2 = remainSize_p1 / blockSize_p2;
-		remainSize_p2 = remainSize_p1 % blockSize_p2;
+		blocks = remain / block_size;
+		remain = remain % block_size;
 
-		for (i = 0; i < blockCount_p2; i++) {
-			ret = rtw_writeN(padapter, (FW_8188E_START_ADDRESS + offset + i * blockSize_p2), blockSize_p2, (bufferPtr + offset + i * blockSize_p2));
+		for (i = 0; i < blocks; i++) {
+			addr = FW_8188E_START_ADDRESS + offset + i * block_size;
+			data = buffer + offset + i * block_size;
 
+			ret = rtw_writeN(padapter, addr, block_size, data);
 			if (ret == _FAIL)
 				goto exit;
 		}
 	}
 
-	/* 3 Phase #3 */
-	if (remainSize_p2) {
-		offset = (blockCount_p1 * blockSize_p1) + (blockCount_p2 * blockSize_p2);
+	if (remain) {
+		offset += blocks * block_size;
 
-		blockCount_p3 = remainSize_p2 / blockSize_p3;
+		/* block size 1 */
+		blocks = remain;
 
-		for (i = 0; i < blockCount_p3; i++) {
-			ret = rtw_write8(padapter, (FW_8188E_START_ADDRESS + offset + i), *(bufferPtr + offset + i));
+		for (i = 0; i < blocks; i++) {
+			addr = FW_8188E_START_ADDRESS + offset + i;
+			data = buffer + offset + i;
 
+			ret = rtw_write8(padapter, addr, *data);
 			if (ret == _FAIL)
 				goto exit;
 		}
@@ -127,7 +129,7 @@ exit:
 	return ret;
 }
 
-static int page_write(struct adapter *padapter, u32 page, void *buffer, u32 size)
+static int page_write(struct adapter *padapter, u32 page, u8 *buffer, u32 size)
 {
 	u8 value8;
 	u8 u8Page = (u8)(page & 0x07);
@@ -138,21 +140,20 @@ static int page_write(struct adapter *padapter, u32 page, void *buffer, u32 size
 	return block_write(padapter, buffer, size);
 }
 
-static int write_fw(struct adapter *padapter, void *buffer, u32 size)
+static int write_fw(struct adapter *padapter, u8 *buffer, u32 size)
 {
 	/*  Since we need dynamic decide method of dwonload fw, so we call this function to get chip version. */
 	/*  We can remove _ReadChipVersion from ReadpadapterInfo8192C later. */
 	int ret = _SUCCESS;
 	u32	pageNums, remainSize;
 	u32	page, offset;
-	u8 *bufferPtr = (u8 *)buffer;
 
 	pageNums = size / MAX_PAGE_SIZE;
 	remainSize = size % MAX_PAGE_SIZE;
 
 	for (page = 0; page < pageNums; page++) {
 		offset = page * MAX_PAGE_SIZE;
-		ret = page_write(padapter, page, bufferPtr + offset, MAX_PAGE_SIZE);
+		ret = page_write(padapter, page, buffer + offset, MAX_PAGE_SIZE);
 
 		if (ret == _FAIL)
 			goto exit;
@@ -160,7 +161,7 @@ static int write_fw(struct adapter *padapter, void *buffer, u32 size)
 	if (remainSize) {
 		offset = pageNums * MAX_PAGE_SIZE;
 		page = pageNums;
-		ret = page_write(padapter, page, bufferPtr + offset, remainSize);
+		ret = page_write(padapter, page, buffer + offset, remainSize);
 
 		if (ret == _FAIL)
 			goto exit;
@@ -247,7 +248,7 @@ int rtl8188e_firmware_download(struct adapter *padapter)
 {
 	int ret = _SUCCESS;
 	u8 write_fw_retry = 0;
-	u32 fwdl_start_time;
+	unsigned long fwdl_timeout;
 	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
 	struct device *device = dvobj_to_dev(dvobj);
 	struct rt_firmware_hdr *fwhdr = NULL;
@@ -290,7 +291,7 @@ int rtl8188e_firmware_download(struct adapter *padapter)
 	}
 
 	fw_download_enable(padapter, true);
-	fwdl_start_time = jiffies;
+	fwdl_timeout = jiffies + msecs_to_jiffies(500);
 	while (1) {
 		/* reset the FWDL chksum */
 		rtw_write8(padapter, REG_MCUFWDL, rtw_read8(padapter, REG_MCUFWDL) | FWDL_CHKSUM_RPT);
@@ -298,7 +299,7 @@ int rtl8188e_firmware_download(struct adapter *padapter)
 		ret = write_fw(padapter, fw_data, fw_size);
 
 		if (ret == _SUCCESS ||
-		    (rtw_get_passing_time_ms(fwdl_start_time) > 500 && write_fw_retry++ >= 3))
+		    (time_after(jiffies, fwdl_timeout) && write_fw_retry++ >= 3))
 			break;
 	}
 	fw_download_enable(padapter, false);
