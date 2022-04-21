@@ -1341,7 +1341,7 @@ static inline void req_ref_get(struct io_kiocb *req)
 
 static inline bool io_should_fail_tw(struct io_kiocb *req)
 {
-	return unlikely(req->task->flags & PF_EXITING);
+	return unlikely(req->flags & REQ_F_FAIL);
 }
 
 static inline void io_submit_flush_completions(struct io_ring_ctx *ctx)
@@ -2612,10 +2612,6 @@ static void tctx_task_work(struct callback_head *cb)
 	}
 
 	ctx_flush_and_put(ctx, &uring_locked);
-
-	/* relaxed read is enough as only the task itself sets ->in_idle */
-	if (unlikely(atomic_read(&tctx->in_idle)))
-		io_uring_drop_tctx_refs(current);
 }
 
 static void io_req_task_work_add(struct io_kiocb *req, bool priority)
@@ -2635,6 +2631,9 @@ static void io_req_task_work_add(struct io_kiocb *req, bool priority)
 	spin_lock_irqsave(&tctx->task_lock, flags);
 	list = priority ? &tctx->prior_task_list : &tctx->task_list;
 	wq_list_add_tail(&req->io_task_work.node, list);
+	if (unlikely(atomic_read(&tctx->in_idle)))
+		goto cancel_locked;
+
 	running = tctx->task_running;
 	if (!running)
 		tctx->task_running = true;
@@ -2658,12 +2657,13 @@ static void io_req_task_work_add(struct io_kiocb *req, bool priority)
 	}
 
 	spin_lock_irqsave(&tctx->task_lock, flags);
-	tctx->task_running = false;
+cancel_locked:
 	node = wq_list_merge(&tctx->prior_task_list, &tctx->task_list);
 	spin_unlock_irqrestore(&tctx->task_lock, flags);
 
 	while (node) {
 		req = container_of(node, struct io_kiocb, io_task_work.node);
+		req_set_fail(req);
 		node = node->next;
 		if (llist_add(&req->io_task_work.fallback_node,
 			      &req->ctx->fallback_llist))
@@ -10539,7 +10539,10 @@ static __cold void io_uring_cancel_generic(bool cancel_all,
 	if (tctx->io_wq)
 		io_wq_exit_start(tctx->io_wq);
 
+	spin_lock_irq(&tctx->task_lock);
 	atomic_inc(&tctx->in_idle);
+	spin_unlock_irq(&tctx->task_lock);
+
 	do {
 		io_uring_drop_tctx_refs(current);
 		/* read completions before cancelations */
