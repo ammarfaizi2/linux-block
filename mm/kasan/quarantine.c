@@ -319,28 +319,37 @@ static void qlist_move_cache(struct qlist_head *from,
 	}
 }
 
-static void per_cpu_remove_cache(void *arg)
+#ifndef CONFIG_PREEMPT_RT
+static void __per_cpu_remove_cache(struct qlist_head *q, void *arg)
 {
 	struct kmem_cache *cache = arg;
-	struct qlist_head *q;
-#ifndef CONFIG_PREEMPT_RT
 	struct qlist_head to_free = QLIST_INIT;
-#else
-	unsigned long flags;
-	struct cpu_shrink_qlist *sq;
-#endif
-	q = this_cpu_ptr(&cpu_quarantine);
-#ifndef CONFIG_PREEMPT_RT
-	if (READ_ONCE(q->offline))
-		return;
+
 	qlist_move_cache(q, &to_free, cache);
 	qlist_free_all(&to_free, cache);
+}
 #else
+static void __per_cpu_remove_cache(struct qlist_head *q, void *arg)
+{
+	struct kmem_cache *cache = arg;
+	unsigned long flags;
+	struct cpu_shrink_qlist *sq;
+
 	sq = this_cpu_ptr(&shrink_qlist);
 	raw_spin_lock_irqsave(&sq->lock, flags);
 	qlist_move_cache(q, &sq->qlist, cache);
 	raw_spin_unlock_irqrestore(&sq->lock, flags);
+}
 #endif
+
+static void per_cpu_remove_cache(void *arg)
+{
+	struct qlist_head *q;
+
+	q = this_cpu_ptr(&cpu_quarantine);
+	if (READ_ONCE(q->offline))
+		return;
+	__per_cpu_remove_cache(q, arg);
 }
 
 /* Free all quarantined objects belonging to cache. */
@@ -348,10 +357,6 @@ void kasan_quarantine_remove_cache(struct kmem_cache *cache)
 {
 	unsigned long flags, i;
 	struct qlist_head to_free = QLIST_INIT;
-#ifdef CONFIG_PREEMPT_RT
-	int cpu;
-	struct cpu_shrink_qlist *sq;
-#endif
 
 	/*
 	 * Must be careful to not miss any objects that are being moved from
@@ -363,13 +368,18 @@ void kasan_quarantine_remove_cache(struct kmem_cache *cache)
 	on_each_cpu(per_cpu_remove_cache, cache, 1);
 
 #ifdef CONFIG_PREEMPT_RT
-	for_each_online_cpu(cpu) {
-		sq = per_cpu_ptr(&shrink_qlist, cpu);
-		raw_spin_lock_irqsave(&sq->lock, flags);
-		qlist_move_cache(&sq->qlist, &to_free, cache);
-		raw_spin_unlock_irqrestore(&sq->lock, flags);
+	{
+		int cpu;
+		struct cpu_shrink_qlist *sq;
+
+		for_each_online_cpu(cpu) {
+			sq = per_cpu_ptr(&shrink_qlist, cpu);
+			raw_spin_lock_irqsave(&sq->lock, flags);
+			qlist_move_cache(&sq->qlist, &to_free, cache);
+			raw_spin_unlock_irqrestore(&sq->lock, flags);
+		}
+		qlist_free_all(&to_free, cache);
 	}
-	qlist_free_all(&to_free, cache);
 #endif
 
 	raw_spin_lock_irqsave(&quarantine_lock, flags);
