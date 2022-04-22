@@ -118,6 +118,11 @@ enum {
  * IORING_SQ_TASKRUN in the sq ring flags. Not valid with COOP_TASKRUN.
  */
 #define IORING_SETUP_TASKRUN_FLAG	(1U << 9)
+/*
+ * Turn on cooperative task work runs, but detect if the application is
+ * using multiple tasks to submit and/or complete IO and disable it if so.
+ */
+#define IORING_SETUP_COOP_DETECT	(1U << 10)
 
 enum {
 	IORING_OP_NOP,

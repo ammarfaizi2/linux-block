@@ -376,6 +376,8 @@ struct io_ring_ctx {
 		unsigned int		drain_disabled: 1;
 		unsigned int		has_evfd: 1;
 		unsigned int		syscall_iopoll: 1;
+		unsigned int		submit : 1;
+		unsigned int		multi_submit : 1;
 	} ____cacheline_aligned_in_smp;
 
 	/* submission data */
@@ -519,6 +521,8 @@ struct io_ring_ctx {
 struct io_uring_task {
 	/* submission side */
 	int			cached_refs;
+	bool			task_running;
+	bool			did_submit;
 	struct xarray		xa;
 	struct wait_queue_head	wait;
 	const struct io_ring_ctx *last;
@@ -531,7 +535,6 @@ struct io_uring_task {
 	struct io_wq_work_list	prior_task_list;
 	struct callback_head	task_work;
 	struct file		**registered_rings;
-	bool			task_running;
 };
 
 /*
@@ -2115,11 +2118,34 @@ static void io_task_refs_refill(struct io_uring_task *tctx)
 	tctx->cached_refs += refill;
 }
 
-static inline void io_get_task_refs(int nr)
+static __cold void io_uring_mark_submit(struct io_ring_ctx *ctx,
+					struct io_uring_task *tctx)
+{
+	if (!(ctx->flags & IORING_SETUP_COOP_DETECT))
+		return;
+
+	/*
+	 * Mark this tctx as having submitted IO. If the ctx hasn't seen a
+	 * submitter yet, mark it as such. If it has, mark it as a multi
+	 * submitter.
+	 */
+	tctx->did_submit = true;
+	if (!ctx->submit) {
+		ctx->submit = 1;
+	} else {
+		ctx->multi_submit = 1;
+		ctx->notify_method = TWA_SIGNAL;
+		atomic_andnot(IORING_SQ_TASKRUN, &ctx->rings->sq_flags);
+	}
+}
+
+static inline void io_get_task_refs(struct io_ring_ctx *ctx, int nr)
 {
 	struct io_uring_task *tctx = current->io_uring;
 
 	tctx->cached_refs -= nr;
+	if (unlikely(!tctx->did_submit))
+		io_uring_mark_submit(ctx, tctx);
 	if (unlikely(tctx->cached_refs < 0))
 		io_task_refs_refill(tctx);
 }
@@ -2536,7 +2562,8 @@ static void ctx_flush_and_put(struct io_ring_ctx *ctx, bool *locked)
 {
 	if (!ctx)
 		return;
-	if (ctx->flags & IORING_SETUP_TASKRUN_FLAG)
+	if (ctx->flags & IORING_SETUP_TASKRUN_FLAG &&
+	    ctx->notify_method == TWA_SIGNAL_NO_IPI)
 		atomic_andnot(IORING_SQ_TASKRUN, &ctx->rings->sq_flags);
 	if (*locked) {
 		io_submit_flush_completions(ctx);
@@ -2678,7 +2705,8 @@ static void io_req_task_work_add(struct io_kiocb *req, bool priority)
 	if (running)
 		return;
 
-	if (ctx->flags & IORING_SETUP_TASKRUN_FLAG)
+	if (ctx->flags & IORING_SETUP_TASKRUN_FLAG &&
+	    ctx->notify_method == TWA_SIGNAL_NO_IPI)
 		atomic_or(IORING_SQ_TASKRUN, &ctx->rings->sq_flags);
 
 	if (likely(!task_work_add(tsk, &tctx->task_work, ctx->notify_method)))
@@ -8425,7 +8453,7 @@ static int io_submit_sqes(struct io_ring_ctx *ctx, unsigned int nr)
 		return 0;
 	/* make sure SQ entry isn't read before tail */
 	ret = left = min3(nr, ctx->sq_entries, entries);
-	io_get_task_refs(left);
+	io_get_task_refs(ctx, left);
 	io_submit_state_start(&ctx->submit_state, left);
 
 	do {
@@ -8703,6 +8731,27 @@ static inline int io_cqring_wait_schedule(struct io_ring_ctx *ctx,
 	return 1;
 }
 
+static void io_check_notify_method(struct io_ring_ctx *ctx)
+{
+	if (ctx->notify_method != TWA_SIGNAL_NO_IPI)
+		return;
+	if (!(ctx->flags & IORING_SETUP_COOP_DETECT))
+		return;
+	/*
+	 * If the waiters doesn't have a task context, it has not submitted
+	 * IO. This means someone else must have, hence we need to use more
+	 * resilient signaling going forward. Ditto if we have multiple
+	 * submitters.
+	 */
+	if (ctx->multi_submit || !current->io_uring) {
+		mutex_lock(&ctx->uring_lock);
+		ctx->notify_method = TWA_SIGNAL;
+		ctx->multi_submit = 1;
+		mutex_unlock(&ctx->uring_lock);
+		atomic_andnot(IORING_SQ_TASKRUN, &ctx->rings->sq_flags);
+	}
+}
+
 /*
  * Wait until events become available, if we don't already have some. The
  * application must reap them itself, as they reside on the shared cq ring.
@@ -8759,6 +8808,8 @@ static int io_cqring_wait(struct io_ring_ctx *ctx, int min_events,
 			ret = -EBUSY;
 			break;
 		}
+		io_check_notify_method(ctx);
+
 		prepare_to_wait_exclusive(&ctx->cq_wait, &iowq.wq,
 						TASK_INTERRUPTIBLE);
 		ret = io_cqring_wait_schedule(ctx, &iowq, timeout);
@@ -11498,6 +11549,7 @@ static __cold void __io_uring_show_fdinfo(struct io_ring_ctx *ctx,
 		xa_for_each(&ctx->personalities, index, cred)
 			io_uring_show_cred(m, index, cred);
 	}
+	seq_printf(m, "Notify:\t\t%u\n", ctx->notify_method);
 	if (has_lock)
 		mutex_unlock(&ctx->uring_lock);
 
@@ -11702,16 +11754,20 @@ static __cold int io_uring_create(unsigned entries, struct io_uring_params *p,
 
 	/*
 	 * For SQPOLL, we just need a wakeup, always. For !SQPOLL, if
-	 * COOP_TASKRUN is set, then IPIs are never needed by the app.
+	 * COOP_TASKRUN is set, then IPIs are never needed by the app. If
+	 * COOP_DETECT is set, then default to no IPI, but detect and
+	 * switch to IPI based task_work as needed.
 	 */
 	ret = -EINVAL;
 	if (ctx->flags & IORING_SETUP_SQPOLL) {
 		/* IPI related flags don't make sense with SQPOLL */
 		if (ctx->flags & (IORING_SETUP_COOP_TASKRUN |
-				  IORING_SETUP_TASKRUN_FLAG))
+				  IORING_SETUP_TASKRUN_FLAG |
+				  IORING_SETUP_COOP_DETECT))
 			goto err;
 		ctx->notify_method = TWA_SIGNAL_NO_IPI;
-	} else if (ctx->flags & IORING_SETUP_COOP_TASKRUN) {
+	} else if (ctx->flags & (IORING_SETUP_COOP_TASKRUN |
+				 IORING_SETUP_COOP_DETECT)) {
 		ctx->notify_method = TWA_SIGNAL_NO_IPI;
 	} else {
 		if (ctx->flags & IORING_SETUP_TASKRUN_FLAG)
@@ -11817,7 +11873,8 @@ static long io_uring_setup(u32 entries, struct io_uring_params __user *params)
 			IORING_SETUP_SQ_AFF | IORING_SETUP_CQSIZE |
 			IORING_SETUP_CLAMP | IORING_SETUP_ATTACH_WQ |
 			IORING_SETUP_R_DISABLED | IORING_SETUP_SUBMIT_ALL |
-			IORING_SETUP_COOP_TASKRUN | IORING_SETUP_TASKRUN_FLAG))
+			IORING_SETUP_COOP_TASKRUN | IORING_SETUP_TASKRUN_FLAG |
+			IORING_SETUP_COOP_DETECT))
 		return -EINVAL;
 
 	return io_uring_create(entries, &p, params);
