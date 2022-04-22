@@ -742,6 +742,11 @@ static __init void set_satp_mode(uintptr_t dtb_pa)
 			if (!mmu_type)
 				continue;
 
+			if (!strcmp(mmu_type, "riscv,sv48")) {
+				disable_pgtable_l5();
+				return;
+			}
+
 			if (!strcmp(mmu_type, "riscv,sv39")) {
 				disable_pgtable_l5();
 				disable_pgtable_l4();
