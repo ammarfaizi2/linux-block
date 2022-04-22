@@ -843,13 +843,13 @@ void rcu_irq_exit_check_preempt(void)
  * If you add or remove a call to rcu_irq_exit_irqson(), be sure to test
  * with CONFIG_RCU_EQS_DEBUG=y.
  */
-void rcu_irq_exit_irqson(void)
+void noinstr rcu_irq_exit_irqson(void)
 {
 	unsigned long flags;
 
-	local_irq_save(flags);
+	raw_local_irq_save(flags);
 	rcu_irq_exit();
-	local_irq_restore(flags);
+	raw_local_irq_restore(flags);
 }
 
 /*
@@ -1081,13 +1081,13 @@ noinstr void rcu_irq_enter(void)
  * If you add or remove a call to rcu_irq_enter_irqson(), be sure to test
  * with CONFIG_RCU_EQS_DEBUG=y.
  */
-void rcu_irq_enter_irqson(void)
+void noinstr rcu_irq_enter_irqson(void)
 {
 	unsigned long flags;
 
-	local_irq_save(flags);
+	raw_local_irq_save(flags);
 	rcu_irq_enter();
-	local_irq_restore(flags);
+	raw_local_irq_restore(flags);
 }
 
 /*
