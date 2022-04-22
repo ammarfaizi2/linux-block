@@ -203,12 +203,21 @@ void afs_create_write_requests(struct netfs_io_request *wreq)
 	struct netfs_dirty_region *region;
 
 	list_for_each_entry(region, &wreq->regions, flush_link) {
-		subreq = netfs_create_write_request(wreq, NETFS_UPLOAD_TO_SERVER,
-						    region->from,
-						    region->to - region->from,
-						    afs_upload_to_server_worker);
-		if (subreq)
-			netfs_queue_write_request(subreq);
+		unsigned long long from = region->from;
+		unsigned long long to = region->to;
+
+		while (from < to) {
+			unsigned long long len = region->to - region->from;
+
+			if (wreq->wsize && len > wreq->wsize)
+				len = wreq->wsize;
+			subreq = netfs_create_write_request(wreq, NETFS_UPLOAD_TO_SERVER,
+							    from, len,
+							    afs_upload_to_server_worker);
+			if (subreq)
+				netfs_queue_write_request(subreq);
+			from += len;
+		}
 	}
 }
 
