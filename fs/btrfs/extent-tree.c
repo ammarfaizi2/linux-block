@@ -895,7 +895,10 @@ again:
 	err = -ENOENT;
 	while (1) {
 		if (ptr >= end) {
-			WARN_ON(ptr > end);
+			if (WARN_ON(ptr > end)) {
+				err = -EUCLEAN;
+				btrfs_print_leaf(leaf);
+			}
 			break;
 		}
 		iref = (struct btrfs_extent_inline_ref *)ptr;
