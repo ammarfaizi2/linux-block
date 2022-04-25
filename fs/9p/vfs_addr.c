@@ -284,16 +284,25 @@ static int v9fs_write_end(struct file *filp, struct address_space *mapping,
 	struct folio *folio = page_folio(subpage);
 	struct inode *inode = mapping->host;
 	struct v9fs_inode *v9inode = V9FS_I(inode);
+	size_t fsize = folio_size(folio);
+	size_t offset = pos & (fsize - 1);
+	/* With multipage folio support, we may be given len > fsize */
+	size_t copy_size = min_t(size_t, len, fsize - offset);
 
 	p9_debug(P9_DEBUG_VFS, "filp %p, mapping %p\n", filp, mapping);
 
 	if (!folio_test_uptodate(folio)) {
-		if (unlikely(copied < len)) {
+		if (unlikely(copied < copy_size)) {
 			copied = 0;
 			goto out;
 		}
-
-		folio_mark_uptodate(folio);
+		if (offset == 0) {
+			if (copied == fsize)
+				folio_mark_uptodate(folio);
+			/* Could clear to end of page if last_pos == new EOF
+			 * and then mark uptodate
+			 */
+		}
 	}
 
 	/*
