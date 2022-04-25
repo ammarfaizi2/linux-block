@@ -54,17 +54,17 @@ static bool nfs_fscache_get_client_key(struct nfs_client *clp,
 
 	switch (clp->cl_addr.ss_family) {
 	case AF_INET:
-		if (!nfs_append_int(key, _len, sin->sin_port) ||
-		    !nfs_append_int(key, _len, sin->sin_addr.s_addr))
+		if (!nfs_append_int(key, _len, ntohs(sin->sin_port)) ||
+		    !nfs_append_int(key, _len, ntohl(sin->sin_addr.s_addr)))
 			return false;
 		return true;
 
 	case AF_INET6:
-		if (!nfs_append_int(key, _len, sin6->sin6_port) ||
-		    !nfs_append_int(key, _len, sin6->sin6_addr.s6_addr32[0]) ||
-		    !nfs_append_int(key, _len, sin6->sin6_addr.s6_addr32[1]) ||
-		    !nfs_append_int(key, _len, sin6->sin6_addr.s6_addr32[2]) ||
-		    !nfs_append_int(key, _len, sin6->sin6_addr.s6_addr32[3]))
+		if (!nfs_append_int(key, _len, ntohs(sin6->sin6_port)) ||
+		    !nfs_append_int(key, _len, ntohl(sin6->sin6_addr.s6_addr32[0])) ||
+		    !nfs_append_int(key, _len, ntohl(sin6->sin6_addr.s6_addr32[1])) ||
+		    !nfs_append_int(key, _len, ntohl(sin6->sin6_addr.s6_addr32[2])) ||
+		    !nfs_append_int(key, _len, ntohl(sin6->sin6_addr.s6_addr32[3])))
 			return false;
 		return true;
 
