@@ -13,6 +13,7 @@
  * https://www.ti.com/lit/ds/symlink/dac5573.pdf
  * https://www.ti.com/lit/ds/symlink/dac6573.pdf
  * https://www.ti.com/lit/ds/symlink/dac7573.pdf
+ * https://www.ti.com/lit/ds/symlink/dac121c081.pdf
  */
 
 #include <linux/iio/iio.h>
@@ -394,6 +395,7 @@ static const struct of_device_id dac5571_of_id[] = {
 	{.compatible = "ti,dac5573"},
 	{.compatible = "ti,dac6573"},
 	{.compatible = "ti,dac7573"},
+	{.compatible = "ti,dac121c081"},
 	{}
 };
 MODULE_DEVICE_TABLE(of, dac5571_of_id);
@@ -408,6 +410,7 @@ static const struct i2c_device_id dac5571_id[] = {
 	{"dac5573", quad_8bit},
 	{"dac6573", quad_10bit},
 	{"dac7573", quad_12bit},
+	{"dac121c081", single_12bit},
 	{}
 };
 MODULE_DEVICE_TABLE(i2c, dac5571_id);
