@@ -176,6 +176,12 @@ extern void __fscache_write_to_cache(struct fscache_cookie *, struct address_spa
 				     bool);
 extern void __fscache_clear_page_bits(struct address_space *, loff_t, size_t);
 
+#if __fscache_available
+extern int fscache_begin_cache_operation(struct netfs_io_request *rreq);
+#else
+#define fscache_begin_cache_operation NULL
+#endif
+
 /**
  * fscache_acquire_volume - Register a volume as desiring caching services
  * @volume_key: An identification string for the volume

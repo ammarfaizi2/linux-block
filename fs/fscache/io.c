@@ -159,6 +159,50 @@ int __fscache_begin_write_operation(struct netfs_cache_resources *cres,
 EXPORT_SYMBOL(__fscache_begin_write_operation);
 
 /**
+ * fscache_begin_cache_operation - Begin a cache op for netfslib
+ * @rreq: The netfs request that wants to access the cache.
+ *
+ * Begin an I/O operation on behalf of the netfs helper library, read or write.
+ * @rreq indicates the netfs operation that wishes to access the cache.
+ *
+ * This is intended to be pointed to directly by the ->begin_cache_operation()
+ * netfs lib operation for the network filesystem.
+ *
+ * @cres->inval_counter is set from @cookie->inval_counter for comparison at
+ * the end of the operation.  This allows invalidation during the operation to
+ * be detected by the caller.
+ *
+ * Returns:
+ * * 0		- Success
+ * * -ENOBUFS	- No caching available
+ * * Other error code from the cache, such as -ENOMEM.
+ */
+int fscache_begin_cache_operation(struct netfs_io_request *rreq)
+{
+	struct netfs_inode *ctx = netfs_inode(rreq->inode);
+
+	switch (rreq->origin) {
+	case NETFS_READAHEAD:
+	case NETFS_READPAGE:
+	case NETFS_READ_FOR_WRITE:
+		return fscache_begin_operation(&rreq->cache_resources,
+					       netfs_i_cookie(ctx),
+					       FSCACHE_WANT_PARAMS,
+					       fscache_access_io_read);
+	case NETFS_WRITEBACK:
+		return fscache_begin_operation(&rreq->cache_resources,
+					       netfs_i_cookie(ctx),
+					       FSCACHE_WANT_PARAMS,
+					       fscache_access_io_write);
+	case NETFS_DIO_READ:
+	case NETFS_DIO_WRITE:
+	default:
+		return -ENOBUFS;
+	}
+}
+EXPORT_SYMBOL(fscache_begin_cache_operation);
+
+/**
  * fscache_dirty_folio - Mark folio dirty and pin a cache object for writeback
  * @mapping: The mapping the folio belongs to.
  * @folio: The folio being dirtied.
