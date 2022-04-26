@@ -1146,8 +1146,7 @@ failed_addition:
 	return ret;
 }
 
-/* we are OK calling __meminit stuff here - we have CONFIG_MEMORY_HOTPLUG */
-static pg_data_t __ref *hotadd_init_pgdat(int nid)
+static void hotadd_init_pgdat(int nid)
 {
 	struct pglist_data *pgdat = NODE_DATA(nid);
 
@@ -1167,8 +1166,6 @@ static pg_data_t __ref *hotadd_init_pgdat(int nid)
 	 * to access not-initialized zonelist, build here.
 	 */
 	build_all_zonelists(pgdat);
-
-	return pgdat;
 }
 
 /*
@@ -1178,31 +1175,27 @@ static pg_data_t __ref *hotadd_init_pgdat(int nid)
  * called by cpu_up() to online a node without onlined memory.
  *
  * Returns:
- * 1 -> a new node has been allocated
- * 0 -> the node is already online
- * -ENOMEM -> the node could not be allocated
+ * 1 -> The node has been initialized.
+ * 0 -> Either the node was already online, or we succesfully registered a new
+ *      one.
+ * -errno -> register_one_node() failed.
  */
 static int __try_online_node(int nid, bool set_node_online)
 {
-	pg_data_t *pgdat;
-	int ret = 1;
+	int ret;
 
 	if (node_online(nid))
 		return 0;
 
-	pgdat = hotadd_init_pgdat(nid);
-	if (!pgdat) {
-		pr_err("Cannot online node %d due to NULL pgdat\n", nid);
-		ret = -ENOMEM;
-		goto out;
-	}
+	hotadd_init_pgdat(nid);
 
-	if (set_node_online) {
-		node_set_online(nid);
-		ret = register_one_node(nid);
-		BUG_ON(ret);
-	}
-out:
+	if (!set_node_online)
+		return 1;
+
+	node_set_online(nid);
+	ret = register_one_node(nid);
+	BUG_ON(ret);
+
 	return ret;
 }
 
