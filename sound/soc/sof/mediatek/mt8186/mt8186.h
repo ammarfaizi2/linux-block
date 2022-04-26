@@ -10,7 +10,6 @@
 #define __MT8186_H
 
 struct mtk_adsp_chip_info;
-struct snd_sof_dev;
 
 #define DSP_REG_BAR			4
 #define DSP_SECREG_BAR			5
@@ -75,6 +74,4 @@ struct snd_sof_dev;
 #define SIZE_SHARED_DRAM_UL			0x40000 /*Shared buffer for Uplink*/
 #define TOTAL_SIZE_SHARED_DRAM_FROM_TAIL	(SIZE_SHARED_DRAM_DL + SIZE_SHARED_DRAM_UL)
 
-void sof_hifixdsp_boot_sequence(struct snd_sof_dev *sdev, u32 boot_addr);
-void sof_hifixdsp_shutdown(struct snd_sof_dev *sdev);
 #endif
