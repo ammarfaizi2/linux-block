@@ -9,6 +9,7 @@
 #include <sound/intel-nhlt.h>
 #include <sound/pcm_params.h>
 #include <sound/soc.h>
+#include <sound/intel-nhlt.h>
 #include "avs.h"
 #include "path.h"
 #include "topology.h"
