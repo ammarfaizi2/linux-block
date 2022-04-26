@@ -58,10 +58,10 @@ struct xfs_log_item {
 #define	XFS_LI_DIRTY	3	/* log item dirty in transaction */
 
 #define XFS_LI_FLAGS \
-	{ (1 << XFS_LI_IN_AIL),		"IN_AIL" }, \
-	{ (1 << XFS_LI_ABORTED),	"ABORTED" }, \
-	{ (1 << XFS_LI_FAILED),		"FAILED" }, \
-	{ (1 << XFS_LI_DIRTY),		"DIRTY" }
+	{ (1u << XFS_LI_IN_AIL),	"IN_AIL" }, \
+	{ (1u << XFS_LI_ABORTED),	"ABORTED" }, \
+	{ (1u << XFS_LI_FAILED),	"FAILED" }, \
+	{ (1u << XFS_LI_DIRTY),		"DIRTY" }
 
 struct xfs_item_ops {
 	unsigned flags;
@@ -175,7 +175,7 @@ xfs_trans_get_buf(
 	struct xfs_buftarg	*target,
 	xfs_daddr_t		blkno,
 	int			numblks,
-	uint			flags,
+	xfs_buf_flags_t		flags,
 	struct xfs_buf		**bpp)
 {
 	DEFINE_SINGLE_BUF_MAP(map, blkno, numblks);
