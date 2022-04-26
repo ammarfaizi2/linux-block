@@ -15,9 +15,36 @@
 #ifdef CONFIG_GCC_PLUGIN_STACKLEAK
 #include <asm/stacktrace.h>
 
+/*
+ * The lowest address on tsk's stack which we can plausibly erase.
+ */
+static __always_inline unsigned long
+stackleak_task_low_bound(const struct task_struct *tsk)
+{
+	/*
+	 * The lowest unsigned long on the task stack contains STACK_END_MAGIC,
+	 * which we must not corrupt.
+	 */
+	return (unsigned long)end_of_stack(tsk) + sizeof(unsigned long);
+}
+
+/*
+ * The address immediately after the highest address on tsk's stack which we
+ * can plausibly erase.
+ */
+static __always_inline unsigned long
+stackleak_task_high_bound(const struct task_struct *tsk)
+{
+	/*
+	 * The task's pt_regs lives at the top of the task stack and will be
+	 * overwritten by exception entry, so there's no need to erase them.
+	 */
+	return (unsigned long)task_pt_regs(tsk);
+}
+
 static inline void stackleak_task_init(struct task_struct *t)
 {
-	t->lowest_stack = (unsigned long)end_of_stack(t) + sizeof(unsigned long);
+	t->lowest_stack = stackleak_task_low_bound(t);
 # ifdef CONFIG_STACKLEAK_METRICS
 	t->prev_lowest_stack = t->lowest_stack;
 # endif
