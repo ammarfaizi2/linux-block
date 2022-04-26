@@ -25,7 +25,6 @@
 #include "../../sof-audio.h"
 #include "../adsp_helper.h"
 #include "mt8186.h"
-#include "mt8186-clk.h"
 
 static int platform_parse_resource(struct platform_device *pdev, void *data)
 {
@@ -277,19 +276,6 @@ static int mt8186_dsp_probe(struct snd_sof_dev *sdev)
 		return ret;
 	}
 
-	/* enable adsp clock before touching registers */
-	ret = mt8186_adsp_init_clock(sdev);
-	if (ret) {
-		dev_err(sdev->dev, "mt8186_adsp_init_clock failed\n");
-		return ret;
-	}
-
-	ret = adsp_clock_on(sdev);
-	if (ret) {
-		dev_err(sdev->dev, "adsp_clock_on fail!\n");
-		return ret;
-	}
-
 	adsp_sram_power_on(sdev);
 
 	return 0;
@@ -299,7 +285,6 @@ static int mt8186_dsp_remove(struct snd_sof_dev *sdev)
 {
 	sof_hifixdsp_shutdown(sdev);
 	adsp_sram_power_off(sdev);
-	adsp_clock_off(sdev);
 
 	return 0;
 }
