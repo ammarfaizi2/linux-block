@@ -1993,7 +1993,10 @@ long __do_semtimedop(int semid, struct sembuf *sops,
 	int max, locknum;
 	bool undos = false, alter = false, dupsop = false;
 	struct sem_queue queue;
-	unsigned long dup = 0, jiffies_left = 0;
+	unsigned long dup = 0;
+	ktime_t expires;
+	int timed_out = 0;
+	struct timespec64 end_time;
 
 	if (nsops < 1 || semid < 0)
 		return -EINVAL;
@@ -2006,7 +2009,9 @@ long __do_semtimedop(int semid, struct sembuf *sops,
 			error = -EINVAL;
 			goto out;
 		}
-		jiffies_left = timespec64_to_jiffies(timeout);
+		ktime_get_ts64(&end_time);
+		end_time = timespec64_add_safe(end_time, *timeout);
+		expires = timespec64_to_ktime(end_time);
 	}
 
 
@@ -2165,7 +2170,9 @@ long __do_semtimedop(int semid, struct sembuf *sops,
 		rcu_read_unlock();
 
 		if (timeout)
-			jiffies_left = schedule_timeout(jiffies_left);
+			timed_out = !schedule_hrtimeout_range(&expires,
+						current->timer_slack_ns,
+						HRTIMER_MODE_ABS);
 		else
 			schedule();
 
@@ -2208,7 +2215,7 @@ long __do_semtimedop(int semid, struct sembuf *sops,
 		/*
 		 * If an interrupt occurred we have to clean up the queue.
 		 */
-		if (timeout && jiffies_left == 0)
+		if (timeout && timed_out)
 			error = -EAGAIN;
 	} while (error == -EINTR && !signal_pending(current)); /* spurious */
 
