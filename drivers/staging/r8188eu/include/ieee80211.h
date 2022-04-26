@@ -8,6 +8,7 @@
 #include "drv_types.h"
 #include "wifi.h"
 #include <linux/wireless.h>
+#include <net/cfg80211.h>
 
 #define MGMT_QUEUE_NUM 5
 
@@ -123,24 +124,6 @@ enum NETWORK_TYPE {
 	WIRELESS_11BG_24N = (WIRELESS_11B | WIRELESS_11G | WIRELESS_11_24N),
 };
 
-#define SUPPORTED_24G_NETTYPE_MSK				\
-	 (WIRELESS_11B | WIRELESS_11G | WIRELESS_11_24N)
-
-#define IsSupported24G(NetType)					\
-	((NetType) & SUPPORTED_24G_NETTYPE_MSK ? true : false)
-
-#define IsEnableHWCCK(NetType)					\
-	IsSupported24G(NetType)
-
-#define IsSupportedRxCCK(NetType) IsEnableHWCCK(NetType)
-
-#define IsSupportedTxCCK(NetType)				\
-	((NetType) & (WIRELESS_11B) ? true : false)
-#define IsSupportedTxOFDM(NetType)				\
-	((NetType) & (WIRELESS_11G) ? true : false)
-#define IsSupportedTxMCS(NetType)				\
-	((NetType) & (WIRELESS_11_24N) ? true : false)
-
 struct ieee_param {
 	u32 cmd;
 	u8 sta_addr[ETH_ALEN];
@@ -195,35 +178,6 @@ struct ieee_param {
 
 /* this is stolen from ipw2200 driver */
 #define IEEE_IBSS_MAC_HASH_SIZE 31
-
-struct rtw_ieee80211_hdr {
-	__le16 frame_ctl;
-	__le16 duration_id;
-	u8 addr1[ETH_ALEN];
-	u8 addr2[ETH_ALEN];
-	u8 addr3[ETH_ALEN];
-	u16 seq_ctl;
-	u8 addr4[ETH_ALEN];
-} __packed;
-
-struct rtw_ieee80211_hdr_3addr {
-	__le16 frame_ctl;
-	__le16 duration_id;
-	u8 addr1[ETH_ALEN];
-	u8 addr2[ETH_ALEN];
-	u8 addr3[ETH_ALEN];
-	u16 seq_ctl;
-} __packed;
-
-struct rtw_ieee80211_hdr_3addr_qos {
-	__le16 frame_ctl;
-	__le16 duration_id;
-	u8 addr1[ETH_ALEN];
-	u8 addr2[ETH_ALEN];
-	u8 addr3[ETH_ALEN];
-	u16 seq_ctl;
-	u16     qc;
-}  __packed;
 
 #define IEEE80211_3ADDR_LEN 24
 #define IEEE80211_4ADDR_LEN 30
@@ -643,15 +597,9 @@ static inline int is_broadcast_mac_addr(const u8 *addr)
 
 /* Action category code */
 enum rtw_ieee80211_category {
-	RTW_WLAN_CATEGORY_SPECTRUM_MGMT = 0,
-	RTW_WLAN_CATEGORY_QOS = 1,
-	RTW_WLAN_CATEGORY_DLS = 2,
 	RTW_WLAN_CATEGORY_BACK = 3,
 	RTW_WLAN_CATEGORY_PUBLIC = 4, /* IEEE 802.11 public action frames */
-	RTW_WLAN_CATEGORY_RADIO_MEASUREMENT  = 5,
-	RTW_WLAN_CATEGORY_FT = 6,
 	RTW_WLAN_CATEGORY_HT = 7,
-	RTW_WLAN_CATEGORY_SA_QUERY = 8,
 	RTW_WLAN_CATEGORY_TDLS = 12,
 	RTW_WLAN_CATEGORY_WMM = 17,
 	RTW_WLAN_CATEGORY_P2P = 0x7f,/* P2P action frames */
@@ -717,39 +665,6 @@ enum rtw_ieee80211_back_actioncode {
 #define OUI_BROADCOM 0x00904c /* Broadcom (Epigram) */
 
 #define VENDOR_HT_CAPAB_OUI_TYPE 0x33 /* 00-90-4c:0x33 */
-
-/**
- * enum rtw_ieee80211_channel_flags - channel flags
- *
- * Channel flags set by the regulatory control code.
- *
- * @RTW_IEEE80211_CHAN_DISABLED: This channel is disabled.
- * @RTW_IEEE80211_CHAN_PASSIVE_SCAN: Only passive scanning is permitted
- *      on this channel.
- * @RTW_IEEE80211_CHAN_NO_IBSS: IBSS is not allowed on this channel.
- * @RTW_IEEE80211_CHAN_RADAR: Radar detection is required on this channel.
- * @RTW_IEEE80211_CHAN_NO_HT40PLUS: extension channel above this channel
- *      is not permitted.
- * @RTW_IEEE80211_CHAN_NO_HT40MINUS: extension channel below this channel
- *      is not permitted.
- */
-enum rtw_ieee80211_channel_flags {
-	RTW_IEEE80211_CHAN_DISABLED	 = 1<<0,
-	RTW_IEEE80211_CHAN_PASSIVE_SCAN     = 1<<1,
-	RTW_IEEE80211_CHAN_NO_IBSS	  = 1<<2,
-	RTW_IEEE80211_CHAN_RADAR	    = 1<<3,
-	RTW_IEEE80211_CHAN_NO_HT40PLUS      = 1<<4,
-	RTW_IEEE80211_CHAN_NO_HT40MINUS     = 1<<5,
-};
-
-#define RTW_IEEE80211_CHAN_NO_HT40 \
-	  (RTW_IEEE80211_CHAN_NO_HT40PLUS | RTW_IEEE80211_CHAN_NO_HT40MINUS)
-
-/* Represent channel details, subset of ieee80211_channel */
-struct rtw_ieee80211_channel {
-	u16 hw_value;
-	u32 flags;
-};
 
 #define CHAN_FMT \
 	"hw_value:%u, " \
