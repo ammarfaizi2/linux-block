@@ -553,7 +553,6 @@ static void put_nommu_region(struct vm_region *region)
 static void add_vma_to_mm(struct mm_struct *mm, struct vm_area_struct *vma)
 {
 	struct address_space *mapping;
-	struct vm_area_struct *prev;
 	MA_STATE(mas, &mm->mm_mt, vma->vm_start, vma->vm_end);
 
 	BUG_ON(!vma->vm_region);
@@ -572,11 +571,8 @@ static void add_vma_to_mm(struct mm_struct *mm, struct vm_area_struct *vma)
 		i_mmap_unlock_write(mapping);
 	}
 
-	prev = mas_prev(&mas, 0);
-	mas_reset(&mas);
 	/* add the VMA to the tree */
 	vma_mas_store(vma, &mas);
-	__vma_link_list(mm, vma, prev);
 }
 
 /*
@@ -601,7 +597,6 @@ static void delete_vma_from_mm(struct vm_area_struct *vma)
 
 	/* remove from the MM's tree and list */
 	vma_mas_remove(vma, &mas);
-	__vma_unlink_list(vma->vm_mm, vma);
 }
 
 /*
