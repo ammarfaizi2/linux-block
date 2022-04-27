@@ -110,7 +110,7 @@ Usage
    If you want to sort by the page nums of buf, use the ``-m`` parameter.
    The detailed parameters are:
 
-   fundamental function:
+   fundamental function::
 
 	Sort:
 		-a		Sort by memory allocation time.
@@ -130,7 +130,7 @@ Usage
 				./page_owner_sort <input> <output> --sort=n,+pid,-tgid
 				./page_owner_sort <input> <output> --sort=at
 
-   additional function:
+   additional function::
 
 	Cull:
 		--cull <rules>
@@ -171,6 +171,7 @@ Usage
 
 STANDARD FORMAT SPECIFIERS
 ==========================
+::
 
 For --sort option:
 
