@@ -5571,6 +5571,7 @@ void mas_store_prealloc(struct ma_state *mas, void *entry)
  * mas_preallocate() - Preallocate enough nodes for a store operation
  * @mas: The maple state
  * @entry: The entry that will be stored
+ * @gfp: The GFP_FLAGS to use for allocations.
  *
  * Return: 0 on success, -ENOMEM if memory could not be allocated.
  */
