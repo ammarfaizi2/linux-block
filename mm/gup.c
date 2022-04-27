@@ -564,8 +564,8 @@ retry:
 		goto out;
 	}
 
-	VM_BUG_ON((flags & FOLL_PIN) && PageAnon(page) &&
-		  !PageAnonExclusive(page));
+	VM_BUG_ON_PAGE((flags & FOLL_PIN) && PageAnon(page) &&
+			!PageAnonExclusive(page), page);
 
 	/* try_grab_page() does nothing unless FOLL_GET or FOLL_PIN is set. */
 	if (unlikely(!try_grab_page(page, flags))) {
