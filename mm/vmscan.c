@@ -1412,9 +1412,9 @@ static enum page_references folio_check_references(struct folio *folio,
 			return PAGEREF_ACTIVATE;
 
 		/*
-		 * Activate file-backed executable folios after first usage.
+		 * Activate executable folios after first usage.
 		 */
-		if ((vm_flags & VM_EXEC) && !folio_test_swapbacked(folio))
+		if (vm_flags & VM_EXEC)
 			return PAGEREF_ACTIVATE;
 
 		return PAGEREF_KEEP;
