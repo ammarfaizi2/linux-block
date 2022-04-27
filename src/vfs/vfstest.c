@@ -13829,11 +13829,7 @@ static const struct option longopts[] = {
 	{NULL,					0,			0,	  0},
 };
 
-struct t_idmapped_mounts {
-	int (*test)(void);
-	bool require_fs_allow_idmap;
-	const char *description;
-} basic_suite[] = {
+struct test_struct basic_suite[] = {
 	{ acls,								true,	"posix acls on regular mounts",									},
 	{ create_in_userns,						true,	"create operations in user namespace",								},
 	{ device_node_in_userns,					true,	"device node in user namespace",								},
@@ -13885,15 +13881,15 @@ struct t_idmapped_mounts {
 	{ threaded_idmapped_mount_interactions,				true,	"threaded operations on idmapped mounts",							},
 };
 
-struct t_idmapped_mounts fscaps_in_ancestor_userns[] = {
+struct test_struct fscaps_in_ancestor_userns[] = {
 	{ fscaps_idmapped_mounts_in_userns_valid_in_ancestor_userns,	true,	"fscaps on idmapped mounts in user namespace writing fscap valid in ancestor userns",		},
 };
 
-struct t_idmapped_mounts t_nested_userns[] = {
+struct test_struct t_nested_userns[] = {
 	{ nested_userns,						true,	"test that nested user namespaces behave correctly when attached to idmapped mounts",		},
 };
 
-struct t_idmapped_mounts t_btrfs[] = {
+struct test_struct t_btrfs[] = {
 	{ btrfs_subvolumes_fsids_mapped,				true,	"test subvolumes with mapped fsids",								},
 	{ btrfs_subvolumes_fsids_mapped_userns,				true, 	"test subvolumes with mapped fsids inside user namespace",					},
 	{ btrfs_subvolumes_fsids_mapped_user_subvol_rm_allowed,		true, 	"test subvolume deletion with user_subvol_rm_allowed mount option",				},
@@ -13919,16 +13915,16 @@ struct t_idmapped_mounts t_btrfs[] = {
 };
 
 /* Test for commit 968219708108 ("fs: handle circular mappings correctly"). */
-struct t_idmapped_mounts t_setattr_fix_968219708108[] = {
+struct test_struct t_setattr_fix_968219708108[] = {
 	{ setattr_fix_968219708108,					true,	"test that setattr works correctly",								},
 };
 
-static bool run_test(struct t_idmapped_mounts suite[], size_t suite_size)
+static bool run_test(struct test_struct suite[], size_t suite_size)
 {
 	int i;
 
 	for (i = 0; i < suite_size; i++) {
-		struct t_idmapped_mounts *t = &suite[i];
+		struct test_struct *t = &suite[i];
 		int ret;
 		pid_t pid;
 
