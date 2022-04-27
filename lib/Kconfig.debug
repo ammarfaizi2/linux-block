@@ -838,13 +838,12 @@ config DEBUG_VM
 
 	  If unsure, say N.
 
-config DEBUG_VM_VMACACHE
-	bool "Debug VMA caching"
+config DEBUG_VM_MAPLE_TREE
+	bool "Debug VM maple trees"
 	depends on DEBUG_VM
+	select DEBUG_MAPLE_TREE
 	help
-	  Enable this to turn on VMA caching debug information. Doing so
-	  can cause significant overhead, so only enable it in non-production
-	  environments.
+	  Enable VM maple tree debugging information and extra validations.
 
 	  If unsure, say N.
 
@@ -1072,13 +1071,6 @@ config BOOTPARAM_SOFTLOCKUP_PANIC
 
 	  Say N if unsure.
 
-config BOOTPARAM_SOFTLOCKUP_PANIC_VALUE
-	int
-	depends on SOFTLOCKUP_DETECTOR
-	range 0 1
-	default 0 if !BOOTPARAM_SOFTLOCKUP_PANIC
-	default 1 if BOOTPARAM_SOFTLOCKUP_PANIC
-
 config HARDLOCKUP_DETECTOR_PERF
 	bool
 	select SOFTLOCKUP_DETECTOR
@@ -1119,13 +1111,6 @@ config BOOTPARAM_HARDLOCKUP_PANIC
 	  using the watchdog_thresh sysctl).
 
 	  Say N if unsure.
-
-config BOOTPARAM_HARDLOCKUP_PANIC_VALUE
-	int
-	depends on HARDLOCKUP_DETECTOR
-	range 0 1
-	default 0 if !BOOTPARAM_HARDLOCKUP_PANIC
-	default 1 if BOOTPARAM_HARDLOCKUP_PANIC
 
 config DETECT_HUNG_TASK
 	bool "Detect Hung Tasks"
@@ -1173,13 +1158,6 @@ config BOOTPARAM_HUNG_TASK_PANIC
 	  where a hung tasks must be resolved ASAP.
 
 	  Say N if unsure.
-
-config BOOTPARAM_HUNG_TASK_PANIC_VALUE
-	int
-	depends on DETECT_HUNG_TASK
-	range 0 1
-	default 0 if !BOOTPARAM_HUNG_TASK_PANIC
-	default 1 if BOOTPARAM_HUNG_TASK_PANIC
 
 config WQ_WATCHDOG
 	bool "Detect Workqueue Stalls"
@@ -1706,6 +1684,14 @@ config BUG_ON_DATA_CORRUPTION
 
 	  If unsure, say N.
 
+config DEBUG_MAPLE_TREE
+	bool "Debug maple trees"
+	depends on DEBUG_KERNEL
+	help
+	  Enable maple tree debugging information and extra validations.
+
+	  If unsure, say N.
+
 endmenu
 
 config DEBUG_CREDENTIALS
@@ -1840,6 +1826,12 @@ config IO_STRICT_DEVMEM
 	  If in doubt, say Y.
 
 menu "$(SRCARCH) Debugging"
+
+config DEBUG_AID_FOR_SYZBOT
+       bool "Additional debug code for syzbot"
+       default n
+       help
+         This option is intended for testing by syzbot.
 
 source "arch/$(SRCARCH)/Kconfig.debug"
 
