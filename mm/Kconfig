@@ -762,7 +762,7 @@ config ARCH_HAS_CURRENT_STACK_POINTER
 	  register alias named "current_stack_pointer", this config can be
 	  selected.
 
-config ARCH_HAS_FILTER_PGPROT
+config ARCH_HAS_VM_GET_PAGE_PROT
 	bool
 
 config ARCH_HAS_PTE_DEVMAP
@@ -908,6 +908,40 @@ config ANON_VMA_NAME
 	  Assigning a name to anonymous virtual memory area might prevent that
 	  area from being merged with adjacent virtual memory areas due to the
 	  difference in their name.
+
+config USERFAULTFD
+	bool "Enable userfaultfd() system call"
+	depends on MMU
+	help
+	  Enable the userfaultfd() system call that allows to intercept and
+	  handle page faults in userland.
+
+config HAVE_ARCH_USERFAULTFD_WP
+	bool
+	help
+	  Arch has userfaultfd write protection support
+
+config HAVE_ARCH_USERFAULTFD_MINOR
+	bool
+	help
+	  Arch has userfaultfd minor fault support
+
+config PTE_MARKER
+	bool
+
+	help
+	  Allows to create marker PTEs for file-backed memory.
+
+config PTE_MARKER_UFFD_WP
+	bool "Userfaultfd write protection support for shmem/hugetlbfs"
+	default y
+	depends on HAVE_ARCH_USERFAULTFD_WP
+	select PTE_MARKER
+
+	help
+	  Allows to create marker PTEs for userfaultfd write protection
+	  purposes.  It is required to enable userfaultfd write protection on
+	  file-backed memory types like shmem and hugetlbfs.
 
 source "mm/damon/Kconfig"
 
