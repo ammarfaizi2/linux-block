@@ -182,6 +182,8 @@ static void rxrpc_resend(struct rxrpc_call *call, unsigned long now_j)
 			continue;
 		if (after(txb->seq, transmitted))
 			break;
+		if (after(ntohl(txb->wire.serial), call->acks_highest_serial))
+			continue;
 
 		rxrpc_see_txbuf(txb, rxrpc_txbuf_see_unacked);
 
