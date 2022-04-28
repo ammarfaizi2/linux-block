@@ -378,6 +378,14 @@
 					iommus = <&smmu_niso0 TEGRA234_SID_APE>;
 					status = "disabled";
 				};
+
+				tegra_asrc: asrc@2910000 {
+					compatible = "nvidia,tegra234-asrc",
+						     "nvidia,tegra186-asrc";
+					reg = <0x2910000 0x2000>;
+					sound-name-prefix = "ASRC1";
+					status = "disabled";
+				};
 			};
 
 			adma: dma-controller@2930000 {
@@ -654,6 +662,20 @@
 			reset-names = "i2c";
 		};
 
+		spi@3270000 {
+			compatible = "nvidia,tegra234-qspi";
+			reg = <0x3270000 0x1000>;
+			interrupts = <GIC_SPI 35 IRQ_TYPE_LEVEL_HIGH>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clocks = <&bpmp TEGRA234_CLK_QSPI0_2X_PM>,
+				 <&bpmp TEGRA234_CLK_QSPI0_PM>;
+			clock-names = "qspi", "qspi_out";
+			resets = <&bpmp TEGRA234_RESET_QSPI0>;
+			reset-names = "qspi";
+			status = "disabled";
+		};
+
 		pwm1: pwm@3280000 {
 			compatible = "nvidia,tegra194-pwm",
 				     "nvidia,tegra186-pwm";
@@ -664,6 +686,20 @@
 			reset-names = "pwm";
 			status = "disabled";
 			#pwm-cells = <2>;
+		};
+
+		spi@3300000 {
+			compatible = "nvidia,tegra234-qspi";
+			reg = <0x3300000 0x1000>;
+			interrupts = <GIC_SPI 39 IRQ_TYPE_LEVEL_HIGH>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clocks = <&bpmp TEGRA234_CLK_QSPI1_2X_PM>,
+				 <&bpmp TEGRA234_CLK_QSPI1_PM>;
+			clock-names = "qspi", "qspi_out";
+			resets = <&bpmp TEGRA234_RESET_QSPI1>;
+			reset-names = "qspi";
+			status = "disabled";
 		};
 
 		mmc@3460000 {
@@ -1256,6 +1292,13 @@
 			nvidia,memory-controller = <&mc>;
 			status = "okay";
 		};
+	};
+
+	ccplex@e000000 {
+		compatible = "nvidia,tegra234-ccplex-cluster";
+		reg = <0x0 0x0e000000 0x0 0x5ffff>;
+		nvidia,bpmp = <&bpmp>;
+		status = "okay";
 	};
 
 	sram@40000000 {
