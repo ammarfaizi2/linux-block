@@ -11,5 +11,7 @@
 
 extern const struct test_suite s_idmapped_mounts;
 extern const struct test_suite s_fscaps_in_ancestor_userns;
+extern const struct test_suite s_nested_userns;
+extern const struct test_suite s_setattr_fix_968219708108;
 
 #endif /* __IDMAPPED_MOUNTS_H */
