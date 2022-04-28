@@ -106,7 +106,7 @@ static int rxrpc_call_seq_show(struct seq_file *seq, void *v)
 		   call->abort_code,
 		   call->debug_id,
 		   acks_hard_ack, READ_ONCE(call->tx_top) - acks_hard_ack,
-		   rx_hard_ack, READ_ONCE(call->rx_top) - rx_hard_ack,
+		   rx_hard_ack, READ_ONCE(call->ackr_highest_seq) - rx_hard_ack,
 		   call->rx_serial,
 		   timeout);
 

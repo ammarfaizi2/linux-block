@@ -129,15 +129,6 @@ struct rxrpc_call *rxrpc_alloc_call(struct rxrpc_sock *rx, gfp_t gfp,
 	if (!call)
 		return NULL;
 
-	call->rx_buffer = kcalloc(RXRPC_RX_BUFF_SIZE, sizeof(struct sk_buff *),
-				  gfp);
-	if (!call->rx_buffer)
-		goto nomem;
-
-	call->rx_annotations = kcalloc(RXRPC_RX_BUFF_SIZE, sizeof(u8), gfp);
-	if (!call->rx_annotations)
-		goto nomem_2;
-
 	mutex_init(&call->user_mutex);
 
 	/* Prevent lockdep reporting a deadlock false positive between the afs
@@ -155,6 +146,8 @@ struct rxrpc_call *rxrpc_alloc_call(struct rxrpc_sock *rx, gfp_t gfp,
 	INIT_LIST_HEAD(&call->recvmsg_link);
 	INIT_LIST_HEAD(&call->sock_link);
 	INIT_LIST_HEAD(&call->tx_buffer);
+	skb_queue_head_init(&call->rx_queue);
+	skb_queue_head_init(&call->rx_oos_queue);
 	init_waitqueue_head(&call->waitq);
 	spin_lock_init(&call->lock);
 	spin_lock_init(&call->notify_lock);
@@ -169,10 +162,8 @@ struct rxrpc_call *rxrpc_alloc_call(struct rxrpc_sock *rx, gfp_t gfp,
 
 	memset(&call->sock_node, 0xed, sizeof(call->sock_node));
 
-	/* Leave space in the ring to handle a maxed-out jumbo packet */
 	call->rx_winsize = rxrpc_rx_window_size;
 	call->tx_winsize = 16;
-	call->rx_expect_next = 1;
 
 	call->cong_cwnd = 2;
 	call->cong_ssthresh = RXRPC_TX_MAX_WINDOW;
@@ -181,12 +172,6 @@ struct rxrpc_call *rxrpc_alloc_call(struct rxrpc_sock *rx, gfp_t gfp,
 	call->rtt_avail = RXRPC_CALL_RTT_AVAIL_MASK;
 	atomic_inc(&rxnet->nr_calls);
 	return call;
-
-nomem_2:
-	kfree(call->rx_buffer);
-nomem:
-	kmem_cache_free(rxrpc_call_jar, call);
-	return NULL;
 }
 
 /*
@@ -513,12 +498,8 @@ void rxrpc_get_call(struct rxrpc_call *call, enum rxrpc_call_trace op)
  */
 static void rxrpc_cleanup_ring(struct rxrpc_call *call)
 {
-	int i;
-
-	for (i = 0; i < RXRPC_RX_BUFF_SIZE; i++) {
-		rxrpc_free_skb(call->rx_buffer[i], rxrpc_skb_cleaned);
-		call->rx_buffer[i] = NULL;
-	}
+	skb_queue_purge(&call->rx_queue);
+	skb_queue_purge(&call->rx_oos_queue);
 }
 
 /*
@@ -655,8 +636,6 @@ static void rxrpc_destroy_call(struct work_struct *work)
 
 	rxrpc_put_connection(call->conn);
 	rxrpc_put_peer(call->peer);
-	kfree(call->rx_buffer);
-	kfree(call->rx_annotations);
 	kmem_cache_free(rxrpc_call_jar, call);
 	if (atomic_dec_and_test(&rxnet->nr_calls))
 		wake_up_var(&rxnet->nr_calls);

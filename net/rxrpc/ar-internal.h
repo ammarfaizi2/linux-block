@@ -174,22 +174,23 @@ struct rxrpc_host_header {
 	u16		serviceId;	/* service ID */
 } __packed;
 
+struct rxrpc_skb_subpacket {
+	u16		offset;		/* Offset of data */
+	u16		len;		/* Length of data */
+	u16		cksum;		/* Security checksum */
+};
+
 /*
  * RxRPC socket buffer private variables
  * - max 48 bytes (struct sk_buff::cb)
  */
 struct rxrpc_skb_priv {
-	atomic_t	nr_ring_pins;		/* Number of rxtx ring pins */
-	u8		nr_subpackets;		/* Number of subpackets */
-	u8		rx_flags;		/* Received packet flags */
-#define RXRPC_SKB_INCL_LAST	0x01		/* - Includes last packet */
-	union {
-		int		remain;		/* amount of space remaining for next write */
-
-		/* List of requested ACKs on subpackets */
-		unsigned long	rx_req_ack[(RXRPC_MAX_NR_JUMBO + BITS_PER_LONG - 1) /
-					   BITS_PER_LONG];
-	};
+	struct rxrpc_skb_subpacket *subs; /* Offset and length of data in subpackets */
+	u8		nr_subpackets;	/* Number of subpackets */
+	s8		req_ack;	/* Subpacket marked request-ack (or -1) */
+	u8		flags;
+#define RXRPC_RX_LAST		0x01	/* Includes last packet */
+#define RXRPC_RX_VERIFIED	0x02
 
 	struct rxrpc_host_header hdr;		/* RxRPC packet header from this packet */
 };
@@ -236,15 +237,10 @@ struct rxrpc_security {
 	int (*secure_packet)(struct rxrpc_call *, struct rxrpc_txbuf *);
 
 	/* verify the security on a received packet */
-	int (*verify_packet)(struct rxrpc_call *, struct sk_buff *,
-			     unsigned int, unsigned int, rxrpc_seq_t, u16);
+	int (*verify_packet)(struct rxrpc_call *, struct sk_buff *);
 
 	/* Free crypto request on a call */
 	void (*free_call_crypto)(struct rxrpc_call *);
-
-	/* Locate the data in a received packet that has been verified. */
-	void (*locate_data)(struct rxrpc_call *, struct sk_buff *,
-			    unsigned int *, unsigned int *);
 
 	/* issue a challenge */
 	int (*issue_challenge)(struct rxrpc_connection *);
@@ -616,22 +612,18 @@ struct rxrpc_call {
 	int			debug_id;	/* debug ID for printks */
 	unsigned short		rx_pkt_offset;	/* Current recvmsg packet offset */
 	unsigned short		rx_pkt_len;	/* Current recvmsg packet len */
-	bool			rx_pkt_last;	/* Current recvmsg packet is last */
+	u8			rx_pkt_sub;	/* Current recvmsg subpacket */
 
-	/* Rx circular buffer.
-	 *
-	 * Packets are annotated with 0 or the number of the segment of a jumbo
-	 * packet each buffer refers to.  There can be up to 47 segments in a
-	 * maximum-size UDP packet.
-	 */
-#define RXRPC_RX_BUFF_SIZE	64
-#define RXRPC_RX_BUFF_MASK	(RXRPC_RX_BUFF_SIZE - 1)
-#define RXRPC_INIT_RX_WINDOW_SIZE 63
-	struct sk_buff		**rx_buffer;
-	u8			*rx_annotations;
+	/* Received data tracking */
+	struct sk_buff_head	rx_queue;	/* Queue of packets ready for recvmsg() */
+	struct sk_buff_head	rx_oos_queue;	/* Queue of out of sequence packets */
+	ktime_t			rx_1st_reply;	/* Timestamp of first reply packet */
 
-#define RXRPC_RX_ANNO_SUBPACKET	0x3f		/* Subpacket number in jumbogram */
-#define RXRPC_RX_ANNO_VERIFIED	0x80		/* Set if verified and decrypted */
+	rxrpc_seq_t		rx_consumed;	/* Highest packet consumed */
+	rxrpc_seq_t		rx_hard_ack;	/* Highest hard-ACK'd packet */
+	rxrpc_serial_t		rx_serial;	/* Highest serial received for this call */
+	u8			rx_winsize;	/* Size of Rx window */
+	u8			nr_jumbo_bad;	/* Number of jumbo dups/exceeds-windows */
 
 	/* Transmitted data tracking. */
 	spinlock_t		tx_lock;	/* Transmit queue lock */
@@ -657,15 +649,6 @@ struct rxrpc_call {
 	u8			cong_cumul_acks; /* Cumulative ACK count */
 	ktime_t			cong_tstamp;	/* Last time cwnd was changed */
 
-	rxrpc_seq_t		rx_hard_ack;	/* Dead slot in buffer; the first received but not
-						 * consumed packet follows this.
-						 */
-	rxrpc_seq_t		rx_top;		/* Highest Rx slot allocated. */
-	rxrpc_seq_t		rx_expect_next;	/* Expected next packet sequence number */
-	rxrpc_serial_t		rx_serial;	/* Highest serial received for this call */
-	u8			rx_winsize;	/* Size of Rx window */
-	u8			nr_jumbo_bad;	/* Number of jumbo dups/exceeds-windows */
-
 	spinlock_t		input_lock;	/* Lock for packet input to this call */
 
 	/* Receive-phase ACK management (ACKs we send). */
@@ -674,6 +657,10 @@ struct rxrpc_call {
 	rxrpc_seq_t		ackr_highest_seq; /* Higest sequence number received */
 	atomic_t		ackr_nr_unacked; /* Number of unacked packets */
 	atomic_t		ackr_nr_consumed; /* Number of packets needing hard ACK */
+	struct {
+		u8		ackr_sack_table[256]; /* SACK table for soft-acked packets */
+	} __aligned(8);
+#define RXRPC_SACK_SIZE 256
 
 	/* RTT management */
 	rxrpc_serial_t		rtt_serial[4];	/* Serial number of DATA or PING sent */

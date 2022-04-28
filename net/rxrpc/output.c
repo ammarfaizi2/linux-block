@@ -60,16 +60,15 @@ static void rxrpc_set_keepalive(struct rxrpc_call *call)
  */
 static size_t rxrpc_fill_out_ack(struct rxrpc_connection *conn,
 				 struct rxrpc_call *call,
-				 struct rxrpc_txbuf *txb,
-				 rxrpc_seq_t *_hard_ack,
-				 rxrpc_seq_t *_top)
+				 struct rxrpc_txbuf *txb)
 {
 	struct rxrpc_ackinfo ackinfo;
-	unsigned int tmp;
-	rxrpc_seq_t hard_ack, top, seq;
-	int ix;
+	unsigned int tmp, qsize;
+	rxrpc_seq_t hard_ack, window, whigh, ix;
+	int rsize;
 	u32 mtu, jmax;
 	u8 *ackp = txb->acks;
+	u8 sack_buffer[sizeof(call->ackr_sack_table)];
 
 	tmp = atomic_xchg(&call->ackr_nr_unacked, 0);
 	tmp |= atomic_xchg(&call->ackr_nr_consumed, 0);
@@ -78,25 +77,36 @@ static size_t rxrpc_fill_out_ack(struct rxrpc_connection *conn,
 		return 0;
 
 	/* Barrier against rxrpc_input_data(). */
+retry:
 	hard_ack = READ_ONCE(call->rx_hard_ack);
-	top = smp_load_acquire(&call->rx_top);
-	*_hard_ack = hard_ack;
-	*_top = top;
-
-	txb->ack.firstPacket	= htonl(hard_ack + 1);
-	txb->ack.previousPacket	= htonl(call->ackr_highest_seq);
-	txb->ack.nAcks		= top - hard_ack;
+	window = hard_ack + 1;
+	whigh = smp_load_acquire(&call->ackr_highest_seq);
+	txb->ack.previousPacket	= htonl(whigh);
+	if (before(whigh, hard_ack)) {
+		cond_resched();
+		goto retry;
+	}
+	txb->ack.firstPacket	= htonl(window);
+	txb->ack.nAcks		= whigh - (window - 1);
 
 	if (txb->ack.nAcks) {
-		seq = hard_ack + 1;
-		do {
-			ix = seq & RXRPC_RX_BUFF_MASK;
-			if (call->rx_buffer[ix])
-				*ackp++ = RXRPC_ACK_TYPE_ACK;
-			else
-				*ackp++ = RXRPC_ACK_TYPE_NACK;
-			seq++;
-		} while (before_eq(seq, top));
+		/* Try to copy the SACK table locklessly. */
+		memcpy(sack_buffer, call->ackr_sack_table, sizeof(sack_buffer));
+		tmp = READ_ONCE(call->rx_hard_ack);
+		if (tmp != hard_ack) {
+			cond_resched();
+			goto retry;
+		}
+
+		/* The buffer is maintained as a ring with an invariant mapping
+		 * between bit position and sequence number, so we'll probably
+		 * need to rotate it.
+		 */
+		ix = window % RXRPC_SACK_SIZE;
+		memcpy(txb->acks, sack_buffer + ix, sizeof(sack_buffer) - ix);
+		if (ix > 0)
+			memcpy(txb->acks + ix, sack_buffer, ix);
+
 	} else if (txb->ack.reason == RXRPC_ACK_DELAY) {
 		txb->ack.reason = RXRPC_ACK_IDLE;
 	}
@@ -104,16 +114,18 @@ static size_t rxrpc_fill_out_ack(struct rxrpc_connection *conn,
 	mtu = conn->params.peer->if_mtu;
 	mtu -= conn->params.peer->hdrsize;
 	jmax = (call->nr_jumbo_bad > 3) ? 1 : rxrpc_rx_jumbo_max;
+	qsize = call->rx_hard_ack - call->rx_consumed;
+	rsize = max_t(int, call->rx_winsize - qsize, 0);
 	ackinfo.rxMTU		= htonl(rxrpc_rx_mtu);
 	ackinfo.maxMTU		= htonl(mtu);
-	ackinfo.rwind		= htonl(call->rx_winsize);
+	ackinfo.rwind		= htonl(rsize);
 	ackinfo.jumbo_max	= htonl(jmax);
 
 	*ackp++ = 0;
 	*ackp++ = 0;
 	*ackp++ = 0;
 	memcpy(ackp, &ackinfo, sizeof(ackinfo));
-	return top - hard_ack + 3 + sizeof(ackinfo);
+	return txb->ack.nAcks + 3 + sizeof(ackinfo);
 }
 
 /*
@@ -170,7 +182,6 @@ static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_txbuf *
 	struct msghdr msg;
 	struct kvec iov[1];
 	rxrpc_serial_t serial;
-	rxrpc_seq_t hard_ack, top;
 	size_t len, n;
 	int ret, rtt_slot = -1;
 
@@ -194,7 +205,7 @@ static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_txbuf *
 		clear_bit(RXRPC_CALL_IDLE_ACK_PENDING, &call->flags);
 
 	spin_lock_bh(&call->lock);
-	n = rxrpc_fill_out_ack(conn, call, txb, &hard_ack, &top);
+	n = rxrpc_fill_out_ack(conn, call, txb);
 	spin_unlock_bh(&call->lock);
 	if (n == 0) {
 		kfree(pkt);
