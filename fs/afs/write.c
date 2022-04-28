@@ -201,9 +201,13 @@ void afs_create_write_requests(struct netfs_io_request *wreq)
 	struct netfs_io_subrequest *subreq;
 	struct netfs_dirty_region *region;
 
+	_enter("W=%x", wreq->debug_id);
+
 	list_for_each_entry(region, &wreq->regions, dirty_link) {
 		unsigned long long from = region->from;
 		unsigned long long to = region->to;
+
+		_debug("- region D=%x %llx-%llx", region->debug_id, from, to);
 
 		if (region->type == NETFS_COPY_TO_CACHE)
 			continue;

@@ -352,7 +352,8 @@ static int afs_init_request(struct netfs_io_request *rreq, struct file *file)
 	if (file)
 		rreq->netfs_priv = key_get(afs_file_key(file));
 	rreq->rsize = 4 * 1024 * 1024;
-	rreq->wsize = 16 * 1024 * 1024; // 0x33333;
+	//rreq->wsize = 256 * 1024; // 0x33333;
+	//rreq->alignment = 65536;
 	return 0;
 }
 
