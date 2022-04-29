@@ -528,6 +528,31 @@ unlock:
 }
 
 /**
+ * drm_dp_dpcd_probe() - probe a given DPCD address with a 1-byte read access
+ * @aux: DisplayPort AUX channel (SST)
+ * @offset: address of the register to probe
+ *
+ * Probe the provided DPCD address by reading 1 byte from it. The function can
+ * be used to trigger some side-effect the read access has, like waking up the
+ * sink, without the need for the read-out value.
+ *
+ * Returns 0 if the read access suceeded, or a negative error code on failure.
+ */
+int drm_dp_dpcd_probe(struct drm_dp_aux *aux, unsigned int offset)
+{
+	u8 buffer;
+	int ret;
+
+	ret = drm_dp_dpcd_access(aux, DP_AUX_NATIVE_READ, offset, &buffer, 1);
+	WARN_ON(ret == 0);
+
+	drm_dp_dump_access(aux, DP_AUX_NATIVE_READ, offset, &buffer, ret);
+
+	return ret < 0 ? ret : 0;
+}
+EXPORT_SYMBOL(drm_dp_dpcd_probe);
+
+/**
  * drm_dp_dpcd_read() - read a series of bytes from the DPCD
  * @aux: DisplayPort AUX channel (SST or MST)
  * @offset: address of the (first) register to read
@@ -559,10 +584,9 @@ ssize_t drm_dp_dpcd_read(struct drm_dp_aux *aux, unsigned int offset,
 	 * monitor doesn't power down exactly after the throw away read.
 	 */
 	if (!aux->is_remote) {
-		ret = drm_dp_dpcd_access(aux, DP_AUX_NATIVE_READ, DP_DPCD_REV,
-					 buffer, 1);
-		if (ret != 1)
-			goto out;
+		ret = drm_dp_dpcd_probe(aux, DP_DPCD_REV);
+		if (ret < 0)
+			return ret;
 	}
 
 	if (aux->is_remote)
@@ -571,7 +595,6 @@ ssize_t drm_dp_dpcd_read(struct drm_dp_aux *aux, unsigned int offset,
 		ret = drm_dp_dpcd_access(aux, DP_AUX_NATIVE_READ, offset,
 					 buffer, size);
 
-out:
 	drm_dp_dump_access(aux, DP_AUX_NATIVE_READ, offset, buffer, ret);
 	return ret;
 }
@@ -2390,9 +2413,36 @@ int drm_dp_dsc_sink_supported_input_bpcs(const u8 dsc_dpcd[DP_DSC_RECEIVER_CAP_S
 }
 EXPORT_SYMBOL(drm_dp_dsc_sink_supported_input_bpcs);
 
+static int drm_dp_read_lttpr_regs(struct drm_dp_aux *aux,
+				  const u8 dpcd[DP_RECEIVER_CAP_SIZE], int address,
+				  u8 *buf, int buf_size)
+{
+	/*
+	 * At least the DELL P2715Q monitor with a DPCD_REV < 0x14 returns
+	 * corrupted values when reading from the 0xF0000- range with a block
+	 * size bigger than 1.
+	 */
+	int block_size = dpcd[DP_DPCD_REV] < 0x14 ? 1 : buf_size;
+	int offset;
+	int ret;
+
+	for (offset = 0; offset < buf_size; offset += block_size) {
+		ret = drm_dp_dpcd_read(aux,
+				       address + offset,
+				       &buf[offset], block_size);
+		if (ret < 0)
+			return ret;
+
+		WARN_ON(ret != block_size);
+	}
+
+	return 0;
+}
+
 /**
  * drm_dp_read_lttpr_common_caps - read the LTTPR common capabilities
  * @aux: DisplayPort AUX channel
+ * @dpcd: DisplayPort configuration data
  * @caps: buffer to return the capability info in
  *
  * Read capabilities common to all LTTPRs.
@@ -2400,25 +2450,19 @@ EXPORT_SYMBOL(drm_dp_dsc_sink_supported_input_bpcs);
  * Returns 0 on success or a negative error code on failure.
  */
 int drm_dp_read_lttpr_common_caps(struct drm_dp_aux *aux,
+				  const u8 dpcd[DP_RECEIVER_CAP_SIZE],
 				  u8 caps[DP_LTTPR_COMMON_CAP_SIZE])
 {
-	int ret;
-
-	ret = drm_dp_dpcd_read(aux,
-			       DP_LT_TUNABLE_PHY_REPEATER_FIELD_DATA_STRUCTURE_REV,
-			       caps, DP_LTTPR_COMMON_CAP_SIZE);
-	if (ret < 0)
-		return ret;
-
-	WARN_ON(ret != DP_LTTPR_COMMON_CAP_SIZE);
-
-	return 0;
+	return drm_dp_read_lttpr_regs(aux, dpcd,
+				      DP_LT_TUNABLE_PHY_REPEATER_FIELD_DATA_STRUCTURE_REV,
+				      caps, DP_LTTPR_COMMON_CAP_SIZE);
 }
 EXPORT_SYMBOL(drm_dp_read_lttpr_common_caps);
 
 /**
  * drm_dp_read_lttpr_phy_caps - read the capabilities for a given LTTPR PHY
  * @aux: DisplayPort AUX channel
+ * @dpcd: DisplayPort configuration data
  * @dp_phy: LTTPR PHY to read the capabilities for
  * @caps: buffer to return the capability info in
  *
@@ -2427,20 +2471,13 @@ EXPORT_SYMBOL(drm_dp_read_lttpr_common_caps);
  * Returns 0 on success or a negative error code on failure.
  */
 int drm_dp_read_lttpr_phy_caps(struct drm_dp_aux *aux,
+			       const u8 dpcd[DP_RECEIVER_CAP_SIZE],
 			       enum drm_dp_phy dp_phy,
 			       u8 caps[DP_LTTPR_PHY_CAP_SIZE])
 {
-	int ret;
-
-	ret = drm_dp_dpcd_read(aux,
-			       DP_TRAINING_AUX_RD_INTERVAL_PHY_REPEATER(dp_phy),
-			       caps, DP_LTTPR_PHY_CAP_SIZE);
-	if (ret < 0)
-		return ret;
-
-	WARN_ON(ret != DP_LTTPR_PHY_CAP_SIZE);
-
-	return 0;
+	return drm_dp_read_lttpr_regs(aux, dpcd,
+				      DP_TRAINING_AUX_RD_INTERVAL_PHY_REPEATER(dp_phy),
+				      caps, DP_LTTPR_PHY_CAP_SIZE);
 }
 EXPORT_SYMBOL(drm_dp_read_lttpr_phy_caps);
 

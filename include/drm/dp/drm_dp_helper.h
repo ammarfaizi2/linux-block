@@ -361,6 +361,7 @@ struct drm_panel;
 # define DP_PSR_IS_SUPPORTED                1
 # define DP_PSR2_IS_SUPPORTED		    2	    /* eDP 1.4 */
 # define DP_PSR2_WITH_Y_COORD_IS_SUPPORTED  3	    /* eDP 1.4a */
+# define DP_PSR2_WITH_Y_COORD_ET_SUPPORTED  4	    /* eDP 1.5, adopted eDP 1.4b SCR */
 
 #define DP_PSR_CAPS                         0x071   /* XXX 1.2? */
 # define DP_PSR_NO_TRAIN_ON_EXIT            1
@@ -375,6 +376,7 @@ struct drm_panel;
 # define DP_PSR_SETUP_TIME_SHIFT            1
 # define DP_PSR2_SU_Y_COORDINATE_REQUIRED   (1 << 4)  /* eDP 1.4a */
 # define DP_PSR2_SU_GRANULARITY_REQUIRED    (1 << 5)  /* eDP 1.4b */
+# define DP_PSR2_SU_AUX_FRAME_SYNC_NOT_NEEDED (1 << 6)/* eDP 1.5, adopted eDP 1.4b SCR */
 
 #define DP_PSR2_SU_X_GRANULARITY	    0x072 /* eDP 1.4b */
 #define DP_PSR2_SU_Y_GRANULARITY	    0x074 /* eDP 1.4b */
@@ -2053,6 +2055,7 @@ struct drm_dp_aux {
 	bool is_remote;
 };
 
+int drm_dp_dpcd_probe(struct drm_dp_aux *aux, unsigned int offset);
 ssize_t drm_dp_dpcd_read(struct drm_dp_aux *aux, unsigned int offset,
 			 void *buffer, size_t size);
 ssize_t drm_dp_dpcd_write(struct drm_dp_aux *aux, unsigned int offset,
@@ -2148,8 +2151,10 @@ bool drm_dp_read_sink_count_cap(struct drm_connector *connector,
 int drm_dp_read_sink_count(struct drm_dp_aux *aux);
 
 int drm_dp_read_lttpr_common_caps(struct drm_dp_aux *aux,
+				  const u8 dpcd[DP_RECEIVER_CAP_SIZE],
 				  u8 caps[DP_LTTPR_COMMON_CAP_SIZE]);
 int drm_dp_read_lttpr_phy_caps(struct drm_dp_aux *aux,
+			       const u8 dpcd[DP_RECEIVER_CAP_SIZE],
 			       enum drm_dp_phy dp_phy,
 			       u8 caps[DP_LTTPR_PHY_CAP_SIZE]);
 int drm_dp_lttpr_count(const u8 cap[DP_LTTPR_COMMON_CAP_SIZE]);
