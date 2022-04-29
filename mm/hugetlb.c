@@ -2986,8 +2986,6 @@ int __alloc_bootmem_huge_page(struct hstate *h, int nid)
 	struct huge_bootmem_page *m = NULL; /* initialize for clang */
 	int nr_nodes, node;
 
-	if (nid != NUMA_NO_NODE && !node_online(nid))
-		return 0;
 	/* do node specific alloc */
 	if (nid != NUMA_NO_NODE) {
 		m = memblock_alloc_try_nid_raw(huge_page_size(h), huge_page_size(h),
@@ -4174,7 +4172,7 @@ static int __init hugepages_setup(char *s)
 				pr_warn("HugeTLB: architecture can't support node specific alloc, ignoring!\n");
 				return 0;
 			}
-			if (!node_online(tmp))
+			if (tmp >= MAX_NUMNODES || !node_online(tmp))
 				goto invalid;
 			node = array_index_nospec(tmp, MAX_NUMNODES);
 			p += count + 1;
