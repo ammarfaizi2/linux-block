@@ -3913,7 +3913,9 @@ BROADCOM BNXT_EN 50 GIGABIT ETHERNET DRIVER
 M:	Michael Chan <michael.chan@broadcom.com>
 L:	netdev@vger.kernel.org
 S:	Supported
+F:	drivers/firmware/broadcom/tee_bnxt_fw.c
 F:	drivers/net/ethernet/broadcom/bnxt/
+F:	include/linux/firmware/broadcom/tee_bnxt_fw.h
 
 BROADCOM BRCM80211 IEEE802.11n WIRELESS DRIVER
 M:	Arend van Spriel <aspriel@gmail.com>
@@ -5047,12 +5049,6 @@ S:	Maintained
 F:	Documentation/hwmon/corsair-psu.rst
 F:	drivers/hwmon/corsair-psu.c
 
-COSA/SRP SYNC SERIAL DRIVER
-M:	Jan "Yenya" Kasprzak <kas@fi.muni.cz>
-S:	Maintained
-W:	http://www.fi.muni.cz/~kas/cosa/
-F:	drivers/net/wan/cosa*
-
 COUNTER SUBSYSTEM
 M:	William Breathitt Gray <vilhelm.gray@gmail.com>
 L:	linux-iio@vger.kernel.org
@@ -5233,6 +5229,14 @@ S:	Maintained
 T:	git git://linuxtv.org/media_tree.git
 F:	Documentation/devicetree/bindings/media/allwinner,sun6i-a31-csi.yaml
 F:	drivers/media/platform/sunxi/sun6i-csi/
+
+CTU CAN FD DRIVER
+M:	Pavel Pisa <pisa@cmp.felk.cvut.cz>
+M:	Ondrej Ille <ondrej.ille@gmail.com>
+L:	linux-can@vger.kernel.org
+S:	Maintained
+F:	Documentation/devicetree/bindings/net/can/ctu,ctucanfd.yaml
+F:	drivers/net/can/ctucanfd/
 
 CW1200 WLAN driver
 M:	Solomon Peachy <pizza@shaftnet.org>
@@ -8764,7 +8768,6 @@ F:	kernel/time/timer_*.c
 HIGH-SPEED SCC DRIVER FOR AX.25
 L:	linux-hams@vger.kernel.org
 S:	Orphan
-F:	drivers/net/hamradio/dmascc.c
 F:	drivers/net/hamradio/scc.c
 
 HIGHPOINT ROCKETRAID 3xxx RAID DRIVER
@@ -10237,8 +10240,6 @@ F:	drivers/net/ethernet/sgi/ioc3-eth.c
 IOMAP FILESYSTEM LIBRARY
 M:	Christoph Hellwig <hch@infradead.org>
 M:	Darrick J. Wong <djwong@kernel.org>
-M:	linux-xfs@vger.kernel.org
-M:	linux-fsdevel@vger.kernel.org
 L:	linux-xfs@vger.kernel.org
 L:	linux-fsdevel@vger.kernel.org
 S:	Supported
@@ -11830,6 +11831,13 @@ S:	Supported
 F:	Documentation/devicetree/bindings/mmc/marvell,xenon-sdhci.txt
 F:	drivers/mmc/host/sdhci-xenon*
 
+MARVELL OCTEON ENDPOINT DRIVER
+M:	Veerasenareddy Burru <vburru@marvell.com>
+M:	Abhijit Ayarekar <aayarekar@marvell.com>
+L:	netdev@vger.kernel.org
+S:	Supported
+F:	drivers/net/ethernet/marvell/octeon_ep
+
 MATROX FRAMEBUFFER DRIVER
 L:	linux-fbdev@vger.kernel.org
 S:	Orphan
@@ -12905,6 +12913,13 @@ F:	drivers/net/dsa/microchip/*
 F:	include/linux/platform_data/microchip-ksz.h
 F:	net/dsa/tag_ksz.c
 
+MICROCHIP LAN87xx/LAN937x T1 PHY DRIVER
+M:	Arun Ramadoss <arun.ramadoss@microchip.com>
+R:	UNGLinuxDriver@microchip.com
+L:	netdev@vger.kernel.org
+S:	Maintained
+F:	drivers/net/phy/microchip_t1.c
+
 MICROCHIP LAN743X ETHERNET DRIVER
 M:	Bryan Whitehead <bryan.whitehead@microchip.com>
 M:	UNGLinuxDriver@microchip.com
@@ -13625,6 +13640,7 @@ F:	net/core/drop_monitor.c
 
 NETWORKING DRIVERS
 M:	"David S. Miller" <davem@davemloft.net>
+M:	Eric Dumazet <edumazet@google.com>
 M:	Jakub Kicinski <kuba@kernel.org>
 M:	Paolo Abeni <pabeni@redhat.com>
 L:	netdev@vger.kernel.org
@@ -13672,6 +13688,7 @@ F:	tools/testing/selftests/drivers/net/dsa/
 
 NETWORKING [GENERAL]
 M:	"David S. Miller" <davem@davemloft.net>
+M:	Eric Dumazet <edumazet@google.com>
 M:	Jakub Kicinski <kuba@kernel.org>
 M:	Paolo Abeni <pabeni@redhat.com>
 L:	netdev@vger.kernel.org
@@ -21596,7 +21613,6 @@ F:	drivers/xen/*swiotlb*
 XFS FILESYSTEM
 C:	irc://irc.oftc.net/xfs
 M:	Darrick J. Wong <djwong@kernel.org>
-M:	linux-xfs@vger.kernel.org
 L:	linux-xfs@vger.kernel.org
 S:	Supported
 W:	http://xfs.org/
@@ -21626,7 +21642,7 @@ M:	Appana Durga Kedareswara rao <appana.durga.rao@xilinx.com>
 R:	Naga Sureshkumar Relli <naga.sureshkumar.relli@xilinx.com>
 L:	linux-can@vger.kernel.org
 S:	Maintained
-F:	Documentation/devicetree/bindings/net/can/xilinx_can.txt
+F:	Documentation/devicetree/bindings/net/can/xilinx,can.yaml
 F:	drivers/net/can/xilinx_can.c
 
 XILINX GPIO DRIVER
