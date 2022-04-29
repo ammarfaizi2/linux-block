@@ -370,7 +370,7 @@ static void coalesce_file_region(struct resv_map *resv, struct file_region *rg)
 }
 
 static inline long
-hugetlb_resv_map_add(struct resv_map *map, struct file_region *rg, long from,
+hugetlb_resv_map_add(struct resv_map *map, struct list_head *rg, long from,
 		     long to, struct hstate *h, struct hugetlb_cgroup *cg,
 		     long *regions_needed)
 {
@@ -379,7 +379,7 @@ hugetlb_resv_map_add(struct resv_map *map, struct file_region *rg, long from,
 	if (!regions_needed) {
 		nrg = get_file_region_entry_from_cache(map, from, to);
 		record_hugetlb_cgroup_uncharge_info(cg, h, map, nrg);
-		list_add(&nrg->link, rg->link.prev);
+		list_add(&nrg->link, rg);
 		coalesce_file_region(map, nrg);
 	} else
 		*regions_needed += 1;
@@ -402,47 +402,52 @@ static long add_reservation_in_range(struct resv_map *resv, long f, long t,
 	long add = 0;
 	struct list_head *head = &resv->regions;
 	long last_accounted_offset = f;
-	struct file_region *rg = NULL, *trg = NULL;
+	struct file_region *iter, *trg = NULL;
+	struct list_head *rg = NULL;
 
 	if (regions_needed)
 		*regions_needed = 0;
 
 	/* In this loop, we essentially handle an entry for the range
-	 * [last_accounted_offset, rg->from), at every iteration, with some
+	 * [last_accounted_offset, iter->from), at every iteration, with some
 	 * bounds checking.
 	 */
-	list_for_each_entry_safe(rg, trg, head, link) {
+	list_for_each_entry_safe(iter, trg, head, link) {
 		/* Skip irrelevant regions that start before our range. */
-		if (rg->from < f) {
+		if (iter->from < f) {
 			/* If this region ends after the last accounted offset,
 			 * then we need to update last_accounted_offset.
 			 */
-			if (rg->to > last_accounted_offset)
-				last_accounted_offset = rg->to;
+			if (iter->to > last_accounted_offset)
+				last_accounted_offset = iter->to;
 			continue;
 		}
 
 		/* When we find a region that starts beyond our range, we've
 		 * finished.
 		 */
-		if (rg->from >= t)
+		if (iter->from >= t) {
+			rg = iter->link.prev;
 			break;
+		}
 
-		/* Add an entry for last_accounted_offset -> rg->from, and
+		/* Add an entry for last_accounted_offset -> iter->from, and
 		 * update last_accounted_offset.
 		 */
-		if (rg->from > last_accounted_offset)
-			add += hugetlb_resv_map_add(resv, rg,
+		if (iter->from > last_accounted_offset)
+			add += hugetlb_resv_map_add(resv, iter->link.prev,
 						    last_accounted_offset,
-						    rg->from, h, h_cg,
+						    iter->from, h, h_cg,
 						    regions_needed);
 
-		last_accounted_offset = rg->to;
+		last_accounted_offset = iter->to;
 	}
 
 	/* Handle the case where our range extends beyond
 	 * last_accounted_offset.
 	 */
+	if (!rg)
+		rg = head->prev;
 	if (last_accounted_offset < t)
 		add += hugetlb_resv_map_add(resv, rg, last_accounted_offset,
 					    t, h, h_cg, regions_needed);
@@ -1535,7 +1540,7 @@ static void __update_and_free_page(struct hstate *h, struct page *page)
 	if (hstate_is_gigantic(h) && !gigantic_page_runtime_supported())
 		return;
 
-	if (alloc_huge_page_vmemmap(h, page)) {
+	if (hugetlb_vmemmap_alloc(h, page)) {
 		spin_lock_irq(&hugetlb_lock);
 		/*
 		 * If we cannot allocate vmemmap pages, just refuse to free the
@@ -1612,7 +1617,7 @@ static DECLARE_WORK(free_hpage_work, free_hpage_workfn);
 
 static inline void flush_free_hpage_work(struct hstate *h)
 {
-	if (free_vmemmap_pages_per_hpage(h))
+	if (hugetlb_optimize_vmemmap_pages(h))
 		flush_work(&free_hpage_work);
 }
 
@@ -1732,7 +1737,7 @@ static void __prep_account_new_huge_page(struct hstate *h, int nid)
 
 static void __prep_new_huge_page(struct hstate *h, struct page *page)
 {
-	free_huge_page_vmemmap(h, page);
+	hugetlb_vmemmap_free(h, page);
 	INIT_LIST_HEAD(&page->lru);
 	set_compound_page_dtor(page, HUGETLB_PAGE_DTOR);
 	hugetlb_set_page_subpool(page, NULL);
@@ -2105,7 +2110,7 @@ retry:
 		 * Attempt to allocate vmemmmap here so that we can take
 		 * appropriate action on failure.
 		 */
-		rc = alloc_huge_page_vmemmap(h, head);
+		rc = hugetlb_vmemmap_alloc(h, head);
 		if (!rc) {
 			/*
 			 * Move PageHWPoison flag from head page to the raw
@@ -3420,7 +3425,7 @@ static int demote_free_huge_page(struct hstate *h, struct page *page)
 	remove_hugetlb_page_for_demote(h, page, false);
 	spin_unlock_irq(&hugetlb_lock);
 
-	rc = alloc_huge_page_vmemmap(h, page);
+	rc = hugetlb_vmemmap_alloc(h, page);
 	if (rc) {
 		/* Allocation of vmemmmap failed, we can not demote page */
 		spin_lock_irq(&hugetlb_lock);
@@ -6776,7 +6781,9 @@ int get_hwpoison_huge_page(struct page *page, bool *hugetlb)
 	spin_lock_irq(&hugetlb_lock);
 	if (PageHeadHuge(page)) {
 		*hugetlb = true;
-		if (HPageFreed(page) || HPageMigratable(page))
+		if (HPageFreed(page))
+			ret = 0;
+		else if (HPageMigratable(page))
 			ret = get_page_unless_zero(page);
 		else
 			ret = -EBUSY;
