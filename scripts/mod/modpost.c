@@ -2199,6 +2199,12 @@ static void check_exports(struct module *mod)
 		if (!mod->is_gpl_compatible)
 			check_for_gpl_usage(exp->export, basename, exp->name);
 	}
+
+	list_for_each_entry(s, &mod->exported_symbols, list) {
+		if (s->is_static)
+			error("\"%s\" [%s] is a static %s\n",
+			      s->name, mod->name, export_str(s->export));
+	}
 }
 
 static void check_modname_len(struct module *mod)
@@ -2510,7 +2516,6 @@ int main(int argc, char **argv)
 	char *missing_namespace_deps = NULL;
 	char *dump_write = NULL, *files_source = NULL;
 	int opt;
-	int n;
 	LIST_HEAD(dump_lists);
 	struct dump_list *dl, *dl2;
 
@@ -2606,16 +2611,6 @@ int main(int argc, char **argv)
 	if (sec_mismatch_count && !sec_mismatch_warn_only)
 		error("Section mismatches detected.\n"
 		      "Set CONFIG_SECTION_MISMATCH_WARN_ONLY=y to allow them.\n");
-	for (n = 0; n < SYMBOL_HASH_SIZE; n++) {
-		struct symbol *s;
-
-		for (s = symbolhash[n]; s; s = s->next) {
-			if (s->is_static)
-				error("\"%s\" [%s] is a static %s\n",
-				      s->name, s->module->name,
-				      export_str(s->export));
-		}
-	}
 
 	if (nr_unresolved > MAX_UNRESOLVED_REPORTS)
 		warn("suppressed %u unresolved symbol warnings because there were too many)\n",
