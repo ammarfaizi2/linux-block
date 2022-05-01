@@ -4330,9 +4330,7 @@ static int svm_check_intercept(struct kvm_vcpu *vcpu,
 		break;
 	}
 
-	/* TODO: Advertise NRIPS to guest hypervisor unconditionally */
-	if (static_cpu_has(X86_FEATURE_NRIPS))
-		vmcb->control.next_rip  = info->next_rip;
+	vmcb->control.next_rip  = info->next_rip;
 	vmcb->control.exit_code = icpt_info.exit_code;
 	vmexit = nested_svm_exit_handled(svm);
 
@@ -4962,6 +4960,16 @@ static __init int svm_hardware_setup(void)
 		pause_filter_thresh = 0;
 	}
 
+	if (nrips) {
+		if (!boot_cpu_has(X86_FEATURE_NRIPS))
+			nrips = false;
+	}
+
+	if (!nrips && nested) {
+		pr_notice("kvm: Nested Virtualization requires NRIPS (NextRIP Save)\n");
+		nested = false;
+	}
+
 	if (nested) {
 		printk(KERN_INFO "kvm: Nested Virtualization enabled\n");
 		kvm_enable_efer_bits(EFER_SVME | EFER_LMSLE);
@@ -4997,11 +5005,6 @@ static __init int svm_hardware_setup(void)
 		r = svm_cpu_init(cpu);
 		if (r)
 			goto err;
-	}
-
-	if (nrips) {
-		if (!boot_cpu_has(X86_FEATURE_NRIPS))
-			nrips = false;
 	}
 
 	enable_apicv = avic = avic && npt_enabled && (boot_cpu_has(X86_FEATURE_AVIC) || force_avic);

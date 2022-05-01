@@ -691,14 +691,13 @@ static void nested_vmcb02_prepare_control(struct vcpu_svm *svm,
 	/*
 	 * next_rip is consumed on VMRUN as the return address pushed on the
 	 * stack for injected soft exceptions/interrupts.  If nrips is exposed
-	 * to L1, take it verbatim from vmcb12.  If nrips is supported in
-	 * hardware but not exposed to L1, stuff the actual L2 RIP to emulate
-	 * what a nrips=0 CPU would do (L1 is responsible for advancing RIP
-	 * prior to injecting the event).
+	 * to L1, take it verbatim from vmcb12.  If nrips is not exposed to L1,
+	 * stuff the actual L2 RIP to emulate what an nrips=0 CPU would do (L1
+	 * is responsible for advancing RIP prior to injecting the event).
 	 */
 	if (svm->nrips_enabled)
 		vmcb02->control.next_rip    = svm->nested.ctl.next_rip;
-	else if (boot_cpu_has(X86_FEATURE_NRIPS))
+	else
 		vmcb02->control.next_rip    = vmcb12_rip;
 
 	svm->nmi_l1_to_l2 = is_evtinj_nmi(vmcb02->control.event_inj);
@@ -706,10 +705,7 @@ static void nested_vmcb02_prepare_control(struct vcpu_svm *svm,
 		svm->soft_int_injected = true;
 		svm->soft_int_csbase = svm->vmcb->save.cs.base;
 		svm->soft_int_old_rip = vmcb12_rip;
-		if (svm->nrips_enabled)
-			svm->soft_int_next_rip = svm->nested.ctl.next_rip;
-		else
-			svm->soft_int_next_rip = vmcb12_rip;
+		svm->soft_int_next_rip = vmcb02->control.next_rip;
 	}
 
 	vmcb02->control.virt_ext            = vmcb01->control.virt_ext &
