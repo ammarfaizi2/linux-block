@@ -1282,9 +1282,9 @@ static int __remove_mapping(struct address_space *mapping, struct folio *folio,
 		xa_unlock_irq(&mapping->i_pages);
 		put_swap_page(&folio->page, swap);
 	} else {
-		void (*freepage)(struct page *);
+		void (*free_folio)(struct folio *);
 
-		freepage = mapping->a_ops->freepage;
+		free_folio = mapping->a_ops->free_folio;
 		/*
 		 * Remember a shadow entry for reclaimed file cache in
 		 * order to detect refaults, thus thrashing, later on.
@@ -1310,8 +1310,8 @@ static int __remove_mapping(struct address_space *mapping, struct folio *folio,
 			inode_add_lru(mapping->host);
 		spin_unlock(&mapping->host->i_lock);
 
-		if (freepage != NULL)
-			freepage(&folio->page);
+		if (free_folio)
+			free_folio(folio);
 	}
 
 	return 1;

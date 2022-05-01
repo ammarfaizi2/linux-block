@@ -225,12 +225,12 @@ void __filemap_remove_folio(struct folio *folio, void *shadow)
 
 void filemap_free_folio(struct address_space *mapping, struct folio *folio)
 {
-	void (*freepage)(struct page *);
+	void (*free_folio)(struct folio *);
 	int refs = 1;
 
-	freepage = mapping->a_ops->freepage;
-	if (freepage)
-		freepage(&folio->page);
+	free_folio = mapping->a_ops->free_folio;
+	if (free_folio)
+		free_folio(folio);
 
 	if (folio_test_large(folio) && !folio_test_hugetlb(folio))
 		refs = folio_nr_pages(folio);
@@ -807,7 +807,7 @@ void replace_page_cache_page(struct page *old, struct page *new)
 	struct folio *fold = page_folio(old);
 	struct folio *fnew = page_folio(new);
 	struct address_space *mapping = old->mapping;
-	void (*freepage)(struct page *) = mapping->a_ops->freepage;
+	void (*free_folio)(struct folio *) = mapping->a_ops->free_folio;
 	pgoff_t offset = old->index;
 	XA_STATE(xas, &mapping->i_pages, offset);
 
@@ -835,9 +835,9 @@ void replace_page_cache_page(struct page *old, struct page *new)
 	if (PageSwapBacked(new))
 		__inc_lruvec_page_state(new, NR_SHMEM);
 	xas_unlock_irq(&xas);
-	if (freepage)
-		freepage(old);
-	put_page(old);
+	if (free_folio)
+		free_folio(fold);
+	folio_put(fold);
 }
 EXPORT_SYMBOL_GPL(replace_page_cache_page);
 
