@@ -3732,14 +3732,21 @@ static bool ath12k_dp_rx_h_rxdma_err(struct ath12k *ar,  struct sk_buff *msdu,
 				     struct ieee80211_rx_status *status)
 {
 	struct ath12k_skb_rxcb *rxcb = ATH12K_SKB_RXCB(msdu);
+	struct hal_rx_desc *rx_desc = (struct hal_rx_desc*)msdu->data;
 	bool drop = false;
+	u32 err_bitmap;
 
 	ar->ab->soc_stats.rxdma_error[rxcb->err_code]++;
 
 	switch (rxcb->err_code) {
+	case HAL_REO_ENTR_RING_RXDMA_ECODE_DECRYPT_ERR:
 	case HAL_REO_ENTR_RING_RXDMA_ECODE_TKIP_MIC_ERR:
-		ath12k_dp_rx_h_tkip_mic_err(ar, msdu, status);
-		break;
+		err_bitmap = ath12k_dp_rx_h_mpdu_err(rx_desc);
+		if (err_bitmap & DP_RX_MPDU_ERR_TKIP_MIC) {
+			ath12k_dp_rx_h_tkip_mic_err(ar, msdu, status);
+			break;
+		}
+		fallthrough;
 	default:
 		/* TODO: Review other rxdma error code to check if anything is
 		 * worth reporting to mac80211
