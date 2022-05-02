@@ -65,6 +65,7 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.supports_suspend = false,
 		.hal_desc_sz = sizeof(struct hal_rx_desc_qcn92xx),
 		.num_tcl_banks = 48,
+		.fix_l1ss = false,
 	},
 };
 

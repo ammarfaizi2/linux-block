@@ -261,6 +261,9 @@ static int ath12k_pci_fix_l1ss(struct ath12k_base *ab)
 {
 	int ret;
 
+	if (!ab->hw_params.fix_l1ss)
+		return 0;
+
 	ret = ath12k_pci_set_link_reg(ab,
 				      PCIE_QSERDES_COM_SYSCLK_EN_SEL_REG(ab),
 				      PCIE_QSERDES_COM_SYSCLK_EN_SEL_VAL,
