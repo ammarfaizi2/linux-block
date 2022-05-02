@@ -140,6 +140,7 @@ enum ath11k_hw_rev {
 	ATH11K_HW_QCN9074_HW10,
 	ATH11K_HW_WCN6855_HW20,
 	ATH11K_HW_WCN6855_HW21,
+	ATH11K_HW_WCN6750_HW10,
 };
 
 enum ath11k_firmware_mode {
@@ -748,14 +749,6 @@ struct ath11k_board_data {
 	size_t len;
 };
 
-struct ath11k_bus_params {
-	bool mhi_support;
-	bool m3_fw_support;
-	bool fixed_bdf_addr;
-	bool fixed_mem_region;
-	bool static_window_map;
-};
-
 struct ath11k_pci_ops {
 	int (*wakeup)(struct ath11k_base *ab);
 	void (*release)(struct ath11k_base *ab);
@@ -887,7 +880,6 @@ struct ath11k_base {
 	int bd_api;
 
 	struct ath11k_hw_params hw_params;
-	struct ath11k_bus_params bus_params;
 
 	const struct firmware *cal_file;
 
@@ -958,6 +950,7 @@ struct ath11k_base {
 		struct {
 			const struct ath11k_msi_config *config;
 			u32 ep_base_data;
+			u32 irqs[32];
 			u32 addr_lo;
 			u32 addr_hi;
 		} msi;
@@ -1135,8 +1128,7 @@ int ath11k_core_pre_init(struct ath11k_base *ab);
 int ath11k_core_init(struct ath11k_base *ath11k);
 void ath11k_core_deinit(struct ath11k_base *ath11k);
 struct ath11k_base *ath11k_core_alloc(struct device *dev, size_t priv_size,
-				      enum ath11k_bus bus,
-				      const struct ath11k_bus_params *bus_params);
+				      enum ath11k_bus bus);
 void ath11k_core_free(struct ath11k_base *ath11k);
 int ath11k_core_fetch_bdf(struct ath11k_base *ath11k,
 			  struct ath11k_board_data *bd);
