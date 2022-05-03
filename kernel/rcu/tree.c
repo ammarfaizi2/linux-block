@@ -838,6 +838,10 @@ void rcu_irq_exit_check_preempt(void)
  *
  * If you add or remove a call to rcu_irq_exit_irqson(), be sure to test
  * with CONFIG_RCU_EQS_DEBUG=y.
+ *
+ * FIXME: This function should be noinstr but the below local_irq_restore() is
+ * unsafe because it involves illegal RCU uses through tracing and lockdep.
+ * This must be fixed first.
  */
 void rcu_irq_exit_irqson(void)
 {
@@ -895,6 +899,10 @@ static void noinstr rcu_eqs_exit(bool user)
  *
  * If you add or remove a call to rcu_idle_exit(), be sure to test with
  * CONFIG_RCU_EQS_DEBUG=y.
+ *
+ * FIXME: This function should be noinstr but the below local_irq_save() is
+ * unsafe because it involves illegal RCU uses through tracing and lockdep.
+ * This must be fixed first.
  */
 void rcu_idle_exit(void)
 {
@@ -1076,6 +1084,10 @@ noinstr void rcu_irq_enter(void)
  *
  * If you add or remove a call to rcu_irq_enter_irqson(), be sure to test
  * with CONFIG_RCU_EQS_DEBUG=y.
+ *
+ * FIXME: This function should be noinstr but the below local_irq_save() is
+ * unsafe because it involves illegal RCU uses through tracing and lockdep.
+ * This must be fixed first.
  */
 void rcu_irq_enter_irqson(void)
 {
