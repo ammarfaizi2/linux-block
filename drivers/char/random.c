@@ -1157,6 +1157,9 @@ void rand_initialize_disk(struct gendisk *disk)
 void add_hwgenerator_randomness(const void *buffer, size_t count,
 				size_t entropy)
 {
+	mix_pool_bytes(buffer, count);
+	credit_entropy_bits(entropy);
+
 	/*
 	 * Throttle writing if we're above the trickle threshold.
 	 * We'll be woken up again once below POOL_MIN_BITS, when
@@ -1167,8 +1170,6 @@ void add_hwgenerator_randomness(const void *buffer, size_t count,
 			kthread_should_stop() ||
 			input_pool.entropy_count < POOL_MIN_BITS,
 			CRNG_RESEED_INTERVAL);
-	mix_pool_bytes(buffer, count);
-	credit_entropy_bits(entropy);
 }
 EXPORT_SYMBOL_GPL(add_hwgenerator_randomness);
 
