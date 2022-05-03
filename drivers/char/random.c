@@ -75,12 +75,13 @@
  * crng_init =  0 --> Uninitialized
  *		1 --> Initialized
  *		2 --> Initialized from input_pool
+ *		3 --> Initialized from input_pool and static key set
  *
  * crng_init is protected by base_crng->lock, and only increases
- * its value (from 0->1->2).
+ * its value (from 0->1->2->3).
  */
 static int crng_init = 0;
-#define crng_ready() (likely(crng_init > 1))
+static DEFINE_STATIC_KEY_FALSE(crng_ready_static);
 /* Various types of waiters for crng_init->2 transition. */
 static DECLARE_WAIT_QUEUE_HEAD(crng_init_wait);
 static struct fasync_struct *fasync;
@@ -95,6 +96,17 @@ static struct ratelimit_state urandom_warning =
 static int ratelimit_disable __read_mostly;
 module_param_named(ratelimit_disable, ratelimit_disable, int, 0644);
 MODULE_PARM_DESC(ratelimit_disable, "Disable random ratelimit suppression");
+
+static bool crng_ready_slowpath(void)
+{
+	if (crng_init <= 1)
+		return false;
+	if (in_atomic() || irqs_disabled() || cmpxchg(&crng_init, 2, 3) != 2)
+		return true;
+	static_branch_enable(&crng_ready_static);
+	return true;
+}
+#define crng_ready() (static_branch_likely(&crng_ready_static) || unlikely(crng_ready_slowpath()))
 
 /*
  * Returns whether or not the input pool has been seeded and thus guaranteed
