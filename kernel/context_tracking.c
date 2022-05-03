@@ -251,3 +251,15 @@ void __init context_tracking_init(void)
 #endif
 
 #endif /* #ifdef CONFIG_CONTEXT_TRACKING_USER */
+
+noinstr void ct_idle_enter(void)
+{
+	rcu_idle_enter();
+}
+EXPORT_SYMBOL_GPL(ct_idle_enter);
+
+void ct_idle_exit(void)
+{
+	rcu_idle_exit();
+}
+EXPORT_SYMBOL_GPL(ct_idle_exit);
