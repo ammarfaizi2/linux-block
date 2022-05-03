@@ -24,6 +24,7 @@ struct context_tracking {
 	} state;
 #endif
 	atomic_t dynticks;		/* Even value for idle, else odd. */
+	long dynticks_nesting;		/* Track process nesting level. */
 };
 
 #ifdef CONFIG_CONTEXT_TRACKING
@@ -44,6 +45,17 @@ static __always_inline int ct_dynticks_cpu_acquire(int cpu)
 {
 	struct context_tracking *ct = per_cpu_ptr(&context_tracking, cpu);
 	return atomic_read_acquire(&ct->state);
+}
+
+static __always_inline long ct_dynticks_nesting(void)
+{
+	return __this_cpu_read(context_tracking.dynticks_nesting);
+}
+
+static __always_inline long ct_dynticks_nesting_cpu(int cpu)
+{
+	struct context_tracking *ct = per_cpu_ptr(&context_tracking, cpu);
+	return ct->dynticks_nesting;
 }
 #endif
 

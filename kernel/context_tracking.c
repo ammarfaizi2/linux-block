@@ -250,6 +250,7 @@ void __init context_tracking_init(void)
 #endif /* #ifdef CONFIG_CONTEXT_TRACKING_USER */
 
 DEFINE_PER_CPU(struct context_tracking, context_tracking) = {
+		.dynticks_nesting = 1,
 		.dynticks = ATOMIC_INIT(1),
 };
 EXPORT_SYMBOL_GPL(context_tracking);
