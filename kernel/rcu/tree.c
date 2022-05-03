@@ -659,7 +659,7 @@ static noinstr void rcu_eqs_enter(bool user)
  * If you add or remove a call to rcu_idle_enter(), be sure to test with
  * CONFIG_RCU_EQS_DEBUG=y.
  */
-void rcu_idle_enter(void)
+noinstr void rcu_idle_enter(void)
 {
 	lockdep_assert_irqs_disabled();
 	rcu_eqs_enter(false);
