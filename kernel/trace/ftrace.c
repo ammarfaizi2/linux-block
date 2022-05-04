@@ -3048,6 +3048,10 @@ int ftrace_shutdown(struct ftrace_ops *ops, int command)
 		 */
 		synchronize_rcu_tasks_rude();
 
+		/* Make sure hotplug is not happening */
+		cpus_read_lock();
+		cpus_read_unlock();
+
 		/*
 		 * When the kernel is preemptive, tasks can be preempted
 		 * while on a ftrace trampoline. Just scheduling a task on
