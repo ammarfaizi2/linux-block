@@ -551,10 +551,6 @@ static void pci_pm_default_resume(struct pci_dev *pci_dev)
 	pci_enable_wake(pci_dev, PCI_D0, false);
 }
 
-#endif
-
-#ifdef CONFIG_PM_SLEEP
-
 static void pci_pm_default_resume_early(struct pci_dev *pci_dev)
 {
 	pci_power_up(pci_dev);
@@ -562,6 +558,21 @@ static void pci_pm_default_resume_early(struct pci_dev *pci_dev)
 	pci_restore_state(pci_dev);
 	pci_pme_restore(pci_dev);
 }
+
+static void pci_pm_bridge_power_up_actions(struct pci_dev *pci_dev)
+{
+	pci_bridge_wait_for_secondary_bus(pci_dev);
+	/*
+	 * When powering on a bridge from D3cold, the whole hierarchy may be
+	 * powered on into D0uninitialized state, resume them to give them a
+	 * chance to suspend again
+	 */
+	pci_resume_bus(pci_dev->subordinate);
+}
+
+#endif
+
+#ifdef CONFIG_PM_SLEEP
 
 /*
  * Default "suspend" method for devices that have no driver provided suspend,
@@ -934,7 +945,7 @@ static int pci_pm_resume_noirq(struct device *dev)
 	pcie_pme_root_status_cleanup(pci_dev);
 
 	if (!skip_bus_pm && prev_state == PCI_D3cold)
-		pci_bridge_wait_for_secondary_bus(pci_dev);
+		pci_pm_bridge_power_up_actions(pci_dev);
 
 	if (pci_has_legacy_pm_support(pci_dev))
 		return 0;
@@ -1312,7 +1323,7 @@ static int pci_pm_runtime_resume(struct device *dev)
 	 * to a driver because although we left it in D0, it may have gone to
 	 * D3cold when the bridge above it runtime suspended.
 	 */
-	pci_restore_standard_config(pci_dev);
+	pci_pm_default_resume_early(pci_dev);
 
 	if (!pci_dev->driver)
 		return 0;
@@ -1321,12 +1332,10 @@ static int pci_pm_runtime_resume(struct device *dev)
 	pci_pm_default_resume(pci_dev);
 
 	if (prev_state == PCI_D3cold)
-		pci_bridge_wait_for_secondary_bus(pci_dev);
+		pci_pm_bridge_power_up_actions(pci_dev);
 
 	if (pm && pm->runtime_resume)
 		error = pm->runtime_resume(dev);
-
-	pci_dev->runtime_d3cold = false;
 
 	return error;
 }
