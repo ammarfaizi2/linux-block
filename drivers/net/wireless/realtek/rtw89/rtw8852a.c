@@ -408,6 +408,51 @@ static const struct rtw89_reg_def rtw8852a_dcfo_comp = {
 	R_DCFO_COMP_S0, B_DCFO_COMP_S0_MSK
 };
 
+static const struct rtw89_imr_info rtw8852a_imr_info = {
+	.wdrls_imr_set		= B_AX_WDRLS_IMR_SET,
+	.wsec_imr_reg		= R_AX_SEC_DEBUG,
+	.wsec_imr_set		= B_AX_IMR_ERROR,
+	.mpdu_tx_imr_set	= 0,
+	.mpdu_rx_imr_set	= 0,
+	.sta_sch_imr_set	= B_AX_STA_SCHEDULER_IMR_SET,
+	.txpktctl_imr_b0_reg	= R_AX_TXPKTCTL_ERR_IMR_ISR,
+	.txpktctl_imr_b0_clr	= B_AX_TXPKTCTL_IMR_B0_CLR,
+	.txpktctl_imr_b0_set	= B_AX_TXPKTCTL_IMR_B0_SET,
+	.txpktctl_imr_b1_reg	= R_AX_TXPKTCTL_ERR_IMR_ISR_B1,
+	.txpktctl_imr_b1_clr	= B_AX_TXPKTCTL_IMR_B1_CLR,
+	.txpktctl_imr_b1_set	= B_AX_TXPKTCTL_IMR_B1_SET,
+	.wde_imr_clr		= B_AX_WDE_IMR_CLR,
+	.wde_imr_set		= B_AX_WDE_IMR_SET,
+	.ple_imr_clr		= B_AX_PLE_IMR_CLR,
+	.ple_imr_set		= B_AX_PLE_IMR_SET,
+	.host_disp_imr_clr	= B_AX_HOST_DISP_IMR_CLR,
+	.host_disp_imr_set	= B_AX_HOST_DISP_IMR_SET,
+	.cpu_disp_imr_clr	= B_AX_CPU_DISP_IMR_CLR,
+	.cpu_disp_imr_set	= B_AX_CPU_DISP_IMR_SET,
+	.other_disp_imr_clr	= B_AX_OTHER_DISP_IMR_CLR,
+	.other_disp_imr_set	= 0,
+	.bbrpt_chinfo_err_imr_reg = R_AX_BBRPT_CHINFO_ERR_IMR_ISR,
+	.bbrpt_err_imr_set	= 0,
+	.bbrpt_dfs_err_imr_reg	= R_AX_BBRPT_DFS_ERR_IMR_ISR,
+	.ptcl_imr_clr		= B_AX_PTCL_IMR_CLR,
+	.ptcl_imr_set		= B_AX_PTCL_IMR_SET,
+	.cdma_imr_0_reg		= R_AX_DLE_CTRL,
+	.cdma_imr_0_clr		= B_AX_DLE_IMR_CLR,
+	.cdma_imr_0_set		= B_AX_DLE_IMR_SET,
+	.cdma_imr_1_reg		= 0,
+	.cdma_imr_1_clr		= 0,
+	.cdma_imr_1_set		= 0,
+	.phy_intf_imr_reg	= R_AX_PHYINFO_ERR_IMR,
+	.phy_intf_imr_clr	= 0,
+	.phy_intf_imr_set	= 0,
+	.rmac_imr_reg		= R_AX_RMAC_ERR_ISR,
+	.rmac_imr_clr		= B_AX_RMAC_IMR_CLR,
+	.rmac_imr_set		= B_AX_RMAC_IMR_SET,
+	.tmac_imr_reg		= R_AX_TMAC_ERR_IMR_ISR,
+	.tmac_imr_clr		= B_AX_TMAC_IMR_CLR,
+	.tmac_imr_set		= B_AX_TMAC_IMR_SET,
+};
+
 static void rtw8852ae_efuse_parsing(struct rtw89_efuse *efuse,
 				    struct rtw8852a_efuse *map)
 {
@@ -1997,6 +2042,8 @@ static void rtw8852a_query_ppdu(struct rtw89_dev *rtwdev,
 }
 
 static const struct rtw89_chip_ops rtw8852a_chip_ops = {
+	.enable_bb_rf		= rtw89_mac_enable_bb_rf,
+	.disable_bb_rf		= rtw89_mac_disable_bb_rf,
 	.bb_reset		= rtw8852a_bb_reset,
 	.bb_sethw		= rtw8852a_bb_sethw,
 	.read_rf		= rtw89_phy_read_rf,
@@ -2019,6 +2066,7 @@ static const struct rtw89_chip_ops rtw8852a_chip_ops = {
 	.ctrl_btg		= rtw8852a_ctrl_btg,
 	.query_ppdu		= rtw8852a_query_ppdu,
 	.bb_ctrl_btc_preagc	= rtw8852a_bb_ctrl_btc_preagc,
+	.cfg_txrx_path		= NULL,
 	.set_txpwr_ul_tb_offset	= rtw8852a_set_txpwr_ul_tb_offset,
 	.pwr_on_func		= NULL,
 	.pwr_off_func		= NULL,
@@ -2028,6 +2076,7 @@ static const struct rtw89_chip_ops rtw8852a_chip_ops = {
 	.mac_cfg_gnt		= rtw89_mac_cfg_gnt,
 	.stop_sch_tx		= rtw89_mac_stop_sch_tx,
 	.resume_sch_tx		= rtw89_mac_resume_sch_tx,
+	.h2c_dctl_sec_cam	= NULL,
 
 	.btc_set_rfe		= rtw8852a_btc_set_rfe,
 	.btc_init_cfg		= rtw8852a_btc_init_cfg,
@@ -2053,6 +2102,7 @@ const struct rtw89_chip_info rtw8852a_chip_info = {
 	.pwr_on_seq		= pwr_on_seq_8852a,
 	.pwr_off_seq		= pwr_off_seq_8852a,
 	.bb_table		= &rtw89_8852a_phy_bb_table,
+	.bb_gain_table		= NULL,
 	.rf_table		= {&rtw89_8852a_phy_radioa_table,
 				   &rtw89_8852a_phy_radiob_table,},
 	.nctl_table		= &rtw89_8852a_phy_nctl_table,
@@ -2064,6 +2114,7 @@ const struct rtw89_chip_info rtw8852a_chip_info = {
 	.txpwr_factor_rf	= 2,
 	.txpwr_factor_mac	= 1,
 	.dig_table		= &rtw89_8852a_phy_dig_table,
+	.tssi_dbw_table		= NULL,
 	.support_bands		= BIT(NL80211_BAND_2GHZ) |
 				  BIT(NL80211_BAND_5GHZ),
 	.support_bw160		= false,
@@ -2100,6 +2151,8 @@ const struct rtw89_chip_info rtw8852a_chip_info = {
 	.ps_mode_supported	= BIT(RTW89_PS_MODE_RFOFF) |
 				  BIT(RTW89_PS_MODE_CLK_GATED) |
 				  BIT(RTW89_PS_MODE_PWR_GATED),
+	.low_power_hci_modes	= 0,
+	.h2c_cctl_func_id	= H2C_FUNC_MAC_CCTLINFO_UD,
 	.hci_func_en_addr	= R_AX_HCI_FUNC_EN,
 	.h2c_desc_size		= sizeof(struct rtw89_txwd_body),
 	.txwd_body_size		= sizeof(struct rtw89_txwd_body),
@@ -2110,6 +2163,7 @@ const struct rtw89_chip_info rtw8852a_chip_info = {
 	.page_regs		= &rtw8852a_page_regs,
 	.dcfo_comp		= &rtw8852a_dcfo_comp,
 	.dcfo_comp_sft		= 3,
+	.imr_info		= &rtw8852a_imr_info
 };
 EXPORT_SYMBOL(rtw8852a_chip_info);
 

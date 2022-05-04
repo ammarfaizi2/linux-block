@@ -424,10 +424,10 @@ rtw89_core_tx_update_ampdu_info(struct rtw89_dev *rtwdev,
 
 	ampdu_num = (u8)((rtwsta->ampdu_params[tid].agg_num ?
 			  rtwsta->ampdu_params[tid].agg_num :
-			  4 << sta->ht_cap.ampdu_factor) - 1);
+			  4 << sta->deflink.ht_cap.ampdu_factor) - 1);
 
 	desc_info->agg_en = true;
-	desc_info->ampdu_density = sta->ht_cap.ampdu_density;
+	desc_info->ampdu_density = sta->deflink.ht_cap.ampdu_density;
 	desc_info->ampdu_num = ampdu_num;
 }
 
@@ -612,7 +612,7 @@ __rtw89_core_tx_check_he_qos_htc(struct rtw89_dev *rtwdev,
 	if (pkt_type < PACKET_MAX)
 		return false;
 
-	if (!sta || !sta->he_cap.has_he)
+	if (!sta || !sta->deflink.he_cap.has_he)
 		return false;
 
 	if (!ieee80211_is_data_qos(fc))
@@ -855,6 +855,13 @@ int rtw89_h2c_tx(struct rtw89_dev *rtwdev,
 	struct rtw89_core_tx_request tx_req = {0};
 	u32 cnt;
 	int ret;
+
+	if (!test_bit(RTW89_FLAG_POWERON, rtwdev->flags)) {
+		rtw89_debug(rtwdev, RTW89_DBG_FW,
+			    "ignore h2c due to power is off with firmware state=%d\n",
+			    test_bit(RTW89_FLAG_FW_RDY, rtwdev->flags));
+		return 0;
+	}
 
 	tx_req.skb = skb;
 	tx_req.tx_type = RTW89_CORE_TX_TYPE_FWCMD;
@@ -1420,7 +1427,10 @@ static void rtw89_core_rx_to_mac80211(struct rtw89_dev *rtwdev,
 {
 	rtw89_core_hw_to_sband_rate(rx_status);
 	rtw89_core_rx_stats(rtwdev, phy_ppdu, desc_info, skb_ppdu);
+	/* In low power mode, it does RX in thread context. */
+	local_bh_disable();
 	ieee80211_rx_napi(rtwdev->hw, NULL, skb_ppdu, &rtwdev->napi);
+	local_bh_enable();
 	rtwdev->napi_budget_countdown--;
 }
 
@@ -1940,9 +1950,9 @@ static void rtw89_ips_work(struct work_struct *work)
 {
 	struct rtw89_dev *rtwdev = container_of(work, struct rtw89_dev,
 						ips_work);
-
 	mutex_lock(&rtwdev->mutex);
-	rtw89_enter_ips(rtwdev);
+	if (rtwdev->hw->conf.flags & IEEE80211_CONF_IDLE)
+		rtw89_enter_ips(rtwdev);
 	mutex_unlock(&rtwdev->mutex);
 }
 
@@ -2706,8 +2716,11 @@ int rtw89_core_start(struct rtw89_dev *rtwdev)
 	/* efuse process */
 
 	/* pre-config BB/RF, BB reset/RFC reset */
-	rtw89_mac_disable_bb_rf(rtwdev);
-	rtw89_mac_enable_bb_rf(rtwdev);
+	rtw89_chip_disable_bb_rf(rtwdev);
+	ret = rtw89_chip_enable_bb_rf(rtwdev);
+	if (ret)
+		return ret;
+
 	rtw89_phy_init_bb_reg(rtwdev);
 	rtw89_phy_init_rf_reg(rtwdev);
 
@@ -2845,7 +2858,7 @@ void rtw89_core_scan_start(struct rtw89_dev *rtwdev, struct rtw89_vif *rtwvif,
 
 	rtwdev->scanning = true;
 	rtw89_leave_lps(rtwdev);
-	if (hw_scan && rtwvif->net_type == RTW89_NET_TYPE_NO_LINK)
+	if (hw_scan && (rtwdev->hw->conf.flags & IEEE80211_CONF_IDLE))
 		rtw89_leave_ips(rtwdev);
 
 	ether_addr_copy(rtwvif->mac_addr, mac_addr);
@@ -2869,7 +2882,7 @@ void rtw89_core_scan_complete(struct rtw89_dev *rtwdev,
 
 	rtwdev->scanning = false;
 	rtwdev->dig.bypass_dig = true;
-	if (hw_scan && rtwvif->net_type == RTW89_NET_TYPE_NO_LINK)
+	if (hw_scan && (rtwdev->hw->conf.flags & IEEE80211_CONF_IDLE))
 		ieee80211_queue_work(rtwdev->hw, &rtwdev->ips_work);
 }
 
