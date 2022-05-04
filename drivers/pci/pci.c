@@ -1201,14 +1201,17 @@ static int pci_raw_set_power_state(struct pci_dev *dev, pci_power_t state)
  */
 void pci_update_current_state(struct pci_dev *dev, pci_power_t state)
 {
-	if (platform_pci_get_power_state(dev) == PCI_D3cold ||
-	    !pci_device_is_present(dev)) {
+	if (platform_pci_get_power_state(dev) == PCI_D3cold) {
 		dev->current_state = PCI_D3cold;
 	} else if (dev->pm_cap) {
 		u16 pmcsr;
 
 		pci_read_config_word(dev, dev->pm_cap + PCI_PM_CTRL, &pmcsr);
-		dev->current_state = (pmcsr & PCI_PM_CTRL_STATE_MASK);
+		if (PCI_POSSIBLE_ERROR(pmcsr)) {
+			dev->current_state = PCI_D3cold;
+			return;
+		}
+		dev->current_state = pmcsr & PCI_PM_CTRL_STATE_MASK;
 	} else {
 		dev->current_state = state;
 	}
@@ -1310,21 +1313,6 @@ static int pci_dev_wait(struct pci_dev *dev, char *reset_type, int timeout)
 int pci_power_up(struct pci_dev *dev)
 {
 	pci_platform_power_transition(dev, PCI_D0);
-
-	/*
-	 * Mandatory power management transition delays are handled in
-	 * pci_pm_resume_noirq() and pci_pm_runtime_resume() of the
-	 * corresponding bridge.
-	 */
-	if (dev->runtime_d3cold) {
-		/*
-		 * When powering on a bridge from D3cold, the whole hierarchy
-		 * may be powered on into D0uninitialized state, resume them to
-		 * give them a chance to suspend again
-		 */
-		pci_resume_bus(dev->subordinate);
-	}
-
 	return pci_raw_set_power_state(dev, PCI_D0);
 }
 
@@ -2718,8 +2706,6 @@ int pci_finish_runtime_suspend(struct pci_dev *dev)
 	if (target_state == PCI_POWER_ERROR)
 		return -EIO;
 
-	dev->runtime_d3cold = target_state == PCI_D3cold;
-
 	/*
 	 * There are systems (for example, Intel mobile chips since Coffee
 	 * Lake) where the power drawn while suspended can be significantly
@@ -2737,7 +2723,6 @@ int pci_finish_runtime_suspend(struct pci_dev *dev)
 	if (error) {
 		pci_enable_wake(dev, target_state, false);
 		pci_restore_ptm_state(dev);
-		dev->runtime_d3cold = false;
 	}
 
 	return error;
