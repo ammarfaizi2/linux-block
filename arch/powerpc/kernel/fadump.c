@@ -73,8 +73,8 @@ static struct cma *fadump_cma;
  * The total size of fadump reserved memory covers for boot memory size
  * + cpu data size + hpte size and metadata.
  * Initialize only the area equivalent to boot memory size for CMA use.
- * The reamining portion of fadump reserved memory will be not given
- * to CMA and pages for thoes will stay reserved. boot memory size is
+ * The remaining portion of fadump reserved memory will be not given
+ * to CMA and pages for those will stay reserved. boot memory size is
  * aligned per CMA requirement to satisy cma_init_reserved_mem() call.
  * But for some reason even if it fails we still have the memory reservation
  * with us and we can still continue doing fadump.
@@ -365,6 +365,11 @@ static unsigned long __init get_fadump_area_size(void)
 
 	size += fw_dump.cpu_state_data_size;
 	size += fw_dump.hpte_region_size;
+	/*
+	 * Account for pagesize alignment of boot memory area destination address.
+	 * This faciliates in mmap reading of first kernel's memory.
+	 */
+	size = PAGE_ALIGN(size);
 	size += fw_dump.boot_memory_size;
 	size += sizeof(struct fadump_crash_info_header);
 	size += sizeof(struct elfhdr); /* ELF core header.*/
@@ -728,7 +733,7 @@ void crash_fadump(struct pt_regs *regs, const char *str)
 	else
 		ppc_save_regs(&fdh->regs);
 
-	fdh->online_mask = *cpu_online_mask;
+	fdh->cpu_mask = *cpu_online_mask;
 
 	/*
 	 * If we came in via system reset, wait a while for the secondary
@@ -867,7 +872,6 @@ static int fadump_alloc_mem_ranges(struct fadump_mrange_info *mrange_info)
 				       sizeof(struct fadump_memory_range));
 	return 0;
 }
-
 static inline int fadump_add_mem_range(struct fadump_mrange_info *mrange_info,
 				       u64 base, u64 end)
 {
@@ -886,7 +890,12 @@ static inline int fadump_add_mem_range(struct fadump_mrange_info *mrange_info,
 		start = mem_ranges[mrange_info->mem_range_cnt - 1].base;
 		size  = mem_ranges[mrange_info->mem_range_cnt - 1].size;
 
-		if ((start + size) == base)
+		/*
+		 * Boot memory area needs separate PT_LOAD segment(s) as it
+		 * is moved to a different location at the time of crash.
+		 * So, fold only if the region is not boot memory area.
+		 */
+		if ((start + size) == base && start >= fw_dump.boot_mem_top)
 			is_adjacent = true;
 	}
 	if (!is_adjacent) {
@@ -1164,6 +1173,11 @@ static unsigned long init_fadump_header(unsigned long addr)
 	fdh->elfcorehdr_addr = addr;
 	/* We will set the crashing cpu id in crash_fadump() during crash. */
 	fdh->crashing_cpu = FADUMP_CPU_UNKNOWN;
+	/*
+	 * When LPAR is terminated by PYHP, ensure all possible CPUs'
+	 * register data is processed while exporting the vmcore.
+	 */
+	fdh->cpu_mask = *cpu_possible_mask;
 
 	return addr;
 }
@@ -1271,7 +1285,6 @@ static void fadump_release_reserved_area(u64 start, u64 end)
 static void sort_and_merge_mem_ranges(struct fadump_mrange_info *mrange_info)
 {
 	struct fadump_memory_range *mem_ranges;
-	struct fadump_memory_range tmp_range;
 	u64 base, size;
 	int i, j, idx;
 
@@ -1286,11 +1299,8 @@ static void sort_and_merge_mem_ranges(struct fadump_mrange_info *mrange_info)
 			if (mem_ranges[idx].base > mem_ranges[j].base)
 				idx = j;
 		}
-		if (idx != i) {
-			tmp_range = mem_ranges[idx];
-			mem_ranges[idx] = mem_ranges[i];
-			mem_ranges[i] = tmp_range;
-		}
+		if (idx != i)
+			swap(mem_ranges[idx], mem_ranges[i]);
 	}
 
 	/* Merge adjacent reserved ranges */
