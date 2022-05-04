@@ -2,6 +2,8 @@
 #ifndef _ASM_X86_PERF_EVENT_H
 #define _ASM_X86_PERF_EVENT_H
 
+#include <linux/static_call.h>
+
 /*
  * Performance event hw details:
  */
@@ -182,6 +184,18 @@ union cpuid28_ecx {
 		unsigned int    lbr_br_type:1;
 	} split;
 	unsigned int            full;
+};
+
+/*
+ * AMD "Extended Performance Monitoring and Debug" CPUID
+ * detection/enumeration details:
+ */
+union cpuid_0x80000022_ebx {
+	struct {
+		/* Number of Core Performance Counters */
+		unsigned int	num_core_pmc:4;
+	} split;
+	unsigned int		full;
 };
 
 struct x86_pmu_capability {
@@ -371,6 +385,11 @@ struct pebs_xmm {
 };
 
 /*
+ * AMD Extended Performance Monitoring and Debug cpuid feature detection
+ */
+#define EXT_PERFMON_DEBUG_FEATURES		0x80000022
+
+/*
  * IBS cpuid feature detection
  */
 
@@ -518,6 +537,27 @@ static inline void intel_pt_handle_vmx(int on)
 #if defined(CONFIG_PERF_EVENTS) && defined(CONFIG_CPU_SUP_AMD)
  extern void amd_pmu_enable_virt(void);
  extern void amd_pmu_disable_virt(void);
+
+#if defined(CONFIG_PERF_EVENTS_AMD_BRS)
+
+#define PERF_NEEDS_LOPWR_CB 1
+
+/*
+ * architectural low power callback impacts
+ * drivers/acpi/processor_idle.c
+ * drivers/acpi/acpi_pad.c
+ */
+extern void perf_amd_brs_lopwr_cb(bool lopwr_in);
+
+DECLARE_STATIC_CALL(perf_lopwr_cb, perf_amd_brs_lopwr_cb);
+
+static inline void perf_lopwr_cb(bool lopwr_in)
+{
+	static_call_mod(perf_lopwr_cb)(lopwr_in);
+}
+
+#endif /* PERF_NEEDS_LOPWR_CB */
+
 #else
  static inline void amd_pmu_enable_virt(void) { }
  static inline void amd_pmu_disable_virt(void) { }
