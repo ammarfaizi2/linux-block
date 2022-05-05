@@ -6209,12 +6209,10 @@ static void ath12k_mgmt_rx_event(struct ath12k_base *ab, struct sk_buff *skb)
 	 */
 	status->flag |= RX_FLAG_SKIP_MONITOR;
 
-	/* In case of PMF, FW delivers decrypted frames with Protected Bit set.
-	 * Don't clear that. Also, FW delivers broadcast management frames
-	 * (ex: group privacy action frames in mesh) as encrypted payload.
+	/* In case of PMF, FW delivers decrypted frames with Protected Bit set
+	 * including group privacy action frames.
 	 */
-	if (ieee80211_has_protected(hdr->frame_control) &&
-	    !is_multicast_ether_addr(ieee80211_get_DA(hdr))) {
+	if (ieee80211_has_protected(hdr->frame_control)) {
 		status->flag |= RX_FLAG_DECRYPTED;
 
 		if (!ieee80211_is_robust_mgmt_frame(skb)) {
