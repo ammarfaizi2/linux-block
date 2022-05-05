@@ -244,6 +244,7 @@ source "drivers/gpu/drm/radeon/Kconfig"
 config DRM_AMDGPU
 	tristate "AMD GPU"
 	depends on DRM && PCI && MMU
+	depends on CPU_LITTLE_ENDIAN
 	select FW_LOADER
 	select DRM_DISPLAY_DP_HELPER
 	select DRM_DISPLAY_HDMI_HELPER
