@@ -87,6 +87,10 @@ static void page_idle_clear_pte_refs(struct page *page)
 {
 	struct folio *folio = page_folio(page);
 
+	/*
+	 * Since rwc.try_lock is unused, rwc is effectively immutable, so we
+	 * can make it static to save some cycles and stack.
+	 */
 	static struct rmap_walk_control rwc = {
 		.rmap_one = page_idle_clear_pte_refs_one,
 		.anon_lock = folio_lock_anon_vma_read,
