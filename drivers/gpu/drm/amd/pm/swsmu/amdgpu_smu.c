@@ -37,6 +37,7 @@
 #include "aldebaran_ppt.h"
 #include "yellow_carp_ppt.h"
 #include "cyan_skillfish_ppt.h"
+#include "smu_v13_0_0_ppt.h"
 #include "smu_v13_0_5_ppt.h"
 #include "amd_pcie.h"
 
@@ -488,8 +489,20 @@ static int smu_sys_set_pp_table(void *handle,
 static int smu_get_driver_allowed_feature_mask(struct smu_context *smu)
 {
 	struct smu_feature *feature = &smu->smu_feature;
-	int ret = 0;
 	uint32_t allowed_feature_mask[SMU_FEATURE_MAX/32];
+	int ret = 0;
+
+	/*
+	 * With SCPM enabled, the allowed featuremasks setting(via
+	 * PPSMC_MSG_SetAllowedFeaturesMaskLow/High) is not permitted.
+	 * That means there is no way to let PMFW knows the settings below.
+	 * Thus, we just assume all the features are allowed under
+	 * such scenario.
+	 */
+	if (smu->adev->scpm_enabled) {
+		bitmap_fill(feature->allowed, SMU_FEATURE_MAX);
+		return 0;
+	}
 
 	bitmap_zero(feature->allowed, SMU_FEATURE_MAX);
 
@@ -552,6 +565,9 @@ static int smu_set_funcs(struct amdgpu_device *adev)
 		aldebaran_set_ppt_funcs(smu);
 		/* Enable pp_od_clk_voltage node */
 		smu->od_enabled = true;
+		break;
+	case IP_VERSION(13, 0, 0):
+		smu_v13_0_0_set_ppt_funcs(smu);
 		break;
 	default:
 		return -EINVAL;
@@ -1020,6 +1036,19 @@ static int smu_sw_init(void *handle)
 		return ret;
 	}
 
+	/* get boot_values from vbios to set revision, gfxclk, and etc. */
+	ret = smu_get_vbios_bootup_values(smu);
+	if (ret) {
+		dev_err(adev->dev, "Failed to get VBIOS boot clock values!\n");
+		return ret;
+	}
+
+	ret = smu_init_pptable_microcode(smu);
+	if (ret) {
+		dev_err(adev->dev, "Failed to setup pptable firmware!\n");
+		return ret;
+	}
+
 	ret = smu_register_irq_handler(smu);
 	if (ret) {
 		dev_err(adev->dev, "Failed to register smc irq handler!\n");
@@ -1134,15 +1163,28 @@ static int smu_smc_hw_setup(struct smu_context *smu)
 		return ret;
 	}
 
-	/* smu_dump_pptable(smu); */
-	/*
-	 * Copy pptable bo in the vram to smc with SMU MSGs such as
-	 * SetDriverDramAddr and TransferTableDram2Smu.
-	 */
-	ret = smu_write_pptable(smu);
+	ret = smu_setup_pptable(smu);
 	if (ret) {
-		dev_err(adev->dev, "Failed to transfer pptable to SMC!\n");
+		dev_err(adev->dev, "Failed to setup pptable!\n");
 		return ret;
+	}
+
+	/* smu_dump_pptable(smu); */
+
+	/*
+	 * With SCPM enabled, PSP is responsible for the PPTable transferring
+	 * (to SMU). Driver involvement is not needed and permitted.
+	 */
+	if (!adev->scpm_enabled) {
+		/*
+		 * Copy pptable bo in the vram to smc with SMU MSGs such as
+		 * SetDriverDramAddr and TransferTableDram2Smu.
+		 */
+		ret = smu_write_pptable(smu);
+		if (ret) {
+			dev_err(adev->dev, "Failed to transfer pptable to SMC!\n");
+			return ret;
+		}
 	}
 
 	/* issue Run*Btc msg */
@@ -1150,10 +1192,16 @@ static int smu_smc_hw_setup(struct smu_context *smu)
 	if (ret)
 		return ret;
 
-	ret = smu_feature_set_allowed_mask(smu);
-	if (ret) {
-		dev_err(adev->dev, "Failed to set driver allowed features mask!\n");
-		return ret;
+	/*
+	 * With SCPM enabled, these actions(and relevant messages) are
+	 * not needed and permitted.
+	 */
+	if (!adev->scpm_enabled) {
+		ret = smu_feature_set_allowed_mask(smu);
+		if (ret) {
+			dev_err(adev->dev, "Failed to set driver allowed features mask!\n");
+			return ret;
+		}
 	}
 
 	ret = smu_system_features_control(smu, true);
@@ -1173,6 +1221,17 @@ static int smu_smc_hw_setup(struct smu_context *smu)
 
 	if (!smu_is_dpm_running(smu))
 		dev_info(adev->dev, "dpm has been disabled\n");
+
+	/*
+	 * Set initialized values (get from vbios) to dpm tables context such as
+	 * gfxclk, memclk, dcefclk, and etc. And enable the DPM feature for each
+	 * type of clks.
+	 */
+	ret = smu_set_default_dpm_table(smu);
+	if (ret) {
+		dev_err(adev->dev, "Failed to setup default dpm clock tables!\n");
+		return ret;
+	}
 
 	if (adev->pm.pcie_gen_mask & CAIL_PCIE_LINK_SPEED_SUPPORT_GEN4)
 		pcie_gen = 3;
@@ -1214,17 +1273,6 @@ static int smu_smc_hw_setup(struct smu_context *smu)
 	ret = smu_enable_thermal_alert(smu);
 	if (ret) {
 		dev_err(adev->dev, "Failed to enable thermal alert!\n");
-		return ret;
-	}
-
-	/*
-	 * Set initialized values (get from vbios) to dpm tables context such as
-	 * gfxclk, memclk, dcefclk, and etc. And enable the DPM feature for each
-	 * type of clks.
-	 */
-	ret = smu_set_default_dpm_table(smu);
-	if (ret) {
-		dev_err(adev->dev, "Failed to setup default dpm clock tables!\n");
 		return ret;
 	}
 
@@ -1303,19 +1351,6 @@ static int smu_hw_init(void *handle)
 
 	if (!smu->pm_enabled)
 		return 0;
-
-	/* get boot_values from vbios to set revision, gfxclk, and etc. */
-	ret = smu_get_vbios_bootup_values(smu);
-	if (ret) {
-		dev_err(adev->dev, "Failed to get VBIOS boot clock values!\n");
-		return ret;
-	}
-
-	ret = smu_setup_pptable(smu);
-	if (ret) {
-		dev_err(adev->dev, "Failed to setup pptable!\n");
-		return ret;
-	}
 
 	ret = smu_get_driver_allowed_feature_mask(smu);
 	if (ret)
@@ -1415,9 +1450,12 @@ static int smu_disable_dpms(struct smu_context *smu)
 		if (ret)
 			dev_err(adev->dev, "Failed to disable smu features except BACO.\n");
 	} else {
-		ret = smu_system_features_control(smu, false);
-		if (ret)
-			dev_err(adev->dev, "Failed to disable smu features.\n");
+		/* DisableAllSmuFeatures message is not permitted with SCPM enabled */
+		if (!adev->scpm_enabled) {
+			ret = smu_system_features_control(smu, false);
+			if (ret)
+				dev_err(adev->dev, "Failed to disable smu features.\n");
+		}
 	}
 
 	if (adev->ip_versions[GC_HWIP][0] >= IP_VERSION(9, 4, 2) &&
@@ -3031,7 +3069,7 @@ void amdgpu_smu_stb_debug_fs_init(struct amdgpu_device *adev)
 
 	struct smu_context *smu = adev->powerplay.pp_handle;
 
-	if (!smu->stb_context.stb_buf_size)
+	if (!smu || (!smu->stb_context.stb_buf_size))
 		return;
 
 	debugfs_create_file_size("amdgpu_smu_stb_dump",
