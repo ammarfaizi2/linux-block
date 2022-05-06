@@ -5960,7 +5960,7 @@ static void io_poll_remove_entries(struct io_kiocb *req)
  * either spurious wakeup or multishot CQE is served. 0 when it's done with
  * the request, then the mask is stored in req->cqe.res.
  */
-static int io_poll_check_events(struct io_kiocb *req, bool locked)
+static int io_poll_check_events(struct io_kiocb *req, bool *locked)
 {
 	struct io_ring_ctx *ctx = req->ctx;
 	int v;
@@ -5989,17 +5989,26 @@ static int io_poll_check_events(struct io_kiocb *req, bool locked)
 
 		/* multishot, just fill an CQE and proceed */
 		if (req->cqe.res && !(req->apoll_events & EPOLLONESHOT)) {
-			__poll_t mask = mangle_poll(req->cqe.res & req->apoll_events);
-			bool filled;
+			if (req->flags & REQ_F_APOLL_MULTISHOT) {
+				io_tw_lock(req->ctx, locked);
+				if (likely(!(req->task->flags & PF_EXITING)))
+					io_queue_sqe(req);
+				else
+					return -EFAULT;
+			} else {
+				__poll_t mask = mangle_poll(req->cqe.res &
+							    req->apoll_events);
+				bool filled;
 
-			spin_lock(&ctx->completion_lock);
-			filled = io_fill_cqe_aux(ctx, req->cqe.user_data, mask,
-						 IORING_CQE_F_MORE);
-			io_commit_cqring(ctx);
-			spin_unlock(&ctx->completion_lock);
-			if (unlikely(!filled))
-				return -ECANCELED;
-			io_cqring_ev_posted(ctx);
+				spin_lock(&ctx->completion_lock);
+				filled = io_fill_cqe_aux(ctx, req->cqe.user_data,
+							 mask, IORING_CQE_F_MORE);
+				io_commit_cqring(ctx);
+				spin_unlock(&ctx->completion_lock);
+				if (unlikely(!filled))
+					return -ECANCELED;
+				io_cqring_ev_posted(ctx);
+			}
 		} else if (req->cqe.res) {
 			return 0;
 		}
@@ -6018,7 +6027,7 @@ static void io_poll_task_func(struct io_kiocb *req, bool *locked)
 	struct io_ring_ctx *ctx = req->ctx;
 	int ret;
 
-	ret = io_poll_check_events(req, *locked);
+	ret = io_poll_check_events(req, locked);
 	if (ret > 0)
 		return;
 
@@ -6043,7 +6052,7 @@ static void io_apoll_task_func(struct io_kiocb *req, bool *locked)
 	struct io_ring_ctx *ctx = req->ctx;
 	int ret;
 
-	ret = io_poll_check_events(req, *locked);
+	ret = io_poll_check_events(req, locked);
 	if (ret > 0)
 		return;
 
@@ -6283,7 +6292,7 @@ static int io_arm_poll_handler(struct io_kiocb *req, unsigned issue_flags)
 	struct io_ring_ctx *ctx = req->ctx;
 	struct async_poll *apoll;
 	struct io_poll_table ipt;
-	__poll_t mask = EPOLLONESHOT | POLLERR | POLLPRI;
+	__poll_t mask = POLLERR | POLLPRI;
 	int ret;
 
 	if (!def->pollin && !def->pollout)
@@ -6292,6 +6301,8 @@ static int io_arm_poll_handler(struct io_kiocb *req, unsigned issue_flags)
 		return IO_APOLL_ABORTED;
 	if ((req->flags & (REQ_F_POLLED|REQ_F_PARTIAL_IO)) == REQ_F_POLLED)
 		return IO_APOLL_ABORTED;
+	if (!(req->flags & REQ_F_APOLL_MULTISHOT))
+		mask |= EPOLLONESHOT;
 
 	if (def->pollin) {
 		mask |= POLLIN | POLLRDNORM;
