@@ -436,6 +436,13 @@ static void rxrpc_local_destroyer(struct rxrpc_local *local)
 	rxrpc_purge_queue(&local->event_queue);
 	local->zcopy_done_seq = local->zcopy_seq;
 	rxrpc_zcopy_cleanup(local);
+
+	printk("LOCAL: %3u %3u %04x/%04x/%04x\n",
+	       refcount_read(&local->ref),
+	       atomic_read(&local->active_users),
+	       local->zcopy_seq & 65535,
+	       local->zcopy_done_seq & 65535,
+	       local->zcopy_cleaned_seq & 65535);
 }
 
 /*
