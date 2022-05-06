@@ -10,8 +10,12 @@
  */
 
 #include <asm/unaligned.h>
+#include <linux/delay.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <scsi/scsi_cmnd.h>
 
-#include "ufshcd.h"
+#include "ufshcd-priv.h"
 #include "ufshpb.h"
 #include "../sd.h"
 
@@ -90,12 +94,8 @@ static bool ufshpb_is_general_lun(int lun)
 
 static bool ufshpb_is_pinned_region(struct ufshpb_lu *hpb, int rgn_idx)
 {
-	if (hpb->lu_pinned_end != PINNED_NOT_SET &&
-	    rgn_idx >= hpb->lu_pinned_start &&
-	    rgn_idx <= hpb->lu_pinned_end)
-		return true;
-
-	return false;
+	return hpb->lu_pinned_end != PINNED_NOT_SET &&
+	       rgn_idx >= hpb->lu_pinned_start && rgn_idx <= hpb->lu_pinned_end;
 }
 
 static void ufshpb_kick_map_work(struct ufshpb_lu *hpb)
@@ -928,11 +928,6 @@ static int ufshpb_issue_umap_single_req(struct ufshpb_lu *hpb,
 					struct ufshpb_region *rgn)
 {
 	return ufshpb_issue_umap_req(hpb, rgn, true);
-}
-
-static int ufshpb_issue_umap_all_req(struct ufshpb_lu *hpb)
-{
-	return ufshpb_issue_umap_req(hpb, NULL, false);
 }
 
 static void __ufshpb_evict_region(struct ufshpb_lu *hpb,
@@ -2455,8 +2450,6 @@ static void ufshpb_hpb_lu_prepared(struct ufs_hba *hba)
 			ufshpb_set_state(hpb, HPB_PRESENT);
 			if ((hpb->lu_pinned_end - hpb->lu_pinned_start) > 0)
 				queue_work(ufshpb_wq, &hpb->map_work);
-			if (!hpb->is_hcm)
-				ufshpb_issue_umap_all_req(hpb);
 		} else {
 			dev_err(hba->dev, "destroy HPB lu %d\n", hpb->lun);
 			ufshpb_destroy_lu(hba, sdev);
