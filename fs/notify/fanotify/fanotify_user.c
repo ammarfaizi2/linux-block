@@ -1695,6 +1695,11 @@ static int do_fanotify_mark(int fanotify_fd, unsigned int flags, __u64 mask,
 	else
 		mnt = path.mnt;
 
+	/* FAN_RENAME is not allowed on non-dir (for now) */
+	ret = -EINVAL;
+	if (inode && (mask & FAN_RENAME) && !S_ISDIR(inode->i_mode))
+		goto path_put_and_out;
+
 	/* Mask out FAN_EVENT_ON_CHILD flag for sb/mount/non-dir marks */
 	if (mnt || !S_ISDIR(inode->i_mode)) {
 		mask &= ~FAN_EVENT_ON_CHILD;
