@@ -6046,31 +6046,34 @@ static int io_poll_check_events(struct io_kiocb *req, bool *locked)
 			req->cqe.res = vfs_poll(req->file, &pt) & req->apoll_events;
 		}
 
-		/* multishot, just fill an CQE and proceed */
-		if (req->cqe.res && !(req->apoll_events & EPOLLONESHOT)) {
-			if (req->flags & REQ_F_APOLL_MULTISHOT) {
-				io_tw_lock(req->ctx, locked);
-				if (likely(!(req->task->flags & PF_EXITING)))
-					io_queue_sqe(req);
-				else
-					return -EFAULT;
-			} else {
-				__poll_t mask = mangle_poll(req->cqe.res &
-							    req->apoll_events);
-				bool filled;
-
-				spin_lock(&ctx->completion_lock);
-				filled = io_fill_cqe_aux(ctx, req->cqe.user_data,
-							 mask, IORING_CQE_F_MORE);
-				io_commit_cqring(ctx);
-				spin_unlock(&ctx->completion_lock);
-				if (unlikely(!filled))
-					return -ECANCELED;
-				io_cqring_ev_posted(ctx);
-			}
-		} else if (req->cqe.res) {
+		if ((unlikely(!req->cqe.res)))
+			continue;
+		if (req->apoll_events & EPOLLONESHOT)
 			return 0;
+
+		/* multishot, just fill a CQE and proceed */
+		if (!(req->flags & REQ_F_APOLL_MULTISHOT)) {
+			__poll_t mask = mangle_poll(req->cqe.res &
+						    req->apoll_events);
+			bool filled;
+
+			spin_lock(&ctx->completion_lock);
+			filled = io_fill_cqe_aux(ctx, req->cqe.user_data,
+						 mask, IORING_CQE_F_MORE);
+			io_commit_cqring(ctx);
+			spin_unlock(&ctx->completion_lock);
+			if (filled) {
+				io_cqring_ev_posted(ctx);
+				continue;
+			}
+			return -ECANCELED;
 		}
+
+		io_tw_lock(req->ctx, locked);
+		if (likely(!(req->task->flags & PF_EXITING)))
+			io_queue_sqe(req);
+		else
+			return -EFAULT;
 
 		/*
 		 * Release all references, retry if someone tried to restart
