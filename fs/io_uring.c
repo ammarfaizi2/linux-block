@@ -1288,6 +1288,7 @@ static int io_close_fixed(struct io_kiocb *req, unsigned int issue_flags);
 static enum hrtimer_restart io_link_timeout_fn(struct hrtimer *timer);
 static void io_eventfd_signal(struct io_ring_ctx *ctx);
 static void io_req_tw_post_queue(struct io_kiocb *req, s32 res, u32 cflags);
+static void io_poll_remove_entries(struct io_kiocb *req);
 
 static struct kmem_cache *req_cachep;
 
@@ -5703,6 +5704,7 @@ out_free:
 static int io_accept_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 {
 	struct io_accept *accept = &req->accept;
+	bool multishot;
 
 	if (sqe->len || sqe->buf_index)
 		return -EINVAL;
@@ -5711,14 +5713,17 @@ static int io_accept_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	accept->addr_len = u64_to_user_ptr(READ_ONCE(sqe->addr2));
 	accept->flags = READ_ONCE(sqe->accept_flags);
 	accept->nofile = rlimit(RLIMIT_NOFILE);
+	multishot = !!(READ_ONCE(sqe->ioprio) & IORING_ACCEPT_MULTISHOT);
 
 	accept->file_slot = READ_ONCE(sqe->file_index);
-	if (accept->file_slot && (accept->flags & SOCK_CLOEXEC))
+	if (accept->file_slot && ((accept->flags & SOCK_CLOEXEC) || multishot))
 		return -EINVAL;
 	if (accept->flags & ~(SOCK_CLOEXEC | SOCK_NONBLOCK))
 		return -EINVAL;
 	if (SOCK_NONBLOCK != O_NONBLOCK && (accept->flags & SOCK_NONBLOCK))
 		accept->flags = (accept->flags & ~SOCK_NONBLOCK) | O_NONBLOCK;
+	if (multishot)
+		req->flags |= REQ_F_APOLL_MULTISHOT;
 	return 0;
 }
 
@@ -5741,6 +5746,7 @@ static inline void io_poll_clean(struct io_kiocb *req)
 
 static int io_accept(struct io_kiocb *req, unsigned int issue_flags)
 {
+	struct io_ring_ctx *ctx = req->ctx;
 	struct io_accept *accept = &req->accept;
 	bool force_nonblock = issue_flags & IO_URING_F_NONBLOCK;
 	unsigned int file_flags = force_nonblock ? O_NONBLOCK : 0;
@@ -5748,10 +5754,13 @@ static int io_accept(struct io_kiocb *req, unsigned int issue_flags)
 	struct file *file;
 	int ret, fd;
 
+retry:
 	if (!fixed) {
 		fd = __get_unused_fd_flags(accept->flags, accept->nofile);
-		if (unlikely(fd < 0))
+		if (unlikely(fd < 0)) {
+			io_poll_clean(req);
 			return fd;
+		}
 	}
 	file = do_accept(req->file, file_flags, accept->addr, accept->addr_len,
 			 accept->flags);
@@ -5759,8 +5768,12 @@ static int io_accept(struct io_kiocb *req, unsigned int issue_flags)
 		if (!fixed)
 			put_unused_fd(fd);
 		ret = PTR_ERR(file);
-		if (ret == -EAGAIN && force_nonblock)
-			return -EAGAIN;
+		if (ret == -EAGAIN && force_nonblock) {
+			if ((req->flags & REQ_F_APOLL_MULTI_POLLED) ==
+			    REQ_F_APOLL_MULTI_POLLED)
+				ret = 0;
+			return ret;
+		}
 		if (ret == -ERESTARTSYS)
 			ret = -EINTR;
 		req_set_fail(req);
@@ -5771,7 +5784,35 @@ static int io_accept(struct io_kiocb *req, unsigned int issue_flags)
 		ret = io_install_fixed_file(req, file, issue_flags,
 					    accept->file_slot - 1);
 	}
-	__io_req_complete(req, issue_flags, ret, 0);
+
+	if (req->flags & REQ_F_APOLL_MULTISHOT) {
+		if (ret >= 0) {
+			bool filled;
+
+			spin_lock(&ctx->completion_lock);
+			filled = io_fill_cqe_aux(ctx, req->cqe.user_data, ret,
+						 IORING_CQE_F_MORE);
+			io_commit_cqring(ctx);
+			spin_unlock(&ctx->completion_lock);
+			if (unlikely(!filled)) {
+				io_poll_clean(req);
+				return -ECANCELED;
+			}
+			io_cqring_ev_posted(ctx);
+			goto retry;
+		} else {
+			/*
+			 * the apoll multishot req should handle poll
+			 * cancellation by itself since the upper layer
+			 * who called io_queue_sqe() cannot get errors
+			 * happened here.
+			 */
+			io_poll_clean(req);
+			return ret;
+		}
+	} else {
+		__io_req_complete(req, issue_flags, ret, 0);
+	}
 	return 0;
 }
 
