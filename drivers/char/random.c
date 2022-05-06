@@ -1226,6 +1226,12 @@ static void add_timer_randomness(struct timer_rand_state *state, unsigned int nu
 	unsigned long entropy = random_get_entropy(), now = jiffies, flags;
 	long delta, delta2, delta3;
 
+	if (in_hardirq()) {
+		fast_mix(this_cpu_ptr(&irq_randomness)->pool,
+			 (unsigned long[2]){ entropy, num });
+		return;
+	}
+
 	spin_lock_irqsave(&input_pool.lock, flags);
 	_mix_pool_bytes(&entropy, sizeof(entropy));
 	_mix_pool_bytes(&num, sizeof(num));
