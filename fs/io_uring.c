@@ -5789,35 +5789,32 @@ retry:
 					    accept->file_slot - 1);
 	}
 
-	if (req->flags & REQ_F_APOLL_MULTISHOT) {
-		if (ret >= 0) {
-			bool filled;
+	if (!(req->flags & REQ_F_APOLL_MULTISHOT)) {
+		__io_req_complete(req, issue_flags, ret, 0);
+		return 0;
+	}
+	if (ret >= 0) {
+		bool filled;
 
-			spin_lock(&ctx->completion_lock);
-			filled = io_fill_cqe_aux(ctx, req->cqe.user_data, ret,
-						 IORING_CQE_F_MORE);
-			io_commit_cqring(ctx);
-			spin_unlock(&ctx->completion_lock);
-			if (unlikely(!filled)) {
-				io_poll_clean(req);
-				return -ECANCELED;
-			}
+		spin_lock(&ctx->completion_lock);
+		filled = io_fill_cqe_aux(ctx, req->cqe.user_data, ret,
+					 IORING_CQE_F_MORE);
+		io_commit_cqring(ctx);
+		spin_unlock(&ctx->completion_lock);
+		if (filled) {
 			io_cqring_ev_posted(ctx);
 			goto retry;
-		} else {
-			/*
-			 * the apoll multishot req should handle poll
-			 * cancellation by itself since the upper layer
-			 * who called io_queue_sqe() cannot get errors
-			 * happened here.
-			 */
-			io_poll_clean(req);
-			return ret;
 		}
-	} else {
-		__io_req_complete(req, issue_flags, ret, 0);
+		ret = -ECANCELED;
 	}
-	return 0;
+
+	/*
+	 * the apoll multishot req should handle poll cancellation by itself
+	 * since the upper layer who called io_queue_sqe() cannot get errors
+	 * happened here.
+	 */
+	io_poll_clean(req);
+	return ret;
 }
 
 static int io_connect_prep_async(struct io_kiocb *req)
