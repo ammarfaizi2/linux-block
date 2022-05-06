@@ -149,7 +149,6 @@ struct rxrpc_call *rxrpc_alloc_call(struct rxrpc_sock *rx, gfp_t gfp,
 	skb_queue_head_init(&call->rx_queue);
 	skb_queue_head_init(&call->rx_oos_queue);
 	init_waitqueue_head(&call->waitq);
-	spin_lock_init(&call->lock);
 	spin_lock_init(&call->notify_lock);
 	spin_lock_init(&call->input_lock);
 	spin_lock_init(&call->tx_lock);
@@ -519,10 +518,8 @@ void rxrpc_release_call(struct rxrpc_sock *rx, struct rxrpc_call *call)
 
 	ASSERTCMP(call->state, ==, RXRPC_CALL_COMPLETE);
 
-	spin_lock_bh(&call->lock);
 	if (test_and_set_bit(RXRPC_CALL_RELEASED, &call->flags))
 		BUG();
-	spin_unlock_bh(&call->lock);
 
 	rxrpc_put_call_slot(call);
 	rxrpc_delete_call_timer(call);
