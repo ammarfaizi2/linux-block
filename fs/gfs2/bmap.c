@@ -1599,19 +1599,16 @@ static bool mp_eq_to_hgt(struct metapath *mp, __u16 *list, unsigned int h)
 
 /**
  * find_nonnull_ptr - find a non-null pointer given a metapath and height
- * @sdp: The superblock
  * @mp: starting metapath
  * @h: desired height to search
- * @end_list: See punch_hole().
- * @end_aligned: See punch_hole().
+ * @last_list: See punch_hole().
  *
  * Assumes the metapath is valid (with buffers) out to height h.
  * Returns: true if a non-null pointer was found in the metapath buffer
  *          false if all remaining pointers are NULL in the buffer
  */
-static bool find_nonnull_ptr(struct gfs2_sbd *sdp, struct metapath *mp,
-			     unsigned int h,
-			     __u16 *end_list, unsigned int end_aligned)
+static bool find_nonnull_ptr(struct metapath *mp,
+			     unsigned int h, __u16 *last_list)
 {
 	struct buffer_head *bh = mp->mp_bh[h];
 	__be64 *first, *ptr, *end;
@@ -1619,10 +1616,8 @@ static bool find_nonnull_ptr(struct gfs2_sbd *sdp, struct metapath *mp,
 	first = metaptr1(h, mp);
 	ptr = first + mp->mp_list[h];
 	end = (__be64 *)(bh->b_data + bh->b_size);
-	if (end_list && mp_eq_to_hgt(mp, end_list, h)) {
-		bool keep_end = h < end_aligned;
-		end = first + end_list[h] + keep_end;
-	}
+	if (last_list && mp_eq_to_hgt(mp, last_list, h))
+		end = first + last_list[h] + 1;
 
 	while (ptr < end) {
 		if (*ptr) { /* if we have a non-null pointer */
@@ -1644,10 +1639,30 @@ enum dealloc_states {
 	DEALLOC_DONE = 3,       /* process complete */
 };
 
+/**
+ * metapointer_range - compute indirect block range to traverse
+ * @mp: The metapath
+ * @height: The metadata height (0 = dinode)
+ * @first_list: First block of the hole
+ * @first_aligned: Alignment of @first_list
+ * @last_list: Last bock of the hole
+ * @last_aligned: Alignment of @last_list
+ * @start: First indirect block to traverse
+ * @end: End of list of indirect blocks to traverse
+ *
+ * Compute the range of indirect blocks to punch out or read ahead.
+ *
+ * For read-ahead, @first_aligned and @last_aligned should be set to 0 to
+ * always include the blocks at the beginning and the end.
+ *
+ * For hole punching, @first_aligned and @last_aligned should be set to the
+ * alignment of the first and last block of the hole; see the comments in
+ * punch_hole().
+ */
 static inline void
 metapointer_range(struct metapath *mp, int height,
-		  __u16 *start_list, unsigned int start_aligned,
-		  __u16 *end_list, unsigned int end_aligned,
+		  __u16 *first_list, unsigned int first_aligned,
+		  __u16 *last_list, unsigned int last_aligned,
 		  __be64 **start, __be64 **end)
 {
 	struct buffer_head *bh = mp->mp_bh[height];
@@ -1655,28 +1670,27 @@ metapointer_range(struct metapath *mp, int height,
 
 	first = metaptr1(height, mp);
 	*start = first;
-	if (mp_eq_to_hgt(mp, start_list, height)) {
-		bool keep_start = height < start_aligned;
-		*start = first + start_list[height] + keep_start;
+	if (mp_eq_to_hgt(mp, first_list, height)) {
+		bool skip_first = height < first_aligned;
+		*start = first + first_list[height] + skip_first;
 	}
 	*end = (__be64 *)(bh->b_data + bh->b_size);
-	if (end_list && mp_eq_to_hgt(mp, end_list, height)) {
-		bool keep_end = height < end_aligned;
-		*end = first + end_list[height] + keep_end;
+	if (last_list && mp_eq_to_hgt(mp, last_list, height)) {
+		bool skip_last = height < last_aligned;
+		*end = first + last_list[height] - skip_last + 1;
 	}
 }
 
 static inline bool walk_done(struct gfs2_sbd *sdp,
 			     struct metapath *mp, int height,
-			     __u16 *end_list, unsigned int end_aligned)
+			     __u16 *last_list)
 {
 	__u16 end;
 
-	if (end_list) {
-		bool keep_end = height < end_aligned;
-		if (!mp_eq_to_hgt(mp, end_list, height))
+	if (last_list) {
+		if (!mp_eq_to_hgt(mp, last_list, height))
 			return false;
-		end = end_list[height] + keep_end;
+		end = last_list[height] + 1;
 	} else
 		end = (height > 0) ? sdp->sd_inptrs : sdp->sd_diptrs;
 	return mp->mp_list[height] >= end;
@@ -1707,14 +1721,13 @@ static int punch_hole(struct gfs2_inode *ip, u64 offset, u64 length)
 	struct gfs2_holder rd_gh;
 	unsigned int bsize_shift = sdp->sd_sb.sb_bsize_shift;
 	u64 lblock = (offset + (1 << bsize_shift) - 1) >> bsize_shift;
-	__u16 start_list[GFS2_MAX_META_HEIGHT];
-	__u16 __end_list[GFS2_MAX_META_HEIGHT], *end_list = NULL;
-	unsigned int start_aligned, end_aligned;
+	__u16 first_list[GFS2_MAX_META_HEIGHT];
+	__u16 __last_list[GFS2_MAX_META_HEIGHT], *last_list = NULL;
+	unsigned int first_aligned, last_aligned;
 	unsigned int strip_h = ip->i_height - 1;
 	u32 btotal = 0;
 	int ret, state;
 	int mp_h; /* metapath buffers are read in to this height */
-	u64 prev_bnr = 0;
 	__be64 *start, *end;
 
 	if (offset >= maxsize) {
@@ -1726,15 +1739,15 @@ static int punch_hole(struct gfs2_inode *ip, u64 offset, u64 length)
 	}
 
 	/*
-	 * The start position of the hole is defined by lblock, start_list, and
-	 * start_aligned.  The end position of the hole is defined by lend,
-	 * end_list, and end_aligned.
+	 * The start position of the hole is defined by lblock, first_list, and
+	 * first_aligned.  The end position of the hole is defined by lend,
+	 * last_list, and last_aligned.
 	 *
-	 * start_aligned and end_aligned define down to which height the start
+	 * first_aligned and last_aligned define down to which height the start
 	 * and end positions are aligned to the metadata tree (i.e., the
 	 * position is a multiple of the metadata granularity at the height
 	 * above).  This determines at which heights additional meta pointers
-	 * needs to be preserved for the remaining data.
+	 * need to be preserved for the remaining (meta)data outside the hole.
 	 */
 
 	if (length) {
@@ -1753,25 +1766,25 @@ static int punch_hole(struct gfs2_inode *ip, u64 offset, u64 length)
 		if (lblock >= lend)
 			return 0;
 
-		find_metapath(sdp, lend, &mp, ip->i_height);
-		end_list = __end_list;
-		memcpy(end_list, mp.mp_list, sizeof(mp.mp_list));
+		find_metapath(sdp, lend - 1, &mp, ip->i_height);
+		last_list = __last_list;
+		memcpy(last_list, mp.mp_list, sizeof(mp.mp_list));
 
 		for (mp_h = ip->i_height - 1; mp_h > 0; mp_h--) {
-			if (end_list[mp_h])
+			if (last_list[mp_h] + 1 != sdp->sd_inptrs)
 				break;
 		}
-		end_aligned = mp_h;
+		last_aligned = mp_h;
 	}
 
 	find_metapath(sdp, lblock, &mp, ip->i_height);
-	memcpy(start_list, mp.mp_list, sizeof(start_list));
+	memcpy(first_list, mp.mp_list, sizeof(first_list));
 
 	for (mp_h = ip->i_height - 1; mp_h > 0; mp_h--) {
-		if (start_list[mp_h])
+		if (first_list[mp_h])
 			break;
 	}
-	start_aligned = mp_h;
+	first_aligned = mp_h;
 
 	ret = gfs2_meta_inode_buffer(ip, &dibh);
 	if (ret)
@@ -1784,9 +1797,11 @@ static int punch_hole(struct gfs2_inode *ip, u64 offset, u64 length)
 
 	/* issue read-ahead on metadata */
 	for (mp_h = 0; mp_h < mp.mp_aheight - 1; mp_h++) {
-		metapointer_range(&mp, mp_h, start_list, start_aligned,
-				  end_list, end_aligned, &start, &end);
-		gfs2_metapath_ra(ip->i_gl, start, end);
+		metapointer_range(&mp, mp_h,
+				  first_list, 0,
+				  last_list, 0,
+				  &start, &end);
+		gfs2_metapath_ra(ip->i_gl, start + 1, end);
 	}
 
 	if (mp.mp_aheight == ip->i_height)
@@ -1812,14 +1827,6 @@ static int punch_hole(struct gfs2_inode *ip, u64 offset, u64 length)
 		case DEALLOC_MP_FULL:
 			bh = mp.mp_bh[mp_h];
 			gfs2_assert_withdraw(sdp, bh);
-			if (gfs2_assert_withdraw(sdp,
-						 prev_bnr != bh->b_blocknr)) {
-				fs_emerg(sdp, "inode %llu, block:%llu, i_h:%u,"
-					 "s_h:%u, mp_h:%u\n",
-				       (unsigned long long)ip->i_no_addr,
-				       prev_bnr, ip->i_height, strip_h, mp_h);
-			}
-			prev_bnr = bh->b_blocknr;
 
 			if (gfs2_metatype_check(sdp, bh,
 						(mp_h ? GFS2_METATYPE_IN :
@@ -1828,16 +1835,11 @@ static int punch_hole(struct gfs2_inode *ip, u64 offset, u64 length)
 				goto out;
 			}
 
-			/*
-			 * Below, passing end_aligned as 0 gives us the
-			 * metapointer range excluding the end point: the end
-			 * point is the first metapath we must not deallocate!
-			 */
-
-			metapointer_range(&mp, mp_h, start_list, start_aligned,
-					  end_list, 0 /* end_aligned */,
+			metapointer_range(&mp, mp_h,
+					  first_list, first_aligned,
+					  last_list, last_aligned,
 					  &start, &end);
-			ret = sweep_bh_for_rgrps(ip, &rd_gh, mp.mp_bh[mp_h],
+			ret = sweep_bh_for_rgrps(ip, &rd_gh, bh,
 						 start, end,
 						 mp_h != ip->i_height - 1,
 						 &btotal);
@@ -1865,7 +1867,7 @@ static int punch_hole(struct gfs2_inode *ip, u64 offset, u64 length)
 			   stripping the previous level of metadata. */
 			if (mp_h == 0) {
 				strip_h--;
-				memcpy(mp.mp_list, start_list, sizeof(start_list));
+				memcpy(mp.mp_list, first_list, sizeof(first_list));
 				mp_h = strip_h;
 				state = DEALLOC_FILL_MP;
 				break;
@@ -1873,12 +1875,12 @@ static int punch_hole(struct gfs2_inode *ip, u64 offset, u64 length)
 			mp.mp_list[mp_h] = 0;
 			mp_h--; /* search one metadata height down */
 			mp.mp_list[mp_h]++;
-			if (walk_done(sdp, &mp, mp_h, end_list, end_aligned))
+			if (walk_done(sdp, &mp, mp_h, last_list))
 				break;
 			/* Here we've found a part of the metapath that is not
 			 * allocated. We need to search at that height for the
 			 * next non-null pointer. */
-			if (find_nonnull_ptr(sdp, &mp, mp_h, end_list, end_aligned)) {
+			if (find_nonnull_ptr(&mp, mp_h, last_list)) {
 				state = DEALLOC_FILL_MP;
 				mp_h++;
 			}
@@ -1898,15 +1900,15 @@ static int punch_hole(struct gfs2_inode *ip, u64 offset, u64 length)
 				unsigned int height = mp.mp_aheight - 1;
 
 				/* No read-ahead for data blocks. */
-				if (mp.mp_aheight - 1 == strip_h)
+				if (height == strip_h)
 					height--;
 
 				for (; height >= mp.mp_aheight - ret; height--) {
 					metapointer_range(&mp, height,
-							  start_list, start_aligned,
-							  end_list, end_aligned,
+							  first_list, 0,
+							  last_list, 0,
 							  &start, &end);
-					gfs2_metapath_ra(ip->i_gl, start, end);
+					gfs2_metapath_ra(ip->i_gl, start + 1, end);
 				}
 			}
 
@@ -1921,7 +1923,7 @@ static int punch_hole(struct gfs2_inode *ip, u64 offset, u64 length)
 			/* If we find a non-null block pointer, crawl a bit
 			   higher up in the metapath and try again, otherwise
 			   we need to look lower for a new starting point. */
-			if (find_nonnull_ptr(sdp, &mp, mp_h, end_list, end_aligned))
+			if (find_nonnull_ptr(&mp, mp_h, last_list))
 				mp_h++;
 			else
 				state = DEALLOC_MP_LOWER;
