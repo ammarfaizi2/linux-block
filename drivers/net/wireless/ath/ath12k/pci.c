@@ -15,7 +15,7 @@
 #include "debug.h"
 
 #define ATH12K_PCI_BAR_NUM		0
-#define ATH12K_PCI_DMA_MASK		64
+#define ATH12K_PCI_DMA_MASK		32
 
 #define ATH12K_PCI_IRQ_CE0_OFFSET		3
 
