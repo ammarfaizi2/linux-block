@@ -913,7 +913,10 @@ static int amdgpu_device_asic_init(struct amdgpu_device *adev)
 {
 	amdgpu_asic_pre_asic_init(adev);
 
-	return amdgpu_atom_asic_init(adev->mode_info.atom_context);
+	if (adev->ip_versions[GC_HWIP][0] >= IP_VERSION(11, 0, 0))
+		return amdgpu_atomfirmware_asic_init(adev, true);
+	else
+		return amdgpu_atom_asic_init(adev->mode_info.atom_context);
 }
 
 /**
@@ -1041,19 +1044,25 @@ static int amdgpu_device_doorbell_init(struct amdgpu_device *adev)
 	adev->doorbell.base = pci_resource_start(adev->pdev, 2);
 	adev->doorbell.size = pci_resource_len(adev->pdev, 2);
 
-	adev->doorbell.num_doorbells = min_t(u32, adev->doorbell.size / sizeof(u32),
-					     adev->doorbell_index.max_assignment+1);
-	if (adev->doorbell.num_doorbells == 0)
-		return -EINVAL;
+	if (adev->enable_mes) {
+		adev->doorbell.num_doorbells =
+			adev->doorbell.size / sizeof(u32);
+	} else {
+		adev->doorbell.num_doorbells =
+			min_t(u32, adev->doorbell.size / sizeof(u32),
+			      adev->doorbell_index.max_assignment+1);
+		if (adev->doorbell.num_doorbells == 0)
+			return -EINVAL;
 
-	/* For Vega, reserve and map two pages on doorbell BAR since SDMA
-	 * paging queue doorbell use the second page. The
-	 * AMDGPU_DOORBELL64_MAX_ASSIGNMENT definition assumes all the
-	 * doorbells are in the first page. So with paging queue enabled,
-	 * the max num_doorbells should + 1 page (0x400 in dword)
-	 */
-	if (adev->asic_type >= CHIP_VEGA10)
-		adev->doorbell.num_doorbells += 0x400;
+		/* For Vega, reserve and map two pages on doorbell BAR since SDMA
+		 * paging queue doorbell use the second page. The
+		 * AMDGPU_DOORBELL64_MAX_ASSIGNMENT definition assumes all the
+		 * doorbells are in the first page. So with paging queue enabled,
+		 * the max num_doorbells should + 1 page (0x400 in dword)
+		 */
+		if (adev->asic_type >= CHIP_VEGA10)
+			adev->doorbell.num_doorbells += 0x400;
+	}
 
 	adev->doorbell.ptr = ioremap(adev->doorbell.base,
 				     adev->doorbell.num_doorbells *
@@ -1926,11 +1935,9 @@ static int amdgpu_device_parse_gpu_info_fw(struct amdgpu_device *adev)
 	adev->firmware.gpu_info_fw = NULL;
 
 	if (adev->mman.discovery_bin) {
-		amdgpu_discovery_get_gfx_info(adev);
-
 		/*
 		 * FIXME: The bounding box is still needed by Navi12, so
-		 * temporarily read it from gpu_info firmware. Should be droped
+		 * temporarily read it from gpu_info firmware. Should be dropped
 		 * when DAL no longer needs it.
 		 */
 		if (adev->asic_type != CHIP_NAVI12)
@@ -3663,8 +3670,13 @@ int amdgpu_device_init(struct amdgpu_device *adev,
 	if (amdgpu_mcbp)
 		DRM_INFO("MCBP is enabled\n");
 
-	if (amdgpu_mes && adev->asic_type >= CHIP_NAVI10)
-		adev->enable_mes = true;
+	if (adev->asic_type >= CHIP_NAVI10) {
+		if (amdgpu_mes || amdgpu_mes_kiq)
+			adev->enable_mes = true;
+
+		if (amdgpu_mes_kiq)
+			adev->enable_mes_kiq = true;
+	}
 
 	/*
 	 * Reset domain needs to be present early, before XGMI hive discovered
@@ -4486,6 +4498,7 @@ retry:
 	if (!r) {
 		amdgpu_irq_gpu_reset_resume_helper(adev);
 		r = amdgpu_ib_ring_tests(adev);
+
 		amdgpu_amdkfd_post_reset(adev);
 	}
 

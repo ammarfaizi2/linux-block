@@ -41,6 +41,7 @@ MODULE_FIRMWARE("amdgpu/psp_13_0_5_ta.bin");
 MODULE_FIRMWARE("amdgpu/psp_13_0_8_asd.bin");
 MODULE_FIRMWARE("amdgpu/psp_13_0_8_toc.bin");
 MODULE_FIRMWARE("amdgpu/psp_13_0_8_ta.bin");
+MODULE_FIRMWARE("amdgpu/psp_13_0_0_sos.bin");
 
 /* For large FW files the time to complete can be very long */
 #define USBC_PD_POLLING_LIMIT_S 240
@@ -52,6 +53,7 @@ static int psp_v13_0_init_microcode(struct psp_context *psp)
 {
 	struct amdgpu_device *adev = psp->adev;
 	const char *chip_name;
+	char ucode_prefix[30];
 	int err = 0;
 
 	switch (adev->ip_versions[MP0_HWIP][0]) {
@@ -62,15 +64,12 @@ static int psp_v13_0_init_microcode(struct psp_context *psp)
 	case IP_VERSION(13, 0, 3):
 		chip_name = "yellow_carp";
 		break;
-	case IP_VERSION(13, 0, 5):
-		chip_name = "psp_13_0_5";
-		break;
-	case IP_VERSION(13, 0, 8):
-		chip_name = "psp_13_0_8";
-		break;
 	default:
-		BUG();
+		amdgpu_ucode_ip_version_decode(adev, MP0_HWIP, ucode_prefix, sizeof(ucode_prefix));
+		chip_name = ucode_prefix;
+		break;
 	}
+
 	switch (adev->ip_versions[MP0_HWIP][0]) {
 	case IP_VERSION(13, 0, 2):
 		err = psp_init_sos_microcode(psp, chip_name);
@@ -91,6 +90,11 @@ static int psp_v13_0_init_microcode(struct psp_context *psp)
 		if (err)
 			return err;
 		err = psp_init_ta_microcode(psp, chip_name);
+		if (err)
+			return err;
+		break;
+	case IP_VERSION(13, 0, 0):
+		err = psp_init_sos_microcode(psp, chip_name);
 		if (err)
 			return err;
 		break;
@@ -172,6 +176,11 @@ static int psp_v13_0_bootloader_load_component(struct psp_context  	*psp,
 static int psp_v13_0_bootloader_load_kdb(struct psp_context *psp)
 {
 	return psp_v13_0_bootloader_load_component(psp, &psp->kdb, PSP_BL__LOAD_KEY_DATABASE);
+}
+
+static int psp_v13_0_bootloader_load_spl(struct psp_context *psp)
+{
+	return psp_v13_0_bootloader_load_component(psp, &psp->kdb, PSP_BL__LOAD_TOS_SPL_TABLE);
 }
 
 static int psp_v13_0_bootloader_load_sysdrv(struct psp_context *psp)
@@ -457,6 +466,7 @@ static int psp_v13_0_read_usbc_pd_fw(struct psp_context *psp, uint32_t *fw_ver)
 static const struct psp_funcs psp_v13_0_funcs = {
 	.init_microcode = psp_v13_0_init_microcode,
 	.bootloader_load_kdb = psp_v13_0_bootloader_load_kdb,
+	.bootloader_load_spl = psp_v13_0_bootloader_load_spl,
 	.bootloader_load_sysdrv = psp_v13_0_bootloader_load_sysdrv,
 	.bootloader_load_soc_drv = psp_v13_0_bootloader_load_soc_drv,
 	.bootloader_load_intf_drv = psp_v13_0_bootloader_load_intf_drv,
