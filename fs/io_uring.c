@@ -5772,9 +5772,13 @@ static int io_accept_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 		return -EINVAL;
 
 	accept->file_slot = READ_ONCE(sqe->file_index);
-	if (accept->file_slot && ((accept->flags & SOCK_CLOEXEC) ||
-	   flags & IORING_ACCEPT_MULTISHOT))
-		return -EINVAL;
+	if (accept->file_slot) {
+		if (accept->flags & SOCK_CLOEXEC)
+			return -EINVAL;
+		if (accept->file_slot != UINT_MAX &&
+		    req->flags & IORING_ACCEPT_MULTISHOT)
+			return -EINVAL;
+	}
 	if (accept->flags & ~(SOCK_CLOEXEC | SOCK_NONBLOCK))
 		return -EINVAL;
 	if (SOCK_NONBLOCK != O_NONBLOCK && (accept->flags & SOCK_NONBLOCK))
@@ -5838,8 +5842,8 @@ retry:
 		fd_install(fd, file);
 		ret = fd;
 	} else {
-		ret = io_install_fixed_file(req, file, issue_flags,
-					    accept->file_slot - 1);
+		ret = io_fixed_file_install(req, issue_flags, file,
+						accept->file_slot);
 	}
 
 	if (!(req->flags & REQ_F_APOLL_MULTISHOT)) {
