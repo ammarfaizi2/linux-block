@@ -678,11 +678,9 @@ void rxrpc_send_keepalive(struct rxrpc_peer *peer)
 static inline void rxrpc_instant_resend(struct rxrpc_call *call,
 					struct rxrpc_txbuf *txb)
 {
-	if (call->state < RXRPC_CALL_COMPLETE) {
-		set_bit(RXRPC_TXBUF_RETRANS, &txb->flags);
-		if (!test_and_set_bit(RXRPC_CALL_EV_RESEND, &call->events))
-			rxrpc_queue_call(call);
-	}
+	if (call->state < RXRPC_CALL_COMPLETE &&
+	    !test_and_set_bit(RXRPC_CALL_EV_RESEND, &call->events))
+		rxrpc_queue_call(call);
 }
 
 /*
