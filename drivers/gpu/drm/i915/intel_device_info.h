@@ -88,6 +88,7 @@ enum intel_platform {
 	INTEL_ALDERLAKE_P,
 	INTEL_XEHPSDV,
 	INTEL_DG2,
+	INTEL_PONTEVECCHIO,
 	INTEL_MAX_PLATFORMS
 };
 
@@ -137,9 +138,12 @@ enum intel_ppgtt_type {
 	func(needs_compact_pt); \
 	func(gpu_reset_clobbers_display); \
 	func(has_reset_engine); \
+	func(has_4tile); \
 	func(has_flat_ccs); \
 	func(has_global_mocs); \
 	func(has_gt_uc); \
+	func(has_heci_pxp); \
+	func(has_heci_gscfi); \
 	func(has_guc_deprivilege); \
 	func(has_l3_dpf); \
 	func(has_llc); \
