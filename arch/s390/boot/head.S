@@ -27,52 +27,17 @@
 #include <asm/page.h>
 #include <asm/ptrace.h>
 #include <asm/sclp.h>
+#include "boot.h"
 
 #define ARCH_OFFSET	4
 
 #define EP_OFFSET	0x10008
 #define EP_STRING	"S390EP"
+#define IPL_BS		0x730
 
 __HEAD
-
-#define IPL_BS	0x730
-	.org	0
-	.long	0x00080000,0x80000000+iplstart	# The first 24 bytes are loaded
-	.long	0x02000018,0x60000050		# by ipl to addresses 0-23.
-	.long	0x02000068,0x60000050		# (a PSW and two CCWs).
-	.fill	80-24,1,0x40			# bytes 24-79 are discarded !!
-	.long	0x020000f0,0x60000050		# The next 160 byte are loaded
-	.long	0x02000140,0x60000050		# to addresses 0x18-0xb7
-	.long	0x02000190,0x60000050		# They form the continuation
-	.long	0x020001e0,0x60000050		# of the CCW program started
-	.long	0x02000230,0x60000050		# by ipl and load the range
-	.long	0x02000280,0x60000050		# 0x0f0-0x730 from the image
-	.long	0x020002d0,0x60000050		# to the range 0x0f0-0x730
-	.long	0x02000320,0x60000050		# in memory. At the end of
-	.long	0x02000370,0x60000050		# the channel program the PSW
-	.long	0x020003c0,0x60000050		# at location 0 is loaded.
-	.long	0x02000410,0x60000050		# Initial processing starts
-	.long	0x02000460,0x60000050		# at 0x200 = iplstart.
-	.long	0x020004b0,0x60000050
-	.long	0x02000500,0x60000050
-	.long	0x02000550,0x60000050
-	.long	0x020005a0,0x60000050
-	.long	0x020005f0,0x60000050
-	.long	0x02000640,0x60000050
-	.long	0x02000690,0x60000050
-	.long	0x020006e0,0x20000050
-
-	.org	__LC_RST_NEW_PSW		# 0x1a0
-	.quad	0,iplstart
-	.org	__LC_EXT_NEW_PSW		# 0x1b0
-	.quad	0x0002000180000000,0x1b0	# disabled wait
-	.org	__LC_PGM_NEW_PSW		# 0x1d0
-	.quad	0x0000000180000000,startup_pgm_check_handler
-	.org	__LC_IO_NEW_PSW			# 0x1f0
-	.quad	0x0002000180000000,0x1f0	# disabled wait
-
-	.org	0x200
-
+ipl_start:
+	j	.Liplcont
 #
 # subroutine to wait for end I/O
 #
@@ -158,7 +123,7 @@ __HEAD
 	.endr
 	.long	0x02200050,0x00000000
 
-iplstart:
+.Liplcont:
 	mvi	__LC_AR_MODE_ID,1	# set esame flag
 	slr	%r0,%r0			# set cpuid to zero
 	lhi	%r1,2			# mode 2 = esame (dump)
@@ -268,10 +233,10 @@ iplstart:
 # this is called either by the ipl loader or directly by PSW restart
 # or linload or SALIPL
 #
-	.org	STARTUP_NORMAL_OFFSET
+	.org	STARTUP_NORMAL_OFFSET - IPL_START
 SYM_CODE_START(startup)
 	j	startup_normal
-	.org	EP_OFFSET
+	.org	EP_OFFSET - IPL_START
 #
 # This is a list of s390 kernel entry points. At address 0x1000f the number of
 # valid entry points is stored.
@@ -283,7 +248,7 @@ SYM_CODE_START(startup)
 #
 # kdump startup-code, running in 64 bit absolute addressing mode
 #
-	.org	STARTUP_KDUMP_OFFSET
+	.org	STARTUP_KDUMP_OFFSET - IPL_START
 	j	startup_kdump
 SYM_CODE_END(startup)
 SYM_CODE_START_LOCAL(startup_normal)
@@ -368,23 +333,3 @@ SYM_CODE_START_LOCAL(startup_pgm_check_handler)
 	lmg	%r0,%r15,__LC_GPREGS_SAVE_AREA-4095(%r8)
 	lpswe	__LC_RETURN_PSW		# disabled wait
 SYM_CODE_END(startup_pgm_check_handler)
-
-#
-# params at 10400 (setup.h)
-# Must be keept in sync with struct parmarea in setup.h
-#
-	.org	PARMAREA
-SYM_DATA_START(parmarea)
-	.quad	0			# IPL_DEVICE
-	.quad	0			# INITRD_START
-	.quad	0			# INITRD_SIZE
-	.quad	0			# OLDMEM_BASE
-	.quad	0			# OLDMEM_SIZE
-	.quad	kernel_version		# points to kernel version string
-	.quad	COMMAND_LINE_SIZE
-
-	.org	COMMAND_LINE
-	.byte	"root=/dev/ram0 ro"
-	.byte	0
-	.org	PARMAREA+__PARMAREA_SIZE
-SYM_DATA_END(parmarea)
