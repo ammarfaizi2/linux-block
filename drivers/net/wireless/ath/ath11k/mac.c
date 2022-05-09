@@ -6155,6 +6155,11 @@ void ath11k_mac_11d_scan_stop(struct ath11k *ar)
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac stop 11d vdev id %d\n",
 		   ar->vdev_id_11d_scan);
 
+	if (ar->state_11d == ATH11K_11D_PREPARING) {
+		ar->state_11d = ATH11K_11D_IDLE;
+		complete(&ar->completed_11d_scan);
+	}
+
 	if (ar->vdev_id_11d_scan != ATH11K_11D_INVALID_VDEV_ID) {
 		vdev_id = ar->vdev_id_11d_scan;
 
@@ -7741,6 +7746,7 @@ ath11k_mac_validate_vht_he_fixed_rate_settings(struct ath11k *ar, enum nl80211_b
 	bool he_fixed_rate = false, vht_fixed_rate = false;
 	struct ath11k_peer *peer, *tmp;
 	const u16 *vht_mcs_mask, *he_mcs_mask;
+	struct ieee80211_link_sta *deflink;
 	u8 vht_nss, he_nss;
 	bool ret = true;
 
@@ -7763,13 +7769,16 @@ ath11k_mac_validate_vht_he_fixed_rate_settings(struct ath11k *ar, enum nl80211_b
 	spin_lock_bh(&ar->ab->base_lock);
 	list_for_each_entry_safe(peer, tmp, &ar->ab->peers, list) {
 		if (peer->sta) {
-			if (vht_fixed_rate && (!peer->sta->deflink.vht_cap.vht_supported ||
-					       peer->sta->deflink.rx_nss < vht_nss)) {
+			deflink = &peer->sta->deflink;
+
+			if (vht_fixed_rate && (!deflink->vht_cap.vht_supported ||
+					       deflink->rx_nss < vht_nss)) {
 				ret = false;
 				goto out;
 			}
-			if (he_fixed_rate && (!peer->sta->deflink.he_cap.has_he ||
-					      peer->sta->deflink.rx_nss < he_nss)) {
+
+			if (he_fixed_rate && (!deflink->he_cap.has_he ||
+					      deflink->rx_nss < he_nss)) {
 				ret = false;
 				goto out;
 			}
