@@ -105,6 +105,11 @@
 #define REG_RESERVED_ADDR		0xffffffff
 #define REG_RESERVED(reg)		REG(reg, REG_RESERVED_ADDR)
 
+#define for_each_stat(ocelot, stat)				\
+	for ((stat) = (ocelot)->stats_layout;			\
+	     ((stat)->name[0] != '\0');				\
+	     (stat)++)
+
 enum ocelot_target {
 	ANA = 1,
 	QS,
@@ -537,6 +542,8 @@ struct ocelot_stat_layout {
 	u32 offset;
 	char name[ETH_GSTRING_LEN];
 };
+
+#define OCELOT_STAT_END { .name = "" }
 
 struct ocelot_stats_region {
 	struct list_head node;
@@ -990,6 +997,9 @@ int ocelot_mact_learn_streamdata(struct ocelot *ocelot, int dst_idx,
 				 unsigned int vid,
 				 enum macaccess_entry_type type,
 				 int sfid, int ssid);
+
+int ocelot_migrate_mdbs(struct ocelot *ocelot, unsigned long from_mask,
+			unsigned long to_mask);
 
 int ocelot_vcap_policer_add(struct ocelot *ocelot, u32 pol_ix,
 			    struct ocelot_policer *pol);
