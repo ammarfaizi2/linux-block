@@ -166,10 +166,12 @@ CONFIG_RCU_EXP_CPU_STALL_TIMEOUT
 --------------------------------
 
 	Same as the CONFIG_RCU_CPU_STALL_TIMEOUT parameter but only for
-	the expedited grace period. This parameter defines the period of
-	time that RCU will wait from the beginning of an expedited grace
-	period until it issues an RCU CPU stall warning. This time period
-	is normally 20 milliseconds on Android devices.
+	the expedited grace period. This parameter defines the period
+	of time that RCU will wait from the beginning of an expedited
+	grace period until it issues an RCU CPU stall warning. This time
+	period is normally 20 milliseconds on Android devices.	A zero
+	value causes the CONFIG_RCU_CPU_STALL_TIMEOUT value to be used,
+	after conversion to milliseconds.
 
 	This configuration parameter may be changed at runtime via the
 	/sys/module/rcupdate/parameters/rcu_exp_cpu_stall_timeout, however

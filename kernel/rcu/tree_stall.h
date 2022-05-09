@@ -31,15 +31,17 @@ int rcu_exp_jiffies_till_stall_check(void)
 	int exp_stall_delay_delta = 0;
 	int till_stall_check;
 
-	/*
-	 * Limit check must be consistent with the Kconfig limits for
-	 * CONFIG_RCU_EXP_CPU_STALL_TIMEOUT, so check the allowed range.
-	 * The minimum clamped value is "2UL", because at least one full
-	 * tick has to be guaranteed.
-	 */
+	// Zero says to use rcu_cpu_stall_timeout, but in milliseconds.
+	if (!cpu_stall_timeout)
+		cpu_stall_timeout = jiffies_to_msecs(rcu_jiffies_till_stall_check());
+
+	// Limit check must be consistent with the Kconfig limits for
+	// CONFIG_RCU_EXP_CPU_STALL_TIMEOUT, so check the allowed range.
+	// The minimum clamped value is "2UL", because at least one full
+	// tick has to be guaranteed.
 	till_stall_check = clamp(msecs_to_jiffies(cpu_stall_timeout), 2UL, 21UL * HZ);
 
-	if (jiffies_to_msecs(till_stall_check) != cpu_stall_timeout)
+	if (cpu_stall_timeout && jiffies_to_msecs(till_stall_check) != cpu_stall_timeout)
 		WRITE_ONCE(rcu_exp_cpu_stall_timeout, jiffies_to_msecs(till_stall_check));
 
 #ifdef CONFIG_PROVE_RCU
