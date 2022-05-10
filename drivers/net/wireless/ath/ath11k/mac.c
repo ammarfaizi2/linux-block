@@ -1951,7 +1951,7 @@ static void ath11k_peer_assoc_h_vht(struct ath11k *ar,
 	/* Calculate peer NSS capability from VHT capabilities if STA
 	 * supports VHT.
 	 */
-	for (i = 0, max_nss = 0, vht_mcs = 0; i < NL80211_VHT_NSS_MAX; i++) {
+	for (i = 0, max_nss = 0; i < NL80211_VHT_NSS_MAX; i++) {
 		vht_mcs = __le16_to_cpu(vht_cap->vht_mcs.rx_mcs_map) >>
 			  (2 * i) & 3;
 
@@ -2272,7 +2272,7 @@ static void ath11k_peer_assoc_h_he(struct ath11k *ar,
 	/* Calculate peer NSS capability from HE capabilities if STA
 	 * supports HE.
 	 */
-	for (i = 0, max_nss = 0, he_mcs = 0; i < NL80211_HE_NSS_MAX; i++) {
+	for (i = 0, max_nss = 0; i < NL80211_HE_NSS_MAX; i++) {
 		he_mcs = he_tx_mcs >> (2 * i) & 3;
 
 		/* In case of fixed rates, MCS Range in he_tx_mcs might have
@@ -5551,8 +5551,8 @@ static void ath11k_mgmt_over_wmi_tx_work(struct work_struct *work)
 		}
 
 		arvif = ath11k_vif_to_arvif(skb_cb->vif);
-		if (ar->allocated_vdev_map & (1LL << arvif->vdev_id) &&
-		    arvif->is_started) {
+		mutex_lock(&ar->conf_mutex);
+		if (ar->allocated_vdev_map & (1LL << arvif->vdev_id)) {
 			ret = ath11k_mac_mgmt_tx_wmi(ar, arvif, skb);
 			if (ret) {
 				ath11k_warn(ar->ab, "failed to tx mgmt frame, vdev_id %d :%d\n",
@@ -5570,6 +5570,7 @@ static void ath11k_mgmt_over_wmi_tx_work(struct work_struct *work)
 				    arvif->is_started);
 			ath11k_mgmt_over_wmi_tx_drop(ar, skb);
 		}
+		mutex_unlock(&ar->conf_mutex);
 	}
 }
 
@@ -8354,6 +8355,118 @@ exit:
 	return ret;
 }
 
+static int ath11k_mac_op_cancel_remain_on_channel(struct ieee80211_hw *hw,
+						  struct ieee80211_vif *vif)
+{
+	struct ath11k *ar = hw->priv;
+
+	mutex_lock(&ar->conf_mutex);
+
+	spin_lock_bh(&ar->data_lock);
+	ar->scan.roc_notify = false;
+	spin_unlock_bh(&ar->data_lock);
+
+	ath11k_scan_abort(ar);
+
+	mutex_unlock(&ar->conf_mutex);
+
+	cancel_delayed_work_sync(&ar->scan.timeout);
+
+	return 0;
+}
+
+static int ath11k_mac_op_remain_on_channel(struct ieee80211_hw *hw,
+					   struct ieee80211_vif *vif,
+					   struct ieee80211_channel *chan,
+					   int duration,
+					   enum ieee80211_roc_type type)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	struct scan_req_params arg;
+	int ret;
+	u32 scan_time_msec;
+
+	mutex_lock(&ar->conf_mutex);
+
+	spin_lock_bh(&ar->data_lock);
+	switch (ar->scan.state) {
+	case ATH11K_SCAN_IDLE:
+		reinit_completion(&ar->scan.started);
+		reinit_completion(&ar->scan.completed);
+		reinit_completion(&ar->scan.on_channel);
+		ar->scan.state = ATH11K_SCAN_STARTING;
+		ar->scan.is_roc = true;
+		ar->scan.vdev_id = arvif->vdev_id;
+		ar->scan.roc_freq = chan->center_freq;
+		ar->scan.roc_notify = true;
+		ret = 0;
+		break;
+	case ATH11K_SCAN_STARTING:
+	case ATH11K_SCAN_RUNNING:
+	case ATH11K_SCAN_ABORTING:
+		ret = -EBUSY;
+		break;
+	}
+	spin_unlock_bh(&ar->data_lock);
+
+	if (ret)
+		goto exit;
+
+	scan_time_msec = ar->hw->wiphy->max_remain_on_channel_duration * 2;
+
+	memset(&arg, 0, sizeof(arg));
+	ath11k_wmi_start_scan_init(ar, &arg);
+	arg.num_chan = 1;
+	arg.chan_list = kcalloc(arg.num_chan, sizeof(*arg.chan_list),
+				GFP_KERNEL);
+	if (!arg.chan_list) {
+		ret = -ENOMEM;
+		goto exit;
+	}
+
+	arg.vdev_id = arvif->vdev_id;
+	arg.scan_id = ATH11K_SCAN_ID;
+	arg.chan_list[0] = chan->center_freq;
+	arg.dwell_time_active = scan_time_msec;
+	arg.dwell_time_passive = scan_time_msec;
+	arg.max_scan_time = scan_time_msec;
+	arg.scan_flags |= WMI_SCAN_FLAG_PASSIVE;
+	arg.scan_flags |= WMI_SCAN_FILTER_PROBE_REQ;
+	arg.burst_duration = duration;
+
+	ret = ath11k_start_scan(ar, &arg);
+	if (ret) {
+		ath11k_warn(ar->ab, "failed to start roc scan: %d\n", ret);
+
+		spin_lock_bh(&ar->data_lock);
+		ar->scan.state = ATH11K_SCAN_IDLE;
+		spin_unlock_bh(&ar->data_lock);
+		goto free_chan_list;
+	}
+
+	ret = wait_for_completion_timeout(&ar->scan.on_channel, 3 * HZ);
+	if (ret == 0) {
+		ath11k_warn(ar->ab, "failed to switch to channel for roc scan\n");
+		ret = ath11k_scan_stop(ar);
+		if (ret)
+			ath11k_warn(ar->ab, "failed to stop scan: %d\n", ret);
+		ret = -ETIMEDOUT;
+		goto free_chan_list;
+	}
+
+	ieee80211_queue_delayed_work(ar->hw, &ar->scan.timeout,
+				     msecs_to_jiffies(duration));
+
+	ret = 0;
+
+free_chan_list:
+	kfree(arg.chan_list);
+exit:
+	mutex_unlock(&ar->conf_mutex);
+	return ret;
+}
+
 static const struct ieee80211_ops ath11k_ops = {
 	.tx				= ath11k_mac_op_tx,
 	.start                          = ath11k_mac_op_start,
@@ -8406,6 +8519,8 @@ static const struct ieee80211_ops ath11k_ops = {
 #endif
 
 	.set_sar_specs			= ath11k_mac_op_set_bios_sar_specs,
+	.remain_on_channel		= ath11k_mac_op_remain_on_channel,
+	.cancel_remain_on_channel	= ath11k_mac_op_cancel_remain_on_channel,
 };
 
 static void ath11k_mac_update_ch_list(struct ath11k *ar,
@@ -8995,6 +9110,7 @@ int ath11k_mac_allocate(struct ath11k_base *ab)
 		init_completion(&ar->bss_survey_done);
 		init_completion(&ar->scan.started);
 		init_completion(&ar->scan.completed);
+		init_completion(&ar->scan.on_channel);
 		init_completion(&ar->thermal.wmi_sync);
 
 		INIT_DELAYED_WORK(&ar->scan.timeout, ath11k_scan_timeout_work);
@@ -9034,4 +9150,35 @@ void ath11k_mac_destroy(struct ath11k_base *ab)
 		ieee80211_free_hw(ar->hw);
 		pdev->ar = NULL;
 	}
+}
+
+int ath11k_mac_vif_set_keepalive(struct ath11k_vif *arvif,
+				 enum wmi_sta_keepalive_method method,
+				 u32 interval)
+{
+	struct ath11k *ar = arvif->ar;
+	struct wmi_sta_keepalive_arg arg = {};
+	int ret;
+
+	lockdep_assert_held(&ar->conf_mutex);
+
+	if (arvif->vdev_type != WMI_VDEV_TYPE_STA)
+		return 0;
+
+	if (!test_bit(WMI_TLV_SERVICE_STA_KEEP_ALIVE, ar->ab->wmi_ab.svc_map))
+		return 0;
+
+	arg.vdev_id = arvif->vdev_id;
+	arg.enabled = 1;
+	arg.method = method;
+	arg.interval = interval;
+
+	ret = ath11k_wmi_sta_keepalive(ar, &arg);
+	if (ret) {
+		ath11k_warn(ar->ab, "failed to set keepalive on vdev %i: %d\n",
+			    arvif->vdev_id, ret);
+		return ret;
+	}
+
+	return 0;
 }
