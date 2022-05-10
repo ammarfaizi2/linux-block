@@ -2605,7 +2605,6 @@
 			      B_AX_TMAC_HWSIGB_GEN | \
 			      B_AX_TMAC_RXTB | \
 			      B_AX_TMAC_MIMO_CTRL | \
-			      B_AX_RMAC_CSI | \
 			      B_AX_RMAC_FTM)
 
 #define R_AX_WMAC_TX_TF_INFO_0 0xCCD0
@@ -2841,6 +2840,11 @@
 #define R_AX_RX_SR_CTRL 0xCE4A
 #define R_AX_RX_SR_CTRL_C1 0xEE4A
 #define B_AX_SR_EN BIT(0)
+
+#define R_AX_CSIRPT_OPTION 0xCE64
+#define R_AX_CSIRPT_OPTION_C1 0xEE64
+#define B_AX_CSIPRT_HESU_AID_EN BIT(25)
+#define B_AX_CSIPRT_VHTSU_AID_EN BIT(24)
 
 #define R_AX_RX_STATE_MONITOR 0xCEF0
 #define R_AX_RX_STATE_MONITOR_C1 0xEEF0
@@ -3662,7 +3666,7 @@
 #define R_DCFO 0x4264
 #define B_DCFO GENMASK(1, 0)
 #define R_SEG0CSI 0x42AC
-#define B_SEG0CSI_IDX GENMASK(10, 0)
+#define B_SEG0CSI_IDX GENMASK(11, 0)
 #define R_SEG0CSI_EN 0x42C4
 #define B_SEG0CSI_EN BIT(23)
 #define R_BSS_CLR_MAP 0x43ac
