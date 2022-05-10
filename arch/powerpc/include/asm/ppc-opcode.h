@@ -127,8 +127,53 @@
 
 
 /* opcode and xopcode for instructions */
-#define OP_TRAP 3
-#define OP_TRAP_64 2
+#define OP_PREFIX	1
+#define OP_TRAP_64	2
+#define OP_TRAP		3
+#define OP_SC		17
+#define OP_19		19
+#define OP_31		31
+#define OP_LWZ		32
+#define OP_LWZU		33
+#define OP_LBZ		34
+#define OP_LBZU		35
+#define OP_STW		36
+#define OP_STWU		37
+#define OP_STB		38
+#define OP_STBU		39
+#define OP_LHZ		40
+#define OP_LHZU		41
+#define OP_LHA		42
+#define OP_LHAU		43
+#define OP_STH		44
+#define OP_STHU		45
+#define OP_LMW		46
+#define OP_STMW		47
+#define OP_LFS		48
+#define OP_LFSU		49
+#define OP_LFD		50
+#define OP_LFDU		51
+#define OP_STFS		52
+#define OP_STFSU	53
+#define OP_STFD		54
+#define OP_STFDU	55
+#define OP_LQ		56
+#define OP_LD		58
+#define OP_STD		62
+
+#define OP_19_XOP_RFID		18
+#define OP_19_XOP_RFMCI		38
+#define OP_19_XOP_RFDI		39
+#define OP_19_XOP_RFI		50
+#define OP_19_XOP_RFCI		51
+#define OP_19_XOP_RFSCV		82
+#define OP_19_XOP_HRFID		274
+#define OP_19_XOP_URFID		306
+#define OP_19_XOP_STOP		370
+#define OP_19_XOP_DOZE		402
+#define OP_19_XOP_NAP		434
+#define OP_19_XOP_SLEEP		466
+#define OP_19_XOP_RVWINKLE	498
 
 #define OP_31_XOP_TRAP      4
 #define OP_31_XOP_LDX       21
@@ -150,6 +195,8 @@
 #define OP_31_XOP_LHZUX     311
 #define OP_31_XOP_MSGSNDP   142
 #define OP_31_XOP_MSGCLRP   174
+#define OP_31_XOP_MTMSR     146
+#define OP_31_XOP_MTMSRD    178
 #define OP_31_XOP_TLBIE     306
 #define OP_31_XOP_MFSPR     339
 #define OP_31_XOP_LWAX      341
@@ -207,42 +254,6 @@
 
 /* VMX Vector Store Instructions */
 #define OP_31_XOP_STVX          231
-
-/* Prefixed Instructions */
-#define OP_PREFIX		1
-
-#define OP_31   31
-#define OP_LWZ  32
-#define OP_STFS 52
-#define OP_STFSU 53
-#define OP_STFD 54
-#define OP_STFDU 55
-#define OP_LD   58
-#define OP_LWZU 33
-#define OP_LBZ  34
-#define OP_LBZU 35
-#define OP_STW  36
-#define OP_STWU 37
-#define OP_STD  62
-#define OP_STB  38
-#define OP_STBU 39
-#define OP_LHZ  40
-#define OP_LHZU 41
-#define OP_LHA  42
-#define OP_LHAU 43
-#define OP_STH  44
-#define OP_STHU 45
-#define OP_LMW  46
-#define OP_STMW 47
-#define OP_LFS  48
-#define OP_LFSU 49
-#define OP_LFD  50
-#define OP_LFDU 51
-#define OP_STFS 52
-#define OP_STFSU 53
-#define OP_STFD  54
-#define OP_STFDU 55
-#define OP_LQ    56
 
 /* sorted alphabetically */
 #define PPC_INST_BCCTR_FLUSH		0x4c400420
