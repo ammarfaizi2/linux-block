@@ -308,7 +308,6 @@ static int next_opcode(struct rxe_qp *qp, struct rxe_send_wqe *wqe,
 	case IB_QPT_UC:
 		return next_opcode_uc(qp, opcode, fits);
 
-	case IB_QPT_SMI:
 	case IB_QPT_UD:
 	case IB_QPT_GSI:
 		switch (opcode) {
@@ -414,8 +413,7 @@ static struct sk_buff *init_req_packet(struct rxe_qp *qp,
 
 	if (pkt->mask & RXE_ATMETH_MASK) {
 		atmeth_set_va(pkt, wqe->iova);
-		if (opcode == IB_OPCODE_RC_COMPARE_SWAP ||
-		    opcode == IB_OPCODE_RD_COMPARE_SWAP) {
+		if (opcode == IB_OPCODE_RC_COMPARE_SWAP) {
 			atmeth_set_swap_add(pkt, ibwr->wr.atomic.swap);
 			atmeth_set_comp(pkt, ibwr->wr.atomic.compare_add);
 		} else {
@@ -437,7 +435,7 @@ static struct sk_buff *init_req_packet(struct rxe_qp *qp,
 
 static int finish_packet(struct rxe_qp *qp, struct rxe_av *av,
 			 struct rxe_send_wqe *wqe, struct rxe_pkt_info *pkt,
-			 struct sk_buff *skb, u32 paylen)
+			 struct sk_buff *skb, u32 payload)
 {
 	int err;
 
@@ -449,19 +447,19 @@ static int finish_packet(struct rxe_qp *qp, struct rxe_av *av,
 		if (wqe->wr.send_flags & IB_SEND_INLINE) {
 			u8 *tmp = &wqe->dma.inline_data[wqe->dma.sge_offset];
 
-			memcpy(payload_addr(pkt), tmp, paylen);
+			memcpy(payload_addr(pkt), tmp, payload);
 
-			wqe->dma.resid -= paylen;
-			wqe->dma.sge_offset += paylen;
+			wqe->dma.resid -= payload;
+			wqe->dma.sge_offset += payload;
 		} else {
 			err = copy_data(qp->pd, 0, &wqe->dma,
-					payload_addr(pkt), paylen,
+					payload_addr(pkt), payload,
 					RXE_FROM_MR_OBJ);
 			if (err)
 				return err;
 		}
 		if (bth_pad(pkt)) {
-			u8 *pad = payload_addr(pkt) + paylen;
+			u8 *pad = payload_addr(pkt) + payload;
 
 			memset(pad, 0, bth_pad(pkt));
 		}
@@ -527,8 +525,7 @@ static void rollback_state(struct rxe_send_wqe *wqe,
 	qp->req.psn    = rollback_psn;
 }
 
-static void update_state(struct rxe_qp *qp, struct rxe_send_wqe *wqe,
-			 struct rxe_pkt_info *pkt)
+static void update_state(struct rxe_qp *qp, struct rxe_pkt_info *pkt)
 {
 	qp->req.opcode = pkt->opcode;
 
@@ -661,7 +658,7 @@ next_wqe:
 	opcode = next_opcode(qp, wqe, wqe->wr.opcode);
 	if (unlikely(opcode < 0)) {
 		wqe->status = IB_WC_LOC_QP_OP_ERR;
-		goto exit;
+		goto err;
 	}
 
 	mask = rxe_opcode[opcode].mask;
@@ -755,7 +752,7 @@ next_wqe:
 		goto err;
 	}
 
-	update_state(qp, wqe, &pkt);
+	update_state(qp, &pkt);
 
 	goto next_wqe;
 
