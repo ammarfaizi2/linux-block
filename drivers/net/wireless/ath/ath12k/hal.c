@@ -1376,7 +1376,7 @@ int ath12k_hal_srng_update_shadow_config(struct ath12k_base *ab,
 	ath12k_hal_srng_update_hp_tp_addr(ab, shadow_cfg_idx, ring_type,
 					  ring_num);
 
-	ath12k_dbg(ab, ATH11k_DBG_HAL,
+	ath12k_dbg(ab, ATH12K_DBG_HAL,
 		   "target_reg %x, shadow reg 0x%x shadow_idx 0x%x, ring_type %d, ring num %d",
 		  target_reg,
 		  HAL_SHADOW_REG(shadow_cfg_idx),
