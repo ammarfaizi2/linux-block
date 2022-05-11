@@ -1019,6 +1019,8 @@ int rxrpc_send_abort_packet(struct rxrpc_call *);
 void rxrpc_reject_packets(struct rxrpc_local *);
 void rxrpc_send_keepalive(struct rxrpc_peer *);
 int rxrpc_transmitter(void *data);
+int rxrpc_transmitter_stats_show(struct seq_file *seq, void *v);
+
 static inline void rxrpc_wake_up_transmitter(struct rxrpc_local *local)
 {
 	wake_up_process(local->transmitter);

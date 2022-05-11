@@ -16,6 +16,33 @@
 #include <net/udp.h>
 #include "ar-internal.h"
 
+static atomic_t rxrpc_stat_tx_ack_dequeue;
+static atomic_t rxrpc_stat_tx_ack_fill;
+static atomic_t rxrpc_stat_tx_ack_fill_retry;
+static atomic_t rxrpc_stat_tx_ack_fill_weird;
+static atomic_t rxrpc_stat_tx_ack_send;
+static atomic_t rxrpc_stat_tx_ack_skip;
+static atomic_t rxrpc_stat_tx_ack_transmitter;
+static atomic_t rxrpc_stat_tx_data_dequeue;
+static atomic_t rxrpc_stat_tx_data_send;
+static atomic_t rxrpc_stat_tx_data_send_frag;
+static atomic_t rxrpc_stat_tx_loop;
+static atomic_t rxrpc_stat_tx_sendmsg;
+static atomic_t rxrpc_stat_tx_sendmsg_fail;
+static atomic_t rxrpc_stat_tx_sleep;
+static atomic_t rxrpc_stat_tx_zcopy_clean_queued;
+static atomic_t rxrpc_stat_tx_zcopy_clean_dequeued;
+
+static void rxrpc_inc_stat(atomic_t *s)
+{
+	atomic_inc(s);
+}
+
+static void rxrpc_dec_stat(atomic_t *s)
+{
+	atomic_dec(s);
+}
+
 static const char rxrpc_keepalive_string[] = "";
 
 extern int udpv6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len);
@@ -50,8 +77,10 @@ static int rxrpc_zcopy_sendmsg(struct rxrpc_local *local, struct rxrpc_txbuf *tx
 	if (list_empty(&txb->cleanup_link))
 		*_queued = true;
 	list_move_tail(&txb->cleanup_link, &local->zcopy_cleanup_queue);
+	rxrpc_inc_stat(&rxrpc_stat_tx_zcopy_clean_queued);
 	spin_unlock(&local->tx_lock);
 
+	rxrpc_inc_stat(&rxrpc_stat_tx_sendmsg);
 	ret = do_udp_sendmsg(local->socket, msg, sizeof(txb->wire) + txb->len);
 	if (ret < 0) {
 		/* We got an error.  Leave the buffer on the queue, but with a
@@ -60,6 +89,7 @@ static int rxrpc_zcopy_sendmsg(struct rxrpc_local *local, struct rxrpc_txbuf *tx
 		 * can't just dequeue it as it may be pending cleanup from a
 		 * previous transmission.
 		 */
+		rxrpc_inc_stat(&rxrpc_stat_tx_sendmsg_fail);
 		txb->zcopy_seq--;
 		return ret;
 	}
@@ -92,6 +122,7 @@ bool rxrpc_zcopy_cleanup(struct rxrpc_local *local)
 		if (!txb)
 			return again;
 
+		rxrpc_inc_stat(&rxrpc_stat_tx_zcopy_clean_dequeued);
 		seq = txb->seq;
 		call = txb->call;
 		rxrpc_put_txbuf(txb, rxrpc_txbuf_put_zcopy);
@@ -157,8 +188,10 @@ static size_t rxrpc_fill_out_ack(struct rxrpc_connection *conn,
 	tmp = atomic_xchg(&call->ackr_nr_unacked, 0);
 	tmp |= atomic_xchg(&call->ackr_nr_consumed, 0);
 	if (!tmp && (txb->ack.reason == RXRPC_ACK_DELAY ||
-		     txb->ack.reason == RXRPC_ACK_IDLE))
+		     txb->ack.reason == RXRPC_ACK_IDLE)) {
+		rxrpc_inc_stat(&rxrpc_stat_tx_ack_skip);
 		return 0;
+	}
 
 	/* Barrier against rxrpc_input_data(). */
 retry:
@@ -168,6 +201,11 @@ retry:
 	txb->ack.previousPacket	= htonl(whigh);
 	if (before(whigh, hard_ack)) {
 		cond_resched();
+		if (hard_ack == READ_ONCE(call->rx_hard_ack)) {
+			rxrpc_inc_stat(&rxrpc_stat_tx_ack_fill_weird);
+			return 0;
+		}
+		rxrpc_inc_stat(&rxrpc_stat_tx_ack_fill_retry);
 		goto retry;
 	}
 	txb->ack.firstPacket	= htonl(window);
@@ -179,6 +217,7 @@ retry:
 		tmp = READ_ONCE(call->rx_hard_ack);
 		if (tmp != hard_ack) {
 			cond_resched();
+			rxrpc_inc_stat(&rxrpc_stat_tx_ack_fill_retry);
 			goto retry;
 		}
 
@@ -309,6 +348,7 @@ static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_txbuf *
 	if (txb->ack.reason == RXRPC_ACK_PING)
 		rtt_slot = rxrpc_begin_rtt_probe(call, serial, rxrpc_rtt_tx_ping);
 
+	rxrpc_inc_stat(&rxrpc_stat_tx_ack_send);
 	ret = rxrpc_zcopy_sendmsg(conn->params.local, txb, &msg, _queued);
 	call->peer->last_tx_at = ktime_get_seconds();
 	if (ret < 0)
@@ -341,6 +381,7 @@ static void rxrpc_ack_transmitter(struct rxrpc_local *local)
 
 	trace_rxrpc_local(local->debug_id, rxrpc_local_tx_ack,
 			  refcount_read(&local->ref), NULL);
+	rxrpc_inc_stat(&rxrpc_stat_tx_ack_transmitter);
 
 	spin_lock_bh(&local->ack_tx_lock);
 	list_splice_tail_init(&local->ack_tx_queue, &queue);
@@ -349,6 +390,8 @@ static void rxrpc_ack_transmitter(struct rxrpc_local *local)
 	while (!list_empty(&queue)) {
 		struct rxrpc_txbuf *txb =
 			list_entry(queue.next, struct rxrpc_txbuf, tx_link);
+
+		rxrpc_inc_stat(&rxrpc_stat_tx_ack_dequeue);
 
 		queued = false;
 		ret = rxrpc_send_ack_packet(local, txb, &queued);
@@ -536,6 +579,7 @@ dont_set_request_ack:
 	 *   - in which case, we'll have processed the ICMP error
 	 *     message and update the peer record
 	 */
+	rxrpc_inc_stat(&rxrpc_stat_tx_data_send);
 	ret = rxrpc_zcopy_sendmsg(conn->params.local, txb, &msg, _queued);
 	conn->params.peer->last_tx_at = ktime_get_seconds();
 
@@ -609,6 +653,7 @@ send_fragmentable:
 	case AF_INET:
 		ip_sock_set_mtu_discover(conn->params.local->socket->sk,
 					 IP_PMTUDISC_DONT);
+		rxrpc_inc_stat(&rxrpc_stat_tx_data_send_frag);
 		ret = rxrpc_zcopy_sendmsg(conn->params.local, txb, &msg, _queued);
 		conn->params.peer->last_tx_at = ktime_get_seconds();
 
@@ -831,6 +876,7 @@ int rxrpc_transmitter(void *data)
 	set_user_nice(current, MIN_NICE);
 
 	for (;;) {
+		rxrpc_inc_stat(&rxrpc_stat_tx_loop);
 		if (!list_empty(&local->ack_tx_queue))
 			rxrpc_ack_transmitter(local);
 
@@ -838,6 +884,7 @@ int rxrpc_transmitter(void *data)
 		txb = list_first_entry_or_null(&local->tx_queue,
 					       struct rxrpc_txbuf, tx_link);
 		if (txb) {
+			rxrpc_inc_stat(&rxrpc_stat_tx_data_dequeue);
 			call = txb->call;
 			list_del_init(&txb->tx_link);
 			spin_unlock(&local->tx_lock);
@@ -861,9 +908,48 @@ int rxrpc_transmitter(void *data)
 			__set_current_state(TASK_RUNNING);
 			continue;
 		}
+		rxrpc_inc_stat(&rxrpc_stat_tx_sleep);
 		schedule();
 	}
 	__set_current_state(TASK_RUNNING);
 	local->transmitter = NULL;
+	return 0;
+}
+
+/*
+ * Generate transmitted stats in /proc/net/rxrpc/transmitter
+ */
+int rxrpc_transmitter_stats_show(struct seq_file *seq, void *v)
+{
+	seq_printf(seq,
+		   "Trans  : loop=%u sleep=%u\n",
+		   atomic_read(&rxrpc_stat_tx_loop),
+		   atomic_read(&rxrpc_stat_tx_sleep));
+	seq_printf(seq,
+		   "Zcopy  : clnq=%u/%u\n",
+		   atomic_read(&rxrpc_stat_tx_zcopy_clean_queued),
+		   atomic_read(&rxrpc_stat_tx_zcopy_clean_queued));
+	seq_printf(seq,
+		   "Sendmsg: send=%u fail=%u\n",
+		   atomic_read(&rxrpc_stat_tx_sendmsg),
+		   atomic_read(&rxrpc_stat_tx_sendmsg_fail));
+	seq_printf(seq,
+		   "Data   : deq=%u send=%u sendf=%u\n",
+		   atomic_read(&rxrpc_stat_tx_data_dequeue),
+		   atomic_read(&rxrpc_stat_tx_data_send),
+		   atomic_read(&rxrpc_stat_tx_data_send_frag));
+	seq_printf(seq,
+		   "Ack    : deq=%u fill=%u frtr=%u wrd=%u send=%u skip=%u tr=%u\n",
+		   atomic_read(&rxrpc_stat_tx_ack_dequeue),
+		   atomic_read(&rxrpc_stat_tx_ack_fill),
+		   atomic_read(&rxrpc_stat_tx_ack_fill_retry),
+		   atomic_read(&rxrpc_stat_tx_ack_fill_weird),
+		   atomic_read(&rxrpc_stat_tx_ack_send),
+		   atomic_read(&rxrpc_stat_tx_ack_skip),
+		   atomic_read(&rxrpc_stat_tx_ack_transmitter));
+	seq_printf(seq,
+		   "Buffers: txb=%u skb=%u\n",
+		   atomic_read(&rxrpc_nr_txbuf),
+		   atomic_read(&rxrpc_n_rx_skbs));
 	return 0;
 }
