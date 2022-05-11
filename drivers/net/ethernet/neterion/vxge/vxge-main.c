@@ -2720,8 +2720,8 @@ static int vxge_open(struct net_device *dev)
 	}
 
 	if (vdev->config.intr_type != MSI_X) {
-		netif_napi_add(dev, &vdev->napi, vxge_poll_inta,
-			vdev->config.napi_weight);
+		netif_napi_add_weight(dev, &vdev->napi, vxge_poll_inta,
+				      vdev->config.napi_weight);
 		napi_enable(&vdev->napi);
 		for (i = 0; i < vdev->no_of_vpath; i++) {
 			vpath = &vdev->vpaths[i];
@@ -2730,8 +2730,9 @@ static int vxge_open(struct net_device *dev)
 	} else {
 		for (i = 0; i < vdev->no_of_vpath; i++) {
 			vpath = &vdev->vpaths[i];
-			netif_napi_add(dev, &vpath->ring.napi,
-			    vxge_poll_msix, vdev->config.napi_weight);
+			netif_napi_add_weight(dev, &vpath->ring.napi,
+					      vxge_poll_msix,
+					      vdev->config.napi_weight);
 			napi_enable(&vpath->ring.napi);
 			vpath->ring.napi_p = &vpath->ring.napi;
 		}
@@ -4351,7 +4352,7 @@ vxge_probe(struct pci_dev *pdev, const struct pci_device_id *pre)
 	}
 	ll_config->tx_steering_type = TX_MULTIQ_STEERING;
 	ll_config->intr_type = MSI_X;
-	ll_config->napi_weight = NEW_NAPI_WEIGHT;
+	ll_config->napi_weight = NAPI_POLL_WEIGHT;
 	ll_config->rth_steering = RTH_STEERING;
 
 	/* get the default configuration parameters */
