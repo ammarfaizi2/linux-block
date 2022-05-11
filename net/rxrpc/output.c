@@ -116,6 +116,7 @@ retry:
 		wtop   = upper_32_bits(wtmp);
 		if (after(wtop, wrap_point)) {
 			cond_resched();
+			rxrpc_inc_stat(call->rxnet, stat_tx_ack_fill_retry);
 			goto retry;
 		}
 
@@ -138,6 +139,7 @@ retry:
 		ackp += txb->ack.nAcks;
 	} else if (before(wtop, window)) {
 		pr_warn("ack window backward %x %x", window, wtop);
+		rxrpc_inc_stat(call->rxnet, stat_tx_ack_fill_weird);
 	} else if (txb->ack.reason == RXRPC_ACK_DELAY) {
 		txb->ack.reason = RXRPC_ACK_IDLE;
 	}
@@ -259,6 +261,7 @@ static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_txbuf *
 	/* Grab the highest received seq as late as possible */
 	txb->ack.previousPacket	= htonl(call->rx_highest_seq);
 
+	rxrpc_inc_stat(call->rxnet, stat_tx_ack_send);
 	iov_iter_kvec(&msg.msg_iter, WRITE, iov, 1, len);
 	ret = do_udp_sendmsg(conn->params.local->socket, &msg, len);
 	call->peer->last_tx_at = ktime_get_seconds();
@@ -292,6 +295,7 @@ void rxrpc_transmit_ack_packets(struct rxrpc_local *local)
 
 	trace_rxrpc_local(local->debug_id, rxrpc_local_tx_ack,
 			  refcount_read(&local->ref), NULL);
+	rxrpc_inc_stat(local->rxnet, stat_tx_ack_transmitter);
 
 	if (list_empty(&local->ack_tx_queue))
 		return;
@@ -303,6 +307,8 @@ void rxrpc_transmit_ack_packets(struct rxrpc_local *local)
 	while (!list_empty(&queue)) {
 		struct rxrpc_txbuf *txb =
 			list_entry(queue.next, struct rxrpc_txbuf, tx_link);
+
+		rxrpc_inc_stat(local->rxnet, stat_tx_ack_dequeue);
 
 		ret = rxrpc_send_ack_packet(local, txb);
 		if (ret < 0 && ret != -ECONNRESET) {
@@ -787,6 +793,8 @@ int rxrpc_transmitter(void *data)
 	set_user_nice(current, MIN_NICE);
 
 	for (;;) {
+		rxrpc_inc_stat(local->rxnet, stat_tx_loop);
+
 		spin_lock(&local->tx_lock);
 		txb = list_first_entry_or_null(&local->tx_re_queue,
 					       struct rxrpc_txbuf, tx_link);
@@ -795,6 +803,7 @@ int rxrpc_transmitter(void *data)
 						       struct rxrpc_txbuf, tx_link);
 		}
 		if (txb) {
+			rxrpc_inc_stat(local->rxnet, stat_tx_data_dequeue);
 			call = txb->call;
 			list_del_init(&txb->tx_link);
 			spin_unlock(&local->tx_lock);
@@ -815,6 +824,7 @@ int rxrpc_transmitter(void *data)
 			__set_current_state(TASK_RUNNING);
 			continue;
 		}
+		rxrpc_inc_stat(local->rxnet, stat_tx_sleep);
 		schedule();
 	}
 	__set_current_state(TASK_RUNNING);

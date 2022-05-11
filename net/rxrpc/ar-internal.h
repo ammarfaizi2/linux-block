@@ -95,7 +95,11 @@ struct rxrpc_net {
 	struct timer_list	peer_keepalive_timer;
 	struct work_struct	peer_keepalive_work;
 
+	atomic_t		stat_tx_loop;
+	atomic_t		stat_tx_sleep;
+
 	atomic_t		stat_tx_data;
+	atomic_t		stat_tx_data_dequeue;
 	atomic_t		stat_tx_data_retrans;
 	atomic_t		stat_tx_data_send;
 	atomic_t		stat_tx_data_send_frag;
@@ -103,9 +107,13 @@ struct rxrpc_net {
 	atomic_t		stat_rx_data_reqack;
 	atomic_t		stat_rx_data_jumbo;
 
+	atomic_t		stat_tx_ack_dequeue;
 	atomic_t		stat_tx_ack_fill;
+	atomic_t		stat_tx_ack_fill_retry;
+	atomic_t		stat_tx_ack_fill_weird;
 	atomic_t		stat_tx_ack_send;
 	atomic_t		stat_tx_ack_skip;
+	atomic_t		stat_tx_ack_transmitter;
 	atomic_t		stat_tx_acks[256];
 	atomic_t		stat_rx_acks[256];
 

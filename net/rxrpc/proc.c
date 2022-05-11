@@ -408,7 +408,8 @@ int rxrpc_stats_show(struct seq_file *seq, void *v)
 	struct rxrpc_net *rxnet = rxrpc_net(seq_file_single_net(seq));
 
 	seq_printf(seq,
-		   "Data     : send=%u sendf=%u\n",
+		   "Data     : deq=%u send=%u sendf=%u\n",
+		   atomic_read(&rxnet->stat_tx_data_dequeue),
 		   atomic_read(&rxnet->stat_tx_data_send),
 		   atomic_read(&rxnet->stat_tx_data_send_frag));
 	seq_printf(seq,
@@ -421,10 +422,14 @@ int rxrpc_stats_show(struct seq_file *seq, void *v)
 		   atomic_read(&rxnet->stat_rx_data_reqack),
 		   atomic_read(&rxnet->stat_rx_data_jumbo));
 	seq_printf(seq,
-		   "Ack      : fill=%u send=%u skip=%u\n",
+		   "Ack      : deq=%u fill=%u frtr=%u wrd=%u send=%u skip=%u tr=%u\n",
+		   atomic_read(&rxnet->stat_tx_ack_dequeue),
 		   atomic_read(&rxnet->stat_tx_ack_fill),
+		   atomic_read(&rxnet->stat_tx_ack_fill_retry),
+		   atomic_read(&rxnet->stat_tx_ack_fill_weird),
 		   atomic_read(&rxnet->stat_tx_ack_send),
-		   atomic_read(&rxnet->stat_tx_ack_skip));
+		   atomic_read(&rxnet->stat_tx_ack_skip),
+		   atomic_read(&rxnet->stat_tx_ack_transmitter));
 	seq_printf(seq,
 		   "Ack-Tx   : req=%u dup=%u oos=%u exw=%u nos=%u png=%u prs=%u dly=%u idl=%u\n",
 		   atomic_read(&rxnet->stat_tx_acks[RXRPC_ACK_REQUESTED]),
@@ -463,6 +468,10 @@ int rxrpc_stats_show(struct seq_file *seq, void *v)
 		   "Buffers  : txb=%u rxb=%u\n",
 		   atomic_read(&rxrpc_nr_txbuf),
 		   atomic_read(&rxrpc_n_rx_skbs));
+	seq_printf(seq,
+		   "krxrpctxd: loop=%u sleep=%u\n",
+		   atomic_read(&rxnet->stat_tx_loop),
+		   atomic_read(&rxnet->stat_tx_sleep));
 	return 0;
 }
 
@@ -477,7 +486,11 @@ int rxrpc_stats_clear(struct file *file, char *buf, size_t size)
 	if (size > 1 || (size == 1 && buf[0] != '\n'))
 		return -EINVAL;
 
+	atomic_set(&rxnet->stat_tx_loop, 0);
+	atomic_set(&rxnet->stat_tx_sleep, 0);
+
 	atomic_set(&rxnet->stat_tx_data, 0);
+	atomic_set(&rxnet->stat_tx_data_dequeue, 0);
 	atomic_set(&rxnet->stat_tx_data_retrans, 0);
 	atomic_set(&rxnet->stat_tx_data_send, 0);
 	atomic_set(&rxnet->stat_tx_data_send_frag, 0);
@@ -485,9 +498,13 @@ int rxrpc_stats_clear(struct file *file, char *buf, size_t size)
 	atomic_set(&rxnet->stat_rx_data_reqack, 0);
 	atomic_set(&rxnet->stat_rx_data_jumbo, 0);
 
+	atomic_set(&rxnet->stat_tx_ack_dequeue, 0);
 	atomic_set(&rxnet->stat_tx_ack_fill, 0);
+	atomic_set(&rxnet->stat_tx_ack_fill_retry, 0);
+	atomic_set(&rxnet->stat_tx_ack_fill_weird, 0);
 	atomic_set(&rxnet->stat_tx_ack_send, 0);
 	atomic_set(&rxnet->stat_tx_ack_skip, 0);
+	atomic_set(&rxnet->stat_tx_ack_transmitter, 0);
 	memset(&rxnet->stat_tx_acks, 0, sizeof(rxnet->stat_tx_acks));
 	memset(&rxnet->stat_rx_acks, 0, sizeof(rxnet->stat_rx_acks));
 
