@@ -103,6 +103,8 @@ dtb-$(CONFIG_ARCH_BCM_5301X) += \
 	bcm4708-asus-rt-ac56u.dtb \
 	bcm4708-asus-rt-ac68u.dtb \
 	bcm4708-buffalo-wzr-1750dhp.dtb \
+	bcm4708-buffalo-wzr-1166dhp.dtb \
+	bcm4708-buffalo-wzr-1166dhp2.dtb \
 	bcm4708-linksys-ea6300-v1.dtb \
 	bcm4708-linksys-ea6500-v2.dtb \
 	bcm4708-luxul-xap-1510.dtb \
@@ -179,6 +181,8 @@ dtb-$(CONFIG_ARCH_BERLIN) += \
 	berlin2q-marvell-dmp.dtb
 dtb-$(CONFIG_ARCH_BRCMSTB) += \
 	bcm7445-bcm97445svmb.dtb
+dtb-$(CONFIG_ARCH_BCMBCA) += \
+	bcm947622.dtb
 dtb-$(CONFIG_ARCH_CLPS711X) += \
 	ep7211-edb7211.dtb
 dtb-$(CONFIG_ARCH_DAVINCI) += \
@@ -977,11 +981,12 @@ dtb-$(CONFIG_ARCH_OXNAS) += \
 	ox820-cloudengines-pogoplug-series-3.dtb
 dtb-$(CONFIG_ARCH_QCOM) += \
 	qcom-apq8016-sbc.dtb \
+	qcom-apq8026-asus-sparrow.dtb \
 	qcom-apq8026-lg-lenok.dtb \
 	qcom-apq8060-dragonboard.dtb \
 	qcom-apq8064-cm-qs600.dtb \
 	qcom-apq8064-ifc6410.dtb \
-	qcom-apq8064-sony-xperia-yuga.dtb \
+	qcom-apq8064-sony-xperia-lagan-yuga.dtb \
 	qcom-apq8064-asus-nexus7-flo.dtb \
 	qcom-apq8074-dragonboard.dtb \
 	qcom-apq8084-ifc6540.dtb \
@@ -1000,12 +1005,12 @@ dtb-$(CONFIG_ARCH_QCOM) += \
 	qcom-msm8660-surf.dtb \
 	qcom-msm8916-samsung-serranove.dtb \
 	qcom-msm8960-cdp.dtb \
-	qcom-msm8974-fairphone-fp2.dtb \
 	qcom-msm8974-lge-nexus5-hammerhead.dtb \
-	qcom-msm8974-samsung-klte.dtb \
-	qcom-msm8974-sony-xperia-amami.dtb \
-	qcom-msm8974-sony-xperia-castor.dtb \
-	qcom-msm8974-sony-xperia-honami.dtb \
+	qcom-msm8974-sony-xperia-rhine-amami.dtb \
+	qcom-msm8974-sony-xperia-rhine-honami.dtb \
+	qcom-msm8974pro-fairphone-fp2.dtb \
+	qcom-msm8974pro-samsung-klte.dtb \
+	qcom-msm8974pro-sony-xperia-shinano-castor.dtb \
 	qcom-mdm9615-wp8548-mangoh-green.dtb \
 	qcom-sdx55-mtp.dtb \
 	qcom-sdx55-t55.dtb \
@@ -1156,10 +1161,14 @@ dtb-$(CONFIG_ARCH_STM32) += \
 	stm32h743i-disco.dtb \
 	stm32h750i-art-pi.dtb \
 	stm32mp135f-dk.dtb \
+	stm32mp151a-prtt1a.dtb \
+	stm32mp151a-prtt1c.dtb \
+	stm32mp151a-prtt1s.dtb \
 	stm32mp153c-dhcom-drc02.dtb \
 	stm32mp157a-avenger96.dtb \
 	stm32mp157a-dhcor-avenger96.dtb \
 	stm32mp157a-dk1.dtb \
+	stm32mp157a-dk1-scmi.dtb \
 	stm32mp157a-iot-box.dtb \
 	stm32mp157a-microgea-stm32mp1-microdev2.0.dtb \
 	stm32mp157a-microgea-stm32mp1-microdev2.0-of7.dtb \
@@ -1170,9 +1179,12 @@ dtb-$(CONFIG_ARCH_STM32) += \
 	stm32mp157c-dhcom-pdk2.dtb \
 	stm32mp157c-dhcom-picoitx.dtb \
 	stm32mp157c-dk2.dtb \
+	stm32mp157c-dk2-scmi.dtb \
 	stm32mp157c-ed1.dtb \
+	stm32mp157c-ed1-scmi.dtb \
 	stm32mp157c-emsbc-argon.dtb \
 	stm32mp157c-ev1.dtb \
+	stm32mp157c-ev1-scmi.dtb \
 	stm32mp157c-lxa-mc1.dtb \
 	stm32mp157c-odyssey.dtb
 dtb-$(CONFIG_MACH_SUN4I) += \
@@ -1382,6 +1394,7 @@ dtb-$(CONFIG_ARCH_U8500) += \
 	ste-ux500-samsung-janice.dtb \
 	ste-ux500-samsung-gavini.dtb \
 	ste-ux500-samsung-codina.dtb \
+	ste-ux500-samsung-codina-tmo.dtb \
 	ste-ux500-samsung-skomer.dtb \
 	ste-ux500-samsung-kyle.dtb
 dtb-$(CONFIG_ARCH_UNIPHIER) += \
