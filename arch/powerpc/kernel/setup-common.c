@@ -30,12 +30,13 @@
 #include <linux/serial_8250.h>
 #include <linux/percpu.h>
 #include <linux/memblock.h>
+#include <linux/of_irq.h>
+#include <linux/of_fdt.h>
 #include <linux/of_platform.h>
 #include <linux/hugetlb.h>
 #include <linux/pgtable.h>
 #include <asm/io.h>
 #include <asm/paca.h>
-#include <asm/prom.h>
 #include <asm/processor.h>
 #include <asm/vdso_datapage.h>
 #include <asm/smp.h>
@@ -279,7 +280,7 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 			   proc_freq / 1000000, proc_freq % 1000000);
 
 	/* If we are a Freescale core do a simple check so
-	 * we dont have to keep adding cases in the future */
+	 * we don't have to keep adding cases in the future */
 	if (PVR_VER(pvr) & 0x8000) {
 		switch (PVR_VER(pvr)) {
 		case 0x8000:	/* 7441/7450/7451, Voyager */
