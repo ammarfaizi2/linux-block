@@ -78,9 +78,9 @@ static PLIST_HEAD(swap_active_head);
 /*
  * all available (active, not full) swap_info_structs
  * protected with swap_avail_lock, ordered by priority.
- * This is used by get_swap_page() instead of swap_active_head
+ * This is used by folio_alloc_swap() instead of swap_active_head
  * because swap_active_head includes all swap_info_structs,
- * but get_swap_page() doesn't need to look at full ones.
+ * but folio_alloc_swap() doesn't need to look at full ones.
  * This uses its own lock instead of swap_lock because when a
  * swap_info_struct changes between not-full/full, it needs to
  * add/remove itself to/from this list, but the swap_info_struct->lock
@@ -776,6 +776,21 @@ static void set_cluster_next(struct swap_info_struct *si, unsigned long next)
 	this_cpu_write(*si->cluster_next_cpu, next);
 }
 
+static inline bool swap_offset_available(struct swap_info_struct *si, unsigned long offset)
+{
+	if (data_race(!si->swap_map[offset])) {
+		spin_lock(&si->lock);
+		return true;
+	}
+
+	if (vm_swap_full() && READ_ONCE(si->swap_map[offset]) == SWAP_HAS_CACHE) {
+		spin_lock(&si->lock);
+		return true;
+	}
+
+	return false;
+}
+
 static int scan_swap_map_slots(struct swap_info_struct *si,
 			       unsigned char usage, int nr,
 			       swp_entry_t slots[])
@@ -953,15 +968,8 @@ done:
 scan:
 	spin_unlock(&si->lock);
 	while (++offset <= READ_ONCE(si->highest_bit)) {
-		if (data_race(!si->swap_map[offset])) {
-			spin_lock(&si->lock);
+		if (swap_offset_available(si, offset))
 			goto checks;
-		}
-		if (vm_swap_full() &&
-		    READ_ONCE(si->swap_map[offset]) == SWAP_HAS_CACHE) {
-			spin_lock(&si->lock);
-			goto checks;
-		}
 		if (unlikely(--latency_ration < 0)) {
 			cond_resched();
 			latency_ration = LATENCY_LIMIT;
@@ -970,15 +978,8 @@ scan:
 	}
 	offset = si->lowest_bit;
 	while (offset < scan_base) {
-		if (data_race(!si->swap_map[offset])) {
-			spin_lock(&si->lock);
+		if (swap_offset_available(si, offset))
 			goto checks;
-		}
-		if (vm_swap_full() &&
-		    READ_ONCE(si->swap_map[offset]) == SWAP_HAS_CACHE) {
-			spin_lock(&si->lock);
-			goto checks;
-		}
 		if (unlikely(--latency_ration < 0)) {
 			cond_resched();
 			latency_ration = LATENCY_LIMIT;
@@ -1123,7 +1124,7 @@ noswap:
 	return n_ret;
 }
 
-static struct swap_info_struct *__swap_info_get(swp_entry_t entry)
+static struct swap_info_struct *_swap_info_get(swp_entry_t entry)
 {
 	struct swap_info_struct *p;
 	unsigned long offset;
@@ -1138,8 +1139,13 @@ static struct swap_info_struct *__swap_info_get(swp_entry_t entry)
 	offset = swp_offset(entry);
 	if (offset >= p->max)
 		goto bad_offset;
+	if (data_race(!p->swap_map[swp_offset(entry)]))
+		goto bad_free;
 	return p;
 
+bad_free:
+	pr_err("%s: %s%08lx\n", __func__, Unused_offset, entry.val);
+	goto out;
 bad_offset:
 	pr_err("%s: %s%08lx\n", __func__, Bad_offset, entry.val);
 	goto out;
@@ -1148,23 +1154,6 @@ bad_device:
 	goto out;
 bad_nofile:
 	pr_err("%s: %s%08lx\n", __func__, Bad_file, entry.val);
-out:
-	return NULL;
-}
-
-static struct swap_info_struct *_swap_info_get(swp_entry_t entry)
-{
-	struct swap_info_struct *p;
-
-	p = __swap_info_get(entry);
-	if (!p)
-		goto out;
-	if (data_race(!p->swap_map[swp_offset(entry)]))
-		goto bad_free;
-	return p;
-
-bad_free:
-	pr_err("%s: %s%08lx\n", __func__, Unused_offset, entry.val);
 out:
 	return NULL;
 }
@@ -1284,6 +1273,7 @@ bad_nofile:
 out:
 	return NULL;
 put_out:
+	pr_err("%s: %s%08lx\n", __func__, Bad_offset, entry.val);
 	percpu_ref_put(&si->users);
 	return NULL;
 }
@@ -1441,7 +1431,7 @@ void swapcache_free_entries(swp_entry_t *entries, int n)
  * This does not give an exact answer when swap count is continued,
  * but does include the high COUNT_CONTINUED flag to allow for that.
  */
-int page_swapcount(struct page *page)
+static int page_swapcount(struct page *page)
 {
 	int count = 0;
 	struct swap_info_struct *p;
@@ -1784,7 +1774,7 @@ static int unuse_pte(struct vm_area_struct *vma, pmd_t *pmd,
 {
 	struct page *swapcache;
 	spinlock_t *ptl;
-	pte_t *pte;
+	pte_t *pte, new_pte;
 	int ret = 1;
 
 	swapcache = page;
@@ -1794,6 +1784,17 @@ static int unuse_pte(struct vm_area_struct *vma, pmd_t *pmd,
 
 	pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
 	if (unlikely(!pte_same_as_swp(*pte, swp_entry_to_pte(entry)))) {
+		ret = 0;
+		goto out;
+	}
+
+	if (unlikely(!PageUptodate(page))) {
+		pte_t pteval;
+
+		dec_mm_counter(vma->vm_mm, MM_SWAPENTS);
+		pteval = swp_entry_to_pte(make_swapin_error_entry(page));
+		set_pte_at(vma->vm_mm, addr, pte, pteval);
+		swap_free(entry);
 		ret = 0;
 		goto out;
 	}
@@ -1822,8 +1823,12 @@ static int unuse_pte(struct vm_area_struct *vma, pmd_t *pmd,
 		page_add_new_anon_rmap(page, vma, addr);
 		lru_cache_add_inactive_or_unevictable(page, vma);
 	}
-	set_pte_at(vma->vm_mm, addr, pte,
-		   pte_mkold(mk_pte(page, vma->vm_page_prot)));
+	new_pte = pte_mkold(mk_pte(page, vma->vm_page_prot));
+	if (pte_swp_soft_dirty(*pte))
+		new_pte = pte_mksoft_dirty(new_pte);
+	if (pte_swp_uffd_wp(*pte))
+		new_pte = pte_mkuffd_wp(new_pte);
+	set_pte_at(vma->vm_mm, addr, pte, new_pte);
 	swap_free(entry);
 out:
 	pte_unmap_unlock(pte, ptl);
@@ -1985,14 +1990,16 @@ static int unuse_mm(struct mm_struct *mm, unsigned int type)
 {
 	struct vm_area_struct *vma;
 	int ret = 0;
+	VMA_ITERATOR(vmi, mm, 0);
 
 	mmap_read_lock(mm);
-	for (vma = mm->mmap; vma; vma = vma->vm_next) {
+	for_each_vma(vmi, vma) {
 		if (vma->anon_vma) {
 			ret = unuse_vma(vma, type);
 			if (ret)
 				break;
 		}
+
 		cond_resched();
 	}
 	mmap_read_unlock(mm);
@@ -2000,9 +2007,9 @@ static int unuse_mm(struct mm_struct *mm, unsigned int type)
 }
 
 /*
- * Scan swap_map (or frontswap_map if frontswap parameter is true)
- * from current position to next entry still in use. Return 0
- * if there are no inuse entries after prev till end of the map.
+ * Scan swap_map from current position to next entry still in use.
+ * Return 0 if there are no inuse entries after prev till end of
+ * the map.
  */
 static unsigned int find_next_to_unuse(struct swap_info_struct *si,
 					unsigned int prev)
@@ -2110,11 +2117,12 @@ retry:
 	 * Under global memory pressure, swap entries can be reinserted back
 	 * into process space after the mmlist loop above passes over them.
 	 *
-	 * Limit the number of retries? No: when mmget_not_zero() above fails,
-	 * that mm is likely to be freeing swap from exit_mmap(), which proceeds
-	 * at its own independent pace; and even shmem_writepage() could have
-	 * been preempted after get_swap_page(), temporarily hiding that swap.
-	 * It's easy and robust (though cpu-intensive) just to keep retrying.
+	 * Limit the number of retries? No: when mmget_not_zero()
+	 * above fails, that mm is likely to be freeing swap from
+	 * exit_mmap(), which proceeds at its own independent pace;
+	 * and even shmem_writepage() could have been preempted after
+	 * folio_alloc_swap(), temporarily hiding that swap.  It's easy
+	 * and robust (though cpu-intensive) just to keep retrying.
 	 */
 	if (READ_ONCE(si->inuse_pages)) {
 		if (!signal_pending(current))
@@ -2217,8 +2225,8 @@ EXPORT_SYMBOL_GPL(add_swap_extent);
 
 /*
  * A `swap extent' is a simple thing which maps a contiguous range of pages
- * onto a contiguous range of disk blocks.  An ordered list of swap extents
- * is built at swapon time and is then used at swap_writepage/swap_readpage
+ * onto a contiguous range of disk blocks.  A rbtree of swap extents is
+ * built at swapon time and is then used at swap_writepage/swap_readpage
  * time for locating where on disk a page belongs.
  *
  * If the swapfile is an S_ISBLK block device, a single extent is installed.
@@ -2226,12 +2234,12 @@ EXPORT_SYMBOL_GPL(add_swap_extent);
  * swap files identically.
  *
  * Whether the swapdev is an S_ISREG file or an S_ISBLK blockdev, the swap
- * extent list operates in PAGE_SIZE disk blocks.  Both S_ISREG and S_ISBLK
+ * extent rbtree operates in PAGE_SIZE disk blocks.  Both S_ISREG and S_ISBLK
  * swapfiles are handled *identically* after swapon time.
  *
  * For S_ISREG swapfiles, setup_swap_extents() will walk all the file's blocks
- * and will parse them into an ordered extent list, in PAGE_SIZE chunks.  If
- * some stray blocks are found which do not fall within the PAGE_SIZE alignment
+ * and will parse them into a rbtree, in PAGE_SIZE chunks.  If some stray
+ * blocks are found which do not fall within the PAGE_SIZE alignment
  * requirements, they are simply tossed out - we will never use those blocks
  * for swapping.
  *
@@ -2240,10 +2248,7 @@ EXPORT_SYMBOL_GPL(add_swap_extent);
  *
  * The amount of disk space which a single swap extent represents varies.
  * Typically it is in the 1-4 megabyte range.  So we can have hundreds of
- * extents in the list.  To avoid much list walking, we cache the previous
- * search location in `curr_swap_extent', and start new searches from there.
- * This is extremely effective.  The average number of iterations in
- * map_swap_page() has been measured at about 0.3 per page.  - akpm.
+ * extents in the rbtree. - akpm.
  */
 static int setup_swap_extents(struct swap_info_struct *sis, sector_t *span)
 {
@@ -2328,7 +2333,7 @@ static void _enable_swap_info(struct swap_info_struct *p)
 	 * which on removal of any swap_info_struct with an auto-assigned
 	 * (i.e. negative) priority increments the auto-assigned priority
 	 * of any lower-priority swap_info_structs.
-	 * swap_avail_head needs to be priority ordered for get_swap_page(),
+	 * swap_avail_head needs to be priority ordered for folio_alloc_swap(),
 	 * which allocates swap pages from the highest available priority
 	 * swap_info_struct.
 	 */
@@ -3331,8 +3336,7 @@ static int __swap_duplicate(swp_entry_t entry, unsigned char usage)
 
 unlock_out:
 	unlock_cluster_or_swap_info(p, ci);
-	if (p)
-		put_swap_device(p);
+	put_swap_device(p);
 	return err;
 }
 

@@ -315,12 +315,27 @@ void migration_entry_wait(struct mm_struct *mm, pmd_t *pmd,
 	__migration_entry_wait(mm, ptep, ptl);
 }
 
-void migration_entry_wait_huge(struct vm_area_struct *vma,
-		struct mm_struct *mm, pte_t *pte)
+#ifdef CONFIG_HUGETLB_PAGE
+void __migration_entry_wait_huge(pte_t *ptep, spinlock_t *ptl)
 {
-	spinlock_t *ptl = huge_pte_lockptr(hstate_vma(vma), mm, pte);
-	__migration_entry_wait(mm, pte, ptl);
+	pte_t pte;
+
+	spin_lock(ptl);
+	pte = huge_ptep_get(ptep);
+
+	if (unlikely(!is_hugetlb_entry_migration(pte)))
+		spin_unlock(ptl);
+	else
+		migration_entry_wait_on_locked(pte_to_swp_entry(pte), NULL, ptl);
 }
+
+void migration_entry_wait_huge(struct vm_area_struct *vma, pte_t *pte)
+{
+	spinlock_t *ptl = huge_pte_lockptr(hstate_vma(vma), vma->vm_mm, pte);
+
+	__migration_entry_wait_huge(pte, ptl);
+}
+#endif
 
 #ifdef CONFIG_ARCH_ENABLE_THP_MIGRATION
 void pmd_migration_entry_wait(struct mm_struct *mm, pmd_t *pmd)
@@ -843,21 +858,21 @@ static int fallback_migrate_page(struct address_space *mapping,
  *   < 0 - error code
  *  MIGRATEPAGE_SUCCESS - success
  */
-static int move_to_new_page(struct page *newpage, struct page *page,
+static int move_to_new_folio(struct folio *dst, struct folio *src,
 				enum migrate_mode mode)
 {
 	struct address_space *mapping;
 	int rc = -EAGAIN;
-	bool is_lru = !__PageMovable(page);
+	bool is_lru = !__PageMovable(&src->page);
 
-	VM_BUG_ON_PAGE(!PageLocked(page), page);
-	VM_BUG_ON_PAGE(!PageLocked(newpage), newpage);
+	VM_BUG_ON_FOLIO(!folio_test_locked(src), src);
+	VM_BUG_ON_FOLIO(!folio_test_locked(dst), dst);
 
-	mapping = page_mapping(page);
+	mapping = folio_mapping(src);
 
 	if (likely(is_lru)) {
 		if (!mapping)
-			rc = migrate_page(mapping, newpage, page, mode);
+			rc = migrate_page(mapping, &dst->page, &src->page, mode);
 		else if (mapping->a_ops->migratepage)
 			/*
 			 * Most pages have a mapping and most filesystems
@@ -866,54 +881,54 @@ static int move_to_new_page(struct page *newpage, struct page *page,
 			 * migratepage callback. This is the most common path
 			 * for page migration.
 			 */
-			rc = mapping->a_ops->migratepage(mapping, newpage,
-							page, mode);
+			rc = mapping->a_ops->migratepage(mapping, &dst->page,
+							&src->page, mode);
 		else
-			rc = fallback_migrate_page(mapping, newpage,
-							page, mode);
+			rc = fallback_migrate_page(mapping, &dst->page,
+							&src->page, mode);
 	} else {
 		/*
 		 * In case of non-lru page, it could be released after
 		 * isolation step. In that case, we shouldn't try migration.
 		 */
-		VM_BUG_ON_PAGE(!PageIsolated(page), page);
-		if (!PageMovable(page)) {
+		VM_BUG_ON_FOLIO(!folio_test_isolated(src), src);
+		if (!folio_test_movable(src)) {
 			rc = MIGRATEPAGE_SUCCESS;
-			ClearPageIsolated(page);
+			folio_clear_isolated(src);
 			goto out;
 		}
 
-		rc = mapping->a_ops->migratepage(mapping, newpage,
-						page, mode);
+		rc = mapping->a_ops->migratepage(mapping, &dst->page,
+						&src->page, mode);
 		WARN_ON_ONCE(rc == MIGRATEPAGE_SUCCESS &&
-			!PageIsolated(page));
+				!folio_test_isolated(src));
 	}
 
 	/*
-	 * When successful, old pagecache page->mapping must be cleared before
-	 * page is freed; but stats require that PageAnon be left as PageAnon.
+	 * When successful, old pagecache src->mapping must be cleared before
+	 * src is freed; but stats require that PageAnon be left as PageAnon.
 	 */
 	if (rc == MIGRATEPAGE_SUCCESS) {
-		if (__PageMovable(page)) {
-			VM_BUG_ON_PAGE(!PageIsolated(page), page);
+		if (__PageMovable(&src->page)) {
+			VM_BUG_ON_FOLIO(!folio_test_isolated(src), src);
 
 			/*
 			 * We clear PG_movable under page_lock so any compactor
 			 * cannot try to migrate this page.
 			 */
-			ClearPageIsolated(page);
+			folio_clear_isolated(src);
 		}
 
 		/*
-		 * Anonymous and movable page->mapping will be cleared by
+		 * Anonymous and movable src->mapping will be cleared by
 		 * free_pages_prepare so don't reset it here for keeping
 		 * the type to work PageAnon, for example.
 		 */
-		if (!PageMappingFlags(page))
-			page->mapping = NULL;
+		if (!folio_mapping_flags(src))
+			src->mapping = NULL;
 
-		if (likely(!is_zone_device_page(newpage)))
-			flush_dcache_folio(page_folio(newpage));
+		if (likely(!folio_is_zone_device(dst)))
+			flush_dcache_folio(dst);
 	}
 out:
 	return rc;
@@ -1001,7 +1016,7 @@ static int __unmap_and_move(struct page *page, struct page *newpage,
 		goto out_unlock;
 
 	if (unlikely(!is_lru)) {
-		rc = move_to_new_page(newpage, page, mode);
+		rc = move_to_new_folio(dst, folio, mode);
 		goto out_unlock_both;
 	}
 
@@ -1032,7 +1047,7 @@ static int __unmap_and_move(struct page *page, struct page *newpage,
 	}
 
 	if (!page_mapped(page))
-		rc = move_to_new_page(newpage, page, mode);
+		rc = move_to_new_folio(dst, folio, mode);
 
 	/*
 	 * When successful, push newpage to LRU immediately: so that if it
@@ -1093,12 +1108,8 @@ static int unmap_and_move(new_page_t get_new_page,
 		/* page was freed from under us. So we are done. */
 		ClearPageActive(page);
 		ClearPageUnevictable(page);
-		if (unlikely(__PageMovable(page))) {
-			lock_page(page);
-			if (!PageMovable(page))
-				ClearPageIsolated(page);
-			unlock_page(page);
-		}
+		if (unlikely(__PageMovable(page)))
+			ClearPageIsolated(page);
 		goto out;
 	}
 
@@ -1261,7 +1272,7 @@ static int unmap_and_move_huge_page(new_page_t get_new_page,
 	}
 
 	if (!page_mapped(hpage))
-		rc = move_to_new_page(new_hpage, hpage, mode);
+		rc = move_to_new_folio(dst, src, mode);
 
 	if (page_was_mapped)
 		remove_migration_ptes(src,
@@ -1632,8 +1643,9 @@ static int add_page_for_migration(struct mm_struct *mm, unsigned long addr,
 
 	if (PageHuge(page)) {
 		if (PageHead(page)) {
-			isolate_huge_page(page, pagelist);
-			err = 1;
+			err = isolate_huge_page(page, pagelist);
+			if (!err)
+				err = 1;
 		}
 	} else {
 		struct page *head;
@@ -1902,17 +1914,16 @@ static struct mm_struct *find_mm_struct(pid_t pid, nodemask_t *mem_nodes)
 		return ERR_PTR(-ESRCH);
 	}
 	get_task_struct(task);
+	rcu_read_unlock();
 
 	/*
 	 * Check if this process has the right to modify the specified
 	 * process. Use the regular "ptrace_may_access()" checks.
 	 */
 	if (!ptrace_may_access(task, PTRACE_MODE_READ_REALCREDS)) {
-		rcu_read_unlock();
 		mm = ERR_PTR(-EPERM);
 		goto out;
 	}
-	rcu_read_unlock();
 
 	mm = ERR_PTR(security_task_movememory(task));
 	if (IS_ERR(mm))
@@ -2523,11 +2534,7 @@ static ssize_t numa_demotion_enabled_store(struct kobject *kobj,
 					   struct kobj_attribute *attr,
 					   const char *buf, size_t count)
 {
-	if (!strncmp(buf, "true", 4) || !strncmp(buf, "1", 1))
-		numa_demotion_enabled = true;
-	else if (!strncmp(buf, "false", 5) || !strncmp(buf, "0", 1))
-		numa_demotion_enabled = false;
-	else
+	if (kstrtobool(buf, &numa_demotion_enabled))
 		return -EINVAL;
 
 	return count;
