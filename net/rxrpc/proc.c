@@ -340,8 +340,9 @@ static int rxrpc_local_seq_show(struct seq_file *seq, void *v)
 	if (v == SEQ_START_TOKEN) {
 		seq_printf(seq,
 			   "Proto Local                                          "
-			   " Use Act Zerocopy (txb=%d)\n",
-			   atomic_read(&rxrpc_nr_txbuf));
+			   " Use Act Zerocopy (txb=%d skb=%d)\n",
+			   atomic_read(&rxrpc_nr_txbuf),
+			   atomic_read(&rxrpc_n_rx_skbs));
 		return 0;
 	}
 
