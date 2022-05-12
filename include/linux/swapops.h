@@ -13,10 +13,10 @@
  * get good packing density in that tree, so the index should be dense in
  * the low-order bits.
  *
- * We arrange the `type' and `offset' fields so that `type' is at the seven
+ * We arrange the `type' and `offset' fields so that `type' is at the six
  * high-order bits of the swp_entry_t and `offset' is right-aligned in the
  * remaining bits.  Although `type' itself needs only five bits, we allow for
- * shmem/tmpfs to shift it all up a further two bits: see swp_to_radix_entry().
+ * shmem/tmpfs to shift it all up a further one bit: see swp_to_radix_entry().
  *
  * swp_entry_t's are *never* stored anywhere in their arch-dependent format.
  */
@@ -106,6 +106,16 @@ static inline swp_entry_t radix_to_swp_entry(void *arg)
 static inline void *swp_to_radix_entry(swp_entry_t entry)
 {
 	return xa_mk_value(entry.val);
+}
+
+static inline swp_entry_t make_swapin_error_entry(struct page *page)
+{
+	return swp_entry(SWP_SWAPIN_ERROR, page_to_pfn(page));
+}
+
+static inline int is_swapin_error_entry(swp_entry_t entry)
+{
+	return swp_type(entry) == SWP_SWAPIN_ERROR;
 }
 
 #if IS_ENABLED(CONFIG_DEVICE_PRIVATE)
@@ -234,8 +244,10 @@ extern void __migration_entry_wait(struct mm_struct *mm, pte_t *ptep,
 					spinlock_t *ptl);
 extern void migration_entry_wait(struct mm_struct *mm, pmd_t *pmd,
 					unsigned long address);
-extern void migration_entry_wait_huge(struct vm_area_struct *vma,
-		struct mm_struct *mm, pte_t *pte);
+#ifdef CONFIG_HUGETLB_PAGE
+extern void __migration_entry_wait_huge(pte_t *ptep, spinlock_t *ptl);
+extern void migration_entry_wait_huge(struct vm_area_struct *vma, pte_t *pte);
+#endif
 #else
 static inline swp_entry_t make_readable_migration_entry(pgoff_t offset)
 {
@@ -261,8 +273,10 @@ static inline void __migration_entry_wait(struct mm_struct *mm, pte_t *ptep,
 					spinlock_t *ptl) { }
 static inline void migration_entry_wait(struct mm_struct *mm, pmd_t *pmd,
 					 unsigned long address) { }
-static inline void migration_entry_wait_huge(struct vm_area_struct *vma,
-		struct mm_struct *mm, pte_t *pte) { }
+#ifdef CONFIG_HUGETLB_PAGE
+static inline void __migration_entry_wait_huge(pte_t *ptep, spinlock_t *ptl) { }
+static inline void migration_entry_wait_huge(struct vm_area_struct *vma, pte_t *pte) { }
+#endif
 static inline int is_writable_migration_entry(swp_entry_t entry)
 {
 	return 0;
@@ -273,6 +287,85 @@ static inline int is_readable_migration_entry(swp_entry_t entry)
 }
 
 #endif
+
+typedef unsigned long pte_marker;
+
+#define  PTE_MARKER_UFFD_WP  BIT(0)
+#define  PTE_MARKER_MASK     (PTE_MARKER_UFFD_WP)
+
+#ifdef CONFIG_PTE_MARKER
+
+static inline swp_entry_t make_pte_marker_entry(pte_marker marker)
+{
+	return swp_entry(SWP_PTE_MARKER, marker);
+}
+
+static inline bool is_pte_marker_entry(swp_entry_t entry)
+{
+	return swp_type(entry) == SWP_PTE_MARKER;
+}
+
+static inline pte_marker pte_marker_get(swp_entry_t entry)
+{
+	return swp_offset(entry) & PTE_MARKER_MASK;
+}
+
+static inline bool is_pte_marker(pte_t pte)
+{
+	return is_swap_pte(pte) && is_pte_marker_entry(pte_to_swp_entry(pte));
+}
+
+#else /* CONFIG_PTE_MARKER */
+
+static inline swp_entry_t make_pte_marker_entry(pte_marker marker)
+{
+	/* This should never be called if !CONFIG_PTE_MARKER */
+	WARN_ON_ONCE(1);
+	return swp_entry(0, 0);
+}
+
+static inline bool is_pte_marker_entry(swp_entry_t entry)
+{
+	return false;
+}
+
+static inline pte_marker pte_marker_get(swp_entry_t entry)
+{
+	return 0;
+}
+
+static inline bool is_pte_marker(pte_t pte)
+{
+	return false;
+}
+
+#endif /* CONFIG_PTE_MARKER */
+
+static inline pte_t make_pte_marker(pte_marker marker)
+{
+	return swp_entry_to_pte(make_pte_marker_entry(marker));
+}
+
+/*
+ * This is a special version to check pte_none() just to cover the case when
+ * the pte is a pte marker.  It existed because in many cases the pte marker
+ * should be seen as a none pte; it's just that we have stored some information
+ * onto the none pte so it becomes not-none any more.
+ *
+ * It should be used when the pte is file-backed, ram-based and backing
+ * userspace pages, like shmem.  It is not needed upon pgtables that do not
+ * support pte markers at all.  For example, it's not needed on anonymous
+ * memory, kernel-only memory (including when the system is during-boot),
+ * non-ram based generic file-system.  It's fine to be used even there, but the
+ * extra pte marker check will be pure overhead.
+ *
+ * For systems configured with !CONFIG_PTE_MARKER this will be automatically
+ * optimized to pte_none().
+ */
+static inline int pte_none_mostly(pte_t pte)
+{
+	return pte_none(pte) || is_pte_marker(pte);
+}
 
 static inline struct page *pfn_swap_entry_to_page(swp_entry_t entry)
 {
