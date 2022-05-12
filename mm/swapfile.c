@@ -3350,8 +3350,7 @@ static int __swap_duplicate(swp_entry_t entry, unsigned char usage)
 
 unlock_out:
 	unlock_cluster_or_swap_info(p, ci);
-	if (p)
-		put_swap_device(p);
+	put_swap_device(p);
 	return err;
 }
 
