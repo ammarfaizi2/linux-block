@@ -531,7 +531,8 @@ iomap_write_failed(struct inode *inode, loff_t pos, unsigned len)
 	 * write started inside the existing inode size.
 	 */
 	if (pos + len > i_size)
-		truncate_pagecache_range(inode, max(pos, i_size), pos + len);
+		truncate_pagecache_range(inode, max(pos, i_size),
+					 pos + len - 1);
 }
 
 static int iomap_read_folio_sync(loff_t block_start, struct folio *folio,
@@ -733,7 +734,7 @@ static size_t iomap_write_end(struct iomap_iter *iter, loff_t pos, size_t len,
 	folio_put(folio);
 
 	if (ret < len)
-		iomap_write_failed(iter->inode, pos, len);
+		iomap_write_failed(iter->inode, pos + ret, len - ret);
 	return ret;
 }
 
