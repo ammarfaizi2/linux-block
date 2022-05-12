@@ -26,6 +26,7 @@ static inline int is_hugepage_only_range(struct mm_struct *mm,
 static inline pte_t huge_ptep_clear_flush(struct vm_area_struct *vma,
 					  unsigned long addr, pte_t *ptep)
 {
+	return *ptep;
 }
 
 #include <asm-generic/hugetlb.h>
