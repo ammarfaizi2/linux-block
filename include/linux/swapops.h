@@ -26,6 +26,8 @@
 /* Clear all flags but only keep swp_entry_t related information */
 static inline pte_t pte_swp_clear_flags(pte_t pte)
 {
+	if (pte_swp_exclusive(pte))
+		pte = pte_swp_clear_exclusive(pte);
 	if (pte_swp_soft_dirty(pte))
 		pte = pte_swp_clear_soft_dirty(pte);
 	if (pte_swp_uffd_wp(pte))
@@ -194,6 +196,7 @@ static inline bool is_writable_device_exclusive_entry(swp_entry_t entry)
 static inline int is_migration_entry(swp_entry_t entry)
 {
 	return unlikely(swp_type(entry) == SWP_MIGRATION_READ ||
+			swp_type(entry) == SWP_MIGRATION_READ_EXCLUSIVE ||
 			swp_type(entry) == SWP_MIGRATION_WRITE);
 }
 
@@ -202,9 +205,24 @@ static inline int is_writable_migration_entry(swp_entry_t entry)
 	return unlikely(swp_type(entry) == SWP_MIGRATION_WRITE);
 }
 
+static inline int is_readable_migration_entry(swp_entry_t entry)
+{
+	return unlikely(swp_type(entry) == SWP_MIGRATION_READ);
+}
+
+static inline int is_readable_exclusive_migration_entry(swp_entry_t entry)
+{
+	return unlikely(swp_type(entry) == SWP_MIGRATION_READ_EXCLUSIVE);
+}
+
 static inline swp_entry_t make_readable_migration_entry(pgoff_t offset)
 {
 	return swp_entry(SWP_MIGRATION_READ, offset);
+}
+
+static inline swp_entry_t make_readable_exclusive_migration_entry(pgoff_t offset)
+{
+	return swp_entry(SWP_MIGRATION_READ_EXCLUSIVE, offset);
 }
 
 static inline swp_entry_t make_writable_migration_entry(pgoff_t offset)
@@ -220,6 +238,11 @@ extern void migration_entry_wait_huge(struct vm_area_struct *vma,
 		struct mm_struct *mm, pte_t *pte);
 #else
 static inline swp_entry_t make_readable_migration_entry(pgoff_t offset)
+{
+	return swp_entry(0, 0);
+}
+
+static inline swp_entry_t make_readable_exclusive_migration_entry(pgoff_t offset)
 {
 	return swp_entry(0, 0);
 }
@@ -241,6 +264,10 @@ static inline void migration_entry_wait(struct mm_struct *mm, pmd_t *pmd,
 static inline void migration_entry_wait_huge(struct vm_area_struct *vma,
 		struct mm_struct *mm, pte_t *pte) { }
 static inline int is_writable_migration_entry(swp_entry_t entry)
+{
+	return 0;
+}
+static inline int is_readable_migration_entry(swp_entry_t entry)
 {
 	return 0;
 }
@@ -274,7 +301,7 @@ static inline bool is_pfn_swap_entry(swp_entry_t entry)
 struct page_vma_mapped_walk;
 
 #ifdef CONFIG_ARCH_ENABLE_THP_MIGRATION
-extern void set_pmd_migration_entry(struct page_vma_mapped_walk *pvmw,
+extern int set_pmd_migration_entry(struct page_vma_mapped_walk *pvmw,
 		struct page *page);
 
 extern void remove_migration_pmd(struct page_vma_mapped_walk *pvmw,
@@ -304,10 +331,10 @@ static inline pmd_t swp_entry_to_pmd(swp_entry_t entry)
 
 static inline int is_pmd_migration_entry(pmd_t pmd)
 {
-	return !pmd_present(pmd) && is_migration_entry(pmd_to_swp_entry(pmd));
+	return is_swap_pmd(pmd) && is_migration_entry(pmd_to_swp_entry(pmd));
 }
 #else
-static inline void set_pmd_migration_entry(struct page_vma_mapped_walk *pvmw,
+static inline int set_pmd_migration_entry(struct page_vma_mapped_walk *pvmw,
 		struct page *page)
 {
 	BUILD_BUG();
@@ -387,18 +414,10 @@ static inline void num_poisoned_pages_inc(void)
 }
 #endif
 
-#if defined(CONFIG_MEMORY_FAILURE) || defined(CONFIG_MIGRATION) || \
-    defined(CONFIG_DEVICE_PRIVATE)
 static inline int non_swap_entry(swp_entry_t entry)
 {
 	return swp_type(entry) >= MAX_SWAPFILES;
 }
-#else
-static inline int non_swap_entry(swp_entry_t entry)
-{
-	return 0;
-}
-#endif
 
 #endif /* CONFIG_MMU */
 #endif /* _LINUX_SWAPOPS_H */
