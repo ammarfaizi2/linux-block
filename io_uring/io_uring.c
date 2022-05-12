@@ -5708,6 +5708,8 @@ static void io_poll_cancel_req(struct io_kiocb *req)
 	io_poll_execute(req, 0);
 }
 
+#define IO_ASYNC_POLL_COMMON	(EPOLLONESHOT | POLLPRI)
+
 static int io_poll_wake(struct wait_queue_entry *wait, unsigned mode, int sync,
 			void *key)
 {
@@ -5741,7 +5743,7 @@ static int io_poll_wake(struct wait_queue_entry *wait, unsigned mode, int sync,
 	}
 
 	/* for instances that support it check for an event match first */
-	if (mask && !(mask & poll->events))
+	if (mask && !(mask & (poll->events & ~IO_ASYNC_POLL_COMMON)))
 		return 0;
 
 	if (io_poll_get_ownership(req)) {
@@ -5890,7 +5892,7 @@ static int io_arm_poll_handler(struct io_kiocb *req)
 	struct io_ring_ctx *ctx = req->ctx;
 	struct async_poll *apoll;
 	struct io_poll_table ipt;
-	__poll_t mask = EPOLLONESHOT | POLLERR | POLLPRI;
+	__poll_t mask = IO_ASYNC_POLL_COMMON | POLLERR;
 	int ret;
 
 	if (!req->file || !file_can_poll(req->file))
