@@ -150,7 +150,7 @@ static void __hyp_vgic_restore_state(struct kvm_vcpu *vcpu)
 	}
 }
 
-/**
+/*
  * Disable host events, enable guest events
  */
 static bool __pmu_switch_to_guest(struct kvm_cpu_context *host_ctxt)
@@ -170,7 +170,7 @@ static bool __pmu_switch_to_guest(struct kvm_cpu_context *host_ctxt)
 	return (pmu->events_host || pmu->events_guest);
 }
 
-/**
+/*
  * Disable guest events, enable host events
  */
 static void __pmu_switch_to_host(struct kvm_cpu_context *host_ctxt)
@@ -188,7 +188,7 @@ static void __pmu_switch_to_host(struct kvm_cpu_context *host_ctxt)
 		write_sysreg(pmu->events_host, pmcntenset_el0);
 }
 
-/**
+/*
  * Handler for protected VM MSR, MRS or System instruction execution in AArch64.
  *
  * Returns true if the hypervisor has handled the exit, and control should go
@@ -203,23 +203,6 @@ static bool kvm_handle_pvm_sys64(struct kvm_vcpu *vcpu, u64 *exit_code)
 	 */
 	return (kvm_hyp_handle_sysreg(vcpu, exit_code) ||
 		kvm_handle_pvm_sysreg(vcpu, exit_code));
-}
-
-/**
- * Handler for protected floating-point and Advanced SIMD accesses.
- *
- * Returns true if the hypervisor has handled the exit, and control should go
- * back to the guest, or false if it hasn't.
- */
-static bool kvm_handle_pvm_fpsimd(struct kvm_vcpu *vcpu, u64 *exit_code)
-{
-	/* Linux guests assume support for floating-point and Advanced SIMD. */
-	BUILD_BUG_ON(!FIELD_GET(ARM64_FEATURE_MASK(ID_AA64PFR0_FP),
-				PVM_ID_AA64PFR0_ALLOW));
-	BUILD_BUG_ON(!FIELD_GET(ARM64_FEATURE_MASK(ID_AA64PFR0_ASIMD),
-				PVM_ID_AA64PFR0_ALLOW));
-
-	return kvm_hyp_handle_fpsimd(vcpu, exit_code);
 }
 
 static const exit_handler_fn hyp_exit_handlers[] = {
@@ -237,7 +220,7 @@ static const exit_handler_fn pvm_exit_handlers[] = {
 	[0 ... ESR_ELx_EC_MAX]		= NULL,
 	[ESR_ELx_EC_SYS64]		= kvm_handle_pvm_sys64,
 	[ESR_ELx_EC_SVE]		= kvm_handle_pvm_restricted,
-	[ESR_ELx_EC_FP_ASIMD]		= kvm_handle_pvm_fpsimd,
+	[ESR_ELx_EC_FP_ASIMD]		= kvm_hyp_handle_fpsimd,
 	[ESR_ELx_EC_IABT_LOW]		= kvm_hyp_handle_iabt_low,
 	[ESR_ELx_EC_DABT_LOW]		= kvm_hyp_handle_dabt_low,
 	[ESR_ELx_EC_PAC]		= kvm_hyp_handle_ptrauth,
@@ -377,7 +360,7 @@ int __kvm_vcpu_run(struct kvm_vcpu *vcpu)
 	return exit_code;
 }
 
-void __noreturn hyp_panic(void)
+asmlinkage void __noreturn hyp_panic(void)
 {
 	u64 spsr = read_sysreg_el2(SYS_SPSR);
 	u64 elr = read_sysreg_el2(SYS_ELR);
@@ -397,6 +380,11 @@ void __noreturn hyp_panic(void)
 
 	__hyp_do_panic(host_ctxt, spsr, elr, par);
 	unreachable();
+}
+
+asmlinkage void __noreturn hyp_panic_bad_stack(void)
+{
+	hyp_panic();
 }
 
 asmlinkage void kvm_unexpected_el2_exception(void)
