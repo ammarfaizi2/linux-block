@@ -35,6 +35,10 @@ struct folio_batch;
 /* Do not use these with a slab allocator */
 #define GFP_SLAB_BUG_MASK (__GFP_DMA32|__GFP_HIGHMEM|~__GFP_BITS_MASK)
 
+/*
+ * Different from WARN_ON_ONCE(), no warning will be issued
+ * when we specify __GFP_NOWARN.
+ */
 #define WARN_ON_ONCE_GFP(cond, gfp)	({				\
 	static bool __section(".data.once") __warned;			\
 	int __ret_warn_once = !!(cond);					\
