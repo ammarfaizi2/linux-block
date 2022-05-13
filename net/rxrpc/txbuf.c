@@ -11,6 +11,7 @@
 #include "ar-internal.h"
 
 static atomic_t rxrpc_txbuf_debug_ids;
+atomic_t rxrpc_nr_txbuf;
 
 /*
  * Allocate and partially initialise an I/O request structure.
@@ -49,6 +50,7 @@ struct rxrpc_txbuf *rxrpc_alloc_txbuf(struct rxrpc_call *call, u8 packet_type,
 				  packet_type == RXRPC_PACKET_TYPE_DATA ?
 				  rxrpc_txbuf_alloc_data :
 				  rxrpc_txbuf_alloc_ack);
+		atomic_inc(&rxrpc_nr_txbuf);
 	}
 
 	return txb;
@@ -76,6 +78,7 @@ static void rxrpc_free_txbuf(struct rcu_head *rcu)
 	trace_rxrpc_txbuf(txb->debug_id, txb->call_debug_id, txb->seq, 0,
 			  rxrpc_txbuf_free);
 	kfree(txb);
+	atomic_dec(&rxrpc_nr_txbuf);
 }
 
 void rxrpc_put_txbuf(struct rxrpc_txbuf *txb, enum rxrpc_txbuf_trace what)
