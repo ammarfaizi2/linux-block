@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 import re
+import sys
 
 import datetime
 from enum import Enum, auto
@@ -93,11 +94,11 @@ class TestCounts:
 	def __str__(self) -> str:
 		"""Returns the string representation of a TestCounts object.
 		"""
-		return ('Passed: ' + str(self.passed) +
-			', Failed: ' + str(self.failed) +
-			', Crashed: ' + str(self.crashed) +
-			', Skipped: ' + str(self.skipped) +
-			', Errors: ' + str(self.errors))
+		statuses = [('passed', self.passed), ('failed', self.failed),
+			('crashed', self.crashed), ('skipped', self.skipped),
+			('errors', self.errors)]
+		return f'Ran {self.total()} tests: ' + \
+			', '.join(f'{s}: {n}' for s, n in statuses if n > 0)
 
 	def total(self) -> int:
 		"""Returns the total number of test cases within a test
@@ -503,14 +504,20 @@ RESET = '\033[0;0m'
 
 def red(text: str) -> str:
 	"""Returns inputted string with red color code."""
+	if not sys.stdout.isatty():
+		return text
 	return '\033[1;31m' + text + RESET
 
 def yellow(text: str) -> str:
 	"""Returns inputted string with yellow color code."""
+	if not sys.stdout.isatty():
+		return text
 	return '\033[1;33m' + text + RESET
 
 def green(text: str) -> str:
 	"""Returns inputted string with green color code."""
+	if not sys.stdout.isatty():
+		return text
 	return '\033[1;32m' + text + RESET
 
 ANSI_LEN = len(red(''))
@@ -817,7 +824,8 @@ def parse_run_tests(kernel_output: Iterable[str]) -> Test:
 	lines = extract_tap_lines(kernel_output)
 	test = Test()
 	if not lines:
-		test.add_error('invalid KTAP input!')
+		test.name = '<missing>'
+		test.add_error('could not find any KTAP output!')
 		test.status = TestStatus.FAILURE_TO_PARSE_TESTS
 	else:
 		test = parse_test(lines, 0, [])
