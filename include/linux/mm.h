@@ -1632,6 +1632,7 @@ static inline bool is_pinnable_page(struct page *page)
 	 * this routine races with set_pageblock_migratetype(), and we want to
 	 * avoid reading zero, when actually one or the other flags was set.
 	 */
+	int __mt = get_pageblock_migratetype(page);
 	int mt = __READ_ONCE(__mt);
 
 	if (mt & (MIGRATE_CMA | MIGRATE_ISOLATE))
