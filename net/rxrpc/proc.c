@@ -338,9 +338,10 @@ static int rxrpc_local_seq_show(struct seq_file *seq, void *v)
 	char lbuff[50];
 
 	if (v == SEQ_START_TOKEN) {
-		seq_puts(seq,
-			 "Proto Local                                          "
-			 " Use Act\n");
+		seq_printf(seq,
+			   "Proto Local                                          "
+			   " Use Act (txb=%d)\n",
+			   atomic_read(&rxrpc_nr_txbuf));
 		return 0;
 	}
 
@@ -458,7 +459,8 @@ int rxrpc_stats_show(struct seq_file *seq, void *v)
 		   atomic_read(&rxnet->stat_why_req_ack[rxrpc_reqack_slow_start]),
 		   atomic_read(&rxnet->stat_why_req_ack[rxrpc_reqack_small_txwin]));
 	seq_printf(seq,
-		   "Buffers  : txb=%u rxb=%u\n",
+		   "Buffers  : txb=%u,%u rxb=%u\n",
+		   atomic_read(&rxrpc_nr_txbuf),
 		   atomic_read(&rxrpc_n_tx_skbs),
 		   atomic_read(&rxrpc_n_rx_skbs));
 	return 0;
