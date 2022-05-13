@@ -6947,6 +6947,13 @@ u64 btrfs_calc_stripe_length(const struct extent_map *em)
 	return div_u64(em->len, data_stripes);
 }
 
+int btrfs_nr_parity_stripes(u64 type)
+{
+	enum btrfs_raid_types index = btrfs_bg_flags_to_raid_index(type);
+
+	return btrfs_raid_array[index].nparity;
+}
+
 #if BITS_PER_LONG == 32
 /*
  * Due to page cache limit, metadata beyond BTRFS_32BIT_MAX_FILE_SIZE
