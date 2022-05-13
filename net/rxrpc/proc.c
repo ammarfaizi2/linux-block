@@ -338,9 +338,10 @@ static int rxrpc_local_seq_show(struct seq_file *seq, void *v)
 	char lbuff[50];
 
 	if (v == SEQ_START_TOKEN) {
-		seq_puts(seq,
-			 "Proto Local                                          "
-			 " Use Act\n");
+		seq_printf(seq,
+			   "Proto Local                                          "
+			   " Use Act (txb=%d)\n",
+			   atomic_read(&rxrpc_nr_txbuf));
 		return 0;
 	}
 

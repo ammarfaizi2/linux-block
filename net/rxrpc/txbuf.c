@@ -10,6 +10,8 @@
 #include <linux/slab.h>
 #include "ar-internal.h"
 
+atomic_t rxrpc_nr_txbuf;
+
 /*
  * Allocate and partially initialise an I/O request structure.
  */
@@ -42,6 +44,7 @@ struct rxrpc_txbuf *rxrpc_alloc_txbuf(struct rxrpc_call *call, gfp_t gfp)
 
 		trace_rxrpc_txbuf(txb->call_debug_id, txb->seq, 1,
 				  rxrpc_txbuf_alloc);
+		atomic_inc(&rxrpc_nr_txbuf);
 	}
 
 	return txb;
@@ -68,6 +71,7 @@ static void rxrpc_free_txbuf(struct rcu_head *rcu)
 
 	trace_rxrpc_txbuf(txb->call_debug_id, txb->seq, 0, rxrpc_txbuf_free);
 	kfree(txb);
+	atomic_dec(&rxrpc_nr_txbuf);
 }
 
 void rxrpc_put_txbuf(struct rxrpc_txbuf *txb, enum rxrpc_txbuf_trace what)

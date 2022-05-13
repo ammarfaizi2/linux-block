@@ -1147,6 +1147,7 @@ static inline void rxrpc_sysctl_exit(void) {}
 /*
  * txbuf.c
  */
+extern atomic_t rxrpc_nr_txbuf;
 struct rxrpc_txbuf *rxrpc_alloc_txbuf(struct rxrpc_call *call, gfp_t gfp);
 void rxrpc_get_txbuf(struct rxrpc_txbuf *txb, enum rxrpc_txbuf_trace what);
 void rxrpc_see_txbuf(struct rxrpc_txbuf *txb, enum rxrpc_txbuf_trace what);
