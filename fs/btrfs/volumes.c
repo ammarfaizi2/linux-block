@@ -5710,7 +5710,8 @@ int btrfs_num_copies(struct btrfs_fs_info *fs_info, u64 logical, u64 len)
 {
 	struct extent_map *em;
 	struct map_lookup *map;
-	int ret;
+	enum btrfs_raid_types index;
+	int ret = 1;
 
 	em = btrfs_get_chunk_map(fs_info, logical, len);
 	if (IS_ERR(em))
@@ -5723,10 +5724,11 @@ int btrfs_num_copies(struct btrfs_fs_info *fs_info, u64 logical, u64 len)
 		return 1;
 
 	map = em->map_lookup;
-	if (map->type & (BTRFS_BLOCK_GROUP_DUP | BTRFS_BLOCK_GROUP_RAID1_MASK))
-		ret = map->num_stripes;
-	else if (map->type & BTRFS_BLOCK_GROUP_RAID10)
-		ret = map->sub_stripes;
+	index = btrfs_bg_flags_to_raid_index(map->type);
+
+	if (!(map->type & BTRFS_BLOCK_GROUP_RAID56_MASK))
+		/* Non-raid56, use their ncopies from btrfs_raid_array[]. */
+		ret = btrfs_raid_array[index].ncopies;
 	else if (map->type & BTRFS_BLOCK_GROUP_RAID5)
 		ret = 2;
 	else if (map->type & BTRFS_BLOCK_GROUP_RAID6)
@@ -5738,8 +5740,6 @@ int btrfs_num_copies(struct btrfs_fs_info *fs_info, u64 logical, u64 len)
 		 * stripe under reconstruction.
 		 */
 		ret = map->num_stripes;
-	else
-		ret = 1;
 	free_extent_map(em);
 
 	down_read(&fs_info->dev_replace.rwsem);
