@@ -293,12 +293,42 @@ static void do_interrupt(struct pt_regs *regs)
 	set_irq_regs(old_regs);
 }
 
+static int check_div0(struct pt_regs *regs)
+{
+	u8 buf[7];
+	void *p;
+	static const u8 pattern1[] = {0, 0, 0, 'D', 'I', 'V', '0'};
+#if defined(__XTENSA_EB__)
+	static const u8 pattern2[] = {0xd6, 0x0f, 'D', 'I', 'V', '0'};
+#elif defined(__XTENSA_EL__)
+	static const u8 pattern2[] = {0x6d, 0xf0, 'D', 'I', 'V', '0'};
+#else
+#error Unsupported Xtensa endianness
+#endif
+
+	if (user_mode(regs)) {
+		if (copy_from_user(buf, (void __user *)regs->pc, 7))
+			return 0;
+		p = buf;
+	} else {
+		p = (void *)regs->pc;
+	}
+
+	return memcmp(p, pattern1, sizeof(pattern1)) == 0 ||
+		memcmp(p, pattern2, sizeof(pattern2)) == 0;
+}
+
 /*
  * Illegal instruction. Fatal if in kernel space.
  */
 
 static void do_illegal_instruction(struct pt_regs *regs)
 {
+	if (check_div0(regs)) {
+		do_div0(regs);
+		return;
+	}
+
 	__die_if_kernel("Illegal instruction in kernel", regs, SIGKILL);
 
 	/* If in user mode, send SIGILL signal to current process. */
