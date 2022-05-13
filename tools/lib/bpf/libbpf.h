@@ -323,6 +323,24 @@ struct bpf_insn;
  * different.
  */
 LIBBPF_API const struct bpf_insn *bpf_program__insns(const struct bpf_program *prog);
+
+/**
+ * @brief **bpf_program__set_insns()** can set BPF program's underlying
+ * BPF instructions.
+ *
+ * WARNING: This is a very advanced libbpf API and users need to know
+ * what they are doing. This should be used from prog_prepare_load_fn
+ * callback only.
+ *
+ * @param prog BPF program for which to return instructions
+ * @param new_insns a pointer to an array of BPF instructions
+ * @param new_insn_cnt number of `struct bpf_insn`'s that form
+ * specified BPF program
+ * @return 0, on success; negative error code, otherwise
+ */
+LIBBPF_API int bpf_program__set_insns(struct bpf_program *prog,
+				      struct bpf_insn *new_insns, size_t new_insn_cnt);
+
 /**
  * @brief **bpf_program__insn_cnt()** returns number of `struct bpf_insn`'s
  * that form specified BPF program.
@@ -603,8 +621,20 @@ bpf_program__attach_tracepoint_opts(const struct bpf_program *prog,
 LIBBPF_API struct bpf_link *
 bpf_program__attach_raw_tracepoint(const struct bpf_program *prog,
 				   const char *tp_name);
+
+struct bpf_trace_opts {
+	/* size of this struct, for forward/backward compatibility */
+	size_t sz;
+	/* custom user-provided value fetchable through bpf_get_attach_cookie() */
+	__u64 cookie;
+};
+#define bpf_trace_opts__last_field cookie
+
 LIBBPF_API struct bpf_link *
 bpf_program__attach_trace(const struct bpf_program *prog);
+LIBBPF_API struct bpf_link *
+bpf_program__attach_trace_opts(const struct bpf_program *prog, const struct bpf_trace_opts *opts);
+
 LIBBPF_API struct bpf_link *
 bpf_program__attach_lsm(const struct bpf_program *prog);
 LIBBPF_API struct bpf_link *
@@ -865,6 +895,28 @@ LIBBPF_API LIBBPF_DEPRECATED_SINCE(0, 7, "use bpf_object__prev_map() instead")
 struct bpf_map *bpf_map__prev(const struct bpf_map *map, const struct bpf_object *obj);
 LIBBPF_API struct bpf_map *
 bpf_object__prev_map(const struct bpf_object *obj, const struct bpf_map *map);
+
+/**
+ * @brief **bpf_map__set_autocreate()** sets whether libbpf has to auto-create
+ * BPF map during BPF object load phase.
+ * @param map the BPF map instance
+ * @param autocreate whether to create BPF map during BPF object load
+ * @return 0 on success; -EBUSY if BPF object was already loaded
+ *
+ * **bpf_map__set_autocreate()** allows to opt-out from libbpf auto-creating
+ * BPF map. By default, libbpf will attempt to create every single BPF map
+ * defined in BPF object file using BPF_MAP_CREATE command of bpf() syscall
+ * and fill in map FD in BPF instructions.
+ *
+ * This API allows to opt-out of this process for specific map instance. This
+ * can be useful if host kernel doesn't support such BPF map type or used
+ * combination of flags and user application wants to avoid creating such
+ * a map in the first place. User is still responsible to make sure that their
+ * BPF-side code that expects to use such missing BPF map is recognized by BPF
+ * verifier as dead code, otherwise BPF verifier will reject such BPF program.
+ */
+LIBBPF_API int bpf_map__set_autocreate(struct bpf_map *map, bool autocreate);
+LIBBPF_API bool bpf_map__autocreate(const struct bpf_map *map);
 
 /**
  * @brief **bpf_map__fd()** gets the file descriptor of the passed
