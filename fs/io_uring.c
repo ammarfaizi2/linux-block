@@ -3588,7 +3588,7 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	req->imu = NULL;
 	req->rw.addr = READ_ONCE(sqe->addr);
 	req->rw.len = READ_ONCE(sqe->len);
-	req->rw.flags = READ_ONCE(sqe->rw_flags);
+	req->rw.flags = (__force u32)READ_ONCE(sqe->rw_flags);
 	/* used for fixed read/write too - just read unconditionally */
 	req->buf_index = READ_ONCE(sqe->buf_index);
 	return 0;
@@ -4173,7 +4173,7 @@ static int io_rw_init_file(struct io_kiocb *req, fmode_t mode)
 		req->flags |= io_file_get_flags(file) << REQ_F_SUPPORT_NOWAIT_BIT;
 
 	kiocb->ki_flags = iocb_flags(file);
-	ret = kiocb_set_rw_flags(kiocb, req->rw.flags);
+	ret = kiocb_set_rw_flags(kiocb, (__force rwf_t)req->rw.flags);
 	if (unlikely(ret))
 		return ret;
 
