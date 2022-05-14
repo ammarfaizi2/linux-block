@@ -1035,8 +1035,8 @@ Inactive
               Memory which has been less recently used.  It is more
               eligible to be reclaimed for other purposes
 Unevictable
-              Memory that cannot be reclaimed, such as mlocked pages,
-              ramfs backing pages, secret memfd pages etc.
+              Memory allocated for userspace which cannot be reclaimed, such
+              as mlocked pages, ramfs backing pages, secret memfd pages etc.
 Mlocked
               Memory locked with mlock().
 HighTotal, HighFree
