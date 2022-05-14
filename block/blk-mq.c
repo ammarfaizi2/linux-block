@@ -1160,7 +1160,7 @@ static void blk_end_sync_rq(struct request *rq, blk_status_t error)
 {
 	struct completion *waiting = rq->end_io_data;
 
-	rq->end_io_data = (void *)(uintptr_t)error;
+	rq->end_io_data = (void *)(__force uintptr_t)error;
 
 	/*
 	 * complete last, if this is a stack request the process (and thus
@@ -1299,7 +1299,7 @@ blk_status_t blk_execute_rq(struct request *rq, bool at_head)
 	else
 		wait_for_completion_io(&wait);
 
-	return (blk_status_t)(uintptr_t)rq->end_io_data;
+	return (__force blk_status_t)(uintptr_t)rq->end_io_data;
 }
 EXPORT_SYMBOL(blk_execute_rq);
 
