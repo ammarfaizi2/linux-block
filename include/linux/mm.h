@@ -1635,7 +1635,7 @@ static inline bool is_pinnable_page(struct page *page)
 	int __mt = get_pageblock_migratetype(page);
 	int mt = __READ_ONCE(__mt);
 
-	if (mt & (MIGRATE_CMA | MIGRATE_ISOLATE))
+	if (mt == MIGRATE_CMA || mt == MIGRATE_ISOLATE)
 		return false;
 #endif
 
