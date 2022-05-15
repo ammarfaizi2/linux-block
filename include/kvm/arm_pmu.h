@@ -20,13 +20,19 @@ struct kvm_pmc {
 	struct perf_event *perf_event;
 };
 
+struct kvm_pmu_events {
+	u32 events_host;
+	u32 events_guest;
+};
+
 struct kvm_pmu {
-	int irq_num;
+	struct irq_work overflow_work;
+	struct kvm_pmu_events events;
 	struct kvm_pmc pmc[ARMV8_PMU_MAX_COUNTERS];
 	DECLARE_BITMAP(chained, ARMV8_PMU_MAX_COUNTER_PAIRS);
+	int irq_num;
 	bool created;
 	bool irq_level;
-	struct irq_work overflow_work;
 };
 
 struct arm_pmu_entry {
