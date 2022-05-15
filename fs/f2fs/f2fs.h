@@ -2916,6 +2916,7 @@ static inline void f2fs_change_bit(unsigned int nr, char *addr)
 #define F2FS_NOCOMP_FL			0x00000400 /* Don't compress */
 #define F2FS_INDEX_FL			0x00001000 /* hash-indexed directory */
 #define F2FS_DIRSYNC_FL			0x00010000 /* dirsync behaviour (directories only) */
+#define F2FS_NOCOW_FL			0x00800000 /* Do not cow file */
 #define F2FS_PROJINHERIT_FL		0x20000000 /* Create with parents projid */
 #define F2FS_CASEFOLD_FL		0x40000000 /* Casefolded file */
 
@@ -2952,9 +2953,14 @@ static inline void __mark_inode_dirty_flag(struct inode *inode,
 		if (set)
 			return;
 		fallthrough;
+	case FI_PIN_FILE:
+		if (set)
+			F2FS_I(inode)->i_flags |= F2FS_NOCOW_FL;
+		else
+			F2FS_I(inode)->i_flags &= ~F2FS_NOCOW_FL;
+		fallthrough;
 	case FI_DATA_EXIST:
 	case FI_INLINE_DOTS:
-	case FI_PIN_FILE:
 	case FI_COMPRESS_RELEASED:
 		f2fs_mark_inode_dirty_sync(inode, true);
 	}
