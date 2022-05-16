@@ -1914,6 +1914,7 @@ int set_memory_wb(unsigned long addr, int numpages)
 }
 EXPORT_SYMBOL(set_memory_wb);
 
+#ifdef CONFIG_X86_64
 /* Prevent speculative access to a page by marking it not-present */
 int set_mce_nospec(unsigned long pfn)
 {
@@ -1959,6 +1960,7 @@ int clear_mce_nospec(unsigned long pfn)
 	return set_memory_present(&addr, 1);
 }
 EXPORT_SYMBOL_GPL(clear_mce_nospec);
+#endif
 
 int set_memory_x(unsigned long addr, int numpages)
 {
