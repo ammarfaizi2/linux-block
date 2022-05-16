@@ -1718,7 +1718,6 @@ err_free_cints:
 	vec = pci_irq_vector(pf->pdev,
 			     pf->hw.nix_msixoff + NIX_LF_QINT_VEC_START);
 	otx2_write64(pf, NIX_LF_QINTX_ENA_W1C(0), BIT_ULL(0));
-	synchronize_irq(vec);
 	free_irq(vec, pf);
 err_disable_napi:
 	otx2_disable_napi(pf);
@@ -1762,7 +1761,6 @@ int otx2_stop(struct net_device *netdev)
 	vec = pci_irq_vector(pf->pdev,
 			     pf->hw.nix_msixoff + NIX_LF_QINT_VEC_START);
 	otx2_write64(pf, NIX_LF_QINTX_ENA_W1C(0), BIT_ULL(0));
-	synchronize_irq(vec);
 	free_irq(vec, pf);
 
 	/* Cleanup CQ NAPI and IRQ */
@@ -2704,7 +2702,7 @@ static int otx2_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 
 	netdev->hw_features |= NETIF_F_LOOPBACK | NETIF_F_RXALL;
 
-	netif_set_gso_max_segs(netdev, OTX2_MAX_GSO_SEGS);
+	netif_set_tso_max_segs(netdev, OTX2_MAX_GSO_SEGS);
 	netdev->watchdog_timeo = OTX2_TX_TIMEOUT;
 
 	netdev->netdev_ops = &otx2_netdev_ops;
