@@ -937,10 +937,6 @@ struct mem_cgroup *mem_cgroup_get_oom_group(struct task_struct *victim,
 					    struct mem_cgroup *oom_domain);
 void mem_cgroup_print_oom_group(struct mem_cgroup *memcg);
 
-#ifdef CONFIG_MEMCG_SWAP
-extern bool cgroup_memory_noswap;
-#endif
-
 void folio_memcg_lock(struct folio *folio);
 void folio_memcg_unlock(struct folio *folio);
 void lock_page_memcg(struct page *page);
@@ -1059,6 +1055,15 @@ static inline void count_memcg_page_event(struct page *page,
 
 	if (memcg)
 		count_memcg_events(memcg, idx, 1);
+}
+
+static inline void count_memcg_folio_events(struct folio *folio,
+		enum vm_event_item idx, unsigned long nr)
+{
+	struct mem_cgroup *memcg = folio_memcg(folio);
+
+	if (memcg)
+		count_memcg_events(memcg, idx, nr);
 }
 
 static inline void count_memcg_event_mm(struct mm_struct *mm,
@@ -1495,6 +1500,11 @@ static inline void __count_memcg_events(struct mem_cgroup *memcg,
 
 static inline void count_memcg_page_event(struct page *page,
 					  int idx)
+{
+}
+
+static inline void count_memcg_folio_events(struct folio *folio,
+		enum vm_event_item idx, unsigned long nr)
 {
 }
 
