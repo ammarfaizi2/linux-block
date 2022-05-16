@@ -28,6 +28,7 @@
 #include <linux/suspend.h>
 #include <linux/syscore_ops.h>
 #include <linux/tick.h>
+#include <linux/units.h>
 #include <trace/events/power.h>
 
 static LIST_HEAD(cpufreq_policy_list);
@@ -1019,11 +1020,12 @@ static void add_cpu_dev_symlink(struct cpufreq_policy *policy, unsigned int cpu,
 		dev_err(dev, "cpufreq symlink creation failed\n");
 }
 
-static void remove_cpu_dev_symlink(struct cpufreq_policy *policy,
+static void remove_cpu_dev_symlink(struct cpufreq_policy *policy, int cpu,
 				   struct device *dev)
 {
 	dev_dbg(dev, "%s: Removing symlink\n", __func__);
 	sysfs_remove_link(&dev->kobj, "cpufreq");
+	cpumask_clear_cpu(cpu, policy->real_cpus);
 }
 
 static int cpufreq_add_dev_interface(struct cpufreq_policy *policy)
@@ -1531,7 +1533,7 @@ static int cpufreq_online(unsigned int cpu)
 
 out_destroy_policy:
 	for_each_cpu(j, policy->real_cpus)
-		remove_cpu_dev_symlink(policy, get_cpu_device(j));
+		remove_cpu_dev_symlink(policy, j, get_cpu_device(j));
 
 	up_write(&policy->rwsem);
 
@@ -1656,8 +1658,7 @@ static void cpufreq_remove_dev(struct device *dev, struct subsys_interface *sif)
 	if (cpu_online(cpu))
 		cpufreq_offline(cpu);
 
-	cpumask_clear_cpu(cpu, policy->real_cpus);
-	remove_cpu_dev_symlink(policy, dev);
+	remove_cpu_dev_symlink(policy, cpu, dev);
 
 	if (cpumask_empty(policy->real_cpus)) {
 		/* We did light-weight exit earlier, do full tear down now */
@@ -1707,6 +1708,16 @@ static unsigned int cpufreq_verify_current_freq(struct cpufreq_policy *policy, b
 		return new_freq;
 
 	if (policy->cur != new_freq) {
+		/*
+		 * For some platforms, the frequency returned by hardware may be
+		 * slightly different from what is provided in the frequency
+		 * table, for example hardware may return 499 MHz instead of 500
+		 * MHz. In such cases it is better to avoid getting into
+		 * unnecessary frequency updates.
+		 */
+		if (abs(policy->cur - new_freq) < HZ_PER_MHZ)
+			return policy->cur;
+
 		cpufreq_out_of_sync(policy, new_freq);
 		if (update)
 			schedule_work(&policy->update);
