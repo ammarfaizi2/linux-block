@@ -436,6 +436,9 @@ config HAVE_BOOTMEM_INFO_NODE
 config ARCH_ENABLE_MEMORY_HOTPLUG
 	bool
 
+config ARCH_ENABLE_MEMORY_HOTREMOVE
+	bool
+
 # eventually, we can have this option just 'select SPARSEMEM'
 menuconfig MEMORY_HOTPLUG
 	bool "Memory hotplug"
@@ -461,9 +464,6 @@ config MEMORY_HOTPLUG_DEFAULT_ONLINE
 	  'online' state by default.
 	  Say N here if you want the default policy to keep all hot-plugged
 	  memory blocks in 'offline' state.
-
-config ARCH_ENABLE_MEMORY_HOTREMOVE
-	bool
 
 config MEMORY_HOTREMOVE
 	bool "Allow for memory hot remove"
