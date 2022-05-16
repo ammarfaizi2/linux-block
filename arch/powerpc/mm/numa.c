@@ -26,7 +26,6 @@
 #include <linux/slab.h>
 #include <asm/cputhreads.h>
 #include <asm/sparsemem.h>
-#include <asm/prom.h>
 #include <asm/smp.h>
 #include <asm/topology.h>
 #include <asm/firmware.h>
@@ -1457,8 +1456,7 @@ int find_and_online_cpu_nid(int cpu)
 #endif
 	}
 
-	pr_debug("%s:%d cpu %d nid %d\n", __FUNCTION__, __LINE__,
-		cpu, new_nid);
+	pr_debug("%s:%d cpu %d nid %d\n", __func__, __LINE__, cpu, new_nid);
 	return new_nid;
 }
 
