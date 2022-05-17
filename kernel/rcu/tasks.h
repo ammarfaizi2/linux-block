@@ -1621,7 +1621,6 @@ static void exit_tasks_rcu_finish_trace(struct task_struct *t)
 	WRITE_ONCE(t->trc_reader_checked, true);
 	WARN_ON_ONCE(READ_ONCE(t->trc_reader_nesting));
 	WRITE_ONCE(t->trc_reader_nesting, 0);
-	WARN_ON_ONCE(trs.b.blocked);
 	if (WARN_ON_ONCE(trs.b.need_qs) || trs.b.blocked)
 		rcu_read_unlock_trace_special(t);
 }
