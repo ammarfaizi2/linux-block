@@ -245,12 +245,16 @@ struct hantro_postproc_ctx {
 /**
  * struct hantro_postproc_ops - post-processor operations
  *
- * @enable:	Enable the post-processor block. Optional.
- * @disable:	Disable the post-processor block. Optional.
+ * @enable:		Enable the post-processor block. Optional.
+ * @disable:		Disable the post-processor block. Optional.
+ * @enum_framesizes:	Enumerate possible scaled output formats.
+ *			Returns zero if OK, a negative value in error cases.
+ *			Optional.
  */
 struct hantro_postproc_ops {
 	void (*enable)(struct hantro_ctx *ctx);
 	void (*disable)(struct hantro_ctx *ctx);
+	int (*enum_framesizes)(struct hantro_ctx *ctx, struct v4l2_frmsizeenum *fsize);
 };
 
 /**
@@ -338,11 +342,9 @@ int hantro_hevc_dec_init(struct hantro_ctx *ctx);
 void hantro_hevc_dec_exit(struct hantro_ctx *ctx);
 int hantro_g2_hevc_dec_run(struct hantro_ctx *ctx);
 int hantro_hevc_dec_prepare_run(struct hantro_ctx *ctx);
+void hantro_hevc_ref_init(struct hantro_ctx *ctx);
 dma_addr_t hantro_hevc_get_ref_buf(struct hantro_ctx *ctx, int poc);
 int hantro_hevc_add_ref_buf(struct hantro_ctx *ctx, int poc, dma_addr_t addr);
-void hantro_hevc_ref_remove_unused(struct hantro_ctx *ctx);
-size_t hantro_hevc_chroma_offset(const struct v4l2_ctrl_hevc_sps *sps);
-size_t hantro_hevc_motion_vectors_offset(const struct v4l2_ctrl_hevc_sps *sps);
 
 static inline unsigned short hantro_vp9_num_sbs(unsigned short dimension)
 {
