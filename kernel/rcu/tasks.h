@@ -29,6 +29,7 @@ typedef void (*postgp_func_t)(struct rcu_tasks *rtp);
  * @rtp_work: Work queue for invoking callbacks.
  * @rtp_irq_work: IRQ work queue for deferred wakeups.
  * @barrier_q_head: RCU callback for barrier operation.
+ * @rtp_blkd_tasks: List of tasks blocked as readers.
  * @cpu: CPU number corresponding to this entry.
  * @rtpp: Pointer to the rcu_tasks structure.
  */
@@ -40,6 +41,7 @@ struct rcu_tasks_percpu {
 	struct work_struct rtp_work;
 	struct irq_work rtp_irq_work;
 	struct rcu_head barrier_q_head;
+	struct list_head rtp_blkd_tasks;
 	int cpu;
 	struct rcu_tasks *rtpp;
 };
@@ -116,6 +118,7 @@ static void call_rcu_tasks_iw_wakeup(struct irq_work *iwp);
 static DEFINE_PER_CPU(struct rcu_tasks_percpu, rt_name ## __percpu) = {			\
 	.lock = __RAW_SPIN_LOCK_UNLOCKED(rt_name ## __percpu.cbs_pcpu_lock),		\
 	.rtp_irq_work = IRQ_WORK_INIT_HARD(call_rcu_tasks_iw_wakeup),			\
+	.rtp_blkd_tasks = LIST_HEAD_INIT(rt_name ## __percpu.rtp_blkd_tasks),		\
 };											\
 static struct rcu_tasks rt_name =							\
 {											\
@@ -256,6 +259,8 @@ static void cblist_init_generic(struct rcu_tasks *rtp)
 		INIT_WORK(&rtpcp->rtp_work, rcu_tasks_invoke_cbs_wq);
 		rtpcp->cpu = cpu;
 		rtpcp->rtpp = rtp;
+		if (cpu != 0)
+			INIT_LIST_HEAD(&rtpcp->rtp_blkd_tasks);
 		raw_spin_unlock_rcu_node(rtpcp); // irqs remain disabled.
 	}
 	raw_spin_unlock_irqrestore(&rtp->cbs_gbl_lock, flags);
