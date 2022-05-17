@@ -1252,6 +1252,7 @@ void rcu_tasks_trace_qs_blkd(struct task_struct *t)
 	if (!rtpcp->rtp_blkd_tasks.next)
 		INIT_LIST_HEAD(&rtpcp->rtp_blkd_tasks);
 	list_add(&t->trc_blkd_node, &rtpcp->rtp_blkd_tasks);
+	t->trc_reader_special.b.blocked = true;
 	raw_spin_unlock_irqrestore_rcu_node(rtpcp, flags);
 }
 
