@@ -775,7 +775,8 @@ static void set_cluster_next(struct swap_info_struct *si, unsigned long next)
 	this_cpu_write(*si->cluster_next_cpu, next);
 }
 
-static inline bool swap_offset_available(struct swap_info_struct *si, unsigned long offset)
+static bool swap_offset_available_and_locked(struct swap_info_struct *si,
+					     unsigned long offset)
 {
 	if (data_race(!si->swap_map[offset])) {
 		spin_lock(&si->lock);
@@ -967,7 +968,7 @@ done:
 scan:
 	spin_unlock(&si->lock);
 	while (++offset <= READ_ONCE(si->highest_bit)) {
-		if (swap_offset_available(si, offset))
+		if (swap_offset_available_and_locked(si, offset))
 			goto checks;
 		if (unlikely(--latency_ration < 0)) {
 			cond_resched();
@@ -977,7 +978,7 @@ scan:
 	}
 	offset = si->lowest_bit;
 	while (offset < scan_base) {
-		if (swap_offset_available(si, offset))
+		if (swap_offset_available_and_locked(si, offset))
 			goto checks;
 		if (unlikely(--latency_ration < 0)) {
 			cond_resched();
