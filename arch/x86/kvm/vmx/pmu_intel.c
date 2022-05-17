@@ -181,25 +181,28 @@ bool intel_pmu_lbr_is_enabled(struct kvm_vcpu *vcpu)
 static bool intel_pmu_is_valid_lbr_msr(struct kvm_vcpu *vcpu, u32 index)
 {
 	struct x86_pmu_lbr *records = vcpu_to_lbr_records(vcpu);
-	bool ret = false;
 
 	if (!intel_pmu_lbr_is_enabled(vcpu))
-		return ret;
+		return false;
 
 	if (index == MSR_ARCH_LBR_DEPTH || index == MSR_ARCH_LBR_CTL) {
-		if (kvm_cpu_cap_has(X86_FEATURE_ARCH_LBR))
-			ret = guest_cpuid_has(vcpu, X86_FEATURE_ARCH_LBR);
-		return ret;
+		return kvm_cpu_cap_has(X86_FEATURE_ARCH_LBR) &&
+		       guest_cpuid_has(vcpu, X86_FEATURE_ARCH_LBR);
 	}
 
-	ret = (index == MSR_LBR_SELECT) || (index == MSR_LBR_TOS) ||
-		(index >= records->from && index < records->from + records->nr) ||
-		(index >= records->to && index < records->to + records->nr);
+	if (!guest_cpuid_has(vcpu, X86_FEATURE_ARCH_LBR) &&
+	    (index == MSR_LBR_SELECT || index == MSR_LBR_TOS))
+		return true;
 
-	if (!ret && records->info)
-		ret = (index >= records->info && index < records->info + records->nr);
+	if ((index >= records->from && index < records->from + records->nr) ||
+	    (index >= records->to && index < records->to + records->nr))
+		return true;
 
-	return ret;
+	if (records->info && index >= records->info &&
+	    index < records->info + records->nr)
+		return true;
+
+	return false;
 }
 
 static bool intel_is_valid_msr(struct kvm_vcpu *vcpu, u32 msr)
@@ -664,10 +667,15 @@ static void intel_pmu_refresh(struct kvm_vcpu *vcpu)
 	nested_vmx_pmu_refresh(vcpu,
 			       intel_is_valid_msr(vcpu, MSR_CORE_PERF_GLOBAL_CTRL));
 
-	if (cpuid_model_is_consistent(vcpu))
+	if (cpuid_model_is_consistent(vcpu)) {
 		x86_perf_get_lbr(&lbr_desc->records);
-	else
+
+		if (kvm_cpu_cap_has(X86_FEATURE_ARCH_LBR) &&
+		    !guest_cpuid_has(vcpu, X86_FEATURE_ARCH_LBR))
+			lbr_desc->records.nr = 0;
+	} else {
 		lbr_desc->records.nr = 0;
+	}
 
 	if (lbr_desc->records.nr)
 		bitmap_set(pmu->all_valid_pmc_idx, INTEL_PMC_IDX_FIXED_VLBR, 1);
@@ -800,6 +808,9 @@ static void vmx_update_intercept_for_lbr_msrs(struct kvm_vcpu *vcpu, bool set)
 			vmx_set_intercept_for_msr(vcpu, lbr->info + i, MSR_TYPE_RW, set);
 	}
 
+	if (guest_cpuid_has(vcpu, X86_FEATURE_ARCH_LBR))
+		return;
+
 	vmx_set_intercept_for_msr(vcpu, MSR_LBR_SELECT, MSR_TYPE_RW, set);
 	vmx_set_intercept_for_msr(vcpu, MSR_LBR_TOS, MSR_TYPE_RW, set);
 }
@@ -840,10 +851,13 @@ void vmx_passthrough_lbr_msrs(struct kvm_vcpu *vcpu)
 {
 	struct kvm_pmu *pmu = vcpu_to_pmu(vcpu);
 	struct lbr_desc *lbr_desc = vcpu_to_lbr_desc(vcpu);
+	bool lbr_enable = guest_cpuid_has(vcpu, X86_FEATURE_ARCH_LBR) ?
+		(vmcs_read64(GUEST_IA32_LBR_CTL) & ARCH_LBR_CTL_LBREN) :
+		(vmcs_read64(GUEST_IA32_DEBUGCTL) & DEBUGCTLMSR_LBR);
 
 	if (!lbr_desc->event) {
 		vmx_disable_lbr_msrs_passthrough(vcpu);
-		if (vmcs_read64(GUEST_IA32_DEBUGCTL) & DEBUGCTLMSR_LBR)
+		if (lbr_enable)
 			goto warn;
 		if (test_bit(INTEL_PMC_IDX_FIXED_VLBR, pmu->pmc_in_use))
 			goto warn;
@@ -860,13 +874,19 @@ void vmx_passthrough_lbr_msrs(struct kvm_vcpu *vcpu)
 	return;
 
 warn:
+	if (kvm_cpu_cap_has(X86_FEATURE_ARCH_LBR))
+		wrmsrl(MSR_ARCH_LBR_DEPTH, lbr_desc->records.nr);
 	pr_warn_ratelimited("kvm: vcpu-%d: fail to passthrough LBR.\n",
 		vcpu->vcpu_id);
 }
 
 static void intel_pmu_cleanup(struct kvm_vcpu *vcpu)
 {
-	if (!(vmcs_read64(GUEST_IA32_DEBUGCTL) & DEBUGCTLMSR_LBR))
+	bool lbr_enable = guest_cpuid_has(vcpu, X86_FEATURE_ARCH_LBR) ?
+		(vmcs_read64(GUEST_IA32_LBR_CTL) & ARCH_LBR_CTL_LBREN) :
+		(vmcs_read64(GUEST_IA32_DEBUGCTL) & DEBUGCTLMSR_LBR);
+
+	if (!lbr_enable)
 		intel_pmu_release_guest_lbr_event(vcpu);
 }
 
