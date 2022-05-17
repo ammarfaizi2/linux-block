@@ -43,7 +43,6 @@
 #include <asm/kvm_ppc.h>
 #include <asm/dbell.h>
 #include <asm/page.h>
-#include <asm/prom.h>
 #include <asm/smp.h>
 #include <asm/time.h>
 #include <asm/machdep.h>
@@ -1102,7 +1101,7 @@ void __init smp_prepare_cpus(unsigned int max_cpus)
 	DBG("smp_prepare_cpus\n");
 
 	/* 
-	 * setup_cpu may need to be called on the boot cpu. We havent
+	 * setup_cpu may need to be called on the boot cpu. We haven't
 	 * spun any cpus up but lets be paranoid.
 	 */
 	BUG_ON(boot_cpuid != smp_processor_id());
