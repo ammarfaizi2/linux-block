@@ -186,6 +186,8 @@ static bool intel_pmu_is_valid_lbr_msr(struct kvm_vcpu *vcpu, u32 index)
 		return false;
 
 	if (index == MSR_ARCH_LBR_DEPTH || index == MSR_ARCH_LBR_CTL) {
+		if (is_guest_mode(vcpu))
+			return false;
 		return kvm_cpu_cap_has(X86_FEATURE_ARCH_LBR) &&
 		       guest_cpuid_has(vcpu, X86_FEATURE_ARCH_LBR);
 	}
