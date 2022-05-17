@@ -170,13 +170,19 @@ void synchronize_rcu_tasks(void);
 # endif
 
 # ifdef CONFIG_TASKS_TRACE_RCU
-# define rcu_tasks_trace_qs(t)						\
-	do {								\
-		if (!likely(READ_ONCE((t)->trc_reader_checked)) &&	\
-		    !unlikely(READ_ONCE((t)->trc_reader_nesting))) {	\
-			smp_store_release(&(t)->trc_reader_checked, true); \
-			smp_mb(); /* Readers partitioned by store. */	\
-		}							\
+void rcu_tasks_trace_qs_blkd(struct task_struct *t);
+# define rcu_tasks_trace_qs(t)							\
+	do {									\
+		int ___rttq_nesting = READ_ONCE((t)->trc_reader_nesting);	\
+										\
+		if (!likely(READ_ONCE((t)->trc_reader_checked)) &&		\
+		    !unlikely(___rttq_nesting)) {				\
+			smp_store_release(&(t)->trc_reader_checked, true);	\
+			smp_mb(); /* Readers partitioned by store. */		\
+		} else if (___rttq_nesting &&					\
+			   !READ_ONCE((t)->trc_reader_special.b.blocked)) {	\
+			rcu_tasks_trace_qs_blkd(t);				\
+		}								\
 	} while (0)
 # else
 # define rcu_tasks_trace_qs(t) do { } while (0)
@@ -185,7 +191,7 @@ void synchronize_rcu_tasks(void);
 #define rcu_tasks_qs(t, preempt)					\
 do {									\
 	rcu_tasks_classic_qs((t), (preempt));				\
-	rcu_tasks_trace_qs((t));					\
+	rcu_tasks_trace_qs(t);						\
 } while (0)
 
 # ifdef CONFIG_TASKS_RUDE_RCU
