@@ -1225,16 +1225,24 @@ static DEFINE_IRQ_WORK(rcu_tasks_trace_iw, rcu_read_unlock_iw);
 /* If we are the last reader, wake up the grace-period kthread. */
 void rcu_read_unlock_trace_special(struct task_struct *t)
 {
-	int nq = READ_ONCE(t->trc_reader_special.b.need_qs);
+	unsigned long flags;
+	struct rcu_tasks_percpu *rtpcp;
+	union rcu_special trs = READ_ONCE(t->trc_reader_special);
 
-	if (IS_ENABLED(CONFIG_TASKS_TRACE_RCU_READ_MB) &&
-	    t->trc_reader_special.b.need_mb)
+	if (IS_ENABLED(CONFIG_TASKS_TRACE_RCU_READ_MB) && trs.b.need_mb)
 		smp_mb(); // Pairs with update-side barriers.
-	// Update .need_qs before ->trc_reader_nesting for irq/NMI handlers.
-	if (nq)
+	// Update .need_qs and .blocked before ->trc_reader_nesting for irq/NMI handlers.
+	if (trs.b.need_qs)
 		WRITE_ONCE(t->trc_reader_special.b.need_qs, false);
+	if (trs.b.blocked) {
+		rtpcp = per_cpu_ptr(rcu_tasks_trace.rtpcpu, t->trc_blkd_cpu);
+		raw_spin_lock_irqsave_rcu_node(rtpcp, flags);
+		list_del_init(&t->trc_blkd_node);
+		WRITE_ONCE(t->trc_reader_special.b.blocked, false);
+		raw_spin_unlock_irqrestore_rcu_node(rtpcp, flags);
+	}
 	WRITE_ONCE(t->trc_reader_nesting, 0);
-	if (nq && atomic_dec_and_test(&trc_n_readers_need_end))
+	if (trs.b.need_qs && atomic_dec_and_test(&trc_n_readers_need_end))
 		irq_work_queue(&rcu_tasks_trace_iw);
 }
 EXPORT_SYMBOL_GPL(rcu_read_unlock_trace_special);
@@ -1252,7 +1260,7 @@ void rcu_tasks_trace_qs_blkd(struct task_struct *t)
 	if (!rtpcp->rtp_blkd_tasks.next)
 		INIT_LIST_HEAD(&rtpcp->rtp_blkd_tasks);
 	list_add(&t->trc_blkd_node, &rtpcp->rtp_blkd_tasks);
-	t->trc_reader_special.b.blocked = true;
+	WRITE_ONCE(t->trc_reader_special.b.blocked, true);
 	raw_spin_unlock_irqrestore_rcu_node(rtpcp, flags);
 }
 EXPORT_SYMBOL_GPL(rcu_tasks_trace_qs_blkd);
@@ -1622,7 +1630,7 @@ static void exit_tasks_rcu_finish_trace(struct task_struct *t)
 	WRITE_ONCE(t->trc_reader_checked, true);
 	WARN_ON_ONCE(READ_ONCE(t->trc_reader_nesting));
 	WRITE_ONCE(t->trc_reader_nesting, 0);
-	if (WARN_ON_ONCE(trs.b.need_qs) || trs.b.blocked)
+	if (WARN_ON_ONCE(trs.b.need_qs) || WARN_ON_ONCE(trs.b.blocked))
 		rcu_read_unlock_trace_special(t);
 }
 
