@@ -1239,6 +1239,23 @@ void rcu_read_unlock_trace_special(struct task_struct *t)
 }
 EXPORT_SYMBOL_GPL(rcu_read_unlock_trace_special);
 
+/* Add a newly blocked reader task to its CPU's list. */
+void rcu_tasks_trace_qs_blkd(struct task_struct *t)
+{
+	unsigned long flags;
+	struct rcu_tasks_percpu *rtpcp;
+
+	local_irq_save(flags);
+	rtpcp = this_cpu_ptr(rcu_tasks_trace.rtpcpu);
+	raw_spin_lock_rcu_node(rtpcp); // irqs already disabled
+	t->trc_blkd_cpu = smp_processor_id();
+	if (!rtpcp->rtp_blkd_tasks.next)
+		INIT_LIST_HEAD(&rtpcp->rtp_blkd_tasks);
+	list_add(&t->trc_blkd_node, &rtpcp->rtp_blkd_tasks);
+	t->trc_reader_special.b.blocked = true;
+	raw_spin_unlock_irqrestore_rcu_node(rtpcp, flags);
+}
+
 /* Add a task to the holdout list, if it is not already on the list. */
 static void trc_add_holdout(struct task_struct *t, struct list_head *bhp)
 {
@@ -1599,10 +1616,12 @@ static void rcu_tasks_trace_postgp(struct rcu_tasks *rtp)
 /* Report any needed quiescent state for this exiting task. */
 static void exit_tasks_rcu_finish_trace(struct task_struct *t)
 {
+	union rcu_special trs = READ_ONCE(t->trc_reader_special);
+
 	WRITE_ONCE(t->trc_reader_checked, true);
 	WARN_ON_ONCE(READ_ONCE(t->trc_reader_nesting));
 	WRITE_ONCE(t->trc_reader_nesting, 0);
-	if (WARN_ON_ONCE(READ_ONCE(t->trc_reader_special.b.need_qs)))
+	if (WARN_ON_ONCE(trs.b.need_qs) || trs.b.blocked)
 		rcu_read_unlock_trace_special(t);
 }
 
