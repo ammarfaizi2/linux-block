@@ -191,7 +191,7 @@ void rcu_tasks_trace_qs_blkd(struct task_struct *t);
 #define rcu_tasks_qs(t, preempt)					\
 do {									\
 	rcu_tasks_classic_qs((t), (preempt));				\
-	rcu_tasks_trace_qs((t));					\
+	rcu_tasks_trace_qs(t);						\
 } while (0)
 
 # ifdef CONFIG_TASKS_RUDE_RCU
@@ -204,7 +204,7 @@ void exit_tasks_rcu_start(void);
 void exit_tasks_rcu_finish(void);
 #else /* #ifdef CONFIG_TASKS_RCU_GENERIC */
 #define rcu_tasks_classic_qs(t, preempt) do { } while (0)
-#define rcu_tasks_qs(t, preempt) do { } while (0)
+#define rcu_tasks_qs(t, preempt) rcu_tasks_trace_qs(t);
 #define rcu_note_voluntary_context_switch(t) do { } while (0)
 #define call_rcu_tasks call_rcu
 #define synchronize_rcu_tasks synchronize_rcu
