@@ -177,10 +177,11 @@ void arch_uprobe_copy_ixol(struct page *page, unsigned long vaddr,
 	kunmap_atomic(kaddr);
 
 	/*
-	 * We probably need flush_icache_user_page() but it needs vma.
-	 * This should work on most of architectures by default. If
-	 * architecture needs to do something different it can define
-	 * its own version of the function.
+	 * Flush both I/D cache to ensure instruction modification
+	 * takes effect.  We don't need to flush the whole icache, but that's
+	 * all RISC-V defines so rather than worry about aliasing this just
+	 * flushes everything.
 	 */
 	flush_dcache_page(page);
+	flush_icache_all();
 }
