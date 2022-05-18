@@ -1263,6 +1263,7 @@ void rcu_tasks_trace_qs_blkd(struct task_struct *t)
 	WRITE_ONCE(t->trc_reader_special.b.blocked, true);
 	raw_spin_unlock_irqrestore_rcu_node(rtpcp, flags);
 }
+EXPORT_SYMBOL_GPL(rcu_tasks_trace_qs_blkd);
 
 /* Add a task to the holdout list, if it is not already on the list. */
 static void trc_add_holdout(struct task_struct *t, struct list_head *bhp)
