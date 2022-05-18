@@ -403,15 +403,14 @@ cleanup:
 /*
  * First, this test creates the following hierarchy:
  * A       memory.low = 0,    memory.max = 200M
- * A/B     memory.low = 50M,  memory.current = ...
+ * A/B     memory.low = 50M
  * A/B/C   memory.low = 75M,  memory.current = 50M
  * A/B/D   memory.low = 25M,  memory.current = 50M
  * A/B/E   memory.low = 0,    memory.current = 50M
  * A/B/F   memory.low = 500M, memory.current = 0
  *
  * Usages are pagecache.
- * Then it creates A/G an creates a significant
- * memory pressure in it.
+ * Then it creates A/G and creates significant memory pressure in it.
  *
  * Then it checks actual memory usages and expects that:
  * A/B    memory.current ~= 50M
