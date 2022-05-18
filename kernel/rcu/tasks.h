@@ -14,7 +14,7 @@
 
 struct rcu_tasks;
 typedef void (*rcu_tasks_gp_func_t)(struct rcu_tasks *rtp);
-typedef void (*pregp_func_t)(void);
+typedef void (*pregp_func_t)(struct list_head *hop);
 typedef void (*pertask_func_t)(struct task_struct *t, struct list_head *hop);
 typedef void (*postscan_func_t)(struct list_head *hop);
 typedef void (*holdouts_func_t)(struct list_head *hop, bool ndrpt, bool *frptp);
@@ -661,7 +661,7 @@ static void rcu_tasks_wait_gp(struct rcu_tasks *rtp)
 	struct task_struct *t;
 
 	set_tasks_gp_state(rtp, RTGS_PRE_WAIT_GP);
-	rtp->pregp_func();
+	rtp->pregp_func(&holdouts);
 
 	/*
 	 * There were callbacks, so we need to wait for an RCU-tasks
@@ -791,7 +791,7 @@ static void rcu_tasks_wait_gp(struct rcu_tasks *rtp)
 // disabling.
 
 /* Pre-grace-period preparation. */
-static void rcu_tasks_pregp_step(void)
+static void rcu_tasks_pregp_step(struct list_head *hop)
 {
 	/*
 	 * Wait for all pre-existing t->on_rq and t->nvcsw transitions
@@ -1423,24 +1423,48 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 	}
 }
 
-/* Do first-round processing for the specified task. */
-static void rcu_tasks_trace_pertask(struct task_struct *t,
-				    struct list_head *hop)
+/*
+ * Initialize for first-round processing for the specified task.
+ * Return false if task is NULL or already taken care of, true otherwise.
+ */
+static bool rcu_tasks_trace_pertask_prep(struct task_struct *t)
 {
 	// During early boot when there is only the one boot CPU, there
 	// is no idle task for the other CPUs, so just return.  Also
 	// just return if this task is already on the list.
 	if (unlikely(t == NULL) || !list_empty(&t->trc_holdout_list))
-		return;
+		return false;
 
 	WRITE_ONCE(t->trc_reader_special.b.need_qs, false);
 	WRITE_ONCE(t->trc_reader_checked, false);
 	t->trc_ipi_to_cpu = -1;
-	trc_wait_for_one_reader(t, hop);
+	return true;
+}
+
+/* Do first-round processing for the specified task. */
+static void rcu_tasks_trace_pertask(struct task_struct *t, struct list_head *hop)
+{
+	if (rcu_tasks_trace_pertask_prep(t))
+		trc_wait_for_one_reader(t, hop);
+}
+
+/*
+ * Get the current CPU's current task on the holdout list.
+ * Calls to this function must be serialized.
+ */
+static void rcu_tasks_trace_pertask_handler(void *hop_in)
+{
+	struct list_head *hop = hop_in;
+	struct task_struct *t = current;
+
+	// Pull in the currently running task, but only if it is currently
+	// in an RCU tasks trace read-side critical section.
+	if (rcu_tasks_trace_pertask_prep(t))
+		trc_add_holdout(t, hop);
 }
 
 /* Initialize for a new RCU-tasks-trace grace period. */
-static void rcu_tasks_trace_pregp_step(void)
+static void rcu_tasks_trace_pregp_step(struct list_head *hop)
 {
 	int cpu;
 
@@ -1454,6 +1478,11 @@ static void rcu_tasks_trace_pregp_step(void)
 	// Disable CPU hotplug across the tasklist scan.
 	// This also waits for all readers in CPU-hotplug code paths.
 	cpus_read_lock();
+
+	// These smp_call_function_single() calls are serialized to
+	// allow safe access to the hop list.
+	for_each_possible_cpu(cpu)
+		smp_call_function_single(cpu, rcu_tasks_trace_pertask_handler, hop, 1);
 }
 
 /*
