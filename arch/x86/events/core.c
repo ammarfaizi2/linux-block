@@ -2982,6 +2982,12 @@ unsigned long perf_misc_flags(struct pt_regs *regs)
 
 void perf_get_x86_pmu_capability(struct x86_pmu_capability *cap)
 {
+	if (!check_hw_exists(&pmu, x86_pmu.num_counters,
+			     x86_pmu.num_counters_fixed)) {
+		memset(cap, 0, sizeof(*cap));
+		return;
+	}
+
 	cap->version		= x86_pmu.version;
 	/*
 	 * KVM doesn't support the hybrid PMU yet.
