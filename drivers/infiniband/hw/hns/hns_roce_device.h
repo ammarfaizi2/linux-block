@@ -106,16 +106,6 @@ enum {
 	SERV_TYPE_XRC = 5,
 };
 
-enum hns_roce_qp_state {
-	HNS_ROCE_QP_STATE_RST,
-	HNS_ROCE_QP_STATE_INIT,
-	HNS_ROCE_QP_STATE_RTR,
-	HNS_ROCE_QP_STATE_RTS,
-	HNS_ROCE_QP_STATE_SQD,
-	HNS_ROCE_QP_STATE_ERR,
-	HNS_ROCE_QP_NUM_STATE,
-};
-
 enum hns_roce_event {
 	HNS_ROCE_EVENT_TYPE_PATH_MIG                  = 0x01,
 	HNS_ROCE_EVENT_TYPE_PATH_MIG_FAILED           = 0x02,
@@ -535,6 +525,11 @@ struct hns_roce_cmd_context {
 	u16			busy;
 };
 
+enum hns_roce_cmdq_state {
+	HNS_ROCE_CMDQ_STATE_NORMAL,
+	HNS_ROCE_CMDQ_STATE_FATAL_ERR,
+};
+
 struct hns_roce_cmdq {
 	struct dma_pool		*pool;
 	struct semaphore	poll_sem;
@@ -554,6 +549,7 @@ struct hns_roce_cmdq {
 	 * close device, switch into poll mode(non event mode)
 	 */
 	u8			use_events;
+	enum hns_roce_cmdq_state state;
 };
 
 struct hns_roce_cmd_mailbox {
@@ -725,7 +721,6 @@ struct hns_roce_caps {
 	u32		num_pi_qps;
 	u32		reserved_qps;
 	int		num_qpc_timer;
-	int		num_cqc_timer;
 	u32		num_srqs;
 	u32		max_wqes;
 	u32		max_srq_wrs;
@@ -1191,7 +1186,6 @@ void *hns_roce_get_send_wqe(struct hns_roce_qp *hr_qp, unsigned int n);
 void *hns_roce_get_extend_sge(struct hns_roce_qp *hr_qp, unsigned int n);
 bool hns_roce_wq_overflow(struct hns_roce_wq *hr_wq, u32 nreq,
 			  struct ib_cq *ib_cq);
-enum hns_roce_qp_state to_hns_roce_state(enum ib_qp_state state);
 void hns_roce_lock_cqs(struct hns_roce_cq *send_cq,
 		       struct hns_roce_cq *recv_cq);
 void hns_roce_unlock_cqs(struct hns_roce_cq *send_cq,
