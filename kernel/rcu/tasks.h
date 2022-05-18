@@ -1422,6 +1422,21 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 	}
 }
 
+/* Do first-round processing for the specified task. */
+static void rcu_tasks_trace_pertask(struct task_struct *t,
+				    struct list_head *hop)
+{
+	// During early boot when there is only the one boot CPU, there
+	// is no idle task for the other CPUs. Just return.
+	if (unlikely(t == NULL))
+		return;
+
+	WRITE_ONCE(t->trc_reader_special.b.need_qs, false);
+	WRITE_ONCE(t->trc_reader_checked, false);
+	t->trc_ipi_to_cpu = -1;
+	trc_wait_for_one_reader(t, hop);
+}
+
 /* Initialize for a new RCU-tasks-trace grace period. */
 static void rcu_tasks_trace_pregp_step(void)
 {
@@ -1437,21 +1452,6 @@ static void rcu_tasks_trace_pregp_step(void)
 	// Disable CPU hotplug across the tasklist scan.
 	// This also waits for all readers in CPU-hotplug code paths.
 	cpus_read_lock();
-}
-
-/* Do first-round processing for the specified task. */
-static void rcu_tasks_trace_pertask(struct task_struct *t,
-				    struct list_head *hop)
-{
-	// During early boot when there is only the one boot CPU, there
-	// is no idle task for the other CPUs. Just return.
-	if (unlikely(t == NULL))
-		return;
-
-	WRITE_ONCE(t->trc_reader_special.b.need_qs, false);
-	WRITE_ONCE(t->trc_reader_checked, false);
-	t->trc_ipi_to_cpu = -1;
-	trc_wait_for_one_reader(t, hop);
 }
 
 /*
