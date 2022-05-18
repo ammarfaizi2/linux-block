@@ -178,7 +178,7 @@ static inline void pmc_update_sample_period(struct kvm_pmc *pmc)
 			  get_sample_period(pmc, pmc->counter));
 }
 
-void reprogram_gp_counter(struct kvm_pmc *pmc, u64 eventsel);
+void reprogram_gp_counter(struct kvm_pmc *pmc);
 void reprogram_fixed_counter(struct kvm_pmc *pmc, u8 ctrl, int fixed_idx);
 void reprogram_counter(struct kvm_pmc *pmc);
 
