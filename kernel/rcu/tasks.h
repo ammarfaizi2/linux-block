@@ -1428,8 +1428,9 @@ static void rcu_tasks_trace_pertask(struct task_struct *t,
 				    struct list_head *hop)
 {
 	// During early boot when there is only the one boot CPU, there
-	// is no idle task for the other CPUs. Just return.
-	if (unlikely(t == NULL))
+	// is no idle task for the other CPUs, so just return.  Also
+	// just return if this task is already on the list.
+	if (unlikely(t == NULL) || !list_empty(&t->trc_holdout_list))
 		return;
 
 	WRITE_ONCE(t->trc_reader_special.b.need_qs, false);
