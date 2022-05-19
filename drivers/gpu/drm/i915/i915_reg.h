@@ -7555,19 +7555,19 @@ enum skl_power_gate {
 #define  PORT_CLK_SEL_LCPLL_810		(2 << 29)
 #define  PORT_CLK_SEL_SPLL		(3 << 29)
 #define  PORT_CLK_SEL_WRPLL(pll)	(((pll) + 4) << 29)
-#define  PORT_CLK_SEL_WRPLL1		(4 << 29)
-#define  PORT_CLK_SEL_WRPLL2		(5 << 29)
-#define  PORT_CLK_SEL_NONE		(7 << 29)
-#define  PORT_CLK_SEL_MASK		(7 << 29)
+#define  PORT_CLK_SEL_WRPLL1		(4U << 29)
+#define  PORT_CLK_SEL_WRPLL2		(5U << 29)
+#define  PORT_CLK_SEL_NONE		(7U << 29)
+#define  PORT_CLK_SEL_MASK		(7U << 29)
 
 /* On ICL+ this is the same as PORT_CLK_SEL, but all bits change. */
 #define DDI_CLK_SEL(port)		PORT_CLK_SEL(port)
 #define  DDI_CLK_SEL_NONE		(0x0 << 28)
-#define  DDI_CLK_SEL_MG			(0x8 << 28)
-#define  DDI_CLK_SEL_TBT_162		(0xC << 28)
-#define  DDI_CLK_SEL_TBT_270		(0xD << 28)
-#define  DDI_CLK_SEL_TBT_540		(0xE << 28)
-#define  DDI_CLK_SEL_TBT_810		(0xF << 28)
+#define  DDI_CLK_SEL_MG			(0x8U << 28)
+#define  DDI_CLK_SEL_TBT_162		(0xCU << 28)
+#define  DDI_CLK_SEL_TBT_270		(0xDU << 28)
+#define  DDI_CLK_SEL_TBT_540		(0xEU << 28)
+#define  DDI_CLK_SEL_TBT_810		(0xFU << 28)
 #define  DDI_CLK_SEL_MASK		(0xF << 28)
 
 /* Transcoder clock selection */
