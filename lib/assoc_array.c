@@ -1610,7 +1610,7 @@ retry_compress:
 	}
 
 	if (retained && new_n->nr_leaves_on_branch < ASSOC_ARRAY_FAN_OUT) {
-		pr_devel("internal nodes remain despite neough space, retrying\n");
+		pr_devel("internal nodes remain despite enough space, retrying\n");
 		goto retry_compress;
 	}
 	pr_devel("after: %lu\n", new_n->nr_leaves_on_branch);
