@@ -1146,16 +1146,9 @@ CmaTotal
               Memory reserved for the Contiguous Memory Allocator (CMA)
 CmaFree
               Free remaining memory in the CMA reserves
-HugePages_Total
-HugePages_Free
-HugePages_Rsvd
-HugePages_Surp
-Hugepagesize
-Hugetlb
+HugePages_Total, HugePages_Free, HugePages_Rsvd, HugePages_Surp, Hugepagesize, Hugetlb
               See Documentation/admin-guide/mm/hugetlbpage.rst.
-DirectMap4k
-DirectMap2M
-DirectMap1G
+DirectMap4k, DirectMap2M, DirectMap1G
               Breakdown of page table sizes used in the kernel's
               identity mapping of RAM
 
