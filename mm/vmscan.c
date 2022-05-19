@@ -528,13 +528,8 @@ static bool can_demote(int nid, struct scan_control *sc)
 {
 	if (!numa_demotion_enabled)
 		return false;
-	if (sc) {
-		if (sc->no_demotion)
-			return false;
-		/* It is pointless to do demotion in memcg reclaim */
-		if (cgroup_reclaim(sc))
-			return false;
-	}
+	if (sc && sc->no_demotion)
+		return false;
 	if (next_demotion_node(nid) == NUMA_NO_NODE)
 		return false;
 
@@ -1390,6 +1385,10 @@ static enum page_references folio_check_references(struct folio *folio,
 	 */
 	if (vm_flags & VM_LOCKED)
 		return PAGEREF_ACTIVATE;
+
+	/* rmap lock contention: rotate */
+	if (referenced_ptes == -1)
+		return PAGEREF_KEEP;
 
 	if (referenced_ptes) {
 		/*
@@ -2499,8 +2498,9 @@ static void shrink_active_list(unsigned long nr_to_scan,
 			}
 		}
 
+		/* Referenced or rmap lock contention: rotate */
 		if (folio_referenced(folio, 0, sc->target_mem_cgroup,
-				     &vm_flags)) {
+				     &vm_flags) != 0) {
 			/*
 			 * Identify referenced, file-backed active pages and
 			 * give them one more trip around the active list. So
