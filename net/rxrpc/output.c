@@ -737,7 +737,7 @@ static inline void rxrpc_instant_resend(struct rxrpc_call *call,
 		rxrpc_get_txbuf(txb, rxrpc_txbuf_get_trans);
 		rxrpc_get_call(call, rxrpc_call_got_tx);
 		spin_lock(&local->tx_lock);
-		list_move_tail(&txb->tx_link, &local->tx_queue);
+		list_move_tail(&txb->tx_link, &local->tx_re_queue);
 		spin_unlock(&local->tx_lock);
 		rxrpc_wake_up_transmitter(local);
 	}
@@ -788,8 +788,12 @@ int rxrpc_transmitter(void *data)
 
 	for (;;) {
 		spin_lock(&local->tx_lock);
-		txb = list_first_entry_or_null(&local->tx_queue,
+		txb = list_first_entry_or_null(&local->tx_re_queue,
 					       struct rxrpc_txbuf, tx_link);
+		if (!txb) {
+			txb = list_first_entry_or_null(&local->tx_queue,
+						       struct rxrpc_txbuf, tx_link);
+		}
 		if (txb) {
 			call = txb->call;
 			list_del_init(&txb->tx_link);
@@ -806,7 +810,8 @@ int rxrpc_transmitter(void *data)
 		set_current_state(TASK_INTERRUPTIBLE);
 		if (kthread_should_stop())
 			break;
-		if (!list_empty(&local->tx_queue)) {
+		if (!list_empty(&local->tx_queue) ||
+		    !list_empty(&local->tx_re_queue)) {
 			__set_current_state(TASK_RUNNING);
 			continue;
 		}

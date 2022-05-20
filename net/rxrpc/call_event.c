@@ -285,7 +285,7 @@ no_resend:
 	spin_lock(&local->tx_lock);
 	if (rxrpc_is_client_call(call))
 		rxrpc_expose_client_call(call);
-	list_splice_tail(&retrans_queue, &local->tx_queue);
+	list_splice_tail(&retrans_queue, &local->tx_re_queue);
 	spin_unlock(&local->tx_lock);
 	rxrpc_wake_up_transmitter(local);
 

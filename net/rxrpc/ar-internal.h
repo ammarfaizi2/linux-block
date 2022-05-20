@@ -296,6 +296,7 @@ struct rxrpc_local {
 	struct sk_buff_head	reject_queue;	/* packets awaiting rejection */
 	struct sk_buff_head	event_queue;	/* endpoint event packets awaiting processing */
 	struct list_head	tx_queue;	/* Transmission queue */
+	struct list_head	tx_re_queue;	/* Retransmission queue */
 	struct rb_root		client_bundles;	/* Client connection bundles by socket params */
 	spinlock_t		client_bundles_lock; /* Lock for client_bundles */
 	spinlock_t		lock;		/* access lock */
