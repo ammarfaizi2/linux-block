@@ -1459,6 +1459,14 @@ static void rcu_tasks_trace_pertask_handler(void *hop_in)
 	struct rcu_tasks_percpu *rtpcp = this_cpu_ptr(rcu_tasks_trace.rtpcpu);
 	struct task_struct *t;
 
+	// Pull in the currently running task, but only if it is currently
+	// in an RCU tasks trace read-side critical section.
+	if (rcu_tasks_trace_pertask_prep(current)) {
+		if (!READ_ONCE(current->trc_reader_nesting))
+			WRITE_ONCE(current->trc_reader_checked, true);
+		trc_add_holdout(current, hop);
+	}
+
 	// Pull in the tasks that blocked on this CPU while in their
 	// current RCU tasks trace read-side critical section.
 	raw_spin_lock_irqsave_rcu_node(rtpcp, flags);
@@ -1466,14 +1474,6 @@ static void rcu_tasks_trace_pertask_handler(void *hop_in)
 		if (rcu_tasks_trace_pertask_prep(t))
 			trc_add_holdout(t, hop);
 	raw_spin_unlock_irqrestore_rcu_node(rtpcp, flags);
-
-	// Pull in the currently running task, but only if it is currently
-	// in an RCU tasks trace read-side critical section.
-	if (!rcu_tasks_trace_pertask_prep(current))
-		return;
-	if (!READ_ONCE(current->trc_reader_nesting))
-		WRITE_ONCE(current->trc_reader_checked, true);
-	trc_add_holdout(current, hop);
 }
 
 /* Initialize for a new RCU-tasks-trace grace period. */
