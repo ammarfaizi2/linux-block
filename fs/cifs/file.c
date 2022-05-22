@@ -4001,7 +4001,7 @@ static ssize_t __cifs_readv(
 	if (!is_sync_kiocb(iocb))
 		ctx->iocb = iocb;
 
-	if (iter_is_iovec(to))
+	if (user_backed_iter(to))
 		ctx->should_dirty = true;
 
 	if (direct) {
