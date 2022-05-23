@@ -5275,7 +5275,6 @@ static int io_send(struct io_kiocb *req, unsigned int issue_flags)
 {
 	struct io_sr_msg *sr = &req->sr_msg;
 	struct msghdr msg;
-	struct iovec iov;
 	struct socket *sock;
 	unsigned flags;
 	int min_ret = 0;
@@ -5285,7 +5284,7 @@ static int io_send(struct io_kiocb *req, unsigned int issue_flags)
 	if (unlikely(!sock))
 		return -ENOTSOCK;
 
-	ret = import_single_range(WRITE, sr->buf, sr->len, &iov, &msg.msg_iter);
+	ret = import_ubuf(WRITE, sr->buf, sr->len, &msg.msg_iter);
 	if (unlikely(ret))
 		return ret;
 
@@ -5476,10 +5475,8 @@ static int io_recvmsg(struct io_kiocb *req, unsigned int issue_flags)
 		kbuf = io_recv_buffer_select(req, issue_flags);
 		if (IS_ERR(kbuf))
 			return PTR_ERR(kbuf);
-		kmsg->fast_iov[0].iov_base = u64_to_user_ptr(kbuf->addr);
-		kmsg->fast_iov[0].iov_len = req->sr_msg.len;
-		iov_iter_init(&kmsg->msg.msg_iter, READ, kmsg->fast_iov,
-				1, req->sr_msg.len);
+		iov_iter_ubuf(&kmsg->msg.msg_iter, READ,
+				u64_to_user_ptr(kbuf->addr), req->sr_msg.len);
 	}
 
 	flags = req->sr_msg.msg_flags;
@@ -5524,7 +5521,6 @@ static int io_recv(struct io_kiocb *req, unsigned int issue_flags)
 	struct msghdr msg;
 	void __user *buf = sr->buf;
 	struct socket *sock;
-	struct iovec iov;
 	unsigned flags;
 	int ret, min_ret = 0;
 	bool force_nonblock = issue_flags & IO_URING_F_NONBLOCK;
@@ -5540,7 +5536,7 @@ static int io_recv(struct io_kiocb *req, unsigned int issue_flags)
 		buf = u64_to_user_ptr(kbuf->addr);
 	}
 
-	ret = import_single_range(READ, buf, sr->len, &iov, &msg.msg_iter);
+	ret = import_ubuf(READ, buf, sr->len, &msg.msg_iter);
 	if (unlikely(ret))
 		goto out_free;
 
