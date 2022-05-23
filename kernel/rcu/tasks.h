@@ -1457,14 +1457,12 @@ static void __maybe_unused rcu_tasks_trace_pertask(struct task_struct *t, struct
 static void rcu_tasks_trace_pertask_handler(void *hop_in)
 {
 	struct list_head *hop = hop_in;
+	struct task_struct *t = current;
 
 	// Pull in the currently running task, but only if it is currently
 	// in an RCU tasks trace read-side critical section.
-	if (rcu_tasks_trace_pertask_prep(current)) {
-		if (!READ_ONCE(current->trc_reader_nesting))
-			WRITE_ONCE(current->trc_reader_checked, true);
-		trc_add_holdout(current, hop);
-	}
+	if (rcu_tasks_trace_pertask_prep(t))
+		trc_add_holdout(t, hop);
 }
 
 /* Initialize for a new RCU-tasks-trace grace period. */
