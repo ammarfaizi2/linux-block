@@ -16,6 +16,16 @@
 
 #define PIPE_PARANOIA /* for now */
 
+/* covers ubuf and kbuf alike */
+#define iterate_buf(i, n, base, len, off, __p, STEP) {		\
+	size_t __maybe_unused off = 0;				\
+	len = n;						\
+	base = __p + i->iov_offset;				\
+	len -= (STEP);						\
+	i->iov_offset += len;					\
+	n = len;						\
+}
+
 /* covers iovec and kvec alike */
 #define iterate_iovec(i, n, base, len, off, __p, STEP) {	\
 	size_t off = 0;						\
@@ -110,7 +120,12 @@ __out:								\
 	if (unlikely(i->count < n))				\
 		n = i->count;					\
 	if (likely(n)) {					\
-		if (likely(iter_is_iovec(i))) {			\
+		if (likely(iter_is_ubuf(i))) {			\
+			void __user *base;			\
+			size_t len;				\
+			iterate_buf(i, n, base, len, off,	\
+						i->ubuf, (I)) 	\
+		} else if (likely(iter_is_iovec(i))) {		\
 			const struct iovec *iov = i->iov;	\
 			void __user *base;			\
 			size_t len;				\
@@ -165,6 +180,47 @@ static int copyin(void *to, const void __user *from, size_t n)
 		instrument_copy_from_user(to, from, n);
 		n = raw_copy_from_user(to, from, n);
 	}
+	return n;
+}
+
+static size_t copy_page_to_iter_ubuf(struct page *page, size_t offset, size_t bytes,
+			 struct iov_iter *i)
+{
+	void __user *buf = i->ubuf + i->iov_offset;
+	void *kaddr;
+	size_t n;
+
+	if (unlikely(bytes > i->count))
+		bytes = i->count;
+
+	if (unlikely(!bytes))
+		return 0;
+
+	might_fault();
+	n = bytes;
+
+	if (IS_ENABLED(CONFIG_HIGHMEM) && !fault_in_writeable(buf, bytes)) {
+		size_t copied = bytes;
+
+		kaddr = kmap_atomic(page);
+		bytes = copyout(buf, kaddr + offset, bytes);
+		kunmap_atomic(kaddr);
+
+		if (likely(!bytes))
+			goto done;
+
+		copied -= bytes;
+		buf += copied;
+		offset += copied;
+	}
+	/* Too bad - revert to non-atomic kmap */
+
+	kaddr = kmap(page);
+	n -= copyout(buf, kaddr + offset, bytes);
+	kunmap(page);
+done:
+	i->iov_offset += n;
+	i->count -= n;
 	return n;
 }
 
@@ -250,6 +306,47 @@ done:
 	i->iov = iov;
 	i->iov_offset = skip;
 	return wanted - bytes;
+}
+
+static size_t copy_page_from_iter_ubuf(struct page *page, size_t offset, size_t bytes,
+			 struct iov_iter *i)
+{
+	void __user *buf = i->ubuf + i->iov_offset;
+	void *kaddr;
+	size_t n;
+
+	if (unlikely(bytes > i->count))
+		bytes = i->count;
+
+	if (unlikely(!bytes))
+		return 0;
+
+	might_fault();
+	n = bytes;
+
+	if (IS_ENABLED(CONFIG_HIGHMEM) && !fault_in_readable(buf, bytes)) {
+		size_t copied = bytes;
+
+		kaddr = kmap_atomic(page);
+		bytes = copyin(kaddr + offset, buf, bytes);
+		kunmap_atomic(kaddr);
+
+		if (likely(!bytes))
+			goto done;
+
+		copied -= bytes;
+		buf += copied;
+		offset += copied;
+	}
+	/* Too bad - revert to non-atomic kmap */
+
+	kaddr = kmap(page);
+	n -= copyin(kaddr + offset, buf, bytes);
+	kunmap(page);
+done:
+	i->iov_offset += n;
+	i->count -= n;
+	return n;
 }
 
 static size_t copy_page_from_iter_iovec(struct page *page, size_t offset, size_t bytes,
@@ -443,7 +540,11 @@ out:
  */
 size_t fault_in_iov_iter_readable(const struct iov_iter *i, size_t size)
 {
-	if (iter_is_iovec(i)) {
+	if (iter_is_ubuf(i)) {
+		size_t n = min(size, iov_iter_count(i));
+		n -= fault_in_readable(i->ubuf + i->iov_offset, n);
+		return size - n;
+	} else if (iter_is_iovec(i)) {
 		size_t count = min(size, iov_iter_count(i));
 		const struct iovec *p;
 		size_t skip;
@@ -482,7 +583,11 @@ EXPORT_SYMBOL(fault_in_iov_iter_readable);
  */
 size_t fault_in_iov_iter_writeable(const struct iov_iter *i, size_t size)
 {
-	if (iter_is_iovec(i)) {
+	if (iter_is_ubuf(i)) {
+		size_t n = min(size, iov_iter_count(i));
+		n -= fault_in_safe_writeable(i->ubuf + i->iov_offset, n);
+		return size - n;
+	} else if (iter_is_iovec(i)) {
 		size_t count = min(size, iov_iter_count(i));
 		const struct iovec *p;
 		size_t skip;
@@ -662,7 +767,7 @@ size_t _copy_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
 {
 	if (unlikely(iov_iter_is_pipe(i)))
 		return copy_pipe_to_iter(addr, bytes, i);
-	if (iter_is_iovec(i))
+	if (iter_is_iovec(i) || iter_is_ubuf(i))
 		might_fault();
 	iterate_and_advance(i, bytes, base, len, off,
 		copyout(base, addr + off, len),
@@ -744,7 +849,7 @@ size_t _copy_mc_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
 {
 	if (unlikely(iov_iter_is_pipe(i)))
 		return copy_mc_pipe_to_iter(addr, bytes, i);
-	if (iter_is_iovec(i))
+	if (iter_is_iovec(i) || iter_is_ubuf(i))
 		might_fault();
 	__iterate_and_advance(i, bytes, base, len, off,
 		copyout_mc(base, addr + off, len),
@@ -762,7 +867,7 @@ size_t _copy_from_iter(void *addr, size_t bytes, struct iov_iter *i)
 		WARN_ON(1);
 		return 0;
 	}
-	if (iter_is_iovec(i))
+	if (iter_is_iovec(i) || iter_is_ubuf(i))
 		might_fault();
 	iterate_and_advance(i, bytes, base, len, off,
 		copyin(addr + off, base, len),
@@ -848,6 +953,8 @@ static inline bool page_copy_sane(struct page *page, size_t offset, size_t n)
 static size_t __copy_page_to_iter(struct page *page, size_t offset, size_t bytes,
 			 struct iov_iter *i)
 {
+	if (likely(iter_is_ubuf(i)))
+		return copy_page_to_iter_ubuf(page, offset, bytes, i);
 	if (likely(iter_is_iovec(i)))
 		return copy_page_to_iter_iovec(page, offset, bytes, i);
 	if (iov_iter_is_bvec(i) || iov_iter_is_kvec(i) || iov_iter_is_xarray(i)) {
@@ -898,6 +1005,8 @@ size_t copy_page_from_iter(struct page *page, size_t offset, size_t bytes,
 {
 	if (unlikely(!page_copy_sane(page, offset, bytes)))
 		return 0;
+	if (likely(iter_is_ubuf(i)))
+		return copy_page_from_iter_ubuf(page, offset, bytes, i);
 	if (likely(iter_is_iovec(i)))
 		return copy_page_from_iter_iovec(page, offset, bytes, i);
 	if (iov_iter_is_bvec(i) || iov_iter_is_kvec(i) || iov_iter_is_xarray(i)) {
@@ -1065,16 +1174,16 @@ void iov_iter_advance(struct iov_iter *i, size_t size)
 {
 	if (unlikely(i->count < size))
 		size = i->count;
-	if (likely(iter_is_iovec(i) || iov_iter_is_kvec(i))) {
+	if (likely(iter_is_ubuf(i)) || unlikely(iov_iter_is_xarray(i))) {
+		i->iov_offset += size;
+		i->count -= size;
+	} else if (likely(iter_is_iovec(i) || iov_iter_is_kvec(i))) {
 		/* iovec and kvec have identical layouts */
 		iov_iter_iovec_advance(i, size);
 	} else if (iov_iter_is_bvec(i)) {
 		iov_iter_bvec_advance(i, size);
 	} else if (iov_iter_is_pipe(i)) {
 		pipe_advance(i, size);
-	} else if (unlikely(iov_iter_is_xarray(i))) {
-		i->iov_offset += size;
-		i->count -= size;
 	} else if (iov_iter_is_discard(i)) {
 		i->count -= size;
 	}
@@ -1121,7 +1230,7 @@ void iov_iter_revert(struct iov_iter *i, size_t unroll)
 		return;
 	}
 	unroll -= i->iov_offset;
-	if (iov_iter_is_xarray(i)) {
+	if (iov_iter_is_xarray(i) || iter_is_ubuf(i)) {
 		BUG(); /* We should never go beyond the start of the specified
 			* range since we might then be straying into pages that
 			* aren't pinned.
@@ -1312,6 +1421,13 @@ static unsigned long iov_iter_alignment_bvec(const struct iov_iter *i)
 
 unsigned long iov_iter_alignment(const struct iov_iter *i)
 {
+	if (likely(iter_is_ubuf(i))) {
+		size_t size = i->count;
+		if (size)
+			return ((unsigned long)i->ubuf + i->iov_offset) | size;
+		return 0;
+	}
+
 	/* iovec and kvec have identical layouts */
 	if (likely(iter_is_iovec(i) || iov_iter_is_kvec(i)))
 		return iov_iter_alignment_iovec(i);
@@ -1341,6 +1457,9 @@ unsigned long iov_iter_gap_alignment(const struct iov_iter *i)
 	unsigned long v = 0;
 	size_t size = i->count;
 	unsigned k;
+
+	if (iter_is_ubuf(i))
+		return 0;
 
 	if (WARN_ON(!iter_is_iovec(i)))
 		return ~0U;
@@ -1470,13 +1589,30 @@ static ssize_t iter_xarray_get_pages(struct iov_iter *i,
 	return actual;
 }
 
-/* must be done on non-empty ITER_IOVEC one */
+static unsigned long found_ubuf_segment(unsigned long addr,
+					size_t len,
+					size_t *size, size_t *start,
+					unsigned maxpages)
+{
+	len += (*start = addr % PAGE_SIZE);
+	if (len > maxpages * PAGE_SIZE)
+		len = maxpages * PAGE_SIZE;
+	*size = len;
+	return addr & PAGE_MASK;
+}
+
+/* must be done on non-empty ITER_UBUF or ITER_IOVEC one */
 static unsigned long first_iovec_segment(const struct iov_iter *i,
 					 size_t *size, size_t *start,
 					 size_t maxsize, unsigned maxpages)
 {
 	size_t skip;
 	long k;
+
+	if (iter_is_ubuf(i)) {
+		unsigned long addr = (unsigned long)i->ubuf + i->iov_offset;
+		return found_ubuf_segment(addr, maxsize, size, start, maxpages);
+	}
 
 	for (k = 0, skip = i->iov_offset; k < i->nr_segs; k++, skip = 0) {
 		unsigned long addr = (unsigned long)i->iov[k].iov_base + skip;
@@ -1486,11 +1622,7 @@ static unsigned long first_iovec_segment(const struct iov_iter *i,
 			continue;
 		if (len > maxsize)
 			len = maxsize;
-		len += (*start = addr % PAGE_SIZE);
-		if (len > maxpages * PAGE_SIZE)
-			len = maxpages * PAGE_SIZE;
-		*size = len;
-		return addr & PAGE_MASK;
+		return found_ubuf_segment(addr, len, size, start, maxpages);
 	}
 	BUG(); // if it had been empty, we wouldn't get called
 }
@@ -1527,7 +1659,7 @@ ssize_t iov_iter_get_pages(struct iov_iter *i,
 	if (!maxsize)
 		return 0;
 
-	if (likely(iter_is_iovec(i))) {
+	if (likely(iter_is_ubuf(i) || iter_is_iovec(i))) {
 		unsigned int gup_flags = 0;
 		unsigned long addr;
 
@@ -1653,7 +1785,7 @@ ssize_t iov_iter_get_pages_alloc(struct iov_iter *i,
 	if (!maxsize)
 		return 0;
 
-	if (likely(iter_is_iovec(i))) {
+	if (likely(iter_is_ubuf(i) || iter_is_iovec(i))) {
 		unsigned int gup_flags = 0;
 		unsigned long addr;
 
@@ -1807,6 +1939,11 @@ int iov_iter_npages(const struct iov_iter *i, int maxpages)
 {
 	if (unlikely(!i->count))
 		return 0;
+	if (likely(iter_is_ubuf(i))) {
+		unsigned offs = offset_in_page(i->ubuf + i->iov_offset);
+		int npages = DIV_ROUND_UP(offs + i->count, PAGE_SIZE);
+		return min(npages, maxpages);
+	}
 	/* iovec and kvec have identical layouts */
 	if (likely(iter_is_iovec(i) || iov_iter_is_kvec(i)))
 		return iov_npages(i, maxpages);
@@ -2045,10 +2182,12 @@ EXPORT_SYMBOL(import_single_range);
 void iov_iter_restore(struct iov_iter *i, struct iov_iter_state *state)
 {
 	if (WARN_ON_ONCE(!iov_iter_is_bvec(i) && !iter_is_iovec(i)) &&
-			 !iov_iter_is_kvec(i))
+			 !iov_iter_is_kvec(i) && !iter_is_ubuf(i))
 		return;
 	i->iov_offset = state->iov_offset;
 	i->count = state->count;
+	if (iter_is_ubuf(i))
+		return;
 	/*
 	 * For the *vec iters, nr_segs + iov is constant - if we increment
 	 * the vec, then we also decrement the nr_segs count. Hence we don't
