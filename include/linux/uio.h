@@ -112,6 +112,11 @@ static inline unsigned char iov_iter_rw(const struct iov_iter *i)
 	return i->data_source ? WRITE : READ;
 }
 
+static inline bool iter_is_user(const struct iov_iter *i)
+{
+	return iter_is_iovec(i) || iter_is_ubuf(i);
+}
+
 /*
  * Total number of bytes covered by an iovec.
  *
