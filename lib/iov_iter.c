@@ -2188,7 +2188,7 @@ int import_ubuf(int rw, void __user *buf, size_t len, struct iov_iter *i)
  * Used after iov_iter_save_state() to bring restore @i, if operations may
  * have advanced it.
  *
- * Note: only works on ITER_IOVEC, ITER_BVEC, and ITER_KVEC
+ * Note: only works on ITER_IOVEC, ITER_BVEC, ITER_KVEC, and ITER_UBUF.
  */
 void iov_iter_restore(struct iov_iter *i, struct iov_iter_state *state)
 {
