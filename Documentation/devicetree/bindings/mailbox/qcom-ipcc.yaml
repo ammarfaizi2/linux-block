@@ -62,28 +62,28 @@ additionalProperties: false
 
 examples:
   - |
-        #include <dt-bindings/interrupt-controller/arm-gic.h>
-        #include <dt-bindings/mailbox/qcom-ipcc.h>
+    #include <dt-bindings/interrupt-controller/arm-gic.h>
+    #include <dt-bindings/mailbox/qcom-ipcc.h>
 
-        mailbox@408000 {
-                compatible = "qcom,sm8250-ipcc", "qcom,ipcc";
-                reg = <0x408000 0x1000>;
-                interrupts = <GIC_SPI 229 IRQ_TYPE_LEVEL_HIGH>;
-                interrupt-controller;
-                #interrupt-cells = <3>;
-                #mbox-cells = <2>;
-        };
+    mailbox@408000 {
+        compatible = "qcom,sm8250-ipcc", "qcom,ipcc";
+        reg = <0x408000 0x1000>;
+        interrupts = <GIC_SPI 229 IRQ_TYPE_LEVEL_HIGH>;
+        interrupt-controller;
+        #interrupt-cells = <3>;
+        #mbox-cells = <2>;
+    };
 
-        smp2p-modem {
-                compatible = "qcom,smp2p";
-                qcom,smem = <443>, <429>;
-                interrupts-extended = <&ipcc IPCC_CLIENT_LPASS
-                                             IPCC_MPROC_SIGNAL_SMP2P
-                                             IRQ_TYPE_EDGE_RISING>;
-                mboxes = <&ipcc IPCC_CLIENT_LPASS
-                                IPCC_MPROC_SIGNAL_SMP2P>;
+    smp2p-modem {
+        compatible = "qcom,smp2p";
+        qcom,smem = <443>, <429>;
+        interrupts-extended = <&ipcc IPCC_CLIENT_LPASS
+                                     IPCC_MPROC_SIGNAL_SMP2P
+                                     IRQ_TYPE_EDGE_RISING>;
+        mboxes = <&ipcc IPCC_CLIENT_LPASS
+                        IPCC_MPROC_SIGNAL_SMP2P>;
 
-                qcom,local-pid = <0>;
-                qcom,remote-pid = <2>;
-                /* Other SMP2P fields */
-        };
+        qcom,local-pid = <0>;
+        qcom,remote-pid = <2>;
+        /* Other SMP2P fields */
+    };
