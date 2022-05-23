@@ -77,8 +77,7 @@ static ssize_t __blkdev_direct_IO_simple(struct kiocb *iocb,
 
 	if (iov_iter_rw(iter) == READ) {
 		bio_init(&bio, bdev, vecs, nr_pages, REQ_OP_READ);
-		if (iter_is_iovec(iter))
-			should_dirty = true;
+		should_dirty = iter_is_user(iter);
 	} else {
 		bio_init(&bio, bdev, vecs, nr_pages, dio_bio_write_op(iocb));
 	}
@@ -217,7 +216,7 @@ static ssize_t __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter,
 	}
 
 	dio->size = 0;
-	if (is_read && iter_is_iovec(iter))
+	if (is_read && iter_is_user(iter))
 		dio->flags |= DIO_SHOULD_DIRTY;
 
 	blk_start_plug(&plug);
@@ -346,7 +345,7 @@ static ssize_t __blkdev_direct_IO_async(struct kiocb *iocb,
 	dio->size = bio->bi_iter.bi_size;
 
 	if (is_read) {
-		if (iter_is_iovec(iter)) {
+		if (iter_is_user(iter)) {
 			dio->flags |= DIO_SHOULD_DIRTY;
 			bio_set_pages_dirty(bio);
 		}
