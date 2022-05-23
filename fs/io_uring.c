@@ -3485,7 +3485,7 @@ static struct iovec *__io_import_iovec(int rw, struct io_kiocb *req,
 			req->rw.len = sqe_len;
 		}
 
-		ret = import_single_range(rw, buf, sqe_len, s->fast_iov, iter);
+		ret = import_ubuf(rw, buf, sqe_len, iter);
 		if (ret)
 			return ERR_PTR(ret);
 		return NULL;
@@ -3496,7 +3496,7 @@ static struct iovec *__io_import_iovec(int rw, struct io_kiocb *req,
 		ret = io_iov_buffer_select(req, iovec, issue_flags);
 		if (ret)
 			return ERR_PTR(ret);
-		iov_iter_init(iter, rw, iovec, 1, iovec->iov_len);
+		iov_iter_ubuf(iter, rw, iovec[0].iov_base, iovec[0].iov_len);
 		return NULL;
 	}
 
@@ -3552,7 +3552,10 @@ static ssize_t loop_rw_iter(int rw, struct io_kiocb *req, struct iov_iter *iter)
 		struct iovec iovec;
 		ssize_t nr;
 
-		if (!iov_iter_is_bvec(iter)) {
+		if (iter_is_ubuf(iter)) {
+			iovec.iov_base = iter->ubuf + iter->iov_offset;
+			iovec.iov_len = iter->count - iter->iov_offset;
+		} else if (!iov_iter_is_bvec(iter)) {
 			iovec = iov_iter_iovec(iter);
 		} else {
 			iovec.iov_base = u64_to_user_ptr(req->rw.addr);
@@ -3573,7 +3576,7 @@ static ssize_t loop_rw_iter(int rw, struct io_kiocb *req, struct iov_iter *iter)
 			break;
 		}
 		ret += nr;
-		if (!iov_iter_is_bvec(iter)) {
+		if (iter_is_ubuf(iter) || !iov_iter_is_bvec(iter)) {
 			iov_iter_advance(iter, nr);
 		} else {
 			req->rw.addr += nr;
@@ -3597,7 +3600,7 @@ static void io_req_map_rw(struct io_kiocb *req, const struct iovec *iovec,
 	rw->free_iovec = iovec;
 	rw->bytes_done = 0;
 	/* can only be fixed buffers, no need to do anything */
-	if (iov_iter_is_bvec(iter))
+	if (iov_iter_is_bvec(iter) || iter_is_ubuf(iter))
 		return;
 	if (!iovec) {
 		unsigned iov_off = 0;
