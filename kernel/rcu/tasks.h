@@ -1208,6 +1208,20 @@ void call_rcu_tasks_trace(struct rcu_head *rhp, rcu_callback_t func);
 DEFINE_RCU_TASKS(rcu_tasks_trace, rcu_tasks_wait_gp, call_rcu_tasks_trace,
 		 "RCU Tasks Trace");
 
+/* Load from ->trc_reader_special.b.need_qs with proper ordering. */
+static u8 rcu_ld_need_qs(struct task_struct *t)
+{
+	smp_mb(); // Enforce full grace-period ordering.
+	return smp_load_acquire(&t->trc_reader_special.b.need_qs);
+}
+
+/* Store to ->trc_reader_special.b.need_qs with proper ordering. */
+static void rcu_st_need_qs(struct task_struct *t, u8 v)
+{
+	smp_store_release(&t->trc_reader_special.b.need_qs, v);
+	smp_mb(); // Enforce full grace-period ordering.
+}
+
 /*
  * This irq_work handler allows rcu_read_unlock_trace() to be invoked
  * while the scheduler locks are held.
@@ -1221,15 +1235,13 @@ static DEFINE_IRQ_WORK(rcu_tasks_trace_iw, rcu_read_unlock_iw);
 /* If we are the last reader, wake up the grace-period kthread. */
 void rcu_read_unlock_trace_special(struct task_struct *t)
 {
-	int nq = READ_ONCE(t->trc_reader_special.b.need_qs) & TRC_NEED_QS;
+	int nq = rcu_ld_need_qs(t) & TRC_NEED_QS;
 
 	if (IS_ENABLED(CONFIG_TASKS_TRACE_RCU_READ_MB) && t->trc_reader_special.b.need_mb)
 		smp_mb(); // Pairs with update-side barriers.
 	// Update .need_qs before ->trc_reader_nesting for irq/NMI handlers.
-	if (nq) {
-		WRITE_ONCE(t->trc_reader_special.b.need_qs,
-			   t->trc_reader_special.b.need_qs & ~TRC_NEED_QS);
-	}
+	if (nq)
+		rcu_st_need_qs(t, rcu_ld_need_qs(t) & ~TRC_NEED_QS);
 	WRITE_ONCE(t->trc_reader_nesting, 0);
 	if (nq && atomic_dec_and_test(&trc_n_readers_need_end))
 		irq_work_queue(&rcu_tasks_trace_iw);
@@ -1268,7 +1280,7 @@ static void trc_read_check_handler(void *t_in)
 	// If the task is not in a read-side critical section, and
 	// if this is the last reader, awaken the grace-period kthread.
 	if (likely(!READ_ONCE(t->trc_reader_nesting))) {
-		WRITE_ONCE(t->trc_reader_special.b.need_qs, TRC_NEED_QS_CHECKED);
+		rcu_st_need_qs(t, TRC_NEED_QS_CHECKED);
 		goto reset_ipi;
 	}
 	// If we are racing with an rcu_read_unlock_trace(), try again later.
@@ -1279,8 +1291,8 @@ static void trc_read_check_handler(void *t_in)
 	// its state so that it will awaken the grace-period kthread upon
 	// exit from that critical section.
 	atomic_inc(&trc_n_readers_need_end); // One more to wait on.
-	WARN_ON_ONCE(READ_ONCE(t->trc_reader_special.b.need_qs) & TRC_NEED_QS);
-	WRITE_ONCE(t->trc_reader_special.b.need_qs, TRC_NEED_QS | TRC_NEED_QS_CHECKED);
+	WARN_ON_ONCE(rcu_ld_need_qs(t) & TRC_NEED_QS);
+	rcu_st_need_qs(t, TRC_NEED_QS | TRC_NEED_QS_CHECKED);
 
 reset_ipi:
 	// Allow future IPIs to be sent on CPU and for task.
@@ -1324,8 +1336,8 @@ static int trc_inspect_reader(struct task_struct *t, void *arg)
 	// so that the grace-period kthread will remove it from the
 	// holdout list.
 	if (nesting <= 0) {
-		WARN_ON_ONCE(READ_ONCE(t->trc_reader_special.b.need_qs) & TRC_NEED_QS);
-		WRITE_ONCE(t->trc_reader_special.b.need_qs, !nesting ? TRC_NEED_QS_CHECKED : 0);
+		WARN_ON_ONCE(rcu_ld_need_qs(t) & TRC_NEED_QS);
+		rcu_st_need_qs(t, !nesting ? TRC_NEED_QS_CHECKED : 0);
 		return nesting ? -EINVAL : 0;  // If in QS, done, otherwise try again later.
 	}
 
@@ -1333,8 +1345,8 @@ static int trc_inspect_reader(struct task_struct *t, void *arg)
 	// state so that it will awaken the grace-period kthread upon exit
 	// from that critical section.
 	atomic_inc(&trc_n_readers_need_end); // One more to wait on.
-	WARN_ON_ONCE(READ_ONCE(t->trc_reader_special.b.need_qs) & TRC_NEED_QS);
-	WRITE_ONCE(t->trc_reader_special.b.need_qs, TRC_NEED_QS | TRC_NEED_QS_CHECKED);
+	WARN_ON_ONCE(rcu_ld_need_qs(t) & TRC_NEED_QS);
+	rcu_st_need_qs(t, TRC_NEED_QS | TRC_NEED_QS_CHECKED);
 	return 0;
 }
 
@@ -1350,7 +1362,7 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 
 	// The current task had better be in a quiescent state.
 	if (t == current) {
-		WRITE_ONCE(t->trc_reader_special.b.need_qs, TRC_NEED_QS_CHECKED);
+		rcu_st_need_qs(t, TRC_NEED_QS_CHECKED);
 		WARN_ON_ONCE(READ_ONCE(t->trc_reader_nesting));
 		return;
 	}
@@ -1421,7 +1433,7 @@ static void rcu_tasks_trace_pertask(struct task_struct *t,
 	if (unlikely(t == NULL))
 		return;
 
-	WRITE_ONCE(t->trc_reader_special.b.need_qs, 0);
+	rcu_st_need_qs(t, 0);
 	t->trc_ipi_to_cpu = -1;
 	trc_wait_for_one_reader(t, hop);
 }
@@ -1462,7 +1474,7 @@ static int trc_check_slow_task(struct task_struct *t, void *arg)
 		return false; // It is running, so decline to inspect it.
 	trc_rdrp->nesting = READ_ONCE(t->trc_reader_nesting);
 	trc_rdrp->ipi_to_cpu = READ_ONCE(t->trc_ipi_to_cpu);
-	trc_rdrp->needqs = READ_ONCE(t->trc_reader_special.b.need_qs);
+	trc_rdrp->needqs = rcu_ld_need_qs(t);
 	return true;
 }
 
@@ -1516,12 +1528,12 @@ static void check_all_holdout_tasks_trace(struct list_head *hop,
 	list_for_each_entry_safe(t, g, hop, trc_holdout_list) {
 		// If safe and needed, try to check the current task.
 		if (READ_ONCE(t->trc_ipi_to_cpu) == -1 &&
-		    !(READ_ONCE(t->trc_reader_special.b.need_qs) & TRC_NEED_QS_CHECKED))
+		    !(rcu_ld_need_qs(t) & TRC_NEED_QS_CHECKED))
 			trc_wait_for_one_reader(t, hop);
 
 		// If check succeeded, remove this task from the list.
 		if (smp_load_acquire(&t->trc_ipi_to_cpu) == -1 &&
-		    READ_ONCE(t->trc_reader_special.b.need_qs) == TRC_NEED_QS_CHECKED)
+		    rcu_ld_need_qs(t) == TRC_NEED_QS_CHECKED)
 			trc_del_holdout(t);
 		else if (needreport)
 			show_stalled_task_trace(t, firstreport);
@@ -1576,12 +1588,12 @@ static void rcu_tasks_trace_postgp(struct rcu_tasks *rtp)
 		// Stall warning time, so make a list of the offenders.
 		rcu_read_lock();
 		for_each_process_thread(g, t)
-			if (READ_ONCE(t->trc_reader_special.b.need_qs) & TRC_NEED_QS)
+			if (rcu_ld_need_qs(t) & TRC_NEED_QS)
 				trc_add_holdout(t, &holdouts);
 		rcu_read_unlock();
 		firstreport = true;
 		list_for_each_entry_safe(t, g, &holdouts, trc_holdout_list) {
-			if (READ_ONCE(t->trc_reader_special.b.need_qs) & TRC_NEED_QS)
+			if (rcu_ld_need_qs(t) & TRC_NEED_QS)
 				show_stalled_task_trace(t, &firstreport);
 			trc_del_holdout(t); // Release task_struct reference.
 		}
@@ -1597,11 +1609,10 @@ static void rcu_tasks_trace_postgp(struct rcu_tasks *rtp)
 /* Report any needed quiescent state for this exiting task. */
 static void exit_tasks_rcu_finish_trace(struct task_struct *t)
 {
-	WRITE_ONCE(t->trc_reader_special.b.need_qs,
-		   t->trc_reader_special.b.need_qs | TRC_NEED_QS_CHECKED);
+	rcu_st_need_qs(t, rcu_ld_need_qs(t) | TRC_NEED_QS_CHECKED);
 	WARN_ON_ONCE(READ_ONCE(t->trc_reader_nesting));
 	WRITE_ONCE(t->trc_reader_nesting, 0);
-	if (WARN_ON_ONCE(READ_ONCE(t->trc_reader_special.b.need_qs) & TRC_NEED_QS))
+	if (WARN_ON_ONCE(rcu_ld_need_qs(t) & TRC_NEED_QS))
 		rcu_read_unlock_trace_special(t);
 }
 
