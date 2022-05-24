@@ -1229,13 +1229,15 @@ static void rcu_st_need_qs(struct task_struct *t, u8 v)
  */
 u8 rcu_trc_cmpxchg_need_qs(struct task_struct *t, u8 old, u8 new)
 {
+	union rcu_special ret;
 	union rcu_special trs_old = READ_ONCE(t->trc_reader_special);
 	union rcu_special trs_new = trs_old;
 
 	if (trs_old.b.need_qs != old)
 		return trs_old.b.need_qs;
 	trs_new.b.need_qs = new;
-	return cmpxchg(&t->trc_reader_special.s, old, new);
+	ret = cmpxchg(&t->trc_reader_special, trs_old, trs_new);
+	return ret.b.need_qs;
 }
 
 /*
@@ -1251,15 +1253,20 @@ static DEFINE_IRQ_WORK(rcu_tasks_trace_iw, rcu_read_unlock_iw);
 /* If we are the last reader, wake up the grace-period kthread. */
 void rcu_read_unlock_trace_special(struct task_struct *t)
 {
-	int nqs = rcu_ld_need_qs(t);
+	int nqs = (rcu_ld_need_qs(t) == (TRC_NEED_QS_CHECKED | TRC_NEED_QS));
 
 	if (IS_ENABLED(CONFIG_TASKS_TRACE_RCU_READ_MB) && t->trc_reader_special.b.need_mb)
 		smp_mb(); // Pairs with update-side barriers.
 	// Update .need_qs before ->trc_reader_nesting for irq/NMI handlers.
-	if (!nqs || nqs == (TRC_NEED_QS_CHECKED | TRC_NEED_QS))
-		rcu_trc_cmpxchg_need_qs(t, nqs, TRC_NEED_QS_CHECKED);
+	if (nqs) {
+		u8 result = rcu_trc_cmpxchg_need_qs(t, TRC_NEED_QS_CHECKED | TRC_NEED_QS,
+						       TRC_NEED_QS_CHECKED);
+
+		WARN_ONCE(result != (TRC_NEED_QS_CHECKED | TRC_NEED_QS),
+			  "%s: result = %d", __func__, result);
+	}
 	WRITE_ONCE(t->trc_reader_nesting, 0);
-	if ((nqs & TRC_NEED_QS) && atomic_dec_and_test(&trc_n_readers_need_end))
+	if (nqs && atomic_dec_and_test(&trc_n_readers_need_end))
 		irq_work_queue(&rcu_tasks_trace_iw);
 }
 EXPORT_SYMBOL_GPL(rcu_read_unlock_trace_special);
@@ -1287,7 +1294,6 @@ static void trc_read_check_handler(void *t_in)
 {
 	struct task_struct *t = current;
 	struct task_struct *texp = t_in;
-	u8 nqs;
 
 	// If the task is no longer running on this CPU, leave.
 	if (unlikely(texp != t)) {
@@ -1307,10 +1313,8 @@ static void trc_read_check_handler(void *t_in)
 	// Get here if the task is in a read-side critical section.  Set
 	// its state so that it will awaken the grace-period kthread upon
 	// exit from that critical section.
-	atomic_inc(&trc_n_readers_need_end); // One more to wait on.
-	nqs = rcu_ld_need_qs(t);
-	WARN_ONCE(nqs, "%s: Unexpected need_qs value of %x\n", __func__, nqs);
-	rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS | TRC_NEED_QS_CHECKED);
+	if (!rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS | TRC_NEED_QS_CHECKED))
+		atomic_inc(&trc_n_readers_need_end); // One more to wait on.
 
 reset_ipi:
 	// Allow future IPIs to be sent on CPU and for task.
@@ -1321,8 +1325,9 @@ reset_ipi:
 }
 
 /* Callback function for scheduler to check locked-down task.  */
-static int trc_inspect_reader(struct task_struct *t, void *arg)
+static int trc_inspect_reader(struct task_struct *t, void *bhp_in)
 {
+	struct list_head *bhp = bhp_in;
 	int cpu = task_cpu(t);
 	int nesting;
 	bool ofl = cpu_is_offline(cpu);
@@ -1354,20 +1359,18 @@ static int trc_inspect_reader(struct task_struct *t, void *arg)
 	// so that the grace-period kthread will remove it from the
 	// holdout list.
 	if (nesting <= 0) {
-		u8 nqs = rcu_ld_need_qs(t);
-
-		WARN_ONCE(nqs, "%s: Unexpected need_qs value of %x\n", __func__, nqs);
-		if (!nesting && (!nqs || nqs == (TRC_NEED_QS_CHECKED | TRC_NEED_QS)))
-			rcu_trc_cmpxchg_need_qs(t, nqs, TRC_NEED_QS_CHECKED);
+		if (!nesting)
+			rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS_CHECKED);
 		return nesting ? -EINVAL : 0;  // If in QS, done, otherwise try again later.
 	}
 
 	// The task is in a read-side critical section, so set up its
 	// state so that it will awaken the grace-period kthread upon exit
 	// from that critical section.
-	atomic_inc(&trc_n_readers_need_end); // One more to wait on.
-	WARN_ON_ONCE(rcu_ld_need_qs(t));
-	rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS | TRC_NEED_QS_CHECKED);
+	if (!rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS | TRC_NEED_QS_CHECKED)) {
+		atomic_inc(&trc_n_readers_need_end); // One more to wait on.
+		trc_add_holdout(t, bhp);
+	}
 	return 0;
 }
 
@@ -1390,7 +1393,7 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 
 	// Attempt to nail down the task for inspection.
 	get_task_struct(t);
-	if (!task_call_func(t, trc_inspect_reader, NULL)) {
+	if (!task_call_func(t, trc_inspect_reader, bhp)) {
 		put_task_struct(t);
 		return;
 	}

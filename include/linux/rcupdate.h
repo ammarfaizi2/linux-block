@@ -178,7 +178,7 @@ u8 rcu_trc_cmpxchg_need_qs(struct task_struct *t, u8 old, u8 new);
 
 # define rcu_tasks_trace_qs(t)							\
 	do {									\
-		if (!likely(READ_ONCE((t)->trc_reader_special.b.need_qs)) &&	\
+		if (likely(!READ_ONCE((t)->trc_reader_special.b.need_qs)) &&	\
 		    likely(!READ_ONCE((t)->trc_reader_nesting)))		\
 			rcu_trc_cmpxchg_need_qs((t), 0,	TRC_NEED_QS_CHECKED);	\
 	} while (0)
