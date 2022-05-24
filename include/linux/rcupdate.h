@@ -174,15 +174,13 @@ void synchronize_rcu_tasks(void);
 #define TRC_NEED_QS		0x1  // Task needs a quiescent state.
 #define TRC_NEED_QS_CHECKED	0x2  // Task has been checked for needing quiescent state.
 
+u8 rcu_trc_cmpxchg_need_qs(struct task_struct *t, u8 old, u8 new);
+
 # define rcu_tasks_trace_qs(t)							\
 	do {									\
-		if (!likely(READ_ONCE((t)->trc_reader_special.b.need_qs) &	\
-			    TRC_NEED_QS_CHECKED) &&				\
-		    !unlikely(READ_ONCE((t)->trc_reader_nesting))) {		\
-			smp_store_release(&(t)->trc_reader_special.b.need_qs,	\
-					  TRC_NEED_QS_CHECKED);			\
-			smp_mb(); /* Readers partitioned by store. */		\
-		}								\
+		if (!likely(READ_ONCE((t)->trc_reader_special.b.need_qs)) &&	\
+		    likely(!READ_ONCE((t)->trc_reader_nesting)))		\
+			rcu_trc_cmpxchg_need_qs((t), 0,	TRC_NEED_QS_CHECKED);	\
 	} while (0)
 # else
 # define rcu_tasks_trace_qs(t) do { } while (0)

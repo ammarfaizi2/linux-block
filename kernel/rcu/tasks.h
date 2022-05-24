@@ -1223,6 +1223,22 @@ static void rcu_st_need_qs(struct task_struct *t, u8 v)
 }
 
 /*
+ * Do a cmpxchg() on ->trc_reader_special.b.need_qs, allowing for
+ * the four-byte operand-size restriction of some platforms.
+ * Returns the old value, which is often ignored.
+ */
+u8 rcu_trc_cmpxchg_need_qs(struct task_struct *t, u8 old, u8 new)
+{
+	union rcu_special trs_old = READ_ONCE(t->trc_reader_special);
+	union rcu_special trs_new = trs_old;
+
+	if (trs_old.b.need_qs != old)
+		return trs_old.b.need_qs;
+	trs_new.b.need_qs = new;
+	return cmpxchg(&t->trc_reader_special.s, old, new);
+}
+
+/*
  * This irq_work handler allows rcu_read_unlock_trace() to be invoked
  * while the scheduler locks are held.
  */
@@ -1235,15 +1251,15 @@ static DEFINE_IRQ_WORK(rcu_tasks_trace_iw, rcu_read_unlock_iw);
 /* If we are the last reader, wake up the grace-period kthread. */
 void rcu_read_unlock_trace_special(struct task_struct *t)
 {
-	int nq = rcu_ld_need_qs(t) & TRC_NEED_QS;
+	int nqs = rcu_ld_need_qs(t);
 
 	if (IS_ENABLED(CONFIG_TASKS_TRACE_RCU_READ_MB) && t->trc_reader_special.b.need_mb)
 		smp_mb(); // Pairs with update-side barriers.
 	// Update .need_qs before ->trc_reader_nesting for irq/NMI handlers.
-	if (nq)
-		rcu_st_need_qs(t, rcu_ld_need_qs(t) & ~TRC_NEED_QS);
+	if (!nqs || nqs == (TRC_NEED_QS_CHECKED | TRC_NEED_QS))
+		rcu_trc_cmpxchg_need_qs(t, nqs, TRC_NEED_QS_CHECKED);
 	WRITE_ONCE(t->trc_reader_nesting, 0);
-	if (nq && atomic_dec_and_test(&trc_n_readers_need_end))
+	if ((nqs & TRC_NEED_QS) && atomic_dec_and_test(&trc_n_readers_need_end))
 		irq_work_queue(&rcu_tasks_trace_iw);
 }
 EXPORT_SYMBOL_GPL(rcu_read_unlock_trace_special);
@@ -1271,6 +1287,7 @@ static void trc_read_check_handler(void *t_in)
 {
 	struct task_struct *t = current;
 	struct task_struct *texp = t_in;
+	u8 nqs;
 
 	// If the task is no longer running on this CPU, leave.
 	if (unlikely(texp != t)) {
@@ -1280,7 +1297,7 @@ static void trc_read_check_handler(void *t_in)
 	// If the task is not in a read-side critical section, and
 	// if this is the last reader, awaken the grace-period kthread.
 	if (likely(!READ_ONCE(t->trc_reader_nesting))) {
-		rcu_st_need_qs(t, TRC_NEED_QS_CHECKED);
+		rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS_CHECKED);
 		goto reset_ipi;
 	}
 	// If we are racing with an rcu_read_unlock_trace(), try again later.
@@ -1291,8 +1308,9 @@ static void trc_read_check_handler(void *t_in)
 	// its state so that it will awaken the grace-period kthread upon
 	// exit from that critical section.
 	atomic_inc(&trc_n_readers_need_end); // One more to wait on.
-	WARN_ON_ONCE(rcu_ld_need_qs(t) & TRC_NEED_QS);
-	rcu_st_need_qs(t, TRC_NEED_QS | TRC_NEED_QS_CHECKED);
+	nqs = rcu_ld_need_qs(t);
+	WARN_ONCE(nqs, "%s: Unexpected need_qs value of %x\n", __func__, nqs);
+	rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS | TRC_NEED_QS_CHECKED);
 
 reset_ipi:
 	// Allow future IPIs to be sent on CPU and for task.
@@ -1336,8 +1354,11 @@ static int trc_inspect_reader(struct task_struct *t, void *arg)
 	// so that the grace-period kthread will remove it from the
 	// holdout list.
 	if (nesting <= 0) {
-		WARN_ON_ONCE(rcu_ld_need_qs(t) & TRC_NEED_QS);
-		rcu_st_need_qs(t, !nesting ? TRC_NEED_QS_CHECKED : 0);
+		u8 nqs = rcu_ld_need_qs(t);
+
+		WARN_ONCE(nqs, "%s: Unexpected need_qs value of %x\n", __func__, nqs);
+		if (!nesting && (!nqs || nqs == (TRC_NEED_QS_CHECKED | TRC_NEED_QS)))
+			rcu_trc_cmpxchg_need_qs(t, nqs, TRC_NEED_QS_CHECKED);
 		return nesting ? -EINVAL : 0;  // If in QS, done, otherwise try again later.
 	}
 
@@ -1345,8 +1366,8 @@ static int trc_inspect_reader(struct task_struct *t, void *arg)
 	// state so that it will awaken the grace-period kthread upon exit
 	// from that critical section.
 	atomic_inc(&trc_n_readers_need_end); // One more to wait on.
-	WARN_ON_ONCE(rcu_ld_need_qs(t) & TRC_NEED_QS);
-	rcu_st_need_qs(t, TRC_NEED_QS | TRC_NEED_QS_CHECKED);
+	WARN_ON_ONCE(rcu_ld_need_qs(t));
+	rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS | TRC_NEED_QS_CHECKED);
 	return 0;
 }
 
@@ -1362,7 +1383,7 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 
 	// The current task had better be in a quiescent state.
 	if (t == current) {
-		rcu_st_need_qs(t, TRC_NEED_QS_CHECKED);
+		rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS_CHECKED);
 		WARN_ON_ONCE(READ_ONCE(t->trc_reader_nesting));
 		return;
 	}
@@ -1610,11 +1631,12 @@ static void rcu_tasks_trace_postgp(struct rcu_tasks *rtp)
 /* Report any needed quiescent state for this exiting task. */
 static void exit_tasks_rcu_finish_trace(struct task_struct *t)
 {
-	rcu_st_need_qs(t, rcu_ld_need_qs(t) | TRC_NEED_QS_CHECKED);
+	rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS_CHECKED);
 	WARN_ON_ONCE(READ_ONCE(t->trc_reader_nesting));
-	WRITE_ONCE(t->trc_reader_nesting, 0);
 	if (WARN_ON_ONCE(rcu_ld_need_qs(t) & TRC_NEED_QS))
 		rcu_read_unlock_trace_special(t);
+	else
+		WRITE_ONCE(t->trc_reader_nesting, 0);
 }
 
 /**
