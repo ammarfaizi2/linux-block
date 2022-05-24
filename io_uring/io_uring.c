@@ -976,7 +976,6 @@ struct io_kiocb {
 		 */
 		struct file		*file;
 		struct io_cmd_data	cmd;
-		struct io_xattr		xattr;
 		struct io_uring_cmd	uring_cmd;
 	};
 
@@ -4456,7 +4455,7 @@ static int io_renameat(struct io_kiocb *req, unsigned int issue_flags)
 
 static inline void __io_xattr_finish(struct io_kiocb *req)
 {
-	struct io_xattr *ix = &req->xattr;
+	struct io_xattr *ix = io_kiocb_to_cmd(req);
 
 	if (ix->filename)
 		putname(ix->filename);
@@ -4476,7 +4475,7 @@ static void io_xattr_finish(struct io_kiocb *req, int ret)
 static int __io_getxattr_prep(struct io_kiocb *req,
 			      const struct io_uring_sqe *sqe)
 {
-	struct io_xattr *ix = &req->xattr;
+	struct io_xattr *ix = io_kiocb_to_cmd(req);
 	const char __user *name;
 	int ret;
 
@@ -4519,7 +4518,7 @@ static int io_fgetxattr_prep(struct io_kiocb *req,
 static int io_getxattr_prep(struct io_kiocb *req,
 			    const struct io_uring_sqe *sqe)
 {
-	struct io_xattr *ix = &req->xattr;
+	struct io_xattr *ix = io_kiocb_to_cmd(req);
 	const char __user *path;
 	int ret;
 
@@ -4540,7 +4539,7 @@ static int io_getxattr_prep(struct io_kiocb *req,
 
 static int io_fgetxattr(struct io_kiocb *req, unsigned int issue_flags)
 {
-	struct io_xattr *ix = &req->xattr;
+	struct io_xattr *ix = io_kiocb_to_cmd(req);
 	int ret;
 
 	if (issue_flags & IO_URING_F_NONBLOCK)
@@ -4556,7 +4555,7 @@ static int io_fgetxattr(struct io_kiocb *req, unsigned int issue_flags)
 
 static int io_getxattr(struct io_kiocb *req, unsigned int issue_flags)
 {
-	struct io_xattr *ix = &req->xattr;
+	struct io_xattr *ix = io_kiocb_to_cmd(req);
 	unsigned int lookup_flags = LOOKUP_FOLLOW;
 	struct path path;
 	int ret;
@@ -4585,7 +4584,7 @@ retry:
 static int __io_setxattr_prep(struct io_kiocb *req,
 			const struct io_uring_sqe *sqe)
 {
-	struct io_xattr *ix = &req->xattr;
+	struct io_xattr *ix = io_kiocb_to_cmd(req);
 	const char __user *name;
 	int ret;
 
@@ -4616,7 +4615,7 @@ static int __io_setxattr_prep(struct io_kiocb *req,
 static int io_setxattr_prep(struct io_kiocb *req,
 			const struct io_uring_sqe *sqe)
 {
-	struct io_xattr *ix = &req->xattr;
+	struct io_xattr *ix = io_kiocb_to_cmd(req);
 	const char __user *path;
 	int ret;
 
@@ -4644,7 +4643,7 @@ static int io_fsetxattr_prep(struct io_kiocb *req,
 static int __io_setxattr(struct io_kiocb *req, unsigned int issue_flags,
 			struct path *path)
 {
-	struct io_xattr *ix = &req->xattr;
+	struct io_xattr *ix = io_kiocb_to_cmd(req);
 	int ret;
 
 	ret = mnt_want_write(path->mnt);
@@ -4671,7 +4670,7 @@ static int io_fsetxattr(struct io_kiocb *req, unsigned int issue_flags)
 
 static int io_setxattr(struct io_kiocb *req, unsigned int issue_flags)
 {
-	struct io_xattr *ix = &req->xattr;
+	struct io_xattr *ix = io_kiocb_to_cmd(req);
 	unsigned int lookup_flags = LOOKUP_FOLLOW;
 	struct path path;
 	int ret;
