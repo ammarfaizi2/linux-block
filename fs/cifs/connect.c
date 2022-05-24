@@ -1789,7 +1789,7 @@ cifs_setup_ipc(struct cifs_ses *ses, struct smb3_fs_context *ctx)
 		goto out;
 	}
 
-	cifs_dbg(FYI, "IPC tcon rc = %d ipc tid = %d\n", rc, tcon->tid);
+	cifs_dbg(FYI, "IPC tcon rc=%d ipc tid=0x%x\n", rc, tcon->tid);
 
 	ses->tcon_ipc = tcon;
 out:
@@ -3420,8 +3420,9 @@ cifs_are_all_path_components_accessible(struct TCP_Server_Info *server,
 }
 
 /*
- * Check if path is remote (e.g. a DFS share). Return -EREMOTE if it is,
- * otherwise 0.
+ * Check if path is remote (i.e. a DFS share).
+ *
+ * Return -EREMOTE if it is, otherwise 0 or -errno.
  */
 static int is_path_remote(struct mount_ctx *mnt_ctx)
 {
@@ -3432,6 +3433,9 @@ static int is_path_remote(struct mount_ctx *mnt_ctx)
 	struct cifs_tcon *tcon = mnt_ctx->tcon;
 	struct smb3_fs_context *ctx = mnt_ctx->fs_ctx;
 	char *full_path;
+#ifdef CONFIG_CIFS_DFS_UPCALL
+	bool nodfs = cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NO_DFS;
+#endif
 
 	if (!server->ops->is_path_accessible)
 		return -EOPNOTSUPP;
@@ -3449,14 +3453,20 @@ static int is_path_remote(struct mount_ctx *mnt_ctx)
 	rc = server->ops->is_path_accessible(xid, tcon, cifs_sb,
 					     full_path);
 #ifdef CONFIG_CIFS_DFS_UPCALL
+	if (nodfs) {
+		if (rc == -EREMOTE)
+			rc = -EOPNOTSUPP;
+		goto out;
+	}
+
+	/* path *might* exist with non-ASCII characters in DFS root
+	 * try again with full path (only if nodfs is not set) */
 	if (rc == -ENOENT && is_tcon_dfs(tcon))
 		rc = cifs_dfs_query_info_nonascii_quirk(xid, tcon, cifs_sb,
 							full_path);
 #endif
-	if (rc != 0 && rc != -EREMOTE) {
-		kfree(full_path);
-		return rc;
-	}
+	if (rc != 0 && rc != -EREMOTE)
+		goto out;
 
 	if (rc != -EREMOTE) {
 		rc = cifs_are_all_path_components_accessible(server, xid, tcon,
@@ -3468,6 +3478,7 @@ static int is_path_remote(struct mount_ctx *mnt_ctx)
 		}
 	}
 
+out:
 	kfree(full_path);
 	return rc;
 }
@@ -3703,6 +3714,7 @@ int cifs_mount(struct cifs_sb_info *cifs_sb, struct smb3_fs_context *ctx)
 	if (!isdfs)
 		goto out;
 
+	/* proceed as DFS mount */
 	uuid_gen(&mnt_ctx.mount_id);
 	rc = connect_dfs_root(&mnt_ctx, &tl);
 	dfs_cache_free_tgts(&tl);
