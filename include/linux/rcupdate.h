@@ -170,13 +170,19 @@ void synchronize_rcu_tasks(void);
 # endif
 
 # ifdef CONFIG_TASKS_TRACE_RCU
-# define rcu_tasks_trace_qs(t)						\
-	do {								\
-		if (!likely(READ_ONCE((t)->trc_reader_checked)) &&	\
-		    !unlikely(READ_ONCE((t)->trc_reader_nesting))) {	\
-			smp_store_release(&(t)->trc_reader_checked, true); \
-			smp_mb(); /* Readers partitioned by store. */	\
-		}							\
+// Bits for ->trc_reader_special.b.need_qs field.
+#define TRC_NEED_QS		0x1  // Task needs a quiescent state.
+#define TRC_NEED_QS_CHECKED	0x2  // Task has been checked for needing quiescent state.
+
+# define rcu_tasks_trace_qs(t)							\
+	do {									\
+		if (!likely(READ_ONCE((t)->trc_reader_special.b.need_qs) &	\
+			    TRC_NEED_QS_CHECKED) &&				\
+		    !unlikely(READ_ONCE((t)->trc_reader_nesting))) {		\
+			smp_store_release(&(t)->trc_reader_special.b.need_qs,	\
+					  TRC_NEED_QS_CHECKED);			\
+			smp_mb(); /* Readers partitioned by store. */		\
+		}								\
 	} while (0)
 # else
 # define rcu_tasks_trace_qs(t) do { } while (0)
