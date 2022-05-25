@@ -1620,10 +1620,7 @@ static void rcu_tasks_trace_empty_fn(void *unused)
 static void rcu_tasks_trace_postgp(struct rcu_tasks *rtp)
 {
 	int cpu;
-	bool firstreport;
-	struct task_struct *g, *t;
 	LIST_HEAD(holdouts);
-	long ret;
 
 	// Wait for any lingering IPI handlers to complete.  Note that
 	// if a CPU has gone offline or transitioned to userspace in the
@@ -1639,32 +1636,6 @@ static void rcu_tasks_trace_postgp(struct rcu_tasks *rtp)
 	atomic_dec(&trc_n_readers_need_end);
 	smp_mb__after_atomic();  // Order vs. later atomics
 
-	// Wait for readers.
-	set_tasks_gp_state(rtp, RTGS_WAIT_READERS);
-	for (;;) {
-		ret = wait_event_idle_exclusive_timeout(
-				trc_wait,
-				atomic_read(&trc_n_readers_need_end) == 0,
-				READ_ONCE(rcu_task_stall_timeout));
-		if (ret)
-			break;  // Count reached zero.
-		// Stall warning time, so make a list of the offenders.
-		rcu_read_lock();
-		for_each_process_thread(g, t)
-			if (rcu_ld_need_qs(t) & TRC_NEED_QS)
-				trc_add_holdout(t, &holdouts);
-		rcu_read_unlock();
-		firstreport = true;
-		list_for_each_entry_safe(t, g, &holdouts, trc_holdout_list) {
-			if (rcu_ld_need_qs(t) & TRC_NEED_QS)
-				show_stalled_task_trace(t, &firstreport);
-			trc_del_holdout(t); // Release task_struct reference.
-		}
-		if (firstreport)
-			pr_err("INFO: rcu_tasks_trace detected stalls? (Counter/taskslist mismatch?)\n");
-		show_stalled_ipi_trace();
-		pr_err("\t%d holdouts\n", atomic_read(&trc_n_readers_need_end));
-	}
 	smp_mb(); // Caller's code must be ordered after wakeup.
 		  // Pairs with pretty much every ordering primitive.
 }
