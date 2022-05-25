@@ -161,6 +161,9 @@ module_param(rcu_task_contend_lim, int, 0444);
 static int rcu_task_collapse_lim __read_mostly = 10;
 module_param(rcu_task_collapse_lim, int, 0444);
 
+static int rcu_task_trc_detail_stall;
+module_param(rcu_task_trc_detail_stall, int, 0644);
+
 /* RCU tasks grace-period state for debugging. */
 #define RTGS_INIT		 0
 #define RTGS_WAIT_WAIT_CBS	 1
@@ -1377,11 +1380,16 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 	int cpu;
 
 	// If a previous IPI is still in flight, let it complete.
-	if (smp_load_acquire(&t->trc_ipi_to_cpu) != -1) // Order IPI
+	if (smp_load_acquire(&t->trc_ipi_to_cpu) != -1) { // Order IPI
+		if (READ_ONCE(t->trc_needreport))
+			pr_info("%s(P%d/%d) IPI to task still in flight.\n", __func__, t->pid, task_cpu(t));
 		return;
+	}
 
 	// The current task had better be in a quiescent state.
 	if (t == current) {
+		if (READ_ONCE(t->trc_needreport))
+			pr_info("%s(P%d/%d) is currently running task.\n", __func__, t->pid, task_cpu(t));
 		rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS_CHECKED);
 		WARN_ON_ONCE(READ_ONCE(t->trc_reader_nesting));
 		return;
@@ -1390,6 +1398,8 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 	// Attempt to nail down the task for inspection.
 	get_task_struct(t);
 	if (!task_call_func(t, trc_inspect_reader, NULL)) {
+		if (READ_ONCE(t->trc_needreport))
+			pr_info("%s(P%d/%d) task_call_func() succeeded.\n", __func__, t->pid, task_cpu(t));
 		put_task_struct(t);
 		return;
 	}
@@ -1550,6 +1560,8 @@ static void check_all_holdout_tasks_trace(struct list_head *hop,
 
 	list_for_each_entry_safe(t, g, hop, trc_holdout_list) {
 		// If safe and needed, try to check the current task.
+		if (READ_ONCE(rcu_task_trc_detail_stall))
+			t->trc_needreport = needreport;
 		if (READ_ONCE(t->trc_ipi_to_cpu) == -1 &&
 		    !(rcu_ld_need_qs(t) & TRC_NEED_QS_CHECKED))
 			trc_wait_for_one_reader(t, hop);
@@ -1560,6 +1572,7 @@ static void check_all_holdout_tasks_trace(struct list_head *hop,
 			trc_del_holdout(t);
 		else if (needreport)
 			show_stalled_task_trace(t, firstreport);
+		t->trc_needreport = false;
 	}
 
 	// Re-enable CPU hotplug now that the holdout list scan has completed.

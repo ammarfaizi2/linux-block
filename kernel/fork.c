@@ -1811,6 +1811,7 @@ static inline void rcu_copy_process(struct task_struct *p)
 	p->trc_reader_nesting = 0;
 	p->trc_reader_special.s = 0;
 	INIT_LIST_HEAD(&p->trc_holdout_list);
+	p->trc_needreport = false;
 #endif /* #ifdef CONFIG_TASKS_TRACE_RCU */
 }
 

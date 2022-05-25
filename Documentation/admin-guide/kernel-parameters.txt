@@ -5030,6 +5030,10 @@
 			A change in value does not take effect until
 			the beginning of the next grace period.
 
+	rcupdate.rcu_task_trc_detail_stall= [KNL]
+			Print detailed per-task information prior to a
+			RCU Tasks Trace CPU stall warning.
+
 	rcupdate.rcu_self_test= [KNL]
 			Run the RCU early boot self tests
 
