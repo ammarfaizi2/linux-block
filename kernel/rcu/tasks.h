@@ -1296,7 +1296,6 @@ static void trc_read_check_handler(void *t_in)
 {
 	struct task_struct *t = current;
 	struct task_struct *texp = t_in;
-	u8 nqs;
 
 	// If the task is no longer running on this CPU, leave.
 	if (unlikely(texp != t)) {
@@ -1325,10 +1324,8 @@ static void trc_read_check_handler(void *t_in)
 	// exit from that critical section.
 	if (READ_ONCE(t->trc_needreport))
 		pr_info("%s(P%d/%d) in read-side critical section.\n", __func__, t->pid, task_cpu(t));
-	atomic_inc(&trc_n_readers_need_end); // One more to wait on.
-	nqs = rcu_ld_need_qs(t);
-	WARN_ONCE(nqs, "%s: Unexpected need_qs value of %x\n", __func__, nqs);
-	rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS | TRC_NEED_QS_CHECKED);
+	if (!rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS | TRC_NEED_QS_CHECKED))
+		atomic_inc(&trc_n_readers_need_end); // One more to wait on.
 
 reset_ipi:
 	// Allow future IPIs to be sent on CPU and for task.
@@ -1380,13 +1377,10 @@ static int trc_inspect_reader(struct task_struct *t, void *arg)
 	// so that the grace-period kthread will remove it from the
 	// holdout list.
 	if (nesting <= 0) {
-		u8 nqs = rcu_ld_need_qs(t);
-
 		if (READ_ONCE(t->trc_needreport))
 			pr_info("%s(P%d/%d) in QS or exiting towards one.\n", __func__, t->pid, task_cpu(t));
-		WARN_ONCE(nqs, "%s: Unexpected need_qs value of %x\n", __func__, nqs);
-		if (!nesting && (!nqs || nqs == (TRC_NEED_QS_CHECKED | TRC_NEED_QS)))
-			rcu_trc_cmpxchg_need_qs(t, nqs, TRC_NEED_QS_CHECKED);
+		if (!nesting)
+			rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS_CHECKED);
 		return nesting ? -EINVAL : 0;  // If in QS, done, otherwise try again later.
 	}
 
@@ -1395,9 +1389,8 @@ static int trc_inspect_reader(struct task_struct *t, void *arg)
 	// from that critical section.
 	if (READ_ONCE(t->trc_needreport))
 		pr_info("%s(P%d/%d) in read-side critical section.\n", __func__, t->pid, task_cpu(t));
-	atomic_inc(&trc_n_readers_need_end); // One more to wait on.
-	WARN_ON_ONCE(rcu_ld_need_qs(t));
-	rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS | TRC_NEED_QS_CHECKED);
+	if (!rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS | TRC_NEED_QS_CHECKED))
+		atomic_inc(&trc_n_readers_need_end); // One more to wait on.
 	return 0;
 }
 
