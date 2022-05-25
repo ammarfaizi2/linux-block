@@ -1327,9 +1327,7 @@ static int trc_inspect_reader(struct task_struct *t, void *arg)
 	int nesting;
 	bool ofl = cpu_is_offline(cpu);
 
-	if (task_curr(t)) {
-		WARN_ON_ONCE(ofl && !is_idle_task(t));
-
+	if (task_curr(t) && !ofl) {
 		// If no chance of heavyweight readers, do it the hard way.
 		if (!ofl && !IS_ENABLED(CONFIG_TASKS_TRACE_RCU_READ_MB))
 			return -EINVAL;
@@ -1348,6 +1346,7 @@ static int trc_inspect_reader(struct task_struct *t, void *arg)
 	} else {
 		// The task is not running, so C-language access is safe.
 		nesting = t->trc_reader_nesting;
+		WARN_ON_ONCE(ofl && task_curr(t) && !is_idle_task(t));
 	}
 
 	// If not exiting a read-side critical section, mark as checked
