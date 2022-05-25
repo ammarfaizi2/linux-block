@@ -226,7 +226,7 @@ struct smbd_buffer_descriptor_v1 {
 } __packed;
 
 /* Default maximum number of SGEs in a RDMA send/recv */
-#define SMBDIRECT_MAX_SGE	16
+#define SMBDIRECT_MAX_SGE	6
 /* The context for a SMBD request */
 struct smbd_request {
 	struct smbd_connection *info;
