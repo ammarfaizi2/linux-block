@@ -382,6 +382,9 @@ static int ti_opp_supply_probe(struct platform_device *pdev)
 	const struct of_device_id *match;
 	const struct ti_opp_supply_of_data *of_data;
 	int ret = 0;
+	struct dev_pm_opp_config config = {
+		.set_opp = ti_opp_supply_set_opp,
+	};
 
 	match = of_match_device(ti_opp_supply_of_match, dev);
 	if (!match) {
@@ -405,9 +408,8 @@ static int ti_opp_supply_probe(struct platform_device *pdev)
 			return ret;
 	}
 
-	ret = PTR_ERR_OR_ZERO(dev_pm_opp_register_set_opp_helper(cpu_dev,
-								 ti_opp_supply_set_opp));
-	if (ret)
+	ret = dev_pm_opp_set_config(cpu_dev, &config);
+	if (ret < 0)
 		_free_optimized_voltages(dev, &opp_data);
 
 	return ret;
