@@ -1015,6 +1015,101 @@ DEFINE_SMB3_CREDIT_EVENT(waitff_credits);
 DEFINE_SMB3_CREDIT_EVENT(overflow_credits);
 DEFINE_SMB3_CREDIT_EVENT(set_credits);
 
+TRACE_EVENT(smb3_rdma_send,
+	    TP_PROTO(unsigned int nr_rqst, unsigned int sub_rqst,
+		     unsigned int nr_kvec, unsigned int kvec_len,
+		     unsigned int iter_len, unsigned int remaining_len),
+	    TP_ARGS(nr_rqst, sub_rqst, nr_kvec, kvec_len, iter_len, remaining_len),
+	    TP_STRUCT__entry(
+		    __field(u8, nr_rqst)
+		    __field(u8, sub_rqst)
+		    __field(u8, nr_kvec)
+		    __field(unsigned int, kvec_len)
+		    __field(unsigned int, iter_len)
+		    __field(unsigned int, remaining_len)
+			     ),
+	    TP_fast_assign(
+		    __entry->nr_rqst = nr_rqst;
+		    __entry->sub_rqst = sub_rqst;
+		    __entry->nr_kvec = nr_kvec;
+		    __entry->kvec_len = kvec_len;
+		    __entry->iter_len = iter_len;
+		    __entry->remaining_len = remaining_len;
+			   ),
+	    TP_printk("nrq=%u/%u nkv=%u kvl=%u iter=%u rem=%u",
+		      __entry->sub_rqst + 1, __entry->nr_rqst,
+		      __entry->nr_kvec, __entry->kvec_len,
+		      __entry->iter_len, __entry->remaining_len)
+	    )
+
+TRACE_EVENT(smb3_rdma_page,
+	    TP_PROTO(unsigned int nr_rqst, unsigned int sub_rqst,
+		     unsigned int i, size_t offset, ssize_t len,
+		     unsigned int iter_len, unsigned int remaining_len),
+	    TP_ARGS(nr_rqst, sub_rqst, i, offset, len, iter_len, remaining_len),
+	    TP_STRUCT__entry(
+		    __field(u8, nr_rqst)
+		    __field(u8, sub_rqst)
+		    __field(unsigned int, iter_len)
+		    __field(unsigned int, remaining_len)
+		    __field(unsigned int, i)
+		    __field(size_t, offset)
+		    __field(ssize_t, len)
+			     ),
+	    TP_fast_assign(
+		    __entry->nr_rqst = nr_rqst;
+		    __entry->sub_rqst = sub_rqst;
+		    __entry->i = i;
+		    __entry->offset = offset;
+		    __entry->len = len;
+		    __entry->iter_len = iter_len;
+		    __entry->remaining_len = remaining_len;
+			   ),
+	    TP_printk("nrq=%u/%u pg=%u o=%zx l=%zx iter=%u rem=%u",
+		      __entry->sub_rqst + 1, __entry->nr_rqst,
+		      __entry->i, __entry->offset, __entry->len,
+		      __entry->iter_len, __entry->remaining_len)
+	    )
+
+TRACE_EVENT(smb3_rdma_done,
+	    TP_PROTO(unsigned int nr_rqst, unsigned int sub_rqst,
+		     unsigned int where),
+	    TP_ARGS(nr_rqst, sub_rqst, where),
+	    TP_STRUCT__entry(
+		    __field(u8, nr_rqst)
+		    __field(u8, sub_rqst)
+		    __field(u8, where)
+			     ),
+	    TP_fast_assign(
+		    __entry->nr_rqst = nr_rqst;
+		    __entry->sub_rqst = sub_rqst;
+		    __entry->where = where;
+			   ),
+	    TP_printk("nrq=%u/%u where=%u",
+		      __entry->sub_rqst + 1, __entry->nr_rqst, __entry->where)
+	    )
+
+TRACE_EVENT(smb3_rdma_fail,
+	    TP_PROTO(unsigned int nr_rqst, unsigned int sub_rqst,
+		     unsigned int where, int rc),
+	    TP_ARGS(nr_rqst, sub_rqst, where, rc),
+	    TP_STRUCT__entry(
+		    __field(u8, nr_rqst)
+		    __field(u8, sub_rqst)
+		    __field(u8, where)
+		    __field(short, rc)
+			     ),
+	    TP_fast_assign(
+		    __entry->nr_rqst = nr_rqst;
+		    __entry->sub_rqst = sub_rqst;
+		    __entry->where = where;
+		    __entry->rc = rc;
+			   ),
+	    TP_printk("nrq=%u/%u where=%u rc=%d",
+		      __entry->sub_rqst + 1, __entry->nr_rqst,
+		      __entry->where, __entry->rc)
+	    )
+
 #endif /* _CIFS_TRACE_H */
 
 #undef TRACE_INCLUDE_PATH

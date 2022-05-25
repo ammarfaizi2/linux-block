@@ -1945,6 +1945,8 @@ static ssize_t smbd_post_send_iter_scanner(struct iov_iter *iter, const void *p,
 	ctx->len += len;
 	log_write(INFO, "sending page i=%d offset=%zu size=%zu remaining_data_length=%d\n",
 		  ix, offset, len, *ctx->_remaining_data_length);
+	trace_smb3_rdma_page(ctx->num_rqst, ctx->rqst_idx, ix, offset, len,
+			     iov_iter_count(iter), *ctx->_remaining_data_length);
 	*ctx->_remaining_data_length -= len;
 	ctx->nsg++;
 	return len;
@@ -2043,19 +2045,27 @@ next_rqst:
 		klen += rqst->rq_iov[i].iov_len;
 	iov_iter_kvec(&iter, WRITE, rqst->rq_iov, rqst->rq_nvec, klen);
 
+	trace_smb3_rdma_send(num_rqst, rqst_idx, rqst->rq_nvec, klen,
+			     iov_iter_count(&rqst->rq_iter), remaining_data_length);
+
 	rc = smbd_post_send_iter(info, &iter, num_rqst, rqst_idx,
 				 &remaining_data_length);
-	if (rc < 0)
+	if (rc < 0) {
+		trace_smb3_rdma_fail(num_rqst, rqst_idx, 1, rc);
 		goto done;
+	}
 
 	if (iov_iter_count(&rqst->rq_iter) > 0) {
 		/* And then the data pages if there are any */
 		rc = smbd_post_send_iter(info, &rqst->rq_iter, num_rqst, rqst_idx,
 					 &remaining_data_length);
-		if (rc < 0)
+		if (rc < 0) {
+			trace_smb3_rdma_fail(num_rqst, rqst_idx, 2, rc);
 			goto done;
+		}
 	}
 
+	trace_smb3_rdma_done(num_rqst, rqst_idx, 3);
 	rqst_idx++;
 	if (rqst_idx < num_rqst)
 		goto next_rqst;
@@ -2282,6 +2292,7 @@ static ssize_t smbd_iter_to_mr_scanner(struct iov_iter *iter, const void *p,
 	sg_set_buf(&ctx->sgl[ix], p, len);
 	log_write(INFO, "sending page i=%d offset=%zu size=%zu\n",
 		  ix, offset, len);
+	trace_smb3_rdma_page(0, 0, ix, offset, len, iov_iter_count(iter), 0);
 	ctx->nsg++;
 	return len;
 }
