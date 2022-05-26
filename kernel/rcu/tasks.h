@@ -1636,11 +1636,6 @@ static void rcu_tasks_trace_postgp(struct rcu_tasks *rtp)
 		if (WARN_ON_ONCE(smp_load_acquire(per_cpu_ptr(&trc_ipi_to_cpu, cpu))))
 			smp_call_function_single(cpu, rcu_tasks_trace_empty_fn, NULL, 1);
 
-	// Remove the safety count.
-	smp_mb__before_atomic();  // Order vs. earlier atomics
-	atomic_dec(&trc_n_readers_need_end);
-	smp_mb__after_atomic();  // Order vs. later atomics
-
 	smp_mb(); // Caller's code must be ordered after wakeup.
 		  // Pairs with pretty much every ordering primitive.
 }
