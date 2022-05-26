@@ -1260,15 +1260,20 @@ static DEFINE_IRQ_WORK(rcu_tasks_trace_iw, rcu_read_unlock_iw);
 /* If we are the last reader, wake up the grace-period kthread. */
 void rcu_read_unlock_trace_special(struct task_struct *t)
 {
-	int nqs = rcu_ld_need_qs(t);
+	int nqs = (rcu_ld_need_qs(t) == (TRC_NEED_QS_CHECKED | TRC_NEED_QS));
 
 	if (IS_ENABLED(CONFIG_TASKS_TRACE_RCU_READ_MB) && t->trc_reader_special.b.need_mb)
 		smp_mb(); // Pairs with update-side barriers.
 	// Update .need_qs before ->trc_reader_nesting for irq/NMI handlers.
-	if (!nqs || nqs == (TRC_NEED_QS_CHECKED | TRC_NEED_QS))
-		rcu_trc_cmpxchg_need_qs(t, nqs, TRC_NEED_QS_CHECKED);
+	if (nqs) {
+		u8 result = rcu_trc_cmpxchg_need_qs(t, TRC_NEED_QS_CHECKED | TRC_NEED_QS,
+						       TRC_NEED_QS_CHECKED);
+
+		WARN_ONCE(result != (TRC_NEED_QS_CHECKED | TRC_NEED_QS),
+			  "%s: result = %d", __func__, result);
+	}
 	WRITE_ONCE(t->trc_reader_nesting, 0);
-	if ((nqs & TRC_NEED_QS) && atomic_dec_and_test(&trc_n_readers_need_end))
+	if (nqs && atomic_dec_and_test(&trc_n_readers_need_end))
 		irq_work_queue(&rcu_tasks_trace_iw);
 }
 EXPORT_SYMBOL_GPL(rcu_read_unlock_trace_special);
