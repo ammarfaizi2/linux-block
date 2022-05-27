@@ -517,6 +517,91 @@ static enum netfs_io_source netfs_cache_prepare_read(struct netfs_io_subrequest 
 }
 
 /*
+ * Select the span of a bvec iterator we're going to use.  Limit it by both maximum
+ * size and maximum number of segments.
+ */
+static size_t netfs_limit_bvec(const struct iov_iter *iter, size_t start_offset,
+			       size_t max_size, size_t max_segs)
+{
+	const struct bio_vec *bvecs = iter->bvec;
+	unsigned int nbv = iter->nr_segs, ix = 0, nsegs = 0;
+	size_t len, span = 0, n = iter->count;
+	size_t skip = iter->iov_offset + start_offset;
+
+	if (WARN_ON(!iov_iter_is_bvec(iter)) ||
+	    WARN_ON(start_offset > n) ||
+	    n == 0)
+		return 0;
+
+	while (n && ix < nbv && skip) {
+		len = bvecs[ix].bv_len;
+		if (skip < len)
+			break;
+		skip -= len;
+		n -= len;
+		ix++;
+	}
+
+	while (n && ix < nbv) {
+		len = min3(n, bvecs[ix].bv_len - skip, max_size);
+		span += len;
+		nsegs++;
+		ix++;
+		if (span >= max_size || nsegs >= max_segs)
+			break;
+		skip = 0;
+		n -= len;
+	}
+
+	return min(span, max_size);
+}
+
+/*
+ * Select the span of an xarray iterator we're going to use.  Limit it by both
+ * maximum size and maximum number of segments.  It is assumed that segments
+ * can be larger than a page in size, provided they're physically contiguous.
+ */
+static size_t netfs_limit_xarray(struct iov_iter *iter, size_t start_offset,
+				 size_t max_size, size_t max_segs)
+{
+	struct folio *folio;
+	unsigned int nsegs = 0;
+	loff_t pos = iter->xarray_start + iter->iov_offset;
+	pgoff_t index = pos / PAGE_SIZE;
+	size_t span = 0, n = iter->count;
+
+	XA_STATE(xas, iter->xarray, index);
+
+	if (WARN_ON(!iov_iter_is_xarray(iter)) ||
+	    WARN_ON(start_offset > n) ||
+	    n == 0)
+		return 0;
+	max_size = min(max_size, n - start_offset);
+
+	rcu_read_lock();
+	xas_for_each(&xas, folio, ULONG_MAX) {
+		size_t offset, flen, len;
+		if (xas_retry(&xas, folio))
+			continue;
+		if (WARN_ON(xa_is_value(folio)))
+			break;
+		if (WARN_ON(folio_test_hugetlb(folio)))
+			break;
+
+		flen = folio_size(folio);
+		offset = offset_in_folio(folio, pos);
+		len = min(max_size, flen - offset);
+		span += len;
+		nsegs++;
+		if (span >= max_size || nsegs >= max_segs)
+			break;
+	}
+
+	rcu_read_unlock();
+	return min(span, max_size);
+}
+
+/*
  * Work out what sort of subrequest the next one will be.
  */
 static enum netfs_io_source
@@ -524,12 +609,13 @@ netfs_rreq_prepare_read(struct netfs_io_request *rreq,
 			struct netfs_io_subrequest *subreq)
 {
 	enum netfs_io_source source;
+	size_t lsize;
 
 	_enter("%llx-%llx,%llx", subreq->start, subreq->start + subreq->len, rreq->i_size);
 
 	source = netfs_cache_prepare_read(subreq, rreq->i_size);
 	if (source == NETFS_INVALID_READ)
-		goto out;
+		goto invalid;
 
 	if (source == NETFS_DOWNLOAD_FROM_SERVER) {
 		/* Call out to the netfs to let it shrink the request to fit
@@ -542,40 +628,69 @@ netfs_rreq_prepare_read(struct netfs_io_request *rreq,
 			subreq->len = rreq->i_size - subreq->start;
 
 		if (rreq->netfs_ops->clamp_length &&
-		    !rreq->netfs_ops->clamp_length(subreq)) {
-			source = NETFS_INVALID_READ;
-			goto out;
-		}
+		    !rreq->netfs_ops->clamp_length(subreq))
+			goto invalid;
 	}
 
-	if (WARN_ON(subreq->len == 0)) {
-		source = NETFS_INVALID_READ;
-		goto out;
-	}
+	if (subreq->len > rreq->len)
+		pr_warn("R=%08x[%u] SREQ>RREQ %zx > %zx\n",
+			rreq->debug_id, subreq->debug_index,
+			subreq->len, rreq->len);
+
+	if (WARN_ON(subreq->len == 0))
+		goto invalid;
+
+	subreq->source = source;
+	trace_netfs_sreq(subreq, netfs_sreq_trace_prepare);
 
 	switch (rreq->buffering) {
 	case NETFS_DIRECT:
+		subreq->iter = rreq->direct_iter;
+		iov_iter_advance(&subreq->iter, subreq->start - rreq->start);
+		break;
 	case NETFS_DIRECT_BV:
 		subreq->iter = rreq->direct_iter;
 		iov_iter_advance(&subreq->iter, subreq->start - rreq->start);
+		iov_iter_truncate(&subreq->iter, subreq->len);
+
+		if (subreq->max_nr_segs) {
+			lsize = netfs_limit_bvec(&subreq->iter, 0, subreq->len,
+						 subreq->max_nr_segs);
+			if (subreq->len != lsize) {
+				subreq->len = lsize;
+				iov_iter_truncate(&subreq->iter, subreq->len);
+				trace_netfs_sreq(subreq, netfs_sreq_trace_limited);
+			}
+		}
 		break;
 	case NETFS_BUFFER:
 		iov_iter_xarray(&subreq->iter, READ, &rreq->buffer,
 				subreq->start, subreq->len);
-		break;
+		goto limit_xarray;
 	case NETFS_BOUNCE:
 		iov_iter_xarray(&subreq->iter, READ, &rreq->bounce,
 				subreq->start, subreq->len);
+	limit_xarray:
+		if (subreq->max_nr_segs) {
+			lsize = netfs_limit_xarray(&subreq->iter, 0, subreq->len,
+						   subreq->max_nr_segs);
+			if (subreq->len != lsize) {
+				subreq->len = lsize;
+				iov_iter_truncate(&subreq->iter, lsize);
+				trace_netfs_sreq(subreq, netfs_sreq_trace_limited);
+			}
+		}
 		break;
 	case NETFS_INVALID:
 		kdebug("Invalid buffering form %u", rreq->buffering);
 		BUG();
 	}
 
-out:
-	subreq->source = source;
-	trace_netfs_sreq(subreq, netfs_sreq_trace_prepare);
-	return source;
+	return subreq->source;
+invalid:
+	subreq->source = NETFS_INVALID_READ;
+	trace_netfs_sreq(subreq, netfs_sreq_trace_invalid);
+	return NETFS_INVALID_READ;
 }
 
 /*
