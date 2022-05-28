@@ -75,6 +75,9 @@ bpf/%: FORCE
 libapi: FORCE
 	$(call descend,lib/api)
 
+nolibc: FORCE
+	$(call descend,include/nolibc)
+
 nolibc_%: FORCE
 	$(call descend,include/nolibc,$(patsubst nolibc_%,%,$@))
 
