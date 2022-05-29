@@ -599,10 +599,18 @@ extern void __warn_flushing_systemwide_wq(void)
  * workqueues is in progress. This function will be removed after all in-tree
  * users stopped calling this function.
  */
+#ifdef GCC_VERSION
+#define flush_scheduled_work()					\
+{								\
+	_Pragma("message \"Please avoid flushing system-wide workqueues.\"") \
+	__flush_workqueue(system_wq);				\
+}
+#else
 static inline void __deprecated flush_scheduled_work(void)
 {
 	__flush_workqueue(system_wq);
 }
+#endif
 
 /**
  * flush_workqueue - ensure that any scheduled work has run to completion.
