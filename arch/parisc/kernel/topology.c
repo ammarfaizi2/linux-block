@@ -81,10 +81,6 @@ void store_cpu_topology(unsigned int cpuid)
 }
 
 static struct sched_domain_topology_level parisc_mc_topology[] = {
-#ifdef CONFIG_SCHED_MC
-	{ cpu_coregroup_mask, cpu_core_flags, SD_INIT_NAME(MC) },
-#endif
-
 	{ cpu_cpu_mask, SD_INIT_NAME(DIE) },
 	{ NULL, },
 };
