@@ -132,6 +132,14 @@ const struct ce_attr ath12k_host_ce_config_qcn92xx[] = {
 		.dest_nentries = 512,
 		.recv_cb = ath12k_htc_rx_completion_handler,
 	},
+
+	/* CE15: reserved for future use */
+	{
+		.flags = (CE_ATTR_FLAGS | CE_ATTR_DIS_INTR),
+		.src_nentries = 0,
+		.src_sz_max = 0,
+		.dest_nentries = 0,
+	},
 };
 
 const struct ce_attr ath12k_host_ce_config_wcn7850[] = {

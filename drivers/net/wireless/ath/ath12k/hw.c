@@ -211,7 +211,7 @@ const struct ce_pipe_config ath12k_target_ce_config_wlan_qcn92xx[] = {
 		.pipedir = __cpu_to_le32(PIPEDIR_OUT),
 		.nentries = __cpu_to_le32(32),
 		.nbytes_max = __cpu_to_le32(2048),
-		.flags = __cpu_to_le32(8192),
+		.flags = __cpu_to_le32(CE_ATTR_FLAGS),
 		.reserved = __cpu_to_le32(0),
 	},
 
@@ -221,7 +221,7 @@ const struct ce_pipe_config ath12k_target_ce_config_wlan_qcn92xx[] = {
 		.pipedir = __cpu_to_le32(PIPEDIR_OUT),
 		.nentries = __cpu_to_le32(32),
 		.nbytes_max = __cpu_to_le32(2048),
-		.flags = __cpu_to_le32(8192),
+		.flags = __cpu_to_le32(CE_ATTR_FLAGS),
 		.reserved = __cpu_to_le32(0),
 	},
 
@@ -418,11 +418,6 @@ const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_qcn92xx[] = {
 		__cpu_to_le32(1),
 	},
 	{
-		__cpu_to_le32(ATH12K_HTC_SVC_ID_PKT_LOG),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
-		__cpu_to_le32(5),
-	},
-	{
 		__cpu_to_le32(ATH12K_HTC_SVC_ID_WMI_CONTROL_MAC1),
 		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
 		__cpu_to_le32(7),
@@ -431,6 +426,11 @@ const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_qcn92xx[] = {
 		__cpu_to_le32(ATH12K_HTC_SVC_ID_WMI_CONTROL_MAC1),
 		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
 		__cpu_to_le32(2),
+	},
+	{
+		__cpu_to_le32(ATH12K_HTC_SVC_ID_PKT_LOG),
+		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(5),
 	},
 	{
 		__cpu_to_le32(ATH12K_HTC_SVC_ID_WMI_CONTROL_DIAG),
