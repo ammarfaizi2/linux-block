@@ -161,9 +161,6 @@ module_param(rcu_task_contend_lim, int, 0444);
 static int rcu_task_collapse_lim __read_mostly = 10;
 module_param(rcu_task_collapse_lim, int, 0444);
 
-static int rcu_task_trc_detail_stall;
-module_param(rcu_task_trc_detail_stall, int, 0644);
-
 /* RCU tasks grace-period state for debugging. */
 #define RTGS_INIT		 0
 #define RTGS_WAIT_WAIT_CBS	 1
@@ -1241,8 +1238,6 @@ u8 rcu_trc_cmpxchg_need_qs(struct task_struct *t, u8 old, u8 new)
 	trs_new.b.need_qs = new;
 	ret = cmpxchg(&t->trc_reader_special, trs_old, trs_new);
 	realnew = READ_ONCE(t->trc_reader_special.b.need_qs);
-	if (READ_ONCE(t->trc_needreport))
-		pr_info("%s(P%d/%d, %d/%d, %d)->%d.\n", __func__, t->pid, task_cpu(t), old, ret.b.need_qs, new, realnew);
 	return ret.b.need_qs;
 }
 
@@ -1291,41 +1286,29 @@ static void trc_read_check_handler(void *t_in)
 	struct task_struct *texp = t_in;
 
 	// If the task is no longer running on this CPU, leave.
-	if (unlikely(texp != t)) {
-		if (READ_ONCE(t->trc_needreport))
-			pr_info("%s(P%d/%d) IPIed, but P%d running.\n", __func__, texp->pid, task_cpu(texp), t->pid);
+	if (unlikely(texp != t))
 		goto reset_ipi; // Already on holdout list, so will check later.
-	}
 
 	// If the task is not in a read-side critical section, and
 	// if this is the last reader, awaken the grace-period kthread.
 	nesting = READ_ONCE(t->trc_reader_nesting);
 	if (likely(!nesting)) {
-		if (READ_ONCE(t->trc_needreport))
-			pr_info("%s(P%d/%d) in quiescent state.\n", __func__, t->pid, task_cpu(t));
 		rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS_CHECKED);
 		goto reset_ipi;
 	}
 	// If we are racing with an rcu_read_unlock_trace(), try again later.
-	if (unlikely(nesting < 0)) {
-		if (READ_ONCE(t->trc_needreport))
-			pr_info("%s(P%d/%d) exiting read-side critical section.\n", __func__, t->pid, task_cpu(t));
+	if (unlikely(nesting < 0))
 		goto reset_ipi;
-	}
 
 	// Get here if the task is in a read-side critical section.  Set
 	// its state so that it will awaken the grace-period kthread upon
 	// exit from that critical section.
-	if (READ_ONCE(t->trc_needreport))
-		pr_info("%s(P%d/%d) in read-side critical section.\n", __func__, t->pid, task_cpu(t));
 	rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS | TRC_NEED_QS_CHECKED);
 
 reset_ipi:
 	// Allow future IPIs to be sent on CPU and for task.
 	// Also order this IPI handler against any later manipulations of
 	// the intended task.
-	if (READ_ONCE(t->trc_needreport))
-		pr_info("%s(P%d/%d) resetting IPIs.\n", __func__, texp->pid, task_cpu(texp));
 	smp_store_release(per_cpu_ptr(&trc_ipi_to_cpu, smp_processor_id()), false); // ^^^
 	smp_store_release(&texp->trc_ipi_to_cpu, -1); // ^^^
 }
@@ -1339,14 +1322,9 @@ static int trc_inspect_reader(struct task_struct *t, void *bhp_in)
 	bool ofl = cpu_is_offline(cpu);
 
 	if (task_curr(t) && !ofl) {
-		if (READ_ONCE(t->trc_needreport))
-			pr_info("%s(P%d/%d) task is running.\n", __func__, t->pid, task_cpu(t));
 		// If no chance of heavyweight readers, do it the hard way.
-		if (!ofl && !IS_ENABLED(CONFIG_TASKS_TRACE_RCU_READ_MB)) {
-			if (READ_ONCE(t->trc_needreport))
-				pr_info("%s(P%d/%d) task is running and cannot remotely sample.\n", __func__, t->pid, task_cpu(t));
+		if (!ofl && !IS_ENABLED(CONFIG_TASKS_TRACE_RCU_READ_MB))
 			return -EINVAL;
-		}
 
 		// If heavyweight readers are enabled on the remote task,
 		// we can inspect its state despite its currently running.
@@ -1361,8 +1339,6 @@ static int trc_inspect_reader(struct task_struct *t, void *bhp_in)
 		nesting = 0;
 	} else {
 		// The task is not running, so C-language access is safe.
-		if (READ_ONCE(t->trc_needreport))
-			pr_info("%s(P%d/%d) task is not running.\n", __func__, t->pid, task_cpu(t));
 		nesting = t->trc_reader_nesting;
 		WARN_ON_ONCE(ofl && task_curr(t) && !is_idle_task(t));
 	}
@@ -1371,8 +1347,6 @@ static int trc_inspect_reader(struct task_struct *t, void *bhp_in)
 	// so that the grace-period kthread will remove it from the
 	// holdout list.
 	if (nesting <= 0) {
-		if (READ_ONCE(t->trc_needreport))
-			pr_info("%s(P%d/%d) in QS or exiting towards one.\n", __func__, t->pid, task_cpu(t));
 		if (!nesting)
 			rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS_CHECKED);
 		return nesting ? -EINVAL : 0;  // If in QS, done, otherwise try again later.
@@ -1381,8 +1355,6 @@ static int trc_inspect_reader(struct task_struct *t, void *bhp_in)
 	// The task is in a read-side critical section, so set up its
 	// state so that it will awaken the grace-period kthread upon exit
 	// from that critical section.
-	if (READ_ONCE(t->trc_needreport))
-		pr_info("%s(P%d/%d) in read-side critical section.\n", __func__, t->pid, task_cpu(t));
 	if (!rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS | TRC_NEED_QS_CHECKED))
 		trc_add_holdout(t, bhp);
 	return 0;
@@ -1395,16 +1367,11 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 	int cpu;
 
 	// If a previous IPI is still in flight, let it complete.
-	if (smp_load_acquire(&t->trc_ipi_to_cpu) != -1) { // Order IPI
-		if (READ_ONCE(t->trc_needreport))
-			pr_info("%s(P%d/%d) IPI to task still in flight.\n", __func__, t->pid, task_cpu(t));
+	if (smp_load_acquire(&t->trc_ipi_to_cpu) != -1) // Order IPI
 		return;
-	}
 
 	// The current task had better be in a quiescent state.
 	if (t == current) {
-		if (READ_ONCE(t->trc_needreport))
-			pr_info("%s(P%d/%d) is currently running task.\n", __func__, t->pid, task_cpu(t));
 		rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS_CHECKED);
 		WARN_ON_ONCE(READ_ONCE(t->trc_reader_nesting));
 		return;
@@ -1413,8 +1380,6 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 	// Attempt to nail down the task for inspection.
 	get_task_struct(t);
 	if (!task_call_func(t, trc_inspect_reader, bhp)) {
-		if (READ_ONCE(t->trc_needreport))
-			pr_info("%s(P%d/%d) task_call_func() succeeded.\n", __func__, t->pid, task_cpu(t));
 		put_task_struct(t);
 		return;
 	}
@@ -1434,19 +1399,13 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 		cpu = task_cpu(t);
 
 		// If there is already an IPI outstanding, let it happen.
-		if (per_cpu(trc_ipi_to_cpu, cpu) || t->trc_ipi_to_cpu >= 0) {
-			if (READ_ONCE(t->trc_needreport))
-				pr_info("%s(P%d/%d) IPI to CPU still in flight.\n", __func__, t->pid, task_cpu(t));
+		if (per_cpu(trc_ipi_to_cpu, cpu) || t->trc_ipi_to_cpu >= 0)
 			return;
-		}
 
 		per_cpu(trc_ipi_to_cpu, cpu) = true;
 		t->trc_ipi_to_cpu = cpu;
 		rcu_tasks_trace.n_ipis++;
-		if (!smp_call_function_single(cpu, trc_read_check_handler, t, 0)) {
-			if (READ_ONCE(t->trc_needreport))
-				pr_info("%s(P%d/%d) smp_call_function_single to CPU %d launched.\n", __func__, t->pid, task_cpu(t), cpu);
-		} else {
+		if (smp_call_function_single(cpu, trc_read_check_handler, t, 0)) {
 			// Just in case there is some other reason for
 			// failure than the target CPU being offline.
 			WARN_ONCE(1, "%s():  smp_call_function_single() failed for CPU: %d\n",
@@ -1578,8 +1537,6 @@ static void check_all_holdout_tasks_trace(struct list_head *hop,
 
 	list_for_each_entry_safe(t, g, hop, trc_holdout_list) {
 		// If safe and needed, try to check the current task.
-		if (READ_ONCE(rcu_task_trc_detail_stall))
-			t->trc_needreport = needreport;
 		if (READ_ONCE(t->trc_ipi_to_cpu) == -1 &&
 		    !(rcu_ld_need_qs(t) & TRC_NEED_QS_CHECKED))
 			trc_wait_for_one_reader(t, hop);
@@ -1590,7 +1547,6 @@ static void check_all_holdout_tasks_trace(struct list_head *hop,
 			trc_del_holdout(t);
 		else if (needreport)
 			show_stalled_task_trace(t, firstreport);
-		t->trc_needreport = false;
 	}
 
 	// Re-enable CPU hotplug now that the holdout list scan has completed.
