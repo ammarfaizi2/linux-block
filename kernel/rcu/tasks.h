@@ -1195,7 +1195,6 @@ EXPORT_SYMBOL_GPL(rcu_trace_lock_map);
 
 #ifdef CONFIG_TASKS_TRACE_RCU
 
-static atomic_t trc_n_readers_need_end;		// Number of waited-for readers.
 static DECLARE_WAIT_QUEUE_HEAD(trc_wait);	// List of holdout tasks.
 
 // Record outstanding IPIs to each CPU.  No point in sending two...
@@ -1247,16 +1246,6 @@ u8 rcu_trc_cmpxchg_need_qs(struct task_struct *t, u8 old, u8 new)
 	return ret.b.need_qs;
 }
 
-/*
- * This irq_work handler allows rcu_read_unlock_trace() to be invoked
- * while the scheduler locks are held.
- */
-static void rcu_read_unlock_iw(struct irq_work *iwp)
-{
-	wake_up(&trc_wait);
-}
-static DEFINE_IRQ_WORK(rcu_tasks_trace_iw, rcu_read_unlock_iw);
-
 /* If we are the last reader, wake up the grace-period kthread. */
 void rcu_read_unlock_trace_special(struct task_struct *t)
 {
@@ -1273,8 +1262,6 @@ void rcu_read_unlock_trace_special(struct task_struct *t)
 			  "%s: result = %d", __func__, result);
 	}
 	WRITE_ONCE(t->trc_reader_nesting, 0);
-	if (nqs && atomic_dec_and_test(&trc_n_readers_need_end))
-		irq_work_queue(&rcu_tasks_trace_iw);
 }
 EXPORT_SYMBOL_GPL(rcu_read_unlock_trace_special);
 
@@ -1331,8 +1318,7 @@ static void trc_read_check_handler(void *t_in)
 	// exit from that critical section.
 	if (READ_ONCE(t->trc_needreport))
 		pr_info("%s(P%d/%d) in read-side critical section.\n", __func__, t->pid, task_cpu(t));
-	if (!rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS | TRC_NEED_QS_CHECKED))
-		atomic_inc(&trc_n_readers_need_end); // One more to wait on.
+	rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS | TRC_NEED_QS_CHECKED);
 
 reset_ipi:
 	// Allow future IPIs to be sent on CPU and for task.
@@ -1397,10 +1383,8 @@ static int trc_inspect_reader(struct task_struct *t, void *bhp_in)
 	// from that critical section.
 	if (READ_ONCE(t->trc_needreport))
 		pr_info("%s(P%d/%d) in read-side critical section.\n", __func__, t->pid, task_cpu(t));
-	if (!rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS | TRC_NEED_QS_CHECKED)) {
-		atomic_inc(&trc_n_readers_need_end); // One more to wait on.
+	if (!rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS | TRC_NEED_QS_CHECKED))
 		trc_add_holdout(t, bhp);
-	}
 	return 0;
 }
 
@@ -1478,9 +1462,6 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 static void rcu_tasks_trace_pregp_step(void)
 {
 	int cpu;
-
-	// Allow for fast-acting IPIs.
-	atomic_set(&trc_n_readers_need_end, 1);
 
 	// There shouldn't be any old IPIs, but...
 	for_each_possible_cpu(cpu)
@@ -1740,7 +1721,7 @@ void show_rcu_tasks_trace_gp_kthread(void)
 {
 	char buf[64];
 
-	sprintf(buf, "N%d h:%lu/%lu/%lu", atomic_read(&trc_n_readers_need_end),
+	sprintf(buf, "h:%lu/%lu/%lu",
 		data_race(n_heavy_reader_ofl_updates),
 		data_race(n_heavy_reader_updates),
 		data_race(n_heavy_reader_attempts));
