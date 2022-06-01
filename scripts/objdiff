@@ -32,7 +32,7 @@ if [ -z "$SRCTREE" ]; then
 	exit 1
 fi
 
-TMPD=$SRCTREE/.tmp_objdiff
+TMPD=$SRCTREE/.objdiff
 
 usage() {
 	echo >&2 "Usage: $0 <command> <args>"
