@@ -1284,9 +1284,8 @@ static void trc_read_check_handler(void *t_in)
 	struct task_struct *texp = t_in;
 
 	// If the task is no longer running on this CPU, leave.
-	if (unlikely(texp != t)) {
+	if (unlikely(texp != t))
 		goto reset_ipi; // Already on holdout list, so will check later.
-	}
 
 	// If the task is not in a read-side critical section, and
 	// if this is the last reader, awaken the grace-period kthread.
