@@ -502,7 +502,7 @@ static void squashfs_readahead(struct readahead_control *ractl)
 	struct squashfs_sb_info *msblk = inode->i_sb->s_fs_info;
 	size_t mask = (1UL << msblk->block_log) - 1;
 	unsigned short shift = msblk->block_log - PAGE_SHIFT;
-	loff_t start = readahead_pos(ractl) &~ mask;
+	loff_t start = readahead_pos(ractl) & ~mask;
 	size_t len = readahead_length(ractl) + readahead_pos(ractl) - start;
 	struct squashfs_page_actor *actor;
 	unsigned int nr_pages = 0;
