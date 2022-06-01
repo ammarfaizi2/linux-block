@@ -1228,7 +1228,6 @@ static void rcu_st_need_qs(struct task_struct *t, u8 v)
  */
 u8 rcu_trc_cmpxchg_need_qs(struct task_struct *t, u8 old, u8 new)
 {
-	u8 realnew;
 	union rcu_special ret;
 	union rcu_special trs_old = READ_ONCE(t->trc_reader_special);
 	union rcu_special trs_new = trs_old;
@@ -1237,7 +1236,6 @@ u8 rcu_trc_cmpxchg_need_qs(struct task_struct *t, u8 old, u8 new)
 		return trs_old.b.need_qs;
 	trs_new.b.need_qs = new;
 	ret = cmpxchg(&t->trc_reader_special, trs_old, trs_new);
-	realnew = READ_ONCE(t->trc_reader_special.b.need_qs);
 	return ret.b.need_qs;
 }
 
