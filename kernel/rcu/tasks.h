@@ -1345,8 +1345,9 @@ reset_ipi:
 }
 
 /* Callback function for scheduler to check locked-down task.  */
-static int trc_inspect_reader(struct task_struct *t, void *arg)
+static int trc_inspect_reader(struct task_struct *t, void *bhp_in)
 {
+	struct list_head *bhp = bhp_in;
 	int cpu = task_cpu(t);
 	int nesting;
 	bool ofl = cpu_is_offline(cpu);
@@ -1396,8 +1397,10 @@ static int trc_inspect_reader(struct task_struct *t, void *arg)
 	// from that critical section.
 	if (READ_ONCE(t->trc_needreport))
 		pr_info("%s(P%d/%d) in read-side critical section.\n", __func__, t->pid, task_cpu(t));
-	if (!rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS | TRC_NEED_QS_CHECKED))
+	if (!rcu_trc_cmpxchg_need_qs(t, 0, TRC_NEED_QS | TRC_NEED_QS_CHECKED)) {
 		atomic_inc(&trc_n_readers_need_end); // One more to wait on.
+		trc_add_holdout(t, bhp);
+	}
 	return 0;
 }
 
@@ -1425,7 +1428,7 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 
 	// Attempt to nail down the task for inspection.
 	get_task_struct(t);
-	if (!task_call_func(t, trc_inspect_reader, NULL)) {
+	if (!task_call_func(t, trc_inspect_reader, bhp)) {
 		if (READ_ONCE(t->trc_needreport))
 			pr_info("%s(P%d/%d) task_call_func() succeeded.\n", __func__, t->pid, task_cpu(t));
 		put_task_struct(t);
