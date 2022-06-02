@@ -1526,7 +1526,8 @@ static void rcu_tasks_trace_pregp_step(struct list_head *hop)
 			list_del_init(&t->trc_blkd_node);
 			list_add(&t->trc_blkd_node, &rtpcp->rtp_blkd_tasks);
 			raw_spin_unlock_irqrestore_rcu_node(rtpcp, flags);
-			rcu_tasks_trace_pertask(t, hop);
+			if (rcu_tasks_trace_pertask_prep(t))
+				trc_add_holdout(t, hop);
 			raw_spin_lock_irqsave_rcu_node(rtpcp, flags);
 		}
 		raw_spin_unlock_irqrestore_rcu_node(rtpcp, flags);
