@@ -1508,7 +1508,7 @@ static void rcu_tasks_trace_pregp_step(struct list_head *hop)
 	for_each_possible_cpu(cpu)
 		WARN_ON_ONCE(per_cpu(trc_ipi_to_cpu, cpu));
 
-	// Disable CPU hotplug across the tasklist scan.
+	// Disable CPU hotplug across the CPU scan.
 	// This also waits for all readers in CPU-hotplug code paths.
 	cpus_read_lock();
 
