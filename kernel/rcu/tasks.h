@@ -1456,13 +1456,13 @@ static void trc_wait_for_one_reader(struct task_struct *t,
  * Initialize for first-round processing for the specified task.
  * Return false if task is NULL or already taken care of, true otherwise.
  */
-static bool rcu_tasks_trace_pertask_prep(struct task_struct *t)
+static bool rcu_tasks_trace_pertask_prep(struct task_struct *t, bool notself)
 {
 	// During early boot when there is only the one boot CPU, there
 	// is no idle task for the other CPUs.	Also, the grace-period
 	// kthread is always in a quiescent state.  In addition, just return
 	// if this task is already on the list.
-	if (unlikely(t == NULL) || t == current || !list_empty(&t->trc_holdout_list))
+	if (unlikely(t == NULL) || (t == current && notself) || !list_empty(&t->trc_holdout_list))
 		return false;
 
 	rcu_st_need_qs(t, 0);
@@ -1473,7 +1473,7 @@ static bool rcu_tasks_trace_pertask_prep(struct task_struct *t)
 /* Do first-round processing for the specified task. */
 static void __maybe_unused rcu_tasks_trace_pertask(struct task_struct *t, struct list_head *hop)
 {
-	if (rcu_tasks_trace_pertask_prep(t))
+	if (rcu_tasks_trace_pertask_prep(t, true))
 		trc_wait_for_one_reader(t, hop);
 }
 
@@ -1488,7 +1488,7 @@ static void rcu_tasks_trace_pertask_handler(void *hop_in)
 
 	// Pull in the currently running task, but only if it is currently
 	// in an RCU tasks trace read-side critical section.
-	if (rcu_tasks_trace_pertask_prep(t))
+	if (rcu_tasks_trace_pertask_prep(t, false))
 		trc_add_holdout(t, hop);
 }
 
@@ -1526,7 +1526,7 @@ static void rcu_tasks_trace_pregp_step(struct list_head *hop)
 			list_del_init(&t->trc_blkd_node);
 			list_add(&t->trc_blkd_node, &rtpcp->rtp_blkd_tasks);
 			raw_spin_unlock_irqrestore_rcu_node(rtpcp, flags);
-			if (rcu_tasks_trace_pertask_prep(t))
+			if (rcu_tasks_trace_pertask_prep(t, true))
 				trc_add_holdout(t, hop);
 			raw_spin_lock_irqsave_rcu_node(rtpcp, flags);
 		}
