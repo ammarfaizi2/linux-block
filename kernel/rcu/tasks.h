@@ -1475,7 +1475,7 @@ static bool rcu_tasks_trace_pertask_prep(struct task_struct *t, bool notself)
 }
 
 /* Do first-round processing for the specified task. */
-static void __maybe_unused rcu_tasks_trace_pertask(struct task_struct *t, struct list_head *hop)
+static void rcu_tasks_trace_pertask(struct task_struct *t, struct list_head *hop)
 {
 	if (rcu_tasks_trace_pertask_prep(t, true))
 		trc_wait_for_one_reader(t, hop);
