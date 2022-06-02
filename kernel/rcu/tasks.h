@@ -1516,7 +1516,7 @@ static void rcu_tasks_trace_pregp_step(struct list_head *hop)
 	// These smp_call_function_single() calls are serialized to
 	// allow safe access to the hop list.
 	for_each_possible_cpu(cpu)
-		WARN_ON_ONCE(smp_call_function_single(cpu, rcu_tasks_trace_pertask_handler, hop, 1));
+		smp_call_function_single(cpu, rcu_tasks_trace_pertask_handler, hop, 1);
 
 	// Only after all running tasks have been accounted for is it
 	// safe to take care of the tasks that have blocked within their
