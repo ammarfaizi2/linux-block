@@ -1764,7 +1764,8 @@ void show_rcu_tasks_trace_gp_kthread(void)
 {
 	char buf[64];
 
-	sprintf(buf, "h:%lu/%lu/%lu",
+	sprintf(buf, "N%lu h:%lu/%lu/%lu",
+		data_race(n_trc_holdouts),
 		data_race(n_heavy_reader_ofl_updates),
 		data_race(n_heavy_reader_updates),
 		data_race(n_heavy_reader_attempts));
