@@ -1208,6 +1208,7 @@ static DEFINE_PER_CPU(bool, trc_ipi_to_cpu);
 static unsigned long n_heavy_reader_attempts;
 static unsigned long n_heavy_reader_updates;
 static unsigned long n_heavy_reader_ofl_updates;
+static unsigned long n_trc_holdouts;
 
 void call_rcu_tasks_trace(struct rcu_head *rhp, rcu_callback_t func);
 DEFINE_RCU_TASKS(rcu_tasks_trace, rcu_tasks_wait_gp, call_rcu_tasks_trace,
@@ -1300,6 +1301,7 @@ static void trc_add_holdout(struct task_struct *t, struct list_head *bhp)
 	if (list_empty(&t->trc_holdout_list)) {
 		get_task_struct(t);
 		list_add(&t->trc_holdout_list, bhp);
+		n_trc_holdouts++;
 	}
 }
 
@@ -1309,6 +1311,7 @@ static void trc_del_holdout(struct task_struct *t)
 	if (!list_empty(&t->trc_holdout_list)) {
 		list_del_init(&t->trc_holdout_list);
 		put_task_struct(t);
+		n_trc_holdouts--;
 	}
 }
 
