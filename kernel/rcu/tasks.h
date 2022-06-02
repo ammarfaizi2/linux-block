@@ -1245,6 +1245,7 @@ u8 rcu_trc_cmpxchg_need_qs(struct task_struct *t, u8 old, u8 new)
 	ret = cmpxchg(&t->trc_reader_special, trs_old, trs_new);
 	return ret.b.need_qs;
 }
+EXPORT_SYMBOL_GPL(rcu_trc_cmpxchg_need_qs);
 
 /* If we are the last reader, wake up the grace-period kthread. */
 void rcu_read_unlock_trace_special(struct task_struct *t)
