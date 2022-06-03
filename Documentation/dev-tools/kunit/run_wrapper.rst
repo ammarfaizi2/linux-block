@@ -30,10 +30,9 @@ We may want to use the following options:
 
 ::
 
-	./tools/testing/kunit/kunit.py run --timeout=30 --jobs=`nproc --all
+	./tools/testing/kunit/kunit.py run --timeout=30
 
 - ``--timeout`` sets a maximum amount of time for tests to run.
-- ``--jobs`` sets the number of threads to build the kernel.
 
 kunit_tool will generate a ``.kunitconfig`` with a default
 configuration, if no other ``.kunitconfig`` file exists
@@ -236,6 +235,9 @@ command line arguments:
 - ``--make_options``: Specifies additional options to pass to make, when
   compiling a kernel (using ``build`` or ``run`` commands). For example:
   to enable compiler warnings, we can pass ``--make_options W=1``.
+
+- ``--jobs``: The ``-j`` argument to ``make`` when building the kernel.
+  Defaults to the same value as ``nproc``.
 
 - ``--alltests``: Builds a UML kernel with all config options enabled
   using ``make allyesconfig``. This allows us to run as many tests as
