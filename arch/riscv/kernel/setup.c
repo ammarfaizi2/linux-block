@@ -263,13 +263,15 @@ static void __init parse_dtb(void)
 
 void __init setup_arch(char **cmdline_p)
 {
+	early_ioremap_setup();
+	sbi_init();
+	jump_label_init();
+
 	parse_dtb();
 	setup_initial_init_mm(_stext, _etext, _edata, _end);
 
 	*cmdline_p = boot_command_line;
 
-	early_ioremap_setup();
-	jump_label_init();
 	parse_early_param();
 
 	efi_init();
@@ -285,7 +287,6 @@ void __init setup_arch(char **cmdline_p)
 	misc_mem_init();
 
 	init_resources();
-	sbi_init();
 
 #ifdef CONFIG_KASAN
 	kasan_init();
