@@ -8,6 +8,7 @@ static void __arch_jump_label_transform(struct jump_entry *entry,
 					enum jump_label_type type,
 					bool is_static)
 {
+	extern bool early_mm_initialized;
 	void *addr = (void *)entry->code;
 	unsigned int insn;
 
@@ -16,7 +17,7 @@ static void __arch_jump_label_transform(struct jump_entry *entry,
 	else
 		insn = arm_gen_nop();
 
-	if (is_static)
+	if (is_static || !early_mm_initialized)
 		__patch_text_early(addr, insn);
 	else
 		patch_text(addr, insn);

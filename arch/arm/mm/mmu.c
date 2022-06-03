@@ -1754,10 +1754,13 @@ void __init paging_init(const struct machine_desc *mdesc)
 	__flush_dcache_page(NULL, empty_zero_page);
 }
 
+bool early_mm_initialized;
+
 void __init early_mm_init(const struct machine_desc *mdesc)
 {
 	build_mem_type_table();
 	early_paging_init(mdesc);
+	early_mm_initialized = true;
 }
 
 void set_pte_at(struct mm_struct *mm, unsigned long addr,
