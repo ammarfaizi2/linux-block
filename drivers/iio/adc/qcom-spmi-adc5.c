@@ -925,3 +925,4 @@ module_platform_driver(adc5_driver);
 MODULE_ALIAS("platform:qcom-spmi-adc5");
 MODULE_DESCRIPTION("Qualcomm Technologies Inc. PMIC5 ADC driver");
 MODULE_LICENSE("GPL v2");
+MODULE_IMPORT_NS(IIO_QCOM_VADC);

@@ -662,7 +662,7 @@ int qcom_vadc_scale(enum vadc_scale_fn_type scaletype,
 		return -EINVAL;
 	}
 }
-EXPORT_SYMBOL(qcom_vadc_scale);
+EXPORT_SYMBOL_NS(qcom_vadc_scale, IIO_QCOM_VADC);
 
 u16 qcom_adc_tm5_temp_volt_scale(unsigned int prescale_ratio,
 				 u32 full_scale_code_volt, int temp)
@@ -675,7 +675,7 @@ u16 qcom_adc_tm5_temp_volt_scale(unsigned int prescale_ratio,
 					     temp);
 	return qcom_vadc_scale_voltage_code(voltage, prescale, full_scale_code_volt, 1000);
 }
-EXPORT_SYMBOL(qcom_adc_tm5_temp_volt_scale);
+EXPORT_SYMBOL_NS(qcom_adc_tm5_temp_volt_scale, IIO_QCOM_VADC);
 
 u16 qcom_adc_tm5_gen2_temp_res_scale(int temp)
 {
@@ -704,7 +704,7 @@ int qcom_adc5_hw_scale(enum vadc_scale_fn_type scaletype,
 	return scale_adc5_fn[scaletype].scale_fn(prescale, data,
 					adc_code, result);
 }
-EXPORT_SYMBOL(qcom_adc5_hw_scale);
+EXPORT_SYMBOL_NS(qcom_adc5_hw_scale, IIO_QCOM_VADC);
 
 int qcom_adc5_prescaling_from_dt(u32 numerator, u32 denominator)
 {
@@ -720,7 +720,7 @@ int qcom_adc5_prescaling_from_dt(u32 numerator, u32 denominator)
 
 	return pre;
 }
-EXPORT_SYMBOL(qcom_adc5_prescaling_from_dt);
+EXPORT_SYMBOL_NS(qcom_adc5_prescaling_from_dt, IIO_QCOM_VADC);
 
 int qcom_adc5_hw_settle_time_from_dt(u32 value,
 				     const unsigned int *hw_settle)
@@ -734,7 +734,7 @@ int qcom_adc5_hw_settle_time_from_dt(u32 value,
 
 	return -EINVAL;
 }
-EXPORT_SYMBOL(qcom_adc5_hw_settle_time_from_dt);
+EXPORT_SYMBOL_NS(qcom_adc5_hw_settle_time_from_dt, IIO_QCOM_VADC);
 
 int qcom_adc5_avg_samples_from_dt(u32 value)
 {
@@ -743,7 +743,7 @@ int qcom_adc5_avg_samples_from_dt(u32 value)
 
 	return __ffs(value);
 }
-EXPORT_SYMBOL(qcom_adc5_avg_samples_from_dt);
+EXPORT_SYMBOL_NS(qcom_adc5_avg_samples_from_dt, IIO_QCOM_VADC);
 
 int qcom_adc5_decimation_from_dt(u32 value, const unsigned int *decimation)
 {
@@ -756,7 +756,7 @@ int qcom_adc5_decimation_from_dt(u32 value, const unsigned int *decimation)
 
 	return -EINVAL;
 }
-EXPORT_SYMBOL(qcom_adc5_decimation_from_dt);
+EXPORT_SYMBOL_NS(qcom_adc5_decimation_from_dt, IIO_QCOM_VADC);
 
 int qcom_vadc_decimation_from_dt(u32 value)
 {
@@ -766,7 +766,7 @@ int qcom_vadc_decimation_from_dt(u32 value)
 
 	return __ffs64(value / VADC_DECIMATION_MIN);
 }
-EXPORT_SYMBOL(qcom_vadc_decimation_from_dt);
+EXPORT_SYMBOL_NS(qcom_vadc_decimation_from_dt, IIO_QCOM_VADC);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Qualcomm ADC common functionality");
