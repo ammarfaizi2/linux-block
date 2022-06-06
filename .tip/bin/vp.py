@@ -4,7 +4,6 @@
 vp.py - Patch verifier and massager tool
 """
 
-
 # TODO (and potential ideas):
 #
 # Add a _verify.cfg.example config file so that the user can adjust it herself
@@ -13,6 +12,9 @@ vp.py - Patch verifier and massager tool
 #
 # extend the function-name-needs-a-verb check to when the patch is adding a new function - there
 # check the name too.
+#
+# - https://realpython.com/python-f-strings/
+# convert to f-strings
 #
 # - a8: switch to logging module maybe:
 #   https://docs.python.org/3/howto/logging.html#logging-basic-tutorial
@@ -190,39 +192,44 @@ def verify_commit_ref(sha1, name):
 dc = None
 
 # my words
-dc_words = [ "ACPI", "AMD", "AMD64",
+dc_words = [ "ACPI", "AER", "allocator", "AMD", "AMD64",
          # that's some stupid dictionary
          "amongst", "AMX", "APEI", "arm64", "asm", "BHB",
-         "binutils", "bitmask", "bitfield", "bool", "breakpoint", "BSP",
-         "cacheline", "clocksource", "CMCI", "cmdline", "config", "CPER", "CPPC", "CPUID",
-         "DF", "DMA", "DIMM", "e820", "EAX", "ECC", "EDAC", "EHCI", "enablement", "ENQCMD", "EPT", "fixup",
-         "gcc", "GHES", "goto", "GPR", "GUID", "hotplug", "hugepage", "Hygon",
-         "hypercall", "HyperV", "HV", "hwpoison", "i387", "I/O", "IBT", "initializer", "initrd", "IRET", "IRQ",
-         "JMP", "kallsyms", "KASAN", "Kconfig", "kdump", "kexec", "KVM",
-         "LFENCE", "libc", "livepatch", "LSB", "lvalue", "maintainership",
-         "MCE", "MDS", "memmove", "memtype", 
-         "MMIO", "modpost", "MOVDIR64B", "MSR", "MTRR", "NMI", "noinstr",
-         "NX", "OEM", "ok", "oneliner", "OVMF", "PCI", "pdf", "percpu", "perf", "PPIN",
+         "binutils", "bitmask", "bitfield", "bool", "breakpoint", "brk",
+         "cacheline", "CLAC", "clocksource", "CMCI", "cmdline", "Coccinelle", "codename", "config", "CPER",
+         "CPPC", "CPUID", "CSM", "DCT",
+         "DF", "distro", "DMA", "DIMM", "e820", "EAX", "EBDA", "ECC", "EDAC", "EHCI", "enablement",
+         "ENDBR", "ENQCMD", "EPT",
+         "fixup", "gcc", "GHES", "goto", "GPR", "GUID", "hotplug", "hugepage", "Hygon",
+         "hypercall", "HyperV", "HV", "hwpoison", "i387", "i915", "I/O", "IBT", "IMA", "init", "inlined",
+         "IRET", "IRQ",
+         "kallsyms", "KASAN", "KASLR", "Kconfig", "kdump", "kexec", "kmemleak", "KVM",
+         "LFENCE", "libc", "linux", "livepatch", "LSB", "lvalue", "maintainership",
+         "MCE", "MDS", "MMIO", "modpost", "MOVDIR64B", "MSR", "MTRR", "NMI", "noinstr",
+         "NX", "objtool", "OEM", "ok", "oneliner", "OVMF", "pahole", "pdf", "percpu", "perf", "PPIN",
          "preemptible",
          "prepend", # derived from append, not in the dictionaries
          "PTE", "ptrace",
-         "PV", "PVALIDATE", "RDMSR", "repurposing", "RET", "retpoline", "rFLAGS", "RTM", "Ryzen",
-         "SIGSEGV", "Skylake", "SNP", "SRAR", "SRBDS", "STI", "STLF", "strtab", "struct", "SVA", "swiotlb",
-         "symtab", "sysfs", "TAA", "TCC", "TDCALL", "TDGETVEINFO", "TDVMCALL", "TLB", "TODO",
-         "tracepoint", "TSC", "uncacheable", "uncore",
+         "PV", "PVALIDATE", "QOS", "repurposing", "RET", "retpoline", "rFLAGS", "RTM",
+         "runtime", "Ryzen",
+         "selftest", "SGX", "sideband", "SIGSEGV", "Skylake", "Smatch", "SNP", "SPDX", "SRAR", "SRBDS", "STAC",
+         "STI", "STLF", "stringify", "struct", "SVA", "SWAPGS", "swiotlb",
+         "symtab", "Synopsys", "SYSENTER", "sysfs", "TAA", "TCC", "TDCALL", "TDGETVEINFO", "TDVMCALL", "TLB", "TODO",
+         "TPM", "tracepoint", "TSC", "UC", "uncacheable", "uncore", "unmapping",
          # too late for that one to enforce even as the dictionary says it is wrong
-         "untrusted", "userspace", "vCPU", "VERW",
-         "VMCALL", "VMCB", "VMENTER", "VMLAUNCH", "VMSA", "VMware", "vTOM", "WBINVD", "WRMSR",
-         "XCR0", "Xen", "Xeon",
+         "untrusted", "unwinder", "userspace", "vCPU", "VERW", "VLA",
+         "VMCALL", "VMCB", "VMENTER", "VMLAUNCH", "VMSA", "VMware", "vsyscall", "vTOM",
+         "WBINVD", "WRMSR",
+         "XCR0", "Xeon",
          "XSS", "XSTATE" ]
 
 dc_non_words = [ "E820", "X86" ]
 
 # prominent kernel vars, etc which get mentioned often in commit messages and comments
-known_vars = [ '__BOOT_DS', 'boot_params', 'cpumask', 'earlyprintk',
-           'fpstate', 'i915', 'kobj_type',
+known_vars = [ '__BOOT_DS', 'cpumask', 'earlyprintk',
+           'fpstate', 'idtentry', 'kobj_type',
            'kptr_restrict', 'libvirt', 'pt_regs',
-           'ptr', 'set_lvt_off', 'setup_data',
+           'ptr', 'pvops', 'set_lvt_off', 'setup_data',
            'sme_me_mask', 'sysctl_perf_event_paranoid', 'threshold_banks', 'vfio', 'virtio_gpu',
            'vmlinux', 'xfeatures' ]
 
@@ -230,7 +237,8 @@ known_vars = [ '__BOOT_DS', 'boot_params', 'cpumask', 'earlyprintk',
 regexes_pats = [ r'^U?ABI$',
             r'^all(mod|yes)config$',
             r'^AP[IMU]$',
-            r'^AVX(512)?(-FP16)?$', r'BIOS(e[sn])?', r'boot(loader|params?|up)',
+            r'^AVX(512)?(-FP16)?$',
+            r'BIOS(e[sn])?', r'boot(loader|up)', r'boot_params([\.\w_]+)?$', r'BS[PS]$',
             r'^cpuinfo(_x86)?$',
             r'default_(attrs|groups)', r'^DDR([1-5])?$',
             r'^S?DRAM$',
@@ -238,25 +246,27 @@ regexes_pats = [ r'^U?ABI$',
             r'^F[PR]U$',
             r'^GHC(B|I)$',
             r'^HL[ET]$',
-            r'^Icelake(-D)?$', r'I[DS]T', r'^(in|off)lining$',
-            r'^[ku]probes?$', r'S?MCA$', r'^mem(cpy|remap|set)$',
-            r'^microarchitectur(al|e)$', 
+            r'^Icelake(-D)?$', r'I[DS]T', r'init(ializer|rd|ramfs)?',
+            r'^(in|off)lining$',
+            r'(?i)^jmp$', r'^k[cm]alloc$',
+            r'^[ku]probes?$', r'S?MCA$', r'^[Mm]em(block|cpy|move|remap|set|type)$',
+            r'^microarchitectur(al|e)$',
             r'MOVSB?',
             r'^param(s)?$',
             r'^([Pp]ara)?virt(ualiz(ed|ing|ation))?$',
             # embedded modifier which goes at the beginning of the regex
-            r'(?i)^pasid$', r'PS[CP]', r'^P[MU]D$',
-            r'^RMP(ADJUST)?$',
+            r'(?i)^pasid$', r'^PCIe?$', r'PS[CP]', r'^P[MU]D$',
+            r'RD(MSR|RAND|SEED)$', r'^RMP(ADJUST)?$',
             r'sev_(features|status)', r'^SEV(-(ES|SNP))?$', r'^SM[ET]$',
-            r'^SM[AE]P$', r'^[Ss]pectre(_v2)*$',
+            r'^SM[AE]P$', r'^[Ss]pectre(_v2)*$', r'^str(lcat|tab)$',
             r'T[DS]X', r'^u(16|32|64)$', r'^UM[CL]$',
             r'^U?EFI$', r'^v?syscall$', r'^VMG?E(xit|XIT)$', r'^VM[MX]?$',
-            r'^VMPL([0-3])?$', r'^x86(-(32|64))?$', r'^XSAVE[CS]?$' ]
+            r'^VMPL([0-3])?$', r'^x86(-(32|64))?$', r'^(Xen|XENPV)$', r'^XSAVE[CS]?$' ]
 
 def load_spellchecker():
-    global dc, regexes, regexes_pats, rex_asm_dir, rex_brackets, \
+    global dc, regexes, regexes_pats, rex_abs_fnames, rex_amd_fam, rex_asm_dir, rex_brackets, \
 rex_c_keywords, rex_c_macro, rex_comment, rex_comment_end, \
-rex_commit_ref, rex_decimal, rex_errval, rex_abs_fnames, rex_gpr, rex_hyphenated, \
+rex_commit_ref, rex_constant, rex_decimal, rex_errval, rex_fnames, rex_gpr, rex_hyphenated, \
 rex_kcmdline, rex_kdoc_arg, rex_kdoc_cmt, rex_misc_num, rex_non_alpha, \
 rex_opts, rex_paths, rex_reg_field, rex_sections, rex_sent_end, rex_sha1, \
 rex_struct_mem, rex_units, rex_url, rex_version, rex_word_bla, \
@@ -274,6 +284,7 @@ rex_word_split, rex_x86_traps
     # compile all regexes
     # Use /usr/share/doc/pythonX.X/examples/demo/redemo.py for checking
     rex_asm_dir     = re.compile(r'^\.(align|org)$')
+    rex_amd_fam     = re.compile(r'^[Ff]?[0-9a-f]+h$')
     rex_brackets    = re.compile(r'^.*[()\[\]]+.*$')
     rex_c_keywords  = re.compile(r'#(ifdef|include)')
     rex_c_macro     = re.compile(r'^[A-Z0-9_]+$')
@@ -283,16 +294,21 @@ rex_word_split, rex_x86_traps
     # a commit ref is either preceded by some uninteresting chars and a space or it begins on a
     # newline
     rex_commit_ref  = re.compile(r'^(.*\s)?(?P<sha1>[a-f0-9]{7,})\s(?P<commit_title>\(\".*\"\)).*')
+    rex_constant    = re.compile(r'^~?[0-9]+(?:UL)?$')
 
     rex_decimal     = re.compile(r'^[0-9]+$')
     rex_errval      = re.compile(r'-E(EINVAL|EXIST|NODEV|NOMEM|OPNOTSUPP|PROBE_DEFER)')
 
     # match only absolute filenames, for regex simplicity
-    rex_abs_fnames      = re.compile(r"""\s?/([\w-]+/)+[\w-]+  # dirname + fname up to suffix
+    rex_abs_fnames      = re.compile(r"""\W/                # starts with /
+                                     ([\w_-]+/)+[\w_-]+     # dirname + fname up to suffix
                                      (\.(c|h|S|config))?    # filenames with no suffix too
                                      \W
                                      """,
                                      re.VERBOSE)
+
+    # potential word and / chars ending with a filename
+    rex_fnames      = re.compile(r'[\w_/-]?[\w_-]+\.(?:c|h|S|config|rst)')
 
     rex_gpr         = re.compile(r"""([re]?[abcd]x|     # the first 4
                                        r([89]|1[0-5])|  # the extended ones
@@ -310,20 +326,20 @@ rex_word_split, rex_x86_traps
     # path spec can begin on a new line
     rex_paths       = re.compile(r'(^|\s)/[\w/_\*-]+\s')
 
-    # xx:xx, with and without brackets around it
-    rex_reg_field   = re.compile(r'(\w+)?\[?\d+(:\d+)?\]?', re.I)
-    rex_sections    = re.compile(r'\.(bss|data|head|noinstr(\.text)?|text)')
+    # xx:xx, with brackets around it
+    rex_reg_field   = re.compile(r'(\w+)?\[\d+(:\d+)?\]', re.I)
+    rex_sections    = re.compile(r'\.(altinstr_replacement|bss|data|head|noinstr(\.text)?|text)')
 
     rex_sent_end    = re.compile(r"""\.((\s+)?      # catch all spaces after the end of the sentence
                                                     # as some formatters add more than one for block
                                                     # formatting
-                                  ([A-Z][a-z]+|$))  # Either another sentence starts here or EOL.
+                                  ([A-Za-z]+|$))  # Either another sentence starts here or EOL.
                                   """, re.VERBOSE)
 
     rex_struct_mem  = re.compile(r'\w+->\w+')
     # a hex with a following commit name
     rex_sha1        = re.compile(r'[a-f0-9]{12,40}\s?\(?"\w+"\)?', re.I)
-    rex_units       = re.compile(r'^(0x[0-9a-f]+|[0-9a-f]+(K|Mb))$', re.I)
+    rex_units       = re.compile(r'^(0x[0-9a-f]+|[0-9a-f]+[GMKP](i?b)?)$', re.I)
     rex_url         = re.compile(r'https?://[a-z0-9:/.-]+')
     rex_version     = re.compile(r'v\d+$', re.I)
     rex_word_bla    = re.compile(r'non-(\w+)')
@@ -464,9 +480,13 @@ def spellcheck(s, where, flags):
 
         # filenames, ditto
         line = rex_abs_fnames.sub('', line)
+        line = rex_fnames.sub('', line)
 
         # paths... replace with a single \s because the regex is eating it
         line = rex_paths.sub(' ', line)
+
+        # section names - no need to check those
+        line = rex_sections.sub(' ', line)
 
         # remove fullstops ending a sentence - not other dots, as in "i.e." for example.
         line = rex_sent_end.sub(r' \1', line)
@@ -536,7 +556,9 @@ def spellcheck(s, where, flags):
             if flags and flags['check_func']:
 
                 # it is only a heuristic anyway
-                if ('_' in w or w.endswith('()')) and words[i - 1] != "struct":
+                if (('_' in w or w.endswith('()'))
+                        and words[i - 1] != "struct"
+                        and not w.startswith('.')):
                     ret = spellcheck_func_name(w)
                     if ret:
                         continue
@@ -558,6 +580,12 @@ def spellcheck(s, where, flags):
             m = rex_units.match(w)
             if m:
                 dbg("Skip hex number/unit [%s], match [%s]" % (w, m.group(0)))
+                continue
+
+            # number: constants...
+            m = rex_constant.match(w)
+            if m:
+                dbg("Skip constant number [%s], match [%s]" % (w, m.group(0)))
                 continue
 
             # x86 trap names
@@ -583,6 +611,11 @@ def spellcheck(s, where, flags):
             # asm directives
             if rex_asm_dir.match(w):
                 dbg("Skip asm directive: [%s]" % (w, ))
+                continue
+
+            # AMD families
+            if rex_amd_fam.match(w):
+                dbg("Skip AMD family: [%s]" % (w, ))
                 continue
 
             # sections
@@ -677,6 +710,9 @@ class Patch:
         # the actual diff
         self.diff = None
 
+        self.no_link_check = False
+        self.no_link_tag = False
+
         # init ordered dictionary for tags processing
         self.od = collections.OrderedDict()
         # build in the proper order
@@ -740,6 +776,9 @@ class Patch:
         # remove funky newlines
         s = re.sub(r'\n', '', s)
 
+        # fixup EDAC prefix, needs to happen before the split as it uses the ':' as a sep
+        s = re.sub(r'edac:\s([a-z0-9]+)_edac:', r'EDAC/\1:', s, re.I)
+
         try:
             (prefix, title) = s.rsplit(':', 1)
         except ValueError:
@@ -748,7 +787,7 @@ class Patch:
 
         # replace commas in the subject with slashes. I need to avoid replacing when it looks like
         # "x86/MCE/AMD, EDAC/amd64:"
-        prefix = re.sub(r'([:alnum:]+),([:alnum:]+)', '\1/\2', prefix)
+        prefix = re.sub(r'([:alnum:]+),([:alnum:]+)', r'\1/\2', prefix)
 
         # uppercase "EDAC":
         prefix = re.sub(r'edac/', 'EDAC/', prefix)
@@ -759,7 +798,8 @@ class Patch:
         title = title.lstrip()
         new_title = title[0].upper() + title[1:]
 
-        spellcheck(new_title, "Subject", None)
+        flags = { 'check_func': True }
+        spellcheck(new_title, "Subject", flags)
 
         new_subj = prefix + ": " + new_title
 
@@ -925,8 +965,10 @@ class Patch:
 
         dbg("")
 
-        # zap any trailing empty lines
-        while not clines[-1]:
+        # zap any uninteresting lines
+        while (not clines[-1] or
+                   clines[-1].startswith("index ") or
+                   clines[-1].startswith("diff --git ")):
             ret_lines += 1
             clines.pop()
 
@@ -937,7 +979,12 @@ class Patch:
             if not line:
                 break
 
-            dbg(line)
+            if ':' not in line:
+                warn("skipping line: [%s]" % (line, ))
+                ret_lines += 1
+                continue
+            else:
+                dbg(line)
 
             (a, b) = line.split(':', maxsplit=1)
             tag = a.strip()
@@ -1016,11 +1063,9 @@ class Patch:
         """
         Go through the patch and pick apart stuff like tags, diffstat, hunks etc.
         """
-        i = 0
-
         plines = self.patch.splitlines()
 
-        for line in plines:
+        for i, line in enumerate(plines):
             dbg(" -> [%s]" % (line, ))
 
             # take only the first "---" split line. Subsequent ones can contain
@@ -1045,8 +1090,6 @@ class Patch:
                 plines = plines[cutoff_idx:]
                 break
 
-            i += 1
-
 
         dfst_len = self.__parse_diffstat(plines)
 
@@ -1054,11 +1097,9 @@ class Patch:
         plines = plines[dfst_len:]
 
         # skip potential sender notes etc
-        i = 0
-        for line in plines:
+        for i, line in enumerate(plines):
             if line.startswith("diff") or line.startswith("---"):
                 break
-            i += 1
 
         dbg("i: %d" % (i, ))
 
@@ -1124,7 +1165,7 @@ class Patch:
         spellcheck(self.commit_msg, "commit message", flags)
 
 
-    def format_tags(self, f, link_check=True):
+    def format_tags(self, f):
         """
         @f: Write into this file stream
         """
@@ -1151,6 +1192,9 @@ class Patch:
                 info("%s: %s" % (tag, v, ))
                 f.write(("%s: %s\n" % (tag, v, )))
 
+        if self.no_link_tag:
+            return
+
         # go through Link tags from the patch itself:
         if od['Link']:
             for url in od['Link']:
@@ -1168,7 +1212,7 @@ class Patch:
             link_url = ("https://lore.kernel.org/r/%s" % (self.message_id, ))
 
             # check it
-            if link_check:
+            if not self.no_link_check:
                 try:
                     get = requests.get(link_url)
                     if get.status_code != 200:
@@ -1196,7 +1240,7 @@ class Patch:
         self.verify_commit_message()
         self.verify_diff()
 
-    def format_patch(self, link_check):
+    def format_patch(self):
         """
         Write patch to tmp_dir after having processed it properly
 
@@ -1232,15 +1276,15 @@ class Patch:
         f_out.write(("%s\n" % (self.commit_msg, )))
 
         info(" | tags:")
-        self.format_tags(f_out, link_check)
+        self.format_tags(f_out)
 
         f_out.write("---\n")
 
-        info(" | diffstat:")
-        info(self.diffstat)
-        f_out.write(("%s" % (self.diffstat, )))
-
-        f_out.write("\n\n")
+        if self.diffstat:
+            info(" | diffstat:")
+            info(self.diffstat)
+            f_out.write(("%s" % (self.diffstat, )))
+            f_out.write("\n\n")
 
         info(" | diff")
         info(self.diff)
@@ -1422,7 +1466,10 @@ def main(args):
 
     print(p)
 
-    p.format_patch(not args.no_link_check)
+    p.no_link_check = args.no_link_check
+    p.no_link_tag   = args.no_link_tag
+
+    p.format_patch()
 
 def parse_config_file():
     global tmp_dir, sob, git_repo
@@ -1473,6 +1520,11 @@ def init_parser():
                         action="store_true",
                         default=False,
                         help="Do not check whether the Link tag URL is accessible")
+
+    parser.add_argument("--no-link-tag",
+                        action="store_true",
+                        default=False,
+                        help="Do not add a Link tag")
 
     parser.add_argument("-v", "--verbose",
                         action="count",
