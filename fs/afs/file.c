@@ -184,8 +184,8 @@ int afs_release(struct inode *inode, struct file *file)
 
 	_enter("{%llx:%llu},", vnode->fid.vid, vnode->fid.vnode);
 
-	if ((file->f_mode & FMODE_WRITE))
-		ret = vfs_fsync(file, 0);
+	//if ((file->f_mode & FMODE_WRITE))
+	//	ret = vfs_fsync(file, 0);
 
 	file->private_data = NULL;
 	if (af->wb)
