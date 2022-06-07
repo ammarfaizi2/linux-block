@@ -19,6 +19,13 @@ struct migration_target_control;
  */
 #define MIGRATEPAGE_SUCCESS		0
 
+struct movable_operations {
+	bool (*isolate_page)(struct page *, isolate_mode_t);
+	int (*migrate_page)(struct page *dst, struct page *src,
+			enum migrate_mode);
+	void (*putback_page)(struct page *);
+};
+
 /* Defined in mm/debug.c: */
 extern const char *migrate_reason_names[MR_TYPES];
 
@@ -91,13 +98,13 @@ static inline int next_demotion_node(int node)
 #endif
 
 #ifdef CONFIG_COMPACTION
-extern int PageMovable(struct page *page);
-extern void __SetPageMovable(struct page *page, struct address_space *mapping);
-extern void __ClearPageMovable(struct page *page);
+bool PageMovable(struct page *page);
+void __SetPageMovable(struct page *page, const struct movable_operations *ops);
+void __ClearPageMovable(struct page *page);
 #else
-static inline int PageMovable(struct page *page) { return 0; }
+static inline bool PageMovable(struct page *page) { return false; }
 static inline void __SetPageMovable(struct page *page,
-				struct address_space *mapping)
+		const struct movable_operations *ops)
 {
 }
 static inline void __ClearPageMovable(struct page *page)
@@ -108,6 +115,15 @@ static inline void __ClearPageMovable(struct page *page)
 static inline bool folio_test_movable(struct folio *folio)
 {
 	return PageMovable(&folio->page);
+}
+
+static inline
+const struct movable_operations *page_movable_ops(struct page *page)
+{
+	VM_BUG_ON(!__PageMovable(page));
+
+	return (const struct movable_operations *)
+		((unsigned long)page->mapping - PAGE_MAPPING_MOVABLE);
 }
 
 #ifdef CONFIG_NUMA_BALANCING
