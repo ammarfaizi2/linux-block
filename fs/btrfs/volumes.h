@@ -158,6 +158,8 @@ struct btrfs_device {
 	/* Bio used for flushing device barriers */
 	struct bio flush_bio;
 	struct completion flush_wait;
+	/* Temporary page for writing the superblock */
+	struct page *sb_write_page;
 
 	/* per-device scrub information */
 	struct scrub_ctx *scrub_ctx;
