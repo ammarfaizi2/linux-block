@@ -6867,7 +6867,6 @@ int ath12k_mac_allocate(struct ath12k_base *ab)
 		init_completion(&ar->bss_survey_done);
 		init_completion(&ar->scan.started);
 		init_completion(&ar->scan.completed);
-		init_completion(&ar->thermal.wmi_sync);
 
 		INIT_DELAYED_WORK(&ar->scan.timeout, ath12k_scan_timeout_work);
 		INIT_WORK(&ar->regd_update_work, ath12k_regd_update_work);

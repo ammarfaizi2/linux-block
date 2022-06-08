@@ -507,17 +507,8 @@ static int ath12k_core_pdev_create(struct ath12k_base *ab)
 		goto err_mac_unregister;
 	}
 
-	ret = ath12k_thermal_register(ab);
-	if (ret) {
-		ath12k_err(ab, "could not register thermal device: %d\n",
-			   ret);
-		goto err_dp_pdev_free;
-	}
-
 	return 0;
 
-err_dp_pdev_free:
-	ath12k_dp_pdev_free(ab);
 err_mac_unregister:
 	ath12k_mac_unregister(ab);
 
@@ -526,7 +517,6 @@ err_mac_unregister:
 
 static void ath12k_core_pdev_destroy(struct ath12k_base *ab)
 {
-	ath12k_thermal_unregister(ab);
 	ath12k_mac_unregister(ab);
 	ath12k_hif_irq_disable(ab);
 	ath12k_dp_pdev_free(ab);
@@ -718,7 +708,6 @@ static int ath12k_core_reconfigure_on_crash(struct ath12k_base *ab)
 	int ret;
 
 	mutex_lock(&ab->core_lock);
-	ath12k_thermal_unregister(ab);
 	ath12k_hif_irq_disable(ab);
 	ath12k_dp_pdev_free(ab);
 	ath12k_hif_stop(ab);
@@ -796,7 +785,6 @@ static void ath12k_core_pre_reconfigure_recovery(struct ath12k_base *ab)
 		complete(&ar->vdev_setup_done);
 		complete(&ar->vdev_delete_done);
 		complete(&ar->bss_survey_done);
-		complete(&ar->thermal.wmi_sync);
 
 		wake_up(&ar->dp.tx_empty_waitq);
 		idr_for_each(&ar->txmgmt_idr,

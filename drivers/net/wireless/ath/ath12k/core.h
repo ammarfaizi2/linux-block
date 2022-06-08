@@ -21,7 +21,6 @@
 #include "hw.h"
 #include "hal_rx.h"
 #include "reg.h"
-#include "thermal.h"
 #include "dbring.h"
 
 #define SM(_v, _f) (((_v) << _f##_LSB) & _f##_MASK)
@@ -594,7 +593,6 @@ struct ath12k {
 	u32 cached_ppdu_id;
 
 	bool dfs_block_radar_events;
-	struct ath12k_thermal thermal;
 	bool monitor_conf_enabled;
 	bool monitor_vdev_created;
 	bool monitor_started;

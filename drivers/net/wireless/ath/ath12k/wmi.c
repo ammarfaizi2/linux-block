@@ -6890,8 +6890,6 @@ ath12k_wmi_pdev_temperature_event(struct ath12k_base *ab,
 		ath12k_warn(ab, "invalid pdev id in pdev temperature ev %d", ev.pdev_id);
 		return;
 	}
-
-	ath12k_thermal_event_temperature(ar, ev.temp);
 }
 
 static void ath12k_fils_discovery_event(struct ath12k_base *ab,

@@ -23,7 +23,6 @@ ath12k-y += core.o \
 	    dp_mon.o
 
 ath12k-$(CONFIG_ATH12K_TRACING) += trace.o
-ath12k-$(CONFIG_THERMAL) += thermal.o
 
 # for tracing framework to find trace.h
 CFLAGS_trace.o := -I$(src)
