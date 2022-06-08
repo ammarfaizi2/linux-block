@@ -8,7 +8,6 @@
 #define _ATH12K_DEBUG_H_
 
 #include "trace.h"
-#include "debugfs.h"
 
 enum ath12k_debug_mask {
 	ATH12K_DBG_AHB		= 0x00000001,

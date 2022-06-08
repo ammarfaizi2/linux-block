@@ -5315,6 +5315,8 @@ struct wmi_wow_ev_arg {
 	u32 data_len;
 };
 
+#define ATH12K_FW_STATS_BUF_SIZE (1024 * 1024)
+
 int ath12k_wmi_cmd_send(struct ath12k_pdev_wmi *wmi, struct sk_buff *skb,
 			u32 cmd_id);
 struct sk_buff *ath12k_wmi_alloc_skb(struct ath12k_wmi_base *wmi_sc, u32 len);

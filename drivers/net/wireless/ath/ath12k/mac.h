@@ -117,6 +117,9 @@ struct ath12k_generic_iter {
 
 #define ATH12K_CHAN_WIDTH_NUM			8
 
+#define ATH12K_TX_POWER_MAX_VAL	70
+#define ATH12K_TX_POWER_MIN_VAL	0
+
 extern const struct htt_rx_ring_tlv_filter ath12k_mac_mon_status_filter_default;
 
 void ath12k_mac_destroy(struct ath12k_base *ab);
