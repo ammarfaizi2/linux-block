@@ -114,6 +114,7 @@ struct ath12k_skb_rxcb {
 
 enum ath12k_hw_rev {
 	ATH12K_HW_QCN92XX_HW10,
+	ATH12K_HW_WCN7850_HW20
 };
 
 enum ath12k_firmware_mode {

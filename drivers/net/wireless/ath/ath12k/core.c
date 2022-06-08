@@ -67,6 +67,42 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.num_tcl_banks = 48,
 		.fix_l1ss = false,
 	},
+	{
+		.name = "wcn7850 hw2.0",
+		.hw_rev = ATH12K_HW_WCN7850_HW20,
+		.fw = {
+			.dir = "WCN7850/hw2.0",
+			.board_size = 256 * 1024,
+			.cal_offset = 256 * 1024,
+		},
+		.max_radios = 1,
+		.single_pdev_only = true,
+		.qmi_service_ins_id = 0,
+		.hw_ops = NULL,
+		.ring_mask = NULL,
+		.internal_sleep_clock = true,
+		.regs = NULL,
+		.host_ce_config = NULL,
+		.ce_count = 0,
+		.target_ce_config = NULL,
+		.target_ce_count = 0,
+		.svc_to_ce_map = NULL,
+		.svc_to_ce_map_len = 0,
+		.rxdma1_enable = false,
+		.num_rxmda_per_pdev = 2,
+		.rx_mac_buf_ring = true,
+		.vdev_start_delay = true,
+		.interface_modes = BIT(NL80211_IFTYPE_STATION) |
+					BIT(NL80211_IFTYPE_AP) |
+					BIT(NL80211_IFTYPE_MESH_POINT),
+		.supports_monitor = false,
+		.idle_ps = false,
+		.cold_boot_calib = false,
+		.supports_suspend = false,
+		.hal_desc_sz = 0,
+		.num_tcl_banks = 7,
+		.fix_l1ss = false,
+	},
 };
 
 int ath12k_core_suspend(struct ath12k_base *ab)
