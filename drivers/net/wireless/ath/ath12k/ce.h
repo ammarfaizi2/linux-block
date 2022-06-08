@@ -173,6 +173,7 @@ struct ath12k_ce {
 };
 
 extern const struct ce_attr ath12k_host_ce_config_qcn92xx[];
+extern const struct ce_attr ath12k_host_ce_config_wcn7850[];
 
 void ath12k_ce_cleanup_pipes(struct ath12k_base *ab);
 void ath12k_ce_rx_replenish_retry(struct timer_list *t);
