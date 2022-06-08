@@ -2090,6 +2090,7 @@ int unpoison_memory(unsigned long pfn)
 {
 	struct page *page;
 	struct page *p;
+	pte_t *kpte;
 	int ret = -EBUSY;
 	int freeit = 0;
 	static DEFINE_RATELIMIT_STATE(unpoison_rs, DEFAULT_RATELIMIT_INTERVAL,
@@ -2100,6 +2101,13 @@ int unpoison_memory(unsigned long pfn)
 
 	p = pfn_to_page(pfn);
 	page = compound_head(p);
+
+	kpte = virt_to_kpte((unsigned long)page_to_virt(p));
+	if (kpte && !pte_present(*kpte)) {
+		unpoison_pr_info("Unpoison: Page was hardware poisoned %#lx\n",
+				 pfn, &unpoison_rs);
+		return -EPERM;
+	}
 
 	mutex_lock(&mf_mutex);
 
