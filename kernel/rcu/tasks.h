@@ -1158,10 +1158,11 @@ EXPORT_SYMBOL_GPL(show_rcu_tasks_rude_gp_kthread);
 //	Disables CPU hotplug, adds all currently executing tasks to the
 //	holdout list, then checks the state of all tasks that blocked
 //	or were preempted within their current RCU Tasks Trace read-side
-//	critical section, adding them to the holdout list if appropriate..
+//	critical section, adding them to the holdout list if appropriate.
+//	Finally, this function re-enables CPU hotplug.
 // The ->pertask_func() pointer is NULL, so there is no per-task processing.
 // rcu_tasks_trace_postscan():
-//	Re-enables CPU hotplug and waits for late-stage exiting tasks
+//	Invokes synchronize_rcu() to wait for late-stage exiting tasks
 //	to finish exiting.
 // check_all_holdout_tasks_trace(), repeatedly until holdout list is empty:
 //	Scans the holdout list, attempting to identify a quiescent state
