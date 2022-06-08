@@ -172,6 +172,7 @@ struct ath12k_hw_ops {
 };
 
 extern const struct ath12k_hw_ops qcn92xx_ops;
+extern const struct ath12k_hw_ops wcn7850_ops;
 
 extern const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_qcn92xx;
 

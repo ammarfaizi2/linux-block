@@ -29,10 +29,28 @@ static int ath12k_hw_mac_id_to_srng_id_qcn92xx(struct ath12k_hw_params *hw,
 	return 0;
 }
 
+static int ath12k_hw_mac_id_to_pdev_id_wcn7850(struct ath12k_hw_params *hw,
+					       int mac_id)
+{
+	return 0;
+}
+
+static int ath12k_hw_mac_id_to_srng_id_wcn7850(struct ath12k_hw_params *hw,
+					       int mac_id)
+{
+	return mac_id;
+}
+
 const struct ath12k_hw_ops qcn92xx_ops = {
 	.get_hw_mac_from_pdev_id = ath12k_hw_qcn92xx_mac_from_pdev_id,
 	.mac_id_to_pdev_id = ath12k_hw_mac_id_to_pdev_id_qcn92xx,
 	.mac_id_to_srng_id = ath12k_hw_mac_id_to_srng_id_qcn92xx,
+};
+
+const struct ath12k_hw_ops wcn7850_ops = {
+	.get_hw_mac_from_pdev_id = ath12k_hw_qcn92xx_mac_from_pdev_id,
+	.mac_id_to_pdev_id = ath12k_hw_mac_id_to_pdev_id_wcn7850,
+	.mac_id_to_srng_id = ath12k_hw_mac_id_to_srng_id_wcn7850,
 };
 
 #define ATH12K_TX_RING_MASK_0 0x1
