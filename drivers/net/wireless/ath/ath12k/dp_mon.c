@@ -2094,14 +2094,6 @@ int ath12k_dp_mon_srng_process(struct ath12k *ar, int mac_id, int *budget,
 		buf_ring = &dp->tx_mon_buf_ring;
 	}
 
-	if (ath12k_debugfs_is_pktlog_lite_mode_enabled(ar)) {
-		log_type = ATH12K_PKTLOG_TYPE_LITE_RX;
-		rx_buf_sz = DP_RX_BUFFER_SIZE_LITE;
-	} else if (ath12k_debugfs_is_pktlog_rx_stats_enabled(ar)) {
-		log_type = ATH12K_PKTLOG_TYPE_RX_STATBUF;
-		rx_buf_sz = DP_RX_BUFFER_SIZE;
-	}
-
 	srng = &ab->hal.srng_list[mon_dst_ring->ring_id];
 
 	spin_lock_bh(&srng->lock);
@@ -2163,10 +2155,6 @@ int ath12k_dp_mon_srng_process(struct ath12k *ar, int mac_id, int *budget,
 				dev_kfree_skb_any(skb);
 				continue;
 			}
-
-			if (ath12k_debugfs_is_pktlog_peer_valid(ar, peer->addr))
-				trace_ath12k_htt_rxdesc(ar, skb->data,
-							log_type, rx_buf_sz);
 
 			dev_kfree_skb_any(skb);
 			pmon->dest_skb_q[i] = NULL;
@@ -2232,9 +2220,6 @@ static void ath12k_dp_mon_rx_update_peer_su_stats(struct ath12k *ar,
 		return;
 
 	arsta->rssi_comb = ppdu_info->rssi_comb;
-
-	if (!ath12k_debugfs_is_extd_rx_stats_enabled(ar))
-		return;
 
 	num_msdu = ppdu_info->tcp_msdu_count + ppdu_info->tcp_ack_msdu_count +
 		   ppdu_info->udp_msdu_count + ppdu_info->other_msdu_count;
@@ -2482,9 +2467,6 @@ ath12k_dp_mon_rx_update_peer_mu_stats(struct ath12k *ar,
 				      struct hal_rx_mon_ppdu_info *ppdu_info)
 {
 	u32 num_users, i;
-
-	if (!ath12k_debugfs_is_extd_rx_stats_enabled(ar))
-		return;
 
 	num_users = ppdu_info->num_users;
 	if (num_users > HAL_MAX_UL_MU_USERS)

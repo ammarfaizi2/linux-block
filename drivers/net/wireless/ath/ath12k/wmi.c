@@ -6718,7 +6718,6 @@ static void ath12k_peer_assoc_conf_event(struct ath12k_base *ab, struct sk_buff 
 
 static void ath12k_update_stats_event(struct ath12k_base *ab, struct sk_buff *skb)
 {
-	ath12k_debugfs_fw_stats_process(ab, skb);
 }
 
 /* PDEV_CTL_FAILSAFE_CHECK_EVENT is received from FW when the frequency scanned

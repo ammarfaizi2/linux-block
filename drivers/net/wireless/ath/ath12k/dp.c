@@ -972,16 +972,12 @@ done:
 
 void ath12k_dp_pdev_free(struct ath12k_base *ab)
 {
-	struct ath12k *ar;
 	int i;
 
 	del_timer_sync(&ab->mon_reap_timer);
 
-	for (i = 0; i < ab->num_radios; i++) {
-		ar = ab->pdevs[i].ar;
+	for (i = 0; i < ab->num_radios; i++)
 		ath12k_dp_rx_pdev_free(ab, i);
-		ath12k_debugfs_unregister(ar);
-	}
 }
 
 void ath12k_dp_pdev_pre_alloc(struct ath12k_base *ab)

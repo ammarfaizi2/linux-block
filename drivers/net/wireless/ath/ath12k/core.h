@@ -424,14 +424,8 @@ struct ath12k_sta {
 	u64 rx_duration;
 	u64 tx_duration;
 	u8 rssi_comb;
-	struct ath12k_htt_tx_stats *tx_stats;
 	struct ath12k_rx_peer_stats *rx_stats;
 	struct ath12k_wbm_tx_stats *wbm_tx_stats;
-
-#ifdef CONFIG_MAC80211_DEBUGFS
-	/* protected by conf_mutex */
-	bool aggr_mode;
-#endif
 };
 
 #define ATH12K_MIN_5G_FREQ 4150
@@ -453,35 +447,11 @@ enum ath12k_state {
 #define ATH12K_DEFAULT_NOISE_FLOOR -95
 
 struct ath12k_fw_stats {
-	struct dentry *debugfs_fwstats;
 	u32 pdev_id;
 	u32 stats_id;
 	struct list_head pdevs;
 	struct list_head vdevs;
 	struct list_head bcn;
-};
-
-struct ath12k_dbg_htt_stats {
-	u8 type;
-	u8 reset;
-	struct debug_htt_stats_req *stats_req;
-	/* protects shared stats req buffer */
-	spinlock_t lock;
-};
-
-struct ath12k_debug {
-	struct dentry *debugfs_pdev;
-	struct ath12k_dbg_htt_stats htt_stats;
-	u32 extd_tx_stats;
-	struct ath12k_fw_stats fw_stats;
-	struct completion fw_stats_complete;
-	bool fw_stats_done;
-	u32 extd_rx_stats;
-	u32 pktlog_filter;
-	u32 pktlog_mode;
-	u32 pktlog_peer_valid;
-	u8 pktlog_peer_addr[ETH_ALEN];
-	u32 rx_filter;
 };
 
 struct ath12k_per_peer_tx_stats {
@@ -622,9 +592,6 @@ struct ath12k {
 	struct ath12k_per_peer_tx_stats cached_stats;
 	u32 last_ppdu_id;
 	u32 cached_ppdu_id;
-#ifdef CONFIG_ATH12K_DEBUGFS
-	struct ath12k_debug debug;
-#endif
 
 	bool dfs_block_radar_events;
 	struct ath12k_thermal thermal;
@@ -797,9 +764,6 @@ struct ath12k_base {
 
 	/* Current DFS Regulatory */
 	enum ath12k_dfs_region dfs_region;
-#ifdef CONFIG_ATH12K_DEBUGFS
-	struct dentry *debugfs_soc;
-#endif
 	struct ath12k_soc_dp_stats soc_stats;
 
 	unsigned long dev_flags;

@@ -10,8 +10,6 @@
 #include <crypto/hash.h>
 #include "core.h"
 #include "debug.h"
-#include "debugfs_htt_stats.h"
-#include "debugfs_sta.h"
 #include "hal_desc.h"
 #include "hw.h"
 #include "dp_rx.h"
@@ -1435,9 +1433,6 @@ ath12k_update_per_peer_tx_stats(struct ath12k *ar,
 		peer_stats->ba_fails =
 			HTT_USR_CMPLTN_LONG_RETRY(usr_stats->cmpltn_cmn.flags) +
 			HTT_USR_CMPLTN_SHORT_RETRY(usr_stats->cmpltn_cmn.flags);
-
-		if (ath12k_debugfs_is_extd_tx_stats_enabled(ar))
-			ath12k_debugfs_sta_add_tx_stats(arsta, peer_stats, rate_idx);
 	}
 
 	spin_unlock_bh(&ab->base_lock);
@@ -1543,9 +1538,6 @@ static int ath12k_htt_pull_ppdu_stats(struct ath12k_base *ab,
 		ret = -EINVAL;
 		goto exit;
 	}
-
-	if (ath12k_debugfs_is_pktlog_lite_mode_enabled(ar))
-		trace_ath12k_htt_ppdu_stats(ar, skb->data, len);
 
 	spin_lock_bh(&ar->data_lock);
 	ppdu_info = ath12k_dp_htt_get_ppdu_desc(ar, ppdu_id);
@@ -1855,7 +1847,6 @@ void ath12k_dp_htt_htc_t2h_msg_handler(struct ath12k_base *ab,
 		ath12k_htt_pull_ppdu_stats(ab, skb);
 		break;
 	case HTT_T2H_MSG_TYPE_EXT_STATS_CONF:
-		ath12k_debugfs_htt_ext_stats_handler(ab, skb);
 		break;
 	case HTT_T2H_MSG_TYPE_PKTLOG:
 		ath12k_htt_pktlog(ab, skb);

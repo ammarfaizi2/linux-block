@@ -14,7 +14,6 @@
 #include "dp_tx.h"
 #include "dp_rx.h"
 #include "peer.h"
-#include "debugfs_sta.h"
 
 #define CHAN2G(_channel, _freq, _flags) { \
 	.band                   = NL80211_BAND_2GHZ, \
@@ -3294,19 +3293,11 @@ static int ath12k_mac_station_add(struct ath12k *ar,
 	if (ret) {
 		ath12k_warn(ab, "Failed to add peer: %pM for VDEV: %d\n",
 			    sta->addr, arvif->vdev_id);
-		goto free_rx_stats;
+		goto free_peer;
 	}
 
 	ath12k_dbg(ab, ATH12K_DBG_MAC, "Added peer: %pM for VDEV: %d\n",
 		   sta->addr, arvif->vdev_id);
-
-	if (ath12k_debugfs_is_extd_tx_stats_enabled(ar)) {
-		arsta->tx_stats = kzalloc(sizeof(*arsta->tx_stats), GFP_KERNEL);
-		if (!arsta->tx_stats) {
-			ret = -ENOMEM;
-			goto free_peer;
-		}
-	}
 
 	if (ieee80211_vif_is_mesh(vif)) {
 		ret = ath12k_wmi_set_peer_param(ar, sta->addr,
@@ -3315,7 +3306,7 @@ static int ath12k_mac_station_add(struct ath12k *ar,
 		if (ret) {
 			ath12k_warn(ab, "failed to STA %pM 4addr capability: %d\n",
 				    sta->addr, ret);
-			goto free_tx_stats;
+			goto free_peer;
 		}
 	}
 
@@ -3323,7 +3314,7 @@ static int ath12k_mac_station_add(struct ath12k *ar,
 	if (ret) {
 		ath12k_warn(ab, "failed to setup dp for peer %pM on vdev %i (%d)\n",
 			    sta->addr, arvif->vdev_id, ret);
-		goto free_tx_stats;
+		goto free_peer;
 	}
 
 	if (ab->hw_params.vdev_start_delay &&
@@ -3332,20 +3323,14 @@ static int ath12k_mac_station_add(struct ath12k *ar,
 		ret = ath12k_start_vdev_delay(ar->hw, vif);
 		if (ret) {
 			ath12k_warn(ab, "failed to delay vdev start: %d\n", ret);
-			goto free_tx_stats;
+			goto free_peer;
 		}
 	}
 
 	return 0;
 
-free_tx_stats:
-	kfree(arsta->tx_stats);
-	arsta->tx_stats = NULL;
 free_peer:
 	ath12k_peer_delete(ar, arvif->vdev_id, sta->addr);
-free_rx_stats:
-	kfree(arsta->rx_stats);
-	arsta->rx_stats = NULL;
 dec_num_station:
 	ath12k_mac_dec_num_stations(arvif, sta);
 exit:
@@ -3405,9 +3390,6 @@ static int ath12k_mac_op_sta_state(struct ieee80211_hw *hw,
 			ar->num_peers--;
 		}
 		spin_unlock_bh(&ar->ab->base_lock);
-
-		kfree(arsta->tx_stats);
-		arsta->tx_stats = NULL;
 
 		kfree(arsta->rx_stats);
 		arsta->rx_stats = NULL;
@@ -6375,10 +6357,6 @@ static const struct ieee80211_ops ath12k_ops = {
 	.get_survey			= ath12k_mac_op_get_survey,
 	.flush				= ath12k_mac_op_flush,
 	.sta_statistics			= ath12k_mac_op_sta_statistics,
-
-#ifdef CONFIG_ATH12K_DEBUGFS
-	.sta_add_debugfs		= ath12k_debugfs_sta_op_add,
-#endif
 };
 
 static void ath12k_mac_update_ch_list(struct ath12k *ar,
@@ -6772,12 +6750,6 @@ static int __ath12k_mac_register(struct ath12k *ar)
 	ret = ath12k_regd_update(ar, true);
 	if (ret) {
 		ath12k_err(ar->ab, "ath12k regd update failed: %d\n", ret);
-		goto err_unregister_hw;
-	}
-
-	ret = ath12k_debugfs_register(ar);
-	if (ret) {
-		ath12k_err(ar->ab, "debugfs registration failed: %d\n", ret);
 		goto err_unregister_hw;
 	}
 

@@ -1341,7 +1341,6 @@ static void ath12k_pci_remove(struct pci_dev *pdev)
 
 	if (test_bit(ATH12K_FLAG_QMI_FAIL, &ab->dev_flags)) {
 		ath12k_pci_power_down(ab);
-		ath12k_debugfs_soc_destroy(ab);
 		ath12k_qmi_deinit_service(ab);
 		goto qmi_fail;
 	}
@@ -1414,29 +1413,20 @@ static int ath12k_pci_init(void)
 {
 	int ret;
 
-	ret = ath12k_debugfs_create();
-	if (ret)
-		pr_info("failed to register debugfs ath12k driver: %d\n", ret);
-
 	ret = pci_register_driver(&ath12k_pci_driver);
 	if (ret) {
 		pr_err("failed to register ath12k pci driver: %d\n",
 		       ret);
-		goto err;
+		return ret;
 	}
 
 	return 0;
-
-err:
-	ath12k_debugfs_destroy();
-	return ret;
 }
 module_init(ath12k_pci_init);
 
 static void ath12k_pci_exit(void)
 {
 	pci_unregister_driver(&ath12k_pci_driver);
-	ath12k_debugfs_destroy();
 }
 
 module_exit(ath12k_pci_exit);

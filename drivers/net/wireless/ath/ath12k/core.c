@@ -471,22 +471,14 @@ static int ath12k_core_soc_create(struct ath12k_base *ab)
 		return ret;
 	}
 
-	ret = ath12k_debugfs_soc_create(ab);
-	if (ret) {
-		ath12k_err(ab, "failed to create ath12k debugfs\n");
-		goto err_qmi_deinit;
-	}
-
 	ret = ath12k_hif_power_up(ab);
 	if (ret) {
 		ath12k_err(ab, "failed to power up :%d\n", ret);
-		goto err_debugfs_reg;
+		goto err_qmi_deinit;
 	}
 
 	return 0;
 
-err_debugfs_reg:
-	ath12k_debugfs_soc_destroy(ab);
 err_qmi_deinit:
 	ath12k_qmi_deinit_service(ab);
 	return ret;
@@ -494,7 +486,6 @@ err_qmi_deinit:
 
 static void ath12k_core_soc_destroy(struct ath12k_base *ab)
 {
-	ath12k_debugfs_soc_destroy(ab);
 	ath12k_dp_free(ab);
 	ath12k_reg_free(ab);
 	ath12k_qmi_deinit_service(ab);
@@ -504,16 +495,10 @@ static int ath12k_core_pdev_create(struct ath12k_base *ab)
 {
 	int ret;
 
-	ret = ath12k_debugfs_pdev_create(ab);
-	if (ret) {
-		ath12k_err(ab, "failed to create core pdev debugfs: %d\n", ret);
-		return ret;
-	}
-
 	ret = ath12k_mac_register(ab);
 	if (ret) {
 		ath12k_err(ab, "failed register the radio with mac80211: %d\n", ret);
-		goto err_pdev_debug;
+		return ret;
 	}
 
 	ret = ath12k_dp_pdev_alloc(ab);
@@ -535,8 +520,6 @@ err_dp_pdev_free:
 	ath12k_dp_pdev_free(ab);
 err_mac_unregister:
 	ath12k_mac_unregister(ab);
-err_pdev_debug:
-	ath12k_debugfs_pdev_destroy(ab);
 
 	return ret;
 }
@@ -547,7 +530,6 @@ static void ath12k_core_pdev_destroy(struct ath12k_base *ab)
 	ath12k_mac_unregister(ab);
 	ath12k_hif_irq_disable(ab);
 	ath12k_dp_pdev_free(ab);
-	ath12k_debugfs_pdev_destroy(ab);
 }
 
 static int ath12k_core_start(struct ath12k_base *ab,
