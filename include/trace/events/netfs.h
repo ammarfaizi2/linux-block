@@ -128,7 +128,9 @@
 	EM(netfs_dirty_trace_flush2,		"FLUSH!    ")	\
 	EM(netfs_dirty_trace_flush_conflict,	"FLSH CONFL")	\
 	EM(netfs_dirty_trace_flush_dsync,	"FLSH DSYNC")	\
-	EM(netfs_dirty_trace_insert,		"INSERT    ")	\
+	EM(netfs_dirty_trace_insert_only,	"INS ONLY  ")	\
+	EM(netfs_dirty_trace_insert_after,	"INS AFTER ")	\
+	EM(netfs_dirty_trace_insert_before,	"INS BEFORE")	\
 	EM(netfs_dirty_trace_mark_copy_to_cache,"COPY2CACHE")	\
 	EM(netfs_dirty_trace_merged_next,	"MERGE NEXT")	\
 	EM(netfs_dirty_trace_merged_next_super,	"MRG NXT SU")	\
@@ -141,7 +143,9 @@
 	EM(netfs_dirty_trace_split_off_back,	"SPLIT BACK")	\
 	EM(netfs_dirty_trace_split_off_front,	"SPLIT FRNT")	\
 	EM(netfs_dirty_trace_superseded,	"SUPERSEDED")	\
-	EM(netfs_dirty_trace_supersede,		"SUPERSEDE ")	\
+	EM(netfs_dirty_trace_supersede_all,	"SUPRSD ALL")	\
+	EM(netfs_dirty_trace_supersede_back,	"SUPRSD BAK")	\
+	EM(netfs_dirty_trace_supersede_front,	"SUPRSD FRN")	\
 	E_(netfs_dirty_trace_wait_active,	"WAIT ACTV ")
 
 #define netfs_folio_traces					\

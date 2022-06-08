@@ -71,12 +71,12 @@ static void *netfs_requests_seq_start(struct seq_file *m, loff_t *_pos)
 	__acquires(rcu)
 {
 	rcu_read_lock();
-	return seq_list_start_head(&netfs_io_requests, *_pos);
+	return seq_list_start_head_rcu(&netfs_io_requests, *_pos);
 }
 
 static void *netfs_requests_seq_next(struct seq_file *m, void *v, loff_t *_pos)
 {
-	return seq_list_next(v, &netfs_io_requests, _pos);
+	return seq_list_next_rcu(v, &netfs_io_requests, _pos);
 }
 
 static void netfs_requests_seq_stop(struct seq_file *m, void *v)
@@ -123,12 +123,12 @@ static void *netfs_regions_seq_start(struct seq_file *m, loff_t *_pos)
 	__acquires(rcu)
 {
 	rcu_read_lock();
-	return seq_list_start_head(&netfs_regions, *_pos);
+	return seq_list_start_head_rcu(&netfs_regions, *_pos);
 }
 
 static void *netfs_regions_seq_next(struct seq_file *m, void *v, loff_t *_pos)
 {
-	return seq_list_next(v, &netfs_regions, _pos);
+	return seq_list_next_rcu(v, &netfs_regions, _pos);
 }
 
 static void netfs_regions_seq_stop(struct seq_file *m, void *v)

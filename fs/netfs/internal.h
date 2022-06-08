@@ -32,8 +32,6 @@ int netfs_prefetch_for_write(struct file *file, struct folio *folio, size_t len)
 /*
  * buffered_write.c
  */
-int netfs_preallocate_regions(struct list_head *spare_regions);
-void netfs_unpreallocate_regions(struct list_head *spare_regions);
 void netfs_discard_regions(struct netfs_inode *ctx,
 			   struct list_head *discards,
 			   enum netfs_region_trace why);
@@ -42,6 +40,11 @@ bool netfs_are_regions_mergeable(struct netfs_inode *ctx,
 				 const struct netfs_dirty_region *b);
 struct netfs_dirty_region *netfs_find_region(struct netfs_inode *ctx,
 					     pgoff_t first, pgoff_t last);
+void netfs_split_off_front(struct netfs_inode *ctx,
+			   struct netfs_dirty_region *front,
+			   struct netfs_dirty_region *back,
+			   pgoff_t front_last,
+			   enum netfs_dirty_trace why);
 void netfs_rreq_do_write_to_cache(struct netfs_io_request *rreq);
 
 /*

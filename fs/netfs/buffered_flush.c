@@ -187,7 +187,7 @@ int netfs_flush_conflicting_writes(struct netfs_inode *ctx,
  * point indicates the last page in the front region.  A pointer to the new
  * front part is returned.
  */
-static struct netfs_dirty_region *netfs_split_off_front(
+static struct netfs_dirty_region *netfs_alloc_split_off_front(
 	struct netfs_inode *ctx,
 	struct netfs_dirty_region *back,
 	pgoff_t front_last,
@@ -195,39 +195,13 @@ static struct netfs_dirty_region *netfs_split_off_front(
 {
 	struct netfs_dirty_region *front;
 
-	BUG_ON(back->first > front_last);
-	BUG_ON(back->last < front_last);
-
 	front = netfs_alloc_dirty_region(GFP_ATOMIC);
 	if (!front) {
 		pr_err("OOM\n");
 		BUG();
 	}
 
-	front->debug_id = atomic_inc_return(&netfs_region_debug_ids);
-	front->type	= back->type;
-	front->first	= back->first;
-	front->last	= front_last;
-	back->first	= front->last + 1;
-	front->from	= back->from;
-	back->from	= back->first * PAGE_SIZE;
-	front->to	= back->from;
-
-	_debug("front %04lx-%04lx %08llx-%08llx",
-	       front->first, front->last, front->from, front->to);
-	_debug("back  %04lx-%04lx %08llx-%08llx",
-	       back->first, back->last, back->from, back->to);
-
-	_debug("split D=%x from D=%x", front->debug_id, back->debug_id);
-
-	if (ctx->ops->split_dirty_region)
-		ctx->ops->split_dirty_region(front, back);
-
-	list_move_tail(&front->dirty_link, &back->dirty_link);
-	list_add_tail (&front->proc_link,  &back->proc_link);
-
-	trace_netfs_dirty(ctx, front, back, why);
-	trace_netfs_dirty(ctx, back, front, netfs_dirty_trace_split);
+	netfs_split_off_front(ctx, front, back, front_last, why);
 	return front;
 }
 
@@ -301,8 +275,8 @@ static void netfs_split_out_regions(struct netfs_io_request *wreq,
 	if (wreq->first != region->first) {
 		BUG_ON(wreq->first < region->first);
 		BUG_ON(wreq->first == 0);
-		netfs_split_off_front(ctx, region, wreq->first - 1,
-				      netfs_dirty_trace_split_off_front);
+		netfs_alloc_split_off_front(ctx, region, wreq->first - 1,
+					    netfs_dirty_trace_split_off_front);
 		netfs_check_dirty_list('F', &ctx->dirty_regions, region);
 	}
 
@@ -311,7 +285,7 @@ static void netfs_split_out_regions(struct netfs_io_request *wreq,
 			if (wreq->last == region->last)
 				goto excise;
 			if (wreq->last < region->last) {
-				region = netfs_split_off_front(
+				region = netfs_alloc_split_off_front(
 					ctx, region, wreq->last,
 					netfs_dirty_trace_split_off_back);
 				if (region->dirty_link.next == &front->dirty_link)
