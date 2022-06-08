@@ -23,7 +23,6 @@
 #include "reg.h"
 #include "thermal.h"
 #include "dbring.h"
-#include "spectral.h"
 
 #define SM(_v, _f) (((_v) << _f##_LSB) & _f##_MASK)
 
@@ -257,7 +256,6 @@ struct ath12k_vif {
 
 	bool is_started;
 	bool is_up;
-	bool spectral_enabled;
 	u32 aid;
 	u8 bssid[ETH_ALEN];
 	struct cfg80211_bitrate_mask bitrate_mask;
@@ -627,9 +625,7 @@ struct ath12k {
 #ifdef CONFIG_ATH12K_DEBUGFS
 	struct ath12k_debug debug;
 #endif
-#ifdef CONFIG_ATH12K_SPECTRAL
-	struct ath12k_spectral spectral;
-#endif
+
 	bool dfs_block_radar_events;
 	struct ath12k_thermal thermal;
 	bool monitor_conf_enabled;

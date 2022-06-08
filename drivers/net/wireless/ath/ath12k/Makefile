@@ -25,7 +25,6 @@ ath12k-y += core.o \
 ath12k-$(CONFIG_ATH12K_DEBUGFS) += debugfs.o debugfs_htt_stats.o debugfs_sta.o
 ath12k-$(CONFIG_ATH12K_TRACING) += trace.o
 ath12k-$(CONFIG_THERMAL) += thermal.o
-ath12k-$(CONFIG_ATH12K_SPECTRAL) += spectral.o
 
 # for tracing framework to find trace.h
 CFLAGS_trace.o := -I$(src)

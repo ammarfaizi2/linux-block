@@ -269,7 +269,6 @@ int ath12k_dbring_buffer_release_event(struct ath12k_base *ab,
 
 	switch (ev->fixed.module_id) {
 	case WMI_DIRECT_BUF_SPECTRAL:
-		ring = ath12k_spectral_get_dbring(ar);
 		break;
 	default:
 		ring = NULL;

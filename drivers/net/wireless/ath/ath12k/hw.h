@@ -154,7 +154,6 @@ struct ath12k_hw_params {
 	int num_rxmda_per_pdev;
 	bool rx_mac_buf_ring;
 	bool vdev_start_delay;
-	u8 spectral_fft_sz;
 
 	u16 interface_modes;
 	bool supports_monitor;

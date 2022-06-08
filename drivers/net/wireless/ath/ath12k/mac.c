@@ -2587,9 +2587,6 @@ static int ath12k_start_scan(struct ath12k *ar,
 
 	lockdep_assert_held(&ar->conf_mutex);
 
-	if (ath12k_spectral_get_mode(ar) == ATH12K_SPECTRAL_BACKGROUND)
-		ath12k_spectral_reset_buffer(ar);
-
 	ret = ath12k_wmi_send_scan_start_cmd(ar, arg);
 	if (ret)
 		return ret;

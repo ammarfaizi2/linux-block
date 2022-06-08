@@ -529,16 +529,8 @@ static int ath12k_core_pdev_create(struct ath12k_base *ab)
 		goto err_dp_pdev_free;
 	}
 
-	ret = ath12k_spectral_init(ab);
-	if (ret) {
-		ath12k_err(ab, "failed to init spectral %d\n", ret);
-		goto err_thermal_unregister;
-	}
-
 	return 0;
 
-err_thermal_unregister:
-	ath12k_thermal_unregister(ab);
 err_dp_pdev_free:
 	ath12k_dp_pdev_free(ab);
 err_mac_unregister:
@@ -551,7 +543,6 @@ err_pdev_debug:
 
 static void ath12k_core_pdev_destroy(struct ath12k_base *ab)
 {
-	ath12k_spectral_deinit(ab);
 	ath12k_thermal_unregister(ab);
 	ath12k_mac_unregister(ab);
 	ath12k_hif_irq_disable(ab);
@@ -748,7 +739,6 @@ static int ath12k_core_reconfigure_on_crash(struct ath12k_base *ab)
 	ath12k_thermal_unregister(ab);
 	ath12k_hif_irq_disable(ab);
 	ath12k_dp_pdev_free(ab);
-	ath12k_spectral_deinit(ab);
 	ath12k_hif_stop(ab);
 	ath12k_wmi_detach(ab);
 	ath12k_dp_pdev_reo_cleanup(ab);

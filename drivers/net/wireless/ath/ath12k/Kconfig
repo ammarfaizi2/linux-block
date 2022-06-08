@@ -36,11 +36,3 @@ config ATH12K_TRACING
 	help
 	  Select this to use ath12k tracing infrastructure.
 
-config ATH12K_SPECTRAL
-	bool "QCA ath12k spectral scan support"
-	depends on ATH12K_DEBUGFS
-	depends on RELAY
-	help
-	  Enable ath12k spectral scan support
-
-	  Say Y to enable access to the FFT/spectral data via debugfs.
