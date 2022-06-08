@@ -13,7 +13,6 @@
 #include "hw.h"
 #include "dp_tx.h"
 #include "dp_rx.h"
-#include "testmode.h"
 #include "peer.h"
 #include "debugfs_sta.h"
 
@@ -6379,7 +6378,7 @@ static const struct ieee80211_ops ath12k_ops = {
 	.get_survey			= ath12k_mac_op_get_survey,
 	.flush				= ath12k_mac_op_flush,
 	.sta_statistics			= ath12k_mac_op_sta_statistics,
-	CFG80211_TESTMODE_CMD(ath12k_tm_cmd)
+
 #ifdef CONFIG_ATH12K_DEBUGFS
 	.sta_add_debugfs		= ath12k_debugfs_sta_op_add,
 #endif

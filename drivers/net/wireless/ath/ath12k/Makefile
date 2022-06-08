@@ -23,7 +23,6 @@ ath12k-y += core.o \
 	    dp_mon.o
 
 ath12k-$(CONFIG_ATH12K_DEBUGFS) += debugfs.o debugfs_htt_stats.o debugfs_sta.o
-ath12k-$(CONFIG_NL80211_TESTMODE) += testmode.o
 ath12k-$(CONFIG_ATH12K_TRACING) += trace.o
 ath12k-$(CONFIG_THERMAL) += thermal.o
 ath12k-$(CONFIG_ATH12K_SPECTRAL) += spectral.o
