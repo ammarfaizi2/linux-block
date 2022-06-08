@@ -8,8 +8,6 @@ vp.py - Patch verifier and massager tool
 #
 # Add a _verify.cfg.example config file so that the user can adjust it herself
 #
-# Check for BUG(_ON)*s
-#
 # extend the function-name-needs-a-verb check to when the patch is adding a new function - there
 # check the name too.
 #
@@ -926,6 +924,7 @@ f"""Class patch:
                 verify_comment_style(f, hunk)
                 verify_symbol_exports(f, hunk)
                 verify_include_paths(f, hunk)
+                check_for_asserts(f, hunk)
 
     def __insert_tag(self, tag, name):
         try:
@@ -1406,6 +1405,18 @@ def verify_include_paths(pfile, h):
         l = str(line)
         warn_on(rex_include.match(l),
                 f"Kernel-proper include at { pfile }:{ line.target_line_no } [{ l.strip() }]\n")
+
+# check for BUG(_ON)s
+def check_for_asserts(pfile, h):
+    if not h.added:
+        return
+
+    rex_bug_ons = re.compile(r'^\+.*BUG(_ON)?\(.*\).*$')
+
+    for line in h.target_lines():
+        l = str(line)
+        warn_on(rex_bug_ons.match(l),
+                f"Avoid BUG(_ON)s at any cost. At { pfile }:{ line.target_line_no } [{ l.strip() }]\n")
 
 ###
 ###
