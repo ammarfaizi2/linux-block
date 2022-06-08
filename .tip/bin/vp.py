@@ -13,9 +13,6 @@ vp.py - Patch verifier and massager tool
 # extend the function-name-needs-a-verb check to when the patch is adding a new function - there
 # check the name too.
 #
-# - https://realpython.com/python-f-strings/
-# convert to f-strings
-#
 # - a8: switch to logging module maybe:
 #   https://docs.python.org/3/howto/logging.html#logging-basic-tutorial
 
@@ -60,18 +57,17 @@ def __func__():
 def err(s):
     global args
 
-    sys.stderr.write(("%s: Error: %s\n" % (__func__(), s, )))
+    sys.stderr.write(f"{ __func__() }: Error: {s}\n")
 
     if not args.force:
         sys.exit(1)
 
 def warn_on(cond, s):
     if cond:
-        print(("%s: Warning: %s" % (__func__(), s, )))
+        print(f"{ __func__() }: Warning: {s}")
 
 def warn(s):
-    print(("%s: Warning: %s" % (__func__(), s, )))
-
+    print(f"{ __func__() }: Warning: {s}")
 
 def __verbose_helper(s, v, v_lvl):
     if v < v_lvl:
@@ -80,7 +76,7 @@ def __verbose_helper(s, v, v_lvl):
     # caller is the second function up the frame
     f = inspect.stack()[2][3]
 
-    print(("%s(): %s" % (f, s, )))
+    print(f"{f}(): {s}")
 
 def dbg(s):
     global verbose
@@ -117,11 +113,11 @@ def strip_brackets(w):
     if not rex_brackets.match(w):
         return w
 
-    dbg("\t|%s|" % (w, ))
+    dbg(f"\t|{w}|")
 
     # skip register field specifications
     if rex_reg_field.match(w):
-        dbg("regf: |%s|" % (w, ))
+        dbg(f"regf: |{w}|")
         return w
 
     pairs = {"{": "}", "(": ")", "[": "]"}
@@ -142,7 +138,7 @@ def strip_brackets(w):
         elif stack:
             w = w.replace(stack.pop(), '', 1)
 
-    dbg("-->\t|%s|" % (w, ))
+    dbg(f"-->\t|{w}|")
 
     return w
 
@@ -152,7 +148,7 @@ def strip_brackets(w):
 def verify_commit_ref(sha1, name):
     global git_repo
 
-    print(("Checking commit ref [%s %s]" % (sha1, name, )))
+    print(f"Checking commit ref [{sha1} {name}]")
 
     repo = Repo(git_repo)
     git = repo.git
@@ -161,30 +157,29 @@ def verify_commit_ref(sha1, name):
     try:
         int(sha1, 16)
     except ValueError as e:
-        sys.stderr.write("verify_commit_ref: SHA1 %s\n" % (e, ))
+        sys.stderr.write(f"verify_commit_ref: SHA1 {e}\n")
         sys.exit(1)
 
     # min 12 of length
     if len(sha1) < 12:
-        sys.stderr.write("Commit sha1 (%s) needs to be at least 12 chars long:\n" % (sha1, ))
+        sys.stderr.write(f"Commit sha1 ({sha1}) needs to be at least 12 chars long:\n")
         try:
             print(git.show('-s', '--pretty=format:%h (\"%s\")', sha1))
         except Exception as e:
-            sys.stderr.write("verify_commit_ref: SHA1 len exception %s\n" % (e, ))
+            sys.stderr.write(f"verify_commit_ref: SHA1 len exception {e}\n")
 
     # check sha1 is in the repo
     try:
         git.tag('--contains', sha1)
     except Exception as e:
-        sys.stderr.write("verify_commit_ref: SHA1 not in repo: %s\n" % (e, ))
+        sys.stderr.write(f"verify_commit_ref: SHA1 not in repo: {e}\n")
         sys.exit(1)
 
     # compare the commit names too
     name = name.removeprefix('("').removesuffix('")')
     commit_name = git.show('--no-patch', '--pretty=format:%s', sha1)
     if name != commit_name:
-        sys.stderr.write("verify_commit_ref: commit name mismatch: [%s] vs [%s]\n" % \
-                         (name, commit_name, ))
+        sys.stderr.write(f"verify_commit_ref: commit name mismatch: [{name}] vs [{commit_name}]\n")
         sys.exit(1)
 
 #
@@ -366,14 +361,14 @@ def spellcheck_func_name(w):
 
     """
 
-    dbg("%s" % (w, ))
+    dbg(f"{w}")
 
     if w.endswith('()'):
-        dbg("Skip function name: [%s]" % (w, ))
+        dbg(f"Skip function name: [{w}]")
         return True
 
     if w.endswith('[]'):
-        dbg("Skip array name: [%s]" % (w, ))
+        dbg(f"Skip array name: [{w}]")
         return True
 
     # linker range defines, heuristic only
@@ -382,11 +377,11 @@ def spellcheck_func_name(w):
 
     # all caps - likely a macro name
     if rex_c_macro.match(w):
-        dbg("Skip macro name: [%s]" % (w, ))
+        dbg(f"Skip macro name: [{w}]")
         return True
 
     if rex_struct_mem.match(w):
-        dbg("Skip struct member: [%s]" % (w, ))
+        dbg(f"Skip struct member: [{w}]")
         return True
 
     # heuristic: check if any of the words is a verb
@@ -406,7 +401,7 @@ def spellcheck_regexes(w):
     for rgx in regexes:
         m = rgx.match(w)
         if m:
-            dbg("Skip regexed word: [%s] match: (%s)" % (w, m.group(0)))
+            dbg(f"Skip regexed word: [{w}] match: ({ m.group(0) })")
             return True
 
     return False
@@ -471,8 +466,8 @@ def spellcheck(s, where, flags):
             continue
 
         # specially formatted text (cmdline output, etc) in the commit message, do not check
-        if where == "commit message" and \
-          (line.startswith("  ") or line.startswith("$ ")):
+        if (where == "commit message" and
+            (line.startswith("  ") or line.startswith("$ "))):
             continue
 
         # URLs - ignore them
@@ -512,10 +507,10 @@ def spellcheck(s, where, flags):
 
             # only non-alphabetical chars left?
             if rex_non_alpha.match(w):
-                dbg("Only non-alpha chars left: [%s]" % (w, ))
+                dbg(f"Only non-alpha chars left: [{w}]")
                 continue
 
-            dbg("%s: [%s]" % (where, w, ))
+            dbg(f"{where}: [{w}]")
 
             # bold font, for example: "_especially_"
             if w.startswith('_') and w.endswith('_'):
@@ -528,15 +523,15 @@ def spellcheck(s, where, flags):
 
             # skip SHAs
             if rex_sha1.match(w):
-                dbg("Skip SHA: [%s]" % (w, ))
+                dbg(f"Skip SHA: [{w}]")
                 continue
 
             if w.startswith("CONFIG_") or w.startswith("ARCH_"):
-                dbg("Skip CONFIG_ item: [%s]" % (w, ))
+                dbg(f"Skip CONFIG_ item: [{w}]")
                 continue
 
             if w in known_vars:
-                dbg("Skip known_vars [%s]" % (w, ))
+                dbg(f"Skip known_vars [{w}]")
                 continue
 
             if spellcheck_regexes(w):
@@ -544,12 +539,12 @@ def spellcheck(s, where, flags):
 
             # kernel cmdline params
             if rex_kcmdline.match(w):
-                dbg("Skip cmdline param: [%s]" % (w, ))
+                dbg(f"Skip cmdline param: [{w}]")
                 continue
 
             # error value defines
             if rex_errval.match(w):
-                dbg("Skip error define: [%s]" % (w, ))
+                dbg(f"Skip error define: [{w}]")
                 continue
 
             # Check function names
@@ -563,101 +558,101 @@ def spellcheck(s, where, flags):
                     if ret:
                         continue
 
-                    warn_on(1, ("Function name doesn't end with (): [%s]" % (w, )))
-                    print(" [%s]" % (line, ))
+                    warn_on(1, (f"Function name doesn't end with (): [{w}]"))
+                    print(f" [{line}]")
 
             # kernel-doc arguments
             if rex_kdoc_arg.match(w):
-                dbg("Skip kernel-doc argument: [%s]" % (w, ))
+                dbg(f"Skip kernel-doc argument: [{w}]")
                 continue
 
             # number: decimal...
             if rex_decimal.match(w):
-                dbg("Skip decimal number: [%s]" % (w, ))
+                dbg(f"Skip decimal number: [{w}]")
                 continue
 
             # number: hex, units, ...
             m = rex_units.match(w)
             if m:
-                dbg("Skip hex number/unit [%s], match [%s]" % (w, m.group(0)))
+                dbg(f"Skip hex number/unit [{w}], match [{ m.group(0) }]")
                 continue
 
             # number: constants...
             m = rex_constant.match(w)
             if m:
-                dbg("Skip constant number [%s], match [%s]" % (w, m.group(0)))
+                dbg(f"Skip constant number [{w}], match [{ m.group(0) }]")
                 continue
 
             # x86 trap names
             if rex_x86_traps.match(w):
-                dbg("Skip x86 trap name: [%s]" % (w, ))
+                dbg(f"Skip x86 trap name: [{w}]")
                 continue
 
             # x86 registers
             if rex_gpr.match(w):
-                dbg("Skip x86 register: [%s]" % (w, ))
+                dbg(f"Skip x86 register: [{w}]")
                 continue
 
             # versions...
             if rex_version.match(w):
-                dbg("Skip version: [%s]" % (w, ))
+                dbg(f"Skip version: [{w}]")
                 continue
 
             # C keywords
             if rex_c_keywords.match(w):
-                dbg("Skip C keyword: [%s]" % (w, ))
+                dbg(f"Skip C keyword: [{w}]")
                 continue
 
             # asm directives
             if rex_asm_dir.match(w):
-                dbg("Skip asm directive: [%s]" % (w, ))
+                dbg(f"Skip asm directive: [{w}]")
                 continue
 
             # AMD families
             if rex_amd_fam.match(w):
-                dbg("Skip AMD family: [%s]" % (w, ))
+                dbg(f"Skip AMD family: [{w}]")
                 continue
 
             # sections
             if rex_sections.match(w):
-                dbg("Skip section name: [%s]" % (w, ))
+                dbg(f"Skip section name: [{w}]")
                 continue
 
             # tool options
             if rex_opts.match(w):
-                dbg("Skip tool option: [%s]" % (w, ))
+                dbg(f"Skip tool option: [{w}]")
                 continue
 
             # hyphenated words
             m = rex_hyphenated.match(w)
             if m:
                 if dc.check(m.group(1)):
-                    dbg("Skip hyphenated: [%s]-%s" % (m.group(1), m.group(2), ))
+                    dbg(f"Skip hyphenated: [{ m.group(1) }]-{ m.group(2) }")
 
                 if dc.check(m.group(2)):
-                    dbg("Skip hyphenated: %s-[%s]" % (m.group(1), m.group(2), ))
+                    dbg(f"Skip hyphenated: { m.group(1) }-[{ m.group(2) }]")
                     continue
 
             # <word>-BLA
             m = rex_word_bla.match(w)
             if m:
                 if dc.check(m.group(1)):
-                    dbg("Skip <word>-BLA: [%s]" % (w, ))
+                    dbg(f"Skip <word>-BLA: [{w}]")
                     continue
 
             # reference to register fields like GHCBData[55:52], for example
             if rex_reg_field.match(w):
-                dbg("Skip reference to register fields: [%s]" % (w, ))
+                dbg(f"Skip reference to register fields: [{w}]")
                 continue
 
             # misc numbering with misc formatting
             if rex_misc_num.match(w):
-                dbg("Skip misc numbering: [%s]" % (w, ))
+                dbg(f"Skip misc numbering: [{w}]")
                 continue
 
             # skip words containing '_' - they're likely variable or function names
             if '_' in w:
-                dbg("Skip '_'-containing word: [%s]" % (w, ))
+                dbg(f"Skip '_'-containing word: [{w}]")
                 continue
 
             if not dc.check(w):
@@ -667,14 +662,14 @@ def spellcheck(s, where, flags):
 
                 # gerund?
                 if dc.check(w.removesuffix('ing')):
-                    dbg("Skip gerund: [%s]" % (w, ))
+                    dbg(f"Skip gerund: [{w}]")
                     continue
 
                 print(line)
-                print(("Unknown word [%s] in %s." % (w, where, )))
+                print(f"Unknown word [{w}] in {where}.")
                 suggestions = dc.suggest(w)
                 if suggestions:
-                    print("Suggestions: %s" % (suggestions, ))
+                    print(f"Suggestions: {suggestions}")
                 print()
 
 #
@@ -731,11 +726,11 @@ class Patch:
         self.od['other'] = []
 
         self.orig_subject = msg['subject']
-        info("Patch: orig_subject: [%s]" % (self.orig_subject, ))
+        info(f"Patch: orig_subject: [{self.orig_subject}]")
 
         self.sender  = msg['from']
         self.author = self.sender
-        info("Patch: sender: [%s]" % (self.sender, ))
+        info(f"Patch: sender: [{self.sender}]")
 
         if msg['date']:
             self.date = msg['date']
@@ -750,18 +745,17 @@ class Patch:
 
     def __repr__(self):
         return (
-"""Class patch:
-    original subject: [%s]
-             subject: [%s]
-              sender: [%s]
-              author: [%s]
-             version: [%d]
-              number: [%d]
-                name: [%s]
-                date: [%s]
-          message-id: [%s]
-""" % (self.orig_subject, self.subject, self.sender, self.author,
-       self.version, self.number, self.name, self.date, self.message_id))
+f"""Class patch:
+    original subject: [{self.orig_subject}]
+             subject: [{self.subject}]
+              sender: [{self.sender}]
+              author: [{self.author}]
+             version: [{self.version}]
+              number: [{self.number}]
+                name: [{self.name}]
+                date: [{self.date}]
+          message-id: [{self.message_id}]
+""")
 
     def massage_subject(self):
         """
@@ -782,7 +776,7 @@ class Patch:
         try:
             (prefix, title) = s.rsplit(':', 1)
         except ValueError:
-            sys.stderr.write(("Cannot split subject; no prefix?: [%s]\n" % (s, )))
+            sys.stderr.write(f"Cannot split subject; no prefix?: [{s}]\n")
             sys.exit(1)
 
         # replace commas in the subject with slashes. I need to avoid replacing when it looks like
@@ -805,7 +799,7 @@ class Patch:
 
         if s != new_subj:
             print("Massaged subject:")
-            print(" [%s]\n [%s]\n" % (s, new_subj, ))
+            print(f" [{s}]\n [{new_subj}]\n")
 
         # set new subject
         self.subject = new_subj
@@ -832,10 +826,10 @@ class Patch:
             last  = last.strip()
             first = first.strip()
 
-            a = ("%s %s %s" % (first, last, m.group('author_email'), ))
+            a = f"{first} {last} { m.group('author_email') }"
 
         if self.author != a:
-            print("%s: New author: [%s]" % (__func__(), a, ))
+            print(f"{ __func__() }: New author: [{a}]")
             self.author = a
 
     def determine_versioning(self):
@@ -855,8 +849,8 @@ class Patch:
             if m.group('rest'):
                 rest = m.group('rest')
 
-        dbg("version: [%s]" % (version, ))
-        dbg("Patch: rest: [%s]" % (rest, ))
+        dbg(f"version: [{version}]")
+        dbg(f"Patch: rest: [{rest}]")
 
         # patch numbering
         pnum = 1
@@ -868,12 +862,12 @@ class Patch:
         if m and m.group('max_pnum'):
             max_pnum = int(m.group('max_pnum'))
 
-        dbg("Patch: ver: %d, range: %d-%d" % (version, pnum, max_pnum))
+        dbg(f"Patch: ver: {version}, range: {pnum}-{max_pnum}")
 
         # patch name
         m = re.match(r'^.*\[.*patch[^]]*\]\s*(?P<pname>.*)', self.orig_subject, re.I)
         if m and m.group('pname'):
-            dbg(("Patch: pname: [%s]" % (m.group('pname'), )))
+            dbg(f"Patch: pname: [{ m.group('pname') }]")
             pname = m.group('pname')
         else:
             print("Error: cannot match patch name. Falling back to subject... ")
@@ -903,7 +897,7 @@ class Patch:
                 new_from = m.group(1)
                 if new_from != self.sender:
                     self.author = new_from
-                    print("Found new author: [%s]" % (new_from))
+                    print(f"Found new author: [{new_from}]")
                     plines.remove(line)
 
         self.commit_msg = "\n".join(plines[:])
@@ -921,8 +915,7 @@ class Patch:
                     # check for unicode chars, aka https://trojansource.codes/
                     m = rex_unicode_chars.search(line)
                     if m:
-                        warn_on(1, "Unicode char [%s] (0x%x) in line: %s"
-                                % (m.group(1), ord(m.group(1)), line, ))
+                        warn_on(1, f"Unicode char [{ m.group(1) }] (0x{ ord(m.group(1)) } in line: {line}")
 
                 spellcheck_hunk(pfile, hunk)
 
@@ -937,10 +930,10 @@ class Patch:
     def __insert_tag(self, tag, name):
         try:
             if name in self.od[tag]:
-                dbg("%s already present for tag %s, skipping" % (name, tag, ))
+                dbg(f"{name} already present for tag {tag}, skipping")
                 return
         except KeyError:
-            warn("Unknown tag: [%s: %s], ignoring it... \n" % (tag, name, ))
+            warn(f"Unknown tag: [{tag}: {name}], ignoring it... \n")
             return
 
         self.od[tag].insert(0, name)
@@ -948,7 +941,7 @@ class Patch:
     def add_tag(self, line):
         m = re.search(r'^(.*):\s*(.*)$', line)
         if m.group(1) and m.group(2):
-            info("Adding tag [%s]" % (line, ))
+            info(f"Adding tag [{line}]")
             self.__insert_tag(m.group(1), m.group(2))
         else:
             warn_on(1, "add_tag: Cannot match tag properly\n")
@@ -980,7 +973,7 @@ class Patch:
                 break
 
             if ':' not in line:
-                warn("skipping line: [%s]" % (line, ))
+                warn(f"skipping line: [{line}]")
                 ret_lines += 1
                 continue
             else:
@@ -990,14 +983,14 @@ class Patch:
             tag = a.strip()
             name_email = b.strip()
 
-            dbg("--> tag: [%s] name: [%s]" % (tag, name_email, ))
+            dbg(f"--> tag: [{tag}] name: [{name_email}]")
             ret_lines += 1
 
             # Skip all Cc: tags except stable and explicitly added ones
             if tag.lower() == "cc":
                 m = rex_cc_stable.match(name_email)
                 if not m:
-                    info(("Skipping Cc: %s" % (name_email, )))
+                    info(f"Skipping Cc: {name_email}")
                     continue
 
             # check Fixes: tag
@@ -1006,7 +999,7 @@ class Patch:
                 if m:
                     verify_commit_ref(m.group('sha1'), m.group('commit_title'))
 
-            info("Adding tag %s: %s" % (tag, name_email, ))
+            info(f"Adding tag {tag}: {name_email}")
             self.__insert_tag(tag, name_email)
 
         # add global sob
@@ -1014,7 +1007,7 @@ class Patch:
             self.od['Signed-off-by'].append(sob)
 
         dbg(self.od)
-        dbg("done, ate %d lines" % (ret_lines, ))
+        dbg(f"done, ate {ret_lines} lines")
 
         return ret_lines
 
@@ -1054,7 +1047,7 @@ class Patch:
         self.diffstat = "\n".join(dfst[:])
 
         dbg("\n" + self.diffstat)
-        dbg("EOF diffstat, lines: %d" % (ret, ))
+        dbg(f"EOF diffstat, lines: {ret}")
 
         return ret
 
@@ -1066,7 +1059,7 @@ class Patch:
         plines = self.patch.splitlines()
 
         for i, line in enumerate(plines):
-            dbg(" -> [%s]" % (line, ))
+            dbg(f" -> [{line}]")
 
             # take only the first "---" split line. Subsequent ones can contain
             # changelog history which git ignores.
@@ -1101,7 +1094,7 @@ class Patch:
             if line.startswith("diff") or line.startswith("---"):
                 break
 
-        dbg("i: %d" % (i, ))
+        dbg(f"i: {i}")
 
         # plines contains the actual diff now, save it.
         self.diff = "\n".join(plines[i:])
@@ -1132,7 +1125,7 @@ class Patch:
         # WIP: make sure there's no second ':' in the subject
         # needs improving
         if not re.match(r'^x86(/[\w/-]+)?:[^:]*$', self.subject):
-            err(("Subject prefix wrong: [%s]" % (self.subject, )))
+            err(f"Subject prefix wrong: [{ self.subject }]")
 
     def verify_commit_message(self):
         """
@@ -1150,8 +1143,8 @@ class Patch:
             if l.startswith("  [ bp:"):
                 continue
 
-            warn_on(rex_pers_pronoun.search(l), ("Commit message has 'we':\n [%s]\n" % (l, )))
-            warn_on(rex_this_patch.search(l),   ("Commit message has 'this patch':\n [%s]\n" % (l, )))
+            warn_on(rex_pers_pronoun.search(l), f"Commit message has 'we':\n [{l}]\n")
+            warn_on(rex_this_patch.search(l),   f"Commit message has 'this patch':\n [{l}]\n")
 
             if rex_sha1.search(l):
                 try:
@@ -1185,12 +1178,12 @@ class Patch:
                 # Slap Co-developed-by before the SOB
                 if tag == 'Signed-off-by':
                     if v in od[cdb]:
-                        info("%s: %s" % (cdb, v, ))
-                        f.write(("%s: %s\n" % (cdb, v, )))
+                        info(f"{cdb}: {v}")
+                        f.write(f"{cdb}: {v}\n")
                         od[cdb].remove(v)
 
-                info("%s: %s" % (tag, v, ))
-                f.write(("%s: %s\n" % (tag, v, )))
+                info(f"{tag}: {v}")
+                f.write(f"{tag}: {v}\n")
 
         if self.no_link_tag:
             return
@@ -1203,26 +1196,25 @@ class Patch:
                 if url.startswith("https://lore.kernel.org/r/"):
                     continue
 
-            info(("Link: %s" % (url, )))
-            f.write(("Link: %s\n" % (url, )))
+            info(f"Link: {url}")
+            f.write(f"Link: {url}\n")
 
 
         link_url = ""
         if self.message_id:
-            link_url = ("https://lore.kernel.org/r/%s" % (self.message_id, ))
+            link_url = f"https://lore.kernel.org/r/{ self.message_id }"
 
             # check it
             if not self.no_link_check:
                 try:
                     get = requests.get(link_url)
                     if get.status_code != 200:
-                        err("Link URL %s not reachable, status_code: %d" % (link_url, get.status_code, ))
+                        err(f"Link URL { link_url } not reachable, status_code: { get.status_code }")
                 except requests.exceptions.RequestException as e:
-                    err("Exception %s while trying to get URL: %s" % (e, link_url, ))
+                    err(f"Exception {e} while trying to get URL: { link_url }")
 
-            info(("Link: %s\n" % (link_url, )))
-            f.write(("Link: %s\n" % (link_url, )))
-
+            info(f"Link: { link_url }\n")
+            f.write(f"Link: { link_url }\n")
 
     def process_patch(self):
         """
@@ -1255,25 +1247,28 @@ class Patch:
 
         final = ("%s/%02d-%s-new.patch" % (tmp_dir, self.number, self.name, ))
 
-        print("Patch: will write [%s]" % (final, ))
+        print(f"Patch: will write [{final}]")
 
         f_out = open(final, "w")
 
-        info(" | From: %s" % (self.author, ))
-        f_out.write(("From: %s\n" % (self.author, )))
+        self_author = f" | From: { self.author }"
+        info(self_author)
+        f_out.write(self_author + "\n")
 
-        info(" | Date: %s" % (self.date, ))
-        f_out.write(("Date: %s\n" % (self.date, )))
+        self_date = f" | Date: { self.date }"
+        info(self_date)
+        f_out.write(self_date + "\n")
 
-        info(" | Subject: %s" % (self.subject, ))
-        f_out.write(("Subject: %s\n\n" % (self.subject, )))
+        self_subject = f" | Subject: { self.subject }"
+        info(self_subject)
+        f_out.write(self_subject + "\n")
 
         info(" |")
         info(" | PATCH CONTENTS:")
 
         info(" | commit_msg:")
         info(self.commit_msg)
-        f_out.write(("%s\n" % (self.commit_msg, )))
+        f_out.write(f"{ self.commit_msg }\n")
 
         info(" | tags:")
         self.format_tags(f_out)
@@ -1283,12 +1278,12 @@ class Patch:
         if self.diffstat:
             info(" | diffstat:")
             info(self.diffstat)
-            f_out.write(("%s" % (self.diffstat, )))
+            f_out.write(f"{ self.diffstat }")
             f_out.write("\n\n")
 
         info(" | diff")
         info(self.diff)
-        f_out.write(("%s\n" % (self.diff, )))
+        f_out.write(f"{ self.diff }\n")
 
         info(" | END OF PATCH CONTENTS:")
 
@@ -1344,7 +1339,7 @@ def verify_binutils_version(f, h):
 
     for l in lines:
         print(l, end="")
-    err("No binutils version specified over naked opcode bytes at %s:%d" % (f, asm_line.target_line_no, ))
+    err(f"No binutils version specified over naked opcode bytes at {f}:{ asm_line.target_line_no }")
 
 # check comment formatting
 def verify_comment_style(pfile, h):
@@ -1366,8 +1361,7 @@ def verify_comment_style(pfile, h):
 
         if in_comment:
             warn_on(rex_comment.match(l),
-                 "Multi-line comment needs to start text on the second line:\n [%s]\n" %
-                 (comment_start.strip(), ))
+                 f"Multi-line comment needs to start text on the second line:\n [{ comment_start.strip() }]\n")
             in_comment = False
 
     # check side comments only in .c/.h files
@@ -1385,8 +1379,8 @@ def verify_comment_style(pfile, h):
 
         l = str(line)
 
-        warn_on(rex_tail_comment.match(l), "No tail comments please:\n %s:%d [%s]\n" %
-                (pfile, line.target_line_no, l.strip(), ))
+        warn_on(rex_tail_comment.match(l),
+                f"No tail comments please:\n { pfile }:{ line.target_line_no } [{ l.strip() }]\n")
 
 def verify_symbol_exports(pfile, h):
 
@@ -1394,8 +1388,8 @@ def verify_symbol_exports(pfile, h):
 
     for line in h.target_lines():
         l = str(line)
-        warn_on(rex_export_symbol.match(l), "Non-GPL symbol export at %s:%d [%s]\n" %
-                (pfile, line.target_line_no, l.strip(), ))
+        warn_on(rex_export_symbol.match(l),
+                f"Non-GPL symbol export at { pfile }:{ line.target_line_no } [{ l.strip() }]\n")
 
 # Check if the decompressor kernel includes kernel proper headers
 def verify_include_paths(pfile, h):
@@ -1410,8 +1404,8 @@ def verify_include_paths(pfile, h):
 
     for line in h.target_lines():
         l = str(line)
-        warn_on(rex_include.match(l), "Kernel-proper include at %s:%d [%s]\n" %
-                (pfile, line.target_line_no, l.strip(), ))
+        warn_on(rex_include.match(l),
+                f"Kernel-proper include at { pfile }:{ line.target_line_no } [{ l.strip() }]\n")
 
 ###
 ###
@@ -1425,7 +1419,7 @@ def verify_commit_quotation(linenum, prev, cur, nxt):
     if not prev and not nxt and cur.startswith("  "):
         return
 
-    warn_on(1, "line %d: [%s]" % (linenum, cur, ))
+    warn_on(1, f"line {linenum}: [{cur}]")
     warn_on(1, "The proper commit quotation format is:\n<newline>\n[  ]<sha1, 12 chars> (\"commit name\")\n<newline>")
 ###
 
@@ -1442,7 +1436,7 @@ def main(args):
 
     input_file  = args.infile[0]
     if not os.path.isfile(input_file):
-        sys.stderr.write("Cannot access %s, exiting...\n" % (input_file, ))
+        sys.stderr.write(f"Cannot access { input_file }, exiting...\n")
         sys.exit(1)
 
     with open(input_file, 'rb') as fp:
@@ -1499,7 +1493,7 @@ def init_parser():
             options:dict -- config options
     """
 
-    parser = argparse.ArgumentParser(description='patch preparation script', prog='prep-patch')
+    parser = argparse.ArgumentParser(description='patch verification and preparation script', prog='vp')
 
     parser.add_argument("--add-tag",
                         help="Add tag to the tags list in the patch",
@@ -1544,7 +1538,7 @@ def refresh_ntlk_modules():
             if not dl.is_installed(m) or dl.is_stale(m):
                 dl.download(m)
         except:
-            warn("cannot download ntlk module %s" % (m, ))
+            warn(f"cannot download ntlk module {m}")
 
 if __name__ == '__main__':
     global args
