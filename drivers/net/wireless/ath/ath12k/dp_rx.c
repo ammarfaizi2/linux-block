@@ -3732,7 +3732,7 @@ static bool ath12k_dp_rx_h_rxdma_err(struct ath12k *ar,  struct sk_buff *msdu,
 				     struct ieee80211_rx_status *status)
 {
 	struct ath12k_skb_rxcb *rxcb = ATH12K_SKB_RXCB(msdu);
-	struct hal_rx_desc *rx_desc = (struct hal_rx_desc*)msdu->data;
+	struct hal_rx_desc *rx_desc = (struct hal_rx_desc *)msdu->data;
 	bool drop = false;
 	u32 err_bitmap;
 
