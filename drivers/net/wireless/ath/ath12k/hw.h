@@ -234,9 +234,27 @@ struct ath12k_hw_regs {
 
 	u32 hal_tcl_status_ring_base_lsb;
 
+	u32 hal_wbm_idle_ring_base_lsb;
+	u32 hal_wbm_idle_ring_misc_addr;
+	u32 hal_wbm_r0_idle_list_cntl_addr;
+	u32 hal_wbm_r0_idle_list_size_addr;
+	u32 hal_wbm_scattered_ring_base_lsb;
+	u32 hal_wbm_scattered_ring_base_msb;
+	u32 hal_wbm_scattered_desc_head_info_ix0;
+	u32 hal_wbm_scattered_desc_head_info_ix1;
+	u32 hal_wbm_scattered_desc_tail_info_ix0;
+	u32 hal_wbm_scattered_desc_tail_info_ix1;
+	u32 hal_wbm_scattered_desc_ptr_hp_addr;
+
+	u32 hal_wbm_sw_release_ring_base_lsb;
+	u32 hal_wbm_sw1_release_ring_base_lsb;
+	u32 hal_wbm0_release_ring_base_lsb;
+	u32 hal_wbm1_release_ring_base_lsb;
+
 	u32 pcie_qserdes_sysclk_en_sel;
 	u32 pcie_pcs_osc_dtct_config_base;
 };
 
 extern const struct ath12k_hw_regs qcn92xx_regs;
+extern const struct ath12k_hw_regs wcn7850_regs;
 #endif

@@ -1145,21 +1145,22 @@ void ath12k_hal_setup_link_idle_list(struct ath12k_base *ab,
 	}
 
 	ath12k_hif_write32(ab,
-			   HAL_SEQ_WCSS_UMAC_WBM_REG + HAL_WBM_R0_IDLE_LIST_CONTROL_ADDR,
+			   HAL_SEQ_WCSS_UMAC_WBM_REG +
+			   HAL_WBM_R0_IDLE_LIST_CONTROL_ADDR(ab),
 			   FIELD_PREP(HAL_WBM_SCATTER_BUFFER_SIZE, reg_scatter_buf_sz) |
 			   FIELD_PREP(HAL_WBM_LINK_DESC_IDLE_LIST_MODE, 0x1));
 	ath12k_hif_write32(ab,
-			   HAL_SEQ_WCSS_UMAC_WBM_REG + HAL_WBM_R0_IDLE_LIST_SIZE_ADDR,
+			   HAL_SEQ_WCSS_UMAC_WBM_REG + HAL_WBM_R0_IDLE_LIST_SIZE_ADDR(ab),
 			   FIELD_PREP(HAL_WBM_SCATTER_RING_SIZE_OF_IDLE_LINK_DESC_LIST,
 				      reg_scatter_buf_sz * nsbufs));
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
-			   HAL_WBM_SCATTERED_RING_BASE_LSB,
+			   HAL_WBM_SCATTERED_RING_BASE_LSB(ab),
 			   FIELD_PREP(BUFFER_ADDR_INFO0_ADDR,
 				      sbuf[0].paddr & HAL_ADDR_LSB_REG_MASK));
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
-			   HAL_WBM_SCATTERED_RING_BASE_MSB,
+			   HAL_WBM_SCATTERED_RING_BASE_MSB(ab),
 			   FIELD_PREP(
 				HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32,
 				(u64)sbuf[0].paddr >> HAL_ADDR_MSB_REG_SHIFT) |
@@ -1170,12 +1171,12 @@ void ath12k_hal_setup_link_idle_list(struct ath12k_base *ab,
 	/* Setup head and tail pointers for the idle list */
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
-			   HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX0,
+			   HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX0(ab),
 			   FIELD_PREP(BUFFER_ADDR_INFO0_ADDR,
 				      sbuf[nsbufs - 1].paddr));
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
-			   HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX1,
+			   HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX1(ab),
 			   FIELD_PREP(
 				HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32,
 				((u64)sbuf[nsbufs - 1].paddr >>
@@ -1184,18 +1185,18 @@ void ath12k_hal_setup_link_idle_list(struct ath12k_base *ab,
 				      (end_offset >> 2)));
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
-			   HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX0,
+			   HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX0(ab),
 			   FIELD_PREP(BUFFER_ADDR_INFO0_ADDR,
 				      sbuf[0].paddr));
 
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
-			   HAL_WBM_SCATTERED_DESC_PTR_TAIL_INFO_IX0,
+			   HAL_WBM_SCATTERED_DESC_PTR_TAIL_INFO_IX0(ab),
 			   FIELD_PREP(BUFFER_ADDR_INFO0_ADDR,
 				      sbuf[0].paddr));
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
-			   HAL_WBM_SCATTERED_DESC_PTR_TAIL_INFO_IX1,
+			   HAL_WBM_SCATTERED_DESC_PTR_TAIL_INFO_IX1(ab),
 			   FIELD_PREP(
 				HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32,
 				((u64)sbuf[0].paddr >> HAL_ADDR_MSB_REG_SHIFT)) |
@@ -1203,13 +1204,13 @@ void ath12k_hal_setup_link_idle_list(struct ath12k_base *ab,
 				      0));
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
-			   HAL_WBM_SCATTERED_DESC_PTR_HP_ADDR,
+			   HAL_WBM_SCATTERED_DESC_PTR_HP_ADDR(ab),
 			   2 * tot_link_desc);
 
 	/* Enable the SRNG */
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
-			   HAL_WBM_IDLE_LINK_RING_MISC_ADDR,
+			   HAL_WBM_IDLE_LINK_RING_MISC_ADDR(ab),
 			   FIELD_PREP(HAL_WBM_IDLE_LINK_RING_MISC_SRNG_ENABLE,
 				      1) |
 			   FIELD_PREP(HAL_WBM_IDLE_LINK_RING_MISC_RIND_ID_DISABLE,
@@ -1506,21 +1507,22 @@ static int ath12k_hal_srng_create_config(struct ath12k_base *ab)
 		HAL_SEQ_WCSS_UMAC_CE0_DST_REG;
 
 	s = &hal->srng_config[HAL_WBM_IDLE_LINK];
-	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_WBM_REG + HAL_WBM_IDLE_LINK_RING_BASE_LSB;
+	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_WBM_REG + HAL_WBM_IDLE_LINK_RING_BASE_LSB(ab);
 	s->reg_start[1] = HAL_SEQ_WCSS_UMAC_WBM_REG + HAL_WBM_IDLE_LINK_RING_HP;
 
 	s = &hal->srng_config[HAL_SW2WBM_RELEASE];
-	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_WBM_REG + HAL_WBM_SW_RELEASE_RING_BASE_LSB;
+	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_WBM_REG +
+		HAL_WBM_SW_RELEASE_RING_BASE_LSB(ab);
 	s->reg_start[1] = HAL_SEQ_WCSS_UMAC_WBM_REG + HAL_WBM_SW_RELEASE_RING_HP;
-	s->reg_size[0] = HAL_WBM_SW1_RELEASE_RING_BASE_LSB -
-			 HAL_WBM_SW_RELEASE_RING_BASE_LSB;
+	s->reg_size[0] = HAL_WBM_SW1_RELEASE_RING_BASE_LSB(ab) -
+			 HAL_WBM_SW_RELEASE_RING_BASE_LSB(ab);
 	s->reg_size[1] = HAL_WBM_SW1_RELEASE_RING_HP - HAL_WBM_SW_RELEASE_RING_HP;
 
 	s = &hal->srng_config[HAL_WBM2SW_RELEASE];
-	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_WBM_REG + HAL_WBM0_RELEASE_RING_BASE_LSB;
+	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_WBM_REG + HAL_WBM0_RELEASE_RING_BASE_LSB(ab);
 	s->reg_start[1] = HAL_SEQ_WCSS_UMAC_WBM_REG + HAL_WBM0_RELEASE_RING_HP;
-	s->reg_size[0] = HAL_WBM1_RELEASE_RING_BASE_LSB -
-		HAL_WBM0_RELEASE_RING_BASE_LSB;
+	s->reg_size[0] = HAL_WBM1_RELEASE_RING_BASE_LSB(ab) -
+		HAL_WBM0_RELEASE_RING_BASE_LSB(ab);
 	s->reg_size[1] = HAL_WBM1_RELEASE_RING_HP - HAL_WBM0_RELEASE_RING_HP;
 
 	/* Some LMAC rings are not accesed from the host:

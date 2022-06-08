@@ -536,7 +536,62 @@ const struct ath12k_hw_regs qcn92xx_regs = {
 	/* TCL STATUS ring address */
 	.hal_tcl_status_ring_base_lsb = 0x00000d38,
 
+	.hal_wbm_idle_ring_base_lsb = 0x00000d0c,
+	.hal_wbm_idle_ring_misc_addr = 0x00000d1c,
+	.hal_wbm_r0_idle_list_cntl_addr = 0x00000210,
+	.hal_wbm_r0_idle_list_size_addr = 0x00000214,
+	.hal_wbm_scattered_ring_base_lsb = 0x00000220,
+	.hal_wbm_scattered_ring_base_msb = 0x00000224,
+	.hal_wbm_scattered_desc_head_info_ix0 = 0x00000230,
+	.hal_wbm_scattered_desc_head_info_ix1 = 0x00000234,
+	.hal_wbm_scattered_desc_tail_info_ix0 = 0x00000240,
+	.hal_wbm_scattered_desc_tail_info_ix1 = 0x00000244,
+	.hal_wbm_scattered_desc_ptr_hp_addr = 0x0000024c,
+
+	.hal_wbm_sw_release_ring_base_lsb = 0x0000034c,
+	.hal_wbm_sw1_release_ring_base_lsb = 0x000003c4,
+	.hal_wbm0_release_ring_base_lsb = 0x00000dd8,
+	.hal_wbm1_release_ring_base_lsb = 0x00000e50,
+
 	/* PCIe base address */
 	.pcie_qserdes_sysclk_en_sel = 0x01e0c0a8,
 	.pcie_pcs_osc_dtct_config_base = 0x01e0d45c,
+};
+
+const struct ath12k_hw_regs wcn7850_regs = {
+	/* SW2TCL(x) R0 ring configuration address */
+	.hal_tcl1_ring_id = 0x00000908,
+	.hal_tcl1_ring_misc = 0x00000910,
+	.hal_tcl1_ring_tp_addr_lsb = 0x0000091c,
+	.hal_tcl1_ring_tp_addr_msb = 0x00000920,
+	.hal_tcl1_ring_consumer_int_setup_ix0 = 0x00000930,
+	.hal_tcl1_ring_consumer_int_setup_ix1 = 0x00000934,
+	.hal_tcl1_ring_msi1_base_lsb = 0x00000948,
+	.hal_tcl1_ring_msi1_base_msb = 0x0000094c,
+	.hal_tcl1_ring_msi1_data = 0x00000950,
+	.hal_tcl_ring_base_lsb = 0x00000b58,
+
+	/* TCL STATUS ring address */
+	.hal_tcl_status_ring_base_lsb = 0x00000d38,
+
+	.hal_wbm_idle_ring_base_lsb = 0x00000d3c,
+	.hal_wbm_idle_ring_misc_addr = 0x00000d4c,
+	.hal_wbm_r0_idle_list_cntl_addr = 0x00000240,
+	.hal_wbm_r0_idle_list_size_addr = 0x00000244,
+	.hal_wbm_scattered_ring_base_lsb = 0x00000250,
+	.hal_wbm_scattered_ring_base_msb = 0x00000254,
+	.hal_wbm_scattered_desc_head_info_ix0 = 0x00000260,
+	.hal_wbm_scattered_desc_head_info_ix1 = 0x00000264,
+	.hal_wbm_scattered_desc_tail_info_ix0 = 0x00000270,
+	.hal_wbm_scattered_desc_tail_info_ix1 = 0x00000274,
+	.hal_wbm_scattered_desc_ptr_hp_addr = 0x00000027c,
+
+	.hal_wbm_sw_release_ring_base_lsb = 0x0000037c,
+	.hal_wbm_sw1_release_ring_base_lsb = 0x00000284,
+	.hal_wbm0_release_ring_base_lsb = 0x00000e08,
+	.hal_wbm1_release_ring_base_lsb = 0x00000e80,
+
+	/* PCIe base address */
+	.pcie_qserdes_sysclk_en_sel = 0x01e0e0a8,
+	.pcie_pcs_osc_dtct_config_base = 0x01e0f45c,
 };

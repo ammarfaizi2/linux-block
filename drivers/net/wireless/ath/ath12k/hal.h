@@ -208,32 +208,48 @@ struct ath12k_base;
 #define HAL_REO_STATUS_HP			0x000030a8
 
 /* WBM Idle R0 address */
-#define HAL_WBM_IDLE_LINK_RING_BASE_LSB		0x00000d0c
-#define HAL_WBM_IDLE_LINK_RING_MISC_ADDR	0x00000d1c
-#define HAL_WBM_R0_IDLE_LIST_CONTROL_ADDR	0x00000210
-#define HAL_WBM_R0_IDLE_LIST_SIZE_ADDR		0x00000214
-#define HAL_WBM_SCATTERED_RING_BASE_LSB		0x00000220
-#define HAL_WBM_SCATTERED_RING_BASE_MSB		0x00000224
-#define HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX0 0x00000230
-#define HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX1 0x00000234
-#define HAL_WBM_SCATTERED_DESC_PTR_TAIL_INFO_IX0 0x00000240
-#define HAL_WBM_SCATTERED_DESC_PTR_TAIL_INFO_IX1 0x00000244
-#define HAL_WBM_SCATTERED_DESC_PTR_HP_ADDR	 0x0000024c
+#define HAL_WBM_IDLE_LINK_RING_BASE_LSB(ab) \
+	ab->hw_params.regs->hal_wbm_idle_ring_base_lsb
+#define HAL_WBM_IDLE_LINK_RING_MISC_ADDR(ab) \
+	ab->hw_params.regs->hal_wbm_idle_ring_misc_addr
+#define HAL_WBM_R0_IDLE_LIST_CONTROL_ADDR(ab) \
+	ab->hw_params.regs->hal_wbm_r0_idle_list_cntl_addr
+#define HAL_WBM_R0_IDLE_LIST_SIZE_ADDR(ab) \
+	ab->hw_params.regs->hal_wbm_r0_idle_list_size_addr
+#define HAL_WBM_SCATTERED_RING_BASE_LSB(ab) \
+	ab->hw_params.regs->hal_wbm_scattered_ring_base_lsb
+#define HAL_WBM_SCATTERED_RING_BASE_MSB(ab) \
+	ab->hw_params.regs->hal_wbm_scattered_ring_base_msb
+#define HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX0(ab) \
+	ab->hw_params.regs->hal_wbm_scattered_desc_head_info_ix0
+#define HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX1(ab) \
+	ab->hw_params.regs->hal_wbm_scattered_desc_head_info_ix1
+#define HAL_WBM_SCATTERED_DESC_PTR_TAIL_INFO_IX0(ab) \
+	ab->hw_params.regs->hal_wbm_scattered_desc_tail_info_ix0
+#define HAL_WBM_SCATTERED_DESC_PTR_TAIL_INFO_IX1(ab) \
+	ab->hw_params.regs->hal_wbm_scattered_desc_tail_info_ix1
+#define HAL_WBM_SCATTERED_DESC_PTR_HP_ADDR(ab) \
+	ab->hw_params.regs->hal_wbm_scattered_desc_ptr_hp_addr
 
 /* WBM Idle R2 address */
 #define HAL_WBM_IDLE_LINK_RING_HP		0x000030b8
 
 /* SW2WBM R0 release address */
-#define HAL_WBM_SW_RELEASE_RING_BASE_LSB	0x0000034c
-#define HAL_WBM_SW1_RELEASE_RING_BASE_LSB	0x000003c4
+#define HAL_WBM_SW_RELEASE_RING_BASE_LSB(ab) \
+	ab->hw_params.regs->hal_wbm_sw_release_ring_base_lsb
+#define HAL_WBM_SW1_RELEASE_RING_BASE_LSB(ab) \
+	ab->hw_params.regs->hal_wbm_sw1_release_ring_base_lsb
 
 /* SW2WBM R2 release address */
 #define HAL_WBM_SW_RELEASE_RING_HP		0x00003010
 #define HAL_WBM_SW1_RELEASE_RING_HP		0x00003018
 
 /* WBM2SW R0 release address */
-#define HAL_WBM0_RELEASE_RING_BASE_LSB		0x00000dd8
-#define HAL_WBM1_RELEASE_RING_BASE_LSB		0x00000e50
+#define HAL_WBM0_RELEASE_RING_BASE_LSB(ab) \
+	ab->hw_params.regs->hal_wbm0_release_ring_base_lsb
+
+#define HAL_WBM1_RELEASE_RING_BASE_LSB(ab) \
+	ab->hw_params.regs->hal_wbm1_release_ring_base_lsb
 
 /* WBM2SW R2 release address */
 #define HAL_WBM0_RELEASE_RING_HP		0x000030c8
