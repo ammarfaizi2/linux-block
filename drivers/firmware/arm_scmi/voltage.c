@@ -180,7 +180,6 @@ static int scmi_voltage_levels_get(const struct scmi_protocol_handle *ph,
 {
 	int ret;
 	void *iter;
-	struct scmi_msg_cmd_describe_levels *msg;
 	struct scmi_iterator_ops ops = {
 		.prepare_message = iter_volt_levels_prepare_message,
 		.update_state = iter_volt_levels_update_state,
@@ -193,7 +192,8 @@ static int scmi_voltage_levels_get(const struct scmi_protocol_handle *ph,
 
 	iter = ph->hops->iter_response_init(ph, &ops, v->num_levels,
 					    VOLTAGE_DESCRIBE_LEVELS,
-					    sizeof(*msg), &vpriv);
+					    sizeof(struct scmi_msg_cmd_describe_levels),
+					    &vpriv);
 	if (IS_ERR(iter))
 		return PTR_ERR(iter);
 
@@ -233,7 +233,7 @@ static int scmi_voltage_descriptors_get(const struct scmi_protocol_handle *ph,
 		v = vinfo->domains + dom;
 		v->id = dom;
 		attributes = le32_to_cpu(resp_dom->attr);
-		strlcpy(v->name, resp_dom->name, SCMI_MAX_STR_SIZE);
+		strscpy(v->name, resp_dom->name, SCMI_SHORT_NAME_MAX_SIZE);
 
 		/*
 		 * If supported overwrite short name with the extended one;
