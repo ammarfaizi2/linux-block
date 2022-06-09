@@ -1329,12 +1329,28 @@ def verify_binutils_version(f, h):
 
     if not opcodes: return
 
-    rex_binutils = re.compile(r'^.*binutils\s[\d.]+.*')
+    rex_binutils = re.compile(r'^.*binutils\s.*[0-2]\.[0-9]+.*')
+    rex_cm_start = re.compile(r'^[\s\t\+]+/\*\s+(.*)$')
+    comment_string = ""
+    in_comment = False
 
+    # Fish out the comment first - binutils version spec could be spread over multiple lines
     for l in lines:
-        m = rex_binutils.match(l)
-        if m:
-            return
+        if not in_comment:
+            m = rex_cm_start.match(l)
+            if m:
+                in_comment = True
+                comment_string += m.group(1)
+        else:
+            if rex_comment_end.match(l):
+                break
+
+            comment_string += re.sub(r'[+*\n]', '', l)
+
+    dbg(f"Matching comment: [{ comment_string }]")
+    m = rex_binutils.match(comment_string)
+    if m:
+        return
 
     for l in lines:
         print(l, end="")
