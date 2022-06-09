@@ -94,7 +94,8 @@ static int reconn_set_ipaddr_from_hostname(struct TCP_Server_Info *server)
 	time64_t expiry, now;
 	unsigned long ttl = SMB_DNS_RESOLVE_INTERVAL_DEFAULT;
 
-	if (!server->hostname)
+	if (!server->hostname ||
+	    server->hostname[0] == '\0')
 		return -EINVAL;
 
 	len = strlen(server->hostname) + 3;
