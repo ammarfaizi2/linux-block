@@ -1190,8 +1190,6 @@ EXPORT_SYMBOL_GPL(rcu_trace_lock_map);
 
 #ifdef CONFIG_TASKS_TRACE_RCU
 
-static DECLARE_WAIT_QUEUE_HEAD(trc_wait);	// List of holdout tasks.
-
 // Record outstanding IPIs to each CPU.  No point in sending two...
 static DEFINE_PER_CPU(bool, trc_ipi_to_cpu);
 
