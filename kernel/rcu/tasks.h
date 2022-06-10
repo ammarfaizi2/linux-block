@@ -1639,7 +1639,6 @@ static void rcu_tasks_trace_empty_fn(void *unused)
 static void rcu_tasks_trace_postgp(struct rcu_tasks *rtp)
 {
 	int cpu;
-	LIST_HEAD(holdouts);
 
 	// Wait for any lingering IPI handlers to complete.  Note that
 	// if a CPU has gone offline or transitioned to userspace in the
