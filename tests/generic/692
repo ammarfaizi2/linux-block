@@ -1,0 +1,74 @@
+#! /bin/bash
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (c) 2022 Christian Brauner (Microsoft).  All Rights Reserved.
+#
+# FS QA Test 692
+#
+# Test that users can changed group ownership of a file they own to a group
+# they are a member of.
+#
+# Regression test for commit:
+#
+# 263de29d8397 ("fs: account for group membership")
+#
+. ./common/preamble
+_begin_fstest auto quick perms attr idmapped mount
+
+# Override the default cleanup function.
+_cleanup()
+{
+	cd /
+	$UMOUNT_PROG $TEST_DIR/target-mnt
+	rm -r -f $tmp.*
+}
+
+# Import common functions.
+# . ./common/filter
+
+# real QA test starts here
+
+# Modify as appropriate.
+_supported_fs generic
+_require_test
+_require_chown
+_require_idmapped_mounts
+_require_user fsgqa
+_require_group fsgqa
+_require_group fsgqa2
+
+uqid=`id -u fsgqa`
+gqid=`id -g fsgqa`
+uqid2=`id -u fsgqa2`
+gqid2=`id -g fsgqa2`
+
+setup_tree()
+{
+	mkdir -p $TEST_DIR/source-mnt
+	chmod 0777 $TEST_DIR/source-mnt
+	touch $TEST_DIR/source-mnt/dir1
+	chown 65534:65534 $TEST_DIR/source-mnt
+	chown 65534:65535 $TEST_DIR/source-mnt/dir1
+
+	mkdir -p $TEST_DIR/target-mnt
+	chmod 0777 $TEST_DIR/target-mnt
+}
+
+setup_idmapped_mnt()
+{
+	$here/src/vfs/mount-idmapped \
+		--map-mount=u:65534:$uqid:1 \
+		--map-mount=g:65534:$gqid:1 \
+		--map-mount=u:65535:$uqid2:1 \
+		--map-mount=g:65535:$gqid2:1 \
+		$TEST_DIR/source-mnt $TEST_DIR/target-mnt
+}
+
+setup_tree
+setup_idmapped_mnt
+stat -c '%U:%G' "$TEST_DIR/target-mnt/dir1"
+_user_do "chgrp $gqid $TEST_DIR/target-mnt/dir1"
+stat -c '%U:%G' "$TEST_DIR/target-mnt/dir1"
+
+# success, all done
+status=0
+exit
