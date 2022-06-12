@@ -1474,12 +1474,15 @@ static void kmemleak_scan(void)
 	struct zone *zone;
 	int __maybe_unused i;
 	int new_leaks = 0;
+	int gray_list_cnt = 0;
 
 	jiffies_last_scan = jiffies;
 
 	/* prepare the kmemleak_object's */
 	rcu_read_lock();
 	list_for_each_entry_rcu(object, &object_list, object_list) {
+		bool object_pinned = false;
+
 		raw_spin_lock_irq(&object->lock);
 #ifdef DEBUG
 		/*
@@ -1505,10 +1508,25 @@ static void kmemleak_scan(void)
 
 		/* reset the reference count (whiten the object) */
 		object->count = 0;
-		if (color_gray(object) && get_object(object))
+		if (color_gray(object) && get_object(object)) {
 			list_add_tail(&object->gray_list, &gray_list);
+			gray_list_cnt++;
+			object_pinned = true;
+		}
 
 		raw_spin_unlock_irq(&object->lock);
+
+		/*
+		 * With object pinned by a positive reference count, it
+		 * won't go away and we can safely release the RCU read
+		 * lock and do a cond_resched() to avoid soft lockup every
+		 * 64k objects.
+		 */
+		if (object_pinned && !(gray_list_cnt & 0xffff)) {
+			rcu_read_unlock();
+			cond_resched();
+			rcu_read_lock();
+		}
 	}
 	rcu_read_unlock();
 
