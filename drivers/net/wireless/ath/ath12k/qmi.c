@@ -2735,6 +2735,9 @@ static int ath12k_qmi_load_bdf_qmi(struct ath12k_base *ab,
 		goto out;
 	}
 
+	if (!ab->hw_params.download_calib)
+		goto out;
+
 	file_type = ATH12K_QMI_FILE_TYPE_CALDATA;
 
 	/* cal-<bus>-<id>.bin */
