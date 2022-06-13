@@ -5404,6 +5404,11 @@ ath12k_wmi_send_thermal_mitigation_param_cmd(struct ath12k *ar,
 int ath12k_wmi_pdev_pktlog_enable(struct ath12k *ar, u32 pktlog_filter);
 int ath12k_wmi_pdev_pktlog_disable(struct ath12k *ar);
 int ath12k_wmi_pdev_peer_pktlog_filter(struct ath12k *ar, u8 *addr, u8 enable);
+int ath12k_wmi_peer_rx_reorder_queue_setup(struct ath12k *ar,
+					   int vdev_id, const u8 *addr,
+					   dma_addr_t paddr, u8 tid,
+					   u8 ba_window_size_valid,
+					   u32 ba_window_size);
 int
 ath12k_wmi_rx_reord_queue_remove(struct ath12k *ar,
 				 struct rx_reorder_queue_remove_params *param);

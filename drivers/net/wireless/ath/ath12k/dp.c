@@ -1165,6 +1165,9 @@ static void ath12k_dp_reoq_lut_cleanup(struct ath12k_base *ab)
 {
 	struct ath12k_dp *dp = &ab->dp;
 
+	if (!ab->hw_params.reoq_lut_support)
+		return;
+
 	if (!dp->reoq_lut.vaddr)
 		return;
 
@@ -1414,6 +1417,9 @@ static int ath12k_dp_reoq_lut_setup(struct ath12k_base *ab)
 {
 	struct ath12k_dp *dp = &ab->dp;
 
+	if (!ab->hw_params.reoq_lut_support)
+		return 0;
+
 	dp->reoq_lut.vaddr = dma_alloc_coherent(ab->dev,
 						DP_REOQ_LUT_SIZE,
 						&dp->reoq_lut.paddr,
@@ -1428,7 +1434,6 @@ static int ath12k_dp_reoq_lut_setup(struct ath12k_base *ab)
 
 	ath12k_hif_write32(ab, HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO1_QDESC_LUT_BASE0,
 			   dp->reoq_lut.paddr);
-
 	return 0;
 }
 

@@ -745,6 +745,9 @@ static void ath12k_peer_rx_tid_qref_setup(struct ath12k_base *ab, u16 peer_id, u
 	struct ath12k_reo_queue_ref *qref;
 	struct ath12k_dp *dp = &ab->dp;
 
+	if (!ab->hw_params.reoq_lut_support)
+		return;
+
 	//TODO based on ML peer or not, select the LUT. below assumes non ML peer
 	qref = (struct ath12k_reo_queue_ref *)dp->reoq_lut.vaddr +
 			(peer_id * (IEEE80211_NUM_TIDS + 1) + tid);
@@ -758,6 +761,9 @@ static void ath12k_peer_rx_tid_qref_reset(struct ath12k_base *ab, u16 peer_id, u
 {
 	struct ath12k_reo_queue_ref *qref;
 	struct ath12k_dp *dp = &ab->dp;
+
+	if (!ab->hw_params.reoq_lut_support)
+		return;
 
 	//TODO based on ML peer or not, select the LUT. below assumes non ML peer
 	qref = (struct ath12k_reo_queue_ref *)dp->reoq_lut.vaddr +
@@ -926,7 +932,7 @@ int ath12k_peer_rx_tid_setup(struct ath12k *ar, const u8 *peer_mac, int vdev_id,
 		return -ENOENT;
 	}
 
-	if (!dp->reoq_lut.vaddr) {
+	if (ab->hw_params.reoq_lut_support && !dp->reoq_lut.vaddr) {
 		spin_unlock_bh(&ab->base_lock);
 		ath12k_warn(ab, "reo qref table is not setup\n");
 		return -EINVAL;
@@ -991,8 +997,14 @@ int ath12k_peer_rx_tid_setup(struct ath12k *ar, const u8 *peer_mac, int vdev_id,
 	rx_tid->size = hw_desc_sz;
 	rx_tid->active = true;
 
-	/* Update the REO queue LUT at the corresponding peer id and tid with qaddr */
-	ath12k_peer_rx_tid_qref_setup(ab, peer->peer_id, tid, paddr);
+	if (ab->hw_params.reoq_lut_support)
+		/* Update the REO queue LUT at the corresponding peer id
+		 * and tid with qaddr.
+		 */
+		ath12k_peer_rx_tid_qref_setup(ab, peer->peer_id, tid, paddr);
+	else
+		ret = ath12k_wmi_peer_rx_reorder_queue_setup(ar, vdev_id, peer_mac,
+							     paddr, tid, 1, ba_win_sz);
 
 	spin_unlock_bh(&ab->base_lock);
 

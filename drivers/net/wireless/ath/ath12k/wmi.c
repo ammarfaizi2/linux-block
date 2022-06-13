@@ -1225,6 +1225,49 @@ int ath12k_wmi_send_peer_flush_tids_cmd(struct ath12k *ar,
 	return ret;
 }
 
+int ath12k_wmi_peer_rx_reorder_queue_setup(struct ath12k *ar,
+					   int vdev_id, const u8 *addr,
+					   dma_addr_t paddr, u8 tid,
+					   u8 ba_window_size_valid,
+					   u32 ba_window_size)
+{
+	struct wmi_peer_reorder_queue_setup_cmd *cmd;
+	struct sk_buff *skb;
+	int ret;
+
+	skb = ath12k_wmi_alloc_skb(ar->wmi->wmi_ab, sizeof(*cmd));
+	if (!skb)
+		return -ENOMEM;
+
+	cmd = (struct wmi_peer_reorder_queue_setup_cmd *)skb->data;
+	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
+				     WMI_TAG_REORDER_QUEUE_SETUP_CMD) |
+			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+
+	ether_addr_copy(cmd->peer_macaddr.addr, addr);
+	cmd->vdev_id = vdev_id;
+	cmd->tid = tid;
+	cmd->queue_ptr_lo = lower_32_bits(paddr);
+	cmd->queue_ptr_hi = upper_32_bits(paddr);
+	cmd->queue_no = tid;
+	cmd->ba_window_size_valid = ba_window_size_valid;
+	cmd->ba_window_size = ba_window_size;
+
+	ret = ath12k_wmi_cmd_send(ar->wmi, skb,
+				  WMI_PEER_REORDER_QUEUE_SETUP_CMDID);
+	if (ret) {
+		ath12k_warn(ar->ab,
+			    "failed to send WMI_PEER_REORDER_QUEUE_SETUP\n");
+		dev_kfree_skb(skb);
+	}
+
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "wmi rx reorder queue setup addr %pM vdev_id %d tid %d\n",
+		   addr, vdev_id, tid);
+
+	return ret;
+}
+
 int
 ath12k_wmi_rx_reord_queue_remove(struct ath12k *ar,
 				 struct rx_reorder_queue_remove_params *param)
