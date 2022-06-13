@@ -1498,6 +1498,47 @@ static struct qmi_elem_info qmi_wlanfw_ce_svc_pipe_cfg_s_v01_ei[] = {
 	},
 };
 
+static struct qmi_elem_info qmi_wlanfw_shadow_reg_cfg_s_v01_ei[] = {
+	{
+		.data_type	= QMI_UNSIGNED_2_BYTE,
+		.elem_len	= 1,
+		.elem_size	= sizeof(u16),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0,
+		.offset		= offsetof(struct qmi_wlanfw_shadow_reg_cfg_s_v01, id),
+	},
+	{
+		.data_type	= QMI_UNSIGNED_2_BYTE,
+		.elem_len	= 1,
+		.elem_size	= sizeof(u16),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0,
+		.offset		= offsetof(struct qmi_wlanfw_shadow_reg_cfg_s_v01,
+					   offset),
+	},
+	{
+		.data_type	= QMI_EOTI,
+		.array_type	= QMI_COMMON_TLV_TYPE,
+	},
+};
+
+static struct qmi_elem_info qmi_wlanfw_shadow_reg_v2_cfg_s_v01_ei[] = {
+	{
+		.data_type	= QMI_UNSIGNED_4_BYTE,
+		.elem_len	= 1,
+		.elem_size	= sizeof(u32),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0,
+		.offset		= offsetof(struct qmi_wlanfw_shadow_reg_v2_cfg_s_v01,
+					   addr),
+	},
+	{
+		.data_type	= QMI_EOTI,
+		.array_type	= NO_ARRAY,
+		.tlv_type	= QMI_COMMON_TLV_TYPE,
+	},
+};
+
 static struct qmi_elem_info qmi_wlanfw_wlan_mode_req_msg_v01_ei[] = {
 	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
@@ -1627,6 +1668,63 @@ static struct qmi_elem_info qmi_wlanfw_wlan_cfg_req_msg_v01_ei[] = {
 					   svc_cfg),
 		.ei_array	= qmi_wlanfw_ce_svc_pipe_cfg_s_v01_ei,
 	},
+	{
+		.data_type	= QMI_OPT_FLAG,
+		.elem_len	= 1,
+		.elem_size	= sizeof(u8),
+		.array_type = NO_ARRAY,
+		.tlv_type	= 0x13,
+		.offset		= offsetof(struct qmi_wlanfw_wlan_cfg_req_msg_v01,
+					   shadow_reg_valid),
+	},
+	{
+		.data_type	= QMI_DATA_LEN,
+		.elem_len	= 1,
+		.elem_size	= sizeof(u8),
+		.array_type = NO_ARRAY,
+		.tlv_type	= 0x13,
+		.offset		= offsetof(struct qmi_wlanfw_wlan_cfg_req_msg_v01,
+					   shadow_reg_len),
+	},
+	{
+		.data_type	= QMI_STRUCT,
+		.elem_len	= QMI_WLANFW_MAX_NUM_SHADOW_REG_V01,
+		.elem_size	= sizeof(struct qmi_wlanfw_shadow_reg_cfg_s_v01),
+		.array_type = VAR_LEN_ARRAY,
+		.tlv_type	= 0x13,
+		.offset		= offsetof(struct qmi_wlanfw_wlan_cfg_req_msg_v01,
+					   shadow_reg),
+		.ei_array	= qmi_wlanfw_shadow_reg_cfg_s_v01_ei,
+	},
+	{
+		.data_type	= QMI_OPT_FLAG,
+		.elem_len	= 1,
+		.elem_size	= sizeof(u8),
+		.array_type = NO_ARRAY,
+		.tlv_type	= 0x14,
+		.offset		= offsetof(struct qmi_wlanfw_wlan_cfg_req_msg_v01,
+					   shadow_reg_v2_valid),
+	},
+	{
+		.data_type	= QMI_DATA_LEN,
+		.elem_len	= 1,
+		.elem_size	= sizeof(u8),
+		.array_type = NO_ARRAY,
+		.tlv_type	= 0x14,
+		.offset		= offsetof(struct qmi_wlanfw_wlan_cfg_req_msg_v01,
+					   shadow_reg_v2_len),
+	},
+	{
+		.data_type	= QMI_STRUCT,
+		.elem_len	= QMI_WLANFW_MAX_NUM_SHADOW_REG_V2_V01,
+		.elem_size	= sizeof(struct qmi_wlanfw_shadow_reg_v2_cfg_s_v01),
+		.array_type = VAR_LEN_ARRAY,
+		.tlv_type	= 0x14,
+		.offset		= offsetof(struct qmi_wlanfw_wlan_cfg_req_msg_v01,
+					   shadow_reg_v2),
+		.ei_array	= qmi_wlanfw_shadow_reg_v2_cfg_s_v01_ei,
+	},
+
 	{
 		.data_type	= QMI_EOTI,
 		.array_type	= NO_ARRAY,
@@ -2510,6 +2608,18 @@ static int ath12k_qmi_wlanfw_wlan_cfg_send(struct ath12k_base *ab)
 		req->svc_cfg[pipe_num].service_id = svc_cfg[pipe_num].service_id;
 		req->svc_cfg[pipe_num].pipe_dir = svc_cfg[pipe_num].pipedir;
 		req->svc_cfg[pipe_num].pipe_num = svc_cfg[pipe_num].pipenum;
+	}
+
+	/* set shadow v2 configuration */
+	if (ab->hw_params.supports_shadow_regs) {
+		req->shadow_reg_v2_valid = 1;
+		req->shadow_reg_v2_len = min_t(u32,
+					       ab->qmi.ce_cfg.shadow_reg_v2_len,
+					       QMI_WLANFW_MAX_NUM_SHADOW_REG_V2_V01);
+		memcpy(&req->shadow_reg_v2, ab->qmi.ce_cfg.shadow_reg_v2,
+		       sizeof(u32) * req->shadow_reg_v2_len);
+	} else {
+		req->shadow_reg_v2_valid = 0;
 	}
 
 	ret = qmi_txn_init(&ab->qmi.handle, &txn,

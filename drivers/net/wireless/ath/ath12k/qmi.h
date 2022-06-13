@@ -492,6 +492,8 @@ struct qmi_wlanfw_m3_info_resp_msg_v01 {
 #define QMI_WLANFW_MAX_STR_LEN_V01			16
 #define QMI_WLANFW_MAX_NUM_CE_V01			12
 #define QMI_WLANFW_MAX_NUM_SVC_V01			24
+#define QMI_WLANFW_MAX_NUM_SHADOW_REG_V01		24
+#define QMI_WLANFW_MAX_NUM_SHADOW_REG_V2_V01		36
 
 struct qmi_wlanfw_wlan_mode_req_msg_v01 {
 	u32 mode;
@@ -514,6 +516,14 @@ struct qmi_wlanfw_wlan_cfg_req_msg_v01 {
 	u32 svc_cfg_len;
 	struct qmi_wlanfw_ce_svc_pipe_cfg_s_v01
 			svc_cfg[QMI_WLANFW_MAX_NUM_SVC_V01];
+	u8 shadow_reg_valid;
+	u32 shadow_reg_len;
+	struct qmi_wlanfw_shadow_reg_cfg_s_v01
+		shadow_reg[QMI_WLANFW_MAX_NUM_SHADOW_REG_V01];
+	u8 shadow_reg_v2_valid;
+	u32 shadow_reg_v2_len;
+	struct qmi_wlanfw_shadow_reg_v2_cfg_s_v01
+		shadow_reg_v2[QMI_WLANFW_MAX_NUM_SHADOW_REG_V2_V01];
 };
 
 struct qmi_wlanfw_wlan_cfg_resp_msg_v01 {

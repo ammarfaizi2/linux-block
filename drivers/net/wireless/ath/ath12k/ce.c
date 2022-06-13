@@ -196,7 +196,7 @@ const struct ce_attr ath12k_host_ce_config_wcn7850[] = {
 	/* CE7: host->target WMI (mac1) */
 	{
 		.flags = CE_ATTR_FLAGS | CE_ATTR_DIS_INTR,
-		.src_nentries = 32,
+		.src_nentries = 0,
 		.src_sz_max = 2048,
 		.dest_nentries = 0,
 	},
@@ -783,11 +783,53 @@ void ath12k_ce_rx_replenish_retry(struct timer_list *t)
 	ath12k_ce_rx_post_buf(ab);
 }
 
+static void ath12k_ce_shadow_config(struct ath12k_base *ab)
+{
+	int i;
+
+	for (i = 0; i < ab->hw_params.ce_count; i++) {
+		if (ab->hw_params.host_ce_config[i].src_nentries)
+			ath12k_hal_srng_update_shadow_config(ab, HAL_CE_SRC, i);
+
+		if (ab->hw_params.host_ce_config[i].dest_nentries) {
+			ath12k_hal_srng_update_shadow_config(ab, HAL_CE_DST, i);
+			ath12k_hal_srng_update_shadow_config(ab, HAL_CE_DST_STATUS, i);
+		}
+	}
+}
+
+void ath12k_ce_get_shadow_config(struct ath12k_base *ab,
+				 u32 **shadow_cfg, u32 *shadow_cfg_len)
+{
+	if (!ab->hw_params.supports_shadow_regs)
+		return;
+
+	ath12k_hal_srng_get_shadow_config(ab, shadow_cfg, shadow_cfg_len);
+
+	/* shadow is already configured */
+	if (*shadow_cfg_len)
+		return;
+
+	/* shadow isn't configured yet, configure now.
+	 * non-CE srngs are configured firstly, then
+	 * all CE srngs.
+	 */
+	ath12k_hal_srng_shadow_config(ab);
+	ath12k_ce_shadow_config(ab);
+
+	/* get the shadow configuration */
+	ath12k_hal_srng_get_shadow_config(ab, shadow_cfg, shadow_cfg_len);
+}
+EXPORT_SYMBOL(ath12k_ce_get_shadow_config);
+
 int ath12k_ce_init_pipes(struct ath12k_base *ab)
 {
 	struct ath12k_ce_pipe *pipe;
 	int i;
 	int ret;
+
+	ath12k_ce_get_shadow_config(ab, &ab->qmi.ce_cfg.shadow_reg_v2,
+				    &ab->qmi.ce_cfg.shadow_reg_v2_len);
 
 	for (i = 0; i < ab->hw_params.ce_count; i++) {
 		pipe = &ab->ce.ce_pipe[i];

@@ -67,6 +67,7 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.supports_suspend = false,
 		.tcl_ring_retry = true,
 		.reoq_lut_support = true,
+		.supports_shadow_regs = false,
 		.hal_desc_sz = sizeof(struct hal_rx_desc_qcn92xx),
 		.num_tcl_banks = 48,
 		.fix_l1ss = false,
@@ -108,6 +109,7 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.supports_suspend = false,
 		.tcl_ring_retry = false,
 		.reoq_lut_support = false,
+		.supports_shadow_regs = true,
 		.hal_desc_sz = sizeof(struct hal_rx_desc_wcn7850),
 		.num_tcl_banks = 7,
 		.fix_l1ss = false,
@@ -573,16 +575,10 @@ static int ath12k_core_start(struct ath12k_base *ab,
 {
 	int ret;
 
-	ret = ath12k_qmi_firmware_start(ab, mode);
-	if (ret) {
-		ath12k_err(ab, "failed to attach wmi: %d\n", ret);
-		return ret;
-	}
-
 	ret = ath12k_wmi_attach(ab);
 	if (ret) {
 		ath12k_err(ab, "failed to attach wmi: %d\n", ret);
-		goto err_firmware_stop;
+		return ret;
 	}
 
 	ret = ath12k_htc_init(ab);
@@ -684,8 +680,22 @@ err_hif_stop:
 	ath12k_hif_stop(ab);
 err_wmi_detach:
 	ath12k_wmi_detach(ab);
-err_firmware_stop:
-	ath12k_qmi_firmware_stop(ab);
+	return ret;
+}
+
+static int ath12k_core_start_firmware(struct ath12k_base *ab,
+				      enum ath12k_firmware_mode mode)
+{
+	int ret;
+
+	ath12k_ce_get_shadow_config(ab, &ab->qmi.ce_cfg.shadow_reg_v2,
+				    &ab->qmi.ce_cfg.shadow_reg_v2_len);
+
+	ret = ath12k_qmi_firmware_start(ab, mode);
+	if (ret) {
+		ath12k_err(ab, "failed to send firmware start: %d\n", ret);
+		return ret;
+	}
 
 	return ret;
 }
@@ -694,16 +704,22 @@ int ath12k_core_qmi_firmware_ready(struct ath12k_base *ab)
 {
 	int ret;
 
+	ret = ath12k_core_start_firmware(ab, ATH12K_FIRMWARE_MODE_NORMAL);
+	if (ret) {
+		ath12k_err(ab, "failed to start firmware: %d\n", ret);
+		return ret;
+	}
+
 	ret = ath12k_ce_init_pipes(ab);
 	if (ret) {
 		ath12k_err(ab, "failed to initialize CE: %d\n", ret);
-		return ret;
+		goto err_firmware_stop;
 	}
 
 	ret = ath12k_dp_alloc(ab);
 	if (ret) {
 		ath12k_err(ab, "failed to init DP: %d\n", ret);
-		return ret;
+		goto err_firmware_stop;
 	}
 
 	switch (ath12k_crypto_mode) {
@@ -746,6 +762,9 @@ err_core_stop:
 err_dp_free:
 	ath12k_dp_free(ab);
 	mutex_unlock(&ab->core_lock);
+err_firmware_stop:
+	ath12k_qmi_firmware_stop(ab);
+
 	return ret;
 }
 

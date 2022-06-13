@@ -171,6 +171,7 @@ struct ath12k_hw_params {
 	bool supports_suspend;
 	bool tcl_ring_retry;
 	bool reoq_lut_support;
+	bool supports_shadow_regs;
 	u32 hal_desc_sz;
 	u32 num_tcl_banks;
 	bool fix_l1ss;

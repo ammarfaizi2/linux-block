@@ -1805,8 +1805,16 @@ int ath12k_hal_srng_setup(struct ath12k_base *ab, enum hal_ring_type type,
 		srng->u.src_ring.low_threshold = params->low_threshold *
 						 srng->entry_size;
 		if (srng_config->mac_type == ATH12K_HAL_SRNG_UMAC) {
-			srng->u.src_ring.hp_addr =
-				(u32 *)((unsigned long)ab->mem + reg_base);
+			if (!ab->hw_params.supports_shadow_regs)
+				srng->u.src_ring.hp_addr =
+					(u32 *)((unsigned long)ab->mem + reg_base);
+			else
+				ath12k_dbg(ab, ATH12K_DBG_HAL,
+					   "hal type %d ring_num %d reg_base 0x%x shadow 0x%lx\n",
+					   type, ring_num,
+					   reg_base,
+					   (unsigned long)srng->u.src_ring.hp_addr -
+					   (unsigned long)ab->mem);
 		} else {
 			idx = ring_id - HAL_SRNG_RING_ID_DMAC_CMN_ID_START;
 			srng->u.src_ring.hp_addr = (void *)(hal->wrp.vaddr +
@@ -1827,9 +1835,17 @@ int ath12k_hal_srng_setup(struct ath12k_base *ab, enum hal_ring_type type,
 		srng->u.dst_ring.cached_hp = 0;
 		srng->u.dst_ring.hp_addr = (void *)(hal->rdp.vaddr + ring_id);
 		if (srng_config->mac_type == ATH12K_HAL_SRNG_UMAC) {
-			srng->u.dst_ring.tp_addr =
-				(u32 *)((unsigned long)ab->mem + reg_base +
-				(HAL_REO1_RING_TP - HAL_REO1_RING_HP));
+			if (!ab->hw_params.supports_shadow_regs)
+				srng->u.dst_ring.tp_addr =
+					(u32 *)((unsigned long)ab->mem + reg_base +
+					(HAL_REO1_RING_TP - HAL_REO1_RING_HP));
+			else
+				ath12k_dbg(ab, ATH12K_DBG_HAL,
+					   "type %d ring_num %d target_reg 0x%x shadow 0x%lx\n",
+					   type, ring_num,
+					   reg_base + HAL_REO1_RING_TP - HAL_REO1_RING_HP,
+					   (unsigned long)srng->u.dst_ring.tp_addr -
+					   (unsigned long)ab->mem);
 		} else {
 			/* For PMAC & DMAC rings, tail pointer updates will be done
 			 * through FW by writing to a shared memory location
