@@ -2239,6 +2239,7 @@ int btrfs_repair_eb_io_failure(const struct extent_buffer *eb, int mirror_num)
 		ret = btrfs_map_repair_bio(fs_info, &bio, mirror_num);
 		bio_uninit(&bio);
 
+		start += PAGE_SIZE;
 		if (ret)
 			return ret;
 	}
