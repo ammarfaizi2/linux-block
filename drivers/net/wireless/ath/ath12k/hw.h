@@ -125,6 +125,7 @@ struct ath12k_hw_ring_mask {
 
 struct ath12k_hw_hal_params {
 	enum hal_rx_buf_return_buf_manager rx_buf_rbm;
+	u32	  wbm2sw_cc_enable;
 };
 
 struct ath12k_hw_params {

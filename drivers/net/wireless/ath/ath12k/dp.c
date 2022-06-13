@@ -1237,12 +1237,8 @@ void ath12k_dp_cc_config(struct ath12k_base *ab)
 
 	/* Enable Cookie conversion for WBM2SW Rings */
 	val = ath12k_hif_read32(ab, wbm_base + HAL_WBM_SW_COOKIE_CONVERT_CFG);
-	val |= FIELD_PREP(HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW0_EN, 1) |
-		FIELD_PREP(HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW1_EN, 1) |
-		FIELD_PREP(HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW2_EN, 1) |
-		FIELD_PREP(HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW3_EN, 1) |
-		FIELD_PREP(HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW4_EN, 1) |
-		FIELD_PREP(HAL_WBM_SW_COOKIE_CONV_CFG_GLOBAL_EN, 1);
+	val |= FIELD_PREP(HAL_WBM_SW_COOKIE_CONV_CFG_GLOBAL_EN, 1) |
+	       ab->hw_params.hal_params->wbm2sw_cc_enable;
 
 	ath12k_hif_write32(ab, wbm_base + HAL_WBM_SW_COOKIE_CONVERT_CFG, val);
 }
