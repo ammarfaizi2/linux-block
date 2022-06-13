@@ -184,7 +184,7 @@ void rcu_tasks_trace_qs_blkd(struct task_struct *t);
 		if (likely(!READ_ONCE((t)->trc_reader_special.b.need_qs)) &&	\
 		    likely(!___rttq_nesting)) {					\
 			rcu_trc_cmpxchg_need_qs((t), 0,	TRC_NEED_QS_CHECKED);	\
-		} else if (___rttq_nesting &&					\
+		} else if (___rttq_nesting && ___rttq_nesting != INT_MIN &&	\
 			   !READ_ONCE((t)->trc_reader_special.b.blocked)) {	\
 			rcu_tasks_trace_qs_blkd(t);				\
 		}								\
