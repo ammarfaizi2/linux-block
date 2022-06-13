@@ -335,7 +335,7 @@ void ath12k_dp_tx_get_vdev_bank_config(struct ath12k_base *ab, struct ath12k_vif
 	*bank_config |= FIELD_PREP(HAL_TX_BANK_CONFIG_ADDRX_EN,
 				   arvif->hal_addr_search_flags & HAL_TX_ADDRX_EN) |
 			FIELD_PREP(HAL_TX_BANK_CONFIG_ADDRY_EN,
-				   arvif->hal_addr_search_flags & HAL_TX_ADDRY_EN);
+				   !!(arvif->hal_addr_search_flags & HAL_TX_ADDRY_EN));
 
 	*bank_config |= FIELD_PREP(HAL_TX_BANK_CONFIG_MESH_EN,
 				  ieee80211_vif_is_mesh(arvif->vif) ? 3 : 0) |
