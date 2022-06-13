@@ -175,6 +175,16 @@ enum qmi_wlanfw_host_build_type {
 	WLANFW_HOST_BUILD_TYPE_ENUM_MAX_VAL_V01 = INT_MAX,
 };
 
+#define QMI_WLFW_MAX_NUM_MLO_CHIPS_V01 3
+#define QMI_WLFW_MAX_NUM_MLO_LINKS_PER_CHIP_V01 2
+
+struct wlfw_host_mlo_chip_info_s_v01 {
+	u8 chip_id;
+	u8 num_local_links;
+	u8 hw_link_id[QMI_WLFW_MAX_NUM_MLO_LINKS_PER_CHIP_V01];
+	u8 valid_mlo_link_id[QMI_WLFW_MAX_NUM_MLO_LINKS_PER_CHIP_V01];
+};
+
 struct qmi_wlanfw_host_cap_req_msg_v01 {
 	u8 num_clients_valid;
 	u32 num_clients;
@@ -215,6 +225,17 @@ struct qmi_wlanfw_host_cap_req_msg_v01 {
 	u8 mlo_capable;
 	u8 mlo_chip_id_valid;
 	u16 mlo_chip_id;
+	u8 mlo_group_id_valid;
+	u8 mlo_group_id;
+	u8 max_mlo_peer_valid;
+	u16 max_mlo_peer;
+	u8 mlo_num_chips_valid;
+	u8 mlo_num_chips;
+	u8 mlo_chip_info_valid;
+	struct wlfw_host_mlo_chip_info_s_v01 mlo_chip_info[QMI_WLFW_MAX_NUM_MLO_CHIPS_V01];
+	u8 feature_list_valid;
+	u64 feature_list;
+
 };
 
 struct qmi_wlanfw_host_cap_resp_msg_v01 {

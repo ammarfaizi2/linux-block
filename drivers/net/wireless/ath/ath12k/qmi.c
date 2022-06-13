@@ -21,6 +21,50 @@ module_param_named(cold_boot_cal, ath12k_cold_boot_cal, bool, 0644);
 MODULE_PARM_DESC(cold_boot_cal,
 		 "Decrease the channel switch time but increase the driver load time (Default: true)");
 
+static struct qmi_elem_info wlfw_host_mlo_chip_info_s_v01_ei[] = {
+	{
+		.data_type      = QMI_UNSIGNED_1_BYTE,
+		.elem_len       = 1,
+		.elem_size      = sizeof(u8),
+		.array_type	= NO_ARRAY,
+		.tlv_type       = 0,
+		.offset         = offsetof(struct wlfw_host_mlo_chip_info_s_v01,
+					   chip_id),
+	},
+	{
+		.data_type      = QMI_UNSIGNED_1_BYTE,
+		.elem_len       = 1,
+		.elem_size      = sizeof(u8),
+		.array_type	= NO_ARRAY,
+		.tlv_type       = 0,
+		.offset         = offsetof(struct wlfw_host_mlo_chip_info_s_v01,
+					   num_local_links),
+	},
+	{
+		.data_type      = QMI_UNSIGNED_1_BYTE,
+		.elem_len       = QMI_WLFW_MAX_NUM_MLO_LINKS_PER_CHIP_V01,
+		.elem_size      = sizeof(u8),
+		.array_type     = STATIC_ARRAY,
+		.tlv_type       = 0,
+		.offset         = offsetof(struct wlfw_host_mlo_chip_info_s_v01,
+					   hw_link_id),
+	},
+	{
+		.data_type      = QMI_UNSIGNED_1_BYTE,
+		.elem_len       = QMI_WLFW_MAX_NUM_MLO_LINKS_PER_CHIP_V01,
+		.elem_size      = sizeof(u8),
+		.array_type     = STATIC_ARRAY,
+		.tlv_type       = 0,
+		.offset         = offsetof(struct wlfw_host_mlo_chip_info_s_v01,
+					   valid_mlo_link_id),
+	},
+	{
+		.data_type      = QMI_EOTI,
+		.array_type	= NO_ARRAY,
+		.tlv_type       = QMI_COMMON_TLV_TYPE,
+	},
+};
+
 static struct qmi_elem_info qmi_wlanfw_host_cap_req_msg_v01_ei[] = {
 	{
 		.data_type	= QMI_OPT_FLAG,
@@ -372,6 +416,97 @@ static struct qmi_elem_info qmi_wlanfw_host_cap_req_msg_v01_ei[] = {
 		.tlv_type	= 0x22,
 		.offset		= offsetof(struct qmi_wlanfw_host_cap_req_msg_v01,
 					   mlo_chip_id),
+	},
+	{
+		.data_type	= QMI_OPT_FLAG,
+		.elem_len	= 1,
+		.elem_size	= sizeof(u8),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x23,
+		.offset		= offsetof(struct qmi_wlanfw_host_cap_req_msg_v01,
+					   mlo_group_id_valid),
+	},
+	{
+		.data_type	= QMI_UNSIGNED_1_BYTE,
+		.elem_len	= 1,
+		.elem_size	= sizeof(u8),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x23,
+		.offset		= offsetof(struct qmi_wlanfw_host_cap_req_msg_v01,
+					   mlo_group_id),
+	},
+	{
+		.data_type	= QMI_OPT_FLAG,
+		.elem_len	= 1,
+		.elem_size	= sizeof(u8),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x24,
+		.offset		= offsetof(struct qmi_wlanfw_host_cap_req_msg_v01,
+					   max_mlo_peer_valid),
+	},
+	{
+		.data_type	= QMI_UNSIGNED_2_BYTE,
+		.elem_len	= 1,
+		.elem_size	= sizeof(u16),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x24,
+		.offset		= offsetof(struct qmi_wlanfw_host_cap_req_msg_v01,
+					   max_mlo_peer),
+	},
+	{
+		.data_type	= QMI_OPT_FLAG,
+		.elem_len	= 1,
+		.elem_size	= sizeof(u8),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x25,
+		.offset		= offsetof(struct qmi_wlanfw_host_cap_req_msg_v01,
+					   mlo_num_chips_valid),
+	},
+	{
+		.data_type	= QMI_UNSIGNED_1_BYTE,
+		.elem_len	= 1,
+		.elem_size	= sizeof(u8),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x25,
+		.offset		= offsetof(struct qmi_wlanfw_host_cap_req_msg_v01,
+					   mlo_num_chips),
+	},
+	{
+		.data_type	= QMI_OPT_FLAG,
+		.elem_len	= 1,
+		.elem_size	= sizeof(u8),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x26,
+		.offset		= offsetof(struct qmi_wlanfw_host_cap_req_msg_v01,
+					   mlo_chip_info_valid),
+	},
+	{
+		.data_type	= QMI_STRUCT,
+		.elem_len	= QMI_WLFW_MAX_NUM_MLO_CHIPS_V01,
+		.elem_size	= sizeof(struct wlfw_host_mlo_chip_info_s_v01),
+		.array_type	= STATIC_ARRAY,
+		.tlv_type	= 0x26,
+		.offset		= offsetof(struct qmi_wlanfw_host_cap_req_msg_v01,
+					   mlo_chip_info),
+		.ei_array	= wlfw_host_mlo_chip_info_s_v01_ei,
+	},
+	{
+		.data_type	= QMI_OPT_FLAG,
+		.elem_len	= 1,
+		.elem_size	= sizeof(u8),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x27,
+		.offset		= offsetof(struct qmi_wlanfw_host_cap_req_msg_v01,
+					   feature_list_valid),
+	},
+	{
+		.data_type	= QMI_UNSIGNED_8_BYTE,
+		.elem_len	= 1,
+		.elem_size	= sizeof(u64),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x27,
+		.offset		= offsetof(struct qmi_wlanfw_host_cap_req_msg_v01,
+					   feature_list),
 	},
 	{
 		.data_type	= QMI_EOTI,
@@ -1771,6 +1906,30 @@ static struct qmi_elem_info qmi_wlanfw_cold_boot_cal_done_ind_msg_v01_ei[] = {
 	},
 };
 
+static void ath12k_host_cap_parse_mlo(struct qmi_wlanfw_host_cap_req_msg_v01 *req)
+{
+	req->mlo_capable_valid = 1;
+	req->mlo_capable = 1;
+	req->mlo_chip_id_valid = 1;
+	req->mlo_chip_id = 0;
+	req->mlo_group_id_valid = 1;
+	req->mlo_group_id = 0;
+	req->max_mlo_peer_valid = 1;
+	/* Max peer number generally won't change for the same device
+	 * but needs to be synced with host driver.
+	 */
+	req->max_mlo_peer = 32;
+	req->mlo_num_chips_valid = 1;
+	req->mlo_num_chips = 1;
+	req->mlo_chip_info_valid = 1;
+	req->mlo_chip_info[0].chip_id = 0;
+	req->mlo_chip_info[0].num_local_links = 2;
+	req->mlo_chip_info[0].hw_link_id[0] = 0;
+	req->mlo_chip_info[0].hw_link_id[1] = 1;
+	req->mlo_chip_info[0].valid_mlo_link_id[0] = 1;
+	req->mlo_chip_info[0].valid_mlo_link_id[1] = 1;
+}
+
 static int ath12k_qmi_host_cap_send(struct ath12k_base *ab)
 {
 	struct qmi_wlanfw_host_cap_req_msg_v01 req;
@@ -1796,6 +1955,9 @@ static int ath12k_qmi_host_cap_send(struct ath12k_base *ab)
 	req.cal_done_valid = 1;
 	req.cal_done = ab->qmi.cal_done;
 
+	/* BRINGUP: here we are piggybacking a lot of stuff using
+	 * internal_sleep_clock, should it be split?
+	 */
 	if (ab->hw_params.internal_sleep_clock) {
 		req.nm_modem_valid = 1;
 
@@ -1809,6 +1971,8 @@ static int ath12k_qmi_host_cap_send(struct ath12k_base *ab)
 		 */
 		req.nm_modem |= SLEEP_CLOCK_SELECT_INTERNAL_BIT;
 		req.nm_modem |= PLATFORM_CAP_PCIE_GLOBAL_RESET;
+
+		ath12k_host_cap_parse_mlo(&req);
 	}
 
 	ret = qmi_txn_init(&ab->qmi.handle, &txn,
