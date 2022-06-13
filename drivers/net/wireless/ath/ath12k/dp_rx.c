@@ -2734,7 +2734,7 @@ try_again:
 		desc_info->skb = NULL;
 
 		spin_lock_bh(&dp->rx_desc_lock);
-		list_add_tail(&desc_info->list, &dp->rx_desc_free_list);
+		list_move_tail(&desc_info->list, &dp->rx_desc_free_list);
 		spin_unlock_bh(&dp->rx_desc_lock);
 
 		rxcb = ATH12K_SKB_RXCB(msdu);

@@ -1136,7 +1136,7 @@ static void ath12k_dp_cc_cleanup(struct ath12k_base *ab)
 				continue;
 
 			dma_unmap_single(ab->dev, ATH12K_SKB_RXCB(skb)->paddr,
-					 skb->len + skb_tailroom(skb), DMA_FROM_DEVICE);
+					 skb->len, DMA_TO_DEVICE);
 			dev_kfree_skb_any(skb);
 		}
 
@@ -1154,10 +1154,6 @@ static void ath12k_dp_cc_cleanup(struct ath12k_base *ab)
 	}
 
 	dp->tx_spt_pages = NULL;
-
-	for (i = 0; i < ATH12K_NUM_SPT_PAGES; i++)
-		kfree(dp->spt_info[i].vaddr);
-
 	kfree(dp->spt_info);
 }
 
