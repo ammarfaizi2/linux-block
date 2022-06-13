@@ -8,6 +8,7 @@
 #define ATH12K_HW_H
 
 #include "wmi.h"
+#include "hal.h"
 
 /* Target configuration defines */
 
@@ -122,6 +123,10 @@ struct ath12k_hw_ring_mask {
 	u8 tx_mon_dest[ATH12K_EXT_IRQ_GRP_NUM_MAX];
 };
 
+struct ath12k_hw_hal_params {
+	enum hal_rx_buf_return_buf_manager rx_buf_rbm;
+};
+
 struct ath12k_hw_params {
 	const char *name;
 	u16 hw_rev;
@@ -147,6 +152,8 @@ struct ath12k_hw_params {
 	u32 target_ce_count;
 	const struct service_to_pipe *svc_to_ce_map;
 	u32 svc_to_ce_map_len;
+
+	const struct ath12k_hw_hal_params *hal_params;
 
 	bool single_pdev_only;
 
@@ -181,6 +188,9 @@ extern const struct ath12k_hw_ops qcn92xx_ops;
 extern const struct ath12k_hw_ops wcn7850_ops;
 
 extern const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_qcn92xx;
+
+extern const struct ath12k_hw_hal_params ath12k_hw_hal_params_qcn92xx;
+extern const struct ath12k_hw_hal_params ath12k_hw_hal_params_wcn7850;
 
 static inline
 int ath12k_hw_get_mac_from_pdev_id(struct ath12k_hw_params *hw,

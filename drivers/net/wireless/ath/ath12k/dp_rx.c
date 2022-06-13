@@ -474,7 +474,7 @@ static int ath12k_dp_rxdma_ring_buf_setup(struct ath12k_base *ab,
 		ath12k_dp_mon_buf_replenish(ab, rx_ring, num_entries);
 	else
 		ath12k_dp_rxbufs_replenish(ab, 0, rx_ring, num_entries,
-					   HAL_RX_BUF_RBM_SW3_BM,
+					   ab->hw_params.hal_params->rx_buf_rbm,
 					   ringtype == HAL_RXDMA_BUF);
 	return 0;
 }
@@ -2785,7 +2785,7 @@ try_again:
 
 	//TODO Move to implicit BM?
 	ath12k_dp_rxbufs_replenish(ab, i, rx_ring, num_buffs_reaped,
-				   HAL_RX_BUF_RBM_SW3_BM, true);
+				   ab->hw_params.hal_params->rx_buf_rbm, true);
 
 	ath12k_dp_rx_process_received_packets(ab, napi, &msdu_list,
 					      ring_id);
@@ -3492,7 +3492,8 @@ int ath12k_dp_process_rx_err(struct ath12k_base *ab, struct napi_struct *napi,
 		ath12k_hal_rx_msdu_link_info_get(link_desc_va, &num_msdus, msdu_cookies,
 						 &rbm);
 		if (rbm != HAL_RX_BUF_RBM_WBM_CHIP0_IDLE_DESC_LIST &&
-		    rbm != HAL_RX_BUF_RBM_SW3_BM) {
+		    rbm != HAL_RX_BUF_RBM_SW3_BM &&
+		    rbm != ab->hw_params.hal_params->rx_buf_rbm) {
 			ab->soc_stats.invalid_rbm++;
 			ath12k_warn(ab, "invalid return buffer manager %d\n", rbm);
 			ath12k_dp_rx_link_desc_return(ab, desc,
@@ -3539,7 +3540,7 @@ exit:
 	rx_ring = &dp->rx_refill_buf_ring;
 
 	ath12k_dp_rxbufs_replenish(ab, 0, rx_ring, tot_n_bufs_reaped,
-				   HAL_RX_BUF_RBM_SW3_BM, true);
+				   ab->hw_params.hal_params->rx_buf_rbm, true);
 
 	return tot_n_bufs_reaped;
 }
@@ -3856,7 +3857,7 @@ int ath12k_dp_rx_process_wbm_err(struct ath12k_base *ab,
 		goto done;
 
 	ath12k_dp_rxbufs_replenish(ab, 0, rx_ring, num_buffs_reaped,
-				   HAL_RX_BUF_RBM_SW3_BM, true);
+				   ab->hw_params.hal_params->rx_buf_rbm, true);
 
 	rcu_read_lock();
 	for (i = 0; i <  ab->num_radios; i++) {

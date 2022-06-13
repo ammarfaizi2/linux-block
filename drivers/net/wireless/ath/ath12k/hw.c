@@ -8,9 +8,9 @@
 #include <linux/bitops.h>
 #include <linux/bitfield.h>
 
-#include "hw.h"
 #include "core.h"
 #include "ce.h"
+#include "hw.h"
 
 static u8 ath12k_hw_qcn92xx_mac_from_pdev_id(int pdev_idx)
 {
@@ -614,4 +614,12 @@ const struct ath12k_hw_regs wcn7850_regs = {
 	/* PCIe base address */
 	.pcie_qserdes_sysclk_en_sel = 0x01e0e0a8,
 	.pcie_pcs_osc_dtct_config_base = 0x01e0f45c,
+};
+
+const struct ath12k_hw_hal_params ath12k_hw_hal_params_qcn92xx = {
+	.rx_buf_rbm = HAL_RX_BUF_RBM_SW3_BM,
+};
+
+const struct ath12k_hw_hal_params ath12k_hw_hal_params_wcn7850 = {
+	.rx_buf_rbm = HAL_RX_BUF_RBM_SW1_BM,
 };
