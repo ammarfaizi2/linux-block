@@ -3254,6 +3254,13 @@ rcu_torture_init(void)
 	if (cur_ops->init)
 		cur_ops->init();
 
+	if (cur_ops->exp_sync) {
+		pr_info("%s: Start bulk expedited test at %lu jiffies.\n", __func__, jiffies);
+		for (i = 0; i < 10000; i++)
+			cur_ops->exp_sync();
+		pr_info("%s: End bulk expedited test at %lu jiffies.\n", __func__, jiffies);
+	}
+
 	if (nreaders >= 0) {
 		nrealreaders = nreaders;
 	} else {
