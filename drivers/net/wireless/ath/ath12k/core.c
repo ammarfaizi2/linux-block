@@ -65,9 +65,11 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.idle_ps = false,
 		.cold_boot_calib = false,
 		.supports_suspend = false,
+		.tcl_ring_retry = true,
 		.hal_desc_sz = sizeof(struct hal_rx_desc_qcn92xx),
 		.num_tcl_banks = 48,
 		.fix_l1ss = false,
+		.max_tx_ring = 4,
 	},
 	{
 		.name = "wcn7850 hw2.0",
@@ -81,7 +83,7 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.single_pdev_only = true,
 		.qmi_service_ins_id = 0,
 		.hw_ops = &wcn7850_ops,
-		.ring_mask = NULL,
+		.ring_mask = &ath12k_hw_ring_mask_wcn7850,
 		.internal_sleep_clock = true,
 		.regs = &wcn7850_regs,
 		.host_ce_config = ath12k_host_ce_config_wcn7850,
@@ -103,9 +105,11 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.idle_ps = false,
 		.cold_boot_calib = false,
 		.supports_suspend = false,
+		.tcl_ring_retry = false,
 		.hal_desc_sz = sizeof(struct hal_rx_desc_wcn7850),
 		.num_tcl_banks = 7,
 		.fix_l1ss = false,
+		.max_tx_ring = 3,
 	},
 };
 

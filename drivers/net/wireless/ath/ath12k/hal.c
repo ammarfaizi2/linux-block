@@ -236,7 +236,15 @@ ath12k_hal_wcn7850_tcl_to_wbm_rbm_map[DP_TCL_NUM_RING_MAX] = {
 	{
 		.wbm_ring_num = 0,
 		.rbm_id = HAL_RX_BUF_RBM_SW0_BM,
-	}
+	},
+	{
+		.wbm_ring_num = 2,
+		.rbm_id = HAL_RX_BUF_RBM_SW2_BM,
+	},
+	{
+		.wbm_ring_num = 4,
+		.rbm_id = HAL_RX_BUF_RBM_SW4_BM,
+	},
 };
 
 static bool ath12k_hw_qcn92xx_rx_desc_get_first_msdu(struct hal_rx_desc *desc)

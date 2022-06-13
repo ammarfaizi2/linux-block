@@ -168,9 +168,11 @@ struct ath12k_hw_params {
 	bool idle_ps;
 	bool cold_boot_calib;
 	bool supports_suspend;
+	bool tcl_ring_retry;
 	u32 hal_desc_sz;
 	u32 num_tcl_banks;
 	bool fix_l1ss;
+	u32 max_tx_ring;
 };
 
 /* BRINGUP: move to dp.h */
@@ -182,12 +184,15 @@ struct ath12k_hw_ops {
 	int (*mac_id_to_pdev_id)(struct ath12k_hw_params *hw, int mac_id);
 	int (*mac_id_to_srng_id)(struct ath12k_hw_params *hw, int mac_id);
 	int (*rxdma_ring_sel_config)(struct ath12k_base *ab);
+	u8 (*get_ring_selector)(struct sk_buff *skb);
+	bool (*dp_srng_is_tx_comp_ring)(int ring_num);
 };
 
 extern const struct ath12k_hw_ops qcn92xx_ops;
 extern const struct ath12k_hw_ops wcn7850_ops;
 
 extern const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_qcn92xx;
+extern const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_wcn7850;
 
 extern const struct ath12k_hw_hal_params ath12k_hw_hal_params_qcn92xx;
 extern const struct ath12k_hw_hal_params ath12k_hw_hal_params_wcn7850;

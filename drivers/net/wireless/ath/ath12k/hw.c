@@ -29,6 +29,19 @@ static int ath12k_hw_mac_id_to_srng_id_qcn92xx(struct ath12k_hw_params *hw,
 	return 0;
 }
 
+static u8 ath12k_hw_get_ring_selector_qcn92xx(struct sk_buff *skb)
+{
+	return smp_processor_id();
+}
+
+static bool ath12k_dp_srng_is_comp_ring_qcn92xx(int ring_num)
+{
+	if (ring_num < 3 || ring_num == 4)
+		return true;
+
+	return false;
+}
+
 static int ath12k_hw_mac_id_to_pdev_id_wcn7850(struct ath12k_hw_params *hw,
 					       int mac_id)
 {
@@ -41,11 +54,26 @@ static int ath12k_hw_mac_id_to_srng_id_wcn7850(struct ath12k_hw_params *hw,
 	return mac_id;
 }
 
+static u8 ath12k_hw_get_ring_selector_wcn7850(struct sk_buff *skb)
+{
+	return skb_get_queue_mapping(skb);
+}
+
+static bool ath12k_dp_srng_is_comp_ring_wcn7850(int ring_num)
+{
+	if (ring_num == 0 || ring_num == 2 || ring_num == 4)
+		return true;
+
+	return false;
+}
+
 const struct ath12k_hw_ops qcn92xx_ops = {
 	.get_hw_mac_from_pdev_id = ath12k_hw_qcn92xx_mac_from_pdev_id,
 	.mac_id_to_pdev_id = ath12k_hw_mac_id_to_pdev_id_qcn92xx,
 	.mac_id_to_srng_id = ath12k_hw_mac_id_to_srng_id_qcn92xx,
 	.rxdma_ring_sel_config = ath12k_dp_rxdma_ring_sel_config_qcn92xx,
+	.get_ring_selector = ath12k_hw_get_ring_selector_qcn92xx,
+	.dp_srng_is_tx_comp_ring = ath12k_dp_srng_is_comp_ring_qcn92xx,
 };
 
 const struct ath12k_hw_ops wcn7850_ops = {
@@ -53,12 +81,15 @@ const struct ath12k_hw_ops wcn7850_ops = {
 	.mac_id_to_pdev_id = ath12k_hw_mac_id_to_pdev_id_wcn7850,
 	.mac_id_to_srng_id = ath12k_hw_mac_id_to_srng_id_wcn7850,
 	.rxdma_ring_sel_config = ath12k_dp_rxdma_ring_sel_config_wcn7850,
+	.get_ring_selector = ath12k_hw_get_ring_selector_wcn7850,
+	.dp_srng_is_tx_comp_ring = ath12k_dp_srng_is_comp_ring_wcn7850,
 };
 
 #define ATH12K_TX_RING_MASK_0 0x1
 #define ATH12K_TX_RING_MASK_1 0x2
 #define ATH12K_TX_RING_MASK_2 0x4
 #define ATH12K_TX_RING_MASK_3 0x8
+#define ATH12K_TX_RING_MASK_4 0x10
 
 #define ATH12K_RX_RING_MASK_0 0x1
 #define ATH12K_RX_RING_MASK_1 0x2
@@ -537,6 +568,34 @@ const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_qcn92xx = {
 		ATH12K_TX_MON_RING_MASK_0,
 		ATH12K_TX_MON_RING_MASK_1,
 		0, 0, 0, 0, 0, 0
+	},
+};
+
+const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_wcn7850 = {
+	.tx  = {
+		ATH12K_TX_RING_MASK_0,
+		ATH12K_TX_RING_MASK_2,
+		ATH12K_TX_RING_MASK_4,
+	},
+
+	.rx = {
+		0, 0, 0,
+		ATH12K_RX_RING_MASK_0,
+		ATH12K_RX_RING_MASK_1,
+		ATH12K_RX_RING_MASK_2,
+		ATH12K_RX_RING_MASK_3,
+	},
+	.rx_err = {
+		ATH12K_RX_ERR_RING_MASK_0,
+	},
+	.rx_wbm_rel = {
+		ATH12K_RX_WBM_REL_RING_MASK_0,
+	},
+	.reo_status = {
+		ATH12K_REO_STATUS_RING_MASK_0,
+	},
+
+	.host2rxdma = {
 	},
 };
 

@@ -214,14 +214,6 @@ static void ath12k_dp_srng_msi_setup(struct ath12k_base *ab,
 	ring_params->flags |= HAL_SRNG_FLAGS_MSI_INTR;
 }
 
-static inline bool ath12k_dp_srng_is_tx_comp_ring(int ring_num)
-{
-	if (ring_num < 3 || ring_num == 4)
-		return true;
-
-	return false;
-}
-
 int ath12k_dp_srng_setup(struct ath12k_base *ab, struct dp_srng *ring,
 			 enum hal_ring_type type, int ring_num,
 			 int mac_id, int num_entries)
@@ -274,7 +266,7 @@ int ath12k_dp_srng_setup(struct ath12k_base *ab, struct dp_srng *ring,
 		params.intr_timer_thres_us = HAL_SRNG_INT_TIMER_THRESHOLD_RX;
 		break;
 	case HAL_WBM2SW_RELEASE:
-		if (ath12k_dp_srng_is_tx_comp_ring(ring_num)) {
+		if (ab->hw_params.hw_ops->dp_srng_is_tx_comp_ring(ring_num)) {
 			params.intr_batch_cntr_thres_entries =
 					HAL_SRNG_INT_BATCH_THRESHOLD_TX;
 			params.intr_timer_thres_us =
@@ -445,7 +437,7 @@ static void ath12k_dp_srng_common_cleanup(struct ath12k_base *ab)
 	ath12k_dp_srng_cleanup(ab, &dp->wbm_desc_rel_ring);
 	ath12k_dp_srng_cleanup(ab, &dp->tcl_cmd_ring);
 	ath12k_dp_srng_cleanup(ab, &dp->tcl_status_ring);
-	for (i = 0; i < DP_TCL_NUM_RING_MAX; i++) {
+	for (i = 0; i < ab->hw_params.max_tx_ring; i++) {
 		ath12k_dp_srng_cleanup(ab, &dp->tx_ring[i].tcl_data_ring);
 		ath12k_dp_srng_cleanup(ab, &dp->tx_ring[i].tcl_comp_ring);
 	}
@@ -486,7 +478,7 @@ static int ath12k_dp_srng_common_setup(struct ath12k_base *ab)
 		goto err;
 	}
 
-	for (i = 0; i < DP_TCL_NUM_RING_MAX; i++) {
+	for (i = 0; i < ab->hw_params.max_tx_ring; i++) {
 		tx_comp_ring_num = ab->hal.ops->tcl_to_wbm_rbm_map[i].wbm_ring_num;
 
 		ret = ath12k_dp_srng_setup(ab, &dp->tx_ring[i].tcl_data_ring,
@@ -506,8 +498,6 @@ static int ath12k_dp_srng_common_setup(struct ath12k_base *ab)
 				    tx_comp_ring_num, ret);
 			goto err;
 		}
-
-		srng = &ab->hal.srng_list[dp->tx_ring[i].tcl_data_ring.ring_id];
 	}
 
 	ret = ath12k_dp_srng_setup(ab, &dp->reo_reinject_ring, HAL_REO_REINJECT,
@@ -875,7 +865,8 @@ int ath12k_dp_service_srng(struct ath12k_base *ab,
 	bool flag;
 
 	while (ab->hw_params.ring_mask->tx[grp_id] >> i) {
-		if (ab->hw_params.ring_mask->tx[grp_id] & BIT(i))
+		if (ab->hw_params.ring_mask->tx[grp_id] &
+			BIT(ab->hal.ops->tcl_to_wbm_rbm_map[i].wbm_ring_num))
 			ath12k_dp_tx_completion_handler(ab, i);
 		i++;
 	}
@@ -1199,7 +1190,7 @@ void ath12k_dp_free(struct ath12k_base *ab)
 
 	ath12k_dp_reo_cmd_list_cleanup(ab);
 
-	for (i = 0; i < DP_TCL_NUM_RING_MAX; i++)
+	for (i = 0; i < ab->hw_params.max_tx_ring; i++)
 		kfree(dp->tx_ring[i].tx_status);
 
 	ath12k_dp_rx_free(ab);
@@ -1501,7 +1492,7 @@ int ath12k_dp_alloc(struct ath12k_base *ab)
 		goto fail_cmn_srng_cleanup;
 	}
 
-	for (i = 0; i < DP_TCL_NUM_RING_MAX; i++) {
+	for (i = 0; i < ab->hw_params.max_tx_ring; i++) {
 		dp->tx_ring[i].tcl_data_ring_id = i;
 
 		dp->tx_ring[i].tx_status_head = 0;
