@@ -3887,7 +3887,6 @@ static void btrfs_end_super_write(struct bio *bio)
 			SetPageUptodate(page);
 		}
 
-		put_page(page);
 		unlock_page(page);
 	}
 
@@ -3974,7 +3973,6 @@ static int write_dev_supers(struct btrfs_device *device,
 			    struct btrfs_super_block *sb, int max_mirrors)
 {
 	struct btrfs_fs_info *fs_info = device->fs_info;
-	struct address_space *mapping = device->bdev->bd_inode->i_mapping;
 	SHASH_DESC_ON_STACK(shash, fs_info->csum_shash);
 	int i;
 	int errors = 0;
@@ -3989,7 +3987,6 @@ static int write_dev_supers(struct btrfs_device *device,
 	for (i = 0; i < max_mirrors; i++) {
 		struct page *page;
 		struct bio *bio;
-		struct btrfs_super_block *disk_super;
 
 		bytenr_orig = btrfs_sb_offset(i);
 		ret = btrfs_sb_log_location(device, i, WRITE, &bytenr);
@@ -4012,21 +4009,17 @@ static int write_dev_supers(struct btrfs_device *device,
 				    BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE,
 				    sb->csum);
 
-		page = find_or_create_page(mapping, bytenr >> PAGE_SHIFT,
-					   GFP_NOFS);
-		if (!page) {
-			btrfs_err(device->fs_info,
-			    "couldn't get super block page for bytenr %llu",
-			    bytenr);
-			errors++;
-			continue;
-		}
+		/*
+		 * Super block is copied to a temporary page, which is locked
+		 * and submitted for write. Page is unlocked after IO finishes.
+		 * No page references are needed, write error is returned as
+		 * page Error bit.
+		 */
+		page = device->sb_write_page;
+		ClearPageError(page);
+		lock_page(page);
 
-		/* Bump the refcount for wait_dev_supers() */
-		get_page(page);
-
-		disk_super = page_address(page);
-		memcpy(disk_super, sb, BTRFS_SUPER_INFO_SIZE);
+		memcpy(page_address(page), sb, BTRFS_SUPER_INFO_SIZE);
 
 		/*
 		 * Directly use bios here instead of relying on the page cache
@@ -4093,14 +4086,7 @@ static int wait_dev_supers(struct btrfs_device *device, int max_mirrors)
 		    device->commit_total_bytes)
 			break;
 
-		page = find_get_page(device->bdev->bd_inode->i_mapping,
-				     bytenr >> PAGE_SHIFT);
-		if (!page) {
-			errors++;
-			if (i == 0)
-				primary_failed = true;
-			continue;
-		}
+		page = device->sb_write_page;
 		/* Page is submitted locked and unlocked once the IO completes */
 		wait_on_page_locked(page);
 		if (PageError(page)) {
@@ -4108,12 +4094,6 @@ static int wait_dev_supers(struct btrfs_device *device, int max_mirrors)
 			if (i == 0)
 				primary_failed = true;
 		}
-
-		/* Drop our reference */
-		put_page(page);
-
-		/* Drop the reference from the writing run */
-		put_page(page);
 	}
 
 	/* log error, force error return */
