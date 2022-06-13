@@ -602,8 +602,7 @@ static void hugetlb_vmtruncate(struct inode *inode, loff_t offset)
 
 static void hugetlbfs_zero_partial_page(struct hstate *h,
 					struct address_space *mapping,
-					unsigned long start,
-					unsigned long end)
+					loff_t start, loff_t end)
 {
 	pgoff_t idx = start >> huge_page_shift(h);
 	struct page *page;
