@@ -42,6 +42,7 @@ struct ath12k_peer {
 	u16 sec_type_grp;
 	struct ppdu_user_delayba ppdu_stats_delayba;
 	bool delayba_flag;
+	bool is_authorized;
 };
 
 void ath12k_peer_unmap_event(struct ath12k_base *ab, u16 peer_id);
