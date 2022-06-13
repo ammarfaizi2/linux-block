@@ -107,6 +107,99 @@ static struct mhi_controller_config ath12k_mhi_config_qcn92xx = {
 	.event_cfg = ath12k_mhi_events_qcn92xx,
 };
 
+static struct mhi_channel_config ath12k_mhi_channels_wcn7850[] = {
+	{
+		.num = 0,
+		.name = "LOOPBACK",
+		.num_elements = 32,
+		.event_ring = 0,
+		.dir = DMA_TO_DEVICE,
+		.ee_mask = 0x4,
+		.pollcfg = 0,
+		.doorbell = MHI_DB_BRST_DISABLE,
+		.lpm_notify = false,
+		.offload_channel = false,
+		.doorbell_mode_switch = false,
+		.auto_queue = false,
+	},
+	{
+		.num = 1,
+		.name = "LOOPBACK",
+		.num_elements = 32,
+		.event_ring = 0,
+		.dir = DMA_FROM_DEVICE,
+		.ee_mask = 0x4,
+		.pollcfg = 0,
+		.doorbell = MHI_DB_BRST_DISABLE,
+		.lpm_notify = false,
+		.offload_channel = false,
+		.doorbell_mode_switch = false,
+		.auto_queue = false,
+	},
+	{
+		.num = 20,
+		.name = "IPCR",
+		.num_elements = 64,
+		.event_ring = 1,
+		.dir = DMA_TO_DEVICE,
+		.ee_mask = 0x4,
+		.pollcfg = 0,
+		.doorbell = MHI_DB_BRST_DISABLE,
+		.lpm_notify = false,
+		.offload_channel = false,
+		.doorbell_mode_switch = false,
+		.auto_queue = false,
+	},
+	{
+		.num = 21,
+		.name = "IPCR",
+		.num_elements = 64,
+		.event_ring = 1,
+		.dir = DMA_FROM_DEVICE,
+		.ee_mask = 0x4,
+		.pollcfg = 0,
+		.doorbell = MHI_DB_BRST_DISABLE,
+		.lpm_notify = false,
+		.offload_channel = false,
+		.doorbell_mode_switch = false,
+		.auto_queue = true,
+	},
+};
+
+static struct mhi_event_config ath12k_mhi_events_wcn7850[] = {
+	{
+		.num_elements = 32,
+		.irq_moderation_ms = 0,
+		.irq = 1,
+		.mode = MHI_DB_BRST_DISABLE,
+		.data_type = MHI_ER_CTRL,
+		.hardware_event = false,
+		.client_managed = false,
+		.offload_channel = false,
+	},
+	{
+		.num_elements = 256,
+		.irq_moderation_ms = 1,
+		.irq = 2,
+		.mode = MHI_DB_BRST_DISABLE,
+		.priority = 1,
+		.hardware_event = false,
+		.client_managed = false,
+		.offload_channel = false,
+	},
+};
+
+static struct mhi_controller_config ath12k_mhi_config_wcn7850 = {
+	.max_channels = 128,
+	.timeout_ms = 2000,
+	.use_bounce_buf = false,
+	.buf_len = 0,
+	.num_channels = ARRAY_SIZE(ath12k_mhi_channels_wcn7850),
+	.ch_cfg = ath12k_mhi_channels_wcn7850,
+	.num_events = ARRAY_SIZE(ath12k_mhi_events_wcn7850),
+	.event_cfg = ath12k_mhi_events_wcn7850,
+};
+
 void ath12k_mhi_set_mhictrl_reset(struct ath12k_base *ab)
 {
 	u32 val;
@@ -293,8 +386,17 @@ int ath12k_mhi_register(struct ath12k_pci *ab_pci)
 	mhi_ctrl->read_reg = ath12k_mhi_op_read_reg;
 	mhi_ctrl->write_reg = ath12k_mhi_op_write_reg;
 
-	if (ab->hw_rev == ATH12K_HW_QCN92XX_HW10)
+	switch (ab->hw_rev) {
+	case ATH12K_HW_QCN92XX_HW10:
 		ath12k_mhi_config = &ath12k_mhi_config_qcn92xx;
+		break;
+	case ATH12K_HW_WCN7850_HW20:
+		ath12k_mhi_config = &ath12k_mhi_config_wcn7850;
+		break;
+	default:
+		ath12k_err(ab, "failed to find mhi config for hw_rev = %x\n", ab->hw_rev);
+		return -ENOENT;
+	}
 
 	ret = mhi_register_controller(mhi_ctrl, ath12k_mhi_config);
 	if (ret) {
