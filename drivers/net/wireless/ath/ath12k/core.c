@@ -99,7 +99,7 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.idle_ps = false,
 		.cold_boot_calib = false,
 		.supports_suspend = false,
-		.hal_desc_sz = 0,
+		.hal_desc_sz = sizeof(struct hal_rx_desc_wcn7850),
 		.num_tcl_banks = 7,
 		.fix_l1ss = false,
 	},
