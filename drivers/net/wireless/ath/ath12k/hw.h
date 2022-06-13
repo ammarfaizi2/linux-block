@@ -165,10 +165,15 @@ struct ath12k_hw_params {
 	bool fix_l1ss;
 };
 
+/* BRINGUP: move to dp.h */
+int ath12k_dp_rxdma_ring_sel_config_qcn92xx(struct ath12k_base *ab);
+int ath12k_dp_rxdma_ring_sel_config_wcn7850(struct ath12k_base *ab);
+
 struct ath12k_hw_ops {
 	u8 (*get_hw_mac_from_pdev_id)(int pdev_id);
 	int (*mac_id_to_pdev_id)(struct ath12k_hw_params *hw, int mac_id);
 	int (*mac_id_to_srng_id)(struct ath12k_hw_params *hw, int mac_id);
+	int (*rxdma_ring_sel_config)(struct ath12k_base *ab);
 };
 
 extern const struct ath12k_hw_ops qcn92xx_ops;

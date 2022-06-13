@@ -45,12 +45,14 @@ const struct ath12k_hw_ops qcn92xx_ops = {
 	.get_hw_mac_from_pdev_id = ath12k_hw_qcn92xx_mac_from_pdev_id,
 	.mac_id_to_pdev_id = ath12k_hw_mac_id_to_pdev_id_qcn92xx,
 	.mac_id_to_srng_id = ath12k_hw_mac_id_to_srng_id_qcn92xx,
+	.rxdma_ring_sel_config = ath12k_dp_rxdma_ring_sel_config_qcn92xx,
 };
 
 const struct ath12k_hw_ops wcn7850_ops = {
 	.get_hw_mac_from_pdev_id = ath12k_hw_qcn92xx_mac_from_pdev_id,
 	.mac_id_to_pdev_id = ath12k_hw_mac_id_to_pdev_id_wcn7850,
 	.mac_id_to_srng_id = ath12k_hw_mac_id_to_srng_id_wcn7850,
+	.rxdma_ring_sel_config = ath12k_dp_rxdma_ring_sel_config_wcn7850,
 };
 
 #define ATH12K_TX_RING_MASK_0 0x1

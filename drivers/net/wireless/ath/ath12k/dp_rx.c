@@ -523,9 +523,6 @@ static void ath12k_dp_rx_pdev_srng_free(struct ath12k *ar)
 	int i;
 
 	for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++) {
-		if (ab->hw_params.rx_mac_buf_ring)
-			ath12k_dp_srng_cleanup(ab, &dp->rx_mac_buf_ring[i]);
-
 		ath12k_dp_srng_cleanup(ab, &dp->rxdma_err_dst_ring[i]);
 		ath12k_dp_srng_cleanup(ab, &dp->rxdma_mon_dst_ring[i]);
 		ath12k_dp_srng_cleanup(ab, &dp->tx_mon_dst_ring[i]);
@@ -572,20 +569,6 @@ static int ath12k_dp_rx_pdev_srng_alloc(struct ath12k *ar)
 	int i;
 	int ret;
 	u32 mac_id = dp->mac_id;
-
-	if (ar->ab->hw_params.rx_mac_buf_ring) {
-		for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++) {
-			ret = ath12k_dp_srng_setup(ar->ab,
-						   &dp->rx_mac_buf_ring[i],
-						   HAL_RXDMA_BUF, 1,
-						   mac_id + i, 1024);
-			if (ret) {
-				ath12k_warn(ar->ab, "failed to setup rx_mac_buf_ring %d\n",
-					    i);
-				return ret;
-			}
-		}
-	}
 
 	/* if rxdma1_enable is false, then it doesn't need
 	 * to setup rxdam_mon_buf_ring, rxdma_mon_dst_ring
@@ -3980,8 +3963,15 @@ void ath12k_dp_process_reo_status(struct ath12k_base *ab)
 void ath12k_dp_rx_free(struct ath12k_base *ab)
 {
 	struct ath12k_dp *dp = &ab->dp;
+	int i;
 
 	ath12k_dp_srng_cleanup(ab, &dp->rx_refill_buf_ring.refill_buf_ring);
+
+	for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++) {
+		if (ab->hw_params.rx_mac_buf_ring)
+			ath12k_dp_srng_cleanup(ab, &dp->rx_mac_buf_ring[i]);
+	}
+
 	ath12k_dp_srng_cleanup(ab, &dp->rxdma_mon_buf_ring.refill_buf_ring);
 	ath12k_dp_srng_cleanup(ab, &dp->tx_mon_buf_ring.refill_buf_ring);
 
@@ -3995,7 +3985,7 @@ void ath12k_dp_rx_pdev_free(struct ath12k_base *ab, int mac_id)
 	ath12k_dp_rx_pdev_srng_free(ar);
 }
 
-static int ath12k_dp_rxdma_ring_sel_config(struct ath12k_base *ab)
+int ath12k_dp_rxdma_ring_sel_config_qcn92xx(struct ath12k_base *ab)
 {
 	struct ath12k_dp *dp = &ab->dp;
 	struct htt_rx_ring_tlv_filter tlv_filter = {0};
@@ -4029,11 +4019,52 @@ static int ath12k_dp_rxdma_ring_sel_config(struct ath12k_base *ab)
 	return ret;
 }
 
+int ath12k_dp_rxdma_ring_sel_config_wcn7850(struct ath12k_base *ab)
+{
+	struct ath12k_dp *dp = &ab->dp;
+	struct htt_rx_ring_tlv_filter tlv_filter = {0};
+	u32 ring_id;
+	int ret;
+	u32 hal_rx_desc_sz = ab->hw_params.hal_desc_sz;
+	int i;
+
+	ring_id = dp->rx_refill_buf_ring.refill_buf_ring.ring_id;
+
+	tlv_filter.rx_filter = HTT_RX_TLV_FLAGS_RXDMA_RING;
+	tlv_filter.pkt_filter_flags2 = HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS2_BAR;
+	tlv_filter.pkt_filter_flags3 = HTT_RX_FP_DATA_PKT_FILTER_TLV_FLASG3_MCAST |
+					HTT_RX_FP_DATA_PKT_FILTER_TLV_FLASG3_UCAST |
+					HTT_RX_FP_DATA_PKT_FILTER_TLV_FLASG3_NULL_DATA;
+	tlv_filter.offset_valid = true;
+	tlv_filter.rx_packet_offset = hal_rx_desc_sz;
+
+	tlv_filter.rx_header_offset = offsetof(struct hal_rx_desc_wcn7850, pkt_hdr_tlv);
+
+	tlv_filter.rx_mpdu_start_offset =
+			ab->hal.ops->rx_desc_get_mpdu_start_offset();
+	tlv_filter.rx_msdu_end_offset = ab->hal.ops->rx_desc_get_msdu_end_offset();
+
+	/*TODO Selectively subscribe to required qwords within msdu_end
+	 * and mpdu_start and setup the mask in below msg
+	 * and modify the rx_desc struct
+	 */
+
+	for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++) {
+		ring_id = dp->rx_mac_buf_ring[i].ring_id;
+		ret = ath12k_dp_tx_htt_rx_filter_setup(ab, ring_id, i,
+						       HAL_RXDMA_BUF,
+						       DP_RXDMA_REFILL_RING_SIZE,
+						       &tlv_filter);
+	}
+
+	return ret;
+}
+
 int ath12k_dp_rx_htt_setup(struct ath12k_base *ab)
 {
 	struct ath12k_dp *dp = &ab->dp;
 	u32 ring_id;
-	int ret;
+	int i, ret;
 
 	/* TODO: Need to verify the HTT setup for QCN9224 */
 	ring_id = dp->rx_refill_buf_ring.refill_buf_ring.ring_id;
@@ -4044,25 +4075,40 @@ int ath12k_dp_rx_htt_setup(struct ath12k_base *ab)
 		return ret;
 	}
 
-	ring_id = dp->rxdma_mon_buf_ring.refill_buf_ring.ring_id;
-	ret = ath12k_dp_tx_htt_srng_setup(ab, ring_id,
-					  0, HAL_RXDMA_MONITOR_BUF);
-	if (ret) {
-		ath12k_warn(ab, "failed to configure rxdma_mon_buf_ring %d\n",
-			    ret);
-		return ret;
+	if (ab->hw_params.rx_mac_buf_ring) {
+		for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++) {
+			ring_id = dp->rx_mac_buf_ring[i].ring_id;
+			ret = ath12k_dp_tx_htt_srng_setup(ab, ring_id,
+							  i, HAL_RXDMA_BUF);
+			if (ret) {
+				ath12k_warn(ab, "failed to configure rx_mac_buf_ring%d %d\n",
+					    i, ret);
+				return ret;
+			}
+		}
 	}
 
-	ring_id = dp->tx_mon_buf_ring.refill_buf_ring.ring_id;
-	ret = ath12k_dp_tx_htt_srng_setup(ab, ring_id,
-					  0, HAL_TX_MONITOR_BUF);
-	if (ret) {
-		ath12k_warn(ab, "failed to configure rxdma_mon_buf_ring %d\n",
-			    ret);
-		return ret;
+	if (ab->hw_params.rxdma1_enable) {
+		ring_id = dp->rxdma_mon_buf_ring.refill_buf_ring.ring_id;
+		ret = ath12k_dp_tx_htt_srng_setup(ab, ring_id,
+						  0, HAL_RXDMA_MONITOR_BUF);
+		if (ret) {
+			ath12k_warn(ab, "failed to configure rxdma_mon_buf_ring %d\n",
+				    ret);
+			return ret;
+		}
+
+		ring_id = dp->tx_mon_buf_ring.refill_buf_ring.ring_id;
+		ret = ath12k_dp_tx_htt_srng_setup(ab, ring_id,
+						  0, HAL_TX_MONITOR_BUF);
+		if (ret) {
+			ath12k_warn(ab, "failed to configure rxdma_mon_buf_ring %d\n",
+				    ret);
+			return ret;
+		}
 	}
 
-	ret = ath12k_dp_rxdma_ring_sel_config(ab);
+	ret = ab->hw_params.hw_ops->rxdma_ring_sel_config(ab);
 	if (ret) {
 		ath12k_warn(ab, "failed to setup rxdma ring selection config\n");
 		return ret;
@@ -4074,7 +4120,7 @@ int ath12k_dp_rx_htt_setup(struct ath12k_base *ab)
 int ath12k_dp_rx_alloc(struct ath12k_base *ab)
 {
 	struct ath12k_dp *dp = &ab->dp;
-	int ret;
+	int i, ret;
 
 	idr_init(&dp->rx_refill_buf_ring.bufs_idr);
 	spin_lock_init(&dp->rx_refill_buf_ring.idr_lock);
@@ -4094,22 +4140,38 @@ int ath12k_dp_rx_alloc(struct ath12k_base *ab)
 		return ret;
 	}
 
-	ret = ath12k_dp_srng_setup(ab,
-				   &dp->rxdma_mon_buf_ring.refill_buf_ring,
-				   HAL_RXDMA_MONITOR_BUF, 0, 0,
-				   DP_RXDMA_MONITOR_BUF_RING_SIZE);
-	if (ret) {
-		ath12k_warn(ab, "failed to setup HAL_RXDMA_MONITOR_BUF\n");
-		return ret;
+	if (ab->hw_params.rx_mac_buf_ring) {
+		for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++) {
+			ret = ath12k_dp_srng_setup(ab,
+						   &dp->rx_mac_buf_ring[i],
+						   HAL_RXDMA_BUF, 1,
+						   i, 1024);
+			if (ret) {
+				ath12k_warn(ab, "failed to setup rx_mac_buf_ring %d\n",
+					    i);
+				return ret;
+			}
+		}
 	}
 
-	ret = ath12k_dp_srng_setup(ab,
-				   &dp->tx_mon_buf_ring.refill_buf_ring,
-				   HAL_TX_MONITOR_BUF, 0, 0,
-				   DP_TX_MONITOR_BUF_RING_SIZE);
-	if (ret) {
-		ath12k_warn(ab, "failed to setup DP_TX_MONITOR_BUF_RING_SIZE\n");
-		return ret;
+	if (ab->hw_params.rxdma1_enable) {
+		ret = ath12k_dp_srng_setup(ab,
+					   &dp->rxdma_mon_buf_ring.refill_buf_ring,
+					   HAL_RXDMA_MONITOR_BUF, 0, 0,
+					   DP_RXDMA_MONITOR_BUF_RING_SIZE);
+		if (ret) {
+			ath12k_warn(ab, "failed to setup HAL_RXDMA_MONITOR_BUF\n");
+			return ret;
+		}
+
+		ret = ath12k_dp_srng_setup(ab,
+					   &dp->tx_mon_buf_ring.refill_buf_ring,
+					   HAL_TX_MONITOR_BUF, 0, 0,
+					   DP_TX_MONITOR_BUF_RING_SIZE);
+		if (ret) {
+			ath12k_warn(ab, "failed to setup DP_TX_MONITOR_BUF_RING_SIZE\n");
+			return ret;
+		}
 	}
 
 	ret = ath12k_dp_rxdma_buf_setup(ab);
@@ -4133,19 +4195,6 @@ int ath12k_dp_rx_pdev_alloc(struct ath12k_base *ab, int mac_id)
 	if (ret) {
 		ath12k_warn(ab, "failed to setup rx srngs\n");
 		return ret;
-	}
-
-	if (ab->hw_params.rx_mac_buf_ring) {
-		for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++) {
-			ring_id = dp->rx_mac_buf_ring[i].ring_id;
-			ret = ath12k_dp_tx_htt_srng_setup(ab, ring_id,
-							  mac_id + i, HAL_RXDMA_BUF);
-			if (ret) {
-				ath12k_warn(ab, "failed to configure rx_mac_buf_ring%d %d\n",
-					    i, ret);
-				return ret;
-			}
-		}
 	}
 
 	if (!ab->hw_params.rxdma1_enable)
