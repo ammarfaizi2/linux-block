@@ -408,13 +408,14 @@ ath12k_dp_tx_process_htt_tx_complete(struct ath12k_base *ab,
 
 	wbm_status = FIELD_GET(HTT_TX_WBM_COMP_INFO0_STATUS,
 			       status_desc->info0);
+
 	switch (wbm_status) {
 	case HAL_WBM_REL_HTT_TX_COMP_STATUS_OK:
 	case HAL_WBM_REL_HTT_TX_COMP_STATUS_DROP:
 	case HAL_WBM_REL_HTT_TX_COMP_STATUS_TTL:
 		ts.acked = (wbm_status == HAL_WBM_REL_HTT_TX_COMP_STATUS_OK);
-		ts.ack_rssi = FIELD_GET(HTT_TX_WBM_COMP_INFO1_ACK_RSSI,
-					status_desc->info1);
+		ts.ack_rssi = FIELD_GET(HTT_TX_WBM_COMP_INFO2_ACK_RSSI,
+					status_desc->info2);
 		ath12k_dp_tx_htt_tx_complete_buf(ab, msdu, tx_ring, &ts);
 		break;
 	case HAL_WBM_REL_HTT_TX_COMP_STATUS_REINJ:
@@ -506,6 +507,9 @@ static inline void ath12k_dp_tx_status_parse(struct ath12k_base *ab,
 	if (ts->buf_rel_source == HAL_WBM_REL_SRC_MODULE_FW)
 		return;
 
+	ts->status = FIELD_GET(HAL_WBM_COMPL_TX_INFO0_TQM_RELEASE_REASON,
+			       desc->info0);
+
 	ts->ppdu_id = FIELD_GET(HAL_WBM_COMPL_TX_INFO1_TQM_STATUS_NUMBER,
 				desc->info1);
 	if (desc->rate_stats.info0 & HAL_TX_RATE_STATS_INFO0_VALID)
@@ -562,12 +566,12 @@ void ath12k_dp_tx_completion_handler(struct ath12k_base *ab, int ring_id)
 		if (FIELD_GET(HAL_WBM_COMPL_TX_INFO0_CC_DONE, tx_status->info0)) {
 			/* HW done cookie conversion */
 			tx_desc = (struct ath12k_tx_desc_info *)
-					(tx_status->buf_addr_info.info0 |
-					(((u64)tx_status->buf_addr_info.info1) << 32));
+					(tx_status->buf_va_lo |
+					(((u64)tx_status->buf_va_hi) << 32));
 		} else {
 			/* SW does cookie conversion to VA */
 			desc_id = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE,
-					    tx_status->buf_addr_info.info1);
+					    tx_status->buf_va_hi);
 
 			tx_desc = ath12k_dp_get_tx_desc(ab, desc_id);
 		}
@@ -578,6 +582,7 @@ void ath12k_dp_tx_completion_handler(struct ath12k_base *ab, int ring_id)
 
 		msdu = tx_desc->skb;
 		mac_id = tx_desc->mac_id;
+
 		/* Release descriptor as soon as extracting necessary info
 		 * to reduce contention
 		 */

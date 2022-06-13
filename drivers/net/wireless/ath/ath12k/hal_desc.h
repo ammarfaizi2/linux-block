@@ -1883,7 +1883,8 @@ struct hal_wbm_completion_ring_rx {
 #define HAL_WBM_COMPL_TX_INFO3_LOOPING_COUNT		GENMASK(31, 28)
 
 struct hal_wbm_completion_ring_tx {
-	struct ath12k_buffer_addr buf_addr_info;
+	u32 buf_va_lo;
+	u32 buf_va_hi;
 	u32 info0;
 	u32 info1;
 	u32 info2;

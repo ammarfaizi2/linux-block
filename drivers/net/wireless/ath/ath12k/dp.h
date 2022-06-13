@@ -411,17 +411,21 @@ struct ath12k_dp {
 #define HTT_TX_WBM_COMP_STATUS_OFFSET 8
 
 /* HTT tx completion is overlayed in wbm_release_ring */
-#define HTT_TX_WBM_COMP_INFO0_STATUS		GENMASK(12, 9)
-#define HTT_TX_WBM_COMP_INFO0_REINJECT_REASON	GENMASK(16, 13)
-#define HTT_TX_WBM_COMP_INFO0_REINJECT_REASON	GENMASK(16, 13)
+#define HTT_TX_WBM_COMP_INFO0_STATUS		GENMASK(16, 13)
+#define HTT_TX_WBM_COMP_INFO1_REINJECT_REASON	GENMASK(3, 0)
+#define HTT_TX_WBM_COMP_INFO1_EXCEPTION_FRAME	BIT(4)
 
-#define HTT_TX_WBM_COMP_INFO1_ACK_RSSI		GENMASK(31, 24)
+#define HTT_TX_WBM_COMP_INFO2_ACK_RSSI		GENMASK(31, 24)
 
 struct htt_tx_wbm_completion {
+	u32 rsvd0[2];
 	u32 info0;
 	u32 info1;
 	u32 info2;
 	u32 info3;
+	u32 info4;
+	u32 rsvd1;
+
 } __packed;
 
 enum htt_h2t_msg_type {
