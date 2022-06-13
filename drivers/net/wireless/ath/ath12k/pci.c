@@ -37,9 +37,11 @@
 #define ACCESS_ALWAYS_OFF 0xFE0
 
 #define QCN92XX_DEVICE_ID		0x1109
+#define WCN7850_DEVICE_ID		0x1107
 
 static const struct pci_device_id ath12k_pci_id_table[] = {
 	{ PCI_VDEVICE(QCOM, QCN92XX_DEVICE_ID) },
+	{ PCI_VDEVICE(QCOM, WCN7850_DEVICE_ID) },
 	{0}
 };
 
@@ -1255,6 +1257,12 @@ static int ath12k_pci_probe(struct pci_dev *pdev,
 		ab->bus_params.static_window_map = true;
 		ab->hw_rev = ATH12K_HW_QCN92XX_HW10;
 		break;
+	case WCN7850_DEVICE_ID:
+		ab_pci->msi_config = &ath12k_msi_config[0];
+		ab->bus_params.static_window_map = false;
+		ab->hw_rev = ATH12K_HW_WCN7850_HW20;
+		break;
+
 	default:
 		dev_err(&pdev->dev, "Unknown PCI device found: 0x%x\n",
 			pci_dev->device);
