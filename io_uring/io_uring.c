@@ -1194,8 +1194,6 @@ static inline void __io_fill_cqe32_req(struct io_kiocb *req, u64 extra1,
 
 	if (WARN_ON_ONCE(!(ctx->flags & IORING_SETUP_CQE32)))
 		return;
-	if (req->flags & REQ_F_CQE_SKIP)
-		return;
 
 	trace_io_uring_complete(ctx, req, req->cqe.user_data, req->cqe.res,
 				req->cqe.flags, extra1, extra2);
