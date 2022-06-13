@@ -83,7 +83,7 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		},
 		.max_radios = 1,
 		.single_pdev_only = true,
-		.qmi_service_ins_id = 0,
+		.qmi_service_ins_id = ATH12K_QMI_WLFW_SERVICE_INS_ID_V01_WCN7850,
 		.hw_ops = &wcn7850_ops,
 		.ring_mask = &ath12k_hw_ring_mask_wcn7850,
 		.internal_sleep_clock = true,

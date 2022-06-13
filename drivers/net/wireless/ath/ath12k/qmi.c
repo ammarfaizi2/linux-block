@@ -14,6 +14,7 @@
 
 #define SLEEP_CLOCK_SELECT_INTERNAL_BIT	0x02
 #define HOST_CSTATE_BIT			0x04
+#define PLATFORM_CAP_PCIE_GLOBAL_RESET	0x08
 
 bool ath12k_cold_boot_cal = 1;
 module_param_named(cold_boot_cal, ath12k_cold_boot_cal, bool, 0644);
@@ -1807,6 +1808,7 @@ static int ath12k_qmi_host_cap_send(struct ath12k_base *ab)
 		 * clock.
 		 */
 		req.nm_modem |= SLEEP_CLOCK_SELECT_INTERNAL_BIT;
+		req.nm_modem |= PLATFORM_CAP_PCIE_GLOBAL_RESET;
 	}
 
 	ret = qmi_txn_init(&ab->qmi.handle, &txn,
