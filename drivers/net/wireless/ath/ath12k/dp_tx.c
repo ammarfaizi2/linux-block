@@ -680,6 +680,10 @@ ath12k_dp_tx_get_ring_id_type(struct ath12k_base *ab,
 			}
 		}
 		break;
+	case HAL_RXDMA_DST:
+		*htt_ring_id = HTT_RXDMA_NON_MONITOR_DEST_RING;
+		*htt_ring_type = HTT_HW_TO_SW_RING;
+		break;
 	case HAL_RXDMA_MONITOR_BUF:
 		*htt_ring_id = HTT_RXDMA_MONITOR_BUF_RING;
 		*htt_ring_type = HTT_SW_TO_HW_RING;

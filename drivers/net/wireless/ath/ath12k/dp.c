@@ -292,6 +292,7 @@ int ath12k_dp_srng_setup(struct ath12k_base *ab, struct dp_srng *ring,
 	case HAL_TCL_STATUS:
 	case HAL_WBM_IDLE_LINK:
 	case HAL_SW2WBM_RELEASE:
+	case HAL_RXDMA_DST:
 	case HAL_RXDMA_MONITOR_DST:
 	case HAL_RXDMA_MONITOR_DESC:
 		params.intr_batch_cntr_thres_entries =

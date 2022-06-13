@@ -165,7 +165,6 @@ struct ath12k_pdev_dp {
 	u32 mac_id;
 	atomic_t num_tx_pending;
 	wait_queue_head_t tx_empty_waitq;
-	struct dp_srng rxdma_err_dst_ring[MAX_RXDMA_PER_PDEV];
 	struct dp_srng rxdma_mon_dst_ring[MAX_RXDMA_PER_PDEV];
 	struct dp_srng tx_mon_dst_ring[MAX_RXDMA_PER_PDEV];
 
@@ -390,6 +389,7 @@ struct ath12k_dp {
 
 	struct dp_rxdma_ring rx_refill_buf_ring;
 	struct dp_srng rx_mac_buf_ring[MAX_RXDMA_PER_PDEV];
+	struct dp_srng rxdma_err_dst_ring[MAX_RXDMA_PER_PDEV];
 	struct dp_rxdma_ring rxdma_mon_buf_ring;
 	struct dp_rxdma_ring tx_mon_buf_ring;
 	struct ath12k_reo_q_addr_lut reoq_lut;

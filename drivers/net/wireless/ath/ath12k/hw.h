@@ -152,6 +152,7 @@ struct ath12k_hw_params {
 
 	bool rxdma1_enable;
 	int num_rxmda_per_pdev;
+	int num_rxdma_dst_ring;
 	bool rx_mac_buf_ring;
 	bool vdev_start_delay;
 
