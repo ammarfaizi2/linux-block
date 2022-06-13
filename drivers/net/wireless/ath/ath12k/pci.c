@@ -1222,7 +1222,6 @@ static int ath12k_pci_probe(struct pci_dev *pdev,
 {
 	struct ath12k_base *ab;
 	struct ath12k_pci *ab_pci;
-	u32 addr;
 	int ret;
 
 	dev_warn(&pdev->dev, "WARNING: ath12k PCI support is experimental!\n");
@@ -1243,12 +1242,6 @@ static int ath12k_pci_probe(struct pci_dev *pdev,
 	ab->hif.ops = &ath12k_pci_hif_ops;
 	pci_set_drvdata(pdev, ab);
 	spin_lock_init(&ab_pci->window_lock);
-
-	/* Set fixed_mem_region to true for
-	 * the platforms supports reserved memory.
-	 */
-	if (of_property_read_u32(ab->dev->of_node, "qcom,base-addr", &addr))
-		ab->bus_params.fixed_mem_region = true;
 
 	ret = ath12k_pci_claim(ab_pci, pdev);
 	if (ret) {

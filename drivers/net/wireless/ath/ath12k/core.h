@@ -649,6 +649,7 @@ struct ath12k_board_data {
 	size_t len;
 };
 
+/* BRINGUP: we support only one bus (PCI) so remove this struct */
 struct ath12k_bus_params {
 	bool fixed_bdf_addr;
 	bool fixed_mem_region;
