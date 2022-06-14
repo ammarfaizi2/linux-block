@@ -3408,7 +3408,7 @@ ath12k_dp_process_rx_err_buf(struct ath12k *ar, u32 *ring_desc,
 	msdu = desc_info->skb;
 	desc_info->skb = NULL;
 	spin_lock_bh(&ab->dp.rx_desc_lock);
-	list_add_tail(&desc_info->list, &ab->dp.rx_desc_free_list);
+	list_move_tail(&desc_info->list, &ab->dp.rx_desc_free_list);
 	spin_unlock_bh(&ab->dp.rx_desc_lock);
 
 	rxcb = ATH12K_SKB_RXCB(msdu);
@@ -3831,7 +3831,7 @@ int ath12k_dp_rx_process_wbm_err(struct ath12k_base *ab,
 		desc_info->skb = NULL;
 
 		spin_lock_bh(&dp->rx_desc_lock);
-		list_add_tail(&desc_info->list, &dp->rx_desc_free_list);
+		list_move_tail(&desc_info->list, &dp->rx_desc_free_list);
 		spin_unlock_bh(&dp->rx_desc_lock);
 
 		rxcb = ATH12K_SKB_RXCB(msdu);
