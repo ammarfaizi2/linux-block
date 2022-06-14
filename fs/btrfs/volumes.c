@@ -5710,7 +5710,8 @@ int btrfs_num_copies(struct btrfs_fs_info *fs_info, u64 logical, u64 len)
 {
 	struct extent_map *em;
 	struct map_lookup *map;
-	int ret;
+	enum btrfs_raid_types index;
+	int ret = 1;
 
 	em = btrfs_get_chunk_map(fs_info, logical, len);
 	if (IS_ERR(em))
@@ -5723,10 +5724,11 @@ int btrfs_num_copies(struct btrfs_fs_info *fs_info, u64 logical, u64 len)
 		return 1;
 
 	map = em->map_lookup;
-	if (map->type & (BTRFS_BLOCK_GROUP_DUP | BTRFS_BLOCK_GROUP_RAID1_MASK))
-		ret = map->num_stripes;
-	else if (map->type & BTRFS_BLOCK_GROUP_RAID10)
-		ret = map->sub_stripes;
+	index = btrfs_bg_flags_to_raid_index(map->type);
+
+	if (!(map->type & BTRFS_BLOCK_GROUP_RAID56_MASK))
+		/* Non-raid56, use their ncopies from btrfs_raid_array[]. */
+		ret = btrfs_raid_array[index].ncopies;
 	else if (map->type & BTRFS_BLOCK_GROUP_RAID5)
 		ret = 2;
 	else if (map->type & BTRFS_BLOCK_GROUP_RAID6)
@@ -5738,8 +5740,6 @@ int btrfs_num_copies(struct btrfs_fs_info *fs_info, u64 logical, u64 len)
 		 * stripe under reconstruction.
 		 */
 		ret = map->num_stripes;
-	else
-		ret = 1;
 	free_extent_map(em);
 
 	down_read(&fs_info->dev_replace.rwsem);
@@ -6466,7 +6466,7 @@ static int __btrfs_map_block(struct btrfs_fs_info *fs_info,
 
 			/* RAID[56] write or recovery. Return all stripes */
 			num_stripes = map->num_stripes;
-			max_errors = nr_parity_stripes(map);
+			max_errors = btrfs_chunk_max_errors(map);
 
 			*length = map->stripe_len;
 			stripe_index = 0;
@@ -6939,11 +6939,19 @@ static void btrfs_report_missing_device(struct btrfs_fs_info *fs_info,
 			      devid, uuid);
 }
 
-static u64 calc_stripe_length(u64 type, u64 chunk_len, int num_stripes)
+u64 btrfs_calc_stripe_length(const struct extent_map *em)
 {
-	const int data_stripes = calc_data_stripes(type, num_stripes);
+	const struct map_lookup *map = em->map_lookup;
+	const int data_stripes = calc_data_stripes(map->type, map->num_stripes);
 
-	return div_u64(chunk_len, data_stripes);
+	return div_u64(em->len, data_stripes);
+}
+
+int btrfs_nr_parity_stripes(u64 type)
+{
+	enum btrfs_raid_types index = btrfs_bg_flags_to_raid_index(type);
+
+	return btrfs_raid_array[index].nparity;
 }
 
 #if BITS_PER_LONG == 32
@@ -7082,8 +7090,7 @@ static int read_one_chunk(struct btrfs_key *key, struct extent_buffer *leaf,
 	map->type = type;
 	map->sub_stripes = btrfs_chunk_sub_stripes(leaf, chunk);
 	map->verified_stripes = 0;
-	em->orig_block_len = calc_stripe_length(type, em->len,
-						map->num_stripes);
+	em->orig_block_len = btrfs_calc_stripe_length(em);
 	for (i = 0; i < num_stripes; i++) {
 		map->stripes[i].physical =
 			btrfs_stripe_offset_nr(leaf, chunk, i);
@@ -7984,7 +7991,7 @@ static int verify_one_dev_extent(struct btrfs_fs_info *fs_info,
 	}
 
 	map = em->map_lookup;
-	stripe_len = calc_stripe_length(map->type, em->len, map->num_stripes);
+	stripe_len = btrfs_calc_stripe_length(em);
 	if (physical_len != stripe_len) {
 		btrfs_err(fs_info,
 "dev extent physical offset %llu on devid %llu length doesn't match chunk %llu, have %llu expect %llu",
