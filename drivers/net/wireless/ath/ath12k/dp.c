@@ -351,6 +351,7 @@ static int ath12k_dp_tx_get_bank_profile(struct ath12k_base *ab, struct ath12k_v
 	int bank_id = DP_INVALID_BANK_ID;
 	int i;
 	u32 bank_config = 0;
+	bool configure_register = false;
 
 	/* convert vdev params into hal_tx_bank_config */
 	ath12k_dp_tx_get_vdev_bank_config(ab, arvif, &bank_config);
@@ -379,11 +380,13 @@ static int ath12k_dp_tx_get_bank_profile(struct ath12k_base *ab, struct ath12k_v
 configure_and_return:
 	dp->bank_profiles[bank_id].is_configured = true;
 	dp->bank_profiles[bank_id].bank_config = bank_config;
-	ath12k_hal_tx_configure_bank_register(ab, dp->bank_profiles[bank_id].bank_config,
-					      bank_id);
+	configure_register = true;
 inc_ref_and_return:
 	dp->bank_profiles[bank_id].num_users++;
 	spin_unlock_bh(&dp->tx_bank_lock);
+
+	if (configure_register)
+		ath12k_hal_tx_configure_bank_register(ab, bank_config, bank_id);
 
 	ath12k_info(ab, "found TCL bank at index %d, input:0x%x match:0x%x num_users %u",
 		    bank_id, bank_config, dp->bank_profiles[bank_id].bank_config,
