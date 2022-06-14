@@ -298,8 +298,8 @@ struct io_buffer_list {
 	/* below is for ring provided buffers */
 	__u16 buf_nr_pages;
 	__u16 nr_entries;
-	__u32 head;
-	__u32 mask;
+	__u16 head;
+	__u16 mask;
 };
 
 struct io_buffer {
@@ -576,7 +576,6 @@ struct io_close {
 	struct file			*file;
 	int				fd;
 	u32				file_slot;
-	u32				flags;
 };
 
 struct io_timeout_data {
@@ -784,12 +783,6 @@ struct io_msg {
 	u32 len;
 };
 
-struct io_nop {
-	struct file			*file;
-	u64				extra1;
-	u64				extra2;
-};
-
 struct io_async_connect {
 	struct sockaddr_storage		address;
 };
@@ -994,7 +987,6 @@ struct io_kiocb {
 		struct io_msg		msg;
 		struct io_xattr		xattr;
 		struct io_socket	sock;
-		struct io_nop		nop;
 		struct io_uring_cmd	uring_cmd;
 	};
 
@@ -1121,7 +1113,6 @@ static const struct io_op_def io_op_defs[] = {
 	[IORING_OP_NOP] = {
 		.audit_skip		= 1,
 		.iopoll			= 1,
-		.buffer_select		= 1,
 	},
 	[IORING_OP_READV] = {
 		.needs_file		= 1,
@@ -1729,9 +1720,16 @@ static void io_kbuf_recycle(struct io_kiocb *req, unsigned issue_flags)
 
 	if (!(req->flags & (REQ_F_BUFFER_SELECTED|REQ_F_BUFFER_RING)))
 		return;
-	/* don't recycle if we already did IO to this buffer */
-	if (req->flags & REQ_F_PARTIAL_IO)
+	/*
+	 * For legacy provided buffer mode, don't recycle if we already did
+	 * IO to this buffer. For ring-mapped provided buffer mode, we should
+	 * increment ring->head to explicitly monopolize the buffer to avoid
+	 * multiple use.
+	 */
+	if ((req->flags & REQ_F_BUFFER_SELECTED) &&
+	    (req->flags & REQ_F_PARTIAL_IO))
 		return;
+
 	/*
 	 * We don't need to recycle for REQ_F_BUFFER_RING, we can just clear
 	 * the flag and hence ensure that bl->head doesn't get incremented.
@@ -1739,8 +1737,13 @@ static void io_kbuf_recycle(struct io_kiocb *req, unsigned issue_flags)
 	 */
 	if (req->flags & REQ_F_BUFFER_RING) {
 		if (req->buf_list) {
-			req->buf_index = req->buf_list->bgid;
-			req->flags &= ~REQ_F_BUFFER_RING;
+			if (req->flags & REQ_F_PARTIAL_IO) {
+				req->buf_list->head++;
+				req->buf_list = NULL;
+			} else {
+				req->buf_index = req->buf_list->bgid;
+				req->flags &= ~REQ_F_BUFFER_RING;
+			}
 		}
 		return;
 	}
@@ -3677,6 +3680,20 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	int ret;
 
 	kiocb->ki_pos = READ_ONCE(sqe->off);
+	/* used for fixed read/write too - just read unconditionally */
+	req->buf_index = READ_ONCE(sqe->buf_index);
+
+	if (req->opcode == IORING_OP_READ_FIXED ||
+	    req->opcode == IORING_OP_WRITE_FIXED) {
+		struct io_ring_ctx *ctx = req->ctx;
+		u16 index;
+
+		if (unlikely(req->buf_index >= ctx->nr_user_bufs))
+			return -EFAULT;
+		index = array_index_nospec(req->buf_index, ctx->nr_user_bufs);
+		req->imu = ctx->user_bufs[index];
+		io_req_set_rsrc_node(req, ctx, 0);
+	}
 
 	ioprio = READ_ONCE(sqe->ioprio);
 	if (ioprio) {
@@ -3689,12 +3706,9 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 		kiocb->ki_ioprio = get_current_ioprio();
 	}
 
-	req->imu = NULL;
 	req->rw.addr = READ_ONCE(sqe->addr);
 	req->rw.len = READ_ONCE(sqe->len);
 	req->rw.flags = READ_ONCE(sqe->rw_flags);
-	/* used for fixed read/write too - just read unconditionally */
-	req->buf_index = READ_ONCE(sqe->buf_index);
 	return 0;
 }
 
@@ -3826,20 +3840,9 @@ static int __io_import_fixed(struct io_kiocb *req, int rw, struct iov_iter *iter
 static int io_import_fixed(struct io_kiocb *req, int rw, struct iov_iter *iter,
 			   unsigned int issue_flags)
 {
-	struct io_mapped_ubuf *imu = req->imu;
-	u16 index, buf_index = req->buf_index;
-
-	if (likely(!imu)) {
-		struct io_ring_ctx *ctx = req->ctx;
-
-		if (unlikely(buf_index >= ctx->nr_user_bufs))
-			return -EFAULT;
-		io_req_set_rsrc_node(req, ctx, issue_flags);
-		index = array_index_nospec(buf_index, ctx->nr_user_bufs);
-		imu = READ_ONCE(ctx->user_bufs[index]);
-		req->imu = imu;
-	}
-	return __io_import_fixed(req, rw, iter, imu);
+	if (WARN_ON_ONCE(!req->imu))
+		return -EFAULT;
+	return __io_import_fixed(req, rw, iter, req->imu);
 }
 
 static int io_buffer_add_list(struct io_ring_ctx *ctx,
@@ -3876,19 +3879,17 @@ static void __user *io_ring_buffer_select(struct io_kiocb *req, size_t *len,
 {
 	struct io_uring_buf_ring *br = bl->buf_ring;
 	struct io_uring_buf *buf;
-	__u32 head = bl->head;
+	__u16 head = bl->head;
 
-	if (unlikely(smp_load_acquire(&br->tail) == head)) {
-		io_ring_submit_unlock(req->ctx, issue_flags);
+	if (unlikely(smp_load_acquire(&br->tail) == head))
 		return NULL;
-	}
 
 	head &= bl->mask;
 	if (head < IO_BUFFER_LIST_BUF_PER_PAGE) {
 		buf = &br->bufs[head];
 	} else {
 		int off = head & (IO_BUFFER_LIST_BUF_PER_PAGE - 1);
-		int index = head / IO_BUFFER_LIST_BUF_PER_PAGE - 1;
+		int index = head / IO_BUFFER_LIST_BUF_PER_PAGE;
 		buf = page_address(bl->buf_pages[index]);
 		buf += off;
 	}
@@ -5258,14 +5259,6 @@ done:
 
 static int io_nop_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 {
-	/*
-	 * If the ring is setup with CQE32, relay back addr/addr
-	 */
-	if (req->ctx->flags & IORING_SETUP_CQE32) {
-		req->nop.extra1 = READ_ONCE(sqe->addr);
-		req->nop.extra2 = READ_ONCE(sqe->addr2);
-	}
-
 	return 0;
 }
 
@@ -5274,23 +5267,7 @@ static int io_nop_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
  */
 static int io_nop(struct io_kiocb *req, unsigned int issue_flags)
 {
-	unsigned int cflags;
-	void __user *buf;
-
-	if (req->flags & REQ_F_BUFFER_SELECT) {
-		size_t len = 1;
-
-		buf = io_buffer_select(req, &len, issue_flags);
-		if (!buf)
-			return -ENOBUFS;
-	}
-
-	cflags = io_put_kbuf(req, issue_flags);
-	if (!(req->ctx->flags & IORING_SETUP_CQE32))
-		__io_req_complete(req, issue_flags, 0, cflags);
-	else
-		__io_req_complete32(req, issue_flags, 0, cflags,
-				    req->nop.extra1, req->nop.extra2);
+	__io_req_complete(req, issue_flags, 0, 0);
 	return 0;
 }
 
@@ -5988,18 +5965,14 @@ static int io_statx(struct io_kiocb *req, unsigned int issue_flags)
 
 static int io_close_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 {
-	if (sqe->off || sqe->addr || sqe->len || sqe->buf_index)
+	if (sqe->off || sqe->addr || sqe->len || sqe->rw_flags || sqe->buf_index)
 		return -EINVAL;
 	if (req->flags & REQ_F_FIXED_FILE)
 		return -EBADF;
 
 	req->close.fd = READ_ONCE(sqe->fd);
 	req->close.file_slot = READ_ONCE(sqe->file_index);
-	req->close.flags = READ_ONCE(sqe->close_flags);
-	if (req->close.flags & ~IORING_CLOSE_FD_AND_FILE_SLOT)
-		return -EINVAL;
-	if (!(req->close.flags & IORING_CLOSE_FD_AND_FILE_SLOT) &&
-	    req->close.file_slot && req->close.fd)
+	if (req->close.file_slot && req->close.fd)
 		return -EINVAL;
 
 	return 0;
@@ -6015,8 +5988,7 @@ static int io_close(struct io_kiocb *req, unsigned int issue_flags)
 
 	if (req->close.file_slot) {
 		ret = io_close_fixed(req, issue_flags);
-		if (ret || !(req->close.flags & IORING_CLOSE_FD_AND_FILE_SLOT))
-			goto err;
+		goto err;
 	}
 
 	spin_lock(&files->file_lock);
@@ -8063,8 +8035,8 @@ static int io_files_update_with_index_alloc(struct io_kiocb *req,
 		if (ret < 0)
 			break;
 		if (copy_to_user(&fds[done], &ret, sizeof(ret))) {
-			ret = -EFAULT;
 			__io_close_fixed(req, issue_flags, ret);
+			ret = -EFAULT;
 			break;
 		}
 	}
@@ -9788,11 +9760,19 @@ static void __io_sqe_files_unregister(struct io_ring_ctx *ctx)
 
 static int io_sqe_files_unregister(struct io_ring_ctx *ctx)
 {
+	unsigned nr = ctx->nr_user_files;
 	int ret;
 
 	if (!ctx->file_data)
 		return -ENXIO;
+
+	/*
+	 * Quiesce may unlock ->uring_lock, and while it's not held
+	 * prevent new requests using the table.
+	 */
+	ctx->nr_user_files = 0;
 	ret = io_rsrc_ref_quiesce(ctx->file_data, ctx);
+	ctx->nr_user_files = nr;
 	if (!ret)
 		__io_sqe_files_unregister(ctx);
 	return ret;
@@ -10690,12 +10670,19 @@ static void __io_sqe_buffers_unregister(struct io_ring_ctx *ctx)
 
 static int io_sqe_buffers_unregister(struct io_ring_ctx *ctx)
 {
+	unsigned nr = ctx->nr_user_bufs;
 	int ret;
 
 	if (!ctx->buf_data)
 		return -ENXIO;
 
+	/*
+	 * Quiesce may unlock ->uring_lock, and while it's not held
+	 * prevent new requests using the table.
+	 */
+	ctx->nr_user_bufs = 0;
 	ret = io_rsrc_ref_quiesce(ctx->buf_data, ctx);
+	ctx->nr_user_bufs = nr;
 	if (!ret)
 		__io_sqe_buffers_unregister(ctx);
 	return ret;
@@ -13000,6 +12987,10 @@ static int io_register_pbuf_ring(struct io_ring_ctx *ctx, void __user *arg)
 	if (reg.ring_addr & ~PAGE_MASK)
 		return -EINVAL;
 	if (!is_power_of_2(reg.ring_entries))
+		return -EINVAL;
+
+	/* cannot disambiguate full vs empty due to head/tail size */
+	if (reg.ring_entries >= 65536)
 		return -EINVAL;
 
 	if (unlikely(reg.bgid < BGID_ARRAY && !ctx->io_bl)) {
