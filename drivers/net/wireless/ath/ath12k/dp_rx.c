@@ -997,16 +997,17 @@ int ath12k_peer_rx_tid_setup(struct ath12k *ar, const u8 *peer_mac, int vdev_id,
 	rx_tid->size = hw_desc_sz;
 	rx_tid->active = true;
 
-	if (ab->hw_params.reoq_lut_support)
+	if (ab->hw_params.reoq_lut_support) {
 		/* Update the REO queue LUT at the corresponding peer id
 		 * and tid with qaddr.
 		 */
 		ath12k_peer_rx_tid_qref_setup(ab, peer->peer_id, tid, paddr);
-	else
+		spin_unlock_bh(&ab->base_lock);
+	} else {
+		spin_unlock_bh(&ab->base_lock);
 		ret = ath12k_wmi_peer_rx_reorder_queue_setup(ar, vdev_id, peer_mac,
 							     paddr, tid, 1, ba_win_sz);
-
-	spin_unlock_bh(&ab->base_lock);
+	}
 
 	return ret;
 
