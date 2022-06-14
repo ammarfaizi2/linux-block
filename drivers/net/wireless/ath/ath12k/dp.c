@@ -864,7 +864,7 @@ int ath12k_dp_service_srng(struct ath12k_base *ab,
 	int tot_work_done = 0;
 	bool flag;
 
-	while (ab->hw_params.ring_mask->tx[grp_id] >> i) {
+	while (i < ab->hw_params.max_tx_ring) {
 		if (ab->hw_params.ring_mask->tx[grp_id] &
 			BIT(ab->hal.ops->tcl_to_wbm_rbm_map[i].wbm_ring_num))
 			ath12k_dp_tx_completion_handler(ab, i);
