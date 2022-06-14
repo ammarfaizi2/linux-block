@@ -586,13 +586,14 @@ static void hugetlb_vmtruncate(struct inode *inode, loff_t offset)
 
 static void hugetlbfs_zero_partial_page(struct hstate *h,
 					struct address_space *mapping,
-					loff_t start, loff_t end)
+					loff_t start,
+					loff_t end)
 {
 	pgoff_t idx = start >> huge_page_shift(h);
-	struct page *page;
+	struct folio *folio;
 
-	page = find_lock_page(mapping, idx);
-	if (!page)
+	folio = filemap_lock_folio(mapping, idx);
+	if (!folio)
 		return;
 
 	start = start & ~huge_page_mask(h);
@@ -600,10 +601,10 @@ static void hugetlbfs_zero_partial_page(struct hstate *h,
 	if (!end)
 		end = huge_page_size(h);
 
-	zero_user_segment(page, (unsigned int)start, (unsigned int)end);
+	folio_zero_segment(folio, (size_t)start, (size_t)end);
 
-	unlock_page(page);
-	put_page(page);
+	folio_unlock(folio);
+	folio_put(folio);
 }
 
 static long hugetlbfs_punch_hole(struct inode *inode, loff_t offset, loff_t len)
