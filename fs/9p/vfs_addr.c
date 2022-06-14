@@ -58,9 +58,19 @@ static void v9fs_issue_read(struct netfs_io_subrequest *subreq)
  */
 static int v9fs_init_request(struct netfs_io_request *rreq, struct file *file)
 {
-	struct p9_fid *fid = file->private_data;
+	struct inode *inode = file_inode(file);
+	struct v9fs_inode *v9inode = V9FS_I(inode);
+	struct p9_fid *fid = v9inode->writeback_fid;
 
-	refcount_inc(&fid->count);
+	/* If there is no writeback fid this file only ever has had
+	 * read-only opens, so we can use file's fid which should
+	 * always be set instead */
+	if (!fid)
+		fid = file->private_data;
+
+	BUG_ON(!fid);
+
+	p9_fid_get(fid);
 	rreq->netfs_priv = fid;
 	return 0;
 }
@@ -73,7 +83,7 @@ static void v9fs_free_request(struct netfs_io_request *rreq)
 {
 	struct p9_fid *fid = rreq->netfs_priv;
 
-	p9_client_clunk(fid);
+	p9_fid_put(fid);
 }
 
 /**
