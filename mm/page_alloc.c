@@ -183,8 +183,10 @@ static DEFINE_MUTEX(pcp_batch_high_lock);
 	type *_ret;							\
 	pcpu_task_pin();						\
 	_ret = this_cpu_ptr(ptr);					\
-	if (!spin_trylock_irqsave(&_ret->member, flags))		\
+	if (!spin_trylock_irqsave(&_ret->member, flags)) {		\
+		pcpu_task_unpin();					\
 		_ret = NULL;						\
+	}								\
 	_ret;								\
 })
 
