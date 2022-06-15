@@ -2226,7 +2226,7 @@ scheduling-clock interrupt be enabled when RCU needs it to be:
 +-----------------------------------------------------------------------+
 | **Answer**:                                                           |
 +-----------------------------------------------------------------------+
-| One approach is to do ``ct_irq_exit();ct_irq_enter();`` every so    |
+| One approach is to do ``ct_irq_exit();ct_irq_enter();`` every so      |
 | often. But given that long-running interrupt handlers can cause other |
 | problems, not least for response time, shouldn't you work to keep     |
 | your interrupt handler's runtime within reasonable bounds?            |
