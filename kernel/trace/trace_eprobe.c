@@ -242,15 +242,12 @@ static int trace_eprobe_tp_arg_update(struct trace_eprobe *ep, int i)
 
 static int eprobe_event_define_fields(struct trace_event_call *event_call)
 {
-	int ret;
 	struct eprobe_trace_entry_head field;
 	struct trace_probe *tp;
 
 	tp = trace_probe_primary_from_call(event_call);
 	if (WARN_ON_ONCE(!tp))
 		return -ENOENT;
-
-	DEFINE_FIELD(unsigned int, type, FIELD_STRING_TYPE, 0);
 
 	return traceprobe_define_arg_fields(event_call, sizeof(field), tp);
 }
@@ -270,7 +267,9 @@ print_eprobe_event(struct trace_iterator *iter, int flags,
 	struct trace_event_call *pevent;
 	struct trace_event *probed_event;
 	struct trace_seq *s = &iter->seq;
+	struct trace_eprobe *ep;
 	struct trace_probe *tp;
+	unsigned int type;
 
 	field = (struct eprobe_trace_entry_head *)iter->ent;
 	tp = trace_probe_primary_from_call(
@@ -278,15 +277,18 @@ print_eprobe_event(struct trace_iterator *iter, int flags,
 	if (WARN_ON_ONCE(!tp))
 		goto out;
 
+	ep = container_of(tp, struct trace_eprobe, tp);
+	type = ep->event->event.type;
+
 	trace_seq_printf(s, "%s: (", trace_probe_name(tp));
 
-	probed_event = ftrace_find_event(field->type);
+	probed_event = ftrace_find_event(type);
 	if (probed_event) {
 		pevent = container_of(probed_event, struct trace_event_call, event);
 		trace_seq_printf(s, "%s.%s", pevent->class->system,
 				 trace_event_name(pevent));
 	} else {
-		trace_seq_printf(s, "%u", field->type);
+		trace_seq_printf(s, "%u", type);
 	}
 
 	trace_seq_putc(s, ')');
@@ -489,25 +491,15 @@ __eprobe_trace_func(struct eprobe_data *edata, void *rec)
 	if (trace_trigger_soft_disabled(edata->file))
 		return;
 
-	fbuffer.trace_ctx = tracing_gen_ctx();
-	fbuffer.trace_file = edata->file;
-
 	dsize = get_eprobe_size(&edata->ep->tp, rec);
-	fbuffer.regs = NULL;
 
-	fbuffer.event =
-		trace_event_buffer_lock_reserve(&fbuffer.buffer, edata->file,
-					call->event.type,
-					sizeof(*entry) + edata->ep->tp.size + dsize,
-					fbuffer.trace_ctx);
-	if (!fbuffer.event)
+	entry = trace_event_buffer_reserve(&fbuffer, edata->file,
+					   sizeof(*entry) + edata->ep->tp.size + dsize);
+
+	if (!entry)
 		return;
 
 	entry = fbuffer.entry = ring_buffer_event_data(fbuffer.event);
-	if (edata->ep->event)
-		entry->type = edata->ep->event->event.type;
-	else
-		entry->type = 0;
 	store_trace_args(&entry[1], &edata->ep->tp, rec, sizeof(*entry), dsize);
 
 	trace_event_buffer_commit(&fbuffer);
@@ -519,20 +511,17 @@ __eprobe_trace_func(struct eprobe_data *edata, void *rec)
  * functions are just stubs to fulfill what is needed to use the trigger
  * infrastructure.
  */
-static int eprobe_trigger_init(struct event_trigger_ops *ops,
-			       struct event_trigger_data *data)
+static int eprobe_trigger_init(struct event_trigger_data *data)
 {
 	return 0;
 }
 
-static void eprobe_trigger_free(struct event_trigger_ops *ops,
-				struct event_trigger_data *data)
+static void eprobe_trigger_free(struct event_trigger_data *data)
 {
 
 }
 
 static int eprobe_trigger_print(struct seq_file *m,
-				struct event_trigger_ops *ops,
 				struct event_trigger_data *data)
 {
 	/* Do not print eprobe event triggers */
@@ -549,29 +538,30 @@ static void eprobe_trigger_func(struct event_trigger_data *data,
 }
 
 static struct event_trigger_ops eprobe_trigger_ops = {
-	.func			= eprobe_trigger_func,
+	.trigger		= eprobe_trigger_func,
 	.print			= eprobe_trigger_print,
 	.init			= eprobe_trigger_init,
 	.free			= eprobe_trigger_free,
 };
 
-static int eprobe_trigger_cmd_func(struct event_command *cmd_ops,
-				   struct trace_event_file *file,
-				   char *glob, char *cmd, char *param)
+static int eprobe_trigger_cmd_parse(struct event_command *cmd_ops,
+				    struct trace_event_file *file,
+				    char *glob, char *cmd,
+				    char *param_and_filter)
 {
 	return -1;
 }
 
-static int eprobe_trigger_reg_func(char *glob, struct event_trigger_ops *ops,
-				 struct event_trigger_data *data,
-				 struct trace_event_file *file)
+static int eprobe_trigger_reg_func(char *glob,
+				   struct event_trigger_data *data,
+				   struct trace_event_file *file)
 {
 	return -1;
 }
 
-static void eprobe_trigger_unreg_func(char *glob, struct event_trigger_ops *ops,
-				    struct event_trigger_data *data,
-				    struct trace_event_file *file)
+static void eprobe_trigger_unreg_func(char *glob,
+				      struct event_trigger_data *data,
+				      struct trace_event_file *file)
 {
 
 }
@@ -586,7 +576,7 @@ static struct event_command event_trigger_cmd = {
 	.name			= "eprobe",
 	.trigger_type		= ETT_EVENT_EPROBE,
 	.flags			= EVENT_CMD_FL_NEEDS_REC,
-	.func			= eprobe_trigger_cmd_func,
+	.parse			= eprobe_trigger_cmd_parse,
 	.reg			= eprobe_trigger_reg_func,
 	.unreg			= eprobe_trigger_unreg_func,
 	.unreg_all		= NULL,
@@ -658,7 +648,7 @@ static struct trace_event_functions eprobe_funcs = {
 static int disable_eprobe(struct trace_eprobe *ep,
 			  struct trace_array *tr)
 {
-	struct event_trigger_data *trigger;
+	struct event_trigger_data *trigger = NULL, *iter;
 	struct trace_event_file *file;
 	struct eprobe_data *edata;
 
@@ -666,14 +656,16 @@ static int disable_eprobe(struct trace_eprobe *ep,
 	if (!file)
 		return -ENOENT;
 
-	list_for_each_entry(trigger, &file->triggers, list) {
-		if (!(trigger->flags & EVENT_TRIGGER_FL_PROBE))
+	list_for_each_entry(iter, &file->triggers, list) {
+		if (!(iter->flags & EVENT_TRIGGER_FL_PROBE))
 			continue;
-		edata = trigger->private_data;
-		if (edata->ep == ep)
+		edata = iter->private_data;
+		if (edata->ep == ep) {
+			trigger = iter;
 			break;
+		}
 	}
-	if (list_entry_is_head(trigger, &file->triggers, list))
+	if (!trigger)
 		return -ENODEV;
 
 	list_del_rcu(&trigger->list);

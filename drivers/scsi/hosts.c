@@ -61,6 +61,7 @@ static void scsi_host_cls_release(struct device *dev)
 static struct class shost_class = {
 	.name		= "scsi_host",
 	.dev_release	= scsi_host_cls_release,
+	.dev_groups	= scsi_shost_groups,
 };
 
 /**
@@ -228,16 +229,16 @@ int scsi_add_host_with_dma(struct Scsi_Host *shost, struct device *dev,
 	if (error)
 		goto fail;
 
-	error = scsi_mq_setup_tags(shost);
-	if (error)
-		goto fail;
-
 	if (!shost->shost_gendev.parent)
 		shost->shost_gendev.parent = dev ? dev : &platform_bus;
 	if (!dma_dev)
 		dma_dev = shost->shost_gendev.parent;
 
 	shost->dma_dev = dma_dev;
+
+	error = scsi_mq_setup_tags(shost);
+	if (error)
+		goto fail;
 
 	/*
 	 * Increase usage count temporarily here so that calling
@@ -377,7 +378,7 @@ static struct device_type scsi_host_type = {
 struct Scsi_Host *scsi_host_alloc(struct scsi_host_template *sht, int privsize)
 {
 	struct Scsi_Host *shost;
-	int index, i, j = 0;
+	int index;
 
 	shost = kzalloc(sizeof(struct Scsi_Host) + privsize, GFP_KERNEL);
 	if (!shost)
@@ -483,17 +484,7 @@ struct Scsi_Host *scsi_host_alloc(struct scsi_host_template *sht, int privsize)
 	shost->shost_dev.parent = &shost->shost_gendev;
 	shost->shost_dev.class = &shost_class;
 	dev_set_name(&shost->shost_dev, "host%d", shost->host_no);
-	shost->shost_dev.groups = shost->shost_dev_attr_groups;
-	shost->shost_dev_attr_groups[j++] = &scsi_shost_attr_group;
-	if (sht->shost_groups) {
-		for (i = 0; sht->shost_groups[i] &&
-			     j < ARRAY_SIZE(shost->shost_dev_attr_groups);
-		     i++, j++) {
-			shost->shost_dev_attr_groups[j] =
-				sht->shost_groups[i];
-		}
-	}
-	WARN_ON_ONCE(j >= ARRAY_SIZE(shost->shost_dev_attr_groups));
+	shost->shost_dev.groups = sht->shost_groups;
 
 	shost->ehandler = kthread_run(scsi_error_handler, shost,
 			"scsi_eh_%d", shost->host_no);

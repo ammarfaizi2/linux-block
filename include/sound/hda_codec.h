@@ -8,7 +8,7 @@
 #ifndef __SOUND_HDA_CODEC_H
 #define __SOUND_HDA_CODEC_H
 
-#include <linux/kref.h>
+#include <linux/refcount.h>
 #include <linux/mod_devicetable.h>
 #include <sound/info.h>
 #include <sound/control.h>
@@ -59,6 +59,9 @@ struct hda_bus {
 	unsigned int no_response_fallback:1; /* don't fallback at RIRB error */
 	unsigned int bus_probing :1;	/* during probing process */
 	unsigned int keep_power:1;	/* keep power up for notification */
+	unsigned int jackpoll_in_suspend:1; /* keep jack polling during
+					     * runtime suspend
+					     */
 
 	int primary_dig_out_type;	/* primary digital out PCM type */
 	unsigned int mixer_assigned;	/* codec addr for mixer name */
@@ -166,8 +169,8 @@ struct hda_pcm {
 	bool own_chmap;		/* codec driver provides own channel maps */
 	/* private: */
 	struct hda_codec *codec;
-	struct kref kref;
 	struct list_head list;
+	unsigned int disconnected:1;
 };
 
 /* codec information */
@@ -187,6 +190,8 @@ struct hda_codec {
 
 	/* PCM to create, set by patch_ops.build_pcms callback */
 	struct list_head pcm_list_head;
+	refcount_t pcm_ref;
+	wait_queue_head_t remove_sleep;
 
 	/* codec specific info */
 	void *spec;
@@ -304,12 +309,19 @@ struct hda_codec {
 /*
  * constructors
  */
+__printf(3, 4) struct hda_codec *
+snd_hda_codec_device_init(struct hda_bus *bus, unsigned int codec_addr,
+			  const char *fmt, ...);
 int snd_hda_codec_new(struct hda_bus *bus, struct snd_card *card,
 		      unsigned int codec_addr, struct hda_codec **codecp);
 int snd_hda_codec_device_new(struct hda_bus *bus, struct snd_card *card,
-		      unsigned int codec_addr, struct hda_codec *codec);
+		      unsigned int codec_addr, struct hda_codec *codec,
+		      bool snddev_managed);
 int snd_hda_codec_configure(struct hda_codec *codec);
 int snd_hda_codec_update_widgets(struct hda_codec *codec);
+void snd_hda_codec_register(struct hda_codec *codec);
+void snd_hda_codec_unregister(struct hda_codec *codec);
+void snd_hda_codec_cleanup_for_unbind(struct hda_codec *codec);
 
 /*
  * low level functions
@@ -420,7 +432,7 @@ void snd_hda_codec_cleanup_for_unbind(struct hda_codec *codec);
 
 static inline void snd_hda_codec_pcm_get(struct hda_pcm *pcm)
 {
-	kref_get(&pcm->kref);
+	refcount_inc(&pcm->codec->pcm_ref);
 }
 void snd_hda_codec_pcm_put(struct hda_pcm *pcm);
 
@@ -488,9 +500,11 @@ int hda_call_check_power_status(struct hda_codec *codec, hda_nid_t nid)
 #define snd_hda_power_down(codec)	snd_hdac_power_down(&(codec)->core)
 #define snd_hda_power_down_pm(codec)	snd_hdac_power_down_pm(&(codec)->core)
 #ifdef CONFIG_PM
+void snd_hda_codec_set_power_save(struct hda_codec *codec, int delay);
 void snd_hda_set_power_save(struct hda_bus *bus, int delay);
 void snd_hda_update_power_acct(struct hda_codec *codec);
 #else
+static inline void snd_hda_codec_set_power_save(struct hda_codec *codec, int delay) {}
 static inline void snd_hda_set_power_save(struct hda_bus *bus, int delay) {}
 #endif
 

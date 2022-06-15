@@ -5,7 +5,7 @@
  * Copyright 2006-2007	Jiri Benc <jbenc@suse.cz>
  * Copyright 2007	Johannes Berg <johannes@sipsolutions.net>
  * Copyright 2013-2014  Intel Mobile Communications GmbH
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * Transmit and frame generation functions.
  */
@@ -768,9 +768,9 @@ ieee80211_tx_h_rate_ctrl(struct ieee80211_tx_data *tx)
 	if (txrc.reported_rate.idx < 0) {
 		txrc.reported_rate = tx->rate;
 		if (tx->sta && ieee80211_is_tx_data(tx->skb))
-			tx->sta->tx_stats.last_rate = txrc.reported_rate;
+			tx->sta->deflink.tx_stats.last_rate = txrc.reported_rate;
 	} else if (tx->sta)
-		tx->sta->tx_stats.last_rate = txrc.reported_rate;
+		tx->sta->deflink.tx_stats.last_rate = txrc.reported_rate;
 
 	if (ratetbl)
 		return TX_CONTINUE;
@@ -837,7 +837,7 @@ ieee80211_tx_h_sequence(struct ieee80211_tx_data *tx)
 		hdr->seq_ctrl = cpu_to_le16(tx->sdata->sequence_number);
 		tx->sdata->sequence_number += 0x10;
 		if (tx->sta)
-			tx->sta->tx_stats.msdu[IEEE80211_NUM_TIDS]++;
+			tx->sta->deflink.tx_stats.msdu[IEEE80211_NUM_TIDS]++;
 		return TX_CONTINUE;
 	}
 
@@ -851,7 +851,7 @@ ieee80211_tx_h_sequence(struct ieee80211_tx_data *tx)
 
 	/* include per-STA, per-TID sequence counter */
 	tid = ieee80211_get_tid(hdr);
-	tx->sta->tx_stats.msdu[tid]++;
+	tx->sta->deflink.tx_stats.msdu[tid]++;
 
 	hdr->seq_ctrl = ieee80211_tx_next_seq(tx->sta, tid);
 
@@ -882,7 +882,7 @@ static int ieee80211_fragment(struct ieee80211_tx_data *tx,
 		rem -= fraglen;
 		tmp = dev_alloc_skb(local->tx_headroom +
 				    frag_threshold +
-				    tx->sdata->encrypt_headroom +
+				    IEEE80211_ENCRYPT_HEADROOM +
 				    IEEE80211_ENCRYPT_TAILROOM);
 		if (!tmp)
 			return -ENOMEM;
@@ -890,7 +890,7 @@ static int ieee80211_fragment(struct ieee80211_tx_data *tx,
 		__skb_queue_tail(&tx->skbs, tmp);
 
 		skb_reserve(tmp,
-			    local->tx_headroom + tx->sdata->encrypt_headroom);
+			    local->tx_headroom + IEEE80211_ENCRYPT_HEADROOM);
 
 		/* copy control information */
 		memcpy(tmp->cb, skb->cb, sizeof(tmp->cb));
@@ -1004,10 +1004,10 @@ ieee80211_tx_h_stats(struct ieee80211_tx_data *tx)
 
 	skb_queue_walk(&tx->skbs, skb) {
 		ac = skb_get_queue_mapping(skb);
-		tx->sta->tx_stats.bytes[ac] += skb->len;
+		tx->sta->deflink.tx_stats.bytes[ac] += skb->len;
 	}
 	if (ac >= 0)
-		tx->sta->tx_stats.packets[ac]++;
+		tx->sta->deflink.tx_stats.packets[ac]++;
 
 	return TX_CONTINUE;
 }
@@ -1040,8 +1040,6 @@ ieee80211_tx_h_encrypt(struct ieee80211_tx_data *tx)
 	case WLAN_CIPHER_SUITE_GCMP:
 	case WLAN_CIPHER_SUITE_GCMP_256:
 		return ieee80211_crypto_gcmp_encrypt(tx);
-	default:
-		return ieee80211_crypto_hw_encrypt(tx);
 	}
 
 	return TX_DROP;
@@ -1159,7 +1157,7 @@ ieee80211_aggr_check(struct ieee80211_sub_if_data *sdata,
 	if (!ref || !(ref->ops->capa & RATE_CTRL_CAPA_AMPDU_TRIGGER))
 		return;
 
-	if (!sta || !sta->sta.ht_cap.ht_supported ||
+	if (!sta || !sta->sta.deflink.ht_cap.ht_supported ||
 	    !sta->sta.wme || skb_get_queue_mapping(skb) == IEEE80211_AC_VO ||
 	    skb->protocol == sdata->control_port_protocol)
 		return;
@@ -2013,7 +2011,7 @@ void ieee80211_xmit(struct ieee80211_sub_if_data *sdata,
 
 	headroom = local->tx_headroom;
 	if (encrypt != ENCRYPT_NO)
-		headroom += sdata->encrypt_headroom;
+		headroom += IEEE80211_ENCRYPT_HEADROOM;
 	headroom -= skb_headroom(skb);
 	headroom = max_t(int, 0, headroom);
 
@@ -2867,7 +2865,7 @@ static struct sk_buff *ieee80211_build_hdr(struct ieee80211_sub_if_data *sdata,
 	 */
 
 	if (head_need > 0 || skb_cloned(skb)) {
-		head_need += sdata->encrypt_headroom;
+		head_need += IEEE80211_ENCRYPT_HEADROOM;
 		head_need += local->tx_headroom;
 		head_need = max_t(int, 0, head_need);
 		if (ieee80211_skb_resize(sdata, skb, head_need, ENCRYPT_DATA)) {
@@ -3128,15 +3126,6 @@ void ieee80211_check_fast_xmit(struct sta_info *sta)
 			/* we don't know how to generate IVs for this at all */
 			if (WARN_ON(gen_iv))
 				goto out;
-			/* pure hardware keys are OK, of course */
-			if (!(build.key->flags & KEY_FLAG_CIPHER_SCHEME))
-				break;
-			/* cipher scheme might require space allocation */
-			if (iv_spc &&
-			    build.key->conf.iv_len > IEEE80211_FAST_XMIT_MAX_IV)
-				goto out;
-			if (iv_spc)
-				build.hdr_len += build.key->conf.iv_len;
 		}
 
 		fc |= cpu_to_le16(IEEE80211_FCTL_PROTECTED);
@@ -3150,8 +3139,6 @@ void ieee80211_check_fast_xmit(struct sta_info *sta)
 
 	fast_tx = kmemdup(&build, sizeof(build), GFP_ATOMIC);
 	/* if the kmemdup fails, continue w/o fast_tx */
-	if (!fast_tx)
-		goto out;
 
  out:
 	/* we might have raced against another call to this function */
@@ -3462,18 +3449,18 @@ ieee80211_xmit_fast_finish(struct ieee80211_sub_if_data *sdata,
 	}
 
 	if (skb_shinfo(skb)->gso_size)
-		sta->tx_stats.msdu[tid] +=
+		sta->deflink.tx_stats.msdu[tid] +=
 			DIV_ROUND_UP(skb->len, skb_shinfo(skb)->gso_size);
 	else
-		sta->tx_stats.msdu[tid]++;
+		sta->deflink.tx_stats.msdu[tid]++;
 
 	info->hw_queue = sdata->vif.hw_queue[skb_get_queue_mapping(skb)];
 
 	/* statistics normally done by ieee80211_tx_h_stats (but that
 	 * has to consider fragmentation, so is more complex)
 	 */
-	sta->tx_stats.bytes[skb_get_queue_mapping(skb)] += skb->len;
-	sta->tx_stats.packets[skb_get_queue_mapping(skb)]++;
+	sta->deflink.tx_stats.bytes[skb_get_queue_mapping(skb)] += skb->len;
+	sta->deflink.tx_stats.packets[skb_get_queue_mapping(skb)]++;
 
 	if (pn_offs) {
 		u64 pn;
@@ -4481,8 +4468,8 @@ static void ieee80211_8023_xmit(struct ieee80211_sub_if_data *sdata,
 
 	dev_sw_netstats_tx_add(dev, 1, skb->len);
 
-	sta->tx_stats.bytes[skb_get_queue_mapping(skb)] += skb->len;
-	sta->tx_stats.packets[skb_get_queue_mapping(skb)]++;
+	sta->deflink.tx_stats.bytes[skb_get_queue_mapping(skb)] += skb->len;
+	sta->deflink.tx_stats.packets[skb_get_queue_mapping(skb)]++;
 
 	if (sdata->vif.type == NL80211_IFTYPE_AP_VLAN)
 		sdata = container_of(sdata->bss,
@@ -5042,6 +5029,19 @@ ieee80211_beacon_get_finish(struct ieee80211_hw *hw,
 		       IEEE80211_TX_CTL_FIRST_FRAGMENT;
 }
 
+static void
+ieee80211_beacon_add_mbssid(struct sk_buff *skb, struct beacon_data *beacon)
+{
+	int i;
+
+	if (!beacon->mbssid_ies)
+		return;
+
+	for (i = 0; i < beacon->mbssid_ies->cnt; i++)
+		skb_put_data(skb, beacon->mbssid_ies->elem[i].data,
+			     beacon->mbssid_ies->elem[i].len);
+}
+
 static struct sk_buff *
 ieee80211_beacon_get_ap(struct ieee80211_hw *hw,
 			struct ieee80211_vif *vif,
@@ -5055,6 +5055,7 @@ ieee80211_beacon_get_ap(struct ieee80211_hw *hw,
 	struct ieee80211_if_ap *ap = &sdata->u.ap;
 	struct sk_buff *skb = NULL;
 	u16 csa_off_base = 0;
+	int mbssid_len;
 
 	if (beacon->cntdwn_counter_offsets[0]) {
 		if (!is_template)
@@ -5064,11 +5065,12 @@ ieee80211_beacon_get_ap(struct ieee80211_hw *hw,
 	}
 
 	/* headroom, head length,
-	 * tail length and maximum TIM length
+	 * tail length, maximum TIM length and multiple BSSID length
 	 */
+	mbssid_len = ieee80211_get_mbssid_beacon_len(beacon->mbssid_ies);
 	skb = dev_alloc_skb(local->tx_headroom + beacon->head_len +
 			    beacon->tail_len + 256 +
-			    local->hw.extra_beacon_tailroom);
+			    local->hw.extra_beacon_tailroom + mbssid_len);
 	if (!skb)
 		return NULL;
 
@@ -5081,6 +5083,11 @@ ieee80211_beacon_get_ap(struct ieee80211_hw *hw,
 		offs->tim_offset = beacon->head_len;
 		offs->tim_length = skb->len - beacon->head_len;
 		offs->cntdwn_counter_offs[0] = beacon->cntdwn_counter_offsets[0];
+
+		if (mbssid_len) {
+			ieee80211_beacon_add_mbssid(skb, beacon);
+			offs->mbssid_off = skb->len - mbssid_len;
+		}
 
 		/* for AP the csa offsets are from tail */
 		csa_off_base = skb->len;

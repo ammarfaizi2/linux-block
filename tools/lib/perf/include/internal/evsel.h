@@ -6,8 +6,8 @@
 #include <linux/perf_event.h>
 #include <stdbool.h>
 #include <sys/types.h>
+#include <internal/cpumap.h>
 
-struct perf_cpu_map;
 struct perf_thread_map;
 struct xyarray;
 
@@ -27,7 +27,7 @@ struct perf_sample_id {
 	* queue number.
 	*/
 	int			 idx;
-	int			 cpu;
+	struct perf_cpu		 cpu;
 	pid_t			 tid;
 
 	/* Holds total ID period value for PERF_SAMPLE_READ processing. */
@@ -49,7 +49,18 @@ struct perf_evsel {
 
 	/* parse modifier helper */
 	int			 nr_members;
+	/*
+	 * system_wide is for events that need to be on every CPU, irrespective
+	 * of user requested CPUs or threads. Map propagation will set cpus to
+	 * this event's own_cpus, whereby they will contribute to evlist
+	 * all_cpus.
+	 */
 	bool			 system_wide;
+	/*
+	 * Some events, for example uncore events, require a CPU.
+	 * i.e. it cannot be the 'any CPU' value of -1.
+	 */
+	bool			 requires_cpu;
 	int			 idx;
 };
 

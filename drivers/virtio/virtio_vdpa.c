@@ -53,16 +53,16 @@ static struct vdpa_device *vd_get_vdpa(struct virtio_device *vdev)
 	return to_virtio_vdpa_device(vdev)->vdpa;
 }
 
-static void virtio_vdpa_get(struct virtio_device *vdev, unsigned offset,
-			    void *buf, unsigned len)
+static void virtio_vdpa_get(struct virtio_device *vdev, unsigned int offset,
+			    void *buf, unsigned int len)
 {
 	struct vdpa_device *vdpa = vd_get_vdpa(vdev);
 
 	vdpa_get_config(vdpa, offset, buf, len);
 }
 
-static void virtio_vdpa_set(struct virtio_device *vdev, unsigned offset,
-			    const void *buf, unsigned len)
+static void virtio_vdpa_set(struct virtio_device *vdev, unsigned int offset,
+			    const void *buf, unsigned int len)
 {
 	struct vdpa_device *vdpa = vd_get_vdpa(vdev);
 
@@ -91,9 +91,8 @@ static u8 virtio_vdpa_get_status(struct virtio_device *vdev)
 static void virtio_vdpa_set_status(struct virtio_device *vdev, u8 status)
 {
 	struct vdpa_device *vdpa = vd_get_vdpa(vdev);
-	const struct vdpa_config_ops *ops = vdpa->config;
 
-	return ops->set_status(vdpa, status);
+	return vdpa_set_status(vdpa, status);
 }
 
 static void virtio_vdpa_reset(struct virtio_device *vdev)
@@ -185,7 +184,7 @@ virtio_vdpa_setup_vq(struct virtio_device *vdev, unsigned int index,
 	}
 
 	/* Setup virtqueue callback */
-	cb.callback = virtio_vdpa_virtqueue_cb;
+	cb.callback = callback ? virtio_vdpa_virtqueue_cb : NULL;
 	cb.private = info;
 	ops->set_vq_cb(vdpa, index, &cb);
 	ops->set_vq_num(vdpa, index, virtqueue_get_vring_size(vq));
@@ -264,7 +263,7 @@ static void virtio_vdpa_del_vqs(struct virtio_device *vdev)
 		virtio_vdpa_del_vq(vq);
 }
 
-static int virtio_vdpa_find_vqs(struct virtio_device *vdev, unsigned nvqs,
+static int virtio_vdpa_find_vqs(struct virtio_device *vdev, unsigned int nvqs,
 				struct virtqueue *vqs[],
 				vq_callback_t *callbacks[],
 				const char * const names[],
@@ -308,7 +307,7 @@ static u64 virtio_vdpa_get_features(struct virtio_device *vdev)
 	struct vdpa_device *vdpa = vd_get_vdpa(vdev);
 	const struct vdpa_config_ops *ops = vdpa->config;
 
-	return ops->get_features(vdpa);
+	return ops->get_device_features(vdpa);
 }
 
 static int virtio_vdpa_finalize_features(struct virtio_device *vdev)

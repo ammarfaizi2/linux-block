@@ -1811,7 +1811,9 @@ int wacom_equivalent_usage(int usage)
 		    usage == WACOM_HID_WD_TOUCHSTRIP2 ||
 		    usage == WACOM_HID_WD_TOUCHRING ||
 		    usage == WACOM_HID_WD_TOUCHRINGSTATUS ||
-		    usage == WACOM_HID_WD_REPORT_VALID) {
+		    usage == WACOM_HID_WD_REPORT_VALID ||
+		    usage == WACOM_HID_WD_BARRELSWITCH3 ||
+		    usage == WACOM_HID_WD_SEQUENCENUMBER) {
 			return usage;
 		}
 
@@ -2196,8 +2198,11 @@ static void wacom_set_barrel_switch3_usage(struct wacom_wac *wacom_wac)
 	if (!(features->quirks & WACOM_QUIRK_AESPEN) &&
 	    wacom_wac->hid_data.barrelswitch &&
 	    wacom_wac->hid_data.barrelswitch2 &&
-	    wacom_wac->hid_data.serialhi)
+	    wacom_wac->hid_data.serialhi &&
+	    !wacom_wac->hid_data.barrelswitch3) {
 		input_set_capability(input, EV_KEY, BTN_STYLUS3);
+		features->quirks |= WACOM_QUIRK_PEN_BUTTON3;
+	}
 }
 
 static void wacom_wac_pen_usage_mapping(struct hid_device *hdev,
@@ -2261,6 +2266,9 @@ static void wacom_wac_pen_usage_mapping(struct hid_device *hdev,
 		features->quirks |= WACOM_QUIRK_TOOLSERIAL;
 		wacom_map_usage(input, usage, field, EV_MSC, MSC_SERIAL, 0);
 		break;
+	case HID_DG_SCANTIME:
+		wacom_map_usage(input, usage, field, EV_MSC, MSC_TIMESTAMP, 0);
+		break;
 	case WACOM_HID_WD_SENSE:
 		features->quirks |= WACOM_QUIRK_SENSE;
 		wacom_map_usage(input, usage, field, EV_KEY, BTN_TOOL_PEN, 0);
@@ -2273,6 +2281,11 @@ static void wacom_wac_pen_usage_mapping(struct hid_device *hdev,
 	case WACOM_HID_WD_FINGERWHEEL:
 		input_set_capability(input, EV_KEY, BTN_TOOL_AIRBRUSH);
 		wacom_map_usage(input, usage, field, EV_ABS, ABS_WHEEL, 0);
+		break;
+	case WACOM_HID_WD_BARRELSWITCH3:
+		wacom_wac->hid_data.barrelswitch3 = true;
+		wacom_map_usage(input, usage, field, EV_KEY, BTN_STYLUS3, 0);
+		features->quirks &= ~WACOM_QUIRK_PEN_BUTTON3;
 		break;
 	}
 }
@@ -2390,6 +2403,14 @@ static void wacom_wac_pen_event(struct hid_device *hdev, struct hid_field *field
 	case WACOM_HID_WD_REPORT_VALID:
 		wacom_wac->is_invalid_bt_frame = !value;
 		return;
+	case WACOM_HID_WD_BARRELSWITCH3:
+		wacom_wac->hid_data.barrelswitch3 = value;
+		return;
+	case WACOM_HID_WD_SEQUENCENUMBER:
+		if (wacom_wac->hid_data.sequence_number != value)
+			hid_warn(hdev, "Dropped %hu packets", (unsigned short)(value - wacom_wac->hid_data.sequence_number));
+		wacom_wac->hid_data.sequence_number = value + 1;
+		return;
 	}
 
 	/* send pen events only when touch is up or forced out
@@ -2442,12 +2463,15 @@ static void wacom_wac_pen_report(struct hid_device *hdev,
 
 	if (!delay_pen_events(wacom_wac) && wacom_wac->tool[0]) {
 		int id = wacom_wac->id[0];
-		int sw_state = wacom_wac->hid_data.barrelswitch |
-			       (wacom_wac->hid_data.barrelswitch2 << 1);
-
-		input_report_key(input, BTN_STYLUS, sw_state == 1);
-		input_report_key(input, BTN_STYLUS2, sw_state == 2);
-		input_report_key(input, BTN_STYLUS3, sw_state == 3);
+		if (wacom_wac->features.quirks & WACOM_QUIRK_PEN_BUTTON3 &&
+		    wacom_wac->hid_data.barrelswitch & wacom_wac->hid_data.barrelswitch2) {
+			wacom_wac->hid_data.barrelswitch = 0;
+			wacom_wac->hid_data.barrelswitch2 = 0;
+			wacom_wac->hid_data.barrelswitch3 = 1;
+		}
+		input_report_key(input, BTN_STYLUS, wacom_wac->hid_data.barrelswitch);
+		input_report_key(input, BTN_STYLUS2, wacom_wac->hid_data.barrelswitch2);
+		input_report_key(input, BTN_STYLUS3, wacom_wac->hid_data.barrelswitch3);
 
 		/*
 		 * Non-USI EMR tools should have their IDs mangled to
@@ -2529,6 +2553,9 @@ static void wacom_wac_finger_usage_mapping(struct hid_device *hdev,
 			field->logical_maximum = 255;
 		}
 		break;
+	case HID_DG_SCANTIME:
+		wacom_map_usage(input, usage, field, EV_MSC, MSC_TIMESTAMP, 0);
+		break;
 	}
 }
 
@@ -2588,6 +2615,24 @@ static void wacom_wac_finger_slot(struct wacom_wac *wacom_wac,
 	}
 }
 
+static bool wacom_wac_slot_is_active(struct input_dev *dev, int key)
+{
+	struct input_mt *mt = dev->mt;
+	struct input_mt_slot *s;
+
+	if (!mt)
+		return false;
+
+	for (s = mt->slots; s != mt->slots + mt->num_slots; s++) {
+		if (s->key == key &&
+			input_mt_get_value(s, ABS_MT_TRACKING_ID) >= 0) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 static void wacom_wac_finger_event(struct hid_device *hdev,
 		struct hid_field *field, struct hid_usage *usage, __s32 value)
 {
@@ -2638,9 +2683,14 @@ static void wacom_wac_finger_event(struct hid_device *hdev,
 	}
 
 	if (usage->usage_index + 1 == field->report_count) {
-		if (equivalent_usage == wacom_wac->hid_data.last_slot_field &&
-		    wacom_wac->hid_data.confidence)
-			wacom_wac_finger_slot(wacom_wac, wacom_wac->touch_input);
+		if (equivalent_usage == wacom_wac->hid_data.last_slot_field) {
+			bool touch_removed = wacom_wac_slot_is_active(wacom_wac->touch_input,
+				wacom_wac->hid_data.id) && !wacom_wac->hid_data.tipswitch;
+
+			if (wacom_wac->hid_data.confidence || touch_removed) {
+				wacom_wac_finger_slot(wacom_wac, wacom_wac->touch_input);
+			}
+		}
 	}
 }
 
@@ -2658,6 +2708,10 @@ static void wacom_wac_finger_pre_report(struct hid_device *hdev,
 	wacom_wac->is_invalid_bt_frame = false;
 
 	hid_data->confidence = true;
+
+	hid_data->cc_report = 0;
+	hid_data->cc_index = -1;
+	hid_data->cc_value_index = -1;
 
 	for (i = 0; i < report->maxfield; i++) {
 		struct hid_field *field = report->field[i];
@@ -2692,11 +2746,14 @@ static void wacom_wac_finger_pre_report(struct hid_device *hdev,
 	    hid_data->cc_index >= 0) {
 		struct hid_field *field = report->field[hid_data->cc_index];
 		int value = field->value[hid_data->cc_value_index];
-		if (value)
+		if (value) {
 			hid_data->num_expected = value;
+			hid_data->num_received = 0;
+		}
 	}
 	else {
 		hid_data->num_expected = wacom_wac->features.touch_max;
+		hid_data->num_received = 0;
 	}
 }
 
@@ -2724,6 +2781,7 @@ static void wacom_wac_finger_report(struct hid_device *hdev,
 
 	input_sync(input);
 	wacom_wac->hid_data.num_received = 0;
+	wacom_wac->hid_data.num_expected = 0;
 
 	/* keep touch state for pen event */
 	wacom_wac->shared->touch_down = wacom_wac_finger_count_touches(wacom_wac);

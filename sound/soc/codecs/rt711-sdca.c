@@ -1208,6 +1208,7 @@ static const struct snd_soc_component_driver soc_sdca_dev_rt711 = {
 	.num_dapm_routes = ARRAY_SIZE(rt711_sdca_audio_map),
 	.set_jack = rt711_sdca_set_jack_detect,
 	.remove = rt711_sdca_remove,
+	.endianness = 1,
 };
 
 static int rt711_sdca_set_sdw_stream(struct snd_soc_dai *dai, void *sdw_stream,
@@ -1358,7 +1359,7 @@ static int rt711_sdca_pcm_hw_free(struct snd_pcm_substream *substream,
 static const struct snd_soc_dai_ops rt711_sdca_ops = {
 	.hw_params	= rt711_sdca_pcm_hw_params,
 	.hw_free	= rt711_sdca_pcm_hw_free,
-	.set_sdw_stream	= rt711_sdca_set_sdw_stream,
+	.set_stream	= rt711_sdca_set_sdw_stream,
 	.shutdown	= rt711_sdca_shutdown,
 };
 

@@ -93,7 +93,7 @@
 #define VM_CH_REQ	BIT(21)
 
 #define IP_TMR			0x05
-#define POWER_DELAY_CYCLE_256	0x80
+#define POWER_DELAY_CYCLE_256	0x100
 #define POWER_DELAY_CYCLE_64	0x40
 
 #define PVT_POLL_DELAY_US	20
@@ -222,16 +222,6 @@ static int pvt_read(struct device *dev, enum hwmon_sensor_types type,
 		return -EOPNOTSUPP;
 	}
 }
-
-static const u32 pvt_chip_config[] = {
-	HWMON_C_REGISTER_TZ,
-	0
-};
-
-static const struct hwmon_channel_info pvt_chip = {
-	.type = hwmon_chip,
-	.config = pvt_chip_config,
-};
 
 static struct hwmon_channel_info pvt_temp = {
 	.type = hwmon_temp,
@@ -555,7 +545,7 @@ static int mr75203_probe(struct platform_device *pdev)
 	pvt_info = devm_kcalloc(dev, val + 2, sizeof(*pvt_info), GFP_KERNEL);
 	if (!pvt_info)
 		return -ENOMEM;
-	pvt_info[0] = &pvt_chip;
+	pvt_info[0] = HWMON_CHANNEL_INFO(chip, HWMON_C_REGISTER_TZ);
 	index = 1;
 
 	if (ts_num) {

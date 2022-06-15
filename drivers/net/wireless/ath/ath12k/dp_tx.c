@@ -386,7 +386,7 @@ ath12k_dp_tx_htt_tx_complete_buf(struct ath12k_base *ab,
 			info->flags |= IEEE80211_TX_STAT_ACK;
 			info->status.ack_signal = ATH12K_DEFAULT_NOISE_FLOOR +
 						  ts->ack_rssi;
-			info->status.is_valid_ack_signal = true;
+			info->status.flags = IEEE80211_TX_STATUS_ACK_SIGNAL_VALID;
 		} else {
 			info->flags |= IEEE80211_TX_STAT_NOACK_TRANSMITTED;
 		}
@@ -477,7 +477,7 @@ static void ath12k_dp_tx_complete_msdu(struct ath12k *ar,
 		info->flags |= IEEE80211_TX_STAT_ACK;
 		info->status.ack_signal = ATH12K_DEFAULT_NOISE_FLOOR +
 					  ts->ack_rssi;
-		info->status.is_valid_ack_signal = true;
+		info->status.flags = IEEE80211_TX_STATUS_ACK_SIGNAL_VALID;
 	}
 
 	if (ts->status == HAL_WBM_TQM_REL_REASON_CMD_REMOVE_TX &&

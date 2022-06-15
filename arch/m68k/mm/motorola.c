@@ -27,7 +27,6 @@
 #include <asm/pgalloc.h>
 #include <asm/machdep.h>
 #include <asm/io.h>
-#include <asm/dma.h>
 #ifdef CONFIG_ATARI
 #include <asm/atari_stram.h>
 #endif
@@ -456,6 +455,8 @@ void __init paging_init(void)
 	}
 
 	flush_tlb_all();
+
+	early_memtest(min_addr, max_addr);
 
 	/*
 	 * initialize the bad page table and bad page to point

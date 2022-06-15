@@ -12,34 +12,34 @@
 #define EROFS_SUPER_OFFSET      1024
 
 #define EROFS_FEATURE_COMPAT_SB_CHKSUM          0x00000001
+#define EROFS_FEATURE_COMPAT_MTIME              0x00000002
 
 /*
  * Any bits that aren't in EROFS_ALL_FEATURE_INCOMPAT should
  * be incompatible with this kernel version.
  */
-#define EROFS_FEATURE_INCOMPAT_LZ4_0PADDING	0x00000001
+#define EROFS_FEATURE_INCOMPAT_ZERO_PADDING	0x00000001
 #define EROFS_FEATURE_INCOMPAT_COMPR_CFGS	0x00000002
 #define EROFS_FEATURE_INCOMPAT_BIG_PCLUSTER	0x00000002
 #define EROFS_FEATURE_INCOMPAT_CHUNKED_FILE	0x00000004
 #define EROFS_FEATURE_INCOMPAT_DEVICE_TABLE	0x00000008
 #define EROFS_FEATURE_INCOMPAT_COMPR_HEAD2	0x00000008
+#define EROFS_FEATURE_INCOMPAT_ZTAILPACKING	0x00000010
 #define EROFS_ALL_FEATURE_INCOMPAT		\
-	(EROFS_FEATURE_INCOMPAT_LZ4_0PADDING | \
+	(EROFS_FEATURE_INCOMPAT_ZERO_PADDING | \
 	 EROFS_FEATURE_INCOMPAT_COMPR_CFGS | \
 	 EROFS_FEATURE_INCOMPAT_BIG_PCLUSTER | \
 	 EROFS_FEATURE_INCOMPAT_CHUNKED_FILE | \
 	 EROFS_FEATURE_INCOMPAT_DEVICE_TABLE | \
-	 EROFS_FEATURE_INCOMPAT_COMPR_HEAD2)
+	 EROFS_FEATURE_INCOMPAT_COMPR_HEAD2 | \
+	 EROFS_FEATURE_INCOMPAT_ZTAILPACKING)
 
 #define EROFS_SB_EXTSLOT_SIZE	16
 
 struct erofs_deviceslot {
-	union {
-		u8 uuid[16];		/* used for device manager later */
-		u8 userdata[64];	/* digest(sha256), etc. */
-	} u;
-	__le32 blocks;			/* total fs blocks of this device */
-	__le32 mapped_blkaddr;		/* map starting at mapped_blkaddr */
+	u8 tag[64];		/* digest(sha256), etc. */
+	__le32 blocks;		/* total fs blocks of this device */
+	__le32 mapped_blkaddr;	/* map starting at mapped_blkaddr */
 	u8 reserved[56];
 };
 #define EROFS_DEVT_SLOT_SIZE	sizeof(struct erofs_deviceslot)
@@ -55,8 +55,8 @@ struct erofs_super_block {
 	__le16 root_nid;	/* nid of root directory */
 	__le64 inos;            /* total valid ino # (== f_files - f_favail) */
 
-	__le64 build_time;      /* inode v1 time derivation */
-	__le32 build_time_nsec;	/* inode v1 time derivation in nano scale */
+	__le64 build_time;      /* compact inode time derivation */
+	__le32 build_time_nsec;	/* compact inode time derivation in ns scale */
 	__le32 blocks;          /* used for statfs */
 	__le32 meta_blkaddr;	/* start block address of metadata area */
 	__le32 xattr_blkaddr;	/* start block address of shared xattr area */
@@ -76,15 +76,15 @@ struct erofs_super_block {
 
 /*
  * erofs inode datalayout (i_format in on-disk inode):
- * 0 - inode plain without inline data A:
+ * 0 - uncompressed flat inode without tail-packing inline data:
  * inode, [xattrs], ... | ... | no-holed data
- * 1 - inode VLE compression B (legacy):
- * inode, [xattrs], extents ... | ...
- * 2 - inode plain with inline data C:
- * inode, [xattrs], last_inline_data, ... | ... | no-holed data
- * 3 - inode compression D:
+ * 1 - compressed inode with non-compact indexes:
+ * inode, [xattrs], [map_header], extents ... | ...
+ * 2 - uncompressed flat inode with tail-packing inline data:
+ * inode, [xattrs], tailpacking data, ... | ... | no-holed data
+ * 3 - compressed inode with compact indexes:
  * inode, [xattrs], map_header, extents ... | ...
- * 4 - inode chunk-based E:
+ * 4 - chunk-based inode with (optional) multi-device support:
  * inode, [xattrs], chunk indexes ... | ...
  * 5~7 - reserved
  */
@@ -103,7 +103,7 @@ static inline bool erofs_inode_is_data_compressed(unsigned int datamode)
 		datamode == EROFS_INODE_FLAT_COMPRESSION_LEGACY;
 }
 
-/* bit definitions of inode i_advise */
+/* bit definitions of inode i_format */
 #define EROFS_I_VERSION_BITS            1
 #define EROFS_I_DATALAYOUT_BITS         3
 
@@ -137,8 +137,9 @@ struct erofs_inode_compact {
 	__le32 i_size;
 	__le32 i_reserved;
 	union {
-		/* file total compressed blocks for data mapping 1 */
+		/* total compressed blocks for compressed inodes */
 		__le32 compressed_blocks;
+		/* block address for uncompressed flat inodes */
 		__le32 raw_blkaddr;
 
 		/* for device files, used to indicate old/new device # */
@@ -153,9 +154,9 @@ struct erofs_inode_compact {
 	__le32 i_reserved2;
 };
 
-/* 32 bytes on-disk inode */
+/* 32-byte on-disk inode */
 #define EROFS_INODE_LAYOUT_COMPACT	0
-/* 64 bytes on-disk inode */
+/* 64-byte on-disk inode */
 #define EROFS_INODE_LAYOUT_EXTENDED	1
 
 /* 64-byte complete form of an ondisk inode */
@@ -168,8 +169,9 @@ struct erofs_inode_extended {
 	__le16 i_reserved;
 	__le64 i_size;
 	union {
-		/* file total compressed blocks for data mapping 1 */
+		/* total compressed blocks for compressed inodes */
 		__le32 compressed_blocks;
+		/* block address for uncompressed flat inodes */
 		__le32 raw_blkaddr;
 
 		/* for device files, used to indicate old/new device # */
@@ -184,8 +186,8 @@ struct erofs_inode_extended {
 
 	__le32 i_uid;
 	__le32 i_gid;
-	__le64 i_ctime;
-	__le32 i_ctime_nsec;
+	__le64 i_mtime;
+	__le32 i_mtime_nsec;
 	__le32 i_nlink;
 	__u8   i_reserved2[16];
 };
@@ -209,7 +211,7 @@ struct erofs_xattr_ibody_header {
 	__le32 h_reserved;
 	__u8   h_shared_count;
 	__u8   h_reserved2[7];
-	__le32 h_shared_xattrs[0];      /* shared xattr id array */
+	__le32 h_shared_xattrs[];       /* shared xattr id array */
 };
 
 /* Name indexes */
@@ -226,7 +228,7 @@ struct erofs_xattr_entry {
 	__u8   e_name_index;    /* attribute name index */
 	__le16 e_value_size;    /* size of attribute value */
 	/* followed by e_name and e_value */
-	char   e_name[0];       /* attribute name */
+	char   e_name[];        /* attribute name */
 };
 
 static inline unsigned int erofs_xattr_ibody_size(__le16 i_xattr_icount)
@@ -292,13 +294,17 @@ struct z_erofs_lzma_cfgs {
  *                                  (4B) + 2B + (4B) if compacted 2B is on.
  * bit 1 : HEAD1 big pcluster (0 - off; 1 - on)
  * bit 2 : HEAD2 big pcluster (0 - off; 1 - on)
+ * bit 3 : tailpacking inline pcluster (0 - off; 1 - on)
  */
 #define Z_EROFS_ADVISE_COMPACTED_2B		0x0001
 #define Z_EROFS_ADVISE_BIG_PCLUSTER_1		0x0002
 #define Z_EROFS_ADVISE_BIG_PCLUSTER_2		0x0004
+#define Z_EROFS_ADVISE_INLINE_PCLUSTER		0x0008
 
 struct z_erofs_map_header {
-	__le32	h_reserved1;
+	__le16	h_reserved1;
+	/* indicates the encoded size of tailpacking data */
+	__le16  h_idata_size;
 	__le16	h_advise;
 	/*
 	 * bit 0-3 : algorithm type of head 1 (logical cluster type 01);
@@ -358,17 +364,16 @@ enum {
 
 struct z_erofs_vle_decompressed_index {
 	__le16 di_advise;
-	/* where to decompress in the head cluster */
+	/* where to decompress in the head lcluster */
 	__le16 di_clusterofs;
 
 	union {
-		/* for the head cluster */
+		/* for the HEAD lclusters */
 		__le32 blkaddr;
 		/*
-		 * for the rest clusters
-		 * eg. for 4k page-sized cluster, maximum 4K*64k = 256M)
-		 * [0] - pointing to the head cluster
-		 * [1] - pointing to the tail cluster
+		 * for the NONHEAD lclusters
+		 * [0] - distance to its HEAD lcluster
+		 * [1] - distance to the next HEAD lcluster
 		 */
 		__le16 delta[2];
 	} di_u;

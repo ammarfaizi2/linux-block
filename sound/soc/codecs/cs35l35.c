@@ -1311,7 +1311,7 @@ static int cs35l35_handle_of_data(struct i2c_client *i2c_client,
 	pdata->gain_zc = of_property_read_bool(np, "cirrus,amp-gain-zc");
 
 	classh = of_get_child_by_name(np, "cirrus,classh-internal-algo");
-	classh_config->classh_algo_enable = classh ? true : false;
+	classh_config->classh_algo_enable = (classh != NULL);
 
 	if (classh_config->classh_algo_enable) {
 		classh_config->classh_bst_override =
@@ -1466,8 +1466,7 @@ static const struct reg_sequence cs35l35_errata_patch[] = {
 	{ 0x7F, 0x00 },
 };
 
-static int cs35l35_i2c_probe(struct i2c_client *i2c_client,
-			      const struct i2c_device_id *id)
+static int cs35l35_i2c_probe(struct i2c_client *i2c_client)
 {
 	struct cs35l35_private *cs35l35;
 	struct device *dev = &i2c_client->dev;
@@ -1658,7 +1657,7 @@ static struct i2c_driver cs35l35_i2c_driver = {
 		.of_match_table = cs35l35_of_match,
 	},
 	.id_table = cs35l35_id,
-	.probe = cs35l35_i2c_probe,
+	.probe_new = cs35l35_i2c_probe,
 	.remove = cs35l35_i2c_remove,
 };
 

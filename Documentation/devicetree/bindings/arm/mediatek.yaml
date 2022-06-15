@@ -32,6 +32,10 @@ properties:
           - const: mediatek,mt6580
       - items:
           - enum:
+              - prestigio,pmt5008-3g
+          - const: mediatek,mt6582
+      - items:
+          - enum:
               - fairphone,fp1
               - mundoreader,bq-aquaris5
           - const: mediatek,mt6589
@@ -79,6 +83,14 @@ properties:
           - const: mediatek,mt7629
       - items:
           - enum:
+              - mediatek,mt7986a-rfb
+          - const: mediatek,mt7986a
+      - items:
+          - enum:
+              - mediatek,mt7986b-rfb
+          - const: mediatek,mt7986b
+      - items:
+          - enum:
               - mediatek,mt8127-moose
           - const: mediatek,mt8127
       - items:
@@ -121,6 +133,11 @@ properties:
           - const: mediatek,mt8183
       - items:
           - enum:
+              - mediatek,mt8192-evb
+          - const: mediatek,mt8192
+      - items:
+          - enum:
+              - mediatek,mt8195-demo
               - mediatek,mt8195-evb
           - const: mediatek,mt8195
       - description: Google Burnet (HP Chromebook x360 11MK G3 EE)
@@ -134,6 +151,10 @@ properties:
               - google,krane-sku176
           - const: google,krane
           - const: mediatek,mt8183
+      - description: Google Cozmo (Acer Chromebook 314)
+        items:
+          - const: google,cozmo
+          - const: mediatek,mt8183
       - description: Google Damu (ASUS Chromebook Flip CM3)
         items:
           - const: google,damu
@@ -143,7 +164,9 @@ properties:
           - enum:
               - google,fennel-sku0
               - google,fennel-sku1
+              - google,fennel-sku2
               - google,fennel-sku6
+              - google,fennel-sku7
           - const: google,fennel
           - const: mediatek,mt8183
       - description: Google Juniper (Acer Chromebook Spin 311) / Kenzo (Acer Chromebook 311)
@@ -157,6 +180,12 @@ properties:
         items:
           - const: google,kakadu-rev3
           - const: google,kakadu-rev2
+          - const: google,kakadu
+          - const: mediatek,mt8183
+      - description: Google Kakadu (ASUS Chromebook Detachable CM3)
+        items:
+          - const: google,kakadu-rev3-sku22
+          - const: google,kakadu-rev2-sku22
           - const: google,kakadu
           - const: mediatek,mt8183
       - description: Google Kappa (HP Chromebook 11a)

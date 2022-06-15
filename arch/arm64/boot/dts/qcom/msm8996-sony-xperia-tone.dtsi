@@ -13,9 +13,10 @@
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 #include <dt-bindings/pinctrl/qcom,pmic-mpp.h>
 
-/delete-node/ &slpi_region;
-/delete-node/ &venus_region;
-/delete-node/ &zap_shader_region;
+/delete-node/ &adsp_mem;
+/delete-node/ &slpi_mem;
+/delete-node/ &venus_mem;
+/delete-node/ &gpu_mem;
 
 / {
 	qcom,msm-id = <246 0x30001>; /* MSM8996 V3.1 (Final) */
@@ -46,18 +47,23 @@
 			no-map;
 		};
 
-		zap_shader_region: gpu@90400000 {
+		adsp_mem: adsp@8ea00000 {
+			reg = <0x0 0x8ea00000 0x0 0x1a00000>;
+			no-map;
+		};
+
+		gpu_mem: gpu@90400000 {
 			compatible = "shared-dma-pool";
 			reg = <0x0 0x90400000 0x0 0x2000>;
 			no-map;
 		};
 
-		slpi_region: memory@90500000 {
+		slpi_mem: memory@90500000 {
 			reg = <0 0x90500000 0 0xa00000>;
 			no-map;
 		};
 
-		venus_region: memory@90f00000 {
+		venus_mem: memory@90f00000 {
 			reg = <0 0x90f00000 0 0x500000>;
 			no-map;
 		};
@@ -184,6 +190,7 @@
 &hsusb_phy1 {
 	status = "okay";
 
+	vdd-supply = <&pm8994_l28>;
 	vdda-pll-supply = <&pm8994_l12>;
 	vdda-phy-dpdm-supply = <&pm8994_l24>;
 };
@@ -589,9 +596,27 @@
 	};
 };
 
-&pmi8994_spmi_regulators {
+&pm8994_spmi_regulators {
 	qcom,saw-reg = <&saw3>;
 
+	pm8994_s9: s9 {
+		qcom,saw-slave;
+	};
+
+	pm8994_s10: s10 {
+		qcom,saw-slave;
+	};
+
+	pm8994_s11: s11 {
+		qcom,saw-leader;
+		regulator-name = "vdd_apcc";
+		regulator-always-on;
+		regulator-min-microvolt = <470000>;
+		regulator-max-microvolt = <1140000>;
+	};
+};
+
+&pmi8994_spmi_regulators {
 	vdd_gfx:
 	pmi8994_s2: s2 {
 		/* Pinned to a high value for now to avoid random crashes. */
@@ -599,21 +624,6 @@
 		regulator-max-microvolt = <1015000>;
 		regulator-name = "vdd_gfx";
 		regulator-always-on;
-	};
-
-	pmi8994_s9: s9 {
-		qcom,saw-slave;
-	};
-
-	pmi8994_s10: s10 {
-		qcom,saw-slave;
-	};
-
-	pmi8994_s11: s11 {
-		qcom,saw-leader;
-		regulator-always-on;
-		regulator-min-microvolt = <470000>;
-		regulator-max-microvolt = <1140000>;
 	};
 };
 

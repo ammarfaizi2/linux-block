@@ -34,6 +34,7 @@ KSZ_REGMAP_TABLE(ksz8863, 16, KSZ8863_SPI_ADDR_SHIFT,
 static int ksz8795_spi_probe(struct spi_device *spi)
 {
 	const struct regmap_config *regmap_config;
+	const struct ksz_chip_data *chip;
 	struct device *ddev = &spi->dev;
 	struct regmap_config rc;
 	struct ksz_device *dev;
@@ -50,9 +51,14 @@ static int ksz8795_spi_probe(struct spi_device *spi)
 	if (!dev)
 		return -ENOMEM;
 
-	regmap_config = device_get_match_data(ddev);
-	if (!regmap_config)
+	chip = device_get_match_data(ddev);
+	if (!chip)
 		return -EINVAL;
+
+	if (chip->chip_id == KSZ8830_CHIP_ID)
+		regmap_config = ksz8863_regmap_config;
+	else
+		regmap_config = ksz8795_regmap_config;
 
 	for (i = 0; i < ARRAY_SIZE(ksz8795_regmap_config); i++) {
 		rc = regmap_config[i];
@@ -87,7 +93,7 @@ static int ksz8795_spi_probe(struct spi_device *spi)
 	return 0;
 }
 
-static int ksz8795_spi_remove(struct spi_device *spi)
+static void ksz8795_spi_remove(struct spi_device *spi)
 {
 	struct ksz_device *dev = spi_get_drvdata(spi);
 
@@ -95,8 +101,6 @@ static int ksz8795_spi_remove(struct spi_device *spi)
 		ksz_switch_remove(dev);
 
 	spi_set_drvdata(spi, NULL);
-
-	return 0;
 }
 
 static void ksz8795_spi_shutdown(struct spi_device *spi)
@@ -115,14 +119,39 @@ static void ksz8795_spi_shutdown(struct spi_device *spi)
 }
 
 static const struct of_device_id ksz8795_dt_ids[] = {
-	{ .compatible = "microchip,ksz8765", .data = &ksz8795_regmap_config },
-	{ .compatible = "microchip,ksz8794", .data = &ksz8795_regmap_config },
-	{ .compatible = "microchip,ksz8795", .data = &ksz8795_regmap_config },
-	{ .compatible = "microchip,ksz8863", .data = &ksz8863_regmap_config },
-	{ .compatible = "microchip,ksz8873", .data = &ksz8863_regmap_config },
+	{
+		.compatible = "microchip,ksz8765",
+		.data = &ksz_switch_chips[KSZ8765]
+	},
+	{
+		.compatible = "microchip,ksz8794",
+		.data = &ksz_switch_chips[KSZ8794]
+	},
+	{
+		.compatible = "microchip,ksz8795",
+		.data = &ksz_switch_chips[KSZ8795]
+	},
+	{
+		.compatible = "microchip,ksz8863",
+		.data = &ksz_switch_chips[KSZ8830]
+	},
+	{
+		.compatible = "microchip,ksz8873",
+		.data = &ksz_switch_chips[KSZ8830]
+	},
 	{},
 };
 MODULE_DEVICE_TABLE(of, ksz8795_dt_ids);
+
+static const struct spi_device_id ksz8795_spi_ids[] = {
+	{ "ksz8765" },
+	{ "ksz8794" },
+	{ "ksz8795" },
+	{ "ksz8863" },
+	{ "ksz8873" },
+	{ },
+};
+MODULE_DEVICE_TABLE(spi, ksz8795_spi_ids);
 
 static struct spi_driver ksz8795_spi_driver = {
 	.driver = {
@@ -130,6 +159,7 @@ static struct spi_driver ksz8795_spi_driver = {
 		.owner	= THIS_MODULE,
 		.of_match_table = of_match_ptr(ksz8795_dt_ids),
 	},
+	.id_table = ksz8795_spi_ids,
 	.probe	= ksz8795_spi_probe,
 	.remove	= ksz8795_spi_remove,
 	.shutdown = ksz8795_spi_shutdown,

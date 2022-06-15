@@ -62,8 +62,6 @@
 #include <trace/events/skb.h>
 #include <net/busy_poll.h>
 
-#include "datagram.h"
-
 /*
  *	Is a socket 'connection oriented' ?
  */
@@ -310,12 +308,11 @@ struct sk_buff *__skb_recv_datagram(struct sock *sk,
 EXPORT_SYMBOL(__skb_recv_datagram);
 
 struct sk_buff *skb_recv_datagram(struct sock *sk, unsigned int flags,
-				  int noblock, int *err)
+				  int *err)
 {
 	int off = 0;
 
-	return __skb_recv_datagram(sk, &sk->sk_receive_queue,
-				   flags | (noblock ? MSG_DONTWAIT : 0),
+	return __skb_recv_datagram(sk, &sk->sk_receive_queue, flags,
 				   &off, err);
 }
 EXPORT_SYMBOL(skb_recv_datagram);
@@ -323,7 +320,6 @@ EXPORT_SYMBOL(skb_recv_datagram);
 void skb_free_datagram(struct sock *sk, struct sk_buff *skb)
 {
 	consume_skb(skb);
-	sk_mem_reclaim_partial(sk);
 }
 EXPORT_SYMBOL(skb_free_datagram);
 
@@ -339,7 +335,6 @@ void __skb_free_datagram_locked(struct sock *sk, struct sk_buff *skb, int len)
 	slow = lock_sock_fast(sk);
 	sk_peek_offset_bwd(sk, len);
 	skb_orphan(skb);
-	sk_mem_reclaim_partial(sk);
 	unlock_sock_fast(sk, slow);
 
 	/* skb is now orphaned, can be freed outside of locked section */
@@ -399,7 +394,6 @@ int skb_kill_datagram(struct sock *sk, struct sk_buff *skb, unsigned int flags)
 				      NULL);
 
 	kfree_skb(skb);
-	sk_mem_reclaim_partial(sk);
 	return err;
 }
 EXPORT_SYMBOL(skb_kill_datagram);

@@ -25,73 +25,11 @@
 #define MAX_TILE_COLS 20
 #define MAX_TILE_ROWS 22
 
-#define UNUSED_REF	-1
-
-#define G2_ALIGN		16
-
-size_t hantro_hevc_chroma_offset(const struct v4l2_ctrl_hevc_sps *sps)
-{
-	int bytes_per_pixel = sps->bit_depth_luma_minus8 == 0 ? 1 : 2;
-
-	return sps->pic_width_in_luma_samples *
-	       sps->pic_height_in_luma_samples * bytes_per_pixel;
-}
-
-size_t hantro_hevc_motion_vectors_offset(const struct v4l2_ctrl_hevc_sps *sps)
-{
-	size_t cr_offset = hantro_hevc_chroma_offset(sps);
-
-	return ALIGN((cr_offset * 3) / 2, G2_ALIGN);
-}
-
-static size_t hantro_hevc_mv_size(const struct v4l2_ctrl_hevc_sps *sps)
-{
-	u32 min_cb_log2_size_y = sps->log2_min_luma_coding_block_size_minus3 + 3;
-	u32 ctb_log2_size_y = min_cb_log2_size_y + sps->log2_diff_max_min_luma_coding_block_size;
-	u32 pic_width_in_ctbs_y = (sps->pic_width_in_luma_samples + (1 << ctb_log2_size_y) - 1)
-				  >> ctb_log2_size_y;
-	u32 pic_height_in_ctbs_y = (sps->pic_height_in_luma_samples + (1 << ctb_log2_size_y) - 1)
-				   >> ctb_log2_size_y;
-	size_t mv_size;
-
-	mv_size = pic_width_in_ctbs_y * pic_height_in_ctbs_y *
-		  (1 << (2 * (ctb_log2_size_y - 4))) * 16;
-
-	vpu_debug(4, "%dx%d (CTBs) %zu MV bytes\n",
-		  pic_width_in_ctbs_y, pic_height_in_ctbs_y, mv_size);
-
-	return mv_size;
-}
-
-static size_t hantro_hevc_ref_size(struct hantro_ctx *ctx)
-{
-	const struct hantro_hevc_dec_ctrls *ctrls = &ctx->hevc_dec.ctrls;
-	const struct v4l2_ctrl_hevc_sps *sps = ctrls->sps;
-
-	return hantro_hevc_motion_vectors_offset(sps) + hantro_hevc_mv_size(sps);
-}
-
-static void hantro_hevc_ref_free(struct hantro_ctx *ctx)
+void hantro_hevc_ref_init(struct hantro_ctx *ctx)
 {
 	struct hantro_hevc_dec_hw_ctx *hevc_dec = &ctx->hevc_dec;
-	struct hantro_dev *vpu = ctx->dev;
-	int i;
 
-	for (i = 0;  i < NUM_REF_PICTURES; i++) {
-		if (hevc_dec->ref_bufs[i].cpu)
-			dma_free_coherent(vpu->dev, hevc_dec->ref_bufs[i].size,
-					  hevc_dec->ref_bufs[i].cpu,
-					  hevc_dec->ref_bufs[i].dma);
-	}
-}
-
-static void hantro_hevc_ref_init(struct hantro_ctx *ctx)
-{
-	struct hantro_hevc_dec_hw_ctx *hevc_dec = &ctx->hevc_dec;
-	int i;
-
-	for (i = 0;  i < NUM_REF_PICTURES; i++)
-		hevc_dec->ref_bufs_poc[i] = UNUSED_REF;
+	hevc_dec->ref_bufs_used = 0;
 }
 
 dma_addr_t hantro_hevc_get_ref_buf(struct hantro_ctx *ctx,
@@ -100,7 +38,7 @@ dma_addr_t hantro_hevc_get_ref_buf(struct hantro_ctx *ctx,
 	struct hantro_hevc_dec_hw_ctx *hevc_dec = &ctx->hevc_dec;
 	int i;
 
-	/* Find the reference buffer in already know ones */
+	/* Find the reference buffer in already known ones */
 	for (i = 0;  i < NUM_REF_PICTURES; i++) {
 		if (hevc_dec->ref_bufs_poc[i] == poc) {
 			hevc_dec->ref_bufs_used |= 1 << i;
@@ -108,54 +46,25 @@ dma_addr_t hantro_hevc_get_ref_buf(struct hantro_ctx *ctx,
 		}
 	}
 
-	/* Allocate a new reference buffer */
-	for (i = 0; i < NUM_REF_PICTURES; i++) {
-		if (hevc_dec->ref_bufs_poc[i] == UNUSED_REF) {
-			if (!hevc_dec->ref_bufs[i].cpu) {
-				struct hantro_dev *vpu = ctx->dev;
-
-				/*
-				 * Allocate the space needed for the raw data +
-				 * motion vector data. Optimizations could be to
-				 * allocate raw data in non coherent memory and only
-				 * clear the motion vector data.
-				 */
-				hevc_dec->ref_bufs[i].cpu =
-					dma_alloc_coherent(vpu->dev,
-							   hantro_hevc_ref_size(ctx),
-							   &hevc_dec->ref_bufs[i].dma,
-							   GFP_KERNEL);
-				if (!hevc_dec->ref_bufs[i].cpu)
-					return 0;
-
-				hevc_dec->ref_bufs[i].size = hantro_hevc_ref_size(ctx);
-			}
-			hevc_dec->ref_bufs_used |= 1 << i;
-			memset(hevc_dec->ref_bufs[i].cpu, 0, hantro_hevc_ref_size(ctx));
-			hevc_dec->ref_bufs_poc[i] = poc;
-
-			return hevc_dec->ref_bufs[i].dma;
-		}
-	}
-
 	return 0;
 }
 
-void hantro_hevc_ref_remove_unused(struct hantro_ctx *ctx)
+int hantro_hevc_add_ref_buf(struct hantro_ctx *ctx, int poc, dma_addr_t addr)
 {
 	struct hantro_hevc_dec_hw_ctx *hevc_dec = &ctx->hevc_dec;
 	int i;
 
-	/* Just tag buffer as unused, do not free them */
-	for (i = 0;  i < NUM_REF_PICTURES; i++) {
-		if (hevc_dec->ref_bufs_poc[i] == UNUSED_REF)
-			continue;
-
-		if (hevc_dec->ref_bufs_used & (1 << i))
-			continue;
-
-		hevc_dec->ref_bufs_poc[i] = UNUSED_REF;
+	/* Add a new reference buffer */
+	for (i = 0; i < NUM_REF_PICTURES; i++) {
+		if (!(hevc_dec->ref_bufs_used & 1 << i)) {
+			hevc_dec->ref_bufs_used |= 1 << i;
+			hevc_dec->ref_bufs_poc[i] = poc;
+			hevc_dec->ref_bufs[i].dma = addr;
+			return 0;
+		}
 	}
+
+	return -EINVAL;
 }
 
 static int tile_buffer_reallocate(struct hantro_ctx *ctx)
@@ -314,8 +223,6 @@ void hantro_hevc_dec_exit(struct hantro_ctx *ctx)
 				  hevc_dec->tile_bsd.cpu,
 				  hevc_dec->tile_bsd.dma);
 	hevc_dec->tile_bsd.cpu = NULL;
-
-	hantro_hevc_ref_free(ctx);
 }
 
 int hantro_hevc_dec_init(struct hantro_ctx *ctx)

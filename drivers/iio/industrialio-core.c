@@ -185,6 +185,20 @@ int iio_device_id(struct iio_dev *indio_dev)
 EXPORT_SYMBOL_GPL(iio_device_id);
 
 /**
+ * iio_buffer_enabled() - helper function to test if the buffer is enabled
+ * @indio_dev:		IIO device structure for device
+ */
+bool iio_buffer_enabled(struct iio_dev *indio_dev)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+
+	return iio_dev_opaque->currentmode
+		& (INDIO_BUFFER_TRIGGERED | INDIO_BUFFER_HARDWARE |
+		   INDIO_BUFFER_SOFTWARE);
+}
+EXPORT_SYMBOL_GPL(iio_buffer_enabled);
+
+/**
  * iio_sysfs_match_string_with_gaps - matches given string in an array with gaps
  * @array: array of strings
  * @n: number of strings in the array
@@ -702,6 +716,9 @@ static ssize_t __iio_format_value(char *buf, size_t offset, unsigned int type,
 	}
 	case IIO_VAL_CHAR:
 		return sysfs_emit_at(buf, offset, "%c", (char)vals[0]);
+	case IIO_VAL_INT_64:
+		tmp2 = (s64)((((u64)vals[1]) << 32) | (u32)vals[0]);
+		return sysfs_emit_at(buf, offset, "%lld", tmp2);
 	default:
 		return 0;
 	}
@@ -744,7 +761,7 @@ static ssize_t iio_read_channel_label(struct device *dev,
 		return indio_dev->info->read_label(indio_dev, this_attr->c, buf);
 
 	if (this_attr->c->extend_name)
-		return sprintf(buf, "%s\n", this_attr->c->extend_name);
+		return sysfs_emit(buf, "%s\n", this_attr->c->extend_name);
 
 	return -EINVAL;
 }
@@ -889,8 +906,7 @@ static int __iio_str_to_fixpoint(const char *str, int fract_mult,
 		} else if (*str == '\n') {
 			if (*(str + 1) == '\0')
 				break;
-			else
-				return -EINVAL;
+			return -EINVAL;
 		} else if (!strncmp(str, " dB", sizeof(" dB") - 1) && scale_db) {
 			/* Ignore the dB suffix */
 			str += sizeof(" dB") - 1;
@@ -1619,7 +1635,7 @@ static void iio_dev_release(struct device *device)
 	kfree(iio_dev_opaque);
 }
 
-struct device_type iio_device_type = {
+const struct device_type iio_device_type = {
 	.name = "iio_device",
 	.release = iio_dev_release,
 };
@@ -1653,7 +1669,6 @@ struct iio_dev *iio_device_alloc(struct device *parent, int sizeof_priv)
 	indio_dev->dev.type = &iio_device_type;
 	indio_dev->dev.bus = &iio_bus_type;
 	device_initialize(&indio_dev->dev);
-	iio_device_set_drvdata(indio_dev, (void *)indio_dev);
 	mutex_init(&indio_dev->mlock);
 	mutex_init(&iio_dev_opaque->info_exist_lock);
 	INIT_LIST_HEAD(&iio_dev_opaque->channel_attr_list);
@@ -1892,20 +1907,22 @@ static const struct iio_buffer_setup_ops noop_ring_setup_ops;
 int __iio_device_register(struct iio_dev *indio_dev, struct module *this_mod)
 {
 	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	const char *label;
+	struct fwnode_handle *fwnode;
 	int ret;
 
 	if (!indio_dev->info)
 		return -EINVAL;
 
 	iio_dev_opaque->driver_module = this_mod;
-	/* If the calling driver did not initialize of_node, do it here */
-	if (!indio_dev->dev.of_node && indio_dev->dev.parent)
-		indio_dev->dev.of_node = indio_dev->dev.parent->of_node;
 
-	label = of_get_property(indio_dev->dev.of_node, "label", NULL);
-	if (label)
-		indio_dev->label = label;
+	/* If the calling driver did not initialize firmware node, do it here */
+	if (dev_fwnode(&indio_dev->dev))
+		fwnode = dev_fwnode(&indio_dev->dev);
+	else
+		fwnode = dev_fwnode(indio_dev->dev.parent);
+	device_set_node(&indio_dev->dev, fwnode);
+
+	fwnode_property_read_string(fwnode, "label", &indio_dev->label);
 
 	ret = iio_check_unique_scan_index(indio_dev);
 	if (ret < 0)
@@ -2056,6 +2073,19 @@ void iio_device_release_direct_mode(struct iio_dev *indio_dev)
 	mutex_unlock(&indio_dev->mlock);
 }
 EXPORT_SYMBOL_GPL(iio_device_release_direct_mode);
+
+/**
+ * iio_device_get_current_mode() - helper function providing read-only access to
+ *				   the opaque @currentmode variable
+ * @indio_dev:			   IIO device structure for device
+ */
+int iio_device_get_current_mode(struct iio_dev *indio_dev)
+{
+	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
+
+	return iio_dev_opaque->currentmode;
+}
+EXPORT_SYMBOL_GPL(iio_device_get_current_mode);
 
 subsys_initcall(iio_init);
 module_exit(iio_exit);

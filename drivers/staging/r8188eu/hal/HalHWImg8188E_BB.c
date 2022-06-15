@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright(c) 2007 - 2011 Realtek Corporation. */
 
-#include "../include/odm_precomp.h"
 #include "../include/rtw_iol.h"
 
 #define read_next_pair(array, v1, v2, i)		\
@@ -171,7 +170,7 @@ enum HAL_STATUS ODM_ReadAndConfig_AGC_TAB_1T_8188E(struct odm_dm_struct *dm_odm)
 {
 	u32     hex         = 0;
 	u32     i           = 0;
-	u32     arraylen    = sizeof(array_agc_tab_1t_8188e) / sizeof(u32);
+	u32     arraylen    = ARRAY_SIZE(array_agc_tab_1t_8188e);
 	u32    *array       = array_agc_tab_1t_8188e;
 	bool		biol = false;
 	struct adapter *adapter =  dm_odm->Adapter;
@@ -447,7 +446,7 @@ enum HAL_STATUS ODM_ReadAndConfig_PHY_REG_1T_8188E(struct odm_dm_struct *dm_odm)
 {
 	u32     hex         = 0;
 	u32     i           = 0;
-	u32     arraylen    = sizeof(array_phy_reg_1t_8188e) / sizeof(u32);
+	u32     arraylen    = ARRAY_SIZE(array_phy_reg_1t_8188e);
 	u32    *array       = array_phy_reg_1t_8188e;
 	bool	biol = false;
 	struct adapter *adapter =  dm_odm->Adapter;
@@ -652,7 +651,7 @@ void ODM_ReadAndConfig_PHY_REG_PG_8188E(struct odm_dm_struct *dm_odm)
 {
 	u32  hex;
 	u32  i           = 0;
-	u32  arraylen    = sizeof(array_phy_reg_pg_8188e) / sizeof(u32);
+	u32  arraylen    = ARRAY_SIZE(array_phy_reg_pg_8188e);
 	u32 *array       = array_phy_reg_pg_8188e;
 
 	hex = ODM_ITRF_USB << 8;

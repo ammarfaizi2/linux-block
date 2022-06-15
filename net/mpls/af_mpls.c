@@ -1527,10 +1527,9 @@ static int mpls_ifdown(struct net_device *dev, int event)
 					rt->rt_nh_size;
 				struct mpls_route *orig = rt;
 
-				rt = kmalloc(size, GFP_KERNEL);
+				rt = kmemdup(orig, size, GFP_KERNEL);
 				if (!rt)
 					return -ENOMEM;
-				memcpy(rt, orig, size);
 			}
 		}
 
@@ -1607,6 +1606,7 @@ static int mpls_dev_notify(struct notifier_block *this, unsigned long event,
 	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
 	struct mpls_dev *mdev;
 	unsigned int flags;
+	int err;
 
 	if (event == NETDEV_REGISTER) {
 		mdev = mpls_add_dev(dev);
@@ -1621,7 +1621,6 @@ static int mpls_dev_notify(struct notifier_block *this, unsigned long event,
 		return NOTIFY_OK;
 
 	switch (event) {
-		int err;
 
 	case NETDEV_DOWN:
 		err = mpls_ifdown(dev, event);

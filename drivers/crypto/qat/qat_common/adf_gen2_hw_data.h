@@ -4,6 +4,7 @@
 #define ADF_GEN2_HW_DATA_H_
 
 #include "adf_accel_devices.h"
+#include "adf_cfg_common.h"
 
 /* Transport access */
 #define ADF_BANK_INT_SRC_SEL_MASK_0	0x4444444CUL
@@ -113,7 +114,15 @@ do { \
 	(ADF_ARB_REG_SLOT * (index)), value)
 
 /* Power gating */
+#define ADF_POWERGATE_DC		BIT(23)
 #define ADF_POWERGATE_PKE		BIT(24)
+
+/* Default ring mapping */
+#define ADF_GEN2_DEFAULT_RING_TO_SRV_MAP \
+	(CRYPTO << ADF_CFG_SERV_RING_PAIR_0_SHIFT | \
+	 CRYPTO << ADF_CFG_SERV_RING_PAIR_1_SHIFT | \
+	 UNUSED << ADF_CFG_SERV_RING_PAIR_2_SHIFT | \
+	   COMP << ADF_CFG_SERV_RING_PAIR_3_SHIFT)
 
 /* WDT timers
  *
@@ -136,18 +145,10 @@ do { \
 #define ADF_GEN2_CERRSSMSH(i)		((i) * 0x4000 + 0x10)
 #define ADF_GEN2_ERRSSMSH_EN		BIT(3)
 
- /* VF2PF interrupts */
-#define ADF_GEN2_ERRSOU3 (0x3A000 + 0x0C)
-#define ADF_GEN2_ERRSOU5 (0x3A000 + 0xD8)
-#define ADF_GEN2_ERRMSK3 (0x3A000 + 0x1C)
-#define ADF_GEN2_ERRMSK5 (0x3A000 + 0xDC)
-#define ADF_GEN2_ERR_REG_VF2PF(vf_src)	(((vf_src) & 0x01FFFE00) >> 9)
-#define ADF_GEN2_ERR_MSK_VF2PF(vf_mask)	(((vf_mask) & 0xFFFF) << 9)
-
-u32 adf_gen2_get_pf2vf_offset(u32 i);
-u32 adf_gen2_get_vf2pf_sources(void __iomem *pmisc_bar);
-void adf_gen2_enable_vf2pf_interrupts(void __iomem *pmisc_addr, u32 vf_mask);
-void adf_gen2_disable_vf2pf_interrupts(void __iomem *pmisc_addr, u32 vf_mask);
+/* Interrupts */
+#define ADF_GEN2_SMIAPF0_MASK_OFFSET    (0x3A000 + 0x28)
+#define ADF_GEN2_SMIAPF1_MASK_OFFSET    (0x3A000 + 0x30)
+#define ADF_GEN2_SMIA1_MASK             0x1
 
 u32 adf_gen2_get_num_accels(struct adf_hw_device_data *self);
 u32 adf_gen2_get_num_aes(struct adf_hw_device_data *self);
@@ -157,6 +158,7 @@ void adf_gen2_cfg_iov_thds(struct adf_accel_dev *accel_dev, bool enable,
 void adf_gen2_init_hw_csr_ops(struct adf_hw_csr_ops *csr_ops);
 void adf_gen2_get_admin_info(struct admin_info *admin_csrs_info);
 void adf_gen2_get_arb_info(struct arb_info *arb_info);
+void adf_gen2_enable_ints(struct adf_accel_dev *accel_dev);
 u32 adf_gen2_get_accel_cap(struct adf_accel_dev *accel_dev);
 void adf_gen2_set_ssm_wdtimer(struct adf_accel_dev *accel_dev);
 

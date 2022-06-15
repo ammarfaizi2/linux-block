@@ -5,10 +5,10 @@
  * Copyright (C) 2001-2005 PPC 64 Team, IBM Corp
  */
 #include <linux/types.h>
+#include <linux/of.h>
 #include <asm/udbg.h>
 #include <asm/processor.h>
 #include <asm/io.h>
-#include <asm/prom.h>
 #include <asm/pmac_feature.h>
 
 extern u8 real_readb(volatile u8 __iomem  *addr);
@@ -62,7 +62,7 @@ static unsigned char scc_inittab[] = {
     3,  0xc1,		/* rx enable, 8 bits */
 };
 
-void udbg_scc_init(int force_scc)
+void __init udbg_scc_init(int force_scc)
 {
 	const u32 *reg;
 	unsigned long addr;

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0
  *
- * Copyright 2020 HabanaLabs, Ltd.
+ * Copyright 2020-2021 HabanaLabs, Ltd.
  * All Rights Reserved.
  *
  */
@@ -376,6 +376,27 @@ enum pq_init_status {
  *       and QMANs. The f/w will return a bitmask where each bit represents
  *       a different engine or QMAN according to enum cpucp_idle_mask.
  *       The bit will be 1 if the engine is NOT idle.
+ *
+ * CPUCP_PACKET_HBM_REPLACED_ROWS_INFO_GET -
+ *       Fetch all HBM replaced-rows and prending to be replaced rows data.
+ *
+ * CPUCP_PACKET_HBM_PENDING_ROWS_STATUS -
+ *       Fetch status of HBM rows pending replacement and need a reboot to
+ *       be replaced.
+ *
+ * CPUCP_PACKET_POWER_SET -
+ *       Resets power history of device to 0
+ *
+ * CPUCP_PACKET_ENGINE_CORE_ASID_SET -
+ *       Packet to perform engine core ASID configuration
+ *
+ * CPUCP_PACKET_MONITOR_DUMP_GET -
+ *       Get monitors registers dump from the CpuCP kernel.
+ *       The CPU will put the registers dump in the a buffer allocated by the driver
+ *       which address is passed via the CpuCp packet. In addition, the host's driver
+ *       passes the max size it allows the CpuCP to write to the structure, to prevent
+ *       data corruption in case of mismatched driver/FW versions.
+ *       Relevant only to Gaudi.
  */
 
 enum cpucp_packet_id {
@@ -421,6 +442,16 @@ enum cpucp_packet_id {
 	CPUCP_PACKET_NIC_STAT_REGS_CLR,		/* internal */
 	CPUCP_PACKET_NIC_STAT_REGS_ALL_GET,	/* internal */
 	CPUCP_PACKET_IS_IDLE_CHECK,		/* internal */
+	CPUCP_PACKET_HBM_REPLACED_ROWS_INFO_GET,/* internal */
+	CPUCP_PACKET_HBM_PENDING_ROWS_STATUS,	/* internal */
+	CPUCP_PACKET_POWER_SET,			/* internal */
+	CPUCP_PACKET_RESERVED,			/* not used */
+	CPUCP_PACKET_ENGINE_CORE_ASID_SET,	/* internal */
+	CPUCP_PACKET_RESERVED2,			/* not used */
+	CPUCP_PACKET_RESERVED3,			/* not used */
+	CPUCP_PACKET_RESERVED4,			/* not used */
+	CPUCP_PACKET_RESERVED5,			/* not used */
+	CPUCP_PACKET_MONITOR_DUMP_GET,		/* debugfs */
 };
 
 #define CPUCP_PACKET_FENCE_VAL	0xFE8CE7A5
@@ -480,7 +511,14 @@ struct cpucp_packet {
 			__u8 i2c_bus;
 			__u8 i2c_addr;
 			__u8 i2c_reg;
-			__u8 pad; /* unused */
+			/*
+			 * In legacy implemetations, i2c_len was not present,
+			 * was unused and just added as pad.
+			 * So if i2c_len is 0, it is treated as legacy
+			 * and r/w 1 Byte, else if i2c_len is specified,
+			 * its treated as new multibyte r/w support.
+			 */
+			__u8 i2c_len;
 		};
 
 		struct {/* For PLL info fetch */
@@ -515,19 +553,25 @@ struct cpucp_packet {
 struct cpucp_unmask_irq_arr_packet {
 	struct cpucp_packet cpucp_pkt;
 	__le32 length;
-	__le32 irqs[0];
+	__le32 irqs[];
 };
 
 struct cpucp_nic_status_packet {
 	struct cpucp_packet cpucp_pkt;
 	__le32 length;
-	__le32 data[0];
+	__le32 data[];
 };
 
 struct cpucp_array_data_packet {
 	struct cpucp_packet cpucp_pkt;
 	__le32 length;
-	__le32 data[0];
+	__le32 data[];
+};
+
+enum cpucp_led_index {
+	CPUCP_LED0_INDEX = 0,
+	CPUCP_LED1_INDEX,
+	CPUCP_LED2_INDEX
 };
 
 enum cpucp_packet_rc {
@@ -551,7 +595,10 @@ enum cpucp_temp_type {
 	cpucp_temp_offset = 19,
 	cpucp_temp_lowest = 21,
 	cpucp_temp_highest = 22,
-	cpucp_temp_reset_history = 23
+	cpucp_temp_reset_history = 23,
+	cpucp_temp_warn = 24,
+	cpucp_temp_max_crit = 25,
+	cpucp_temp_max_warn = 26,
 };
 
 enum cpucp_in_attributes {
@@ -661,6 +708,7 @@ enum pll_index {
 enum rl_index {
 	TPC_RL = 0,
 	MME_RL,
+	EDMA_RL,
 };
 
 enum pvt_index {
@@ -688,6 +736,7 @@ struct eq_generic_event {
 #define CPUCP_MAX_NIC_LANES		(CPUCP_MAX_NICS * CPUCP_LANES_PER_NIC)
 #define CPUCP_NIC_MASK_ARR_LEN		((CPUCP_MAX_NICS + 63) / 64)
 #define CPUCP_NIC_POLARITY_ARR_LEN	((CPUCP_MAX_NIC_LANES + 63) / 64)
+#define CPUCP_HBM_ROW_REPLACE_MAX	32
 
 struct cpucp_sensor {
 	__le32 type;
@@ -740,6 +789,7 @@ struct cpucp_security_info {
  * @fuse_version: silicon production FUSE information.
  * @thermal_version: thermald S/W version.
  * @cpucp_version: CpuCP S/W version.
+ * @infineon_second_stage_version: Infineon 2nd stage DC-DC version.
  * @dram_size: available DRAM size.
  * @card_name: card name that will be displayed in HWMON subsystem on the host
  * @sec_info: security information
@@ -749,6 +799,11 @@ struct cpucp_security_info {
  * @dram_binning_mask: DRAM binning mask, 1 bit per dram instance
  *                     (0 = functional 1 = binned)
  * @memory_repair_flag: eFuse flag indicating memory repair
+ * @edma_binning_mask: EDMA binning mask, 1 bit per EDMA instance
+ *                     (0 = functional 1 = binned)
+ * @xbar_binning_mask: Xbar binning mask, 1 bit per Xbar instance
+ *                     (0 = functional 1 = binned)
+ * @fw_os_version: Firmware OS Version
  */
 struct cpucp_info {
 	struct cpucp_sensor sensors[CPUCP_MAX_SENSORS];
@@ -761,7 +816,7 @@ struct cpucp_info {
 	__u8 fuse_version[VERSION_MAX_LEN];
 	__u8 thermal_version[VERSION_MAX_LEN];
 	__u8 cpucp_version[VERSION_MAX_LEN];
-	__le32 reserved2;
+	__le32 infineon_second_stage_version;
 	__le64 dram_size;
 	char card_name[CARD_NAME_MAX_LEN];
 	__le64 reserved3;
@@ -769,11 +824,14 @@ struct cpucp_info {
 	__u8 reserved5;
 	__u8 dram_binning_mask;
 	__u8 memory_repair_flag;
-	__u8 pad[5];
+	__u8 edma_binning_mask;
+	__u8 xbar_binning_mask;
+	__u8 pad[3];
 	struct cpucp_security_info sec_info;
 	__le32 reserved6;
 	__u8 pll_map[PLL_MAP_LEN];
 	__le64 mme_binning_mask;
+	__u8 fw_os_version[VERSION_MAX_LEN];
 };
 
 struct cpucp_mac_addr {
@@ -785,6 +843,7 @@ enum cpucp_serdes_type {
 	TYPE_2_SERDES_TYPE,
 	HLS1_SERDES_TYPE,
 	HLS1H_SERDES_TYPE,
+	HLS2_SERDES_TYPE,
 	UNKNOWN_SERDES_TYPE,
 	MAX_NUM_SERDES_TYPE = UNKNOWN_SERDES_TYPE
 };
@@ -798,7 +857,26 @@ struct cpucp_nic_info {
 	__u8 qsfp_eeprom[CPUCP_NIC_QSFP_EEPROM_MAX_LEN];
 	__le64 auto_neg_mask[CPUCP_NIC_MASK_ARR_LEN];
 	__le16 serdes_type; /* enum cpucp_serdes_type */
+	__le16 tx_swap_map[CPUCP_MAX_NICS];
 	__u8 reserved[6];
+};
+
+#define PAGE_DISCARD_MAX	64
+
+struct page_discard_info {
+	__u8 num_entries;
+	__u8 reserved[7];
+	__le32 mmu_page_idx[PAGE_DISCARD_MAX];
+};
+
+/*
+ * struct ser_val - the SER (symbol error rate) value is represented by "integer * 10 ^ -exp".
+ * @integer: the integer part of the SER value;
+ * @exp: the exponent part of the SER value.
+ */
+struct ser_val {
+	__le16 integer;
+	__le16 exp;
 };
 
 /*
@@ -831,6 +909,52 @@ struct cpucp_nic_status {
 	__u8 auto_neg;
 	__le32 timeout_retransmission_cnt;
 	__le32 high_ber_cnt;
+};
+
+enum cpucp_hbm_row_replace_cause {
+	REPLACE_CAUSE_DOUBLE_ECC_ERR,
+	REPLACE_CAUSE_MULTI_SINGLE_ECC_ERR,
+};
+
+struct cpucp_hbm_row_info {
+	__u8 hbm_idx;
+	__u8 pc;
+	__u8 sid;
+	__u8 bank_idx;
+	__le16 row_addr;
+	__u8 replaced_row_cause; /* enum cpucp_hbm_row_replace_cause */
+	__u8 pad;
+};
+
+struct cpucp_hbm_row_replaced_rows_info {
+	__le16 num_replaced_rows;
+	__u8 pad[6];
+	struct cpucp_hbm_row_info replaced_rows[CPUCP_HBM_ROW_REPLACE_MAX];
+};
+
+/*
+ * struct dcore_monitor_regs_data - DCORE monitor regs data.
+ * the structure follows sync manager block layout. relevant only to Gaudi.
+ * @mon_pay_addrl: array of payload address low bits.
+ * @mon_pay_addrh: array of payload address high bits.
+ * @mon_pay_data: array of payload data.
+ * @mon_arm: array of monitor arm.
+ * @mon_status: array of monitor status.
+ */
+struct dcore_monitor_regs_data {
+	__le32 mon_pay_addrl[512];
+	__le32 mon_pay_addrh[512];
+	__le32 mon_pay_data[512];
+	__le32 mon_arm[512];
+	__le32 mon_status[512];
+};
+
+/* contains SM data for each SYNC_MNGR (relevant only to Gaudi) */
+struct cpucp_monitor_dump {
+	struct dcore_monitor_regs_data sync_mngr_w_s;
+	struct dcore_monitor_regs_data sync_mngr_e_s;
+	struct dcore_monitor_regs_data sync_mngr_w_n;
+	struct dcore_monitor_regs_data sync_mngr_e_n;
 };
 
 #endif /* CPUCP_IF_H */

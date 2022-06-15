@@ -69,6 +69,7 @@ struct zpci_dev *get_zdev_by_fid(u32 fid)
 	list_for_each_entry(tmp, &zpci_list, entry) {
 		if (tmp->fid == fid) {
 			zdev = tmp;
+			zpci_zdev_get(zdev);
 			break;
 		}
 	}
@@ -399,7 +400,7 @@ EXPORT_SYMBOL(pci_iounmap);
 static int pci_read(struct pci_bus *bus, unsigned int devfn, int where,
 		    int size, u32 *val)
 {
-	struct zpci_dev *zdev = get_zdev_by_bus(bus, devfn);
+	struct zpci_dev *zdev = zdev_from_bus(bus, devfn);
 
 	return (zdev) ? zpci_cfg_load(zdev, where, val, size) : -ENODEV;
 }
@@ -407,7 +408,7 @@ static int pci_read(struct pci_bus *bus, unsigned int devfn, int where,
 static int pci_write(struct pci_bus *bus, unsigned int devfn, int where,
 		     int size, u32 val)
 {
-	struct zpci_dev *zdev = get_zdev_by_bus(bus, devfn);
+	struct zpci_dev *zdev = zdev_from_bus(bus, devfn);
 
 	return (zdev) ? zpci_cfg_store(zdev, where, val, size) : -ENODEV;
 }
@@ -771,7 +772,7 @@ int zpci_hot_reset_device(struct zpci_dev *zdev)
 
 	if (zdev->dma_table)
 		rc = zpci_register_ioat(zdev, 0, zdev->start_dma, zdev->end_dma,
-					(u64)zdev->dma_table);
+					virt_to_phys(zdev->dma_table));
 	else
 		rc = zpci_dma_init_device(zdev);
 	if (rc) {
@@ -798,7 +799,7 @@ struct zpci_dev *zpci_create_device(u32 fid, u32 fh, enum zpci_state state)
 	struct zpci_dev *zdev;
 	int rc;
 
-	zpci_dbg(3, "add fid:%x, fh:%x, c:%d\n", fid, fh, state);
+	zpci_dbg(1, "add fid:%x, fh:%x, c:%d\n", fid, fh, state);
 	zdev = kzalloc(sizeof(*zdev), GFP_KERNEL);
 	if (!zdev)
 		return ERR_PTR(-ENOMEM);

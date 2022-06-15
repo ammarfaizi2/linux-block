@@ -13,7 +13,7 @@ Following tables describe the expected semantics which can also be tested during
 boot via CONFIG_DEBUG_VM_PGTABLE option. All future changes in here or the debug
 test need to be in sync.
 
-======================
+
 PTE Page Table Helpers
 ======================
 
@@ -66,9 +66,11 @@ PTE Page Table Helpers
 +---------------------------+--------------------------------------------------+
 | pte_mknotpresent          | Invalidates a mapped PTE                         |
 +---------------------------+--------------------------------------------------+
-| ptep_get_and_clear        | Clears a PTE                                     |
+| ptep_clear                | Clears a PTE                                     |
 +---------------------------+--------------------------------------------------+
-| ptep_get_and_clear_full   | Clears a PTE                                     |
+| ptep_get_and_clear        | Clears and returns PTE                           |
++---------------------------+--------------------------------------------------+
+| ptep_get_and_clear_full   | Clears and returns PTE (batched PTE unmap)       |
 +---------------------------+--------------------------------------------------+
 | ptep_test_and_clear_young | Clears young from a PTE                          |
 +---------------------------+--------------------------------------------------+
@@ -77,7 +79,7 @@ PTE Page Table Helpers
 | ptep_set_access_flags     | Converts into a more permissive PTE              |
 +---------------------------+--------------------------------------------------+
 
-======================
+
 PMD Page Table Helpers
 ======================
 
@@ -151,7 +153,7 @@ PMD Page Table Helpers
 | pmdp_set_access_flags     | Converts into a more permissive PMD              |
 +---------------------------+--------------------------------------------------+
 
-======================
+
 PUD Page Table Helpers
 ======================
 
@@ -207,7 +209,7 @@ PUD Page Table Helpers
 | pudp_set_access_flags     | Converts into a more permissive PUD              |
 +---------------------------+--------------------------------------------------+
 
-==========================
+
 HugeTLB Page Table Helpers
 ==========================
 
@@ -233,7 +235,7 @@ HugeTLB Page Table Helpers
 | huge_ptep_set_access_flags  | Converts into a more permissive HugeTLB        |
 +---------------------------+--------------------------------------------------+
 
-========================
+
 SWAP Page Table Helpers
 ========================
 
@@ -247,12 +249,12 @@ SWAP Page Table Helpers
 | __swp_to_pmd_entry        | Creates a mapped PMD from a swapped entry (arch) |
 +---------------------------+--------------------------------------------------+
 | is_migration_entry        | Tests a migration (read or write) swapped entry  |
-+---------------------------+--------------------------------------------------+
-| is_write_migration_entry  | Tests a write migration swapped entry            |
-+---------------------------+--------------------------------------------------+
-| make_migration_entry_read | Converts into read migration swapped entry       |
-+---------------------------+--------------------------------------------------+
-| make_migration_entry      | Creates a migration swapped entry (read or write)|
-+---------------------------+--------------------------------------------------+
++-------------------------------+----------------------------------------------+
+| is_writable_migration_entry   | Tests a write migration swapped entry        |
++-------------------------------+----------------------------------------------+
+| make_readable_migration_entry | Creates a read migration swapped entry       |
++-------------------------------+----------------------------------------------+
+| make_writable_migration_entry | Creates a write migration swapped entry      |
++-------------------------------+----------------------------------------------+
 
 [1] https://lore.kernel.org/linux-mm/20181017020930.GN30832@redhat.com/

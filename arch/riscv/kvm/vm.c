@@ -31,13 +31,13 @@ int kvm_arch_init_vm(struct kvm *kvm, unsigned long type)
 {
 	int r;
 
-	r = kvm_riscv_stage2_alloc_pgd(kvm);
+	r = kvm_riscv_gstage_alloc_pgd(kvm);
 	if (r)
 		return r;
 
-	r = kvm_riscv_stage2_vmid_init(kvm);
+	r = kvm_riscv_gstage_vmid_init(kvm);
 	if (r) {
-		kvm_riscv_stage2_free_pgd(kvm);
+		kvm_riscv_gstage_free_pgd(kvm);
 		return r;
 	}
 
@@ -46,15 +46,7 @@ int kvm_arch_init_vm(struct kvm *kvm, unsigned long type)
 
 void kvm_arch_destroy_vm(struct kvm *kvm)
 {
-	int i;
-
-	for (i = 0; i < KVM_MAX_VCPUS; ++i) {
-		if (kvm->vcpus[i]) {
-			kvm_vcpu_destroy(kvm->vcpus[i]);
-			kvm->vcpus[i] = NULL;
-		}
-	}
-	atomic_set(&kvm->online_vcpus, 0);
+	kvm_destroy_vcpus(kvm);
 }
 
 int kvm_vm_ioctl_check_extension(struct kvm *kvm, long ext)
@@ -81,6 +73,9 @@ int kvm_vm_ioctl_check_extension(struct kvm *kvm, long ext)
 		break;
 	case KVM_CAP_NR_MEMSLOTS:
 		r = KVM_USER_MEM_SLOTS;
+		break;
+	case KVM_CAP_VM_GPA_BITS:
+		r = kvm_riscv_gstage_gpa_bits();
 		break;
 	default:
 		r = 0;

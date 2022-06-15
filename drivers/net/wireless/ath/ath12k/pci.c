@@ -747,7 +747,7 @@ static int ath12k_pci_msi_alloc(struct ath12k_pci *ab_pci)
 	}
 
 	ab_pci->msi_ep_base_data = msi_desc->msg.data;
-	if (msi_desc->msi_attrib.is_64)
+	if (msi_desc->pci.msi_attrib.is_64)
 		set_bit(ATH12K_PCI_FLAG_IS_MSI_64, &ab_pci->flags);
 
 	ath12k_dbg(ab, ATH12K_DBG_PCI, "msi base data is %d\n", ab_pci->msi_ep_base_data);
@@ -797,16 +797,10 @@ static int ath12k_pci_claim(struct ath12k_pci *ab_pci, struct pci_dev *pdev)
 		goto disable_device;
 	}
 
-	ret = pci_set_dma_mask(pdev, DMA_BIT_MASK(ATH12K_PCI_DMA_MASK));
+	ret = dma_set_mask_and_coherent(&pdev->dev,
+					DMA_BIT_MASK(ATH12K_PCI_DMA_MASK));
 	if (ret) {
 		ath12k_err(ab, "failed to set pci dma mask to %d: %d\n",
-			   ATH12K_PCI_DMA_MASK, ret);
-		goto release_region;
-	}
-
-	ret = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(ATH12K_PCI_DMA_MASK));
-	if (ret) {
-		ath12k_err(ab, "failed to set pci consistent dma mask to %d: %d\n",
 			   ATH12K_PCI_DMA_MASK, ret);
 		goto release_region;
 	}

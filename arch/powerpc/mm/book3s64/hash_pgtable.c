@@ -16,7 +16,6 @@
 
 #include <mm/mmu_decl.h>
 
-#define CREATE_TRACE_POINTS
 #include <trace/events/thp.h>
 
 #if H_PGTABLE_RANGE > (USER_VSID_RANGE * (TASK_SIZE_USER64 / TASK_CONTEXT_SIZE))
@@ -378,7 +377,7 @@ int hash__has_transparent_hugepage(void)
 	if (mmu_psize_defs[MMU_PAGE_16M].shift != PMD_SHIFT)
 		return 0;
 	/*
-	 * We need to make sure that we support 16MB hugepage in a segement
+	 * We need to make sure that we support 16MB hugepage in a segment
 	 * with base page size 64K or 4K. We only enable THP with a PAGE_SIZE
 	 * of 64K.
 	 */

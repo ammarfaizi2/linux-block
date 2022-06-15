@@ -104,13 +104,15 @@ static void *kexec_page_alloc(void *arg)
 {
 	struct kimage *kimage = (struct kimage *)arg;
 	struct page *page = kimage_alloc_control_pages(kimage, 0);
+	void *vaddr = NULL;
 
 	if (!page)
 		return NULL;
 
-	memset(page_address(page), 0, PAGE_SIZE);
+	vaddr = page_address(page);
+	memset(vaddr, 0, PAGE_SIZE);
 
-	return page_address(page);
+	return vaddr;
 }
 
 int machine_kexec_post_load(struct kimage *kimage)
@@ -327,8 +329,13 @@ bool crash_is_nosave(unsigned long pfn)
 
 	/* in reserved memory? */
 	addr = __pfn_to_phys(pfn);
-	if ((addr < crashk_res.start) || (crashk_res.end < addr))
-		return false;
+	if ((addr < crashk_res.start) || (crashk_res.end < addr)) {
+		if (!crashk_low_res.end)
+			return false;
+
+		if ((addr < crashk_low_res.start) || (crashk_low_res.end < addr))
+			return false;
+	}
 
 	if (!kexec_crash_image)
 		return true;

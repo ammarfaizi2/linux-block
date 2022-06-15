@@ -14,7 +14,6 @@
 #include <linux/can.h>
 #include <linux/can/dev.h>
 #include <linux/can/error.h>
-#include <linux/can/led.h>
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/firmware/imx/sci.h>
@@ -296,6 +295,7 @@ static_assert(sizeof(struct flexcan_regs) ==  0x4 * 18 + 0xfb8);
 static const struct flexcan_devtype_data fsl_mcf5441x_devtype_data = {
 	.quirks = FLEXCAN_QUIRK_BROKEN_PERR_STATE |
 		FLEXCAN_QUIRK_NR_IRQ_3 | FLEXCAN_QUIRK_NR_MB_16 |
+		FLEXCAN_QUIRK_SUPPPORT_RX_MAILBOX |
 		FLEXCAN_QUIRK_SUPPPORT_RX_FIFO,
 };
 
@@ -722,11 +722,9 @@ static int flexcan_get_berr_counter(const struct net_device *dev,
 	const struct flexcan_priv *priv = netdev_priv(dev);
 	int err;
 
-	err = pm_runtime_get_sync(priv->dev);
-	if (err < 0) {
-		pm_runtime_put_noidle(priv->dev);
+	err = pm_runtime_resume_and_get(priv->dev);
+	if (err < 0)
 		return err;
-	}
 
 	err = __flexcan_get_berr_counter(dev, bec);
 
@@ -844,7 +842,7 @@ static void flexcan_irq_bus_err(struct net_device *dev, u32 reg_esr)
 	if (tx_errors)
 		dev->stats.tx_errors++;
 
-	err = can_rx_offload_queue_sorted(&priv->offload, skb, timestamp);
+	err = can_rx_offload_queue_timestamp(&priv->offload, skb, timestamp);
 	if (err)
 		dev->stats.rx_fifo_errors++;
 }
@@ -891,7 +889,7 @@ static void flexcan_irq_state(struct net_device *dev, u32 reg_esr)
 	if (unlikely(new_state == CAN_STATE_BUS_OFF))
 		can_bus_off(dev);
 
-	err = can_rx_offload_queue_sorted(&priv->offload, skb, timestamp);
+	err = can_rx_offload_queue_timestamp(&priv->offload, skb, timestamp);
 	if (err)
 		dev->stats.rx_fifo_errors++;
 }
@@ -1082,7 +1080,6 @@ static irqreturn_t flexcan_irq(int irq, void *dev_id)
 			can_rx_offload_get_echo_skb(&priv->offload, 0,
 						    reg_ctrl << 16, NULL);
 		stats->tx_packets++;
-		can_led_event(dev, CAN_LED_EVENT_TX);
 
 		/* after sending a RTR frame MB is in RX mode */
 		priv->write(FLEXCAN_MB_CODE_TX_INACTIVE,
@@ -1699,11 +1696,9 @@ static int flexcan_open(struct net_device *dev)
 		return -EINVAL;
 	}
 
-	err = pm_runtime_get_sync(priv->dev);
-	if (err < 0) {
-		pm_runtime_put_noidle(priv->dev);
+	err = pm_runtime_resume_and_get(priv->dev);
+	if (err < 0)
 		return err;
-	}
 
 	err = open_candev(dev);
 	if (err)
@@ -1740,8 +1735,6 @@ static int flexcan_open(struct net_device *dev)
 	}
 
 	flexcan_chip_interrupts_enable(dev);
-
-	can_led_event(dev, CAN_LED_EVENT_OPEN);
 
 	netif_start_queue(dev);
 
@@ -1787,8 +1780,6 @@ static int flexcan_close(struct net_device *dev)
 	close_candev(dev);
 
 	pm_runtime_put(priv->dev);
-
-	can_led_event(dev, CAN_LED_EVENT_STOP);
 
 	return 0;
 }
@@ -2192,7 +2183,6 @@ static int flexcan_probe(struct platform_device *pdev)
 	}
 
 	of_can_transceiver(dev);
-	devm_can_led_init(dev);
 
 	return 0;
 

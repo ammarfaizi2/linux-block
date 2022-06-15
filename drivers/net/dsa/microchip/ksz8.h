@@ -7,7 +7,8 @@
 
 #ifndef __KSZ8XXX_H
 #define __KSZ8XXX_H
-#include <linux/kernel.h>
+
+#include <linux/types.h>
 
 enum ksz_regs {
 	REG_IND_CTRL_0,
@@ -16,6 +17,7 @@ enum ksz_regs {
 	REG_IND_DATA_HI,
 	REG_IND_DATA_LO,
 	REG_IND_MIB_CHECK,
+	REG_IND_BYTE,
 	P_FORCE_CTRL,
 	P_LINK_STATUS,
 	P_LOCAL_CTRL,

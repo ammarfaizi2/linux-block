@@ -49,8 +49,10 @@ static void __init sclp_early_facilities_detect(void)
 		S390_lowcore.machine_flags |= MACHINE_FLAG_ESOP;
 	if (sccb->fac91 & 0x40)
 		S390_lowcore.machine_flags |= MACHINE_FLAG_TLB_GUEST;
-	if (sccb->cpuoff > 134)
+	if (sccb->cpuoff > 134) {
 		sclp.has_diag318 = !!(sccb->byte_134 & 0x80);
+		sclp.has_iplcc = !!(sccb->byte_134 & 0x02);
+	}
 	if (sccb->cpuoff > 137)
 		sclp.has_sipl = !!(sccb->cbl & 0x4000);
 	sclp.rnmax = sccb->rnmax ? sccb->rnmax : sccb->rnmax2;
@@ -139,7 +141,7 @@ int __init sclp_early_get_core_info(struct sclp_core_info *info)
 	}
 	sclp_fill_core_info(info, sccb);
 out:
-	memblock_phys_free((unsigned long)sccb, length);
+	memblock_free(sccb, length);
 	return rc;
 }
 

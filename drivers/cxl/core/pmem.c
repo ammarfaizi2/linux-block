@@ -49,26 +49,40 @@ struct cxl_nvdimm_bridge *to_cxl_nvdimm_bridge(struct device *dev)
 		return NULL;
 	return container_of(dev, struct cxl_nvdimm_bridge, dev);
 }
-EXPORT_SYMBOL_GPL(to_cxl_nvdimm_bridge);
+EXPORT_SYMBOL_NS_GPL(to_cxl_nvdimm_bridge, CXL);
 
-__mock int match_nvdimm_bridge(struct device *dev, const void *data)
+bool is_cxl_nvdimm_bridge(struct device *dev)
 {
 	return dev->type == &cxl_nvdimm_bridge_type;
+}
+EXPORT_SYMBOL_NS_GPL(is_cxl_nvdimm_bridge, CXL);
+
+static int match_nvdimm_bridge(struct device *dev, void *data)
+{
+	return is_cxl_nvdimm_bridge(dev);
 }
 
 struct cxl_nvdimm_bridge *cxl_find_nvdimm_bridge(struct cxl_nvdimm *cxl_nvd)
 {
+	struct cxl_port *port = find_cxl_root(&cxl_nvd->dev);
 	struct device *dev;
 
-	dev = bus_find_device(&cxl_bus_type, NULL, cxl_nvd, match_nvdimm_bridge);
+	if (!port)
+		return NULL;
+
+	dev = device_find_child(&port->dev, NULL, match_nvdimm_bridge);
+	put_device(&port->dev);
+
 	if (!dev)
 		return NULL;
+
 	return to_cxl_nvdimm_bridge(dev);
 }
-EXPORT_SYMBOL_GPL(cxl_find_nvdimm_bridge);
+EXPORT_SYMBOL_NS_GPL(cxl_find_nvdimm_bridge, CXL);
 
-static struct cxl_nvdimm_bridge *
-cxl_nvdimm_bridge_alloc(struct cxl_port *port)
+static struct lock_class_key cxl_nvdimm_bridge_key;
+
+static struct cxl_nvdimm_bridge *cxl_nvdimm_bridge_alloc(struct cxl_port *port)
 {
 	struct cxl_nvdimm_bridge *cxl_nvb;
 	struct device *dev;
@@ -87,6 +101,7 @@ cxl_nvdimm_bridge_alloc(struct cxl_port *port)
 	cxl_nvb->port = port;
 	cxl_nvb->state = CXL_NVB_NEW;
 	device_initialize(dev);
+	lockdep_set_class(&dev->mutex, &cxl_nvdimm_bridge_key);
 	device_set_pm_not_required(dev);
 	dev->parent = &port->dev;
 	dev->bus = &cxl_bus_type;
@@ -167,7 +182,7 @@ err:
 	put_device(dev);
 	return ERR_PTR(rc);
 }
-EXPORT_SYMBOL_GPL(devm_cxl_add_nvdimm_bridge);
+EXPORT_SYMBOL_NS_GPL(devm_cxl_add_nvdimm_bridge, CXL);
 
 static void cxl_nvdimm_release(struct device *dev)
 {
@@ -191,7 +206,7 @@ bool is_cxl_nvdimm(struct device *dev)
 {
 	return dev->type == &cxl_nvdimm_type;
 }
-EXPORT_SYMBOL_GPL(is_cxl_nvdimm);
+EXPORT_SYMBOL_NS_GPL(is_cxl_nvdimm, CXL);
 
 struct cxl_nvdimm *to_cxl_nvdimm(struct device *dev)
 {
@@ -200,7 +215,9 @@ struct cxl_nvdimm *to_cxl_nvdimm(struct device *dev)
 		return NULL;
 	return container_of(dev, struct cxl_nvdimm, dev);
 }
-EXPORT_SYMBOL_GPL(to_cxl_nvdimm);
+EXPORT_SYMBOL_NS_GPL(to_cxl_nvdimm, CXL);
+
+static struct lock_class_key cxl_nvdimm_key;
 
 static struct cxl_nvdimm *cxl_nvdimm_alloc(struct cxl_memdev *cxlmd)
 {
@@ -214,6 +231,7 @@ static struct cxl_nvdimm *cxl_nvdimm_alloc(struct cxl_memdev *cxlmd)
 	dev = &cxl_nvd->dev;
 	cxl_nvd->cxlmd = cxlmd;
 	device_initialize(dev);
+	lockdep_set_class(&dev->mutex, &cxl_nvdimm_key);
 	device_set_pm_not_required(dev);
 	dev->parent = &cxlmd->dev;
 	dev->bus = &cxl_bus_type;
@@ -262,4 +280,4 @@ err:
 	put_device(dev);
 	return rc;
 }
-EXPORT_SYMBOL_GPL(devm_cxl_add_nvdimm);
+EXPORT_SYMBOL_NS_GPL(devm_cxl_add_nvdimm, CXL);

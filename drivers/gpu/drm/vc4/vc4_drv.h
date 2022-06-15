@@ -202,9 +202,6 @@ struct vc4_dev {
 
 	int power_refcount;
 
-	/* Set to true when the load tracker is supported. */
-	bool load_tracker_available;
-
 	/* Set to true when the load tracker is active. */
 	bool load_tracker_enabled;
 
@@ -495,6 +492,33 @@ struct vc4_crtc {
 	struct drm_pending_vblank_event *event;
 
 	struct debugfs_regset32 regset;
+
+	/**
+	 * @feeds_txp: True if the CRTC feeds our writeback controller.
+	 */
+	bool feeds_txp;
+
+	/**
+	 * @irq_lock: Spinlock protecting the resources shared between
+	 * the atomic code and our vblank handler.
+	 */
+	spinlock_t irq_lock;
+
+	/**
+	 * @current_dlist: Start offset of the display list currently
+	 * set in the HVS for that CRTC. Protected by @irq_lock, and
+	 * copied in vc4_hvs_update_dlist() for the CRTC interrupt
+	 * handler to have access to that value.
+	 */
+	unsigned int current_dlist;
+
+	/**
+	 * @current_hvs_channel: HVS channel currently assigned to the
+	 * CRTC. Protected by @irq_lock, and copied in
+	 * vc4_hvs_atomic_begin() for the CRTC interrupt handler to have
+	 * access to that value.
+	 */
+	unsigned int current_hvs_channel;
 };
 
 static inline struct vc4_crtc *
@@ -517,11 +541,13 @@ vc4_crtc_to_vc4_pv_data(const struct vc4_crtc *crtc)
 	return container_of(data, struct vc4_pv_data, base);
 }
 
+struct drm_encoder *vc4_get_crtc_encoder(struct drm_crtc *crtc,
+					 struct drm_crtc_state *state);
+
 struct vc4_crtc_state {
 	struct drm_crtc_state base;
 	/* Dlist area for this CRTC configuration. */
 	struct drm_mm_node mm;
-	bool feed_txp;
 	bool txp_armed;
 	unsigned int assigned_channel;
 
@@ -531,6 +557,8 @@ struct vc4_crtc_state {
 		unsigned int top;
 		unsigned int bottom;
 	} margins;
+
+	unsigned long hvs_load;
 
 	/* Transitional state below, only valid during atomic commits */
 	bool update_muxing;
@@ -546,8 +574,8 @@ to_vc4_crtc_state(struct drm_crtc_state *crtc_state)
 
 #define V3D_READ(offset) readl(vc4->v3d->regs + offset)
 #define V3D_WRITE(offset, val) writel(val, vc4->v3d->regs + offset)
-#define HVS_READ(offset) readl(vc4->hvs->regs + offset)
-#define HVS_WRITE(offset, val) writel(val, vc4->hvs->regs + offset)
+#define HVS_READ(offset) readl(hvs->regs + offset)
+#define HVS_WRITE(offset, val) writel(val, hvs->regs + offset)
 
 #define VC4_REG32(reg) { .name = #reg, .offset = reg }
 
@@ -905,15 +933,17 @@ void vc4_irq_reset(struct drm_device *dev);
 
 /* vc4_hvs.c */
 extern struct platform_driver vc4_hvs_driver;
-void vc4_hvs_stop_channel(struct drm_device *dev, unsigned int output);
-int vc4_hvs_get_fifo_from_output(struct drm_device *dev, unsigned int output);
+void vc4_hvs_stop_channel(struct vc4_hvs *hvs, unsigned int output);
+int vc4_hvs_get_fifo_from_output(struct vc4_hvs *hvs, unsigned int output);
+u8 vc4_hvs_get_fifo_frame_count(struct vc4_hvs *hvs, unsigned int fifo);
 int vc4_hvs_atomic_check(struct drm_crtc *crtc, struct drm_atomic_state *state);
+void vc4_hvs_atomic_begin(struct drm_crtc *crtc, struct drm_atomic_state *state);
 void vc4_hvs_atomic_enable(struct drm_crtc *crtc, struct drm_atomic_state *state);
 void vc4_hvs_atomic_disable(struct drm_crtc *crtc, struct drm_atomic_state *state);
 void vc4_hvs_atomic_flush(struct drm_crtc *crtc, struct drm_atomic_state *state);
-void vc4_hvs_dump_state(struct drm_device *dev);
-void vc4_hvs_unmask_underrun(struct drm_device *dev, int channel);
-void vc4_hvs_mask_underrun(struct drm_device *dev, int channel);
+void vc4_hvs_dump_state(struct vc4_hvs *hvs);
+void vc4_hvs_unmask_underrun(struct vc4_hvs *hvs, int channel);
+void vc4_hvs_mask_underrun(struct vc4_hvs *hvs, int channel);
 
 /* vc4_kms.c */
 int vc4_kms_load(struct drm_device *dev);

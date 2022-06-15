@@ -170,6 +170,7 @@ nvmf_ctlr_matches_baseopts(struct nvme_ctrl *ctrl,
 			struct nvmf_ctrl_options *opts)
 {
 	if (ctrl->state == NVME_CTRL_DELETING ||
+	    ctrl->state == NVME_CTRL_DELETING_NOIO ||
 	    ctrl->state == NVME_CTRL_DEAD ||
 	    strcmp(opts->subsysnqn, ctrl->opts->subsysnqn) ||
 	    strcmp(opts->host->nqn, ctrl->opts->host->nqn) ||
@@ -184,6 +185,14 @@ static inline char *nvmf_ctrl_subsysnqn(struct nvme_ctrl *ctrl)
 	if (!ctrl->subsys)
 		return ctrl->opts->subsysnqn;
 	return ctrl->subsys->subnqn;
+}
+
+static inline void nvmf_complete_timed_out_request(struct request *rq)
+{
+	if (blk_mq_request_started(rq) && !blk_mq_request_completed(rq)) {
+		nvme_req(rq)->status = NVME_SC_HOST_ABORTED_CMD;
+		blk_mq_complete_request(rq);
+	}
 }
 
 int nvmf_reg_read32(struct nvme_ctrl *ctrl, u32 off, u32 *val);

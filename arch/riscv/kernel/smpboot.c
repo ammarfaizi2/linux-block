@@ -32,7 +32,6 @@
 #include <asm/sections.h>
 #include <asm/sbi.h>
 #include <asm/smp.h>
-#include <asm/alternative.h>
 
 #include "head.h"
 
@@ -41,9 +40,6 @@ static DECLARE_COMPLETION(cpu_running);
 void __init smp_prepare_boot_cpu(void)
 {
 	init_cpu_topology();
-#ifdef CONFIG_RISCV_ERRATA_ALTERNATIVE
-	apply_boot_alternatives();
-#endif
 }
 
 void __init smp_prepare_cpus(unsigned int max_cpus)
@@ -96,7 +92,7 @@ void __init setup_smp(void)
 		if (cpuid >= NR_CPUS) {
 			pr_warn("Invalid cpuid [%d] for hartid [%d]\n",
 				cpuid, hart);
-			break;
+			continue;
 		}
 
 		cpuid_to_hartid_map(cpuid) = hart;

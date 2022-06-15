@@ -15,6 +15,7 @@
 #include <linux/list.h>
 #include <linux/perf_event.h>
 #include <linux/types.h>
+#include <internal/cpumap.h>
 #include <asm/bitsperlong.h>
 #include <asm/barrier.h>
 
@@ -75,6 +76,7 @@ enum itrace_period_type {
  * @pwr_events: whether to synthesize power events
  * @other_events: whether to synthesize other events recorded due to the use of
  *                aux_output
+ * @intr_events: whether to synthesize interrupt events
  * @errors: whether to synthesize decoder error events
  * @dont_decode: whether to skip decoding entirely
  * @log: write a decoding log
@@ -119,6 +121,7 @@ struct itrace_synth_opts {
 	bool			ptwrites;
 	bool			pwr_events;
 	bool			other_events;
+	bool			intr_events;
 	bool			errors;
 	bool			dont_decode;
 	bool			log;
@@ -240,7 +243,7 @@ struct auxtrace_buffer {
 	size_t			size;
 	pid_t			pid;
 	pid_t			tid;
-	int			cpu;
+	struct perf_cpu		cpu;
 	void			*data;
 	off_t			data_offset;
 	void			*mmap_addr;
@@ -341,6 +344,10 @@ struct auxtrace_mmap {
  * @idx: index of this mmap
  * @tid: tid for a per-thread mmap (also set if there is only 1 tid on a per-cpu
  *       mmap) otherwise %0
+ * @mmap_needed: set to %false for non-auxtrace events. This is needed because
+ *               auxtrace mmapping is done in the same code path as non-auxtrace
+ *               mmapping but not every evsel that needs non-auxtrace mmapping
+ *               also needs auxtrace mmapping.
  * @cpu: cpu number for a per-cpu mmap otherwise %-1
  */
 struct auxtrace_mmap_params {
@@ -350,7 +357,8 @@ struct auxtrace_mmap_params {
 	int		prot;
 	int		idx;
 	pid_t		tid;
-	int		cpu;
+	bool		mmap_needed;
+	struct perf_cpu	cpu;
 };
 
 /**
@@ -487,8 +495,8 @@ void auxtrace_mmap_params__init(struct auxtrace_mmap_params *mp,
 				unsigned int auxtrace_pages,
 				bool auxtrace_overwrite);
 void auxtrace_mmap_params__set_idx(struct auxtrace_mmap_params *mp,
-				   struct evlist *evlist, int idx,
-				   bool per_cpu);
+				   struct evlist *evlist,
+				   struct evsel *evsel, int idx);
 
 typedef int (*process_auxtrace_t)(struct perf_tool *tool,
 				  struct mmap *map,
@@ -635,6 +643,8 @@ bool auxtrace__evsel_is_auxtrace(struct perf_session *session,
 "				p:	    		synthesize power events\n"			\
 "				o:			synthesize other events recorded due to the use\n" \
 "							of aux-output (refer to perf record)\n"	\
+"				I:			synthesize interrupt or similar (asynchronous) events\n" \
+"							(e.g. Intel PT Event Trace)\n" \
 "				e[flags]:		synthesize error events\n" \
 "							each flag must be preceded by + or -\n" \
 "							error flags are: o (overflow)\n" \
@@ -858,8 +868,8 @@ void auxtrace_mmap_params__init(struct auxtrace_mmap_params *mp,
 				unsigned int auxtrace_pages,
 				bool auxtrace_overwrite);
 void auxtrace_mmap_params__set_idx(struct auxtrace_mmap_params *mp,
-				   struct evlist *evlist, int idx,
-				   bool per_cpu);
+				   struct evlist *evlist,
+				   struct evsel *evsel, int idx);
 
 #define ITRACE_HELP ""
 

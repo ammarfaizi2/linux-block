@@ -10,11 +10,15 @@ TEST_GEN_PROGS += test_kmem
 TEST_GEN_PROGS += test_core
 TEST_GEN_PROGS += test_freezer
 TEST_GEN_PROGS += test_kill
+TEST_GEN_PROGS += test_cpu
+
+LOCAL_HDRS += $(selfdir)/clone3/clone3_selftests.h $(selfdir)/pidfd/pidfd.h
 
 include ../lib.mk
 
-$(OUTPUT)/test_memcontrol: cgroup_util.c ../clone3/clone3_selftests.h
-$(OUTPUT)/test_kmem: cgroup_util.c ../clone3/clone3_selftests.h
-$(OUTPUT)/test_core: cgroup_util.c ../clone3/clone3_selftests.h
-$(OUTPUT)/test_freezer: cgroup_util.c ../clone3/clone3_selftests.h
-$(OUTPUT)/test_kill: cgroup_util.c ../clone3/clone3_selftests.h ../pidfd/pidfd.h
+$(OUTPUT)/test_memcontrol: cgroup_util.c
+$(OUTPUT)/test_kmem: cgroup_util.c
+$(OUTPUT)/test_core: cgroup_util.c
+$(OUTPUT)/test_freezer: cgroup_util.c
+$(OUTPUT)/test_kill: cgroup_util.c
+$(OUTPUT)/test_cpu: cgroup_util.c

@@ -267,7 +267,7 @@ static int stm32_dmamux_probe(struct platform_device *pdev)
 		ret = PTR_ERR(rst);
 		if (ret == -EPROBE_DEFER)
 			goto err_clk;
-	} else {
+	} else if (count > 1) { /* Don't reset if there is only one dma-master */
 		reset_control_assert(rst);
 		udelay(2);
 		reset_control_deassert(rst);
@@ -292,10 +292,12 @@ static int stm32_dmamux_probe(struct platform_device *pdev)
 	ret = of_dma_router_register(node, stm32_dmamux_route_allocate,
 				     &stm32_dmamux->dmarouter);
 	if (ret)
-		goto err_clk;
+		goto pm_disable;
 
 	return 0;
 
+pm_disable:
+	pm_runtime_disable(&pdev->dev);
 err_clk:
 	clk_disable_unprepare(stm32_dmamux->clk);
 

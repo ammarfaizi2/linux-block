@@ -1605,7 +1605,8 @@ static void encode_readdir(struct xdr_stream *xdr, const struct nfs4_readdir_arg
 		FATTR4_WORD0_RDATTR_ERROR,
 		FATTR4_WORD1_MOUNTED_ON_FILEID,
 	};
-	uint32_t dircount = readdir->count >> 1;
+	uint32_t dircount = readdir->count;
+	uint32_t maxcount = readdir->count;
 	__be32 *p, verf[2];
 	uint32_t attrlen = 0;
 	unsigned int i;
@@ -1618,7 +1619,6 @@ static void encode_readdir(struct xdr_stream *xdr, const struct nfs4_readdir_arg
 			FATTR4_WORD1_SPACE_USED|FATTR4_WORD1_TIME_ACCESS|
 			FATTR4_WORD1_TIME_METADATA|FATTR4_WORD1_TIME_MODIFY;
 		attrs[2] |= FATTR4_WORD2_SECURITY_LABEL;
-		dircount >>= 1;
 	}
 	/* Use mounted_on_fileid only if the server supports it */
 	if (!(readdir->bitmask[1] & FATTR4_WORD1_MOUNTED_ON_FILEID))
@@ -1634,7 +1634,7 @@ static void encode_readdir(struct xdr_stream *xdr, const struct nfs4_readdir_arg
 	encode_nfs4_verifier(xdr, &readdir->verifier);
 	p = reserve_space(xdr, 12 + (attrlen << 2));
 	*p++ = cpu_to_be32(dircount);
-	*p++ = cpu_to_be32(readdir->count);
+	*p++ = cpu_to_be32(maxcount);
 	*p++ = cpu_to_be32(attrlen);
 	for (i = 0; i < attrlen; i++)
 		*p++ = cpu_to_be32(attrs[i]);
@@ -1680,19 +1680,35 @@ encode_restorefh(struct xdr_stream *xdr, struct compound_hdr *hdr)
 	encode_op_hdr(xdr, OP_RESTOREFH, decode_restorefh_maxsz, hdr);
 }
 
-static void
-encode_setacl(struct xdr_stream *xdr, const struct nfs_setaclargs *arg,
-		struct compound_hdr *hdr)
+static void nfs4_acltype_to_bitmap(enum nfs4_acl_type type, __u32 bitmap[2])
 {
-	__be32 *p;
+	switch (type) {
+	default:
+		bitmap[0] = FATTR4_WORD0_ACL;
+		bitmap[1] = 0;
+		break;
+	case NFS4ACL_DACL:
+		bitmap[0] = 0;
+		bitmap[1] = FATTR4_WORD1_DACL;
+		break;
+	case NFS4ACL_SACL:
+		bitmap[0] = 0;
+		bitmap[1] = FATTR4_WORD1_SACL;
+	}
+}
+
+static void encode_setacl(struct xdr_stream *xdr,
+			  const struct nfs_setaclargs *arg,
+			  struct compound_hdr *hdr)
+{
+	__u32 bitmap[2];
+
+	nfs4_acltype_to_bitmap(arg->acl_type, bitmap);
 
 	encode_op_hdr(xdr, OP_SETATTR, decode_setacl_maxsz, hdr);
 	encode_nfs4_stateid(xdr, &zero_stateid);
-	p = reserve_space(xdr, 2*4);
-	*p++ = cpu_to_be32(1);
-	*p = cpu_to_be32(FATTR4_WORD0_ACL);
-	p = reserve_space(xdr, 4);
-	*p = cpu_to_be32(arg->acl_len);
+	xdr_encode_bitmap4(xdr, bitmap, ARRAY_SIZE(bitmap));
+	encode_uint32(xdr, arg->acl_len);
 	xdr_write_pages(xdr, arg->acl_pages, 0, arg->acl_len);
 }
 
@@ -2587,10 +2603,10 @@ static void nfs4_xdr_enc_getacl(struct rpc_rqst *req, struct xdr_stream *xdr,
 	struct compound_hdr hdr = {
 		.minorversion = nfs4_xdr_minorversion(&args->seq_args),
 	};
-	const __u32 nfs4_acl_bitmap[1] = {
-		[0] = FATTR4_WORD0_ACL,
-	};
+	__u32 nfs4_acl_bitmap[2];
 	uint32_t replen;
+
+	nfs4_acltype_to_bitmap(args->acl_type, nfs4_acl_bitmap);
 
 	encode_compound_hdr(xdr, req, &hdr);
 	encode_sequence(xdr, &args->seq_args, &hdr);
@@ -3533,6 +3549,42 @@ static int decode_attr_aclsupport(struct xdr_stream *xdr, uint32_t *bitmap, uint
 	return 0;
 }
 
+static int decode_attr_case_insensitive(struct xdr_stream *xdr, uint32_t *bitmap, uint32_t *res)
+{
+	__be32 *p;
+
+	*res = 0;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_CASE_INSENSITIVE - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_CASE_INSENSITIVE)) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
+		*res = be32_to_cpup(p);
+		bitmap[0] &= ~FATTR4_WORD0_CASE_INSENSITIVE;
+	}
+	dprintk("%s: case_insensitive=%s\n", __func__, *res == 0 ? "false" : "true");
+	return 0;
+}
+
+static int decode_attr_case_preserving(struct xdr_stream *xdr, uint32_t *bitmap, uint32_t *res)
+{
+	__be32 *p;
+
+	*res = 0;
+	if (unlikely(bitmap[0] & (FATTR4_WORD0_CASE_PRESERVING - 1U)))
+		return -EIO;
+	if (likely(bitmap[0] & FATTR4_WORD0_CASE_PRESERVING)) {
+		p = xdr_inline_decode(xdr, 4);
+		if (unlikely(!p))
+			return -EIO;
+		*res = be32_to_cpup(p);
+		bitmap[0] &= ~FATTR4_WORD0_CASE_PRESERVING;
+	}
+	dprintk("%s: case_preserving=%s\n", __func__, *res == 0 ? "false" : "true");
+	return 0;
+}
+
 static int decode_attr_fileid(struct xdr_stream *xdr, uint32_t *bitmap, uint64_t *fileid)
 {
 	__be32 *p;
@@ -3696,8 +3748,6 @@ static int decode_attr_fs_locations(struct xdr_stream *xdr, uint32_t *bitmap, st
 	if (unlikely(!p))
 		goto out_eio;
 	n = be32_to_cpup(p);
-	if (n <= 0)
-		goto out_eio;
 	for (res->nlocations = 0; res->nlocations < n; res->nlocations++) {
 		u32 m;
 		struct nfs4_fs_location *loc;
@@ -4200,10 +4250,11 @@ static int decode_attr_security_label(struct xdr_stream *xdr, uint32_t *bitmap,
 		} else
 			printk(KERN_WARNING "%s: label too long (%u)!\n",
 					__func__, len);
+		if (label && label->label)
+			dprintk("%s: label=%.*s, len=%d, PI=%d, LFS=%d\n",
+				__func__, label->len, (char *)label->label,
+				label->len, label->pi, label->lfs);
 	}
-	if (label && label->label)
-		dprintk("%s: label=%s, len=%d, PI=%d, LFS=%d\n", __func__,
-			(char *)label->label, label->len, label->pi, label->lfs);
 	return status;
 }
 
@@ -4411,6 +4462,10 @@ static int decode_server_caps(struct xdr_stream *xdr, struct nfs4_server_caps_re
 	if ((status = decode_attr_symlink_support(xdr, bitmap, &res->has_symlinks)) != 0)
 		goto xdr_error;
 	if ((status = decode_attr_aclsupport(xdr, bitmap, &res->acl_bitmask)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_case_insensitive(xdr, bitmap, &res->case_insensitive)) != 0)
+		goto xdr_error;
+	if ((status = decode_attr_case_preserving(xdr, bitmap, &res->case_preserving)) != 0)
 		goto xdr_error;
 	if ((status = decode_attr_exclcreat_supported(xdr, bitmap,
 				res->exclcreat_bitmask)) != 0)
@@ -5347,7 +5402,7 @@ decode_restorefh(struct xdr_stream *xdr)
 }
 
 static int decode_getacl(struct xdr_stream *xdr, struct rpc_rqst *req,
-			 struct nfs_getaclres *res)
+			 struct nfs_getaclres *res, enum nfs4_acl_type type)
 {
 	unsigned int savep;
 	uint32_t attrlen,
@@ -5365,26 +5420,39 @@ static int decode_getacl(struct xdr_stream *xdr, struct rpc_rqst *req,
 	if ((status = decode_attr_length(xdr, &attrlen, &savep)) != 0)
 		goto out;
 
-	if (unlikely(bitmap[0] & (FATTR4_WORD0_ACL - 1U)))
-		return -EIO;
-	if (likely(bitmap[0] & FATTR4_WORD0_ACL)) {
+	switch (type) {
+	default:
+		if (unlikely(bitmap[0] & (FATTR4_WORD0_ACL - 1U)))
+			return -EIO;
+		if (!(bitmap[0] & FATTR4_WORD0_ACL))
+			return -EOPNOTSUPP;
+		break;
+	case NFS4ACL_DACL:
+		if (unlikely(bitmap[0] || bitmap[1] & (FATTR4_WORD1_DACL - 1U)))
+			return -EIO;
+		if (!(bitmap[1] & FATTR4_WORD1_DACL))
+			return -EOPNOTSUPP;
+		break;
+	case NFS4ACL_SACL:
+		if (unlikely(bitmap[0] || bitmap[1] & (FATTR4_WORD1_SACL - 1U)))
+			return -EIO;
+		if (!(bitmap[1] & FATTR4_WORD1_SACL))
+			return -EOPNOTSUPP;
+	}
 
-		/* The bitmap (xdr len + bitmaps) and the attr xdr len words
-		 * are stored with the acl data to handle the problem of
-		 * variable length bitmaps.*/
-		res->acl_data_offset = xdr_page_pos(xdr);
-		res->acl_len = attrlen;
+	/* The bitmap (xdr len + bitmaps) and the attr xdr len words
+	 * are stored with the acl data to handle the problem of
+	 * variable length bitmaps.*/
+	res->acl_data_offset = xdr_page_pos(xdr);
+	res->acl_len = attrlen;
 
-		/* Check for receive buffer overflow */
-		if (res->acl_len > xdr_stream_remaining(xdr) ||
-		    res->acl_len + res->acl_data_offset > xdr->buf->page_len) {
-			res->acl_flags |= NFS4_ACL_TRUNC;
-			dprintk("NFS: acl reply: attrlen %u > page_len %zu\n",
-				attrlen, xdr_stream_remaining(xdr));
-		}
-	} else
-		status = -EOPNOTSUPP;
-
+	/* Check for receive buffer overflow */
+	if (res->acl_len > xdr_stream_remaining(xdr) ||
+	    res->acl_len + res->acl_data_offset > xdr->buf->page_len) {
+		res->acl_flags |= NFS4_ACL_TRUNC;
+		dprintk("NFS: acl reply: attrlen %u > page_len %zu\n",
+			attrlen, xdr_stream_remaining(xdr));
+	}
 out:
 	return status;
 }
@@ -6447,7 +6515,7 @@ nfs4_xdr_dec_getacl(struct rpc_rqst *rqstp, struct xdr_stream *xdr,
 	status = decode_putfh(xdr);
 	if (status)
 		goto out;
-	status = decode_getacl(xdr, rqstp, res);
+	status = decode_getacl(xdr, rqstp, res, res->acl_type);
 
 out:
 	return status;
@@ -7012,7 +7080,7 @@ static int nfs4_xdr_dec_fs_locations(struct rpc_rqst *req,
 	if (res->migration) {
 		xdr_enter_page(xdr, PAGE_SIZE);
 		status = decode_getfattr_generic(xdr,
-					&res->fs_locations->fattr,
+					res->fs_locations->fattr,
 					 NULL, res->fs_locations,
 					 res->fs_locations->server);
 		if (status)
@@ -7025,7 +7093,7 @@ static int nfs4_xdr_dec_fs_locations(struct rpc_rqst *req,
 			goto out;
 		xdr_enter_page(xdr, PAGE_SIZE);
 		status = decode_getfattr_generic(xdr,
-					&res->fs_locations->fattr,
+					res->fs_locations->fattr,
 					 NULL, res->fs_locations,
 					 res->fs_locations->server);
 	}
@@ -7469,7 +7537,6 @@ int nfs4_decode_dirent(struct xdr_stream *xdr, struct nfs_entry *entry,
 	if (entry->fattr->valid & NFS_ATTR_FATTR_TYPE)
 		entry->d_type = nfs_umode_to_dtype(entry->fattr->mode);
 
-	entry->prev_cookie = entry->cookie;
 	entry->cookie = new_cookie;
 
 	return 0;

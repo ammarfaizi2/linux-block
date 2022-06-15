@@ -3,7 +3,6 @@
 
 #include <linux/interrupt.h>
 #include <linux/notifier.h>
-#include <linux/module.h>
 #include <linux/mlx5/driver.h>
 #include "mlx5_core.h"
 #include "mlx5_irq.h"
@@ -95,8 +94,8 @@ int mlx5_set_msix_vec_count(struct mlx5_core_dev *dev, int function_id,
 	if (msix_vec_count > max_msix)
 		return -EOVERFLOW;
 
-	query_cap = kzalloc(query_sz, GFP_KERNEL);
-	hca_cap = kzalloc(set_sz, GFP_KERNEL);
+	query_cap = kvzalloc(query_sz, GFP_KERNEL);
+	hca_cap = kvzalloc(set_sz, GFP_KERNEL);
 	if (!hca_cap || !query_cap) {
 		ret = -ENOMEM;
 		goto out;
@@ -119,8 +118,8 @@ int mlx5_set_msix_vec_count(struct mlx5_core_dev *dev, int function_id,
 		 MLX5_SET_HCA_CAP_OP_MOD_GENERAL_DEVICE << 1);
 	ret = mlx5_cmd_exec_in(dev, set_hca_cap, hca_cap);
 out:
-	kfree(hca_cap);
-	kfree(query_cap);
+	kvfree(hca_cap);
+	kvfree(query_cap);
 	return ret;
 }
 
@@ -129,11 +128,11 @@ static void irq_release(struct mlx5_irq *irq)
 	struct mlx5_irq_pool *pool = irq->pool;
 
 	xa_erase(&pool->irqs, irq->index);
-	/* free_irq requires that affinity and rmap will be cleared
+	/* free_irq requires that affinity_hint and rmap will be cleared
 	 * before calling it. This is why there is asymmetry with set_rmap
 	 * which should be called after alloc_irq but before request_irq.
 	 */
-	irq_set_affinity_hint(irq->irqn, NULL);
+	irq_update_affinity_hint(irq->irqn, NULL);
 	free_cpumask_var(irq->mask);
 	free_irq(irq->irqn, &irq->nh);
 	kfree(irq);
@@ -238,7 +237,7 @@ struct mlx5_irq *mlx5_irq_alloc(struct mlx5_irq_pool *pool, int i,
 	}
 	if (affinity) {
 		cpumask_copy(irq->mask, affinity);
-		irq_set_affinity_hint(irq->irqn, irq->mask);
+		irq_set_affinity_and_hint(irq->irqn, irq->mask);
 	}
 	irq->pool = pool;
 	irq->refcount = 1;
@@ -251,7 +250,7 @@ struct mlx5_irq *mlx5_irq_alloc(struct mlx5_irq_pool *pool, int i,
 	}
 	return irq;
 err_xa:
-	irq_set_affinity_hint(irq->irqn, NULL);
+	irq_update_affinity_hint(irq->irqn, NULL);
 	free_cpumask_var(irq->mask);
 err_cpumask:
 	free_irq(irq->irqn, &irq->nh);
@@ -601,7 +600,8 @@ int mlx5_irq_table_init(struct mlx5_core_dev *dev)
 	if (mlx5_core_is_sf(dev))
 		return 0;
 
-	irq_table = kvzalloc(sizeof(*irq_table), GFP_KERNEL);
+	irq_table = kvzalloc_node(sizeof(*irq_table), GFP_KERNEL,
+				  dev->priv.numa_node);
 	if (!irq_table)
 		return -ENOMEM;
 

@@ -42,8 +42,7 @@ properties:
   gpio-ranges:
     maxItems: 1
 
-  wakeup-parent:
-    maxItems: 1
+  wakeup-parent: true
 
 #PIN CONFIGURATION NODES
 patternProperties:
@@ -117,6 +116,9 @@ patternProperties:
       - pins
 
     additionalProperties: false
+
+allOf:
+  - $ref: "pinctrl.yaml#"
 
 required:
   - compatible

@@ -25,6 +25,34 @@ int sysctl_max_rcu_stall_to_panic __read_mostly;
 #define RCU_STALL_MIGHT_DIV		8
 #define RCU_STALL_MIGHT_MIN		(2 * HZ)
 
+int rcu_exp_jiffies_till_stall_check(void)
+{
+	int cpu_stall_timeout = READ_ONCE(rcu_exp_cpu_stall_timeout);
+	int exp_stall_delay_delta = 0;
+	int till_stall_check;
+
+	// Zero says to use rcu_cpu_stall_timeout, but in milliseconds.
+	if (!cpu_stall_timeout)
+		cpu_stall_timeout = jiffies_to_msecs(rcu_jiffies_till_stall_check());
+
+	// Limit check must be consistent with the Kconfig limits for
+	// CONFIG_RCU_EXP_CPU_STALL_TIMEOUT, so check the allowed range.
+	// The minimum clamped value is "2UL", because at least one full
+	// tick has to be guaranteed.
+	till_stall_check = clamp(msecs_to_jiffies(cpu_stall_timeout), 2UL, 21UL * HZ);
+
+	if (cpu_stall_timeout && jiffies_to_msecs(till_stall_check) != cpu_stall_timeout)
+		WRITE_ONCE(rcu_exp_cpu_stall_timeout, jiffies_to_msecs(till_stall_check));
+
+#ifdef CONFIG_PROVE_RCU
+	/* Add extra ~25% out of till_stall_check. */
+	exp_stall_delay_delta = ((till_stall_check * 25) / 100) + 1;
+#endif
+
+	return till_stall_check + exp_stall_delay_delta;
+}
+EXPORT_SYMBOL_GPL(rcu_exp_jiffies_till_stall_check);
+
 /* Limit-check stall timeouts specified at boottime and runtime. */
 int rcu_jiffies_till_stall_check(void)
 {
@@ -347,26 +375,6 @@ static void rcu_dump_cpu_stacks(void)
 	}
 }
 
-#ifdef CONFIG_RCU_FAST_NO_HZ
-
-static void print_cpu_stall_fast_no_hz(char *cp, int cpu)
-{
-	struct rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
-
-	sprintf(cp, "last_accelerate: %04lx/%04lx dyntick_enabled: %d",
-		rdp->last_accelerate & 0xffff, jiffies & 0xffff,
-		!!rdp->tick_nohz_enabled_snap);
-}
-
-#else /* #ifdef CONFIG_RCU_FAST_NO_HZ */
-
-static void print_cpu_stall_fast_no_hz(char *cp, int cpu)
-{
-	*cp = '\0';
-}
-
-#endif /* #else #ifdef CONFIG_RCU_FAST_NO_HZ */
-
 static const char * const gp_state_names[] = {
 	[RCU_GP_IDLE] = "RCU_GP_IDLE",
 	[RCU_GP_WAIT_GPS] = "RCU_GP_WAIT_GPS",
@@ -399,6 +407,15 @@ static bool rcu_is_gp_kthread_starving(unsigned long *jp)
 	return j > 2 * HZ;
 }
 
+static bool rcu_is_rcuc_kthread_starving(struct rcu_data *rdp, unsigned long *jp)
+{
+	unsigned long j = jiffies - READ_ONCE(rdp->rcuc_activity);
+
+	if (jp)
+		*jp = j;
+	return j > 2 * HZ;
+}
+
 /*
  * Print out diagnostic information for the specified stalled CPU.
  *
@@ -408,13 +425,12 @@ static bool rcu_is_gp_kthread_starving(unsigned long *jp)
  * of RCU grace periods that this CPU is ignorant of, for example, "1"
  * if the CPU was aware of the previous grace period.
  *
- * Also print out idle and (if CONFIG_RCU_FAST_NO_HZ) idle-entry info.
+ * Also print out idle info.
  */
 static void print_cpu_stall_info(int cpu)
 {
 	unsigned long delta;
 	bool falsepositive;
-	char fast_no_hz[72];
 	struct rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
 	char *ticks_title;
 	unsigned long ticks_value;
@@ -432,11 +448,10 @@ static void print_cpu_stall_info(int cpu)
 		ticks_title = "ticks this GP";
 		ticks_value = rdp->ticks_this_gp;
 	}
-	print_cpu_stall_fast_no_hz(fast_no_hz, cpu);
 	delta = rcu_seq_ctr(rdp->mynode->gp_seq - rdp->rcu_iw_gp_seq);
 	falsepositive = rcu_is_gp_kthread_starving(NULL) &&
 			rcu_dynticks_in_eqs(rcu_dynticks_snap(rdp));
-	pr_err("\t%d-%c%c%c%c: (%lu %s) idle=%03x/%ld/%#lx softirq=%u/%u fqs=%ld %s%s\n",
+	pr_err("\t%d-%c%c%c%c: (%lu %s) idle=%03x/%ld/%#lx softirq=%u/%u fqs=%ld %s\n",
 	       cpu,
 	       "O."[!!cpu_online(cpu)],
 	       "o."[!!(rdp->grpmask & rdp->mynode->qsmaskinit)],
@@ -449,8 +464,30 @@ static void print_cpu_stall_info(int cpu)
 	       rdp->dynticks_nesting, rdp->dynticks_nmi_nesting,
 	       rdp->softirq_snap, kstat_softirqs_cpu(RCU_SOFTIRQ, cpu),
 	       data_race(rcu_state.n_force_qs) - rcu_state.n_force_qs_gpstart,
-	       fast_no_hz,
 	       falsepositive ? " (false positive?)" : "");
+}
+
+static void rcuc_kthread_dump(struct rcu_data *rdp)
+{
+	int cpu;
+	unsigned long j;
+	struct task_struct *rcuc;
+
+	rcuc = rdp->rcu_cpu_kthread_task;
+	if (!rcuc)
+		return;
+
+	cpu = task_cpu(rcuc);
+	if (cpu_is_offline(cpu) || idle_cpu(cpu))
+		return;
+
+	if (!rcu_is_rcuc_kthread_starving(rdp, &j))
+		return;
+
+	pr_err("%s kthread starved for %ld jiffies\n", rcuc->comm, j);
+	sched_show_task(rcuc);
+	if (!trigger_single_cpu_backtrace(cpu))
+		dump_cpu_task(cpu);
 }
 
 /* Complain about starvation of grace-period kthread.  */
@@ -556,9 +593,9 @@ static void print_other_cpu_stall(unsigned long gp_seq, unsigned long gps)
 
 	for_each_possible_cpu(cpu)
 		totqlen += rcu_get_n_cbs_cpu(cpu);
-	pr_cont("\t(detected by %d, t=%ld jiffies, g=%ld, q=%lu)\n",
+	pr_cont("\t(detected by %d, t=%ld jiffies, g=%ld, q=%lu ncpus=%d)\n",
 	       smp_processor_id(), (long)(jiffies - gps),
-	       (long)rcu_seq_current(&rcu_state.gp_seq), totqlen);
+	       (long)rcu_seq_current(&rcu_state.gp_seq), totqlen, rcu_state.n_online_cpus);
 	if (ndetected) {
 		rcu_dump_cpu_stacks();
 
@@ -610,6 +647,7 @@ static void print_cpu_stall(unsigned long gps)
 	 * See Documentation/RCU/stallwarn.rst for info on how to debug
 	 * RCU CPU stall warnings.
 	 */
+	printk_prefer_direct_enter();
 	trace_rcu_stall_warning(rcu_state.name, TPS("SelfDetected"));
 	pr_err("INFO: %s self-detected stall on CPU\n", rcu_state.name);
 	raw_spin_lock_irqsave_rcu_node(rdp->mynode, flags);
@@ -617,12 +655,15 @@ static void print_cpu_stall(unsigned long gps)
 	raw_spin_unlock_irqrestore_rcu_node(rdp->mynode, flags);
 	for_each_possible_cpu(cpu)
 		totqlen += rcu_get_n_cbs_cpu(cpu);
-	pr_cont("\t(t=%lu jiffies g=%ld q=%lu)\n",
+	pr_cont("\t(t=%lu jiffies g=%ld q=%lu ncpus=%d)\n",
 		jiffies - gps,
-		(long)rcu_seq_current(&rcu_state.gp_seq), totqlen);
+		(long)rcu_seq_current(&rcu_state.gp_seq), totqlen, rcu_state.n_online_cpus);
 
 	rcu_check_gp_kthread_expired_fqs_timer();
 	rcu_check_gp_kthread_starvation();
+
+	if (!use_softirq)
+		rcuc_kthread_dump(rdp);
 
 	rcu_dump_cpu_stacks();
 
@@ -644,6 +685,7 @@ static void print_cpu_stall(unsigned long gps)
 	 */
 	set_tsk_need_resched(current);
 	set_preempt_need_resched();
+	printk_prefer_direct_exit();
 }
 
 static void check_cpu_stall(struct rcu_data *rdp)

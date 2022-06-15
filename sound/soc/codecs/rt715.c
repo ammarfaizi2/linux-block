@@ -745,6 +745,7 @@ static const struct snd_soc_component_driver soc_codec_dev_rt715 = {
 	.num_dapm_widgets = ARRAY_SIZE(rt715_dapm_widgets),
 	.dapm_routes = rt715_audio_map,
 	.num_dapm_routes = ARRAY_SIZE(rt715_audio_map),
+	.endianness = 1,
 };
 
 static int rt715_set_sdw_stream(struct snd_soc_dai *dai, void *sdw_stream,
@@ -909,7 +910,7 @@ static int rt715_pcm_hw_free(struct snd_pcm_substream *substream,
 static const struct snd_soc_dai_ops rt715_ops = {
 	.hw_params	= rt715_pcm_hw_params,
 	.hw_free	= rt715_pcm_hw_free,
-	.set_sdw_stream	= rt715_set_sdw_stream,
+	.set_stream	= rt715_set_sdw_stream,
 	.shutdown	= rt715_shutdown,
 };
 

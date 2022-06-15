@@ -146,13 +146,13 @@ int bnxt_re_query_device(struct ib_device *ibdev,
 				    | IB_DEVICE_RC_RNR_NAK_GEN
 				    | IB_DEVICE_SHUTDOWN_PORT
 				    | IB_DEVICE_SYS_IMAGE_GUID
-				    | IB_DEVICE_LOCAL_DMA_LKEY
 				    | IB_DEVICE_RESIZE_MAX_WR
 				    | IB_DEVICE_PORT_ACTIVE_EVENT
 				    | IB_DEVICE_N_NOTIFY_CQ
 				    | IB_DEVICE_MEM_WINDOW
 				    | IB_DEVICE_MEM_WINDOW_TYPE_2B
 				    | IB_DEVICE_MEM_MGT_EXTENSIONS;
+	ib_attr->kernel_cap_flags = IBK_LOCAL_DMA_LKEY;
 	ib_attr->max_send_sge = dev_attr->max_qp_sges;
 	ib_attr->max_recv_sge = dev_attr->max_qp_sges;
 	ib_attr->max_sge_rd = dev_attr->max_qp_sges;
@@ -262,13 +262,12 @@ void bnxt_re_query_fw_str(struct ib_device *ibdev, char *str)
 int bnxt_re_query_pkey(struct ib_device *ibdev, u32 port_num,
 		       u16 index, u16 *pkey)
 {
-	struct bnxt_re_dev *rdev = to_bnxt_re_dev(ibdev, ibdev);
+	if (index > 0)
+		return -EINVAL;
 
-	/* Ignore port_num */
+	*pkey = IB_DEFAULT_PKEY_FULL;
 
-	memset(pkey, 0, sizeof(*pkey));
-	return bnxt_qplib_get_pkey(&rdev->qplib_res,
-				   &rdev->qplib_res.pkey_tbl, index, pkey);
+	return 0;
 }
 
 int bnxt_re_query_gid(struct ib_device *ibdev, u32 port_num,

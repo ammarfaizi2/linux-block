@@ -54,13 +54,8 @@ static ssize_t blk_ia_range_sysfs_show(struct kobject *kobj,
 		container_of(attr, struct blk_ia_range_sysfs_entry, attr);
 	struct blk_independent_access_range *iar =
 		container_of(kobj, struct blk_independent_access_range, kobj);
-	ssize_t ret;
 
-	mutex_lock(&iar->queue->sysfs_lock);
-	ret = entry->show(iar, buf);
-	mutex_unlock(&iar->queue->sysfs_lock);
-
-	return ret;
+	return entry->show(iar, buf);
 }
 
 static const struct sysfs_ops blk_ia_range_sysfs_ops = {
@@ -144,7 +139,7 @@ int disk_register_independent_access_ranges(struct gendisk *disk,
 				   &q->kobj, "%s", "independent_access_ranges");
 	if (ret) {
 		q->ia_ranges = NULL;
-		kfree(iars);
+		kobject_put(&iars->kobj);
 		return ret;
 	}
 

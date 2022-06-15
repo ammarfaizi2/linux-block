@@ -510,7 +510,7 @@ static ssize_t iio_scan_el_store(struct device *dev,
 	struct iio_dev_attr *this_attr = to_iio_dev_attr(attr);
 	struct iio_buffer *buffer = this_attr->buffer;
 
-	ret = strtobool(buf, &state);
+	ret = kstrtobool(buf, &state);
 	if (ret < 0)
 		return ret;
 	mutex_lock(&indio_dev->mlock);
@@ -557,7 +557,7 @@ static ssize_t iio_scan_el_ts_store(struct device *dev,
 	struct iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
 	bool state;
 
-	ret = strtobool(buf, &state);
+	ret = kstrtobool(buf, &state);
 	if (ret < 0)
 		return ret;
 
@@ -915,7 +915,7 @@ static int iio_verify_update(struct iio_dev *indio_dev,
 		if (scan_mask == NULL)
 			return -EINVAL;
 	} else {
-	    scan_mask = compound_mask;
+		scan_mask = compound_mask;
 	}
 
 	config->scan_bytes = iio_compute_scan_bytes(indio_dev,
@@ -1059,13 +1059,13 @@ static int iio_enable_buffers(struct iio_dev *indio_dev,
 	struct iio_device_config *config)
 {
 	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
-	struct iio_buffer *buffer;
+	struct iio_buffer *buffer, *tmp = NULL;
 	int ret;
 
 	indio_dev->active_scan_mask = config->scan_mask;
 	indio_dev->scan_timestamp = config->scan_timestamp;
 	indio_dev->scan_bytes = config->scan_bytes;
-	indio_dev->currentmode = config->mode;
+	iio_dev_opaque->currentmode = config->mode;
 
 	iio_update_demux(indio_dev);
 
@@ -1097,11 +1097,13 @@ static int iio_enable_buffers(struct iio_dev *indio_dev,
 
 	list_for_each_entry(buffer, &iio_dev_opaque->buffer_list, buffer_list) {
 		ret = iio_buffer_enable(buffer, indio_dev);
-		if (ret)
+		if (ret) {
+			tmp = buffer;
 			goto err_disable_buffers;
+		}
 	}
 
-	if (indio_dev->currentmode == INDIO_BUFFER_TRIGGERED) {
+	if (iio_dev_opaque->currentmode == INDIO_BUFFER_TRIGGERED) {
 		ret = iio_trigger_attach_poll_func(indio_dev->trig,
 						   indio_dev->pollfunc);
 		if (ret)
@@ -1120,11 +1122,12 @@ static int iio_enable_buffers(struct iio_dev *indio_dev,
 	return 0;
 
 err_detach_pollfunc:
-	if (indio_dev->currentmode == INDIO_BUFFER_TRIGGERED) {
+	if (iio_dev_opaque->currentmode == INDIO_BUFFER_TRIGGERED) {
 		iio_trigger_detach_poll_func(indio_dev->trig,
 					     indio_dev->pollfunc);
 	}
 err_disable_buffers:
+	buffer = list_prepare_entry(tmp, &iio_dev_opaque->buffer_list, buffer_list);
 	list_for_each_entry_continue_reverse(buffer, &iio_dev_opaque->buffer_list,
 					     buffer_list)
 		iio_buffer_disable(buffer, indio_dev);
@@ -1132,7 +1135,7 @@ err_run_postdisable:
 	if (indio_dev->setup_ops->postdisable)
 		indio_dev->setup_ops->postdisable(indio_dev);
 err_undo_config:
-	indio_dev->currentmode = INDIO_DIRECT_MODE;
+	iio_dev_opaque->currentmode = INDIO_DIRECT_MODE;
 	indio_dev->active_scan_mask = NULL;
 
 	return ret;
@@ -1162,7 +1165,7 @@ static int iio_disable_buffers(struct iio_dev *indio_dev)
 			ret = ret2;
 	}
 
-	if (indio_dev->currentmode == INDIO_BUFFER_TRIGGERED) {
+	if (iio_dev_opaque->currentmode == INDIO_BUFFER_TRIGGERED) {
 		iio_trigger_detach_poll_func(indio_dev->trig,
 					     indio_dev->pollfunc);
 	}
@@ -1181,7 +1184,7 @@ static int iio_disable_buffers(struct iio_dev *indio_dev)
 
 	iio_free_scan_mask(indio_dev, indio_dev->active_scan_mask);
 	indio_dev->active_scan_mask = NULL;
-	indio_dev->currentmode = INDIO_DIRECT_MODE;
+	iio_dev_opaque->currentmode = INDIO_DIRECT_MODE;
 
 	return ret;
 }
@@ -1300,7 +1303,7 @@ static ssize_t iio_buffer_store_enable(struct device *dev,
 	struct iio_buffer *buffer = to_iio_dev_attr(attr)->buffer;
 	bool inlist;
 
-	ret = strtobool(buf, &requested_state);
+	ret = kstrtobool(buf, &requested_state);
 	if (ret < 0)
 		return ret;
 
@@ -1383,9 +1386,9 @@ static ssize_t direction_show(struct device *dev,
 
 	switch (buffer->direction) {
 	case IIO_BUFFER_DIRECTION_IN:
-		return sprintf(buf, "in\n");
+		return sysfs_emit(buf, "in\n");
 	case IIO_BUFFER_DIRECTION_OUT:
-		return sprintf(buf, "out\n");
+		return sysfs_emit(buf, "out\n");
 	default:
 		return -EINVAL;
 	}
@@ -1569,9 +1572,17 @@ static long iio_device_buffer_getfd(struct iio_dev *indio_dev, unsigned long arg
 	}
 
 	if (copy_to_user(ival, &fd, sizeof(fd))) {
-		put_unused_fd(fd);
-		ret = -EFAULT;
-		goto error_free_ib;
+		/*
+		 * "Leak" the fd, as there's not much we can do about this
+		 * anyway. 'fd' might have been closed already, as
+		 * anon_inode_getfd() called fd_install() on it, which made
+		 * it reachable by userland.
+		 *
+		 * Instead of allowing a malicious user to play tricks with
+		 * us, rely on the process exit path to do any necessary
+		 * cleanup, as in releasing the file, if still needed.
+		 */
+		return -EFAULT;
 	}
 
 	return 0;
@@ -1621,6 +1632,19 @@ static int __iio_buffer_alloc_sysfs_and_mask(struct iio_buffer *buffer,
 			if (channels[i].scan_index < 0)
 				continue;
 
+			/* Verify that sample bits fit into storage */
+			if (channels[i].scan_type.storagebits <
+			    channels[i].scan_type.realbits +
+			    channels[i].scan_type.shift) {
+				dev_err(&indio_dev->dev,
+					"Channel %d storagebits (%d) < shifted realbits (%d + %d)\n",
+					i, channels[i].scan_type.storagebits,
+					channels[i].scan_type.realbits,
+					channels[i].scan_type.shift);
+				ret = -EINVAL;
+				goto error_cleanup_dynamic;
+			}
+
 			ret = iio_buffer_add_channel_sysfs(indio_dev, buffer,
 							 &channels[i]);
 			if (ret < 0)
@@ -1641,7 +1665,7 @@ static int __iio_buffer_alloc_sysfs_and_mask(struct iio_buffer *buffer,
 	}
 
 	attrn = buffer_attrcount + scan_el_attrcount + ARRAY_SIZE(iio_buffer_attrs);
-	attr = kcalloc(attrn + 1, sizeof(* attr), GFP_KERNEL);
+	attr = kcalloc(attrn + 1, sizeof(*attr), GFP_KERNEL);
 	if (!attr) {
 		ret = -ENOMEM;
 		goto error_free_scan_mask;
@@ -1727,8 +1751,7 @@ int iio_buffers_alloc_sysfs_and_mask(struct iio_dev *indio_dev)
 	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
 	const struct iio_chan_spec *channels;
 	struct iio_buffer *buffer;
-	int unwind_idx;
-	int ret, i;
+	int ret, i, idx;
 	size_t sz;
 
 	channels = indio_dev->channels;
@@ -1743,15 +1766,12 @@ int iio_buffers_alloc_sysfs_and_mask(struct iio_dev *indio_dev)
 	if (!iio_dev_opaque->attached_buffers_cnt)
 		return 0;
 
-	for (i = 0; i < iio_dev_opaque->attached_buffers_cnt; i++) {
-		buffer = iio_dev_opaque->attached_buffers[i];
-		ret = __iio_buffer_alloc_sysfs_and_mask(buffer, indio_dev, i);
-		if (ret) {
-			unwind_idx = i - 1;
+	for (idx = 0; idx < iio_dev_opaque->attached_buffers_cnt; idx++) {
+		buffer = iio_dev_opaque->attached_buffers[idx];
+		ret = __iio_buffer_alloc_sysfs_and_mask(buffer, indio_dev, idx);
+		if (ret)
 			goto error_unwind_sysfs_and_mask;
-		}
 	}
-	unwind_idx = iio_dev_opaque->attached_buffers_cnt - 1;
 
 	sz = sizeof(*(iio_dev_opaque->buffer_ioctl_handler));
 	iio_dev_opaque->buffer_ioctl_handler = kzalloc(sz, GFP_KERNEL);
@@ -1767,9 +1787,9 @@ int iio_buffers_alloc_sysfs_and_mask(struct iio_dev *indio_dev)
 	return 0;
 
 error_unwind_sysfs_and_mask:
-	for (; unwind_idx >= 0; unwind_idx--) {
-		buffer = iio_dev_opaque->attached_buffers[unwind_idx];
-		__iio_buffer_free_sysfs_and_mask(buffer, indio_dev, unwind_idx);
+	while (idx--) {
+		buffer = iio_dev_opaque->attached_buffers[idx];
+		__iio_buffer_free_sysfs_and_mask(buffer, indio_dev, idx);
 	}
 	return ret;
 }

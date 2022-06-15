@@ -63,33 +63,33 @@ static const struct perf_pmu_test_event bp_l2_btb_correct = {
 static const struct perf_pmu_test_event segment_reg_loads_any = {
 	.event = {
 		.name = "segment_reg_loads.any",
-		.event = "umask=0x80,period=200000,event=0x6",
+		.event = "event=0x6,period=200000,umask=0x80",
 		.desc = "Number of segment register loads",
 		.topic = "other",
 	},
-	.alias_str = "umask=0x80,period=0x30d40,event=0x6",
+	.alias_str = "event=0x6,period=0x30d40,umask=0x80",
 	.alias_long_desc = "Number of segment register loads",
 };
 
 static const struct perf_pmu_test_event dispatch_blocked_any = {
 	.event = {
 		.name = "dispatch_blocked.any",
-		.event = "umask=0x20,period=200000,event=0x9",
+		.event = "event=0x9,period=200000,umask=0x20",
 		.desc = "Memory cluster signals to block micro-op dispatch for any reason",
 		.topic = "other",
 	},
-	.alias_str = "umask=0x20,period=0x30d40,event=0x9",
+	.alias_str = "event=0x9,period=0x30d40,umask=0x20",
 	.alias_long_desc = "Memory cluster signals to block micro-op dispatch for any reason",
 };
 
 static const struct perf_pmu_test_event eist_trans = {
 	.event = {
 		.name = "eist_trans",
-		.event = "umask=0x0,period=200000,event=0x3a",
+		.event = "event=0x3a,period=200000,umask=0x0",
 		.desc = "Number of Enhanced Intel SpeedStep(R) Technology (EIST) transitions",
 		.topic = "other",
 	},
-	.alias_str = "umask=0,period=0x30d40,event=0x3a",
+	.alias_str = "event=0x3a,period=0x30d40,umask=0",
 	.alias_long_desc = "Number of Enhanced Intel SpeedStep(R) Technology (EIST) transitions",
 };
 
@@ -132,14 +132,42 @@ static const struct perf_pmu_test_event uncore_hisi_ddrc_flux_wcmd = {
 static const struct perf_pmu_test_event unc_cbo_xsnp_response_miss_eviction = {
 	.event = {
 		.name = "unc_cbo_xsnp_response.miss_eviction",
-		.event = "umask=0x81,event=0x22",
-		.desc = "Unit: uncore_cbox A cross-core snoop resulted from L3 Eviction which misses in some processor core",
+		.event = "event=0x22,umask=0x81",
+		.desc = "A cross-core snoop resulted from L3 Eviction which misses in some processor core. Unit: uncore_cbox ",
 		.topic = "uncore",
 		.long_desc = "A cross-core snoop resulted from L3 Eviction which misses in some processor core",
 		.pmu = "uncore_cbox",
 	},
-	.alias_str = "umask=0x81,event=0x22",
+	.alias_str = "event=0x22,umask=0x81",
 	.alias_long_desc = "A cross-core snoop resulted from L3 Eviction which misses in some processor core",
+	.matching_pmu = "uncore_cbox_0",
+};
+
+static const struct perf_pmu_test_event uncore_hyphen = {
+	.event = {
+		.name = "event-hyphen",
+		.event = "event=0xe0,umask=0x00",
+		.desc = "UNC_CBO_HYPHEN. Unit: uncore_cbox ",
+		.topic = "uncore",
+		.long_desc = "UNC_CBO_HYPHEN",
+		.pmu = "uncore_cbox",
+	},
+	.alias_str = "event=0xe0,umask=0",
+	.alias_long_desc = "UNC_CBO_HYPHEN",
+	.matching_pmu = "uncore_cbox_0",
+};
+
+static const struct perf_pmu_test_event uncore_two_hyph = {
+	.event = {
+		.name = "event-two-hyph",
+		.event = "event=0xc0,umask=0x00",
+		.desc = "UNC_CBO_TWO_HYPH. Unit: uncore_cbox ",
+		.topic = "uncore",
+		.long_desc = "UNC_CBO_TWO_HYPH",
+		.pmu = "uncore_cbox",
+	},
+	.alias_str = "event=0xc0,umask=0",
+	.alias_long_desc = "UNC_CBO_TWO_HYPH",
 	.matching_pmu = "uncore_cbox_0",
 };
 
@@ -188,6 +216,8 @@ static const struct perf_pmu_test_event uncore_imc_cache_hits = {
 static const struct perf_pmu_test_event *uncore_events[] = {
 	&uncore_hisi_ddrc_flux_wcmd,
 	&unc_cbo_xsnp_response_miss_eviction,
+	&uncore_hyphen,
+	&uncore_two_hyph,
 	&uncore_hisi_l3c_rd_hit_cpipe,
 	&uncore_imc_free_running_cache_miss,
 	&uncore_imc_cache_hits,
@@ -654,6 +684,8 @@ static struct perf_pmu_test_pmu test_pmus[] = {
 		},
 		.aliases = {
 			&unc_cbo_xsnp_response_miss_eviction,
+			&uncore_hyphen,
+			&uncore_two_hyph,
 		},
 	},
 	{
@@ -962,8 +994,18 @@ static int test__parsing(struct test_suite *test __maybe_unused,
 			}
 
 			if (expr__parse(&result, ctx, pe->metric_expr)) {
-				expr_failure("Parse failed", map, pe);
-				ret++;
+				/*
+				 * Parsing failed, make numbers go from large to
+				 * small which can resolve divide by zero
+				 * issues.
+				 */
+				k = 1024;
+				hashmap__for_each_entry(ctx->ids, cur, bkt)
+					expr__add_id_val(ctx, strdup(cur->key), k--);
+				if (expr__parse(&result, ctx, pe->metric_expr)) {
+					expr_failure("Parse failed", map, pe);
+					ret++;
+				}
 			}
 		}
 	}
@@ -1022,10 +1064,20 @@ static int metric_parse_fake(const char *str)
 		}
 	}
 
-	if (expr__parse(&result, ctx, str))
-		pr_err("expr__parse failed\n");
-	else
-		ret = 0;
+	ret = 0;
+	if (expr__parse(&result, ctx, str)) {
+		/*
+		 * Parsing failed, make numbers go from large to small which can
+		 * resolve divide by zero issues.
+		 */
+		i = 1024;
+		hashmap__for_each_entry(ctx->ids, cur, bkt)
+			expr__add_id_val(ctx, strdup(cur->key), i--);
+		if (expr__parse(&result, ctx, str)) {
+			pr_err("expr__parse failed\n");
+			ret = -1;
+		}
+	}
 
 out:
 	expr__ctx_free(ctx);

@@ -15,28 +15,13 @@
 #include <linux/platform_device.h>
 #include <linux/spi/spi.h>
 
-#include <sound/cs35l41.h>
 #include "cs35l41.h"
-
-static struct regmap_config cs35l41_regmap_spi = {
-	.reg_bits = 32,
-	.val_bits = 32,
-	.pad_bits = 16,
-	.reg_stride = CS35L41_REGSTRIDE,
-	.reg_format_endian = REGMAP_ENDIAN_BIG,
-	.val_format_endian = REGMAP_ENDIAN_BIG,
-	.max_register = CS35L41_LASTREG,
-	.reg_defaults = cs35l41_reg,
-	.num_reg_defaults = ARRAY_SIZE(cs35l41_reg),
-	.volatile_reg = cs35l41_volatile_reg,
-	.readable_reg = cs35l41_readable_reg,
-	.precious_reg = cs35l41_precious_reg,
-	.cache_type = REGCACHE_RBTREE,
-};
 
 static const struct spi_device_id cs35l41_id_spi[] = {
 	{ "cs35l40", 0 },
 	{ "cs35l41", 0 },
+	{ "cs35l51", 0 },
+	{ "cs35l53", 0 },
 	{}
 };
 
@@ -45,7 +30,7 @@ MODULE_DEVICE_TABLE(spi, cs35l41_id_spi);
 static int cs35l41_spi_probe(struct spi_device *spi)
 {
 	const struct regmap_config *regmap_config = &cs35l41_regmap_spi;
-	struct cs35l41_platform_data *pdata = dev_get_platdata(&spi->dev);
+	struct cs35l41_hw_cfg *hw_cfg = dev_get_platdata(&spi->dev);
 	struct cs35l41_private *cs35l41;
 	int ret;
 
@@ -67,16 +52,14 @@ static int cs35l41_spi_probe(struct spi_device *spi)
 	cs35l41->dev = &spi->dev;
 	cs35l41->irq = spi->irq;
 
-	return cs35l41_probe(cs35l41, pdata);
+	return cs35l41_probe(cs35l41, hw_cfg);
 }
 
-static int cs35l41_spi_remove(struct spi_device *spi)
+static void cs35l41_spi_remove(struct spi_device *spi)
 {
 	struct cs35l41_private *cs35l41 = spi_get_drvdata(spi);
 
 	cs35l41_remove(cs35l41);
-
-	return 0;
 }
 
 #ifdef CONFIG_OF
@@ -99,6 +82,7 @@ MODULE_DEVICE_TABLE(acpi, cs35l41_acpi_match);
 static struct spi_driver cs35l41_spi_driver = {
 	.driver = {
 		.name		= "cs35l41",
+		.pm		= &cs35l41_pm_ops,
 		.of_match_table = of_match_ptr(cs35l41_of_match),
 		.acpi_match_table = ACPI_PTR(cs35l41_acpi_match),
 	},

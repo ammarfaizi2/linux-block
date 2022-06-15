@@ -6,9 +6,6 @@
  * Originally from swsusp.
  */
 
-
-#undef DEBUG
-
 #include <linux/interrupt.h>
 #include <linux/oom.h>
 #include <linux/suspend.h>
@@ -134,7 +131,7 @@ int freeze_processes(void)
 	if (!pm_freezing)
 		atomic_inc(&system_freezing_cnt);
 
-	pm_wakeup_clear(true);
+	pm_wakeup_clear(0);
 	pr_info("Freezing user space processes ... ");
 	pm_freezing = true;
 	error = try_to_freeze_tasks(true);

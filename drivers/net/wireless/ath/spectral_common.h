@@ -111,7 +111,7 @@ struct fft_sample_ath10k {
 	u8 avgpwr_db;
 	u8 max_exp;
 
-	u8 data[0];
+	u8 data[];
 } __packed;
 
 struct fft_sample_ath11k {
@@ -126,7 +126,7 @@ struct fft_sample_ath11k {
 	__be32 tsf;
 	__be32 noise;
 
-	u8 data[0];
+	u8 data[];
 } __packed;
 
 struct fft_sample_ath12k {

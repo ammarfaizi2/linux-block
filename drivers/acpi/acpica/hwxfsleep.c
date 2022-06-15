@@ -3,7 +3,7 @@
  *
  * Name: hwxfsleep.c - ACPI Hardware Sleep/Wake External Interfaces
  *
- * Copyright (C) 2000 - 2021, Intel Corp.
+ * Copyright (C) 2000 - 2022, Intel Corp.
  *
  *****************************************************************************/
 
@@ -161,8 +161,6 @@ acpi_status acpi_enter_sleep_state_s4bios(void)
 	if (ACPI_FAILURE(status)) {
 		return_ACPI_STATUS(status);
 	}
-
-	ACPI_FLUSH_CPU_CACHE();
 
 	status = acpi_hw_write_port(acpi_gbl_FADT.smi_command,
 				    (u32)acpi_gbl_FADT.s4_bios_request, 8);

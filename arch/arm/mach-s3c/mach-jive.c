@@ -236,17 +236,18 @@ static int __init jive_mtdset(char *options)
 	unsigned long set;
 
 	if (options == NULL || options[0] == '\0')
-		return 0;
+		return 1;
 
 	if (kstrtoul(options, 10, &set)) {
 		printk(KERN_ERR "failed to parse mtdset=%s\n", options);
-		return 0;
+		return 1;
 	}
 
 	switch (set) {
 	case 1:
 		nand->nr_partitions = ARRAY_SIZE(jive_imageB_nand_part);
 		nand->partitions = jive_imageB_nand_part;
+		break;
 	case 0:
 		/* this is already setup in the nand info */
 		break;
@@ -255,7 +256,7 @@ static int __init jive_mtdset(char *options)
 		       "using default.", set);
 	}
 
-	return 0;
+	return 1;
 }
 
 /* parse the mtdset= option given to the kernel command line */
@@ -676,7 +677,7 @@ static void __init jive_machine_init(void)
 MACHINE_START(JIVE, "JIVE")
 	/* Maintainer: Ben Dooks <ben-linux@fluff.org> */
 	.atag_offset	= 0x100,
-
+	.nr_irqs	= NR_IRQS_S3C2412,
 	.init_irq	= s3c2412_init_irq,
 	.map_io		= jive_map_io,
 	.init_machine	= jive_machine_init,

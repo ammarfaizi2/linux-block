@@ -260,9 +260,9 @@ static int xrx200_hw_receive(struct xrx200_chan *ch)
 
 	if (ctl & LTQ_DMA_EOP) {
 		ch->skb_head->protocol = eth_type_trans(ch->skb_head, net_dev);
-		netif_receive_skb(ch->skb_head);
 		net_dev->stats.rx_packets++;
 		net_dev->stats.rx_bytes += ch->skb_head->len;
+		netif_receive_skb(ch->skb_head);
 		ch->skb_head = NULL;
 		ch->skb_tail = NULL;
 		ret = XRX200_DMA_PACKET_COMPLETE;
@@ -615,8 +615,8 @@ static int xrx200_probe(struct platform_device *pdev)
 	/* setup NAPI */
 	netif_napi_add(net_dev, &priv->chan_rx.napi, xrx200_poll_rx,
 		       NAPI_POLL_WEIGHT);
-	netif_tx_napi_add(net_dev, &priv->chan_tx.napi, xrx200_tx_housekeeping,
-			  NAPI_POLL_WEIGHT);
+	netif_napi_add_tx(net_dev, &priv->chan_tx.napi,
+			  xrx200_tx_housekeeping);
 
 	platform_set_drvdata(pdev, priv);
 

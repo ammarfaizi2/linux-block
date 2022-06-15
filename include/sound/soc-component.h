@@ -148,6 +148,8 @@ struct snd_soc_component_driver {
 		    struct vm_area_struct *vma);
 	int (*ack)(struct snd_soc_component *component,
 		   struct snd_pcm_substream *substream);
+	snd_pcm_sframes_t (*delay)(struct snd_soc_component *component,
+				   struct snd_pcm_substream *substream);
 
 	const struct snd_compress_ops *compress_ops;
 
@@ -167,6 +169,15 @@ struct snd_soc_component_driver {
 	unsigned int idle_bias_on:1;
 	unsigned int suspend_bias_off:1;
 	unsigned int use_pmdown_time:1; /* care pmdown_time at stop */
+	/*
+	 * Indicates that the component does not care about the endianness of
+	 * PCM audio data and the core will ensure that both LE and BE variants
+	 * of each used format are present. Typically this is because the
+	 * component sits behind a bus that abstracts away the endian of the
+	 * original data, ie. one for which the transmission endian is defined
+	 * (I2S/SLIMbus/SoundWire), or the concept of endian doesn't exist (PDM,
+	 * analogue).
+	 */
 	unsigned int endianness:1;
 	unsigned int non_legacy_dai_naming:1;
 
@@ -177,6 +188,10 @@ struct snd_soc_component_driver {
 				  struct snd_pcm_hw_params *params);
 	bool use_dai_pcm_id;	/* use DAI link PCM ID as PCM device number */
 	int be_pcm_base;	/* base device ID for all BE PCMs */
+
+#ifdef CONFIG_DEBUG_FS
+	const char *debugfs_prefix;
+#endif
 };
 
 struct snd_soc_component {
@@ -505,5 +520,7 @@ int snd_soc_pcm_component_pm_runtime_get(struct snd_soc_pcm_runtime *rtd,
 void snd_soc_pcm_component_pm_runtime_put(struct snd_soc_pcm_runtime *rtd,
 					  void *stream, int rollback);
 int snd_soc_pcm_component_ack(struct snd_pcm_substream *substream);
+void snd_soc_pcm_component_delay(struct snd_pcm_substream *substream,
+				 snd_pcm_sframes_t *cpu_delay, snd_pcm_sframes_t *codec_delay);
 
 #endif /* __SOC_COMPONENT_H */

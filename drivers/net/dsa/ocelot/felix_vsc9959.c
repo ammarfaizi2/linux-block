@@ -18,11 +18,28 @@
 #include <linux/pci.h>
 #include "felix.h"
 
+#define VSC9959_NUM_PORTS		6
+
 #define VSC9959_TAS_GCL_ENTRY_MAX	63
 #define VSC9959_VCAP_POLICER_BASE	63
 #define VSC9959_VCAP_POLICER_MAX	383
 #define VSC9959_SWITCH_PCI_BAR		4
 #define VSC9959_IMDIO_PCI_BAR		0
+
+#define VSC9959_PORT_MODE_SERDES	(OCELOT_PORT_MODE_SGMII | \
+					 OCELOT_PORT_MODE_QSGMII | \
+					 OCELOT_PORT_MODE_1000BASEX | \
+					 OCELOT_PORT_MODE_2500BASEX | \
+					 OCELOT_PORT_MODE_USXGMII)
+
+static const u32 vsc9959_port_modes[VSC9959_NUM_PORTS] = {
+	VSC9959_PORT_MODE_SERDES,
+	VSC9959_PORT_MODE_SERDES,
+	VSC9959_PORT_MODE_SERDES,
+	VSC9959_PORT_MODE_SERDES,
+	OCELOT_PORT_MODE_INTERNAL,
+	OCELOT_PORT_MODE_INTERNAL,
+};
 
 static const u32 vsc9959_ana_regmap[] = {
 	REG(ANA_ADVLEARN,			0x0089a0),
@@ -622,6 +639,7 @@ static const struct ocelot_stat_layout vsc9959_stats_layout[] = {
 	{ .offset = 0x10F,	.name = "drop_green_prio_5", },
 	{ .offset = 0x110,	.name = "drop_green_prio_6", },
 	{ .offset = 0x111,	.name = "drop_green_prio_7", },
+	OCELOT_STAT_END
 };
 
 static const struct vcap_field vsc9959_vcap_es0_keys[] = {
@@ -944,14 +962,7 @@ static void vsc9959_phylink_validate(struct ocelot *ocelot, int port,
 				     unsigned long *supported,
 				     struct phylink_link_state *state)
 {
-	struct ocelot_port *ocelot_port = ocelot->ports[port];
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = { 0, };
-
-	if (state->interface != PHY_INTERFACE_MODE_NA &&
-	    state->interface != ocelot_port->phy_mode) {
-		linkmode_zero(supported);
-		return;
-	}
 
 	phylink_set_port_modes(mask);
 	phylink_set(mask, Autoneg);
@@ -963,6 +974,7 @@ static void vsc9959_phylink_validate(struct ocelot *ocelot, int port,
 	phylink_set(mask, 100baseT_Full);
 	phylink_set(mask, 1000baseT_Half);
 	phylink_set(mask, 1000baseT_Full);
+	phylink_set(mask, 1000baseX_Full);
 
 	if (state->interface == PHY_INTERFACE_MODE_INTERNAL ||
 	    state->interface == PHY_INTERFACE_MODE_2500BASEX ||
@@ -973,27 +985,6 @@ static void vsc9959_phylink_validate(struct ocelot *ocelot, int port,
 
 	linkmode_and(supported, supported, mask);
 	linkmode_and(state->advertising, state->advertising, mask);
-}
-
-static int vsc9959_prevalidate_phy_mode(struct ocelot *ocelot, int port,
-					phy_interface_t phy_mode)
-{
-	switch (phy_mode) {
-	case PHY_INTERFACE_MODE_INTERNAL:
-		if (port != 4 && port != 5)
-			return -ENOTSUPP;
-		return 0;
-	case PHY_INTERFACE_MODE_SGMII:
-	case PHY_INTERFACE_MODE_QSGMII:
-	case PHY_INTERFACE_MODE_USXGMII:
-	case PHY_INTERFACE_MODE_2500BASEX:
-		/* Not supported on internal to-CPU ports */
-		if (port == 4 || port == 5)
-			return -ENOTSUPP;
-		return 0;
-	default:
-		return -ENOTSUPP;
-	}
 }
 
 /* Watermark encode
@@ -1061,7 +1052,7 @@ static int vsc9959_mdio_bus_alloc(struct ocelot *ocelot)
 		return PTR_ERR(hw);
 	}
 
-	bus = devm_mdiobus_alloc_size(dev, sizeof(*mdio_priv));
+	bus = mdiobus_alloc_size(sizeof(*mdio_priv));
 	if (!bus)
 		return -ENOMEM;
 
@@ -1081,6 +1072,7 @@ static int vsc9959_mdio_bus_alloc(struct ocelot *ocelot)
 	rc = mdiobus_register(bus);
 	if (rc < 0) {
 		dev_err(dev, "failed to register MDIO bus\n");
+		mdiobus_free(bus);
 		return rc;
 	}
 
@@ -1132,6 +1124,7 @@ static void vsc9959_mdio_bus_free(struct ocelot *ocelot)
 		lynx_pcs_destroy(phylink_pcs);
 	}
 	mdiobus_unregister(felix->imdio);
+	mdiobus_free(felix->imdio);
 }
 
 static void vsc9959_sched_speed_set(struct ocelot *ocelot, int port,
@@ -1938,6 +1931,10 @@ static int vsc9959_psfp_filter_add(struct ocelot *ocelot, int port,
 		case FLOW_ACTION_GATE:
 			size = struct_size(sgi, entries, a->gate.num_entries);
 			sgi = kzalloc(size, GFP_KERNEL);
+			if (!sgi) {
+				ret = -ENOMEM;
+				goto err;
+			}
 			vsc9959_psfp_parse_gate(a, sgi);
 			ret = vsc9959_psfp_sgi_table_add(ocelot, sgi);
 			if (ret) {
@@ -2165,7 +2162,8 @@ static void vsc9959_cut_through_fwd(struct ocelot *ocelot)
 			if (ocelot->npi >= 0)
 				mask |= BIT(ocelot->npi);
 			else
-				mask |= ocelot_get_dsa_8021q_cpu_mask(ocelot);
+				mask |= ocelot_port_assigned_dsa_8021q_cpu_mask(ocelot,
+										port);
 		}
 
 		/* Calculate the minimum link speed, among the ports that are
@@ -2222,21 +2220,20 @@ static const struct felix_info felix_info_vsc9959 = {
 	.map			= vsc9959_regmap,
 	.ops			= &vsc9959_ops,
 	.stats_layout		= vsc9959_stats_layout,
-	.num_stats		= ARRAY_SIZE(vsc9959_stats_layout),
 	.vcap			= vsc9959_vcap_props,
 	.vcap_pol_base		= VSC9959_VCAP_POLICER_BASE,
 	.vcap_pol_max		= VSC9959_VCAP_POLICER_MAX,
 	.vcap_pol_base2		= 0,
 	.vcap_pol_max2		= 0,
 	.num_mact_rows		= 2048,
-	.num_ports		= 6,
+	.num_ports		= VSC9959_NUM_PORTS,
 	.num_tx_queues		= OCELOT_NUM_TC,
 	.quirk_no_xtr_irq	= true,
 	.ptp_caps		= &vsc9959_ptp_caps,
 	.mdio_bus_alloc		= vsc9959_mdio_bus_alloc,
 	.mdio_bus_free		= vsc9959_mdio_bus_free,
 	.phylink_validate	= vsc9959_phylink_validate,
-	.prevalidate_phy_mode	= vsc9959_prevalidate_phy_mode,
+	.port_modes		= vsc9959_port_modes,
 	.port_setup_tc		= vsc9959_port_setup_tc,
 	.port_sched_speed_set	= vsc9959_sched_speed_set,
 	.init_regmap		= ocelot_regmap_init,
@@ -2322,7 +2319,7 @@ static int felix_pci_probe(struct pci_dev *pdev,
 
 	err = dsa_register_switch(ds);
 	if (err) {
-		dev_err(&pdev->dev, "Failed to register DSA switch: %d\n", err);
+		dev_err_probe(&pdev->dev, err, "Failed to register DSA switch\n");
 		goto err_register_ds;
 	}
 

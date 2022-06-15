@@ -107,6 +107,7 @@ static struct test_suite *generic_tests[] = {
 	&suite__expand_cgroup_events,
 	&suite__perf_time_to_tsc,
 	&suite__dlfilter,
+	&suite__sigtrap,
 	NULL,
 };
 
@@ -136,10 +137,10 @@ static bool has_subtests(const struct test_suite *t)
 
 static const char *skip_reason(const struct test_suite *t, int subtest)
 {
-	if (t->test_cases && subtest >= 0)
-		return t->test_cases[subtest].skip_reason;
+	if (!t->test_cases)
+		return NULL;
 
-	return NULL;
+	return t->test_cases[subtest >= 0 ? subtest : 0].skip_reason;
 }
 
 static const char *test_description(const struct test_suite *t, int subtest)
@@ -278,6 +279,7 @@ static const char *shell_test__description(char *description, size_t size,
 {
 	FILE *fp;
 	char filename[PATH_MAX];
+	int ch;
 
 	path__join(filename, sizeof(filename), path, name);
 	fp = fopen(filename, "r");
@@ -285,7 +287,9 @@ static const char *shell_test__description(char *description, size_t size,
 		return NULL;
 
 	/* Skip shebang */
-	while (fgetc(fp) != '\n');
+	do {
+		ch = fgetc(fp);
+	} while (ch != EOF && ch != '\n');
 
 	description = fgets(description, size, fp);
 	fclose(fp);
@@ -295,7 +299,9 @@ static const char *shell_test__description(char *description, size_t size,
 
 #define for_each_shell_test(entlist, nr, base, ent)	                \
 	for (int __i = 0; __i < nr && (ent = entlist[__i]); __i++)	\
-		if (!is_directory(base, ent) && ent->d_name[0] != '.')
+		if (!is_directory(base, ent) && \
+			is_executable_file(base, ent) && \
+			ent->d_name[0] != '.')
 
 static const char *shell_tests__dir(char *path, size_t size)
 {
@@ -416,11 +422,12 @@ static int run_shell_tests(int argc, const char *argv[], int i, int width,
 			.priv = &st,
 		};
 
-		if (!perf_test__matches(test_suite.desc, curr, argc, argv))
+		if (test_suite.desc == NULL ||
+		    !perf_test__matches(test_suite.desc, curr, argc, argv))
 			continue;
 
 		st.file = ent->d_name;
-		pr_info("%2d: %-*s:", i, width, test_suite.desc);
+		pr_info("%3d: %-*s:", i, width, test_suite.desc);
 
 		if (intlist__find(skiplist, i)) {
 			color_fprintf(stderr, PERF_COLOR_YELLOW, " Skip (user override)\n");
@@ -470,7 +477,7 @@ static int __cmd_test(int argc, const char *argv[], struct intlist *skiplist)
 				continue;
 		}
 
-		pr_info("%2d: %-*s:", i, width, test_description(t, -1));
+		pr_info("%3d: %-*s:", i, width, test_description(t, -1));
 
 		if (intlist__find(skiplist, i)) {
 			color_fprintf(stderr, PERF_COLOR_YELLOW, " Skip (user override)\n");
@@ -510,7 +517,7 @@ static int __cmd_test(int argc, const char *argv[], struct intlist *skiplist)
 							curr, argc, argv))
 					continue;
 
-				pr_info("%2d.%1d: %-*s:", i, subi + 1, subw,
+				pr_info("%3d.%1d: %-*s:", i, subi + 1, subw,
 					test_description(t, subi));
 				test_and_print(t, subi);
 			}
@@ -545,7 +552,7 @@ static int perf_test__list_shell(int argc, const char **argv, int i)
 		if (!perf_test__matches(t.desc, curr, argc, argv))
 			continue;
 
-		pr_info("%2d: %s\n", i, t.desc);
+		pr_info("%3d: %s\n", i, t.desc);
 
 	}
 
@@ -567,14 +574,14 @@ static int perf_test__list(int argc, const char **argv)
 		if (!perf_test__matches(test_description(t, -1), curr, argc, argv))
 			continue;
 
-		pr_info("%2d: %s\n", i, test_description(t, -1));
+		pr_info("%3d: %s\n", i, test_description(t, -1));
 
 		if (has_subtests(t)) {
 			int subn = num_subtests(t);
 			int subi;
 
 			for (subi = 0; subi < subn; subi++)
-				pr_info("%2d:%1d: %s\n", i, subi + 1,
+				pr_info("%3d:%1d: %s\n", i, subi + 1,
 					test_description(t, subi));
 		}
 	}
@@ -605,6 +612,9 @@ int cmd_test(int argc, const char **argv)
 
         if (ret < 0)
                 return ret;
+
+	/* Unbuffered output */
+	setvbuf(stdout, NULL, _IONBF, 0);
 
 	argc = parse_options_subcommand(argc, argv, test_options, test_subcommands, test_usage, 0);
 	if (argc >= 1 && !strcmp(argv[0], "list"))

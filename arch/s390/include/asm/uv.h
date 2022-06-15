@@ -2,7 +2,7 @@
 /*
  * Ultravisor Interfaces
  *
- * Copyright IBM Corp. 2019
+ * Copyright IBM Corp. 2019, 2022
  *
  * Author(s):
  *	Vasily Gorbik <gor@linux.ibm.com>
@@ -52,6 +52,7 @@
 #define UVC_CMD_UNPIN_PAGE_SHARED	0x0342
 #define UVC_CMD_SET_SHARED_ACCESS	0x1000
 #define UVC_CMD_REMOVE_SHARED_ACCESS	0x1001
+#define UVC_CMD_RETR_ATTEST		0x1020
 
 /* Bits in installed uv calls */
 enum uv_cmds_inst {
@@ -76,10 +77,12 @@ enum uv_cmds_inst {
 	BIT_UVC_CMD_UNSHARE_ALL = 20,
 	BIT_UVC_CMD_PIN_PAGE_SHARED = 21,
 	BIT_UVC_CMD_UNPIN_PAGE_SHARED = 22,
+	BIT_UVC_CMD_RETR_ATTEST = 28,
 };
 
 enum uv_feat_ind {
 	BIT_UV_FEAT_MISC = 0,
+	BIT_UV_FEAT_AIV = 1,
 };
 
 struct uv_cb_header {
@@ -91,23 +94,23 @@ struct uv_cb_header {
 
 /* Query Ultravisor Information */
 struct uv_cb_qui {
-	struct uv_cb_header header;
-	u64 reserved08;
-	u64 inst_calls_list[4];
-	u64 reserved30[2];
-	u64 uv_base_stor_len;
-	u64 reserved48;
-	u64 conf_base_phys_stor_len;
-	u64 conf_base_virt_stor_len;
-	u64 conf_virt_var_stor_len;
-	u64 cpu_stor_len;
-	u32 reserved70[3];
-	u32 max_num_sec_conf;
-	u64 max_guest_stor_addr;
-	u8  reserved88[158 - 136];
-	u16 max_guest_cpu_id;
-	u64 uv_feature_indications;
-	u8  reserveda0[200 - 168];
+	struct uv_cb_header header;		/* 0x0000 */
+	u64 reserved08;				/* 0x0008 */
+	u64 inst_calls_list[4];			/* 0x0010 */
+	u64 reserved30[2];			/* 0x0030 */
+	u64 uv_base_stor_len;			/* 0x0040 */
+	u64 reserved48;				/* 0x0048 */
+	u64 conf_base_phys_stor_len;		/* 0x0050 */
+	u64 conf_base_virt_stor_len;		/* 0x0058 */
+	u64 conf_virt_var_stor_len;		/* 0x0060 */
+	u64 cpu_stor_len;			/* 0x0068 */
+	u32 reserved70[3];			/* 0x0070 */
+	u32 max_num_sec_conf;			/* 0x007c */
+	u64 max_guest_stor_addr;		/* 0x0080 */
+	u8  reserved88[158 - 136];		/* 0x0088 */
+	u16 max_guest_cpu_id;			/* 0x009e */
+	u64 uv_feature_indications;		/* 0x00a0 */
+	u8  reserveda8[200 - 168];		/* 0x00a8 */
 } __packed __aligned(8);
 
 /* Initialize Ultravisor */
@@ -216,6 +219,25 @@ struct uv_cb_share {
 	u64 reserved08[3];
 	u64 paddr;
 	u64 reserved28;
+} __packed __aligned(8);
+
+/* Retrieve Attestation Measurement */
+struct uv_cb_attest {
+	struct uv_cb_header header;	/* 0x0000 */
+	u64 reserved08[2];		/* 0x0008 */
+	u64 arcb_addr;			/* 0x0018 */
+	u64 cont_token;			/* 0x0020 */
+	u8  reserved28[6];		/* 0x0028 */
+	u16 user_data_len;		/* 0x002e */
+	u8  user_data[256];		/* 0x0030 */
+	u32 reserved130[3];		/* 0x0130 */
+	u32 meas_len;			/* 0x013c */
+	u64 meas_addr;			/* 0x0140 */
+	u8  config_uid[16];		/* 0x0148 */
+	u32 reserved158;		/* 0x0158 */
+	u32 add_data_len;		/* 0x015c */
+	u64 add_data_addr;		/* 0x0160 */
+	u64 reserved168[4];		/* 0x0168 */
 } __packed __aligned(8);
 
 static inline int __uv_call(unsigned long r1, unsigned long r2)

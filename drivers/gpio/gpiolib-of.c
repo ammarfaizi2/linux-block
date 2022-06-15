@@ -711,14 +711,11 @@ static int of_gpiochip_scan_gpios(struct gpio_chip *chip)
 static void of_gpiochip_remove_hog(struct gpio_chip *chip,
 				   struct device_node *hog)
 {
-	struct gpio_desc *descs = chip->gpiodev->descs;
-	unsigned int i;
+	struct gpio_desc *desc;
 
-	for (i = 0; i < chip->ngpio; i++) {
-		if (test_bit(FLAG_IS_HOGGED, &descs[i].flags) &&
-		    descs[i].hog == hog)
-			gpiochip_free_own_desc(&descs[i]);
-	}
+	for_each_gpio_desc_with_flag(chip, desc, FLAG_IS_HOGGED)
+		if (desc->hog == hog)
+			gpiochip_free_own_desc(desc);
 }
 
 static int of_gpiochip_match_node(struct gpio_chip *chip, void *data)
@@ -912,7 +909,7 @@ static void of_gpiochip_init_valid_mask(struct gpio_chip *chip)
 					   i, &start);
 		of_property_read_u32_index(np, "gpio-reserved-ranges",
 					   i + 1, &count);
-		if (start >= chip->ngpio || start + count >= chip->ngpio)
+		if (start >= chip->ngpio || start + count > chip->ngpio)
 			continue;
 
 		bitmap_clear(chip->valid_mask, start, count);
@@ -932,6 +929,11 @@ static int of_gpiochip_add_pin_range(struct gpio_chip *chip)
 
 	if (!np)
 		return 0;
+
+	if (!of_property_read_bool(np, "gpio-ranges") &&
+	    chip->of_gpio_ranges_fallback) {
+		return chip->of_gpio_ranges_fallback(chip, np);
+	}
 
 	group_names = of_find_property(np, group_names_propname, NULL);
 
@@ -1045,6 +1047,9 @@ void of_gpio_dev_init(struct gpio_chip *gc, struct gpio_device *gdev)
 	/* Set default OF node to parent's one if present */
 	if (gc->parent)
 		gdev->dev.of_node = gc->parent->of_node;
+
+	if (gc->fwnode)
+		gc->of_node = to_of_node(gc->fwnode);
 
 	/* If the gpiochip has an assigned OF node this takes precedence */
 	if (gc->of_node)

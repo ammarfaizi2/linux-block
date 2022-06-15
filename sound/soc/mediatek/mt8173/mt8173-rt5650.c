@@ -132,7 +132,7 @@ static int mt8173_rt5650_init(struct snd_soc_pcm_runtime *runtime)
 				    SND_JACK_HEADPHONE | SND_JACK_MICROPHONE |
 				    SND_JACK_BTN_0 | SND_JACK_BTN_1 |
 				    SND_JACK_BTN_2 | SND_JACK_BTN_3,
-				    &mt8173_rt5650_jack, NULL, 0);
+				    &mt8173_rt5650_jack);
 	if (ret) {
 		dev_err(card->dev, "Can't new Headset Jack %d\n", ret);
 		return ret;
@@ -149,7 +149,7 @@ static int mt8173_rt5650_hdmi_init(struct snd_soc_pcm_runtime *rtd)
 	int ret;
 
 	ret = snd_soc_card_jack_new(rtd->card, "HDMI Jack", SND_JACK_LINEOUT,
-				    &mt8173_rt5650_hdmi_jack, NULL, 0);
+				    &mt8173_rt5650_hdmi_jack);
 	if (ret)
 		return ret;
 
@@ -320,9 +320,8 @@ static int mt8173_rt5650_dev_probe(struct platform_device *pdev)
 	card->dev = &pdev->dev;
 
 	ret = devm_snd_soc_register_card(&pdev->dev, card);
-	if (ret)
-		dev_err(&pdev->dev, "%s snd_soc_register_card fail %d\n",
-			__func__, ret);
+
+	of_node_put(platform_node);
 	return ret;
 }
 
@@ -336,9 +335,7 @@ static struct platform_driver mt8173_rt5650_driver = {
 	.driver = {
 		   .name = "mtk-rt5650",
 		   .of_match_table = mt8173_rt5650_dt_match,
-#ifdef CONFIG_PM
 		   .pm = &snd_soc_pm_ops,
-#endif
 	},
 	.probe = mt8173_rt5650_dev_probe,
 };
