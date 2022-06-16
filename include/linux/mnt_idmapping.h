@@ -21,6 +21,11 @@ typedef struct {
 	gid_t val;
 } kmntgid_t;
 
+static_assert(sizeof(kmntuid_t) == sizeof(kuid_t));
+static_assert(sizeof(kmntgid_t) == sizeof(kgid_t));
+static_assert(offsetof(kmntuid_t, val) == offsetof(kuid_t, val));
+static_assert(offsetof(kmntgid_t, val) == offsetof(kgid_t, val));
+
 #ifdef CONFIG_MULTIUSER
 static inline uid_t __kmntuid_val(kmntuid_t uid)
 {
