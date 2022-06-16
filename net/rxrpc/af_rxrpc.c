@@ -734,6 +734,71 @@ int rxrpc_sock_set_upgradeable_service(struct sock *sk, unsigned int val[2])
 EXPORT_SYMBOL(rxrpc_sock_set_upgradeable_service);
 
 /*
+ * Bind this socket to another socket that's already set up and listening to
+ * use this as an additional channel for receiving new service calls.
+ */
+static int rxrpc_bind_channel(struct rxrpc_sock *rx2, int fd)
+{
+	struct rxrpc_service *b;
+	struct rxrpc_sock *rx1;
+	struct socket *sock1;
+	unsigned long *call_id_backlog;
+	int ret;
+
+	if (rx2->sk.sk_state != RXRPC_UNBOUND)
+		return -EISCONN;
+	if (rx2->service || rx2->exclusive)
+		return -EINVAL;
+
+	sock1 = sockfd_lookup(fd, &ret);
+	if (!sock1)
+		return ret;
+	rx1 = rxrpc_sk(sock1->sk);
+
+	ret = -EINVAL;
+	if (rx1 == rx2 || rx2->family != rx1->family ||
+	    sock_net(&rx2->sk) != sock_net(&rx1->sk))
+		goto error;
+
+	ret = -EISCONN;
+	if (rx1->sk.sk_state != RXRPC_SERVER_LISTENING)
+		goto error;
+
+	ret = -ENOMEM;
+	call_id_backlog = kcalloc(RXRPC_BACKLOG_MAX,
+				  sizeof(call_id_backlog[0]),
+				  GFP_KERNEL);
+	if (!call_id_backlog)
+		goto error;
+
+	lock_sock_nested(&rx1->sk, 1);
+
+	ret = -EISCONN;
+	if (rx1->sk.sk_state != RXRPC_SERVER_LISTENING)
+		goto error_unlock;
+
+	b = rx1->service;
+	refcount_inc(&b->ref);
+	refcount_inc(&b->active);
+	rx2->service		= b;
+	rx2->srx		= rx1->srx;
+	rx2->call_id_backlog	= call_id_backlog;
+	rx2->min_sec_level	= rx1->min_sec_level;
+	rx2->local		= rxrpc_get_local(rx1->local);
+	atomic_inc(&rx1->local->active_users);
+	rx2->sk.sk_state	= RXRPC_SERVER_LISTENING;
+	call_id_backlog = NULL;
+	ret = 0;
+
+error_unlock:
+	release_sock(&rx1->sk);
+	kfree(call_id_backlog);
+error:
+	fput(sock1->file);
+	return ret;
+}
+
+/*
  * set RxRPC socket options
  */
 static int rxrpc_setsockopt(struct socket *sock, int level, int optname,
@@ -742,7 +807,7 @@ static int rxrpc_setsockopt(struct socket *sock, int level, int optname,
 	struct rxrpc_sock *rx = rxrpc_sk(sock->sk);
 	unsigned int min_sec_level;
 	u16 service_upgrade[2];
-	int ret;
+	int ret, fd;
 
 	_enter(",%d,%d,,%d", level, optname, optlen);
 
@@ -813,6 +878,18 @@ static int rxrpc_setsockopt(struct socket *sock, int level, int optname,
 			ret = rxrpc_bind_service_upgrade(rx, service_upgrade[0],
 							 service_upgrade[1]);
 			mutex_unlock(&rx->local->services_lock);
+			if (ret < 0)
+				goto error;
+			goto success;
+
+		case RXRPC_BIND_CHANNEL:
+			ret = -EINVAL;
+			if (optlen != sizeof(fd))
+				goto error;
+			ret = -EFAULT;
+			if (copy_from_sockptr(&fd, optval, sizeof(fd)) != 0)
+				goto error;
+			ret = rxrpc_bind_channel(rx, fd);
 			if (ret < 0)
 				goto error;
 			goto success;

@@ -296,8 +296,6 @@ void rxrpc_deactivate_service(struct rxrpc_sock *rx)
 	if (!refcount_dec_and_test(&rx->service->active))
 		return;
 
-	kdebug("-- deactivate --");
-
 	/* Now that active is 0, make sure that there aren't any incoming calls
 	 * being set up before we clear the preallocation buffers.
 	 */
@@ -335,11 +333,8 @@ void rxrpc_deactivate_service(struct rxrpc_sock *rx)
 
 	head = b->call_backlog_head;
 	tail = b->call_backlog_tail;
-	kdebug("backlog %x %x", head, tail);
 	while (CIRC_CNT(head, tail, size) > 0) {
 		struct rxrpc_call *call = b->call_backlog[tail];
-
-		kdebug("discard c=%08x", call->debug_id);
 
 		trace_rxrpc_call(call->debug_id, rxrpc_call_discard,
 				 refcount_read(&call->ref),

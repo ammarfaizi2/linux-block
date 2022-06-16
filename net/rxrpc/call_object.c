@@ -712,7 +712,7 @@ void rxrpc_cleanup_call(struct rxrpc_call *call)
 
 	ASSERTCMP(call->state, ==, RXRPC_CALL_COMPLETE);
 	if (WARN_ON(!test_bit(RXRPC_CALL_RELEASED, &call->flags))) {
-		kdebug("### UNRELEASED c=%08x", call->debug_id);
+		pr_warn("### UNRELEASED c=%08x", call->debug_id);
 		return;
 	}
 
