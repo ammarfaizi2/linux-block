@@ -1039,9 +1039,11 @@ void tctx_task_work(struct callback_head *cb)
 		io_uring_drop_tctx_refs(current);
 }
 
-static void __io_req_task_work_add(struct io_kiocb *req, struct tctx_tw *tw)
+void io_req_task_work_add(struct io_kiocb *req)
 {
+	struct io_uring_task *tctx = req->task->io_uring;
 	struct io_ring_ctx *ctx = req->ctx;
+	struct tctx_tw *tw = &tctx->tw;
 	struct io_wq_work_node *node;
 	unsigned long flags;
 	bool running;
@@ -1076,13 +1078,6 @@ static void __io_req_task_work_add(struct io_kiocb *req, struct tctx_tw *tw)
 			      &req->ctx->fallback_llist))
 			schedule_delayed_work(&req->ctx->fallback_work, 1);
 	}
-}
-
-void io_req_task_work_add(struct io_kiocb *req)
-{
-	struct io_uring_task *tctx = req->task->io_uring;
-
-	__io_req_task_work_add(req, &tctx->tw);
 }
 
 static void io_req_tw_post(struct io_kiocb *req, bool *locked)
