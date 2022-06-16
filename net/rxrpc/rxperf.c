@@ -121,13 +121,6 @@ static void rxperf_notify_rx(struct sock *sk, struct rxrpc_call *rxcall,
 		rxperf_queue_call_work(call);
 }
 
-static void rxperf_rx_attach(struct rxrpc_call *rxcall, unsigned long user_call_ID)
-{
-	struct rxperf_call *call = (struct rxperf_call *)user_call_ID;
-
-	call->rxcall = rxcall;
-}
-
 static void rxperf_notify_end_reply_tx(struct sock *sock,
 				       struct rxrpc_call *rxcall,
 				       unsigned long call_user_ID)
@@ -141,35 +134,33 @@ static void rxperf_notify_end_reply_tx(struct sock *sock,
  */
 static void rxperf_charge_preallocation(struct work_struct *work)
 {
+	rxrpc_kernel_charge_accept(rxperf_socket);
+}
+
+static unsigned long rxperf_rx_preallocate_call(struct sock *sock,
+						struct rxrpc_call *rxcall,
+						unsigned int *_debug_id)
+{
 	struct rxperf_call *call;
 
-	for (;;) {
-		call = kzalloc(sizeof(*call), GFP_KERNEL);
-		if (!call)
-			break;
+	call = kzalloc(sizeof(*call), GFP_KERNEL);
+	if (!call)
+		return 0;
 
-		call->type		= "unset";
-		call->debug_id		= atomic_inc_return(&rxrpc_debug_id);
-		call->deliver		= rxperf_deliver_param_block;
-		call->state		= RXPERF_CALL_SV_AWAIT_PARAMS;
-		call->service_id	= RX_PERF_SERVICE;
-		call->iov_len		= sizeof(call->params);
-		call->kvec[0].iov_len	= sizeof(call->params);
-		call->kvec[0].iov_base	= &call->params;
-		iov_iter_kvec(&call->iter, READ, call->kvec, 1, call->iov_len);
-		INIT_WORK(&call->work, rxperf_deliver_to_call);
+	call->rxcall		= rxcall;
+	call->type		= "unset";
+	call->debug_id		= atomic_inc_return(&rxrpc_debug_id);
+	call->deliver		= rxperf_deliver_param_block;
+	call->state		= RXPERF_CALL_SV_AWAIT_PARAMS;
+	call->service_id	= RX_PERF_SERVICE;
+	call->iov_len		= sizeof(call->params);
+	call->kvec[0].iov_len	= sizeof(call->params);
+	call->kvec[0].iov_base	= &call->params;
+	iov_iter_kvec(&call->iter, READ, call->kvec, 1, call->iov_len);
+	INIT_WORK(&call->work, rxperf_deliver_to_call);
 
-		if (rxrpc_kernel_charge_accept(rxperf_socket,
-					       rxperf_notify_rx,
-					       rxperf_rx_attach,
-					       (unsigned long)call,
-					       GFP_KERNEL,
-					       call->debug_id) < 0)
-			break;
-		call = NULL;
-	}
-
-	kfree(call);
+	*_debug_id = call->debug_id;
+	return (unsigned long)call;
 }
 
 /*
@@ -203,13 +194,18 @@ static int rxperf_open_socket(void)
 	if (ret < 0)
 		goto error_2;
 
-	ret = rxrpc_sock_set_security_keyring(socket->sk, rxperf_sec_keyring);
-
 	ret = kernel_bind(socket, (struct sockaddr *)&srx, sizeof(srx));
 	if (ret < 0)
 		goto error_2;
 
-	rxrpc_kernel_new_call_notification(socket, rxperf_rx_new_call,
+	ret = rxrpc_sock_set_security_keyring(socket->sk, rxperf_sec_keyring);
+	if (ret < 0)
+		goto error_2;
+
+	rxrpc_kernel_new_call_notification(socket,
+					   rxperf_notify_rx,
+					   rxperf_rx_preallocate_call,
+					   rxperf_rx_new_call,
 					   rxperf_rx_discard_new_call);
 
 	ret = kernel_listen(socket, INT_MAX);

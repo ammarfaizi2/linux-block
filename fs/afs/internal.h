@@ -258,7 +258,6 @@ struct afs_net {
 
 	/* AF_RXRPC I/O stuff */
 	struct socket		*socket;
-	struct afs_call		*spare_incoming_call;
 	struct work_struct	charge_preallocation_work;
 	struct mutex		socket_mutex;
 	atomic_t		nr_outstanding_calls;

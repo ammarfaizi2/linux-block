@@ -32,29 +32,51 @@ void rxrpc_notify_socket(struct rxrpc_call *call)
 
 	rcu_read_lock();
 
-	rx = rcu_dereference(call->socket);
-	sk = &rx->sk;
-	if (rx && sk->sk_state < RXRPC_CLOSE) {
-		if (call->notify_rx) {
-			spin_lock(&call->notify_lock);
-			call->notify_rx(sk, call, call->user_call_ID);
-			spin_unlock(&call->notify_lock);
-		} else {
-			spin_lock(&rx->recvmsg_lock);
-			if (list_empty(&call->recvmsg_link)) {
-				rxrpc_get_call(call, rxrpc_call_get_notify_socket);
-				list_add_tail(&call->recvmsg_link, &rx->recvmsg_q);
-				rx->nr_recvmsg++;
-			}
-			spin_unlock(&rx->recvmsg_lock);
-
-			if (!sock_flag(sk, SOCK_DEAD)) {
-				_debug("call %ps", sk->sk_data_ready);
-				sk->sk_data_ready(sk);
-			}
-		}
+	if (call->notify_rx) {
+		spin_lock(&call->notify_lock);
+		call->notify_rx(sk, call, call->user_call_ID);
+		spin_unlock(&call->notify_lock);
+		goto out;
 	}
 
+	rx = rcu_dereference(call->socket);
+	if (rx) {
+		sk = &rx->sk;
+		if (sk->sk_state >= RXRPC_CLOSE)
+			goto out;
+
+		spin_lock(&rx->recvmsg_lock);
+		if (list_empty(&call->recvmsg_link)) {
+			rxrpc_get_call(call, rxrpc_call_get_notify_socket);
+			list_add_tail(&call->recvmsg_link, &rx->recvmsg_q);
+			rx->nr_recvmsg++;
+		}
+		spin_unlock(&rx->recvmsg_lock);
+
+		if (!sock_flag(sk, SOCK_DEAD)) {
+			_debug("call %ps", sk->sk_data_ready);
+			sk->sk_data_ready(sk);
+		}
+		goto out;
+	}
+
+	if (call->service) {
+		struct rxrpc_service *b = call->service;
+
+		spin_lock(&b->incoming_lock);
+		if (list_empty(&call->recvmsg_link)) {
+			list_add_tail(&call->recvmsg_link, &b->to_be_accepted);
+			b->nr_tba++;
+		}
+		list_for_each_entry(rx, &b->waiting_sockets, accept_link) {
+			sk = &rx->sk;
+			if (!sock_flag(sk, SOCK_DEAD))
+				sk->sk_data_ready(sk);
+		}
+		spin_unlock(&b->incoming_lock);
+	}
+
+out:
 	rcu_read_unlock();
 	_leave("");
 }
@@ -298,6 +320,11 @@ int rxrpc_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
 
 try_again:
 	lock_sock(&rx->sk);
+
+	/* If there's a call we can accept, add that to the queue. */
+	if (rx->sk.sk_state == RXRPC_SERVER_LISTENING &&
+	    !list_empty(&rx->service->to_be_accepted))
+		rxrpc_user_accept_incoming_call(rx);
 
 	/* Return immediately if a client socket has no outstanding calls */
 	if (RB_EMPTY_ROOT(&rx->calls) &&

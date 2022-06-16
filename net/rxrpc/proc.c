@@ -399,32 +399,48 @@ const struct seq_operations rxrpc_local_seq_ops = {
  */
 static int rxrpc_socket_seq_show(struct seq_file *seq, void *v)
 {
+	struct rxrpc_service *b;
 	struct rxrpc_local *local;
 	struct rxrpc_sock *rx;
-	char lbuff[50];
+	char lbuff[50], sep;
+	unsigned int nr_acc, i;
 
 	if (v == SEQ_START_TOKEN) {
 		seq_puts(seq,
 			 "Proto Local                                          "
-			 " Use Svc1 Svc2 nCal nAtn\n");
+			 " Use nCal nAcc nAtn Services\n");
 		return 0;
 	}
 
 	rx = hlist_entry(v, struct rxrpc_sock, ns_link);
 	local = rx->local;
-
 	if (local)
 		sprintf(lbuff, "%pISpc", &local->srx.transport);
 	else
 		sprintf(lbuff, "-");
 
+	b = rx->service;
+	nr_acc = b ? b->nr_tba : 0;
+
 	seq_printf(seq,
-		   "UDP   %-47.47s %3d %4x %4x %4u %4u\n",
+		   "UDP   %-47.47s %3d %4x %4x %4u",
 		   lbuff,
 		   refcount_read(&rx->sk.sk_refcnt),
-		   rx->srx.srx_service, rx->second_service,
-		   rx->nr_sock_calls, rx->nr_recvmsg);
+		   rx->nr_sock_calls, nr_acc, rx->nr_recvmsg);
 
+	if (b) {
+		read_lock(&rx->local->services_lock);
+		sep = ' ';
+		for (i = 0; i < b->ids->nr_ids; i++) {
+			seq_printf(seq, "%c%x", sep, b->ids->ids[i].service_id);
+			if (b->ids->ids[i].upgrade_to)
+				seq_printf(seq, ">%x", b->ids->ids[i].upgrade_to);
+			sep = ',';
+		}
+		read_unlock(&rx->local->services_lock);
+	}
+
+	seq_putc(seq, '\n');
 	return 0;
 }
 
