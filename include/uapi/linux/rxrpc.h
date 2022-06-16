@@ -36,6 +36,7 @@ struct sockaddr_rxrpc {
 #define RXRPC_MIN_SECURITY_LEVEL	4	/* minimum security level */
 #define RXRPC_UPGRADEABLE_SERVICE	5	/* Upgrade service[0] -> service[1] */
 #define RXRPC_SUPPORTED_CMSG		6	/* Get highest supported control message type */
+#define RXRPC_BIND_CHANNEL		7	/* Bind a socket as an additional recvmsg channel */
 
 /*
  * RxRPC control messages

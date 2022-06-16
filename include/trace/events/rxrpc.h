@@ -152,6 +152,7 @@
 
 #define rxrpc_local_traces \
 	EM(rxrpc_local_free,			"FREE        ") \
+	EM(rxrpc_local_get_bind_channel,	"GET bind-chn") \
 	EM(rxrpc_local_get_call,		"GET call    ") \
 	EM(rxrpc_local_get_client_conn,		"GET conn-cln") \
 	EM(rxrpc_local_get_for_use,		"GET for-use ") \
