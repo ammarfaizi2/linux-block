@@ -3017,15 +3017,6 @@ static int mas_spanning_rebalance(struct ma_state *mas,
 
 		/* Copy anything necessary out of the right node. */
 		mast_combine_cp_right(mast);
-		if (mte_dead_node(mast->orig_l->node) ||
-		    mte_dead_node(mast->orig_r->node)) {
-			printk("FUCKED.  l %p is %s and r %p is %s\n",
-			       mas_mn(mast->orig_l),
-			       mte_dead_node(mast->orig_l->node) ? "dead" : "alive",
-			       mas_mn(mast->orig_r),
-			       mte_dead_node(mast->orig_r->node) ? "dead" : "alive");
-			printk("Writing %lu-%lu\n", mas->index, mas->last);
-		}
 		mast_topiary(mast);
 		mast->orig_l->last = mast->orig_l->max;
 
@@ -4019,13 +4010,6 @@ static inline int mas_wr_spanning_store(struct ma_wr_state *wr_mas)
 	mast.bn = &b_node;
 	mast.orig_l = &l_mas;
 	mast.orig_r = &r_mas;
-		if (mte_dead_node(mast.orig_l->node) ||
-		    mte_dead_node(mast.orig_r->node)) {
-			printk("FUCKED.  l is %s and r is %s\n",
-		       mte_dead_node(mast.orig_l->node) ? "dead" : "alive",
-		       mte_dead_node(mast.orig_r->node) ? "dead" : "alive");
-			printk("Writing %lu-%lu\n", mas->index, mas->last);
-		}
 	/* Combine l_mas and r_mas and split them up evenly again. */
 	return mas_spanning_rebalance(mas, &mast, height + 1);
 }
