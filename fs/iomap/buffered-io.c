@@ -830,7 +830,13 @@ again:
 		length -= status;
 	} while (iov_iter_count(i) && length);
 
-	return written ? written : status;
+	if (status == -EAGAIN) {
+		iov_iter_revert(i, written);
+		return -EAGAIN;
+	}
+	if (written)
+		return written;
+	return status;
 }
 
 ssize_t
