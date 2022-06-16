@@ -34,9 +34,12 @@ typedef void (*rxrpc_notify_end_tx_t)(struct sock *, struct rxrpc_call *,
 typedef void (*rxrpc_notify_new_call_t)(struct sock *, struct rxrpc_call *,
 					unsigned long);
 typedef void (*rxrpc_discard_new_call_t)(struct rxrpc_call *, unsigned long);
-typedef void (*rxrpc_user_attach_call_t)(struct rxrpc_call *, unsigned long);
+typedef unsigned long (*rxrpc_preallocate_call_t)(struct sock *, struct rxrpc_call *,
+						  unsigned int *);
 
 void rxrpc_kernel_new_call_notification(struct socket *,
+					rxrpc_notify_rx_t,
+					rxrpc_preallocate_call_t,
 					rxrpc_notify_new_call_t,
 					rxrpc_discard_new_call_t);
 struct rxrpc_call *rxrpc_kernel_begin_call(struct socket *,
@@ -60,9 +63,6 @@ void rxrpc_kernel_end_call(struct socket *, struct rxrpc_call *);
 void rxrpc_kernel_get_peer(struct socket *, struct rxrpc_call *,
 			   struct sockaddr_rxrpc *);
 bool rxrpc_kernel_get_srtt(struct socket *, struct rxrpc_call *, u32 *);
-int rxrpc_kernel_charge_accept(struct socket *, rxrpc_notify_rx_t,
-			       rxrpc_user_attach_call_t, unsigned long, gfp_t,
-			       unsigned int);
 void rxrpc_kernel_set_tx_length(struct socket *, struct rxrpc_call *, s64);
 bool rxrpc_kernel_check_life(const struct socket *, const struct rxrpc_call *);
 u32 rxrpc_kernel_get_epoch(struct socket *, struct rxrpc_call *);
@@ -73,5 +73,6 @@ void rxrpc_kernel_set_max_life(struct socket *, struct rxrpc_call *,
 			       unsigned long);
 
 int rxrpc_sock_set_min_security_level(struct sock *sk, unsigned int val);
+int rxrpc_sock_set_upgradeable_service(struct sock *sk, unsigned int val[2]);
 
 #endif /* _NET_RXRPC_H */

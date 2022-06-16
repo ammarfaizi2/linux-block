@@ -153,12 +153,14 @@ struct rxrpc_connection *rxrpc_prealloc_service_connection(struct rxrpc_net *rxn
  * Set up an incoming connection.  This is called in BH context with the RCU
  * read lock held.
  */
-void rxrpc_new_incoming_connection(struct rxrpc_sock *rx,
+void rxrpc_new_incoming_connection(const struct rxrpc_service *b,
 				   struct rxrpc_connection *conn,
 				   const struct rxrpc_security *sec,
 				   struct sk_buff *skb)
 {
+	const struct rxrpc_service_ids *ids;
 	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
+	unsigned int i;
 
 	_enter("");
 
@@ -178,9 +180,16 @@ void rxrpc_new_incoming_connection(struct rxrpc_sock *rx,
 	 * first packet on a new connection.  Once done, it applies to all
 	 * subsequent calls on that connection.
 	 */
-	if (sp->hdr.userStatus == RXRPC_USERSTATUS_SERVICE_UPGRADE &&
-	    conn->service_id == rx->service_upgrade.from)
-		conn->service_id = rx->service_upgrade.to;
+	if (sp->hdr.userStatus == RXRPC_USERSTATUS_SERVICE_UPGRADE) {
+		ids = rcu_dereference(b->ids);
+		for (i = 0; i < ids->nr_ids; i++) {
+			if (conn->service_id == ids->ids[i].service_id &&
+			    ids->ids[i].upgrade_to) {
+				conn->service_id = ids->ids[i].upgrade_to;
+				break;
+			}
+		}
+	}
 
 	/* Make the connection a target for incoming packets. */
 	rxrpc_publish_service_conn(conn->params.peer, conn);

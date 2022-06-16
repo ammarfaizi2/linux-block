@@ -47,7 +47,6 @@ enum {
 	RXRPC_CLIENT_UNBOUND,		/* Unbound socket used as client */
 	RXRPC_CLIENT_BOUND,		/* client local address bound */
 	RXRPC_SERVER_BOUND,		/* server local address bound */
-	RXRPC_SERVER_BOUND2,		/* second server local address bound */
 	RXRPC_SERVER_LISTENING,		/* server listening for connections */
 	RXRPC_SERVER_LISTEN_DISABLED,	/* server listening disabled */
 	RXRPC_CLOSE,			/* socket is being closed */
@@ -57,6 +56,7 @@ enum {
  * Per-network namespace data.
  */
 struct rxrpc_net {
+	struct net		*net;
 	struct proc_dir_entry	*proc_net;	/* Subdir in /proc/net */
 	u32			epoch;		/* Local epoch for detecting local-end reset */
 	struct list_head	calls;		/* List of calls active in this namespace */
@@ -97,14 +97,49 @@ struct rxrpc_net {
 };
 
 /*
- * Service backlog preallocation.
+ * List of services listened on and their upgraded versions.
+ */
+struct rxrpc_service_ids {
+	struct rcu_head		rcu;
+	unsigned int		nr_ids;
+	struct {
+		u16		service_id;	/* Service ID to listen on */
+		u16		upgrade_to;	/* Service ID to upgrade to (or 0) */
+	} ids[];
+};
+
+/*
+ * Active service.  This may be shared between a number of sockets.
  *
  * This contains circular buffers of preallocated peers, connections and calls
  * for incoming service calls and their head and tail pointers.  This allows
  * calls to be set up in the data_ready handler, thereby avoiding the need to
  * shuffle packets around so much.
  */
-struct rxrpc_backlog {
+struct rxrpc_service {
+	struct rcu_head		rcu;
+	struct rxrpc_local	*local;		/* Local endpoint */
+	struct list_head	local_link;	/* Link in local->service_list */
+	struct list_head	to_be_accepted;	/* Calls awaiting acceptance */
+	struct list_head	waiting_sockets; /* List of sockets waiting to accept */
+	struct work_struct	preallocator;	/* Preallocator work item */
+	struct rxrpc_service_ids __rcu *ids;	/* List of service IDs */
+	struct key		*securities;	/* list of server security descriptors */
+	spinlock_t		incoming_lock;	/* Incoming call vs service shutdown lock */
+	refcount_t		ref;
+	refcount_t		active;		/* Active socket count */
+	unsigned int		nr_tba;		/* Number of calls on to_be_accepted */
+	unsigned int		max_tba;	/* Maximum number of calls on to_be_accepted */
+	int			error;		/* Allocation error */
+
+	/* Notifications for kernel-based services. */
+	struct sock		*kernel_sock;	/* Kernel's socket */
+	rxrpc_notify_rx_t	notify_rx;	/* Setting to call->notify_rx */
+	rxrpc_preallocate_call_t preallocate_call; /* Func to preallocate a call */
+	rxrpc_notify_new_call_t	notify_new_call; /* Func to notify of new call */
+	rxrpc_discard_new_call_t discard_new_call; /* Func to discard a new call */
+
+	/* Structure preallocation. */
 	unsigned short		peer_backlog_head;
 	unsigned short		peer_backlog_tail;
 	unsigned short		conn_backlog_head;
@@ -123,31 +158,24 @@ struct rxrpc_backlog {
 struct rxrpc_sock {
 	/* WARNING: sk has to be the first member */
 	struct sock		sk;
-	rxrpc_notify_new_call_t	notify_new_call; /* Func to notify of new call */
-	rxrpc_discard_new_call_t discard_new_call; /* Func to discard a new call */
 	struct rxrpc_local	*local;		/* local endpoint */
-	struct rxrpc_backlog	*backlog;	/* Preallocation for services */
-	spinlock_t		incoming_lock;	/* Incoming call vs service shutdown lock */
+	struct rxrpc_service	*service;
+	unsigned long		*call_id_backlog; /* Precharged call IDs */
 	struct list_head	sock_calls;	/* List of calls owned by this socket */
-	struct list_head	to_be_accepted;	/* calls awaiting acceptance */
 	struct list_head	recvmsg_q;	/* Calls awaiting recvmsg's attention  */
+	struct list_head	accepting_link;	/* Link in service->waiting_sockets */
 	struct hlist_node	ns_link;	/* Link in net->sockets */
 	rwlock_t		recvmsg_lock;	/* Lock for recvmsg_q */
 	struct key		*key;		/* security for this socket */
-	struct key		*securities;	/* list of server security descriptors */
 	struct rb_root		calls;		/* User ID -> call mapping */
 	unsigned long		flags;
-#define RXRPC_SOCK_CONNECTED		0	/* connect_srx is set */
+#define RXRPC_SOCK_CONNECTED	0		/* connect_srx is set */
 	rwlock_t		call_lock;	/* lock for calls */
 	u32			min_sec_level;	/* minimum security level */
 #define RXRPC_SECURITY_MAX	RXRPC_SECURITY_ENCRYPT
 	bool			exclusive;	/* Exclusive connection for a client socket */
-	u16			second_service;	/* Additional service bound to the endpoint */
-	struct {
-		/* Service upgrade information */
-		u16		from;		/* Service ID to upgrade (if not 0) */
-		u16		to;		/* service ID to upgrade to */
-	} service_upgrade;
+	unsigned short		call_id_backlog_head;
+	unsigned short		call_id_backlog_tail;
 	sa_family_t		family;		/* Protocol family created with */
 	struct sockaddr_rxrpc	srx;		/* Primary Service/local addresses */
 	struct sockaddr_rxrpc	connect_srx;	/* Default client address from connect() */
@@ -278,17 +306,18 @@ struct rxrpc_local {
 	struct hlist_node	link;
 	struct socket		*socket;	/* my UDP socket */
 	struct work_struct	processor;
-	struct rxrpc_sock __rcu	*service;	/* Service(s) listening on this endpoint */
+	struct list_head	services;	/* Service(s) listening on this endpoint */
+	struct mutex		services_lock;	/* Lock for services list */
 	struct rw_semaphore	defrag_sem;	/* control re-enablement of IP DF bit */
 	struct sk_buff_head	reject_queue;	/* packets awaiting rejection */
 	struct sk_buff_head	event_queue;	/* endpoint event packets awaiting processing */
 	struct rb_root		client_bundles;	/* Client connection bundles by socket params */
 	spinlock_t		client_bundles_lock; /* Lock for client_bundles */
 	spinlock_t		lock;		/* access lock */
-	rwlock_t		services_lock;	/* lock for services list */
 	int			debug_id;	/* debug ID for printks */
 	bool			dead;
 	bool			service_closed;	/* Service socket closed */
+	bool			kernel;		/* T if kernel endpoint */
 	struct sockaddr_rxrpc	srx;		/* local address */
 };
 
@@ -500,6 +529,7 @@ enum rxrpc_call_flag {
 	RXRPC_CALL_DISCONNECTED,	/* The call has been disconnected */
 	RXRPC_CALL_KERNEL,		/* The call was made by the kernel */
 	RXRPC_CALL_UPGRADE,		/* Service upgrade was requested for the call */
+	RXRPC_CALL_NEWLY_ACCEPTED,	/* Incoming call hasn't yet been reported by recvmsg */
 };
 
 /*
@@ -564,8 +594,10 @@ struct rxrpc_call {
 	struct rcu_head		rcu;
 	struct rxrpc_connection	*conn;		/* connection carrying call */
 	struct rxrpc_peer	*peer;		/* Peer record for remote address */
+	struct rxrpc_local	*local;		/* Local endpoint */
 	struct rxrpc_sock __rcu	*socket;	/* socket responsible */
 	struct rxrpc_net	*rxnet;		/* Network namespace to which call belongs */
+	struct rxrpc_service	*service;	/* The service this call came in through */
 	const struct rxrpc_security *security;	/* applied security module */
 	struct mutex		user_mutex;	/* User access mutex */
 	unsigned long		ack_at;		/* When deferred ACK needs to happen */
@@ -585,7 +617,6 @@ struct rxrpc_call {
 	struct list_head	link;		/* link in master call list */
 	struct list_head	chan_wait_link;	/* Link in conn->bundle->waiting_calls */
 	struct hlist_node	error_link;	/* link in error distribution list */
-	struct list_head	accept_link;	/* Link in rx->acceptq */
 	struct list_head	recvmsg_link;	/* Link in rx->recvmsg_q */
 	struct list_head	sock_link;	/* Link in rx->sock_calls */
 	struct rb_node		sock_node;	/* Node in rx->calls */
@@ -757,12 +788,12 @@ extern struct workqueue_struct *rxrpc_workqueue;
 /*
  * call_accept.c
  */
-int rxrpc_service_prealloc(struct rxrpc_sock *, gfp_t);
-void rxrpc_discard_prealloc(struct rxrpc_sock *);
+void rxrpc_service_preallocate(struct work_struct *work);
+void rxrpc_put_service(struct rxrpc_net *, struct rxrpc_service *);
+void rxrpc_deactivate_service(struct rxrpc_sock *);
 struct rxrpc_call *rxrpc_new_incoming_call(struct rxrpc_local *,
-					   struct rxrpc_sock *,
 					   struct sk_buff *);
-void rxrpc_accept_incoming_calls(struct rxrpc_local *);
+void rxrpc_accept_incoming_call(struct rxrpc_sock *);
 int rxrpc_user_charge_accept(struct rxrpc_sock *, unsigned long);
 
 /*
@@ -788,15 +819,15 @@ extern unsigned int rxrpc_max_call_lifetime;
 extern struct kmem_cache *rxrpc_call_jar;
 
 struct rxrpc_call *rxrpc_find_call_by_user_ID(struct rxrpc_sock *, unsigned long);
-struct rxrpc_call *rxrpc_alloc_call(struct rxrpc_sock *, gfp_t, unsigned int);
+struct rxrpc_call *rxrpc_alloc_call(struct rxrpc_local *, gfp_t, unsigned int,
+				    struct rxrpc_service *);
 struct rxrpc_call *rxrpc_new_client_call(struct rxrpc_sock *,
 					 struct rxrpc_conn_parameters *,
 					 struct sockaddr_rxrpc *,
 					 struct rxrpc_call_params *, gfp_t,
 					 unsigned int);
-void rxrpc_incoming_call(struct rxrpc_sock *, struct rxrpc_call *,
-			 struct sk_buff *);
-void rxrpc_release_call(struct rxrpc_sock *, struct rxrpc_call *);
+void rxrpc_incoming_call(struct rxrpc_call *, struct sk_buff *);
+void rxrpc_release_call(struct rxrpc_call *);
 void rxrpc_release_calls_on_socket(struct rxrpc_sock *);
 bool __rxrpc_queue_call(struct rxrpc_call *);
 bool rxrpc_queue_call(struct rxrpc_call *);
@@ -898,7 +929,7 @@ static inline void rxrpc_reduce_conn_timer(struct rxrpc_connection *conn,
 struct rxrpc_connection *rxrpc_find_service_conn_rcu(struct rxrpc_peer *,
 						     struct sk_buff *);
 struct rxrpc_connection *rxrpc_prealloc_service_connection(struct rxrpc_net *, gfp_t);
-void rxrpc_new_incoming_connection(struct rxrpc_sock *, struct rxrpc_connection *,
+void rxrpc_new_incoming_connection(const struct rxrpc_service *, struct rxrpc_connection *,
 				   const struct rxrpc_security *, struct sk_buff *);
 void rxrpc_unpublish_service_conn(struct rxrpc_connection *);
 
@@ -929,7 +960,8 @@ extern void rxrpc_process_local_events(struct rxrpc_local *);
 /*
  * local_object.c
  */
-struct rxrpc_local *rxrpc_lookup_local(struct net *, const struct sockaddr_rxrpc *);
+struct rxrpc_local *rxrpc_lookup_local(struct net *, const struct sockaddr_rxrpc *,
+				       bool);
 struct rxrpc_local *rxrpc_get_local(struct rxrpc_local *);
 struct rxrpc_local *rxrpc_get_local_maybe(struct rxrpc_local *);
 void rxrpc_put_local(struct rxrpc_local *);
@@ -995,8 +1027,7 @@ struct rxrpc_peer *rxrpc_lookup_peer_rcu(struct rxrpc_local *,
 struct rxrpc_peer *rxrpc_lookup_peer(struct rxrpc_sock *, struct rxrpc_local *,
 				     struct sockaddr_rxrpc *, gfp_t);
 struct rxrpc_peer *rxrpc_alloc_peer(struct rxrpc_local *, gfp_t);
-void rxrpc_new_incoming_peer(struct rxrpc_sock *, struct rxrpc_local *,
-			     struct rxrpc_peer *);
+void rxrpc_new_incoming_peer(struct rxrpc_local *, struct rxrpc_peer *);
 void rxrpc_destroy_all_peers(struct rxrpc_net *);
 struct rxrpc_peer *rxrpc_get_peer(struct rxrpc_peer *);
 struct rxrpc_peer *rxrpc_get_peer_maybe(struct rxrpc_peer *);
@@ -1065,7 +1096,7 @@ int __init rxrpc_init_security(void);
 const struct rxrpc_security *rxrpc_security_lookup(u8);
 void rxrpc_exit_security(void);
 int rxrpc_init_client_conn_security(struct rxrpc_connection *);
-const struct rxrpc_security *rxrpc_get_incoming_security(struct rxrpc_sock *,
+const struct rxrpc_security *rxrpc_get_incoming_security(struct rxrpc_service *,
 							 struct sk_buff *);
 struct key *rxrpc_look_up_server_security(struct rxrpc_connection *,
 					  struct sk_buff *, u32, u32);

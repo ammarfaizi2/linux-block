@@ -33,27 +33,49 @@ void rxrpc_notify_socket(struct rxrpc_call *call)
 	rcu_read_lock();
 
 	rx = rcu_dereference(call->socket);
-	sk = &rx->sk;
-	if (rx && sk->sk_state < RXRPC_CLOSE) {
+	if (rx) {
+		sk = &rx->sk;
+		if (sk->sk_state >= RXRPC_CLOSE)
+			goto out;
+
 		if (call->notify_rx) {
 			spin_lock_bh(&call->notify_lock);
 			call->notify_rx(sk, call, call->user_call_ID);
 			spin_unlock_bh(&call->notify_lock);
-		} else {
-			write_lock_bh(&rx->recvmsg_lock);
-			if (list_empty(&call->recvmsg_link)) {
-				rxrpc_get_call(call, rxrpc_call_got);
-				list_add_tail(&call->recvmsg_link, &rx->recvmsg_q);
-			}
-			write_unlock_bh(&rx->recvmsg_lock);
-
-			if (!sock_flag(sk, SOCK_DEAD)) {
-				_debug("call %ps", sk->sk_data_ready);
-				sk->sk_data_ready(sk);
-			}
+			goto out;
 		}
+
+		write_lock_bh(&rx->recvmsg_lock);
+		if (list_empty(&call->recvmsg_link)) {
+			rxrpc_get_call(call, rxrpc_call_got);
+			list_add_tail(&call->recvmsg_link, &rx->recvmsg_q);
+		}
+		write_unlock_bh(&rx->recvmsg_lock);
+
+		if (!sock_flag(sk, SOCK_DEAD)) {
+			_debug("call %ps", sk->sk_data_ready);
+			sk->sk_data_ready(sk);
+		}
+		goto out;
 	}
 
+	if (call->service) {
+		struct rxrpc_service *b = call->service;
+
+		spin_lock_bh(&b->incoming_lock);
+		if (list_empty(&call->recvmsg_link)) {
+			list_add_tail(&call->recvmsg_link, &b->to_be_accepted);
+			b->nr_tba++;
+		}
+		list_for_each_entry(rx, &b->waiting_sockets, accepting_link) {
+			sk = &rx->sk;
+			if (!sock_flag(sk, SOCK_DEAD))
+				sk->sk_data_ready(sk);
+		}
+		spin_unlock_bh(&b->incoming_lock);
+	}
+
+out:
 	rcu_read_unlock();
 	_leave("");
 }
@@ -505,6 +527,11 @@ int rxrpc_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
 try_again:
 	lock_sock(&rx->sk);
 
+	/* If there's a call we can accept, add that to the queue. */
+	if (rx->sk.sk_state == RXRPC_SERVER_LISTENING &&
+	    !list_empty(&rx->service->to_be_accepted))
+		rxrpc_accept_incoming_call(rx);		
+
 	/* Return immediately if a client socket has no outstanding calls */
 	if (RB_EMPTY_ROOT(&rx->calls) &&
 	    list_empty(&rx->recvmsg_q) &&
@@ -587,6 +614,12 @@ try_again:
 			goto error_unlock_call;
 	}
 
+	if (test_and_clear_bit(RXRPC_CALL_NEWLY_ACCEPTED, &call->flags)) {
+		ret = put_cmsg(msg, SOL_RXRPC, RXRPC_NEW_CALL, 0, NULL);
+		if (ret < 0)
+			goto error_unlock_call;
+	}
+
 	if (msg->msg_name && call->peer) {
 		struct sockaddr_rxrpc *srx = msg->msg_name;
 		size_t len = sizeof(call->peer->srx);
@@ -622,7 +655,7 @@ try_again:
 		if (ret < 0)
 			goto error_unlock_call;
 		if (!(flags & MSG_PEEK))
-			rxrpc_release_call(rx, call);
+			rxrpc_release_call(call);
 		msg->msg_flags |= MSG_EOR;
 		ret = 1;
 	}

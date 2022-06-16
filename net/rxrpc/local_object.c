@@ -73,15 +73,18 @@ static long rxrpc_local_cmp_key(const struct rxrpc_local *local,
  * Allocate a new local endpoint.
  */
 static struct rxrpc_local *rxrpc_alloc_local(struct rxrpc_net *rxnet,
-					     const struct sockaddr_rxrpc *srx)
+					     const struct sockaddr_rxrpc *srx,
+					     bool kernel)
 {
 	struct rxrpc_local *local;
 
 	local = kzalloc(sizeof(struct rxrpc_local), GFP_KERNEL);
 	if (local) {
+		local->kernel = kernel;
 		refcount_set(&local->ref, 1);
 		atomic_set(&local->active_users, 1);
 		local->rxnet = rxnet;
+		INIT_LIST_HEAD(&local->services);
 		INIT_HLIST_NODE(&local->link);
 		INIT_WORK(&local->processor, rxrpc_local_processor);
 		init_rwsem(&local->defrag_sem);
@@ -90,7 +93,7 @@ static struct rxrpc_local *rxrpc_alloc_local(struct rxrpc_net *rxnet,
 		local->client_bundles = RB_ROOT;
 		spin_lock_init(&local->client_bundles_lock);
 		spin_lock_init(&local->lock);
-		rwlock_init(&local->services_lock);
+		mutex_init(&local->services_lock);
 		local->debug_id = atomic_inc_return(&rxrpc_debug_id);
 		memcpy(&local->srx, srx, sizeof(*srx));
 		local->srx.srx_service = 0;
@@ -176,7 +179,8 @@ static int rxrpc_open_socket(struct rxrpc_local *local, struct net *net)
  * Look up or create a new local endpoint using the specified local address.
  */
 struct rxrpc_local *rxrpc_lookup_local(struct net *net,
-				       const struct sockaddr_rxrpc *srx)
+				       const struct sockaddr_rxrpc *srx,
+				       bool kernel)
 {
 	struct rxrpc_local *local;
 	struct rxrpc_net *rxnet = rxrpc_net(net);
@@ -197,12 +201,12 @@ struct rxrpc_local *rxrpc_lookup_local(struct net *net,
 		if (diff != 0)
 			continue;
 
-		/* Services aren't allowed to share transport sockets, so
-		 * reject that here.  It is possible that the object is dying -
-		 * but it may also still have the local transport address that
-		 * we want bound.
+		/* Userspace services aren't allowed to share transport sockets
+		 * with kernel services, so reject that here.  It is possible
+		 * that the object is dying - but it may also still have the
+		 * local transport address that we want bound.
 		 */
-		if (srx->srx_service) {
+		if (local->kernel != kernel) {
 			local = NULL;
 			goto addr_in_use;
 		}
@@ -219,7 +223,7 @@ struct rxrpc_local *rxrpc_lookup_local(struct net *net,
 		goto found;
 	}
 
-	local = rxrpc_alloc_local(rxnet, srx);
+	local = rxrpc_alloc_local(rxnet, srx, kernel);
 	if (!local)
 		goto nomem;
 
@@ -379,7 +383,7 @@ static void rxrpc_local_destroyer(struct rxrpc_local *local)
 
 	rxrpc_clean_up_local_conns(local);
 	rxrpc_service_connection_reaper(&rxnet->service_conn_reaper);
-	ASSERT(!local->service);
+	ASSERT(list_empty(&local->services));
 
 	if (socket) {
 		local->socket = NULL;

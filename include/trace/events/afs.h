@@ -19,7 +19,9 @@
 #define __AFS_DECLARE_TRACE_ENUMS_ONCE_ONLY
 
 enum afs_call_trace {
+	afs_call_trace_accept,
 	afs_call_trace_alloc,
+	afs_call_trace_discard,
 	afs_call_trace_free,
 	afs_call_trace_get,
 	afs_call_trace_put,
@@ -323,7 +325,9 @@ enum afs_cb_break_reason {
  * Declare tracing information enums and their string mappings for display.
  */
 #define afs_call_traces \
+	EM(afs_call_trace_accept,		"ACCPT") \
 	EM(afs_call_trace_alloc,		"ALLOC") \
+	EM(afs_call_trace_discard,		"DSCRD") \
 	EM(afs_call_trace_free,			"FREE ") \
 	EM(afs_call_trace_get,			"GET  ") \
 	EM(afs_call_trace_put,			"PUT  ") \

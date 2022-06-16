@@ -15,6 +15,7 @@
 #include <linux/random.h>
 #include <linux/poll.h>
 #include <linux/proc_fs.h>
+#include <linux/circ_buf.h>
 #include <linux/key-type.h>
 #include <net/net_namespace.h>
 #include <net/sock.h>
@@ -124,6 +125,117 @@ static int rxrpc_validate_address(struct rxrpc_sock *rx,
 }
 
 /*
+ * Bind a service to an rxrpc socket.
+ */
+static int rxrpc_bind_service(struct rxrpc_sock *rx, struct rxrpc_local *local,
+			      u16 service_id)
+{
+	struct rxrpc_service_ids *ids;
+	struct rxrpc_service *b;
+	int i;
+
+	list_for_each_entry(b, &local->services, local_link) {
+		ids = rcu_dereference_protected(
+			b->ids, lockdep_is_held(&rx->local->services_lock));
+		for (i = 0; i < ids->nr_ids; i++)
+			if (service_id == ids->ids[i].service_id)
+				return -EADDRINUSE;
+	}
+
+	b = kzalloc(sizeof(struct rxrpc_service), GFP_KERNEL);
+	if (!b)
+		return -ENOMEM;
+	INIT_LIST_HEAD(&b->local_link);
+	INIT_LIST_HEAD(&b->to_be_accepted);
+	INIT_LIST_HEAD(&b->waiting_sockets);
+	INIT_WORK(&b->preallocator, rxrpc_service_preallocate);
+	spin_lock_init(&b->incoming_lock);
+	refcount_set(&b->ref, 1);
+	refcount_set(&b->active, 1);
+	b->local = local;
+
+	ids = kzalloc(struct_size(ids, ids, 1), GFP_KERNEL);
+	if (!ids) {
+		kfree(b);
+		return -ENOMEM;
+	}
+
+	ids->nr_ids = 1;
+	ids->ids[0].service_id = service_id;
+	rcu_assign_pointer(b->ids, ids);
+
+	rx->service = b;
+	rx->local = local;
+	list_add_tail_rcu(&b->local_link, &local->services);
+	return 0;
+}
+
+/*
+ * Bind an additional service to an rxrpc socket.
+ */
+static int rxrpc_bind_service2(struct rxrpc_sock *rx, struct rxrpc_local *local,
+			       u16 service_id)
+{
+	struct rxrpc_service_ids *ids, *old;
+	struct rxrpc_service *b;
+	int i;
+
+	list_for_each_entry(b, &local->services, local_link) {
+		ids = rcu_dereference_protected(
+			b->ids, lockdep_is_held(&rx->local->services_lock));
+		for (i = 0; i < ids->nr_ids; i++)
+			if (service_id == ids->ids[i].service_id)
+				return -EADDRINUSE;
+	}
+
+	b = rx->service;
+	old = rcu_dereference_protected(
+		b->ids, lockdep_is_held(&local->services_lock));
+
+	ids = kzalloc(struct_size(ids, ids, old->nr_ids + 1), GFP_KERNEL);
+	if (!ids)
+		return -ENOMEM;
+
+	memcpy(ids, old, struct_size(ids, ids, old->nr_ids));
+	ids->ids[ids->nr_ids++].service_id = service_id;
+	rcu_assign_pointer(b->ids, ids);
+	kfree_rcu(old, rcu);
+	return 0;
+}
+
+/*
+ * Mark a service on an rxrpc socket as upgradable.  Both service IDs must have
+ * been bound to this socket and upgrade-to-same is not allowed.
+ */
+static int rxrpc_bind_service_upgrade(struct rxrpc_sock *rx,
+				      u16 service_id, u16 upgrade_to)
+{
+	struct rxrpc_service_ids *ids;
+	struct rxrpc_service *b = rx->service;
+	int i;
+
+	if (upgrade_to == service_id)
+		return -EINVAL;
+
+	ids = rcu_dereference_protected(
+		b->ids, lockdep_is_held(&rx->local->services_lock));
+	for (i = 0; i < ids->nr_ids; i++)
+		if (upgrade_to == ids->ids[i].service_id)
+			goto found_upgrade;
+	return -EINVAL;
+
+found_upgrade:
+	for (i = 0; i < ids->nr_ids; i++) {
+		if (service_id == ids->ids[i].service_id) {
+			if (ids->ids[i].upgrade_to)
+				return -EINVAL;
+			ids->ids[i].upgrade_to = upgrade_to;
+		}
+	}
+	return 0;
+}
+
+/*
  * bind a local address to an RxRPC socket
  */
 static int rxrpc_bind(struct socket *sock, struct sockaddr *saddr, int len)
@@ -145,41 +257,45 @@ static int rxrpc_bind(struct socket *sock, struct sockaddr *saddr, int len)
 
 	switch (rx->sk.sk_state) {
 	case RXRPC_UNBOUND:
-		rx->srx = *srx;
-		local = rxrpc_lookup_local(sock_net(&rx->sk), &rx->srx);
+		local = rxrpc_lookup_local(sock_net(&rx->sk), srx,
+					   rx->sk.sk_kern_sock);
 		if (IS_ERR(local)) {
 			ret = PTR_ERR(local);
 			goto error_unlock;
 		}
 
 		if (service_id) {
-			write_lock(&local->services_lock);
-			if (rcu_access_pointer(local->service))
+			mutex_lock(&local->services_lock);
+			ret = rxrpc_bind_service(rx, local, service_id);
+			if (ret)
 				goto service_in_use;
-			rx->local = local;
-			rcu_assign_pointer(local->service, rx);
-			write_unlock(&local->services_lock);
+			mutex_unlock(&local->services_lock);
 
+			srx->srx_service = 0;
+			rx->srx = *srx;
 			rx->sk.sk_state = RXRPC_SERVER_BOUND;
 		} else {
+			srx->srx_service = 0;
+			rx->srx = *srx;
 			rx->local = local;
 			rx->sk.sk_state = RXRPC_CLIENT_BOUND;
 		}
 		break;
 
 	case RXRPC_SERVER_BOUND:
+		local = rx->local;
 		ret = -EINVAL;
 		if (service_id == 0)
 			goto error_unlock;
-		ret = -EADDRINUSE;
-		if (service_id == rx->srx.srx_service)
-			goto error_unlock;
-		ret = -EINVAL;
-		srx->srx_service = rx->srx.srx_service;
+		srx->srx_service = 0;
 		if (memcmp(srx, &rx->srx, sizeof(*srx)) != 0)
 			goto error_unlock;
-		rx->second_service = service_id;
-		rx->sk.sk_state = RXRPC_SERVER_BOUND2;
+
+		mutex_lock(&local->services_lock);
+		ret = rxrpc_bind_service2(rx, local, service_id);
+		if (ret)
+			goto service_in_use;
+		mutex_unlock(&local->services_lock);
 		break;
 
 	default:
@@ -192,7 +308,7 @@ static int rxrpc_bind(struct socket *sock, struct sockaddr *saddr, int len)
 	return 0;
 
 service_in_use:
-	write_unlock(&local->services_lock);
+	mutex_unlock(&local->services_lock);
 	rxrpc_unuse_local(local);
 	rxrpc_put_local(local);
 	ret = -EADDRINUSE;
@@ -209,20 +325,21 @@ error:
 static int rxrpc_listen(struct socket *sock, int backlog)
 {
 	struct sock *sk = sock->sk;
+	struct rxrpc_service *b;
 	struct rxrpc_sock *rx = rxrpc_sk(sk);
-	unsigned int max, old;
+	unsigned int max;
 	int ret;
 
 	_enter("%p,%d", rx, backlog);
 
 	lock_sock(&rx->sk);
+	b = rx->service;
 
 	switch (rx->sk.sk_state) {
 	case RXRPC_UNBOUND:
 		ret = -EADDRNOTAVAIL;
 		break;
 	case RXRPC_SERVER_BOUND:
-	case RXRPC_SERVER_BOUND2:
 		ASSERT(rx->local != NULL);
 		max = READ_ONCE(rxrpc_max_backlog);
 		ret = -EINVAL;
@@ -230,19 +347,24 @@ static int rxrpc_listen(struct socket *sock, int backlog)
 			backlog = max;
 		else if (backlog < 0 || backlog > max)
 			break;
-		old = sk->sk_max_ack_backlog;
-		sk->sk_max_ack_backlog = backlog;
-		ret = rxrpc_service_prealloc(rx, GFP_KERNEL);
-		if (ret == 0)
-			rx->sk.sk_state = RXRPC_SERVER_LISTENING;
-		else
-			sk->sk_max_ack_backlog = old;
+		ret = -ENOMEM;
+		if (!rx->sk.sk_kern_sock) {
+			rx->call_id_backlog =
+				kcalloc(RXRPC_BACKLOG_MAX,
+					sizeof(rx->call_id_backlog[0]),
+					GFP_KERNEL);
+			if (!rx->call_id_backlog)
+				break;
+		}
+		b->max_tba = backlog;
+		rx->sk.sk_state = RXRPC_SERVER_LISTENING;
+		schedule_work(&b->preallocator);
+		ret = 0;
 		break;
 	case RXRPC_SERVER_LISTENING:
 		if (backlog == 0) {
 			rx->sk.sk_state = RXRPC_SERVER_LISTEN_DISABLED;
-			sk->sk_max_ack_backlog = 0;
-			rxrpc_discard_prealloc(rx);
+			b->max_tba = 0;
 			ret = 0;
 			break;
 		}
@@ -354,7 +476,7 @@ void rxrpc_kernel_end_call(struct socket *sock, struct rxrpc_call *call)
 	_enter("%d{%d}", call->debug_id, refcount_read(&call->ref));
 
 	mutex_lock(&call->user_mutex);
-	rxrpc_release_call(rxrpc_sk(sock->sk), call);
+	rxrpc_release_call(call);
 
 	/* Make sure we're not going to call back into a kernel service */
 	if (call->notify_rx) {
@@ -400,6 +522,8 @@ EXPORT_SYMBOL(rxrpc_kernel_get_epoch);
 /**
  * rxrpc_kernel_new_call_notification - Get notifications of new calls
  * @sock: The socket to intercept received messages on
+ * @notify_rx: Event notification function for the call
+ * @preallocate_call: Func to obtain a user_call_ID
  * @notify_new_call: Function to be called when new calls appear
  * @discard_new_call: Function to discard preallocated calls
  *
@@ -407,13 +531,19 @@ EXPORT_SYMBOL(rxrpc_kernel_get_epoch);
  */
 void rxrpc_kernel_new_call_notification(
 	struct socket *sock,
+	rxrpc_notify_rx_t notify_rx,
+	rxrpc_preallocate_call_t preallocate_call,
 	rxrpc_notify_new_call_t notify_new_call,
 	rxrpc_discard_new_call_t discard_new_call)
 {
 	struct rxrpc_sock *rx = rxrpc_sk(sock->sk);
+	struct rxrpc_service *b = rx->service;
 
-	rx->notify_new_call = notify_new_call;
-	rx->discard_new_call = discard_new_call;
+	b->kernel_sock = sock->sk;
+	b->notify_rx = notify_rx;
+	b->preallocate_call = preallocate_call;
+	b->notify_new_call = notify_new_call;
+	b->discard_new_call = discard_new_call;
 }
 EXPORT_SYMBOL(rxrpc_kernel_new_call_notification);
 
@@ -539,7 +669,8 @@ static int rxrpc_sendmsg(struct socket *sock, struct msghdr *m, size_t len)
 			ret = -EAFNOSUPPORT;
 			goto error_unlock;
 		}
-		local = rxrpc_lookup_local(sock_net(sock->sk), &rx->srx);
+		local = rxrpc_lookup_local(sock_net(sock->sk), &rx->srx,
+					   rx->sk.sk_kern_sock);
 		if (IS_ERR(local)) {
 			ret = PTR_ERR(local);
 			goto error_unlock;
@@ -585,6 +716,22 @@ int rxrpc_sock_set_min_security_level(struct sock *sk, unsigned int val)
 	return 0;
 }
 EXPORT_SYMBOL(rxrpc_sock_set_min_security_level);
+
+int rxrpc_sock_set_upgradeable_service(struct sock *sk, unsigned int val[2])
+{
+	struct rxrpc_sock *rx = rxrpc_sk(sk);
+	int ret = -EISCONN;
+
+	lock_sock(sk);
+	if (rx->sk.sk_state == RXRPC_SERVER_BOUND) {
+		mutex_lock(&rx->local->services_lock);
+		ret = rxrpc_bind_service_upgrade(rx, val[0], val[1]);
+		mutex_unlock(&rx->local->services_lock);
+	}
+	release_sock(sk);
+	return ret;
+}
+EXPORT_SYMBOL(rxrpc_sock_set_upgradeable_service);
 
 /*
  * set RxRPC socket options
@@ -653,24 +800,21 @@ static int rxrpc_setsockopt(struct socket *sock, int level, int optname,
 
 		case RXRPC_UPGRADEABLE_SERVICE:
 			ret = -EINVAL;
-			if (optlen != sizeof(service_upgrade) ||
-			    rx->service_upgrade.from != 0)
+			if (optlen != sizeof(service_upgrade))
 				goto error;
 			ret = -EISCONN;
-			if (rx->sk.sk_state != RXRPC_SERVER_BOUND2)
+			if (rx->sk.sk_state != RXRPC_SERVER_BOUND)
 				goto error;
 			ret = -EFAULT;
 			if (copy_from_sockptr(service_upgrade, optval,
 					   sizeof(service_upgrade)) != 0)
 				goto error;
-			ret = -EINVAL;
-			if ((service_upgrade[0] != rx->srx.srx_service ||
-			     service_upgrade[1] != rx->second_service) &&
-			    (service_upgrade[0] != rx->second_service ||
-			     service_upgrade[1] != rx->srx.srx_service))
+			mutex_lock(&rx->local->services_lock);
+			ret = rxrpc_bind_service_upgrade(rx, service_upgrade[0],
+							 service_upgrade[1]);
+			mutex_unlock(&rx->local->services_lock);
+			if (ret < 0)
 				goto error;
-			rx->service_upgrade.from = service_upgrade[0];
-			rx->service_upgrade.to = service_upgrade[1];
 			goto success;
 
 		default:
@@ -721,6 +865,7 @@ static __poll_t rxrpc_poll(struct file *file, struct socket *sock,
 {
 	struct sock *sk = sock->sk;
 	struct rxrpc_sock *rx = rxrpc_sk(sk);
+	struct rxrpc_service *b = rx->service;
 	__poll_t mask;
 
 	sock_poll_wait(file, sock, wait);
@@ -736,6 +881,12 @@ static __poll_t rxrpc_poll(struct file *file, struct socket *sock,
 	 * on the socket may have space in the Tx ACK window */
 	if (rxrpc_writable(sk))
 		mask |= EPOLLOUT | EPOLLWRNORM;
+
+	if (b &&
+	    !list_empty(&b->to_be_accepted) &&
+	    CIRC_CNT(rx->call_id_backlog_head, rx->call_id_backlog_tail,
+		     RXRPC_BACKLOG_MAX) == 0)
+		mask |= EPOLLIN | EPOLLRDNORM;
 
 	return mask;
 }
@@ -771,17 +922,15 @@ static int rxrpc_create(struct net *net, struct socket *sock, int protocol,
 	sock_set_flag(sk, SOCK_RCU_FREE);
 	sk->sk_state		= RXRPC_UNBOUND;
 	sk->sk_write_space	= rxrpc_write_space;
-	sk->sk_max_ack_backlog	= 0;
 	sk->sk_destruct		= rxrpc_sock_destructor;
 
 	rx = rxrpc_sk(sk);
 	rx->family = protocol;
 	rx->calls = RB_ROOT;
 
-	spin_lock_init(&rx->incoming_lock);
 	INIT_LIST_HEAD(&rx->sock_calls);
-	INIT_LIST_HEAD(&rx->to_be_accepted);
 	INIT_LIST_HEAD(&rx->recvmsg_q);
+	INIT_LIST_HEAD(&rx->accepting_link);
 	rwlock_init(&rx->recvmsg_lock);
 	rwlock_init(&rx->call_lock);
 	memset(&rx->srx, 0, sizeof(rx->srx));
@@ -803,7 +952,6 @@ static int rxrpc_create(struct net *net, struct socket *sock, int protocol,
 static int rxrpc_shutdown(struct socket *sock, int flags)
 {
 	struct sock *sk = sock->sk;
-	struct rxrpc_sock *rx = rxrpc_sk(sk);
 	int ret = 0;
 
 	_enter("%p,%d", sk, flags);
@@ -823,9 +971,6 @@ static int rxrpc_shutdown(struct socket *sock, int flags)
 		ret = -ESHUTDOWN;
 	}
 	spin_unlock_bh(&sk->sk_receive_queue.lock);
-
-	rxrpc_discard_prealloc(rx);
-
 	release_sock(sk);
 	return ret;
 }
@@ -862,6 +1007,8 @@ static int rxrpc_release_sock(struct sock *sk)
 	/* declare the socket closed for business */
 	sock_orphan(sk);
 	sk->sk_shutdown = SHUTDOWN_MASK;
+	if (rx->service)
+		rxrpc_deactivate_service(rx);
 
 	/* We want to kill off all connections from a service socket
 	 * as fast as possible because we can't share these; client
@@ -869,7 +1016,6 @@ static int rxrpc_release_sock(struct sock *sk)
 	 */
 	switch (sk->sk_state) {
 	case RXRPC_SERVER_BOUND:
-	case RXRPC_SERVER_BOUND2:
 	case RXRPC_SERVER_LISTENING:
 	case RXRPC_SERVER_LISTEN_DISABLED:
 		rx->local->service_closed = true;
@@ -880,14 +1026,11 @@ static int rxrpc_release_sock(struct sock *sk)
 	sk->sk_state = RXRPC_CLOSE;
 	spin_unlock_bh(&sk->sk_receive_queue.lock);
 
-	if (rx->local && rcu_access_pointer(rx->local->service) == rx) {
-		write_lock(&rx->local->services_lock);
-		rcu_assign_pointer(rx->local->service, NULL);
-		write_unlock(&rx->local->services_lock);
-	}
-
 	/* try to flush out this socket */
-	rxrpc_discard_prealloc(rx);
+	if (rx->service) {
+		kfree(rx->call_id_backlog);
+		rxrpc_put_service(rxnet, rx->service);
+	}
 	rxrpc_release_calls_on_socket(rx);
 	flush_workqueue(rxrpc_workqueue);
 	rxrpc_purge_queue(&sk->sk_receive_queue);
@@ -901,8 +1044,6 @@ static int rxrpc_release_sock(struct sock *sk)
 	rx->local = NULL;
 	key_put(rx->key);
 	rx->key = NULL;
-	key_put(rx->securities);
-	rx->securities = NULL;
 	sock_put(sk);
 
 	_leave(" = 0");

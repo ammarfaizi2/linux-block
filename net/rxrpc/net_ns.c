@@ -45,6 +45,7 @@ static __net_init int rxrpc_init_net(struct net *net)
 	struct rxrpc_net *rxnet = rxrpc_net(net);
 	int ret, i;
 
+	rxnet->net = net;
 	rxnet->live = true;
 	get_random_bytes(&rxnet->epoch, sizeof(rxnet->epoch));
 	rxnet->epoch |= RXRPC_RANDOM_EPOCH;

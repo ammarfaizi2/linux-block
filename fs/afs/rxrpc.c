@@ -19,6 +19,8 @@ struct workqueue_struct *afs_async_calls;
 static void afs_wake_up_call_waiter(struct sock *, struct rxrpc_call *, unsigned long);
 static void afs_wake_up_async_call(struct sock *, struct rxrpc_call *, unsigned long);
 static void afs_process_async_call(struct work_struct *);
+static unsigned long afs_rx_preallocate_call(struct sock *, struct rxrpc_call *,
+					     unsigned int *);
 static void afs_rx_new_call(struct sock *, struct rxrpc_call *, unsigned long);
 static void afs_rx_discard_new_call(struct rxrpc_call *, unsigned long);
 static int afs_deliver_cm_op_id(struct afs_call *);
@@ -81,7 +83,10 @@ int afs_open_socket(struct afs_net *net)
 	 * it sends back to us.
 	 */
 
-	rxrpc_kernel_new_call_notification(socket, afs_rx_new_call,
+	rxrpc_kernel_new_call_notification(socket,
+					   afs_wake_up_async_call,
+					   afs_rx_preallocate_call,
+					   afs_rx_new_call,
 					   afs_rx_discard_new_call);
 
 	ret = kernel_listen(socket, INT_MAX);
@@ -89,7 +94,6 @@ int afs_open_socket(struct afs_net *net)
 		goto error_2;
 
 	net->socket = socket;
-	afs_charge_preallocation(&net->charge_preallocation_work);
 	_leave(" = 0");
 	return 0;
 
@@ -110,11 +114,6 @@ void afs_close_socket(struct afs_net *net)
 	kernel_listen(net->socket, 0);
 	flush_workqueue(afs_async_calls);
 
-	if (net->spare_incoming_call) {
-		afs_put_call(net->spare_incoming_call);
-		net->spare_incoming_call = NULL;
-	}
-
 	_debug("outstanding %u", atomic_read(&net->nr_outstanding_calls));
 	wait_var_event(&net->nr_outstanding_calls,
 		       !atomic_read(&net->nr_outstanding_calls));
@@ -133,10 +132,10 @@ void afs_close_socket(struct afs_net *net)
  */
 static struct afs_call *afs_alloc_call(struct afs_net *net,
 				       const struct afs_call_type *type,
-				       gfp_t gfp)
+				       bool prealloc, gfp_t gfp)
 {
 	struct afs_call *call;
-	int o;
+	int o = 0;
 
 	call = kzalloc(sizeof(*call), gfp);
 	if (!call)
@@ -151,7 +150,8 @@ static struct afs_call *afs_alloc_call(struct afs_net *net,
 	spin_lock_init(&call->state_lock);
 	call->iter = &call->def_iter;
 
-	o = atomic_inc_return(&net->nr_outstanding_calls);
+	if (!prealloc)
+		o = atomic_inc_return(&net->nr_outstanding_calls);
 	trace_afs_call(call, afs_call_trace_alloc, 1, o,
 		       __builtin_return_address(0));
 	return call;
@@ -229,7 +229,7 @@ struct afs_call *afs_alloc_flat_call(struct afs_net *net,
 {
 	struct afs_call *call;
 
-	call = afs_alloc_call(net, type, GFP_NOFS);
+	call = afs_alloc_call(net, type, false, GFP_NOFS);
 	if (!call)
 		goto nomem_call;
 
@@ -703,45 +703,25 @@ static void afs_process_async_call(struct work_struct *work)
 	_leave("");
 }
 
-static void afs_rx_attach(struct rxrpc_call *rxcall, unsigned long user_call_ID)
+static unsigned long afs_rx_preallocate_call(struct sock *sock,
+					     struct rxrpc_call *rxcall,
+					     unsigned int *_debug_id)
 {
-	struct afs_call *call = (struct afs_call *)user_call_ID;
+	struct afs_call *call;
+	struct afs_net *net = afs_sock2net(sock);
 
+	call = afs_alloc_call(net, &afs_RXCMxxxx, true, GFP_KERNEL);
+	if (!call)
+		return 0;
+
+	*_debug_id = call->debug_id;
 	call->rxcall = rxcall;
-}
-
-/*
- * Charge the incoming call preallocation.
- */
-void afs_charge_preallocation(struct work_struct *work)
-{
-	struct afs_net *net =
-		container_of(work, struct afs_net, charge_preallocation_work);
-	struct afs_call *call = net->spare_incoming_call;
-
-	for (;;) {
-		if (!call) {
-			call = afs_alloc_call(net, &afs_RXCMxxxx, GFP_KERNEL);
-			if (!call)
-				break;
-
-			call->drop_ref = true;
-			call->async = true;
-			call->state = AFS_CALL_SV_AWAIT_OP_ID;
-			init_waitqueue_head(&call->waitq);
-			afs_extract_to_tmp(call);
-		}
-
-		if (rxrpc_kernel_charge_accept(net->socket,
-					       afs_wake_up_async_call,
-					       afs_rx_attach,
-					       (unsigned long)call,
-					       GFP_KERNEL,
-					       call->debug_id) < 0)
-			break;
-		call = NULL;
-	}
-	net->spare_incoming_call = call;
+	call->drop_ref = true;
+	call->async = true;
+	call->state = AFS_CALL_SV_AWAIT_OP_ID;
+	init_waitqueue_head(&call->waitq);
+	afs_extract_to_tmp(call);
+	return (unsigned long)call;
 }
 
 /*
@@ -751,6 +731,11 @@ static void afs_rx_discard_new_call(struct rxrpc_call *rxcall,
 				    unsigned long user_call_ID)
 {
 	struct afs_call *call = (struct afs_call *)user_call_ID;
+	unsigned int o;
+
+	o = atomic_inc_return(&call->net->nr_outstanding_calls);
+	trace_afs_call(call, afs_call_trace_discard, atomic_read(&call->usage),
+		        o, __builtin_return_address(0));
 
 	call->rxcall = NULL;
 	afs_put_call(call);
@@ -762,9 +747,13 @@ static void afs_rx_discard_new_call(struct rxrpc_call *rxcall,
 static void afs_rx_new_call(struct sock *sk, struct rxrpc_call *rxcall,
 			    unsigned long user_call_ID)
 {
+	struct afs_call *call = (struct afs_call *)user_call_ID;
 	struct afs_net *net = afs_sock2net(sk);
+	unsigned int o;
 
-	queue_work(afs_wq, &net->charge_preallocation_work);
+	o = atomic_inc_return(&net->nr_outstanding_calls);
+	trace_afs_call(call, afs_call_trace_accept, atomic_read(&call->usage),
+		        o, __builtin_return_address(0));
 }
 
 /*

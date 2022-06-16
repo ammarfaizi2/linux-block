@@ -74,7 +74,6 @@ static int __net_init afs_net_init(struct net *net_ns)
 	net->live = true;
 	generate_random_uuid((unsigned char *)&net->uuid);
 
-	INIT_WORK(&net->charge_preallocation_work, afs_charge_preallocation);
 	mutex_init(&net->socket_mutex);
 
 	net->cells = RB_ROOT;

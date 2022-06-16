@@ -1130,8 +1130,7 @@ no_free:
  *
  * TODO: If callNumber > call_id + 1, renegotiate security.
  */
-static void rxrpc_input_implicit_end_call(struct rxrpc_sock *rx,
-					  struct rxrpc_connection *conn,
+static void rxrpc_input_implicit_end_call(struct rxrpc_connection *conn,
 					  struct rxrpc_call *call)
 {
 	switch (READ_ONCE(call->state)) {
@@ -1149,9 +1148,9 @@ static void rxrpc_input_implicit_end_call(struct rxrpc_sock *rx,
 		break;
 	}
 
-	spin_lock(&rx->incoming_lock);
+	spin_lock(&call->input_lock);
 	__rxrpc_disconnect_call(conn, call);
-	spin_unlock(&rx->incoming_lock);
+	spin_unlock(&call->input_lock);
 }
 
 /*
@@ -1246,7 +1245,6 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 	struct rxrpc_call *call = NULL;
 	struct rxrpc_skb_priv *sp;
 	struct rxrpc_peer *peer = NULL;
-	struct rxrpc_sock *rx = NULL;
 	unsigned int channel;
 
 	_enter("%p", udp_sk);
@@ -1357,14 +1355,8 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 		 * that would begin a call are explicitly rejected and the rest
 		 * are just discarded.
 		 */
-		rx = rcu_dereference(local->service);
-		if (!rx || (sp->hdr.serviceId != rx->srx.srx_service &&
-			    sp->hdr.serviceId != rx->second_service)) {
-			if (sp->hdr.type == RXRPC_PACKET_TYPE_DATA &&
-			    sp->hdr.seq == 1)
-				goto unsupported_service;
-			goto discard;
-		}
+		if (list_empty(&local->services))
+			goto unsupported_service;
 	}
 
 	conn = rxrpc_find_connection_rcu(local, skb, &peer);
@@ -1433,7 +1425,7 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 			if (rxrpc_to_client(sp))
 				goto reject_packet;
 			if (call)
-				rxrpc_input_implicit_end_call(rx, conn, call);
+				rxrpc_input_implicit_end_call(conn, call);
 			call = NULL;
 		}
 
@@ -1453,7 +1445,7 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 			goto bad_message;
 		if (sp->hdr.seq != 1)
 			goto discard;
-		call = rxrpc_new_incoming_call(local, rx, skb);
+		call = rxrpc_new_incoming_call(local, skb);
 		if (!call)
 			goto reject_packet;
 	}
@@ -1477,6 +1469,9 @@ wrong_security:
 	goto post_abort;
 
 unsupported_service:
+	if (sp->hdr.type != RXRPC_PACKET_TYPE_DATA ||
+	    sp->hdr.seq != 1)
+		goto discard;
 	trace_rxrpc_abort(0, "INV", sp->hdr.cid, sp->hdr.callNumber, sp->hdr.seq,
 			  RX_INVALID_OPERATION, EOPNOTSUPP);
 	skb->priority = RX_INVALID_OPERATION;

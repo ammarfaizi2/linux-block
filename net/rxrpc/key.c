@@ -452,7 +452,7 @@ int rxrpc_request_key(struct rxrpc_sock *rx, sockptr_t optval, int optlen)
 
 	_enter("");
 
-	if (optlen <= 0 || optlen > PAGE_SIZE - 1 || rx->securities)
+	if (optlen <= 0 || optlen > PAGE_SIZE - 1)
 		return -EINVAL;
 
 	description = memdup_sockptr_nul(optval, optlen);
@@ -689,7 +689,7 @@ static long rxrpc_read(const struct key *key,
 #undef ENCODE
 
 	ASSERTCMP(tok, ==, ntoks);
-	ASSERTCMP((char __user *) xdr - buffer, ==, size);
+	ASSERTCMP((unsigned long) xdr - (unsigned long)buffer, ==, size);
 	_leave(" = %zu", size);
 	return size;
 }

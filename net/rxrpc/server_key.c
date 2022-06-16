@@ -122,10 +122,11 @@ int rxrpc_server_keyring(struct rxrpc_sock *rx, sockptr_t optval, int optlen)
 {
 	struct key *key;
 	char *description;
+	int ret = -EBUSY;
 
 	_enter("");
 
-	if (optlen <= 0 || optlen > PAGE_SIZE - 1)
+	if (optlen <= 0 || optlen > PAGE_SIZE - 1 || rx->service)
 		return -EINVAL;
 
 	description = memdup_sockptr_nul(optval, optlen);
@@ -139,8 +140,13 @@ int rxrpc_server_keyring(struct rxrpc_sock *rx, sockptr_t optval, int optlen)
 		return PTR_ERR(key);
 	}
 
-	rx->securities = key;
 	kfree(description);
+
+	if (cmpxchg(&rx->service->securities, NULL, key) == NULL)
+		ret = 0;
+	else
+		key_put(key);
+
 	_leave(" = 0 [key %x]", key->serial);
-	return 0;
+	return ret;
 }

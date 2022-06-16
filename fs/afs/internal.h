@@ -259,8 +259,6 @@ struct afs_net {
 
 	/* AF_RXRPC I/O stuff */
 	struct socket		*socket;
-	struct afs_call		*spare_incoming_call;
-	struct work_struct	charge_preallocation_work;
 	struct mutex		socket_mutex;
 	atomic_t		nr_outstanding_calls;
 	atomic_t		nr_superblocks;
@@ -1273,7 +1271,6 @@ extern struct workqueue_struct *afs_async_calls;
 
 extern int __net_init afs_open_socket(struct afs_net *);
 extern void __net_exit afs_close_socket(struct afs_net *);
-extern void afs_charge_preallocation(struct work_struct *);
 extern void afs_put_call(struct afs_call *);
 extern void afs_make_call(struct afs_addr_cursor *, struct afs_call *, gfp_t);
 extern long afs_wait_for_call_to_complete(struct afs_call *, struct afs_addr_cursor *);

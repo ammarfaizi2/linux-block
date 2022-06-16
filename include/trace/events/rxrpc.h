@@ -68,8 +68,11 @@
 	E_(rxrpc_client_to_idle,		"->Idle")
 
 #define rxrpc_call_traces \
+	EM(rxrpc_call_accepted,			"ACC") \
 	EM(rxrpc_call_connected,		"CON") \
+	EM(rxrpc_call_discard,			"DSC") \
 	EM(rxrpc_call_error,			"*E*") \
+	EM(rxrpc_call_get_socket_list,		"Gsl") \
 	EM(rxrpc_call_got,			"GOT") \
 	EM(rxrpc_call_got_kernel,		"Gke") \
 	EM(rxrpc_call_got_timer,		"GTM") \
@@ -80,6 +83,7 @@
 	EM(rxrpc_call_put_kernel,		"Pke") \
 	EM(rxrpc_call_put_noqueue,		"PnQ") \
 	EM(rxrpc_call_put_notimer,		"PnT") \
+	EM(rxrpc_call_put_socket_list,		"Psl") \
 	EM(rxrpc_call_put_timer,		"PTM") \
 	EM(rxrpc_call_put_userid,		"Pus") \
 	EM(rxrpc_call_queued,			"QUE") \
@@ -438,7 +442,7 @@ TRACE_EVENT(rxrpc_call,
 		    __entry->aux = aux;
 			   ),
 
-	    TP_printk("c=%08x %s u=%d sp=%pSR a=%p",
+	    TP_printk("c=%08x %s u=%d sp=%pSR a=%px",
 		      __entry->call,
 		      __print_symbolic(__entry->op, rxrpc_call_traces),
 		      __entry->usage,

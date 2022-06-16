@@ -104,7 +104,7 @@ found:
 /*
  * Set the ops a server connection.
  */
-const struct rxrpc_security *rxrpc_get_incoming_security(struct rxrpc_sock *rx,
+const struct rxrpc_security *rxrpc_get_incoming_security(struct rxrpc_service *b,
 							 struct sk_buff *skb)
 {
 	const struct rxrpc_security *sec;
@@ -123,7 +123,7 @@ const struct rxrpc_security *rxrpc_get_incoming_security(struct rxrpc_sock *rx,
 	}
 
 	if (sp->hdr.securityIndex != RXRPC_SECURITY_NONE &&
-	    !rx->securities) {
+	    !b->securities) {
 		trace_rxrpc_abort(0, "SVR",
 				  sp->hdr.cid, sp->hdr.callNumber, sp->hdr.seq,
 				  RX_INVALID_OPERATION, EKEYREJECTED);
@@ -143,8 +143,11 @@ struct key *rxrpc_look_up_server_security(struct rxrpc_connection *conn,
 					  u32 kvno, u32 enctype)
 {
 	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
-	struct rxrpc_sock *rx;
+	const struct rxrpc_service_ids *ids;
+	const struct rxrpc_service *b;
+	const struct rxrpc_local *local = conn->params.local;
 	struct key *key = ERR_PTR(-EKEYREJECTED);
+	unsigned int i;
 	key_ref_t kref = NULL;
 	char kdesc[5 + 1 + 3 + 1 + 12 + 1 + 12 + 1];
 	int ret;
@@ -163,12 +166,17 @@ struct key *rxrpc_look_up_server_security(struct rxrpc_connection *conn,
 
 	rcu_read_lock();
 
-	rx = rcu_dereference(conn->params.local->service);
-	if (!rx)
-		goto out;
+	list_for_each_entry_rcu(b, &local->services, local_link) {
+		ids = rcu_dereference(b->ids);
+		for (i = 0; i < ids->nr_ids; i++)
+			if (ids->ids[i].service_id == sp->hdr.serviceId)
+				goto found_service;
+	}
+	goto out;
 
+found_service:
 	/* look through the service's keyring */
-	kref = keyring_search(make_key_ref(rx->securities, 1UL),
+	kref = keyring_search(make_key_ref(b->securities, 1UL),
 			      &key_type_rxrpc_s, kdesc, true);
 	if (IS_ERR(kref)) {
 		key = ERR_CAST(kref);

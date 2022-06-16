@@ -49,7 +49,6 @@ static void rxrpc_call_seq_stop(struct seq_file *seq, void *v)
 static int rxrpc_call_seq_show(struct seq_file *seq, void *v)
 {
 	struct rxrpc_local *local;
-	struct rxrpc_sock *rx;
 	struct rxrpc_peer *peer;
 	struct rxrpc_call *call;
 	struct rxrpc_net *rxnet = rxrpc_net(seq_file_net(seq));
@@ -68,16 +67,11 @@ static int rxrpc_call_seq_show(struct seq_file *seq, void *v)
 
 	call = list_entry(v, struct rxrpc_call, link);
 
-	rx = rcu_dereference(call->socket);
-	if (rx) {
-		local = READ_ONCE(rx->local);
-		if (local)
-			sprintf(lbuff, "%pISpc", &local->srx.transport);
-		else
-			strcpy(lbuff, "no_local");
-	} else {
-		strcpy(lbuff, "no_socket");
-	}
+	local = call->local;
+	if (local)
+		sprintf(lbuff, "%pISpc", &local->srx.transport);
+	else
+		strcpy(lbuff, "no_local");
 
 	peer = call->peer;
 	if (peer)
@@ -403,22 +397,23 @@ const struct seq_operations rxrpc_local_seq_ops = {
  */
 static int rxrpc_socket_seq_show(struct seq_file *seq, void *v)
 {
+	struct rxrpc_service_ids *ids;
+	struct rxrpc_service *b;
 	struct rxrpc_local *local;
 	struct rxrpc_sock *rx;
 	struct list_head *p;
-	char lbuff[50];
-	unsigned int nr_calls = 0, nr_acc = 0, nr_attend = 0;
+	char lbuff[50], sep;
+	unsigned int nr_calls = 0, nr_acc, nr_attend = 0, i;
 
 	if (v == SEQ_START_TOKEN) {
 		seq_puts(seq,
 			 "Proto Local                                          "
-			 " Use Svc1 Svc2 nCal nAcc nAtn\n");
+			 " Use nCal nAcc nAtn Services\n");
 		return 0;
 	}
 
 	rx = hlist_entry(v, struct rxrpc_sock, ns_link);
 	local = rx->local;
-
 	if (local)
 		sprintf(lbuff, "%pISpc", &local->srx.transport);
 	else
@@ -428,10 +423,10 @@ static int rxrpc_socket_seq_show(struct seq_file *seq, void *v)
 	list_for_each(p, &rx->sock_calls) {
 		nr_calls++;
 	}
-	list_for_each(p, &rx->to_be_accepted) {
-		nr_acc++;
-	}
 	read_unlock(&rx->call_lock);
+
+	b = rx->service;
+	nr_acc = b ? b->nr_tba : 0;
 
 	read_lock_bh(&rx->recvmsg_lock);
 	list_for_each(p, &rx->recvmsg_q) {
@@ -440,12 +435,23 @@ static int rxrpc_socket_seq_show(struct seq_file *seq, void *v)
 	read_unlock_bh(&rx->recvmsg_lock);
 
 	seq_printf(seq,
-		   "UDP   %-47.47s %3d %4x %4x %4u %4u %4u\n",
+		   "UDP   %-47.47s %3d %4x %4x %4u",
 		   lbuff,
 		   refcount_read(&rx->sk.sk_refcnt),
-		   rx->srx.srx_service, rx->second_service,
 		   nr_calls, nr_acc, nr_attend);
 
+	if (b) {
+		sep = ' ';
+		ids = rcu_dereference(b->ids);
+		for (i = 0; i < ids->nr_ids; i++) {
+			seq_printf(seq, "%c%x", sep, ids->ids[i].service_id);
+			if (ids->ids[i].upgrade_to)
+				seq_printf(seq, ">%x", ids->ids[i].upgrade_to);
+			sep = ',';
+		}
+	}
+
+	seq_putc(seq, '\n');
 	return 0;
 }
 
