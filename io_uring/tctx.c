@@ -53,6 +53,7 @@ void __io_uring_free(struct task_struct *tsk)
 	WARN_ON_ONCE(tctx->cached_refs);
 
 	percpu_counter_destroy(&tctx->inflight);
+	free_percpu(tctx->tw);
 	kfree(tctx);
 	tsk->io_uring = NULL;
 }
@@ -61,7 +62,7 @@ __cold int io_uring_alloc_task_context(struct task_struct *task,
 				       struct io_ring_ctx *ctx)
 {
 	struct io_uring_task *tctx;
-	int ret;
+	int ret, cpu;
 
 	tctx = kzalloc(sizeof(*tctx), GFP_KERNEL);
 	if (unlikely(!tctx))
@@ -73,12 +74,29 @@ __cold int io_uring_alloc_task_context(struct task_struct *task,
 		return ret;
 	}
 
+	tctx->tw = alloc_percpu(struct tctx_tw);
+	if (!tctx->tw) {
+		percpu_counter_destroy(&tctx->inflight);
+		kfree(tctx);
+		return -ENOMEM;
+	}
+
 	tctx->io_wq = io_init_wq_offload(ctx, task);
 	if (IS_ERR(tctx->io_wq)) {
 		ret = PTR_ERR(tctx->io_wq);
 		percpu_counter_destroy(&tctx->inflight);
+		free_percpu(tctx->tw);
 		kfree(tctx);
 		return ret;
+	}
+
+	for_each_possible_cpu(cpu) {
+		struct tctx_tw *tw = per_cpu_ptr(tctx->tw, cpu);
+
+		spin_lock_init(&tw->task_lock);
+		INIT_WQ_LIST(&tw->task_list);
+		init_task_work(&tw->task_work, tctx_task_work);
+		tw->tctx = tctx;
 	}
 
 	xa_init(&tctx->xa);
@@ -86,9 +104,6 @@ __cold int io_uring_alloc_task_context(struct task_struct *task,
 	atomic_set(&tctx->in_idle, 0);
 	atomic_set(&tctx->inflight_tracked, 0);
 	task->io_uring = tctx;
-	spin_lock_init(&tctx->tw.task_lock);
-	INIT_WQ_LIST(&tctx->tw.task_list);
-	init_task_work(&tctx->tw.task_work, tctx_task_work);
 	return 0;
 }
 

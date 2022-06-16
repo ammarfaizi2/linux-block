@@ -1011,7 +1011,6 @@ void tctx_task_work(struct callback_head *cb)
 	bool uring_locked = false;
 	struct io_ring_ctx *ctx = NULL;
 	struct tctx_tw *tw = container_of(cb, struct tctx_tw, task_work);
-	struct io_uring_task *tctx = container_of(tw, struct io_uring_task, tw);
 
 	while (1) {
 		struct io_wq_work_node *node;
@@ -1035,7 +1034,7 @@ void tctx_task_work(struct callback_head *cb)
 	ctx_flush_and_put(ctx, &uring_locked);
 
 	/* relaxed read is enough as only the task itself sets ->in_idle */
-	if (unlikely(atomic_read(&tctx->in_idle)))
+	if (unlikely(atomic_read(&tw->tctx->in_idle)))
 		io_uring_drop_tctx_refs(current);
 }
 
@@ -1043,12 +1042,15 @@ void io_req_task_work_add(struct io_kiocb *req)
 {
 	struct io_uring_task *tctx = req->task->io_uring;
 	struct io_ring_ctx *ctx = req->ctx;
-	struct tctx_tw *tw = &tctx->tw;
 	struct io_wq_work_node *node;
 	unsigned long flags;
+	struct tctx_tw *tw;
 	bool running;
 
-	spin_lock_irqsave(&tw->task_lock, flags);
+	local_irq_save(flags);
+	tw = this_cpu_ptr(tctx->tw);
+
+	spin_lock(&tw->task_lock);
 	wq_list_add_tail(&req->io_task_work.node, &tw->task_list);
 	running = tw->task_running;
 	if (!running)

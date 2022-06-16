@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 
+#include <linux/percpu.h>
+
 /*
  * Arbitrary limit, can be raised if need be
  */
@@ -9,6 +11,7 @@ struct tctx_tw {
 	spinlock_t		task_lock;
 	struct io_wq_work_list	task_list;
 	struct callback_head	task_work;
+	struct io_uring_task	*tctx;
 	bool			task_running;
 };
 
@@ -23,7 +26,7 @@ struct io_uring_task {
 	atomic_t		inflight_tracked;
 	atomic_t		in_idle;
 
-	struct tctx_tw		tw;
+	struct __percpu	tctx_tw *tw;
 
 	struct file		*registered_rings[IO_RINGFD_REG_MAX];
 };
