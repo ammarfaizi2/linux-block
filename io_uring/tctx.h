@@ -5,6 +5,13 @@
  */
 #define IO_RINGFD_REG_MAX 16
 
+struct tctx_tw {
+	spinlock_t		task_lock;
+	struct io_wq_work_list	task_list;
+	struct callback_head	task_work;
+	bool			task_running;
+};
+
 struct io_uring_task {
 	/* submission side */
 	int			cached_refs;
@@ -16,10 +23,7 @@ struct io_uring_task {
 	atomic_t		inflight_tracked;
 	atomic_t		in_idle;
 
-	spinlock_t		task_lock;
-	struct io_wq_work_list	task_list;
-	struct callback_head	task_work;
-	bool			task_running;
+	struct tctx_tw		tw;
 
 	struct file		*registered_rings[IO_RINGFD_REG_MAX];
 };

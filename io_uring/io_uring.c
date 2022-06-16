@@ -1010,25 +1010,25 @@ void tctx_task_work(struct callback_head *cb)
 {
 	bool uring_locked = false;
 	struct io_ring_ctx *ctx = NULL;
-	struct io_uring_task *tctx = container_of(cb, struct io_uring_task,
-						  task_work);
+	struct tctx_tw *tw = container_of(cb, struct tctx_tw, task_work);
+	struct io_uring_task *tctx = container_of(tw, struct io_uring_task, tw);
 
 	while (1) {
 		struct io_wq_work_node *node;
 
-		spin_lock_irq(&tctx->task_lock);
-		node = tctx->task_list.first;
-		INIT_WQ_LIST(&tctx->task_list);
+		spin_lock_irq(&tw->task_lock);
+		node = tw->task_list.first;
+		INIT_WQ_LIST(&tw->task_list);
 		if (!node)
-			tctx->task_running = false;
-		spin_unlock_irq(&tctx->task_lock);
+			tw->task_running = false;
+		spin_unlock_irq(&tw->task_lock);
 		if (!node)
 			break;
 
 		handle_tw_list(node, &ctx, &uring_locked);
 		cond_resched();
 
-		if (data_race(!tctx->task_list.first) && uring_locked)
+		if (data_race(!tw->task_list.first) && uring_locked)
 			io_submit_flush_completions(ctx);
 	}
 
@@ -1039,20 +1039,19 @@ void tctx_task_work(struct callback_head *cb)
 		io_uring_drop_tctx_refs(current);
 }
 
-static void __io_req_task_work_add(struct io_kiocb *req,
-				   struct io_uring_task *tctx)
+static void __io_req_task_work_add(struct io_kiocb *req, struct tctx_tw *tw)
 {
 	struct io_ring_ctx *ctx = req->ctx;
 	struct io_wq_work_node *node;
 	unsigned long flags;
 	bool running;
 
-	spin_lock_irqsave(&tctx->task_lock, flags);
-	wq_list_add_tail(&req->io_task_work.node, &tctx->task_list);
-	running = tctx->task_running;
+	spin_lock_irqsave(&tw->task_lock, flags);
+	wq_list_add_tail(&req->io_task_work.node, &tw->task_list);
+	running = tw->task_running;
 	if (!running)
-		tctx->task_running = true;
-	spin_unlock_irqrestore(&tctx->task_lock, flags);
+		tw->task_running = true;
+	spin_unlock_irqrestore(&tw->task_lock, flags);
 
 	/* task_work already pending, we're done */
 	if (running)
@@ -1061,14 +1060,14 @@ static void __io_req_task_work_add(struct io_kiocb *req,
 	if (ctx->flags & IORING_SETUP_TASKRUN_FLAG)
 		atomic_or(IORING_SQ_TASKRUN, &ctx->rings->sq_flags);
 
-	if (likely(!task_work_add(req->task, &tctx->task_work, ctx->notify_method)))
+	if (likely(!task_work_add(req->task, &tw->task_work, ctx->notify_method)))
 		return;
 
-	spin_lock_irqsave(&tctx->task_lock, flags);
-	tctx->task_running = false;
-	node = tctx->task_list.first;
-	INIT_WQ_LIST(&tctx->task_list);
-	spin_unlock_irqrestore(&tctx->task_lock, flags);
+	spin_lock_irqsave(&tw->task_lock, flags);
+	tw->task_running = false;
+	node = tw->task_list.first;
+	INIT_WQ_LIST(&tw->task_list);
+	spin_unlock_irqrestore(&tw->task_lock, flags);
 
 	while (node) {
 		req = container_of(node, struct io_kiocb, io_task_work.node);
@@ -1083,7 +1082,7 @@ void io_req_task_work_add(struct io_kiocb *req)
 {
 	struct io_uring_task *tctx = req->task->io_uring;
 
-	__io_req_task_work_add(req, tctx);
+	__io_req_task_work_add(req, &tctx->tw);
 }
 
 static void io_req_tw_post(struct io_kiocb *req, bool *locked)
