@@ -5654,6 +5654,8 @@ void mas_store_prealloc(struct ma_state *mas, void *entry)
  */
 int mas_preallocate(struct ma_state *mas, void *entry, gfp_t gfp)
 {
+	int ret;
+
 	mas_set_alloc_req(mas, 1 + mas_mt_height(mas) * 3);
 	mas_alloc_nodes(mas, gfp);
 	if (likely(!mas_is_err(mas)))
@@ -5661,8 +5663,9 @@ int mas_preallocate(struct ma_state *mas, void *entry, gfp_t gfp)
 
 	mas_set_alloc_req(mas, 0);
 	mas_destroy(mas);
+	ret = xa_err(mas->node);
 	mas->node = MAS_START;
-	return xa_err(mas->node);
+	return ret;
 }
 
 /*
