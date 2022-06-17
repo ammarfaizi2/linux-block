@@ -150,8 +150,9 @@ static int io_setup_async_msg(struct io_kiocb *req,
 	req->flags |= REQ_F_NEED_CLEANUP;
 	memcpy(async_msg, kmsg, sizeof(*kmsg));
 	async_msg->msg.msg_name = &async_msg->addr;
+
 	/* if were using fast_iov, set it to the new one */
-	if (!async_msg->free_iov)
+	if (iter_is_iovec(&async_msg->msg.msg_iter) && !async_msg->free_iov)
 		async_msg->msg.msg_iter.iov = async_msg->fast_iov;
 
 	return -EAGAIN;
@@ -272,7 +273,6 @@ int io_send(struct io_kiocb *req, unsigned int issue_flags)
 {
 	struct io_sr_msg *sr = io_kiocb_to_cmd(req);
 	struct msghdr msg;
-	struct iovec iov;
 	struct socket *sock;
 	unsigned flags;
 	int min_ret = 0;
@@ -286,7 +286,7 @@ int io_send(struct io_kiocb *req, unsigned int issue_flags)
 	if (unlikely(!sock))
 		return -ENOTSOCK;
 
-	ret = import_single_range(WRITE, sr->buf, sr->len, &iov, &msg.msg_iter);
+	ret = import_ubuf(WRITE, sr->buf, sr->len, &msg.msg_iter);
 	if (unlikely(ret))
 		return ret;
 
@@ -675,10 +675,7 @@ retry_multishot:
 			}
 		}
 
-		kmsg->fast_iov[0].iov_base = buf;
-		kmsg->fast_iov[0].iov_len = len;
-		iov_iter_init(&kmsg->msg.msg_iter, READ, kmsg->fast_iov, 1,
-				len);
+		iov_iter_ubuf(&kmsg->msg.msg_iter, READ, buf, len);
 	}
 
 	flags = sr->msg_flags;
@@ -747,7 +744,6 @@ int io_recv(struct io_kiocb *req, unsigned int issue_flags)
 	struct io_sr_msg *sr = io_kiocb_to_cmd(req);
 	struct msghdr msg;
 	struct socket *sock;
-	struct iovec iov;
 	unsigned int cflags;
 	unsigned flags;
 	int ret, min_ret = 0;
@@ -772,7 +768,7 @@ retry_multishot:
 		sr->buf = buf;
 	}
 
-	ret = import_single_range(READ, sr->buf, len, &iov, &msg.msg_iter);
+	ret = import_ubuf(READ, sr->buf, len, &msg.msg_iter);
 	if (unlikely(ret))
 		goto out_free;
 
