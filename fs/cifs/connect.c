@@ -145,6 +145,25 @@ requeue_resolve:
 	return rc;
 }
 
+static void smb2_query_server_interfaces(struct work_struct *work)
+{
+	int rc;
+	struct cifs_tcon *tcon = container_of(work,
+					struct cifs_tcon,
+					query_interfaces.work);
+
+	/*
+	 * query server network interfaces, in case they change
+	 */
+	rc = SMB3_request_interfaces(0, tcon);
+	if (rc) {
+		cifs_dbg(FYI, "%s: failed to query server interfaces: %d\n",
+				__func__, rc);
+	}
+
+	queue_delayed_work(cifsiod_wq, &tcon->query_interfaces,
+			   (SMB_INTERFACE_POLL_INTERVAL * HZ));
+}
 
 static void cifs_resolve_server(struct work_struct *work)
 {
@@ -240,6 +259,10 @@ cifs_mark_tcp_ses_conns_for_reconnect(struct TCP_Server_Info *server,
 			CIFS_SET_ALL_CHANS_NEED_RECONNECT(ses);
 		else
 			cifs_chan_set_need_reconnect(ses, server);
+
+		/* check if iface is still active */
+		if (!cifs_chan_is_iface_active(ses, server))
+			cifs_chan_update_iface(ses, server);
 
 		/* If all channels need reconnect, then tcon needs reconnect */
 		if (!mark_smb_session && !CIFS_ALL_CHANS_NEED_RECONNECT(ses))
@@ -2270,6 +2293,9 @@ cifs_put_tcon(struct cifs_tcon *tcon)
 	list_del_init(&tcon->tcon_list);
 	spin_unlock(&cifs_tcp_ses_lock);
 
+	/* cancel polling of interfaces */
+	cancel_delayed_work_sync(&tcon->query_interfaces);
+
 	if (tcon->use_witness) {
 		int rc;
 
@@ -2506,6 +2532,12 @@ cifs_get_tcon(struct cifs_ses *ses, struct smb3_fs_context *ctx)
 	tcon->nodelete = ctx->nodelete;
 	tcon->local_lease = ctx->local_lease;
 	INIT_LIST_HEAD(&tcon->pending_opens);
+
+	/* schedule query interfaces poll */
+	INIT_DELAYED_WORK(&tcon->query_interfaces,
+			  smb2_query_server_interfaces);
+	queue_delayed_work(cifsiod_wq, &tcon->query_interfaces,
+			   (SMB_INTERFACE_POLL_INTERVAL * HZ));
 
 	spin_lock(&cifs_tcp_ses_lock);
 	list_add(&tcon->tcon_list, &ses->tcon_list);
