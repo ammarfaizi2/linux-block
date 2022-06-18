@@ -22,9 +22,6 @@
 #include <asm/siginfo.h>
 #include <asm/signal.h>
 
-#define NUM_TLB_ENTRIES 64
-#define TLB_OFFSET(add) (((add) >> PAGE_SHIFT) & (NUM_TLB_ENTRIES-1))
-
 /* __PHX__ :: - check the vmalloc_fault in do_page_fault()
  *            - also look into include/asm/mmu_context.h
  */

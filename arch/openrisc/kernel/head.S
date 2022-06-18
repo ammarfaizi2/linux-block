@@ -1160,6 +1160,7 @@ ENTRY(dtlb_miss_handler)
 	EXCEPTION_STORE_GPR2
 	EXCEPTION_STORE_GPR3
 	EXCEPTION_STORE_GPR4
+	EXCEPTION_STORE_GPR5
 	/*
 	 * get EA of the miss
 	 */
@@ -1204,16 +1205,21 @@ d_pmd_good:
 	 */
 	l.and	r4,r3,r4		// apply the mask
 	// Determine number of DMMU sets
-	l.mfspr r2, r0, SPR_DMMUCFGR
-	l.andi	r2, r2, SPR_DMMUCFGR_NTS
+	l.mfspr r5, r0, SPR_DMMUCFGR
+	l.andi	r2, r5, SPR_DMMUCFGR_NTS
 	l.srli	r2, r2, SPR_DMMUCFGR_NTS_OFF
 	l.ori	r3, r0, 0x1
 	l.sll	r3, r3, r2 	// r3 = number DMMU sets DMMUCFGR
-	l.addi	r2, r3, -1  	// r2 = nsets mask
+	l.addi	r3, r3, -1  	// n3 = nsets mask
+	l.andi	r2, r5, SPR_DMMUCFGR_NTW
+	l.slli  r5, r2, SPR_DMMUCFGR_NTS_WIDTH // n5 = nways mask
+	l.or	r2, r3, r5	// r2 - nset+nway mask
 	l.mfspr	r3, r0, SPR_EEAR_BASE
 	l.srli	r3, r3, 0xd	// >> PAGE_SHIFT
-	l.and	r2, r3, r2	// calc offset:	 & (NUM_TLB_ENTRIES-1)
-	                                                   //NUM_TLB_ENTRIES
+	l.and	r2, r3, r2      // r2 - tlb_offset, page & nway+nset mask
+	l.and	r5, r3, r5	// r5 - page & nway mask
+	l.add	r2, r2, r5	// r2 - (way << 1) + set
+
 	l.mtspr	r2,r4,SPR_DTLBTR_BASE(0)
 	/*
 	 * fill DTLB MR register
@@ -1225,12 +1231,14 @@ d_pmd_good:
 	EXCEPTION_LOAD_GPR2
 	EXCEPTION_LOAD_GPR3
 	EXCEPTION_LOAD_GPR4
+	EXCEPTION_LOAD_GPR5
 	l.rfe
 d_pmd_none:
 d_pte_not_present:
 	EXCEPTION_LOAD_GPR2
 	EXCEPTION_LOAD_GPR3
 	EXCEPTION_LOAD_GPR4
+	EXCEPTION_LOAD_GPR5
 	EXCEPTION_HANDLE(_dtlb_miss_page_fault_handler)
 
 /* ==============================================[ ITLB miss handler ]=== */
@@ -1238,6 +1246,7 @@ ENTRY(itlb_miss_handler)
 	EXCEPTION_STORE_GPR2
 	EXCEPTION_STORE_GPR3
 	EXCEPTION_STORE_GPR4
+	EXCEPTION_STORE_GPR5
 	/*
 	 * get EA of the miss
 	 */
@@ -1289,15 +1298,20 @@ i_pmd_good:
 	l.sfeq	r3,r0
 	l.bf	itlb_tr_fill //_workaround
 	// Determine number of IMMU sets
-	l.mfspr r2, r0, SPR_IMMUCFGR
-	l.andi	r2, r2, SPR_IMMUCFGR_NTS
+	l.mfspr r5, r0, SPR_IMMUCFGR
+	l.andi	r2, r5, SPR_IMMUCFGR_NTS
 	l.srli	r2, r2, SPR_IMMUCFGR_NTS_OFF
 	l.ori	r3, r0, 0x1
 	l.sll	r3, r3, r2 	// r3 = number IMMU sets IMMUCFGR
-	l.addi	r2, r3, -1  	// r2 = nsets mask
+	l.addi	r3, r3, -1  	// r2 = nsets mask
+	l.andi	r2, r5, SPR_IMMUCFGR_NTW
+	l.slli  r5, r2, SPR_IMMUCFGR_NTS_WIDTH // n5 = nways mask
+	l.or	r2, r3, r5	// r2 - nset+nway mask
 	l.mfspr	r3, r0, SPR_EEAR_BASE
 	l.srli	r3, r3, 0xd	// >> PAGE_SHIFT
-	l.and	r2, r3, r2	// calc offset:	 & (NUM_TLB_ENTRIES-1)
+	l.and	r2, r3, r2      // r2 - tlb_offset, page & nway+nset mask
+	l.and	r5, r3, r5	// r5 - page & nway mask
+	l.add	r2, r2, r5	// r2 - (way << 1) + set
 
 /*
  * __PHX__ :: fixme
@@ -1320,6 +1334,7 @@ itlb_tr_fill:
 	EXCEPTION_LOAD_GPR2
 	EXCEPTION_LOAD_GPR3
 	EXCEPTION_LOAD_GPR4
+	EXCEPTION_LOAD_GPR5
 	l.rfe
 
 i_pmd_none:
@@ -1327,6 +1342,7 @@ i_pte_not_present:
 	EXCEPTION_LOAD_GPR2
 	EXCEPTION_LOAD_GPR3
 	EXCEPTION_LOAD_GPR4
+	EXCEPTION_LOAD_GPR5
 	EXCEPTION_HANDLE(_itlb_miss_page_fault_handler)
 
 /* ==============================================[ boot tlb handlers ]=== */

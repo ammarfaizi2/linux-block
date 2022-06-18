@@ -363,6 +363,7 @@
 
 #define SPR_DMMUCFGR_NTW_OFF	0
 #define SPR_DMMUCFGR_NTS_OFF	2
+#define SPR_DMMUCFGR_NTS_WIDTH	7
 
 /*
  * Bit definitions for Instruction MMU Configuration Register
@@ -379,6 +380,7 @@
 
 #define SPR_IMMUCFGR_NTW_OFF	0
 #define SPR_IMMUCFGR_NTS_OFF	2
+#define SPR_IMMUCFGR_NTS_WIDTH	7
 
 /*
  * Bit definitions for Debug Control registers

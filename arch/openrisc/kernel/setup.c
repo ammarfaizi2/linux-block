@@ -129,13 +129,11 @@ static void print_cpuinfo(void)
 		printk(KERN_INFO "-- icache disabled\n");
 
 	if (upr & SPR_UPR_DMP)
-		printk(KERN_INFO "-- dmmu: %4d entries, %lu way(s)\n",
-		       1 << ((mfspr(SPR_DMMUCFGR) & SPR_DMMUCFGR_NTS) >> 2),
-		       1 + (mfspr(SPR_DMMUCFGR) & SPR_DMMUCFGR_NTW));
+		printk(KERN_INFO "-- dmmu: %4d entries, %d way(s)\n",
+		       cpuinfo->dtlb_sets, cpuinfo->dtlb_ways);
 	if (upr & SPR_UPR_IMP)
-		printk(KERN_INFO "-- immu: %4d entries, %lu way(s)\n",
-		       1 << ((mfspr(SPR_IMMUCFGR) & SPR_IMMUCFGR_NTS) >> 2),
-		       1 + (mfspr(SPR_IMMUCFGR) & SPR_IMMUCFGR_NTW));
+		printk(KERN_INFO "-- immu: %4d entries, %d way(s)\n",
+		       cpuinfo->itlb_sets, cpuinfo->itlb_ways);
 
 	printk(KERN_INFO "-- additional features:\n");
 	if (upr & SPR_UPR_DUP)
@@ -171,6 +169,7 @@ void __init setup_cpuinfo(void)
 {
 	struct device_node *cpu;
 	unsigned long iccfgr, dccfgr;
+	unsigned long mmucfgr;
 	unsigned long cache_set_size;
 	int cpu_id = smp_processor_id();
 	struct cpuinfo_or1k *cpuinfo = &cpuinfo_or1k[cpu_id];
@@ -192,6 +191,19 @@ void __init setup_cpuinfo(void)
 	cpuinfo->dcache_block_size = 16 << ((dccfgr & SPR_DCCFGR_CBS) >> 7);
 	cpuinfo->dcache_size =
 	    cache_set_size * cpuinfo->dcache_ways * cpuinfo->dcache_block_size;
+
+	/* Calculate ITLB/DTLB Sets and Ways. */
+	mmucfgr = mfspr(SPR_IMMUCFGR);
+	cpuinfo->itlb_ways = 1 + ((mmucfgr & SPR_IMMUCFGR_NTW) >>
+				  SPR_IMMUCFGR_NTW_OFF);
+	cpuinfo->itlb_sets = 1 << ((mmucfgr & SPR_IMMUCFGR_NTS) >>
+				   SPR_IMMUCFGR_NTS_OFF);
+
+	mmucfgr = mfspr(SPR_DMMUCFGR);
+	cpuinfo->dtlb_ways = 1 + ((mmucfgr & SPR_DMMUCFGR_NTW) >>
+				  SPR_DMMUCFGR_NTW_OFF);
+	cpuinfo->dtlb_sets = 1 << ((mmucfgr & SPR_DMMUCFGR_NTS) >>
+				   SPR_DMMUCFGR_NTS_OFF);
 
 	if (of_property_read_u32(cpu, "clock-frequency",
 				 &cpuinfo->clock_frequency)) {

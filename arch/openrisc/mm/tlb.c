@@ -22,18 +22,56 @@
 #include <linux/mm.h>
 #include <linux/init.h>
 
+#include <asm/cpuinfo.h>
 #include <asm/tlbflush.h>
 #include <asm/mmu_context.h>
 #include <asm/spr_defs.h>
 
 #define NO_CONTEXT -1
 
-#define NUM_DTLB_SETS (1 << ((mfspr(SPR_IMMUCFGR) & SPR_IMMUCFGR_NTS) >> \
-			    SPR_DMMUCFGR_NTS_OFF))
-#define NUM_ITLB_SETS (1 << ((mfspr(SPR_IMMUCFGR) & SPR_IMMUCFGR_NTS) >> \
-			    SPR_IMMUCFGR_NTS_OFF))
-#define DTLB_OFFSET(addr) (((addr) >> PAGE_SHIFT) & (NUM_DTLB_SETS-1))
-#define ITLB_OFFSET(addr) (((addr) >> PAGE_SHIFT) & (NUM_ITLB_SETS-1))
+/*
+ * Calculates the SPR register offset top access the xTLB mask
+ * registers.
+ *
+ * The offset is made up of the following bits:
+ *
+ *   +-------+---+-------+---------+
+ *   | 10  8 | 7 | 6   4 | 3     0 |
+ *   +-------+---+-------+---------+
+ *   |   way | MT|             set |
+ *   +-------+---+-------+---------+
+ *
+ * MT is the 0 for mask register and 1 for the translation
+ * register. So we always set 0 here.
+ *
+ * The TLB way replace mechanism just uses more upper bits of
+ * the address rather than attempting something fancy like LRU.
+ *
+ * Side note we always use SPR_xTLBMR_BASE(0) because the base must
+ * be constant.
+ */
+
+static unsigned long dtlb_offset(unsigned long vaddr,
+				 struct cpuinfo_or1k *cpuinfo)
+{
+	unsigned long addr = vaddr >> PAGE_SHIFT;
+	unsigned long idx = addr & (cpuinfo->dtlb_sets - 1);
+	unsigned long way = (addr >> SPR_DMMUCFGR_NTS_WIDTH) &
+			    (cpuinfo->dtlb_ways - 1);
+
+	return (way << (SPR_DMMUCFGR_NTS_WIDTH + 1)) + idx;
+}
+
+static unsigned long itlb_offset(unsigned long vaddr,
+				 struct cpuinfo_or1k *cpuinfo)
+{
+	unsigned long addr = vaddr >> PAGE_SHIFT;
+	unsigned long idx = addr & (cpuinfo->itlb_sets - 1);
+	unsigned long way = (addr >> SPR_IMMUCFGR_NTS_WIDTH) &
+			    (cpuinfo->itlb_ways - 1);
+
+	return (way << (SPR_IMMUCFGR_NTS_WIDTH + 1)) + idx;
+}
 /*
  * Invalidate all TLB entries.
  *
@@ -45,16 +83,18 @@
 
 void local_flush_tlb_all(void)
 {
-	int i;
-	unsigned long num_tlb_sets;
+	int set, way;
+	unsigned long offset;
+	struct cpuinfo_or1k *cpuinfo = &cpuinfo_or1k[smp_processor_id()];
 
-	/* Determine number of sets for IMMU. */
 	/* FIXME: Assumption is I & D nsets equal. */
-	num_tlb_sets = NUM_ITLB_SETS;
+	for (set = 0; set < cpuinfo->itlb_sets; set++) {
+		for (way = 0; way < cpuinfo->itlb_ways; way++) {
+			offset = (way << (SPR_IMMUCFGR_NTS_WIDTH + 1)) + set;
 
-	for (i = 0; i < num_tlb_sets; i++) {
-		mtspr_off(SPR_DTLBMR_BASE(0), i, 0);
-		mtspr_off(SPR_ITLBMR_BASE(0), i, 0);
+			mtspr_off(SPR_DTLBMR_BASE(0), offset, 0);
+			mtspr_off(SPR_ITLBMR_BASE(0), offset, 0);
+		}
 	}
 }
 
@@ -73,24 +113,26 @@ void local_flush_tlb_all(void)
  */
 
 #define flush_dtlb_page_eir(addr) mtspr(SPR_DTLBEIR, addr)
-#define flush_dtlb_page_no_eir(addr) \
-	mtspr_off(SPR_DTLBMR_BASE(0), DTLB_OFFSET(addr), 0);
+#define flush_dtlb_page_no_eir(addr, cpuinfo) \
+	mtspr_off(SPR_DTLBMR_BASE(0), dtlb_offset(addr, cpuinfo), 0)
 
 #define flush_itlb_page_eir(addr) mtspr(SPR_ITLBEIR, addr)
-#define flush_itlb_page_no_eir(addr) \
-	mtspr_off(SPR_ITLBMR_BASE(0), ITLB_OFFSET(addr), 0);
+#define flush_itlb_page_no_eir(addr, cpuinfo) \
+	mtspr_off(SPR_ITLBMR_BASE(0), itlb_offset(addr, cpuinfo), 0)
 
 void local_flush_tlb_page(struct vm_area_struct *vma, unsigned long addr)
 {
+	struct cpuinfo_or1k *cpuinfo = &cpuinfo_or1k[smp_processor_id()];
+
 	if (have_dtlbeir)
 		flush_dtlb_page_eir(addr);
 	else
-		flush_dtlb_page_no_eir(addr);
+		flush_dtlb_page_no_eir(addr, cpuinfo);
 
 	if (have_itlbeir)
 		flush_itlb_page_eir(addr);
 	else
-		flush_itlb_page_no_eir(addr);
+		flush_itlb_page_no_eir(addr, cpuinfo);
 }
 
 void local_flush_tlb_range(struct vm_area_struct *vma,
@@ -99,6 +141,7 @@ void local_flush_tlb_range(struct vm_area_struct *vma,
 	int addr;
 	bool dtlbeir;
 	bool itlbeir;
+	struct cpuinfo_or1k *cpuinfo = &cpuinfo_or1k[smp_processor_id()];
 
 	dtlbeir = have_dtlbeir;
 	itlbeir = have_itlbeir;
@@ -107,12 +150,12 @@ void local_flush_tlb_range(struct vm_area_struct *vma,
 		if (dtlbeir)
 			flush_dtlb_page_eir(addr);
 		else
-			flush_dtlb_page_no_eir(addr);
+			flush_dtlb_page_no_eir(addr, cpuinfo);
 
 		if (itlbeir)
 			flush_itlb_page_eir(addr);
 		else
-			flush_itlb_page_no_eir(addr);
+			flush_itlb_page_no_eir(addr, cpuinfo);
 	}
 }
 

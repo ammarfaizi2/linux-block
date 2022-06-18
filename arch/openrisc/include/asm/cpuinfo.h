@@ -27,6 +27,11 @@ struct cpuinfo_or1k {
 	u32 dcache_ways;
 
 	u16 coreid;
+
+	u32 itlb_sets;
+	u32 itlb_ways;
+	u32 dtlb_sets;
+	u32 dtlb_ways;
 };
 
 extern struct cpuinfo_or1k cpuinfo_or1k[NR_CPUS];
