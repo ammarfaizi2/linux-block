@@ -1866,15 +1866,15 @@ int import_ubuf(int rw, void __user *buf, size_t len, struct iov_iter *i)
  * @i: &struct iov_iter to restore
  * @state: state to restore from
  *
- * Used after iov_iter_save_state() to bring restore @i, if operations may
- * have advanced it.
+ * Used after iov_iter_save_state() to restore @i, if operations may have
+ * advanced it.
  *
- * Note: only works on ITER_IOVEC, ITER_BVEC, and ITER_KVEC
+ * Note: only works on ITER_IOVEC, ITER_BVEC, ITER_KVEC, and ITER_UBUF.
  */
 void iov_iter_restore(struct iov_iter *i, struct iov_iter_state *state)
 {
-	if (WARN_ON_ONCE(!iov_iter_is_bvec(i) && !iter_is_iovec(i)) &&
-			 !iov_iter_is_kvec(i) && !iter_is_ubuf(i))
+	if (WARN_ON_ONCE(!iov_iter_is_bvec(i) && !iter_is_iovec(i) &&
+			 !iov_iter_is_kvec(i) && !iter_is_ubuf(i)))
 		return;
 	i->iov_offset = state->iov_offset;
 	i->count = state->count;
