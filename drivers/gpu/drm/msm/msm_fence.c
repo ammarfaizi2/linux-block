@@ -28,6 +28,14 @@ msm_fence_context_alloc(struct drm_device *dev, volatile uint32_t *fenceptr,
 	fctx->fenceptr = fenceptr;
 	spin_lock_init(&fctx->spinlock);
 
+	/*
+	 * Start out close to the 32b fence rollover point, so we can
+	 * catch bugs with fence comparisons.
+	 */
+	fctx->last_fence = 0xffffff00;
+	fctx->completed_fence = fctx->last_fence;
+	*fctx->fenceptr = fctx->last_fence;
+
 	return fctx;
 }
 
@@ -46,11 +54,12 @@ bool msm_fence_completed(struct msm_fence_context *fctx, uint32_t fence)
 		(int32_t)(*fctx->fenceptr - fence) >= 0;
 }
 
-/* called from workqueue */
+/* called from irq handler */
 void msm_update_fence(struct msm_fence_context *fctx, uint32_t fence)
 {
 	spin_lock(&fctx->spinlock);
-	fctx->completed_fence = max(fence, fctx->completed_fence);
+	if (fence_after(fence, fctx->completed_fence))
+		fctx->completed_fence = fence;
 	spin_unlock(&fctx->spinlock);
 }
 
