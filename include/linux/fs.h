@@ -1600,6 +1600,9 @@ static inline void i_gid_write(struct inode *inode, gid_t gid)
  * @mnt_userns: user namespace of the mount the inode was found from
  * @inode: inode to map
  *
+ * Note, this will eventually be removed completely in favor of the type-safe
+ * i_uid_into_mntuid().
+ *
  * Return: the inode's i_uid mapped down according to @mnt_userns.
  * If the inode's i_uid has no mapping INVALID_UID is returned.
  */
@@ -1610,9 +1613,26 @@ static inline kuid_t i_uid_into_mnt(struct user_namespace *mnt_userns,
 }
 
 /**
+ * i_uid_into_mntuid - map an inode's i_uid down into a mnt_userns
+ * @mnt_userns: user namespace of the mount the inode was found from
+ * @inode: inode to map
+ *
+ * Return: whe inode's i_uid mapped down according to @mnt_userns.
+ * If the inode's i_uid has no mapping INVALID_KMNTUID is returned.
+ */
+static inline kmntuid_t i_uid_into_mntuid(struct user_namespace *mnt_userns,
+					  const struct inode *inode)
+{
+	return KMNTUIDT_INIT(i_uid_into_mnt(mnt_userns, inode));
+}
+
+/**
  * i_gid_into_mnt - map an inode's i_gid down into a mnt_userns
  * @mnt_userns: user namespace of the mount the inode was found from
  * @inode: inode to map
+ *
+ * Note, this will eventually be removed completely in favor of the type-safe
+ * i_gid_into_mntgid().
  *
  * Return: the inode's i_gid mapped down according to @mnt_userns.
  * If the inode's i_gid has no mapping INVALID_GID is returned.
@@ -1621,6 +1641,23 @@ static inline kgid_t i_gid_into_mnt(struct user_namespace *mnt_userns,
 				    const struct inode *inode)
 {
 	return mapped_kgid_fs(mnt_userns, i_user_ns(inode), inode->i_gid);
+}
+
+/**
+ * i_gid_into_mnt - map an inode's i_gid down into a mnt_userns
+ * @mnt_userns: user namespace of the mount the inode was found from
+ * @inode: inode to map
+ *
+ * Note, this will eventually be removed completely in favor of the type-safe
+ * i_gid_into_mntgid().
+ *
+ * Return: the inode's i_gid mapped down according to @mnt_userns.
+ * If the inode's i_gid has no mapping INVALID_KMNTGID is returned.
+ */
+static inline kmntgid_t i_gid_into_mntgid(struct user_namespace *mnt_userns,
+					  const struct inode *inode)
+{
+	return KMNTGIDT_INIT(i_gid_into_mnt(mnt_userns, inode));
 }
 
 /**
