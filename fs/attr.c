@@ -32,14 +32,15 @@
  */
 static bool chown_ok(struct user_namespace *mnt_userns,
 		     const struct inode *inode,
-		     kuid_t uid)
+		     kmntuid_t ia_mntuid)
 {
-	kuid_t kuid = i_uid_into_mnt(mnt_userns, inode);
-	if (uid_eq(current_fsuid(), kuid) && uid_eq(uid, inode->i_uid))
+	kmntuid_t kmntuid = i_uid_into_mntuid(mnt_userns, inode);
+	if (kuid_eq_kmntuid(current_fsuid(), kmntuid) &&
+	    kmntuid_eq(ia_mntuid, kmntuid))
 		return true;
 	if (capable_wrt_inode_uidgid(mnt_userns, inode, CAP_CHOWN))
 		return true;
-	if (uid_eq(kuid, INVALID_UID) &&
+	if (kmntuid_eq(kmntuid, INVALID_KMNTUID) &&
 	    ns_capable(inode->i_sb->s_user_ns, CAP_CHOWN))
 		return true;
 	return false;
@@ -58,21 +59,19 @@ static bool chown_ok(struct user_namespace *mnt_userns,
  * performed on the raw inode simply passs init_user_ns.
  */
 static bool chgrp_ok(struct user_namespace *mnt_userns,
-		     const struct inode *inode, kgid_t gid)
+		     const struct inode *inode, kmntgid_t ia_mntgid)
 {
-	kgid_t kgid = i_gid_into_mnt(mnt_userns, inode);
-	if (uid_eq(current_fsuid(), i_uid_into_mnt(mnt_userns, inode))) {
-		kgid_t mapped_gid;
-
-		if (gid_eq(gid, inode->i_gid))
+	kmntgid_t kmntgid = i_gid_into_mntgid(mnt_userns, inode);
+	kmntuid_t kmntuid = i_uid_into_mntuid(mnt_userns, inode);
+	if (kuid_eq_kmntuid(current_fsuid(), kmntuid)) {
+		if (kmntgid_eq(ia_mntgid, kmntgid))
 			return true;
-		mapped_gid = mapped_kgid_fs(mnt_userns, i_user_ns(inode), gid);
-		if (in_group_p(mapped_gid))
+		if (kmntgid_in_group_p(ia_mntgid))
 			return true;
 	}
 	if (capable_wrt_inode_uidgid(mnt_userns, inode, CAP_CHOWN))
 		return true;
-	if (gid_eq(kgid, INVALID_GID) &&
+	if (kmntgid_eq(ia_mntgid, INVALID_KMNTGID) &&
 	    ns_capable(inode->i_sb->s_user_ns, CAP_CHOWN))
 		return true;
 	return false;
@@ -120,28 +119,29 @@ int setattr_prepare(struct user_namespace *mnt_userns, struct dentry *dentry,
 		goto kill_priv;
 
 	/* Make sure a caller can chown. */
-	if ((ia_valid & ATTR_UID) && !chown_ok(mnt_userns, inode, attr->ia_uid))
+	if ((ia_valid & ATTR_UID) &&
+	    !chown_ok(mnt_userns, inode, attr->ia_mntuid))
 		return -EPERM;
 
 	/* Make sure caller can chgrp. */
-	if ((ia_valid & ATTR_GID) && !chgrp_ok(mnt_userns, inode, attr->ia_gid))
+	if ((ia_valid & ATTR_GID) &&
+	    !chgrp_ok(mnt_userns, inode, attr->ia_mntgid))
 		return -EPERM;
 
 	/* Make sure a caller can chmod. */
 	if (ia_valid & ATTR_MODE) {
-		kgid_t mapped_gid;
+		kmntgid_t kmntgid;
 
 		if (!inode_owner_or_capable(mnt_userns, inode))
 			return -EPERM;
 
 		if (ia_valid & ATTR_GID)
-			mapped_gid = mapped_kgid_fs(mnt_userns,
-						i_user_ns(inode), attr->ia_gid);
+			kmntgid = attr->ia_mntgid;
 		else
-			mapped_gid = i_gid_into_mnt(mnt_userns, inode);
+			kmntgid = i_gid_into_mntgid(mnt_userns, inode);
 
 		/* Also check the setgid bit! */
-		if (!in_group_p(mapped_gid) &&
+		if (!kmntgid_in_group_p(kmntgid) &&
 		    !capable_wrt_inode_uidgid(mnt_userns, inode, CAP_FSETID))
 			attr->ia_mode &= ~S_ISGID;
 	}
@@ -219,9 +219,7 @@ EXPORT_SYMBOL(inode_newsize_ok);
  * setattr_copy must be called with i_mutex held.
  *
  * setattr_copy updates the inode's metadata with that specified
- * in attr on idmapped mounts. If file ownership is changed setattr_copy
- * doesn't map ia_uid and ia_gid. It will asssume the caller has already
- * provided the intended values. Necessary permission checks to determine
+ * in attr on idmapped mounts. Necessary permission checks to determine
  * whether or not the S_ISGID property needs to be removed are performed with
  * the correct idmapped mount permission helpers.
  * Noticeably missing is inode size update, which is more complex
@@ -242,8 +240,8 @@ void setattr_copy(struct user_namespace *mnt_userns, struct inode *inode,
 {
 	unsigned int ia_valid = attr->ia_valid;
 
-	i_uid_update(&init_user_ns, attr, inode);
-	i_gid_update(&init_user_ns, attr, inode);
+	i_uid_update(mnt_userns, attr, inode);
+	i_gid_update(mnt_userns, attr, inode);
 	if (ia_valid & ATTR_ATIME)
 		inode->i_atime = attr->ia_atime;
 	if (ia_valid & ATTR_MTIME)
@@ -252,8 +250,8 @@ void setattr_copy(struct user_namespace *mnt_userns, struct inode *inode,
 		inode->i_ctime = attr->ia_ctime;
 	if (ia_valid & ATTR_MODE) {
 		umode_t mode = attr->ia_mode;
-		kgid_t kgid = i_gid_into_mnt(mnt_userns, inode);
-		if (!in_group_p(kgid) &&
+		kmntgid_t kmntgid = i_gid_into_mntgid(mnt_userns, inode);
+		if (!kmntgid_in_group_p(kmntgid) &&
 		    !capable_wrt_inode_uidgid(mnt_userns, inode, CAP_FSETID))
 			mode &= ~S_ISGID;
 		inode->i_mode = mode;
@@ -303,9 +301,6 @@ EXPORT_SYMBOL(may_setattr);
  * delegated_inode.  The caller should then break the delegation and
  * retry.  Because breaking a delegation may take a long time, the
  * caller should drop the i_mutex before doing so.
- *
- * If file ownership is changed notify_change() doesn't map ia_uid and
- * ia_gid. It will asssume the caller has already provided the intended values.
  *
  * Alternatively, a caller may pass NULL for delegated_inode.  This may
  * be appropriate for callers that expect the underlying filesystem not
@@ -395,23 +390,25 @@ int notify_change(struct user_namespace *mnt_userns, struct dentry *dentry,
 	 * namespace of the superblock.
 	 */
 	if (ia_valid & ATTR_UID &&
-	    !kuid_has_mapping(inode->i_sb->s_user_ns, attr->ia_uid))
+	    !kmntuid_has_mapping(mnt_userns, inode->i_sb->s_user_ns,
+				 attr->ia_mntuid))
 		return -EOVERFLOW;
 	if (ia_valid & ATTR_GID &&
-	    !kgid_has_mapping(inode->i_sb->s_user_ns, attr->ia_gid))
+	    !kmntgid_has_mapping(mnt_userns, inode->i_sb->s_user_ns,
+				 attr->ia_mntgid))
 		return -EOVERFLOW;
 
 	/* Don't allow modifications of files with invalid uids or
 	 * gids unless those uids & gids are being made valid.
 	 */
 	if (!(ia_valid & ATTR_UID) &&
-	    !uid_valid(i_uid_into_mnt(mnt_userns, inode)))
+	    !kmntuid_valid(i_uid_into_mntuid(mnt_userns, inode)))
 		return -EOVERFLOW;
 	if (!(ia_valid & ATTR_GID) &&
-	    !gid_valid(i_gid_into_mnt(mnt_userns, inode)))
+	    !kmntgid_valid(i_gid_into_mntgid(mnt_userns, inode)))
 		return -EOVERFLOW;
 
-	error = security_inode_setattr(&init_user_ns, dentry, attr);
+	error = security_inode_setattr(mnt_userns, dentry, attr);
 	if (error)
 		return error;
 	error = try_break_deleg(inode, delegated_inode);

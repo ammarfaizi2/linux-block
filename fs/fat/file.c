@@ -90,7 +90,7 @@ static int fat_ioctl_set_attributes(struct file *file, u32 __user *user_attr)
 	 * out the RO attribute for checking by the security
 	 * module, just because it maps to a file mode.
 	 */
-	err = security_inode_setattr(&init_user_ns,
+	err = security_inode_setattr(file_mnt_user_ns(file),
 				     file->f_path.dentry, &ia);
 	if (err)
 		goto out_unlock_inode;
@@ -517,9 +517,9 @@ int fat_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
 	}
 
 	if (((attr->ia_valid & ATTR_UID) &&
-	     (!uid_eq(attr->ia_uid, sbi->options.fs_uid))) ||
+	     (!kuid_eq_kmntuid(sbi->options.fs_uid, attr->ia_mntuid))) ||
 	    ((attr->ia_valid & ATTR_GID) &&
-	     (!gid_eq(attr->ia_gid, sbi->options.fs_gid))) ||
+	     (!kgid_eq_kmntgid(sbi->options.fs_gid, attr->ia_mntgid))) ||
 	    ((attr->ia_valid & ATTR_MODE) &&
 	     (attr->ia_mode & ~FAT_VALID_MODE)))
 		error = -EPERM;

@@ -331,8 +331,8 @@ int ovl_set_attr(struct ovl_fs *ofs, struct dentry *upperdentry,
 	if (!err) {
 		struct iattr attr = {
 			.ia_valid = ATTR_UID | ATTR_GID,
-			.ia_uid = stat->uid,
-			.ia_gid = stat->gid,
+			.ia_mntuid = KMNTUIDT_INIT(stat->uid),
+			.ia_mntgid = KMNTGIDT_INIT(stat->gid),
 		};
 		err = ovl_do_notify_change(ofs, upperdentry, &attr);
 	}
