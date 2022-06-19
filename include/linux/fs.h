@@ -1641,6 +1641,44 @@ static inline kmntuid_t i_uid_into_mntuid(struct user_namespace *mnt_userns,
 }
 
 /**
+ * i_uid_needs_update - check whether inode's i_uid needs to be updated
+ * @mnt_userns: user namespace of the mount the inode was found from
+ * @attr: the new attributes of @inode
+ * @inode: the inode to update
+ *
+ * Check whether the $inode's i_uid field needs to be updated taking idmapped
+ * mounts into account if the filesystem supports it.
+ *
+ * Return: true if @inode's i_uid field needs to be updated, false if not.
+ */
+static inline bool i_uid_needs_update(struct user_namespace *mnt_userns,
+				      const struct iattr *attr,
+				      const struct inode *inode)
+{
+	return ((attr->ia_valid & ATTR_UID) &&
+		!kmntuid_eq(attr->ia_mntuid,
+			    i_uid_into_mntuid(mnt_userns, inode)));
+}
+
+/**
+ * i_uid_update - update @inode's i_uid field
+ * @mnt_userns: user namespace of the mount the inode was found from
+ * @attr: the new attributes of @inode
+ * @inode: the inode to update
+ *
+ * Safely update @inode's i_uid field translating the kmntuid of any idmapped
+ * mount into the filesystem kuid.
+ */
+static inline void i_uid_update(struct user_namespace *mnt_userns,
+				const struct iattr *attr,
+				struct inode *inode)
+{
+	if (attr->ia_valid & ATTR_UID)
+		inode->i_uid = kmntuid_to_kuid(mnt_userns, i_user_ns(inode),
+					       attr->ia_mntuid);
+}
+
+/**
  * i_gid_into_mnt - map an inode's i_gid down into a mnt_userns
  * @mnt_userns: user namespace of the mount the inode was found from
  * @inode: inode to map
@@ -1672,6 +1710,44 @@ static inline kmntgid_t i_gid_into_mntgid(struct user_namespace *mnt_userns,
 					  const struct inode *inode)
 {
 	return KMNTGIDT_INIT(i_gid_into_mnt(mnt_userns, inode));
+}
+
+/**
+ * i_gid_needs_update - check whether inode's i_gid needs to be updated
+ * @mnt_userns: user namespace of the mount the inode was found from
+ * @attr: the new attributes of @inode
+ * @inode: the inode to update
+ *
+ * Check whether the $inode's i_gid field needs to be updated taking idmapped
+ * mounts into account if the filesystem supports it.
+ *
+ * Return: true if @inode's i_gid field needs to be updated, false if not.
+ */
+static inline bool i_gid_needs_update(struct user_namespace *mnt_userns,
+				      const struct iattr *attr,
+				      const struct inode *inode)
+{
+	return ((attr->ia_valid & ATTR_GID) &&
+		!kmntgid_eq(attr->ia_mntgid,
+			    i_gid_into_mntgid(mnt_userns, inode)));
+}
+
+/**
+ * i_gid_update - update @inode's i_gid field
+ * @mnt_userns: user namespace of the mount the inode was found from
+ * @attr: the new attributes of @inode
+ * @inode: the inode to update
+ *
+ * Safely update @inode's i_gid field translating the kmntgid of any idmapped
+ * mount into the filesystem kgid.
+ */
+static inline void i_gid_update(struct user_namespace *mnt_userns,
+				const struct iattr *attr,
+				struct inode *inode)
+{
+	if (attr->ia_valid & ATTR_GID)
+		inode->i_gid = kmntgid_to_kgid(mnt_userns, i_user_ns(inode),
+					       attr->ia_mntgid);
 }
 
 /**
