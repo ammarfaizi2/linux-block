@@ -13,6 +13,122 @@ struct user_namespace;
  */
 extern struct user_namespace init_user_ns;
 
+typedef struct {
+	uid_t val;
+} kmntuid_t;
+
+typedef struct {
+	gid_t val;
+} kmntgid_t;
+
+#ifdef CONFIG_MULTIUSER
+static inline uid_t __kmntuid_val(kmntuid_t uid)
+{
+	return uid.val;
+}
+
+static inline gid_t __kmntgid_val(kmntgid_t gid)
+{
+	return gid.val;
+}
+#else
+static inline uid_t __kmntuid_val(kmntuid_t uid)
+{
+	return 0;
+}
+
+static inline gid_t __kmntgid_val(kmntgid_t gid)
+{
+	return 0;
+}
+#endif
+
+static inline bool kmntuid_valid(kmntuid_t uid)
+{
+	return __kmntuid_val(uid) != (uid_t) -1;
+}
+
+static inline bool kmntgid_valid(kmntgid_t gid)
+{
+	return __kmntgid_val(gid) != (gid_t) -1;
+}
+
+/**
+ * kuid_eq_kmntuid - check whether kuid and kmntuid have the same value
+ * @kuid: the kuid to compare
+ * @kmntuid: the kmntuid to compare
+ *
+ * Check whether @kuid and @kmntuid have the same values.
+ *
+ * Return: true if @kuid and @kmntuid have the same value, false if not.
+ */
+static inline bool kuid_eq_kmntuid(kuid_t kuid, kmntuid_t kmntuid)
+{
+	return __kmntuid_val(kmntuid) == __kuid_val(kuid);
+}
+
+/**
+ * kgid_eq_kmntgid - check whether kgid and kmntgid have the same value
+ * @kgid: the kgid to compare
+ * @kmntgid: the kmntgid to compare
+ *
+ * Check whether @kgid and @kmntgid have the same values.
+ *
+ * Return: true if @kgid and @kmntgid have the same value, false if not.
+ */
+static inline bool kgid_eq_kmntgid(kgid_t kgid, kmntgid_t kmntgid)
+{
+	return __kmntgid_val(kmntgid) == __kgid_val(kgid);
+}
+
+static inline bool kmntuid_eq(kmntuid_t left, kmntuid_t right)
+{
+	return __kmntuid_val(left) == __kmntuid_val(right);
+}
+
+static inline bool kmntgid_eq(kmntgid_t left, kmntgid_t right)
+{
+	return __kmntgid_val(left) == __kmntgid_val(right);
+}
+
+/*
+ * kmnt{g,u}ids are created from k{g,u}ids.
+ * We don't allow them to be created from regular {u,g}id.
+ */
+#define KMNTUIDT_INIT(val) (kmntuid_t){ __kuid_val(val) }
+#define KMNTGIDT_INIT(val) (kmntgid_t){ __kgid_val(val) }
+
+#define INVALID_KMNTUID KMNTUIDT_INIT(INVALID_UID)
+#define INVALID_KMNTGID KMNTGIDT_INIT(INVALID_GID)
+
+/*
+ * Allow a kmnt{g,u}id to be used as a k{g,u}id where we want to compare
+ * whether the mapped value is identical to value of a k{g,u}id.
+ */
+#define AS_KUIDT(val) (kuid_t){ __kmntuid_val(val) }
+#define AS_KGIDT(val) (kgid_t){ __kmntgid_val(val) }
+
+#ifdef CONFIG_MULTIUSER
+/**
+ * kmntgid_in_group_p() - check whether a kmntuid matches the caller's groups
+ * @kmntgid: the mnt gid to match
+ *
+ * This function can be used to determine whether @kmntuid matches any of the
+ * caller's groups.
+ *
+ * Return: 1 if kmntuid matches caller's groups, 0 if not.
+ */
+static inline int kmntgid_in_group_p(kmntgid_t kmntgid)
+{
+	return in_group_p(AS_KGIDT(kmntgid));
+}
+#else
+static inline int kmntgid_in_group_p(kmntgid_t kmntgid)
+{
+	return 1;
+}
+#endif
+
 /**
  * initial_idmapping - check whether this is the initial mapping
  * @ns: idmapping to check
@@ -158,6 +274,43 @@ static inline kuid_t mapped_kuid_user(struct user_namespace *mnt_userns,
 }
 
 /**
+ * kmntuid_to_kuid - map a kmntuid into the filesystem idmapping
+ * @mnt_userns: the mount's idmapping
+ * @fs_userns: the filesystem's idmapping
+ * @kmntuid : kmntuid to be mapped
+ *
+ * Map @kmntuid into the filesystem idmapping. This function has to be used in
+ * order to e.g. write @kmntuid to inode->i_uid.
+ *
+ * Return: @kmntuid mapped into the filesystem idmapping
+ */
+static inline kuid_t kmntuid_to_kuid(struct user_namespace *mnt_userns,
+				     struct user_namespace *fs_userns,
+				     kmntuid_t kmntuid)
+{
+	return mapped_kuid_user(mnt_userns, fs_userns, AS_KUIDT(kmntuid));
+}
+
+/**
+ * kmntuid_has_mapping - check whether a kmntuid maps into the filesystem
+ * @mnt_userns: the mount's idmapping
+ * @fs_userns: the filesystem's idmapping
+ * @kmntuid: kmntuid to be mapped
+ *
+ * Check whether @kmntuid has a mapping in the filesystem idmapping. Use this
+ * function to check whether the filesystem idmapping has a mapping for
+ * @kmntuid.
+ *
+ * Return: true if @kmntuid has a mapping in the filesystem, false if not.
+ */
+static inline bool kmntuid_has_mapping(struct user_namespace *mnt_userns,
+				       struct user_namespace *fs_userns,
+				       kmntuid_t kmntuid)
+{
+	return uid_valid(kmntuid_to_kuid(mnt_userns, fs_userns, kmntuid));
+}
+
+/**
  * mapped_kgid_user - map a user kgid into a mnt_userns
  * @mnt_userns: the mount's idmapping
  * @fs_userns: the filesystem's idmapping
@@ -191,6 +344,43 @@ static inline kgid_t mapped_kgid_user(struct user_namespace *mnt_userns,
 	if (initial_idmapping(fs_userns))
 		return KGIDT_INIT(gid);
 	return make_kgid(fs_userns, gid);
+}
+
+/**
+ * kmntgid_to_kgid - map a kmntgid into the filesystem idmapping
+ * @mnt_userns: the mount's idmapping
+ * @fs_userns: the filesystem's idmapping
+ * @kmntgid : kmntgid to be mapped
+ *
+ * Map @kmntgid into the filesystem idmapping. This function has to be used in
+ * order to e.g. write @kmntgid to inode->i_gid.
+ *
+ * Return: @kmntgid mapped into the filesystem idmapping
+ */
+static inline kgid_t kmntgid_to_kgid(struct user_namespace *mnt_userns,
+				     struct user_namespace *fs_userns,
+				     kmntgid_t kmntgid)
+{
+	return mapped_kgid_user(mnt_userns, fs_userns, AS_KGIDT(kmntgid));
+}
+
+/**
+ * kmntgid_has_mapping - check whether a kmntgid maps into the filesystem
+ * @mnt_userns: the mount's idmapping
+ * @fs_userns: the filesystem's idmapping
+ * @kmntgid: kmntgid to be mapped
+ *
+ * Check whether @kmntgid has a mapping in the filesystem idmapping. Use this
+ * function to check whether the filesystem idmapping has a mapping for
+ * @kmntgid.
+ *
+ * Return: true if @kmntgid has a mapping in the filesystem, false if not.
+ */
+static inline bool kmntgid_has_mapping(struct user_namespace *mnt_userns,
+				       struct user_namespace *fs_userns,
+				       kmntgid_t kmntgid)
+{
+	return gid_valid(kmntgid_to_kgid(mnt_userns, fs_userns, kmntgid));
 }
 
 /**
