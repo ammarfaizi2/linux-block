@@ -10,6 +10,7 @@
 
 #include <linux/fs.h>
 #include <linux/types.h>
+#include <linux/time_types.h>
 
 /*
  * IO submission data structure (Submission Queue Entry)
@@ -244,10 +245,12 @@ enum io_uring_op {
  * IORING_ASYNC_CANCEL_FD	Key off 'fd' for cancelation rather than the
  *				request 'user_data'
  * IORING_ASYNC_CANCEL_ANY	Match any request
+ * IORING_ASYNC_CANCEL_FD_FIXED	'fd' passed in is a fixed descriptor
  */
 #define IORING_ASYNC_CANCEL_ALL	(1U << 0)
 #define IORING_ASYNC_CANCEL_FD	(1U << 1)
 #define IORING_ASYNC_CANCEL_ANY	(1U << 2)
+#define IORING_ASYNC_CANCEL_FD_FIXED	(1U << 3)
 
 /*
  * send/sendmsg and recv/recvmsg flags (sqe->addr2)
@@ -423,6 +426,9 @@ enum {
 	IORING_REGISTER_PBUF_RING		= 22,
 	IORING_UNREGISTER_PBUF_RING		= 23,
 
+	/* sync cancelation API */
+	IORING_REGISTER_SYNC_CANCEL		= 24,
+
 	/* this goes last */
 	IORING_REGISTER_LAST
 };
@@ -556,6 +562,17 @@ struct io_uring_getevents_arg {
 	__u32	sigmask_sz;
 	__u32	pad;
 	__u64	ts;
+};
+
+/*
+ * Argument for IORING_REGISTER_SYNC_CANCEL
+ */
+struct io_uring_sync_cancel_reg {
+	__u64				addr;
+	__s32				fd;
+	__u32				flags;
+	struct __kernel_timespec	timeout;
+	__u64				pad[4];
 };
 
 #endif
