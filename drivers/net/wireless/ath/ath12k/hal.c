@@ -1379,6 +1379,9 @@ static void ath12k_hal_srng_src_hw_init(struct ath12k_base *ab,
 
 	val |= HAL_TCL1_RING_MISC_SRNG_ENABLE;
 
+	if (srng->ring_id == HAL_SRNG_RING_ID_WBM_IDLE_LINK)
+		val |= HAL_TCL1_RING_MISC_MSI_RING_ID_DISABLE;
+
 	ath12k_hif_write32(ab, reg_base + HAL_TCL1_RING_MISC_OFFSET(ab), val);
 }
 
