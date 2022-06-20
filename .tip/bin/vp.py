@@ -43,8 +43,8 @@ from git import Repo
 # 2 - dbg
 #
 verbose = 0
-tmp_dir = None
-sob = None
+tmp_dir = "/tmp"
+sob = "Firstname Lastname <user@example.com>"
 git_repo = None
 
 ### generic helpers
@@ -146,6 +146,9 @@ def strip_brackets(w):
 def verify_commit_ref(sha1, name):
     global git_repo
 
+    if not git_repo:
+        return
+
     print(f"Checking commit ref [{sha1} {name}]")
 
     repo = Repo(git_repo)
@@ -203,7 +206,7 @@ dc_words = [ "ACPI", "AER", "allocator", "AMD", "AMD64",
          "preemptible",
          "prepend", # derived from append, not in the dictionaries
          "PTE", "ptrace",
-         "PV", "PVALIDATE", "QOS", "repurposing", "RET", "retpoline", "rFLAGS", "RTM",
+         "PV", "PVALIDATE", "QOS", "repurposing", "RCU", "RET", "retpoline", "rFLAGS", "RTM",
          "runtime", "Ryzen",
          "selftest", "SGX", "sideband", "SIGSEGV", "Skylake", "Smatch", "SNP", "SPDX", "SRAR", "SRBDS", "STAC",
          "STI", "STLF", "stringify", "struct", "SVA", "SWAPGS", "swiotlb",
@@ -1189,7 +1192,9 @@ f"""Class patch:
 
         # go through Link tags from the patch itself:
         if od['Link']:
+            warn("Patch contains Link tags - select the relevant one(s):")
             for url in od['Link']:
+                warn(f" Link: {url}")
 
                 # skip previous links, add the others like bugzilla, etc refs.
                 if url.startswith("https://lore.kernel.org/r/"):
@@ -1198,10 +1203,9 @@ f"""Class patch:
             info(f"Link: {url}")
             f.write(f"Link: {url}\n")
 
-
-        link_url = ""
         if self.message_id:
             link_url = f"https://lore.kernel.org/r/{ self.message_id }"
+            prefix = ""
 
             # check it
             if not self.no_link_check:
@@ -1210,10 +1214,11 @@ f"""Class patch:
                     if get.status_code != 200:
                         err(f"Link URL { link_url } not reachable, status_code: { get.status_code }")
                 except requests.exceptions.RequestException as e:
-                    err(f"Exception {e} while trying to get URL: { link_url }")
+                    warn(f"Exception {e} while trying to get URL: { link_url }")
+                    prefix = "URL UNVERIFIED: "
 
-            info(f"Link: { link_url }\n")
-            f.write(f"Link: { link_url }\n")
+            info(f"Link: { prefix }{ link_url }\n")
+            f.write(f"Link: { prefix }{ link_url }\n")
 
     def process_patch(self):
         """
@@ -1495,6 +1500,10 @@ def main(args):
 def parse_config_file():
     global tmp_dir, sob, git_repo
 
+    if not os.path.exists(os.path.expanduser('~/.verify.cfg')):
+        warn_on(1, "No ~/.verify.cfg configuration file found, will fallback to likely unsuitable defaults.")
+        return
+
     cfg = configparser.ConfigParser()
     cfg.read(os.path.expanduser('~/.verify.cfg'))
 
@@ -1565,7 +1574,7 @@ def refresh_ntlk_modules():
             if not dl.is_installed(m) or dl.is_stale(m):
                 dl.download(m)
         except:
-            warn(f"cannot download ntlk module {m}")
+            dbg(f"cannot download ntlk module {m}")
 
 if __name__ == '__main__':
     global args
