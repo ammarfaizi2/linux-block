@@ -5,7 +5,7 @@
  * Copyright 2006-2010	Johannes Berg <johannes@sipsolutions.net>
  * Copyright 2013-2015  Intel Mobile Communications GmbH
  * Copyright (C) 2015-2017 Intel Deutschland GmbH
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  */
 
 #include <linux/ieee80211.h>
@@ -438,7 +438,6 @@ static int ieee80211_add_key(struct wiphy *wiphy, struct net_device *dev,
 	struct ieee80211_sub_if_data *sdata = IEEE80211_DEV_TO_SUB_IF(dev);
 	struct ieee80211_local *local = sdata->local;
 	struct sta_info *sta = NULL;
-	const struct ieee80211_cipher_scheme *cs = NULL;
 	struct ieee80211_key *key;
 	int err;
 
@@ -456,23 +455,12 @@ static int ieee80211_add_key(struct wiphy *wiphy, struct net_device *dev,
 		if (WARN_ON_ONCE(fips_enabled))
 			return -EINVAL;
 		break;
-	case WLAN_CIPHER_SUITE_CCMP:
-	case WLAN_CIPHER_SUITE_CCMP_256:
-	case WLAN_CIPHER_SUITE_AES_CMAC:
-	case WLAN_CIPHER_SUITE_BIP_CMAC_256:
-	case WLAN_CIPHER_SUITE_BIP_GMAC_128:
-	case WLAN_CIPHER_SUITE_BIP_GMAC_256:
-	case WLAN_CIPHER_SUITE_GCMP:
-	case WLAN_CIPHER_SUITE_GCMP_256:
-		break;
 	default:
-		cs = ieee80211_cs_get(local, params->cipher, sdata->vif.type);
 		break;
 	}
 
 	key = ieee80211_key_alloc(params->cipher, key_idx, params->key_len,
-				  params->key, params->seq_len, params->seq,
-				  cs);
+				  params->key, params->seq_len, params->seq);
 	if (IS_ERR(key))
 		return PTR_ERR(key);
 
@@ -537,9 +525,6 @@ static int ieee80211_add_key(struct wiphy *wiphy, struct net_device *dev,
 		break;
 	}
 
-	if (sta)
-		sta->cipher_scheme = cs;
-
 	err = ieee80211_key_link(key, sdata, sta);
 
  out_unlock:
@@ -548,33 +533,53 @@ static int ieee80211_add_key(struct wiphy *wiphy, struct net_device *dev,
 	return err;
 }
 
+static struct ieee80211_key *
+ieee80211_lookup_key(struct ieee80211_sub_if_data *sdata,
+		     u8 key_idx, bool pairwise, const u8 *mac_addr)
+{
+	struct ieee80211_local *local = sdata->local;
+	struct sta_info *sta;
+
+	if (mac_addr) {
+		sta = sta_info_get_bss(sdata, mac_addr);
+		if (!sta)
+			return NULL;
+
+		if (pairwise && key_idx < NUM_DEFAULT_KEYS)
+			return rcu_dereference_check_key_mtx(local,
+							     sta->ptk[key_idx]);
+
+		if (!pairwise &&
+		    key_idx < NUM_DEFAULT_KEYS +
+			      NUM_DEFAULT_MGMT_KEYS +
+			      NUM_DEFAULT_BEACON_KEYS)
+			return rcu_dereference_check_key_mtx(local,
+							     sta->deflink.gtk[key_idx]);
+
+		return NULL;
+	}
+
+	if (key_idx < NUM_DEFAULT_KEYS +
+		      NUM_DEFAULT_MGMT_KEYS +
+		      NUM_DEFAULT_BEACON_KEYS)
+		return rcu_dereference_check_key_mtx(local,
+						     sdata->keys[key_idx]);
+
+	return NULL;
+}
+
 static int ieee80211_del_key(struct wiphy *wiphy, struct net_device *dev,
 			     u8 key_idx, bool pairwise, const u8 *mac_addr)
 {
 	struct ieee80211_sub_if_data *sdata = IEEE80211_DEV_TO_SUB_IF(dev);
 	struct ieee80211_local *local = sdata->local;
-	struct sta_info *sta;
-	struct ieee80211_key *key = NULL;
+	struct ieee80211_key *key;
 	int ret;
 
 	mutex_lock(&local->sta_mtx);
 	mutex_lock(&local->key_mtx);
 
-	if (mac_addr) {
-		ret = -ENOENT;
-
-		sta = sta_info_get_bss(sdata, mac_addr);
-		if (!sta)
-			goto out_unlock;
-
-		if (pairwise)
-			key = key_mtx_dereference(local, sta->ptk[key_idx]);
-		else
-			key = key_mtx_dereference(local,
-						  sta->deflink.gtk[key_idx]);
-	} else
-		key = key_mtx_dereference(local, sdata->keys[key_idx]);
-
+	key = ieee80211_lookup_key(sdata, key_idx, pairwise, mac_addr);
 	if (!key) {
 		ret = -ENOENT;
 		goto out_unlock;
@@ -597,10 +602,9 @@ static int ieee80211_get_key(struct wiphy *wiphy, struct net_device *dev,
 					      struct key_params *params))
 {
 	struct ieee80211_sub_if_data *sdata;
-	struct sta_info *sta = NULL;
 	u8 seq[6] = {0};
 	struct key_params params;
-	struct ieee80211_key *key = NULL;
+	struct ieee80211_key *key;
 	u64 pn64;
 	u32 iv32;
 	u16 iv16;
@@ -611,20 +615,7 @@ static int ieee80211_get_key(struct wiphy *wiphy, struct net_device *dev,
 
 	rcu_read_lock();
 
-	if (mac_addr) {
-		sta = sta_info_get_bss(sdata, mac_addr);
-		if (!sta)
-			goto out;
-
-		if (pairwise && key_idx < NUM_DEFAULT_KEYS)
-			key = rcu_dereference(sta->ptk[key_idx]);
-		else if (!pairwise &&
-			 key_idx < NUM_DEFAULT_KEYS + NUM_DEFAULT_MGMT_KEYS +
-			 NUM_DEFAULT_BEACON_KEYS)
-			key = rcu_dereference(sta->deflink.gtk[key_idx]);
-	} else
-		key = rcu_dereference(sdata->keys[key_idx]);
-
+	key = ieee80211_lookup_key(sdata, key_idx, pairwise, mac_addr);
 	if (!key)
 		goto out;
 
@@ -1207,9 +1198,6 @@ static int ieee80211_start_ap(struct wiphy *wiphy, struct net_device *dev,
 				params->crypto.control_port_over_nl80211;
 	sdata->control_port_no_preauth =
 				params->crypto.control_port_no_preauth;
-	sdata->encrypt_headroom = ieee80211_cs_headroom(sdata->local,
-							&params->crypto,
-							sdata->vif.type);
 
 	list_for_each_entry(vlan, &sdata->u.ap.vlans, u.vlan.list) {
 		vlan->control_port_protocol =
@@ -1220,10 +1208,6 @@ static int ieee80211_start_ap(struct wiphy *wiphy, struct net_device *dev,
 			params->crypto.control_port_over_nl80211;
 		vlan->control_port_no_preauth =
 			params->crypto.control_port_no_preauth;
-		vlan->encrypt_headroom =
-			ieee80211_cs_headroom(sdata->local,
-					      &params->crypto,
-					      vlan->vif.type);
 	}
 
 	sdata->vif.bss_conf.dtim_period = params->dtim_period;
@@ -1348,6 +1332,16 @@ static int ieee80211_change_beacon(struct wiphy *wiphy, struct net_device *dev,
 	return 0;
 }
 
+static void ieee80211_free_next_beacon(struct ieee80211_sub_if_data *sdata)
+{
+	if (!sdata->u.ap.next_beacon)
+		return;
+
+	kfree(sdata->u.ap.next_beacon->mbssid_ies);
+	kfree(sdata->u.ap.next_beacon);
+	sdata->u.ap.next_beacon = NULL;
+}
+
 static int ieee80211_stop_ap(struct wiphy *wiphy, struct net_device *dev)
 {
 	struct ieee80211_sub_if_data *sdata = IEEE80211_DEV_TO_SUB_IF(dev);
@@ -1382,11 +1376,7 @@ static int ieee80211_stop_ap(struct wiphy *wiphy, struct net_device *dev)
 
 	mutex_unlock(&local->mtx);
 
-	if (sdata->u.ap.next_beacon) {
-		kfree(sdata->u.ap.next_beacon->mbssid_ies);
-		kfree(sdata->u.ap.next_beacon);
-		sdata->u.ap.next_beacon = NULL;
-	}
+	ieee80211_free_next_beacon(sdata);
 
 	/* turn off carrier for this interface and dependent VLANs */
 	list_for_each_entry(vlan, &sdata->u.ap.vlans, u.vlan.list)
@@ -3321,9 +3311,7 @@ static int ieee80211_set_after_csa_beacon(struct ieee80211_sub_if_data *sdata,
 
 		err = ieee80211_assign_beacon(sdata, sdata->u.ap.next_beacon,
 					      NULL, NULL);
-		kfree(sdata->u.ap.next_beacon->mbssid_ies);
-		kfree(sdata->u.ap.next_beacon);
-		sdata->u.ap.next_beacon = NULL;
+		ieee80211_free_next_beacon(sdata);
 
 		if (err < 0)
 			return err;
@@ -3479,9 +3467,7 @@ static int ieee80211_set_csa_beacon(struct ieee80211_sub_if_data *sdata,
 		     IEEE80211_MAX_CNTDWN_COUNTERS_NUM) ||
 		    (params->n_counter_offsets_presp >
 		     IEEE80211_MAX_CNTDWN_COUNTERS_NUM)) {
-			kfree(sdata->u.ap.next_beacon->mbssid_ies);
-			kfree(sdata->u.ap.next_beacon);
-			sdata->u.ap.next_beacon = NULL;
+			ieee80211_free_next_beacon(sdata);
 			return -EINVAL;
 		}
 
@@ -3493,9 +3479,7 @@ static int ieee80211_set_csa_beacon(struct ieee80211_sub_if_data *sdata,
 
 		err = ieee80211_assign_beacon(sdata, &params->beacon_csa, &csa, NULL);
 		if (err < 0) {
-			kfree(sdata->u.ap.next_beacon->mbssid_ies);
-			kfree(sdata->u.ap.next_beacon);
-			sdata->u.ap.next_beacon = NULL;
+			ieee80211_free_next_beacon(sdata);
 			return err;
 		}
 		*changed |= err;
@@ -3585,11 +3569,8 @@ static int ieee80211_set_csa_beacon(struct ieee80211_sub_if_data *sdata,
 static void ieee80211_color_change_abort(struct ieee80211_sub_if_data  *sdata)
 {
 	sdata->vif.color_change_active = false;
-	if (sdata->u.ap.next_beacon) {
-		kfree(sdata->u.ap.next_beacon->mbssid_ies);
-		kfree(sdata->u.ap.next_beacon);
-		sdata->u.ap.next_beacon = NULL;
-	}
+
+	ieee80211_free_next_beacon(sdata);
 
 	cfg80211_color_change_aborted_notify(sdata->dev);
 }
@@ -4330,9 +4311,7 @@ ieee80211_set_after_color_change_beacon(struct ieee80211_sub_if_data *sdata,
 
 		ret = ieee80211_assign_beacon(sdata, sdata->u.ap.next_beacon,
 					      NULL, NULL);
-		kfree(sdata->u.ap.next_beacon->mbssid_ies);
-		kfree(sdata->u.ap.next_beacon);
-		sdata->u.ap.next_beacon = NULL;
+		ieee80211_free_next_beacon(sdata);
 
 		if (ret < 0)
 			return ret;
@@ -4375,11 +4354,7 @@ ieee80211_set_color_change_beacon(struct ieee80211_sub_if_data *sdata,
 		err = ieee80211_assign_beacon(sdata, &params->beacon_color_change,
 					      NULL, &color_change);
 		if (err < 0) {
-			if (sdata->u.ap.next_beacon) {
-				kfree(sdata->u.ap.next_beacon->mbssid_ies);
-				kfree(sdata->u.ap.next_beacon);
-				sdata->u.ap.next_beacon = NULL;
-			}
+			ieee80211_free_next_beacon(sdata);
 			return err;
 		}
 		*changed |= err;

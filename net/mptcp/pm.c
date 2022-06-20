@@ -181,15 +181,14 @@ void mptcp_pm_subflow_check_next(struct mptcp_sock *msk, const struct sock *ssk,
 	struct mptcp_pm_data *pm = &msk->pm;
 	bool update_subflows;
 
-	update_subflows = (ssk->sk_state == TCP_CLOSE) &&
-			  (subflow->request_join || subflow->mp_join) &&
+	update_subflows = (subflow->request_join || subflow->mp_join) &&
 			  mptcp_pm_is_kernel(msk);
 	if (!READ_ONCE(pm->work_pending) && !update_subflows)
 		return;
 
 	spin_lock_bh(&pm->lock);
 	if (update_subflows)
-		pm->subflows--;
+		__mptcp_pm_close_subflow(msk);
 
 	/* Even if this subflow is not really established, tell the PM to try
 	 * to pick the next ones, if possible.
@@ -304,7 +303,7 @@ void mptcp_pm_mp_fail_received(struct sock *sk, u64 fail_seq)
 
 	pr_debug("fail_seq=%llu", fail_seq);
 
-	if (mptcp_has_another_subflow(sk) || !READ_ONCE(msk->allow_infinite_fallback))
+	if (!READ_ONCE(msk->allow_infinite_fallback))
 		return;
 
 	if (!READ_ONCE(subflow->mp_fail_response_expect)) {
@@ -313,13 +312,10 @@ void mptcp_pm_mp_fail_received(struct sock *sk, u64 fail_seq)
 		subflow->send_mp_fail = 1;
 		MPTCP_INC_STATS(sock_net(sk), MPTCP_MIB_MPFAILTX);
 		subflow->send_infinite_map = 1;
-	} else if (s && inet_sk_state_load(s) != TCP_CLOSE) {
+	} else if (!sock_flag(sk, SOCK_DEAD)) {
 		pr_debug("MP_FAIL response received");
 
-		mptcp_data_lock(s);
-		if (inet_sk_state_load(s) != TCP_CLOSE)
-			sk_stop_timer(s, &s->sk_timer);
-		mptcp_data_unlock(s);
+		sk_stop_timer(s, &s->sk_timer);
 	}
 }
 
@@ -469,6 +465,7 @@ void mptcp_pm_data_init(struct mptcp_sock *msk)
 {
 	spin_lock_init(&msk->pm.lock);
 	INIT_LIST_HEAD(&msk->pm.anno_list);
+	INIT_LIST_HEAD(&msk->pm.userspace_pm_local_addr_list);
 	mptcp_pm_data_reset(msk);
 }
 

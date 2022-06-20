@@ -1903,6 +1903,7 @@ const struct net_device_ops nfp_nfd3_netdev_ops = {
 	.ndo_vlan_rx_kill_vid	= nfp_net_vlan_rx_kill_vid,
 	.ndo_set_vf_mac         = nfp_app_set_vf_mac,
 	.ndo_set_vf_vlan        = nfp_app_set_vf_vlan,
+	.ndo_set_vf_rate	= nfp_app_set_vf_rate,
 	.ndo_set_vf_spoofchk    = nfp_app_set_vf_spoofchk,
 	.ndo_set_vf_trust	= nfp_app_set_vf_trust,
 	.ndo_get_vf_config	= nfp_app_get_vf_config,
@@ -1984,7 +1985,7 @@ static const struct udp_tunnel_nic_info nfp_udp_tunnels = {
  */
 void nfp_net_info(struct nfp_net *nn)
 {
-	nn_info(nn, "Netronome NFP-6xxx %sNetdev: TxQs=%d/%d RxQs=%d/%d\n",
+	nn_info(nn, "NFP-6xxx %sNetdev: TxQs=%d/%d RxQs=%d/%d\n",
 		nn->dp.is_vf ? "VF " : "",
 		nn->dp.num_tx_rings, nn->max_tx_rings,
 		nn->dp.num_rx_rings, nn->max_rx_rings);
@@ -2039,6 +2040,7 @@ nfp_net_alloc(struct pci_dev *pdev, const struct nfp_dev_info *dev_info,
 	      void __iomem *ctrl_bar, bool needs_netdev,
 	      unsigned int max_tx_rings, unsigned int max_rx_rings)
 {
+	u64 dma_mask = dma_get_mask(&pdev->dev);
 	struct nfp_net *nn;
 	int err;
 
@@ -2080,6 +2082,14 @@ nfp_net_alloc(struct pci_dev *pdev, const struct nfp_dev_info *dev_info,
 		nn->dp.ops = &nfp_nfdk_ops;
 		break;
 	default:
+		err = -EINVAL;
+		goto err_free_nn;
+	}
+
+	if ((dma_mask & nn->dp.ops->dma_mask) != dma_mask) {
+		dev_err(&pdev->dev,
+			"DMA mask of loaded firmware: %llx, required DMA mask: %llx\n",
+			nn->dp.ops->dma_mask, dma_mask);
 		err = -EINVAL;
 		goto err_free_nn;
 	}
@@ -2320,7 +2330,7 @@ static void nfp_net_netdev_init(struct nfp_net *nn)
 	netdev->min_mtu = ETH_MIN_MTU;
 	netdev->max_mtu = nn->max_mtu;
 
-	netif_set_gso_max_segs(netdev, NFP_NET_LSO_MAX_SEGS);
+	netif_set_tso_max_segs(netdev, NFP_NET_LSO_MAX_SEGS);
 
 	netif_carrier_off(netdev);
 

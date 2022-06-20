@@ -220,7 +220,8 @@ nfp_fl_output(struct nfp_app *app, struct nfp_fl_output *output,
 		}
 		output->port = cpu_to_be32(NFP_FL_LAG_OUT | gid);
 	} else if (nfp_flower_internal_port_can_offload(app, out_dev)) {
-		if (!(priv->flower_ext_feats & NFP_FL_FEATS_PRE_TUN_RULES)) {
+		if (!(priv->flower_ext_feats & NFP_FL_FEATS_PRE_TUN_RULES) &&
+		    !(priv->flower_ext_feats & NFP_FL_FEATS_DECAP_V2)) {
 			NL_SET_ERR_MSG_MOD(extack, "unsupported offload: pre-tunnel rules not supported in loaded firmware");
 			return -EOPNOTSUPP;
 		}
@@ -673,9 +674,9 @@ nfp_fl_set_ip6_hop_limit_flow_label(u32 off, __be32 exact, __be32 mask,
 					    fl_hl_mask->hop_limit;
 		break;
 	case round_down(offsetof(struct ipv6hdr, flow_lbl), 4):
-		if (mask & ~IPV6_FLOW_LABEL_MASK ||
-		    exact & ~IPV6_FLOW_LABEL_MASK) {
-			NL_SET_ERR_MSG_MOD(extack, "unsupported offload: invalid pedit IPv6 flow label action");
+		if (mask & ~IPV6_FLOWINFO_MASK ||
+		    exact & ~IPV6_FLOWINFO_MASK) {
+			NL_SET_ERR_MSG_MOD(extack, "unsupported offload: invalid pedit IPv6 flow info action");
 			return -EOPNOTSUPP;
 		}
 

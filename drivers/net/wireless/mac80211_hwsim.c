@@ -290,8 +290,7 @@ static inline int hwsim_net_set_netgroup(struct net *net)
 {
 	struct hwsim_net *hwsim_net = net_generic(net, hwsim_net_id);
 
-	hwsim_net->netgroup = ida_simple_get(&hwsim_netgroup_ida,
-					     0, 0, GFP_KERNEL);
+	hwsim_net->netgroup = ida_alloc(&hwsim_netgroup_ida, GFP_KERNEL);
 	return hwsim_net->netgroup >= 0 ? 0 : -ENOMEM;
 }
 
@@ -2202,11 +2201,14 @@ mac80211_hwsim_sta_rc_update(struct ieee80211_hw *hw,
 	if (!data->use_chanctx) {
 		confbw = data->bw;
 	} else {
-		struct ieee80211_chanctx_conf *chanctx_conf =
-			rcu_dereference(vif->chanctx_conf);
+		struct ieee80211_chanctx_conf *chanctx_conf;
+
+		rcu_read_lock();
+		chanctx_conf = rcu_dereference(vif->chanctx_conf);
 
 		if (!WARN_ON(!chanctx_conf))
 			confbw = chanctx_conf->def.width;
+		rcu_read_unlock();
 	}
 
 	WARN(bw > hwsim_get_chanwidth(confbw),
@@ -2475,11 +2477,13 @@ static void hw_scan_work(struct work_struct *work)
 			if (req->ie_len)
 				skb_put_data(probe, req->ie, req->ie_len);
 
+			rcu_read_lock();
 			if (!ieee80211_tx_prepare_skb(hwsim->hw,
 						      hwsim->hw_scan_vif,
 						      probe,
 						      hwsim->tmp_chan->band,
 						      NULL)) {
+				rcu_read_unlock();
 				kfree_skb(probe);
 				continue;
 			}
@@ -2487,6 +2491,7 @@ static void hw_scan_work(struct work_struct *work)
 			local_bh_disable();
 			mac80211_hwsim_tx_frame(hwsim->hw, probe,
 						hwsim->tmp_chan);
+			rcu_read_unlock();
 			local_bh_enable();
 		}
 	}
@@ -4727,7 +4732,7 @@ static void __net_exit hwsim_exit_net(struct net *net)
 					 NULL);
 	}
 
-	ida_simple_remove(&hwsim_netgroup_ida, hwsim_net_get_netgroup(net));
+	ida_free(&hwsim_netgroup_ida, hwsim_net_get_netgroup(net));
 }
 
 static struct pernet_operations hwsim_net_ops = {

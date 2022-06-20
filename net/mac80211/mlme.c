@@ -8,7 +8,7 @@
  * Copyright 2007, Michael Wu <flamingice@sourmilk.net>
  * Copyright 2013-2014  Intel Mobile Communications GmbH
  * Copyright (C) 2015 - 2017 Intel Deutschland GmbH
- * Copyright (C) 2018 - 2021 Intel Corporation
+ * Copyright (C) 2018 - 2022 Intel Corporation
  */
 
 #include <linux/delay.h>
@@ -2496,8 +2496,6 @@ static void ieee80211_set_disassoc(struct ieee80211_sub_if_data *sdata,
 	memset(ifmgd->tx_tspec, 0, sizeof(ifmgd->tx_tspec));
 	cancel_delayed_work_sync(&ifmgd->tx_tspec_wk);
 
-	sdata->encrypt_headroom = IEEE80211_ENCRYPT_HEADROOM;
-
 	bss_conf->pwr_reduction = 0;
 	bss_conf->tx_pwr_env_num = 0;
 	memset(bss_conf->tx_pwr_env, 0, sizeof(bss_conf->tx_pwr_env));
@@ -3649,6 +3647,12 @@ static bool ieee80211_assoc_success(struct ieee80211_sub_if_data *sdata,
 				cbss->transmitted_bss->bssid);
 		bss_conf->bssid_indicator = cbss->max_bssid_indicator;
 		bss_conf->bssid_index = cbss->bssid_index;
+	} else {
+		bss_conf->nontransmitted = false;
+		memset(bss_conf->transmitter_bssid, 0,
+		       sizeof(bss_conf->transmitter_bssid));
+		bss_conf->bssid_indicator = 0;
+		bss_conf->bssid_index = 0;
 	}
 
 	/*
@@ -6065,8 +6069,6 @@ int ieee80211_mgd_assoc(struct ieee80211_sub_if_data *sdata,
 	sdata->control_port_over_nl80211 =
 					req->crypto.control_port_over_nl80211;
 	sdata->control_port_no_preauth = req->crypto.control_port_no_preauth;
-	sdata->encrypt_headroom = ieee80211_cs_headroom(local, &req->crypto,
-							sdata->vif.type);
 
 	/* kick off associate process */
 

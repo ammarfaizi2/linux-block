@@ -3960,6 +3960,7 @@ static int mv88e6xxx_mdios_register(struct mv88e6xxx_chip *chip,
 	 */
 	child = of_get_child_by_name(np, "mdio");
 	err = mv88e6xxx_mdio_register(chip, child, false);
+	of_node_put(child);
 	if (err)
 		return err;
 
@@ -6329,11 +6330,12 @@ static enum dsa_tag_protocol mv88e6xxx_get_tag_protocol(struct dsa_switch *ds,
 	return chip->tag_protocol;
 }
 
-static int mv88e6xxx_change_tag_protocol(struct dsa_switch *ds, int port,
+static int mv88e6xxx_change_tag_protocol(struct dsa_switch *ds,
 					 enum dsa_tag_protocol proto)
 {
 	struct mv88e6xxx_chip *chip = ds->priv;
 	enum dsa_tag_protocol old_protocol;
+	struct dsa_port *cpu_dp;
 	int err;
 
 	switch (proto) {
@@ -6358,11 +6360,24 @@ static int mv88e6xxx_change_tag_protocol(struct dsa_switch *ds, int port,
 	chip->tag_protocol = proto;
 
 	mv88e6xxx_reg_lock(chip);
-	err = mv88e6xxx_setup_port_mode(chip, port);
+	dsa_switch_for_each_cpu_port(cpu_dp, ds) {
+		err = mv88e6xxx_setup_port_mode(chip, cpu_dp->index);
+		if (err) {
+			mv88e6xxx_reg_unlock(chip);
+			goto unwind;
+		}
+	}
 	mv88e6xxx_reg_unlock(chip);
 
-	if (err)
-		chip->tag_protocol = old_protocol;
+	return 0;
+
+unwind:
+	chip->tag_protocol = old_protocol;
+
+	mv88e6xxx_reg_lock(chip);
+	dsa_switch_for_each_cpu_port_continue_reverse(cpu_dp, ds)
+		mv88e6xxx_setup_port_mode(chip, cpu_dp->index);
+	mv88e6xxx_reg_unlock(chip);
 
 	return err;
 }

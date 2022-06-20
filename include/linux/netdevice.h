@@ -50,6 +50,7 @@
 #include <linux/hashtable.h>
 #include <linux/rbtree.h>
 #include <net/net_trackers.h>
+#include <net/net_debug.h>
 
 struct netpoll_info;
 struct device;
@@ -909,7 +910,7 @@ struct net_device_path_stack {
 
 struct net_device_path_ctx {
 	const struct net_device *dev;
-	const u8		*daddr;
+	u8			daddr[ETH_ALEN];
 
 	int			num_vlans;
 	struct {
@@ -1356,6 +1357,12 @@ struct netdev_net_notifier {
  *	The caller must be under RCU read context.
  * int (*ndo_fill_forward_path)(struct net_device_path_ctx *ctx, struct net_device_path *path);
  *     Get the forwarding path to reach the real device from the HW destination address
+ * ktime_t (*ndo_get_tstamp)(struct net_device *dev,
+ *			     const struct skb_shared_hwtstamps *hwtstamps,
+ *			     bool cycles);
+ *	Get hardware timestamp based on normal/adjustable time or free running
+ *	cycle counter. This function is required if physical clock supports a
+ *	free running cycle counter.
  */
 struct net_device_ops {
 	int			(*ndo_init)(struct net_device *dev);
@@ -1513,7 +1520,7 @@ struct net_device_ops {
 					       struct nlattr *tb[],
 					       struct net_device *dev,
 					       const unsigned char *addr,
-					       u16 vid);
+					       u16 vid, struct netlink_ext_ack *extack);
 	int			(*ndo_fdb_del_bulk)(struct ndmsg *ndm,
 						    struct nlattr *tb[],
 						    struct net_device *dev,
@@ -1578,6 +1585,9 @@ struct net_device_ops {
 	struct net_device *	(*ndo_get_peer_dev)(struct net_device *dev);
 	int                     (*ndo_fill_forward_path)(struct net_device_path_ctx *ctx,
                                                          struct net_device_path *path);
+	ktime_t			(*ndo_get_tstamp)(struct net_device *dev,
+						  const struct skb_shared_hwtstamps *hwtstamps,
+						  bool cycles);
 };
 
 /**
@@ -1917,8 +1927,10 @@ enum netdev_ml_priv_type {
  *	@rtnl_link_ops:	Rtnl_link_ops
  *
  *	@gso_max_size:	Maximum size of generic segmentation offload
+ *	@tso_max_size:	Device (as in HW) limit on the max TSO request size
  *	@gso_max_segs:	Maximum number of segments that can be passed to the
  *			NIC for GSO
+ *	@tso_max_segs:	Device (as in HW) limit on the max TSO segment count
  *
  *	@dcbnl_ops:	Data Center Bridging netlink ops
  *	@num_tc:	Number of traffic classes in the net device
@@ -2107,6 +2119,8 @@ struct net_device {
 
 	/* Protocol-specific pointers */
 
+	struct in_device __rcu	*ip_ptr;
+	struct inet6_dev __rcu	*ip6_ptr;
 #if IS_ENABLED(CONFIG_VLAN_8021Q)
 	struct vlan_info __rcu	*vlan_info;
 #endif
@@ -2119,16 +2133,18 @@ struct net_device {
 #if IS_ENABLED(CONFIG_ATALK)
 	void 			*atalk_ptr;
 #endif
-	struct in_device __rcu	*ip_ptr;
 #if IS_ENABLED(CONFIG_DECNET)
 	struct dn_dev __rcu     *dn_ptr;
 #endif
-	struct inet6_dev __rcu	*ip6_ptr;
 #if IS_ENABLED(CONFIG_AX25)
 	void			*ax25_ptr;
 #endif
+#if IS_ENABLED(CONFIG_CFG80211)
 	struct wireless_dev	*ieee80211_ptr;
+#endif
+#if IS_ENABLED(CONFIG_IEEE802154) || IS_ENABLED(CONFIG_6LOWPAN)
 	struct wpan_dev		*ieee802154_ptr;
+#endif
 #if IS_ENABLED(CONFIG_MPLS_ROUTING)
 	struct mpls_dev __rcu	*mpls_ptr;
 #endif
@@ -2149,7 +2165,11 @@ struct net_device {
 	struct bpf_prog __rcu	*xdp_prog;
 	unsigned long		gro_flush_timeout;
 	int			napi_defer_hard_irqs;
-#define GRO_MAX_SIZE		65536
+#define GRO_LEGACY_MAX_SIZE	65536u
+/* TCP minimal MSS is 8 (TCP_MIN_GSO_SIZE),
+ * and shinfo->gso_segs is a 16bit field.
+ */
+#define GRO_MAX_SIZE		(8 * 65535u)
 	unsigned int		gro_max_size;
 	rx_handler_func_t __rcu	*rx_handler;
 	void __rcu		*rx_handler_data;
@@ -2260,10 +2280,20 @@ struct net_device {
 	const struct rtnl_link_ops *rtnl_link_ops;
 
 	/* for setting kernel sock attribute on TCP connection setup */
-#define GSO_MAX_SIZE		65536
+#define GSO_MAX_SEGS		65535u
+#define GSO_LEGACY_MAX_SIZE	65536u
+/* TCP minimal MSS is 8 (TCP_MIN_GSO_SIZE),
+ * and shinfo->gso_segs is a 16bit field.
+ */
+#define GSO_MAX_SIZE		(8 * GSO_MAX_SEGS)
+
 	unsigned int		gso_max_size;
-#define GSO_MAX_SEGS		65535
+#define TSO_LEGACY_MAX_SIZE	65536
+#define TSO_MAX_SIZE		UINT_MAX
+	unsigned int		tso_max_size;
 	u16			gso_max_segs;
+#define TSO_MAX_SEGS		U16_MAX
+	u16			tso_max_segs;
 
 #ifdef CONFIG_DCB
 	const struct dcbnl_rtnl_ops *dcbnl_ops;
@@ -2606,10 +2636,10 @@ struct packet_offload {
 
 /* often modified stats are per-CPU, other are shared (netdev->stats) */
 struct pcpu_sw_netstats {
-	u64     rx_packets;
-	u64     rx_bytes;
-	u64     tx_packets;
-	u64     tx_bytes;
+	u64_stats_t		rx_packets;
+	u64_stats_t		rx_bytes;
+	u64_stats_t		tx_packets;
+	u64_stats_t		tx_bytes;
 	struct u64_stats_sync   syncp;
 } __aligned(4 * sizeof(u64));
 
@@ -2626,8 +2656,8 @@ static inline void dev_sw_netstats_rx_add(struct net_device *dev, unsigned int l
 	struct pcpu_sw_netstats *tstats = this_cpu_ptr(dev->tstats);
 
 	u64_stats_update_begin(&tstats->syncp);
-	tstats->rx_bytes += len;
-	tstats->rx_packets++;
+	u64_stats_add(&tstats->rx_bytes, len);
+	u64_stats_inc(&tstats->rx_packets);
 	u64_stats_update_end(&tstats->syncp);
 }
 
@@ -2638,8 +2668,8 @@ static inline void dev_sw_netstats_tx_add(struct net_device *dev,
 	struct pcpu_sw_netstats *tstats = this_cpu_ptr(dev->tstats);
 
 	u64_stats_update_begin(&tstats->syncp);
-	tstats->tx_bytes += len;
-	tstats->tx_packets += packets;
+	u64_stats_add(&tstats->tx_bytes, len);
+	u64_stats_add(&tstats->tx_packets, packets);
 	u64_stats_update_end(&tstats->syncp);
 }
 
@@ -3110,6 +3140,7 @@ struct softnet_data {
 	/* Another possibly contended cache line */
 	spinlock_t		defer_lock ____cacheline_aligned_in_smp;
 	int			defer_count;
+	int			defer_ipi_scheduled;
 	struct sk_buff		*defer_list;
 	call_single_data_t	defer_csd;
 };
@@ -3950,8 +3981,8 @@ static inline void netdev_tracker_free(struct net_device *dev,
 #endif
 }
 
-static inline void dev_hold_track(struct net_device *dev,
-				  netdevice_tracker *tracker, gfp_t gfp)
+static inline void netdev_hold(struct net_device *dev,
+			       netdevice_tracker *tracker, gfp_t gfp)
 {
 	if (dev) {
 		__dev_hold(dev);
@@ -3959,8 +3990,8 @@ static inline void dev_hold_track(struct net_device *dev,
 	}
 }
 
-static inline void dev_put_track(struct net_device *dev,
-				 netdevice_tracker *tracker)
+static inline void netdev_put(struct net_device *dev,
+			      netdevice_tracker *tracker)
 {
 	if (dev) {
 		netdev_tracker_free(dev, tracker);
@@ -3973,11 +4004,11 @@ static inline void dev_put_track(struct net_device *dev,
  *	@dev: network device
  *
  * Hold reference to device to keep it from being freed.
- * Try using dev_hold_track() instead.
+ * Try using netdev_hold() instead.
  */
 static inline void dev_hold(struct net_device *dev)
 {
-	dev_hold_track(dev, NULL, GFP_ATOMIC);
+	netdev_hold(dev, NULL, GFP_ATOMIC);
 }
 
 /**
@@ -3985,17 +4016,17 @@ static inline void dev_hold(struct net_device *dev)
  *	@dev: network device
  *
  * Release reference to device to allow it to be freed.
- * Try using dev_put_track() instead.
+ * Try using netdev_put() instead.
  */
 static inline void dev_put(struct net_device *dev)
 {
-	dev_put_track(dev, NULL);
+	netdev_put(dev, NULL);
 }
 
-static inline void dev_replace_track(struct net_device *odev,
-				     struct net_device *ndev,
-				     netdevice_tracker *tracker,
-				     gfp_t gfp)
+static inline void netdev_ref_replace(struct net_device *odev,
+				      struct net_device *ndev,
+				      netdevice_tracker *tracker,
+				      gfp_t gfp)
 {
 	if (odev)
 		netdev_tracker_free(odev, tracker);
@@ -4754,6 +4785,18 @@ static inline void netdev_rx_csum_fault(struct net_device *dev,
 void net_enable_timestamp(void);
 void net_disable_timestamp(void);
 
+static inline ktime_t netdev_get_tstamp(struct net_device *dev,
+					const struct skb_shared_hwtstamps *hwtstamps,
+					bool cycles)
+{
+	const struct net_device_ops *ops = dev->netdev_ops;
+
+	if (ops->ndo_get_tstamp)
+		return ops->ndo_get_tstamp(dev, hwtstamps, cycles);
+
+	return hwtstamps->hwtstamp;
+}
+
 static inline netdev_tx_t __netdev_start_xmit(const struct net_device_ops *ops,
 					      struct sk_buff *skb, struct net_device *dev,
 					      bool more)
@@ -4874,26 +4917,10 @@ static inline bool netif_needs_gso(struct sk_buff *skb,
 			 (skb->ip_summed != CHECKSUM_UNNECESSARY)));
 }
 
-static inline void netif_set_gso_max_size(struct net_device *dev,
-					  unsigned int size)
-{
-	/* dev->gso_max_size is read locklessly from sk_setup_caps() */
-	WRITE_ONCE(dev->gso_max_size, size);
-}
-
-static inline void netif_set_gso_max_segs(struct net_device *dev,
-					  unsigned int segs)
-{
-	/* dev->gso_max_segs is read locklessly from sk_setup_caps() */
-	WRITE_ONCE(dev->gso_max_segs, segs);
-}
-
-static inline void netif_set_gro_max_size(struct net_device *dev,
-					  unsigned int size)
-{
-	/* This pairs with the READ_ONCE() in skb_gro_receive() */
-	WRITE_ONCE(dev->gro_max_size, size);
-}
+void netif_set_tso_max_size(struct net_device *dev, unsigned int size);
+void netif_set_tso_max_segs(struct net_device *dev, unsigned int segs);
+void netif_inherit_tso_max(struct net_device *to,
+			   const struct net_device *from);
 
 static inline void skb_gso_error_unwind(struct sk_buff *skb, __be16 protocol,
 					int pulled_hlen, u16 mac_offset,
@@ -5059,80 +5086,8 @@ static inline const char *netdev_reg_state(const struct net_device *dev)
 	return " (unknown)";
 }
 
-__printf(3, 4) __cold
-void netdev_printk(const char *level, const struct net_device *dev,
-		   const char *format, ...);
-__printf(2, 3) __cold
-void netdev_emerg(const struct net_device *dev, const char *format, ...);
-__printf(2, 3) __cold
-void netdev_alert(const struct net_device *dev, const char *format, ...);
-__printf(2, 3) __cold
-void netdev_crit(const struct net_device *dev, const char *format, ...);
-__printf(2, 3) __cold
-void netdev_err(const struct net_device *dev, const char *format, ...);
-__printf(2, 3) __cold
-void netdev_warn(const struct net_device *dev, const char *format, ...);
-__printf(2, 3) __cold
-void netdev_notice(const struct net_device *dev, const char *format, ...);
-__printf(2, 3) __cold
-void netdev_info(const struct net_device *dev, const char *format, ...);
-
-#define netdev_level_once(level, dev, fmt, ...)			\
-do {								\
-	static bool __section(".data.once") __print_once;	\
-								\
-	if (!__print_once) {					\
-		__print_once = true;				\
-		netdev_printk(level, dev, fmt, ##__VA_ARGS__);	\
-	}							\
-} while (0)
-
-#define netdev_emerg_once(dev, fmt, ...) \
-	netdev_level_once(KERN_EMERG, dev, fmt, ##__VA_ARGS__)
-#define netdev_alert_once(dev, fmt, ...) \
-	netdev_level_once(KERN_ALERT, dev, fmt, ##__VA_ARGS__)
-#define netdev_crit_once(dev, fmt, ...) \
-	netdev_level_once(KERN_CRIT, dev, fmt, ##__VA_ARGS__)
-#define netdev_err_once(dev, fmt, ...) \
-	netdev_level_once(KERN_ERR, dev, fmt, ##__VA_ARGS__)
-#define netdev_warn_once(dev, fmt, ...) \
-	netdev_level_once(KERN_WARNING, dev, fmt, ##__VA_ARGS__)
-#define netdev_notice_once(dev, fmt, ...) \
-	netdev_level_once(KERN_NOTICE, dev, fmt, ##__VA_ARGS__)
-#define netdev_info_once(dev, fmt, ...) \
-	netdev_level_once(KERN_INFO, dev, fmt, ##__VA_ARGS__)
-
 #define MODULE_ALIAS_NETDEV(device) \
 	MODULE_ALIAS("netdev-" device)
-
-#if defined(CONFIG_DYNAMIC_DEBUG) || \
-	(defined(CONFIG_DYNAMIC_DEBUG_CORE) && defined(DYNAMIC_DEBUG_MODULE))
-#define netdev_dbg(__dev, format, args...)			\
-do {								\
-	dynamic_netdev_dbg(__dev, format, ##args);		\
-} while (0)
-#elif defined(DEBUG)
-#define netdev_dbg(__dev, format, args...)			\
-	netdev_printk(KERN_DEBUG, __dev, format, ##args)
-#else
-#define netdev_dbg(__dev, format, args...)			\
-({								\
-	if (0)							\
-		netdev_printk(KERN_DEBUG, __dev, format, ##args); \
-})
-#endif
-
-#if defined(VERBOSE_DEBUG)
-#define netdev_vdbg	netdev_dbg
-#else
-
-#define netdev_vdbg(dev, format, args...)			\
-({								\
-	if (0)							\
-		netdev_printk(KERN_DEBUG, dev, format, ##args);	\
-	0;							\
-})
-#endif
 
 /*
  * netdev_WARN() acts like dev_printk(), but with the key difference
@@ -5146,74 +5101,6 @@ do {								\
 #define netdev_WARN_ONCE(dev, format, args...)				\
 	WARN_ONCE(1, "netdevice: %s%s: " format, netdev_name(dev),	\
 		  netdev_reg_state(dev), ##args)
-
-/* netif printk helpers, similar to netdev_printk */
-
-#define netif_printk(priv, type, level, dev, fmt, args...)	\
-do {					  			\
-	if (netif_msg_##type(priv))				\
-		netdev_printk(level, (dev), fmt, ##args);	\
-} while (0)
-
-#define netif_level(level, priv, type, dev, fmt, args...)	\
-do {								\
-	if (netif_msg_##type(priv))				\
-		netdev_##level(dev, fmt, ##args);		\
-} while (0)
-
-#define netif_emerg(priv, type, dev, fmt, args...)		\
-	netif_level(emerg, priv, type, dev, fmt, ##args)
-#define netif_alert(priv, type, dev, fmt, args...)		\
-	netif_level(alert, priv, type, dev, fmt, ##args)
-#define netif_crit(priv, type, dev, fmt, args...)		\
-	netif_level(crit, priv, type, dev, fmt, ##args)
-#define netif_err(priv, type, dev, fmt, args...)		\
-	netif_level(err, priv, type, dev, fmt, ##args)
-#define netif_warn(priv, type, dev, fmt, args...)		\
-	netif_level(warn, priv, type, dev, fmt, ##args)
-#define netif_notice(priv, type, dev, fmt, args...)		\
-	netif_level(notice, priv, type, dev, fmt, ##args)
-#define netif_info(priv, type, dev, fmt, args...)		\
-	netif_level(info, priv, type, dev, fmt, ##args)
-
-#if defined(CONFIG_DYNAMIC_DEBUG) || \
-	(defined(CONFIG_DYNAMIC_DEBUG_CORE) && defined(DYNAMIC_DEBUG_MODULE))
-#define netif_dbg(priv, type, netdev, format, args...)		\
-do {								\
-	if (netif_msg_##type(priv))				\
-		dynamic_netdev_dbg(netdev, format, ##args);	\
-} while (0)
-#elif defined(DEBUG)
-#define netif_dbg(priv, type, dev, format, args...)		\
-	netif_printk(priv, type, KERN_DEBUG, dev, format, ##args)
-#else
-#define netif_dbg(priv, type, dev, format, args...)			\
-({									\
-	if (0)								\
-		netif_printk(priv, type, KERN_DEBUG, dev, format, ##args); \
-	0;								\
-})
-#endif
-
-/* if @cond then downgrade to debug, else print at @level */
-#define netif_cond_dbg(priv, type, netdev, cond, level, fmt, args...)     \
-	do {                                                              \
-		if (cond)                                                 \
-			netif_dbg(priv, type, netdev, fmt, ##args);       \
-		else                                                      \
-			netif_ ## level(priv, type, netdev, fmt, ##args); \
-	} while (0)
-
-#if defined(VERBOSE_DEBUG)
-#define netif_vdbg	netif_dbg
-#else
-#define netif_vdbg(priv, type, dev, format, args...)		\
-({								\
-	if (0)							\
-		netif_printk(priv, type, KERN_DEBUG, dev, format, ##args); \
-	0;							\
-})
-#endif
 
 /*
  *	The list of packet types we will receive (as opposed to discard)

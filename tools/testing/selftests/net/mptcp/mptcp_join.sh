@@ -1571,6 +1571,33 @@ chk_prio_nr()
 	[ "${dump_stats}" = 1 ] && dump_stats
 }
 
+chk_subflow_nr()
+{
+	local need_title="$1"
+	local msg="$2"
+	local subflow_nr=$3
+	local cnt1
+	local cnt2
+
+	if [ -n "${need_title}" ]; then
+		printf "%03u %-36s %s" "${TEST_COUNT}" "${TEST_NAME}" "${msg}"
+	else
+		printf "%-${nr_blank}s %s" " " "${msg}"
+	fi
+
+	cnt1=$(ss -N $ns1 -tOni | grep -c token)
+	cnt2=$(ss -N $ns2 -tOni | grep -c token)
+	if [ "$cnt1" != "$subflow_nr" -o "$cnt2" != "$subflow_nr" ]; then
+		echo "[fail] got $cnt1:$cnt2 subflows expected $subflow_nr"
+		fail_test
+		dump_stats=1
+	else
+		echo "[ ok ]"
+	fi
+
+	[ "${dump_stats}" = 1 ] && ( ss -N $ns1 -tOni ; ss -N $ns1 -tOni | grep token; ip -n $ns1 mptcp endpoint )
+}
+
 chk_link_usage()
 {
 	local ns=$1
@@ -2693,6 +2720,7 @@ fastclose_tests()
 pedit_action_pkts()
 {
 	tc -n $ns2 -j -s action show action pedit index 100 | \
+		grep "packets" | \
 		sed 's/.*"packets":\([0-9]\+\),.*/\1/'
 }
 
@@ -2703,6 +2731,16 @@ fail_tests()
 		run_tests $ns1 $ns2 10.0.1.1 128
 		chk_join_nr 0 0 0 +1 +0 1 0 1 "$(pedit_action_pkts)"
 		chk_fail_nr 1 -1 invert
+	fi
+
+	# multiple subflows
+	if reset_with_fail "MP_FAIL MP_RST" 2; then
+		tc -n $ns2 qdisc add dev ns2eth1 root netem rate 1mbit delay 5
+		pm_nl_set_limits $ns1 0 1
+		pm_nl_set_limits $ns2 0 1
+		pm_nl_add_endpoint $ns2 10.0.2.2 dev ns2eth2 flags subflow
+		run_tests $ns1 $ns2 10.0.1.1 1024
+		chk_join_nr 1 1 1 1 0 1 1 0 "$(pedit_action_pkts)"
 	fi
 }
 
@@ -2774,7 +2812,7 @@ userspace_tests()
 	fi
 }
 
-implicit_tests()
+endpoint_tests()
 {
 	# userspace pm type prevents add_addr
 	if reset "implicit EP"; then
@@ -2794,6 +2832,23 @@ implicit_tests()
 		pm_nl_add_endpoint $ns2 10.0.2.2 flags signal
 		pm_nl_check_endpoint 0 "modif is allowed" \
 			$ns2 10.0.2.2 id 1 flags signal
+		wait
+	fi
+
+	if reset "delete and re-add"; then
+		pm_nl_set_limits $ns1 1 1
+		pm_nl_set_limits $ns2 1 1
+		pm_nl_add_endpoint $ns2 10.0.2.2 id 2 dev ns2eth2 flags subflow
+		run_tests $ns1 $ns2 10.0.1.1 4 0 0 slow &
+
+		wait_mpj $ns2
+		pm_nl_del_endpoint $ns2 2 10.0.2.2
+		sleep 0.5
+		chk_subflow_nr needtitle "after delete" 1
+
+		pm_nl_add_endpoint $ns2 10.0.2.2 dev ns2eth2 flags subflow
+		wait_mpj $ns2
+		chk_subflow_nr "" "after re-add" 2
 		wait
 	fi
 }
@@ -2844,7 +2899,7 @@ all_tests_sorted=(
 	z@fastclose_tests
 	F@fail_tests
 	u@userspace_tests
-	I@implicit_tests
+	I@endpoint_tests
 )
 
 all_tests_args=""

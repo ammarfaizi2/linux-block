@@ -1185,7 +1185,7 @@ struct cfg80211_mbssid_elems {
  * @civicloc_len: Civic location data length
  * @he_bss_color: BSS Color settings
  * @he_bss_color_valid: indicates whether bss color
-	attribute is present in beacon data or not.
+ *	attribute is present in beacon data or not.
  */
 struct cfg80211_beacon_data {
 	const u8 *head, *tail;
@@ -8006,7 +8006,9 @@ int cfg80211_register_netdevice(struct net_device *dev);
  */
 static inline void cfg80211_unregister_netdevice(struct net_device *dev)
 {
+#if IS_ENABLED(CONFIG_CFG80211)
 	cfg80211_unregister_wdev(dev->ieee80211_ptr);
+#endif
 }
 
 /**

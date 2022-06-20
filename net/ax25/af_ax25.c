@@ -62,12 +62,12 @@ static void ax25_free_sock(struct sock *sk)
  */
 static void ax25_cb_del(ax25_cb *ax25)
 {
+	spin_lock_bh(&ax25_list_lock);
 	if (!hlist_unhashed(&ax25->ax25_node)) {
-		spin_lock_bh(&ax25_list_lock);
 		hlist_del_init(&ax25->ax25_node);
-		spin_unlock_bh(&ax25_list_lock);
 		ax25_cb_put(ax25);
 	}
+	spin_unlock_bh(&ax25_list_lock);
 }
 
 /*
@@ -81,6 +81,7 @@ static void ax25_kill_by_device(struct net_device *dev)
 
 	if ((ax25_dev = ax25_dev_ax25dev(dev)) == NULL)
 		return;
+	ax25_dev->device_up = false;
 
 	spin_lock_bh(&ax25_list_lock);
 again:
@@ -91,6 +92,7 @@ again:
 				spin_unlock_bh(&ax25_list_lock);
 				ax25_disconnect(s, ENETUNREACH);
 				s->ax25_dev = NULL;
+				ax25_cb_del(s);
 				spin_lock_bh(&ax25_list_lock);
 				goto again;
 			}
@@ -100,9 +102,11 @@ again:
 			ax25_disconnect(s, ENETUNREACH);
 			s->ax25_dev = NULL;
 			if (sk->sk_socket) {
-				dev_put_track(ax25_dev->dev, &ax25_dev->dev_tracker);
+				netdev_put(ax25_dev->dev,
+					   &ax25_dev->dev_tracker);
 				ax25_dev_put(ax25_dev);
 			}
+			ax25_cb_del(s);
 			release_sock(sk);
 			spin_lock_bh(&ax25_list_lock);
 			sock_put(sk);
@@ -995,9 +999,11 @@ static int ax25_release(struct socket *sock)
 	if (sk->sk_type == SOCK_SEQPACKET) {
 		switch (ax25->state) {
 		case AX25_STATE_0:
-			release_sock(sk);
-			ax25_disconnect(ax25, 0);
-			lock_sock(sk);
+			if (!sock_flag(ax25->sk, SOCK_DEAD)) {
+				release_sock(sk);
+				ax25_disconnect(ax25, 0);
+				lock_sock(sk);
+			}
 			ax25_destroy_socket(ax25);
 			break;
 
@@ -1053,12 +1059,14 @@ static int ax25_release(struct socket *sock)
 		ax25_destroy_socket(ax25);
 	}
 	if (ax25_dev) {
-		del_timer_sync(&ax25->timer);
-		del_timer_sync(&ax25->t1timer);
-		del_timer_sync(&ax25->t2timer);
-		del_timer_sync(&ax25->t3timer);
-		del_timer_sync(&ax25->idletimer);
-		dev_put_track(ax25_dev->dev, &ax25_dev->dev_tracker);
+		if (!ax25_dev->device_up) {
+			del_timer_sync(&ax25->timer);
+			del_timer_sync(&ax25->t1timer);
+			del_timer_sync(&ax25->t2timer);
+			del_timer_sync(&ax25->t3timer);
+			del_timer_sync(&ax25->idletimer);
+		}
+		netdev_put(ax25_dev->dev, &ax25_dev->dev_tracker);
 		ax25_dev_put(ax25_dev);
 	}
 
@@ -1139,7 +1147,7 @@ static int ax25_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 
 	if (ax25_dev) {
 		ax25_fillin_cb(ax25, ax25_dev);
-		dev_hold_track(ax25_dev->dev, &ax25_dev->dev_tracker, GFP_ATOMIC);
+		netdev_hold(ax25_dev->dev, &ax25_dev->dev_tracker, GFP_ATOMIC);
 	}
 
 done:

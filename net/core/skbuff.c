@@ -80,6 +80,7 @@
 #include <linux/user_namespace.h>
 #include <linux/indirect_call_wrapper.h>
 
+#include "dev.h"
 #include "sock_destructor.h"
 
 struct kmem_cache *skbuff_head_cache __ro_after_init;
@@ -89,6 +90,9 @@ static struct kmem_cache *skbuff_ext_cache __ro_after_init;
 #endif
 int sysctl_max_skb_frags __read_mostly = MAX_SKB_FRAGS;
 EXPORT_SYMBOL(sysctl_max_skb_frags);
+
+/* The array 'drop_reasons' is auto-generated in dropreason_str.c */
+EXPORT_SYMBOL(drop_reasons);
 
 /**
  *	skb_panic - private function for out-of-line support
@@ -171,13 +175,14 @@ static struct sk_buff *napi_skb_cache_get(void)
 	struct napi_alloc_cache *nc = this_cpu_ptr(&napi_alloc_cache);
 	struct sk_buff *skb;
 
-	if (unlikely(!nc->skb_count))
+	if (unlikely(!nc->skb_count)) {
 		nc->skb_count = kmem_cache_alloc_bulk(skbuff_head_cache,
 						      GFP_ATOMIC,
 						      NAPI_SKB_CACHE_BULK,
 						      nc->skb_cache);
-	if (unlikely(!nc->skb_count))
-		return NULL;
+		if (unlikely(!nc->skb_count))
+			return NULL;
+	}
 
 	skb = nc->skb_cache[--nc->skb_count];
 	kasan_unpoison_object_data(skbuff_head_cache, skb);
@@ -556,6 +561,7 @@ struct sk_buff *__napi_alloc_skb(struct napi_struct *napi, unsigned int len,
 	struct sk_buff *skb;
 	void *data;
 
+	DEBUG_NET_WARN_ON_ONCE(!in_softirq());
 	len += NET_SKB_PAD + NET_IP_ALIGN;
 
 	/* If requested length is either too small or too big,
@@ -724,7 +730,7 @@ void skb_release_head_state(struct sk_buff *skb)
 {
 	skb_dst_drop(skb);
 	if (skb->destructor) {
-		WARN_ON(in_hardirq());
+		DEBUG_NET_WARN_ON_ONCE(in_hardirq());
 		skb->destructor(skb);
 	}
 #if IS_ENABLED(CONFIG_NF_CONNTRACK)
@@ -770,6 +776,8 @@ void kfree_skb_reason(struct sk_buff *skb, enum skb_drop_reason reason)
 {
 	if (!skb_unref(skb))
 		return;
+
+	DEBUG_NET_WARN_ON_ONCE(reason <= 0 || reason >= SKB_DROP_REASON_MAX);
 
 	trace_kfree_skb(skb, __builtin_return_address(0), reason);
 	__kfree_skb(skb);
@@ -975,7 +983,7 @@ void napi_consume_skb(struct sk_buff *skb, int budget)
 		return;
 	}
 
-	lockdep_assert_in_softirq();
+	DEBUG_NET_WARN_ON_ONCE(!in_softirq());
 
 	if (!skb_unref(skb))
 		return;
@@ -1165,7 +1173,7 @@ void mm_unaccount_pinned_pages(struct mmpin *mmp)
 }
 EXPORT_SYMBOL_GPL(mm_unaccount_pinned_pages);
 
-struct ubuf_info *msg_zerocopy_alloc(struct sock *sk, size_t size)
+static struct ubuf_info *msg_zerocopy_alloc(struct sock *sk, size_t size)
 {
 	struct ubuf_info *uarg;
 	struct sk_buff *skb;
@@ -1196,7 +1204,6 @@ struct ubuf_info *msg_zerocopy_alloc(struct sock *sk, size_t size)
 
 	return uarg;
 }
-EXPORT_SYMBOL_GPL(msg_zerocopy_alloc);
 
 static inline struct sk_buff *skb_from_uarg(struct ubuf_info *uarg)
 {
@@ -3890,7 +3897,7 @@ struct sk_buff *skb_segment_list(struct sk_buff *skb,
 	unsigned int delta_len = 0;
 	struct sk_buff *tail = NULL;
 	struct sk_buff *nskb, *tmp;
-	int err;
+	int len_diff, err;
 
 	skb_push(skb, -skb_network_offset(skb) + offset);
 
@@ -3930,9 +3937,11 @@ struct sk_buff *skb_segment_list(struct sk_buff *skb,
 		skb_push(nskb, -skb_network_offset(nskb) + offset);
 
 		skb_release_head_state(nskb);
+		len_diff = skb_network_header_len(nskb) - skb_network_header_len(skb);
 		__copy_skb_header(nskb, skb);
 
 		skb_headers_offset_update(nskb, skb_headroom(nskb) - skb_headroom(skb));
+		nskb->transport_header += len_diff;
 		skb_copy_from_linear_data_offset(skb, -tnl_hlen,
 						 nskb->data - tnl_hlen,
 						 offset + tnl_hlen);
@@ -6493,37 +6502,35 @@ void skb_attempt_defer_free(struct sk_buff *skb)
 	int cpu = skb->alloc_cpu;
 	struct softnet_data *sd;
 	unsigned long flags;
+	unsigned int defer_max;
 	bool kick;
 
 	if (WARN_ON_ONCE(cpu >= nr_cpu_ids) ||
 	    !cpu_online(cpu) ||
 	    cpu == raw_smp_processor_id()) {
-		__kfree_skb(skb);
+nodefer:	__kfree_skb(skb);
 		return;
 	}
 
 	sd = &per_cpu(softnet_data, cpu);
-	/* We do not send an IPI or any signal.
-	 * Remote cpu will eventually call skb_defer_free_flush()
-	 */
+	defer_max = READ_ONCE(sysctl_skb_defer_max);
+	if (READ_ONCE(sd->defer_count) >= defer_max)
+		goto nodefer;
+
 	spin_lock_irqsave(&sd->defer_lock, flags);
+	/* Send an IPI every time queue reaches half capacity. */
+	kick = sd->defer_count == (defer_max >> 1);
+	/* Paired with the READ_ONCE() few lines above */
+	WRITE_ONCE(sd->defer_count, sd->defer_count + 1);
+
 	skb->next = sd->defer_list;
 	/* Paired with READ_ONCE() in skb_defer_free_flush() */
 	WRITE_ONCE(sd->defer_list, skb);
-	sd->defer_count++;
-
-	/* kick every time queue length reaches 128.
-	 * This should avoid blocking in smp_call_function_single_async().
-	 * This condition should hardly be bit under normal conditions,
-	 * unless cpu suddenly stopped to receive NIC interrupts.
-	 */
-	kick = sd->defer_count == 128;
-
 	spin_unlock_irqrestore(&sd->defer_lock, flags);
 
 	/* Make sure to trigger NET_RX_SOFTIRQ on the remote CPU
 	 * if we are unlucky enough (this seems very unlikely).
 	 */
-	if (unlikely(kick))
+	if (unlikely(kick) && !cmpxchg(&sd->defer_ipi_scheduled, 0, 1))
 		smp_call_function_single_async(cpu, &sd->defer_csd);
 }

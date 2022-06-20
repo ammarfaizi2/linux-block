@@ -388,7 +388,7 @@ static int bcm_enet_receive_queue(struct net_device *dev, int budget)
 					 priv->rx_buf_size, DMA_FROM_DEVICE);
 			priv->rx_buf[desc_idx] = NULL;
 
-			skb = build_skb(buf, priv->rx_frag_size);
+			skb = napi_build_skb(buf, priv->rx_frag_size);
 			if (unlikely(!skb)) {
 				skb_free_frag(buf);
 				dev->stats.rx_dropped++;
@@ -468,7 +468,7 @@ static int bcm_enet_tx_reclaim(struct net_device *dev, int force)
 			dev->stats.tx_errors++;
 
 		bytes += skb->len;
-		dev_kfree_skb(skb);
+		napi_consume_skb(skb, !force);
 		released++;
 	}
 
@@ -1859,7 +1859,7 @@ static int bcm_enet_probe(struct platform_device *pdev)
 
 	/* register netdevice */
 	dev->netdev_ops = &bcm_enet_ops;
-	netif_napi_add(dev, &priv->napi, bcm_enet_poll, 16);
+	netif_napi_add_weight(dev, &priv->napi, bcm_enet_poll, 16);
 
 	dev->ethtool_ops = &bcm_enet_ethtool_ops;
 	/* MTU range: 46 - 2028 */
@@ -2714,7 +2714,7 @@ static int bcm_enetsw_probe(struct platform_device *pdev)
 
 	/* register netdevice */
 	dev->netdev_ops = &bcm_enetsw_ops;
-	netif_napi_add(dev, &priv->napi, bcm_enet_poll, 16);
+	netif_napi_add_weight(dev, &priv->napi, bcm_enet_poll, 16);
 	dev->ethtool_ops = &bcm_enetsw_ethtool_ops;
 	SET_NETDEV_DEV(dev, &pdev->dev);
 

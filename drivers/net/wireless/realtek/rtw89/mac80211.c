@@ -350,7 +350,7 @@ static void rtw89_ops_bss_info_changed(struct ieee80211_hw *hw,
 			rtw89_phy_set_bss_color(rtwdev, vif);
 			rtw89_chip_cfg_txpwr_ul_tb_offset(rtwdev, vif);
 			rtw89_mac_port_update(rtwdev, rtwvif);
-			rtw89_store_op_chan(rtwdev);
+			rtw89_store_op_chan(rtwdev, true);
 		} else {
 			/* Abort ongoing scan if cancel_scan isn't issued
 			 * when disconnected by peer
@@ -630,7 +630,7 @@ static void rtw89_ra_mask_info_update_iter(void *data, struct ieee80211_sta *sta
 
 	rtwsta->use_cfg_mask = true;
 	rtwsta->mask = *br_data->mask;
-	rtw89_phy_ra_updata_sta(br_data->rtwdev, sta);
+	rtw89_phy_ra_updata_sta(br_data->rtwdev, sta, IEEE80211_RC_SUPP_RATES_CHANGED);
 }
 
 static void rtw89_ra_mask_info_update(struct rtw89_dev *rtwdev,
@@ -759,6 +759,15 @@ static void rtw89_ops_cancel_hw_scan(struct ieee80211_hw *hw,
 	mutex_unlock(&rtwdev->mutex);
 }
 
+static void rtw89_ops_sta_rc_update(struct ieee80211_hw *hw,
+				    struct ieee80211_vif *vif,
+				    struct ieee80211_sta *sta, u32 changed)
+{
+	struct rtw89_dev *rtwdev = hw->priv;
+
+	rtw89_phy_ra_updata_sta(rtwdev, sta, changed);
+}
+
 const struct ieee80211_ops rtw89_ops = {
 	.tx			= rtw89_ops_tx,
 	.wake_tx_queue		= rtw89_ops_wake_tx_queue,
@@ -788,5 +797,6 @@ const struct ieee80211_ops rtw89_ops = {
 	.hw_scan		= rtw89_ops_hw_scan,
 	.cancel_hw_scan		= rtw89_ops_cancel_hw_scan,
 	.set_sar_specs		= rtw89_ops_set_sar_specs,
+	.sta_rc_update		= rtw89_ops_sta_rc_update,
 };
 EXPORT_SYMBOL(rtw89_ops);

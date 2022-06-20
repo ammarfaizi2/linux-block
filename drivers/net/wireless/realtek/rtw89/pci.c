@@ -682,9 +682,6 @@ EXPORT_SYMBOL(rtw89_pci_enable_intr_v1);
 void rtw89_pci_disable_intr_v1(struct rtw89_dev *rtwdev, struct rtw89_pci *rtwpci)
 {
 	rtw89_write32(rtwdev, R_AX_PCIE_HIMR00_V1, 0);
-	rtw89_write32(rtwdev, R_AX_HIMR0, 0);
-	rtw89_write32(rtwdev, R_AX_HAXI_HIMR00, 0);
-	rtw89_write32(rtwdev, R_AX_HIMR1, 0);
 }
 EXPORT_SYMBOL(rtw89_pci_disable_intr_v1);
 
@@ -740,6 +737,9 @@ static irqreturn_t rtw89_pci_interrupt_threadfn(int irq, void *dev)
 
 	if (unlikely(isrs.halt_c2h_isrs & B_AX_HALT_C2H_INT_EN))
 		rtw89_ser_notify(rtwdev, rtw89_mac_get_err_status(rtwdev));
+
+	if (unlikely(isrs.halt_c2h_isrs & B_AX_WDT_TIMEOUT_INT_EN))
+		rtw89_ser_notify(rtwdev, MAC_AX_ERR_L2_ERR_WDT_TIMEOUT_INT);
 
 	if (unlikely(rtwpci->under_recovery))
 		goto enable_intr;
@@ -3129,7 +3129,7 @@ static void rtw89_pci_recovery_intr_mask_v1(struct rtw89_dev *rtwdev)
 	struct rtw89_pci *rtwpci = (struct rtw89_pci *)rtwdev->priv;
 
 	rtwpci->ind_intrs = B_AX_HS0ISR_IND_INT_EN;
-	rtwpci->halt_c2h_intrs = B_AX_HALT_C2H_INT_EN;
+	rtwpci->halt_c2h_intrs = B_AX_HALT_C2H_INT_EN | B_AX_WDT_TIMEOUT_INT_EN;
 	rtwpci->intrs[0] = 0;
 	rtwpci->intrs[1] = 0;
 }
@@ -3141,7 +3141,7 @@ static void rtw89_pci_default_intr_mask_v1(struct rtw89_dev *rtwdev)
 	rtwpci->ind_intrs = B_AX_HCI_AXIDMA_INT_EN |
 			    B_AX_HS1ISR_IND_INT_EN |
 			    B_AX_HS0ISR_IND_INT_EN;
-	rtwpci->halt_c2h_intrs = B_AX_HALT_C2H_INT_EN;
+	rtwpci->halt_c2h_intrs = B_AX_HALT_C2H_INT_EN | B_AX_WDT_TIMEOUT_INT_EN;
 	rtwpci->intrs[0] = B_AX_TXDMA_STUCK_INT_EN |
 			   B_AX_RXDMA_INT_EN |
 			   B_AX_RXP1DMA_INT_EN |
@@ -3158,7 +3158,7 @@ static void rtw89_pci_low_power_intr_mask_v1(struct rtw89_dev *rtwdev)
 
 	rtwpci->ind_intrs = B_AX_HS1ISR_IND_INT_EN |
 			    B_AX_HS0ISR_IND_INT_EN;
-	rtwpci->halt_c2h_intrs = B_AX_HALT_C2H_INT_EN;
+	rtwpci->halt_c2h_intrs = B_AX_HALT_C2H_INT_EN | B_AX_WDT_TIMEOUT_INT_EN;
 	rtwpci->intrs[0] = 0;
 	rtwpci->intrs[1] = B_AX_GPIO18_INT_EN;
 }
