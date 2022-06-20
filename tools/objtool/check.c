@@ -396,9 +396,7 @@ static int decode_instructions(struct objtool_file *file)
 
 			ret = arch_decode_instruction(file, sec, offset,
 						      sec->sh.sh_size - offset,
-						      &insn->len, &insn->type,
-						      &insn->immediate,
-						      &insn->stack_ops);
+						      insn);
 			if (ret)
 				goto err;
 
@@ -1620,7 +1618,7 @@ static int handle_group_alt(struct objtool_file *file,
 		 * accordingly.
 		 */
 		alt_reloc = insn_reloc(file, insn);
-		if (alt_reloc &&
+		if (alt_reloc && !insn->alt_reloc_safe &&
 		    !arch_support_alt_relocation(special_alt, insn, alt_reloc)) {
 
 			WARN_FUNC("unsupported relocation in alternatives section",

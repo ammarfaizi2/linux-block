@@ -103,24 +103,37 @@ unsigned long arch_jump_destination(struct instruction *insn)
 #define rm_is_mem(reg)	(mod_is_mem() && !is_RIP() && rm_is(reg))
 #define rm_is_reg(reg)	(mod_is_reg() && modrm_rm == (reg))
 
-static bool has_notrack_prefix(struct insn *insn)
+static bool has_prefix(struct insn *insn, u8 prefix)
 {
 	int i;
 
 	for (i = 0; i < insn->prefixes.nbytes; i++) {
-		if (insn->prefixes.bytes[i] == 0x3e)
+		if (insn->prefixes.bytes[i] == prefix)
 			return true;
 	}
 
 	return false;
 }
 
+static bool has_notrack_prefix(struct insn *insn)
+{
+	return has_prefix(insn, 0x3e);
+}
+
+static bool has_gs_prefix(struct insn *insn)
+{
+	return has_prefix(insn, 0x65);
+}
+
 int arch_decode_instruction(struct objtool_file *file, const struct section *sec,
 			    unsigned long offset, unsigned int maxlen,
-			    unsigned int *len, enum insn_type *type,
-			    unsigned long *immediate,
-			    struct list_head *ops_list)
+			    struct instruction *instruction)
 {
+	struct list_head *ops_list = &instruction->stack_ops;
+	unsigned long *immediate = &instruction->immediate;
+	enum insn_type *type = &instruction->type;
+	unsigned int *len = &instruction->len;
+
 	const struct elf *elf = file->elf;
 	struct insn insn;
 	int x86_64, ret;
@@ -148,6 +161,9 @@ int arch_decode_instruction(struct objtool_file *file, const struct section *sec
 
 	if (insn.vex_prefix.nbytes)
 		return 0;
+
+	if (has_gs_prefix(&insn))
+		instruction->alt_reloc_safe = 1;
 
 	prefix = insn.prefixes.bytes[0];
 
