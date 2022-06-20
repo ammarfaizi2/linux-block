@@ -676,6 +676,8 @@ struct hal_srng {
 	/* Lock for serializing ring index updates */
 	spinlock_t lock;
 
+	struct lock_class_key lock_key;
+
 	/* Start offset of SRNG register groups for this ring
 	 * TBD: See if this is required - register address can be derived
 	 * from ring ID
