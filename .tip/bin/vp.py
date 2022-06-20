@@ -1255,16 +1255,16 @@ f"""Class patch:
 
         f_out = open(final, "w")
 
-        self_author = f" | From: { self.author }"
-        info(self_author)
+        self_author = f"From: { self.author }"
+        info(" | " + self_author)
         f_out.write(self_author + "\n")
 
-        self_date = f" | Date: { self.date }"
-        info(self_date)
+        self_date = f"Date: { self.date }"
+        info(" | " + self_date)
         f_out.write(self_date + "\n")
 
-        self_subject = f" | Subject: { self.subject }"
-        info(self_subject)
+        self_subject = f"Subject: { self.subject }"
+        info(" | " + self_subject)
         f_out.write(self_subject + "\n")
 
         info(" |")
