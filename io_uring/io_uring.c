@@ -132,7 +132,7 @@ struct io_defer_entry {
 #define IO_DISARM_MASK (REQ_F_ARM_LTIMEOUT | REQ_F_LINK_TIMEOUT | REQ_F_FAIL)
 #define IO_REQ_LINK_FLAGS (REQ_F_LINK | REQ_F_HARDLINK)
 
-static void io_uring_try_cancel_requests(struct io_ring_ctx *ctx,
+static bool io_uring_try_cancel_requests(struct io_ring_ctx *ctx,
 					 struct task_struct *task,
 					 bool cancel_all);
 
@@ -473,6 +473,22 @@ static __cold void io_queue_deferred(struct io_ring_ctx *ctx)
 static void io_eventfd_signal(struct io_ring_ctx *ctx)
 {
 	struct io_ev_fd *ev_fd;
+	bool skip;
+
+	spin_lock(&ctx->completion_lock);
+	/*
+	 * Eventfd should only get triggered when at least one event has been
+	 * posted. Some applications rely on the eventfd notification count only
+	 * changing IFF a new CQE has been added to the CQ ring. There's no
+	 * depedency on 1:1 relationship between how many times this function is
+	 * called (and hence the eventfd count) and number of CQEs posted to the
+	 * CQ ring.
+	 */
+	skip = ctx->cached_cq_tail == ctx->evfd_last_cq_tail;
+	ctx->evfd_last_cq_tail = ctx->cached_cq_tail;
+	spin_unlock(&ctx->completion_lock);
+	if (skip)
+		return;
 
 	rcu_read_lock();
 	/*
@@ -511,26 +527,29 @@ void __io_commit_cqring_flush(struct io_ring_ctx *ctx)
 		io_eventfd_signal(ctx);
 }
 
-/*
- * This should only get called when at least one event has been posted.
- * Some applications rely on the eventfd notification count only changing
- * IFF a new CQE has been added to the CQ ring. There's no depedency on
- * 1:1 relationship between how many times this function is called (and
- * hence the eventfd count) and number of CQEs posted to the CQ ring.
- */
-void io_cqring_ev_posted(struct io_ring_ctx *ctx)
+static inline void io_cqring_ev_posted(struct io_ring_ctx *ctx)
 {
-	if (unlikely(ctx->off_timeout_used || ctx->drain_active ||
-		     ctx->has_evfd))
-		__io_commit_cqring_flush(ctx);
-
+	io_commit_cqring_flush(ctx);
 	io_cqring_wake(ctx);
+}
+
+static inline void __io_cq_unlock_post(struct io_ring_ctx *ctx)
+	__releases(ctx->completion_lock)
+{
+	io_commit_cqring(ctx);
+	spin_unlock(&ctx->completion_lock);
+	io_cqring_ev_posted(ctx);
+}
+
+void io_cq_unlock_post(struct io_ring_ctx *ctx)
+{
+	__io_cq_unlock_post(ctx);
 }
 
 /* Returns true if there are no backlogged entries after the flush */
 static bool __io_cqring_overflow_flush(struct io_ring_ctx *ctx, bool force)
 {
-	bool all_flushed, posted;
+	bool all_flushed;
 	size_t cqe_size = sizeof(struct io_uring_cqe);
 
 	if (!force && __io_cqring_events(ctx) == ctx->cq_entries)
@@ -539,8 +558,7 @@ static bool __io_cqring_overflow_flush(struct io_ring_ctx *ctx, bool force)
 	if (ctx->flags & IORING_SETUP_CQE32)
 		cqe_size <<= 1;
 
-	posted = false;
-	spin_lock(&ctx->completion_lock);
+	io_cq_lock(ctx);
 	while (!list_empty(&ctx->cq_overflow_list)) {
 		struct io_uring_cqe *cqe = io_get_cqe(ctx);
 		struct io_overflow_cqe *ocqe;
@@ -554,7 +572,6 @@ static bool __io_cqring_overflow_flush(struct io_ring_ctx *ctx, bool force)
 		else
 			io_account_cq_overflow(ctx);
 
-		posted = true;
 		list_del(&ocqe->list);
 		kfree(ocqe);
 	}
@@ -565,10 +582,7 @@ static bool __io_cqring_overflow_flush(struct io_ring_ctx *ctx, bool force)
 		atomic_andnot(IORING_SQ_CQ_OVERFLOW, &ctx->rings->sq_flags);
 	}
 
-	io_commit_cqring(ctx);
-	spin_unlock(&ctx->completion_lock);
-	if (posted)
-		io_cqring_ev_posted(ctx);
+	io_cq_unlock_post(ctx);
 	return all_flushed;
 }
 
@@ -754,12 +768,9 @@ bool io_post_aux_cqe(struct io_ring_ctx *ctx,
 {
 	bool filled;
 
-	spin_lock(&ctx->completion_lock);
+	io_cq_lock(ctx);
 	filled = io_fill_cqe_aux(ctx, user_data, res, cflags);
-	io_commit_cqring(ctx);
-	spin_unlock(&ctx->completion_lock);
-	if (filled)
-		io_cqring_ev_posted(ctx);
+	io_cq_unlock_post(ctx);
 	return filled;
 }
 
@@ -805,11 +816,9 @@ void io_req_complete_post(struct io_kiocb *req)
 {
 	struct io_ring_ctx *ctx = req->ctx;
 
-	spin_lock(&ctx->completion_lock);
+	io_cq_lock(ctx);
 	__io_req_complete_post(req);
-	io_commit_cqring(ctx);
-	spin_unlock(&ctx->completion_lock);
-	io_cqring_ev_posted(ctx);
+	io_cq_unlock_post(ctx);
 }
 
 inline void __io_req_complete(struct io_kiocb *req, unsigned issue_flags)
@@ -940,14 +949,10 @@ __cold void io_free_req(struct io_kiocb *req)
 static void __io_req_find_next_prep(struct io_kiocb *req)
 {
 	struct io_ring_ctx *ctx = req->ctx;
-	bool posted;
 
-	spin_lock(&ctx->completion_lock);
-	posted = io_disarm_next(req);
-	io_commit_cqring(ctx);
-	spin_unlock(&ctx->completion_lock);
-	if (posted)
-		io_cqring_ev_posted(ctx);
+	io_cq_lock(ctx);
+	io_disarm_next(req);
+	io_cq_unlock_post(ctx);
 }
 
 static inline struct io_kiocb *io_req_find_next(struct io_kiocb *req)
@@ -981,13 +986,6 @@ static void ctx_flush_and_put(struct io_ring_ctx *ctx, bool *locked)
 	percpu_ref_put(&ctx->refs);
 }
 
-static inline void ctx_commit_and_unlock(struct io_ring_ctx *ctx)
-{
-	io_commit_cqring(ctx);
-	spin_unlock(&ctx->completion_lock);
-	io_cqring_ev_posted(ctx);
-}
-
 static void handle_prev_tw_list(struct io_wq_work_node *node,
 				struct io_ring_ctx **ctx, bool *uring_locked)
 {
@@ -1003,7 +1001,7 @@ static void handle_prev_tw_list(struct io_wq_work_node *node,
 
 		if (req->ctx != *ctx) {
 			if (unlikely(!*uring_locked && *ctx))
-				ctx_commit_and_unlock(*ctx);
+				io_cq_unlock_post(*ctx);
 
 			ctx_flush_and_put(*ctx, uring_locked);
 			*ctx = req->ctx;
@@ -1011,7 +1009,7 @@ static void handle_prev_tw_list(struct io_wq_work_node *node,
 			*uring_locked = mutex_trylock(&(*ctx)->uring_lock);
 			percpu_ref_get(&(*ctx)->refs);
 			if (unlikely(!*uring_locked))
-				spin_lock(&(*ctx)->completion_lock);
+				io_cq_lock(*ctx);
 		}
 		if (likely(*uring_locked)) {
 			req->io_task_work.func(req, uring_locked);
@@ -1023,7 +1021,7 @@ static void handle_prev_tw_list(struct io_wq_work_node *node,
 	} while (node);
 
 	if (unlikely(!*uring_locked))
-		ctx_commit_and_unlock(*ctx);
+		io_cq_unlock_post(*ctx);
 }
 
 static void handle_tw_list(struct io_wq_work_node *node,
@@ -1258,10 +1256,7 @@ static void __io_submit_flush_completions(struct io_ring_ctx *ctx)
 		if (!(req->flags & REQ_F_CQE_SKIP))
 			__io_fill_cqe_req(ctx, req);
 	}
-
-	io_commit_cqring(ctx);
-	spin_unlock(&ctx->completion_lock);
-	io_cqring_ev_posted(ctx);
+	__io_cq_unlock_post(ctx);
 
 	io_free_batch_list(ctx, state->compl_reqs.first);
 	INIT_WQ_LIST(&state->compl_reqs);
@@ -1385,7 +1380,7 @@ void io_req_task_complete(struct io_kiocb *req, bool *locked)
 	}
 
 	if (*locked)
-		io_req_add_compl_list(req);
+		io_req_complete_defer(req);
 	else
 		io_req_complete_post(req);
 }
@@ -1653,7 +1648,7 @@ static int io_issue_sqe(struct io_kiocb *req, unsigned int issue_flags)
 
 	if (ret == IOU_OK) {
 		if (issue_flags & IO_URING_F_COMPLETE_DEFER)
-			io_req_add_compl_list(req);
+			io_req_complete_defer(req);
 		else
 			io_req_complete_post(req);
 	} else if (ret != IOU_ISSUE_SKIP_COMPLETE)
@@ -2428,6 +2423,11 @@ static int io_eventfd_register(struct io_ring_ctx *ctx, void __user *arg,
 		kfree(ev_fd);
 		return ret;
 	}
+
+	spin_lock(&ctx->completion_lock);
+	ctx->evfd_last_cq_tail = ctx->cached_cq_tail;
+	spin_unlock(&ctx->completion_lock);
+
 	ev_fd->eventfd_async = eventfd_async;
 	ctx->has_evfd = true;
 	rcu_assign_pointer(ctx->io_ev_fd, ev_fd);
@@ -2648,7 +2648,9 @@ static __cold void io_ring_exit_work(struct work_struct *work)
 	 * as nobody else will be looking for them.
 	 */
 	do {
-		io_uring_try_cancel_requests(ctx, NULL, true);
+		while (io_uring_try_cancel_requests(ctx, NULL, true))
+			cond_resched();
+
 		if (ctx->sq_data) {
 			struct io_sq_data *sqd = ctx->sq_data;
 			struct task_struct *tsk;
@@ -2806,53 +2808,48 @@ static __cold bool io_uring_try_cancel_iowq(struct io_ring_ctx *ctx)
 	return ret;
 }
 
-static __cold void io_uring_try_cancel_requests(struct io_ring_ctx *ctx,
+static __cold bool io_uring_try_cancel_requests(struct io_ring_ctx *ctx,
 						struct task_struct *task,
 						bool cancel_all)
 {
 	struct io_task_cancel cancel = { .task = task, .all = cancel_all, };
 	struct io_uring_task *tctx = task ? task->io_uring : NULL;
+	enum io_wq_cancel cret;
+	bool ret = false;
 
 	/* failed during ring init, it couldn't have issued any requests */
 	if (!ctx->rings)
-		return;
+		return false;
 
-	while (1) {
-		enum io_wq_cancel cret;
-		bool ret = false;
-
-		if (!task) {
-			ret |= io_uring_try_cancel_iowq(ctx);
-		} else if (tctx && tctx->io_wq) {
-			/*
-			 * Cancels requests of all rings, not only @ctx, but
-			 * it's fine as the task is in exit/exec.
-			 */
-			cret = io_wq_cancel_cb(tctx->io_wq, io_cancel_task_cb,
-					       &cancel, true);
-			ret |= (cret != IO_WQ_CANCEL_NOTFOUND);
-		}
-
-		/* SQPOLL thread does its own polling */
-		if ((!(ctx->flags & IORING_SETUP_SQPOLL) && cancel_all) ||
-		    (ctx->sq_data && ctx->sq_data->thread == current)) {
-			while (!wq_list_empty(&ctx->iopoll_list)) {
-				io_iopoll_try_reap_events(ctx);
-				ret = true;
-			}
-		}
-
-		ret |= io_cancel_defer_files(ctx, task, cancel_all);
-		mutex_lock(&ctx->uring_lock);
-		ret |= io_poll_remove_all(ctx, task, cancel_all);
-		mutex_unlock(&ctx->uring_lock);
-		ret |= io_kill_timeouts(ctx, task, cancel_all);
-		if (task)
-			ret |= io_run_task_work();
-		if (!ret)
-			break;
-		cond_resched();
+	if (!task) {
+		ret |= io_uring_try_cancel_iowq(ctx);
+	} else if (tctx && tctx->io_wq) {
+		/*
+		 * Cancels requests of all rings, not only @ctx, but
+		 * it's fine as the task is in exit/exec.
+		 */
+		cret = io_wq_cancel_cb(tctx->io_wq, io_cancel_task_cb,
+				       &cancel, true);
+		ret |= (cret != IO_WQ_CANCEL_NOTFOUND);
 	}
+
+	/* SQPOLL thread does its own polling */
+	if ((!(ctx->flags & IORING_SETUP_SQPOLL) && cancel_all) ||
+	    (ctx->sq_data && ctx->sq_data->thread == current)) {
+		while (!wq_list_empty(&ctx->iopoll_list)) {
+			io_iopoll_try_reap_events(ctx);
+			ret = true;
+		}
+	}
+
+	ret |= io_cancel_defer_files(ctx, task, cancel_all);
+	mutex_lock(&ctx->uring_lock);
+	ret |= io_poll_remove_all(ctx, task, cancel_all);
+	mutex_unlock(&ctx->uring_lock);
+	ret |= io_kill_timeouts(ctx, task, cancel_all);
+	if (task)
+		ret |= io_run_task_work();
+	return ret;
 }
 
 static s64 tctx_inflight(struct io_uring_task *tctx, bool tracked)
@@ -2882,6 +2879,8 @@ __cold void io_uring_cancel_generic(bool cancel_all, struct io_sq_data *sqd)
 
 	atomic_inc(&tctx->in_idle);
 	do {
+		bool loop = false;
+
 		io_uring_drop_tctx_refs(current);
 		/* read completions before cancelations */
 		inflight = tctx_inflight(tctx, !cancel_all);
@@ -2896,13 +2895,19 @@ __cold void io_uring_cancel_generic(bool cancel_all, struct io_sq_data *sqd)
 				/* sqpoll task will cancel all its requests */
 				if (node->ctx->sq_data)
 					continue;
-				io_uring_try_cancel_requests(node->ctx, current,
-							     cancel_all);
+				loop |= io_uring_try_cancel_requests(node->ctx,
+							current, cancel_all);
 			}
 		} else {
 			list_for_each_entry(ctx, &sqd->ctx_list, sqd_list)
-				io_uring_try_cancel_requests(ctx, current,
-							     cancel_all);
+				loop |= io_uring_try_cancel_requests(ctx,
+								     current,
+								     cancel_all);
+		}
+
+		if (loop) {
+			cond_resched();
+			continue;
 		}
 
 		prepare_to_wait(&tctx->wait, &wait, TASK_INTERRUPTIBLE);

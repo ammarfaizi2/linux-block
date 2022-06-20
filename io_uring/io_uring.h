@@ -24,7 +24,6 @@ void __io_req_complete(struct io_kiocb *req, unsigned issue_flags);
 void io_req_complete_post(struct io_kiocb *req);
 void __io_req_complete_post(struct io_kiocb *req);
 bool io_post_aux_cqe(struct io_ring_ctx *ctx, u64 user_data, s32 res, u32 cflags);
-void io_cqring_ev_posted(struct io_ring_ctx *ctx);
 void __io_commit_cqring_flush(struct io_ring_ctx *ctx);
 
 struct page **io_pin_pages(unsigned long ubuf, unsigned long len, int *npages);
@@ -65,6 +64,14 @@ bool io_match_task_safe(struct io_kiocb *head, struct task_struct *task,
 
 #define io_for_each_link(pos, head) \
 	for (pos = (head); pos; pos = pos->link)
+
+static inline void io_cq_lock(struct io_ring_ctx *ctx)
+	__acquires(ctx->completion_lock)
+{
+	spin_lock(&ctx->completion_lock);
+}
+
+void io_cq_unlock_post(struct io_ring_ctx *ctx);
 
 static inline struct io_uring_cqe *io_get_cqe(struct io_ring_ctx *ctx)
 {
@@ -215,11 +222,25 @@ static inline void io_tw_lock(struct io_ring_ctx *ctx, bool *locked)
 	}
 }
 
-static inline void io_req_add_compl_list(struct io_kiocb *req)
+/*
+ * Don't complete immediately but use deferred completion infrastructure.
+ * Protected by ->uring_lock and can only be used either with
+ * IO_URING_F_COMPLETE_DEFER or inside a tw handler holding the mutex.
+ */
+static inline void io_req_complete_defer(struct io_kiocb *req)
+	__must_hold(&req->ctx->uring_lock)
 {
 	struct io_submit_state *state = &req->ctx->submit_state;
 
+	lockdep_assert_held(&req->ctx->uring_lock);
+
 	wq_list_add_tail(&req->comp_list, &state->compl_reqs);
+}
+
+static inline void io_commit_cqring_flush(struct io_ring_ctx *ctx)
+{
+	if (unlikely(ctx->off_timeout_used || ctx->drain_active || ctx->has_evfd))
+		__io_commit_cqring_flush(ctx);
 }
 
 #endif
