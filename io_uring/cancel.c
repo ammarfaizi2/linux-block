@@ -6,6 +6,7 @@
 #include <linux/mm.h>
 #include <linux/slab.h>
 #include <linux/namei.h>
+#include <linux/nospec.h>
 #include <linux/io_uring.h>
 
 #include <uapi/linux/io_uring.h>
@@ -24,7 +25,7 @@ struct io_cancel {
 };
 
 #define CANCEL_FLAGS	(IORING_ASYNC_CANCEL_ALL | IORING_ASYNC_CANCEL_FD | \
-			 IORING_ASYNC_CANCEL_ANY)
+			 IORING_ASYNC_CANCEL_ANY | IORING_ASYNC_CANCEL_FD_FIXED)
 
 static bool io_cancel_cb(struct io_wq_work *work, void *data)
 {
@@ -77,15 +78,15 @@ static int io_async_cancel_one(struct io_uring_task *tctx,
 	return ret;
 }
 
-int io_try_cancel(struct io_kiocb *req, struct io_cancel_data *cd,
+int io_try_cancel(struct io_uring_task *tctx, struct io_cancel_data *cd,
 		  unsigned issue_flags)
 {
-	struct io_ring_ctx *ctx = req->ctx;
+	struct io_ring_ctx *ctx = cd->ctx;
 	int ret;
 
-	WARN_ON_ONCE(!io_wq_current_is_worker() && req->task != current);
+	WARN_ON_ONCE(!io_wq_current_is_worker() && tctx != current->io_uring);
 
-	ret = io_async_cancel_one(req->task->io_uring, cd);
+	ret = io_async_cancel_one(tctx, cd);
 	/*
 	 * Fall-through even for -EALREADY, as we may have poll armed
 	 * that need unarming.
@@ -103,7 +104,6 @@ int io_try_cancel(struct io_kiocb *req, struct io_cancel_data *cd,
 	spin_unlock(&ctx->completion_lock);
 	return ret;
 }
-
 
 int io_async_cancel_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 {
@@ -127,7 +127,8 @@ int io_async_cancel_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	return 0;
 }
 
-static int __io_async_cancel(struct io_cancel_data *cd, struct io_kiocb *req,
+static int __io_async_cancel(struct io_cancel_data *cd,
+			     struct io_uring_task *tctx,
 			     unsigned int issue_flags)
 {
 	bool all = cd->flags & (IORING_ASYNC_CANCEL_ALL|IORING_ASYNC_CANCEL_ANY);
@@ -136,7 +137,7 @@ static int __io_async_cancel(struct io_cancel_data *cd, struct io_kiocb *req,
 	int ret, nr = 0;
 
 	do {
-		ret = io_try_cancel(req, cd, issue_flags);
+		ret = io_try_cancel(tctx, cd, issue_flags);
 		if (ret == -ENOENT)
 			break;
 		if (!all)
@@ -170,14 +171,18 @@ int io_async_cancel(struct io_kiocb *req, unsigned int issue_flags)
 		.flags	= cancel->flags,
 		.seq	= atomic_inc_return(&req->ctx->cancel_seq),
 	};
+	struct io_uring_task *tctx = req->task->io_uring;
 	int ret;
 
 	if (cd.flags & IORING_ASYNC_CANCEL_FD) {
-		if (req->flags & REQ_F_FIXED_FILE)
+		if (req->flags & REQ_F_FIXED_FILE ||
+		    cd.flags & IORING_ASYNC_CANCEL_FD_FIXED) {
+			req->flags |= REQ_F_FIXED_FILE;
 			req->file = io_file_get_fixed(req, cancel->fd,
 							issue_flags);
-		else
+		} else {
 			req->file = io_file_get_normal(req, cancel->fd);
+		}
 		if (!req->file) {
 			ret = -EBADF;
 			goto done;
@@ -185,7 +190,7 @@ int io_async_cancel(struct io_kiocb *req, unsigned int issue_flags)
 		cd.file = req->file;
 	}
 
-	ret = __io_async_cancel(&cd, req, issue_flags);
+	ret = __io_async_cancel(&cd, tctx, issue_flags);
 done:
 	if (ret < 0)
 		req_set_fail(req);
@@ -201,4 +206,110 @@ void init_hash_table(struct io_hash_table *table, unsigned size)
 		spin_lock_init(&table->hbs[i].lock);
 		INIT_HLIST_HEAD(&table->hbs[i].list);
 	}
+}
+
+static int __io_sync_cancel(struct io_uring_task *tctx,
+			    struct io_cancel_data *cd, int fd)
+{
+	struct io_ring_ctx *ctx = cd->ctx;
+
+	/* fixed must be grabbed every time since we drop the uring_lock */
+	if ((cd->flags & IORING_ASYNC_CANCEL_FD) &&
+	    (cd->flags & IORING_ASYNC_CANCEL_FD_FIXED)) {
+		unsigned long file_ptr;
+
+		if (unlikely(fd > ctx->nr_user_files))
+			return -EBADF;
+		fd = array_index_nospec(fd, ctx->nr_user_files);
+		file_ptr = io_fixed_file_slot(&ctx->file_table, fd)->file_ptr;
+		cd->file = (struct file *) (file_ptr & FFS_MASK);
+		if (!cd->file)
+			return -EBADF;
+	}
+
+	return __io_async_cancel(cd, tctx, 0);
+}
+
+int io_sync_cancel(struct io_ring_ctx *ctx, void __user *arg)
+	__must_hold(&ctx->uring_lock)
+{
+	struct io_cancel_data cd = {
+		.ctx	= ctx,
+		.seq	= atomic_inc_return(&ctx->cancel_seq),
+	};
+	ktime_t timeout = KTIME_MAX;
+	struct io_uring_sync_cancel_reg sc;
+	struct fd f = { };
+	DEFINE_WAIT(wait);
+	int ret;
+
+	if (copy_from_user(&sc, arg, sizeof(sc)))
+		return -EFAULT;
+	if (sc.flags & ~CANCEL_FLAGS)
+		return -EINVAL;
+	if (sc.pad[0] || sc.pad[1] || sc.pad[2] || sc.pad[3])
+		return -EINVAL;
+
+	cd.data = sc.addr;
+	cd.flags = sc.flags;
+
+	/* we can grab a normal file descriptor upfront */
+	if ((cd.flags & IORING_ASYNC_CANCEL_FD) &&
+	   !(cd.flags & IORING_ASYNC_CANCEL_FD_FIXED)) {
+		f = fdget(sc.fd);
+		if (!f.file)
+			return -EBADF;
+		cd.file = f.file;
+	}
+
+	ret = __io_sync_cancel(current->io_uring, &cd, sc.fd);
+
+	/* found something, done! */
+	if (ret != -EALREADY)
+		goto out;
+
+	if (sc.timeout.tv_sec != -1UL || sc.timeout.tv_nsec != -1UL) {
+		struct timespec64 ts = {
+			.tv_sec		= sc.timeout.tv_sec,
+			.tv_nsec	= sc.timeout.tv_nsec
+		};
+
+		timeout = ktime_add_ns(timespec64_to_ktime(ts), ktime_get_ns());
+	}
+
+	/*
+	 * Keep looking until we get -ENOENT. we'll get woken everytime
+	 * every time a request completes and will retry the cancelation.
+	 */
+	do {
+		cd.seq = atomic_inc_return(&ctx->cancel_seq);
+
+		prepare_to_wait(&ctx->cq_wait, &wait, TASK_INTERRUPTIBLE);
+
+		ret = __io_sync_cancel(current->io_uring, &cd, sc.fd);
+
+		if (ret != -EALREADY)
+			break;
+
+		mutex_unlock(&ctx->uring_lock);
+		ret = io_run_task_work_sig();
+		if (ret < 0) {
+			mutex_lock(&ctx->uring_lock);
+			break;
+		}
+		ret = schedule_hrtimeout(&timeout, HRTIMER_MODE_ABS);
+		mutex_lock(&ctx->uring_lock);
+		if (!ret) {
+			ret = -ETIME;
+			break;
+		}
+	} while (1);
+
+	finish_wait(&ctx->cq_wait, &wait);
+
+	if (ret == -ENOENT || ret > 0)
+		ret = 0;
+out:
+	fdput(f);
+	return ret;
 }
