@@ -2105,9 +2105,6 @@ static int mlxsw_sp_port_module_info_init(struct mlxsw_sp *mlxsw_sp)
 		return -ENOMEM;
 
 	for (i = 1; i < max_ports; i++) {
-		if (mlxsw_core_port_is_xm(mlxsw_sp->core, i))
-			continue;
-
 		port_mapping = &mlxsw_sp->port_mapping[i];
 		err = mlxsw_sp_port_module_info_get(mlxsw_sp, i, port_mapping);
 		if (err)
@@ -3410,8 +3407,6 @@ static const struct mlxsw_config_profile mlxsw_sp2_config_profile = {
 	.max_ib_mc			= 0,
 	.used_max_pkey			= 1,
 	.max_pkey			= 0,
-	.used_kvh_xlt_cache_mode	= 1,
-	.kvh_xlt_cache_mode		= 1,
 	.swid_config			= {
 		{
 			.used_type	= 1,
@@ -3585,6 +3580,25 @@ mlxsw_sp_resources_rif_mac_profile_register(struct mlxsw_core *mlxsw_core)
 					 &size_params);
 }
 
+static int mlxsw_sp_resources_rifs_register(struct mlxsw_core *mlxsw_core)
+{
+	struct devlink *devlink = priv_to_devlink(mlxsw_core);
+	struct devlink_resource_size_params size_params;
+	u64 max_rifs;
+
+	if (!MLXSW_CORE_RES_VALID(mlxsw_core, MAX_RIFS))
+		return -EIO;
+
+	max_rifs = MLXSW_CORE_RES_GET(mlxsw_core, MAX_RIFS);
+	devlink_resource_size_params_init(&size_params, max_rifs, max_rifs,
+					  1, DEVLINK_RESOURCE_UNIT_ENTRY);
+
+	return devlink_resource_register(devlink, "rifs", max_rifs,
+					 MLXSW_SP_RESOURCE_RIFS,
+					 DEVLINK_RESOURCE_ID_PARENT_TOP,
+					 &size_params);
+}
+
 static int mlxsw_sp1_resources_register(struct mlxsw_core *mlxsw_core)
 {
 	int err;
@@ -3609,8 +3623,13 @@ static int mlxsw_sp1_resources_register(struct mlxsw_core *mlxsw_core)
 	if (err)
 		goto err_resources_rif_mac_profile_register;
 
+	err = mlxsw_sp_resources_rifs_register(mlxsw_core);
+	if (err)
+		goto err_resources_rifs_register;
+
 	return 0;
 
+err_resources_rifs_register:
 err_resources_rif_mac_profile_register:
 err_policer_resources_register:
 err_resources_counter_register:
@@ -3643,8 +3662,13 @@ static int mlxsw_sp2_resources_register(struct mlxsw_core *mlxsw_core)
 	if (err)
 		goto err_resources_rif_mac_profile_register;
 
+	err = mlxsw_sp_resources_rifs_register(mlxsw_core);
+	if (err)
+		goto err_resources_rifs_register;
+
 	return 0;
 
+err_resources_rifs_register:
 err_resources_rif_mac_profile_register:
 err_policer_resources_register:
 err_resources_counter_register:
