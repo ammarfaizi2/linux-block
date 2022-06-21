@@ -786,16 +786,11 @@ int io_poll_add(struct io_kiocb *req, unsigned int issue_flags)
 		req->flags &= ~REQ_F_HASH_LOCKED;
 
 	ret = __io_arm_poll_handler(req, poll, &ipt, poll->events);
-	if (ipt.error) {
-		return ipt.error;
-	} else if (ret > 0) {
+	if (ret) {
 		io_req_set_res(req, ret, 0);
 		return IOU_OK;
-	} else if (!ret) {
-		return IOU_ISSUE_SKIP_COMPLETE;
 	}
-
-	return ret;
+	return ipt.error ?: IOU_ISSUE_SKIP_COMPLETE;
 }
 
 int io_poll_remove(struct io_kiocb *req, unsigned int issue_flags)
