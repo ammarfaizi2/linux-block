@@ -193,7 +193,7 @@ dc_words = [ "ACPI", "AER", "allocator", "AMD", "AMD64",
          "amongst", "AMX", "APEI", "arm64", "asm", "BHB",
          "binutils", "bitmask", "bitfield", "bool", "breakpoint", "brk",
          "cacheline", "CLAC", "clocksource", "CMCI", "cmdline", "Coccinelle", "codename", "config", "CPER",
-         "CPPC", "CPUID", "CSM", "DCT",
+         "CPPC", "CPUID", "CSM", "DCT", "devicetree",
          "DF", "distro", "DMA", "DIMM", "e820", "EAX", "EBDA", "ECC", "EDAC", "EHCI", "enablement",
          "ENDBR", "ENQCMD", "EPT",
          "fixup", "gcc", "GHES", "goto", "GPR", "GUID", "hotplug", "hugepage", "Hygon",
@@ -1159,6 +1159,28 @@ f"""Class patch:
         flags = { 'check_func': True }
         spellcheck(self.commit_msg, "commit message", flags)
 
+    def verify_tags(self):
+        od = self.od
+
+        rex_remove_email_addr = re.compile(r'(.*)\W\<.*$')
+
+        for tag in od:
+            if not od[tag]:
+                continue
+
+            if tag == "Signed-off-by":
+                for sob in od[tag]:
+                    if self.sender == sob:
+                        return
+
+                    # see if at least the names match, i.e., using different email addresses
+                    sender_name = re.sub(rex_remove_email_addr, r'\1', self.sender)
+                    sob_name    = re.sub(rex_remove_email_addr, r'\1', sob)
+
+                    if sender_name == sob_name:
+                        return
+
+                warn(f"Sender { self.sender } hasn't signed off on the patch!")
 
     def format_tags(self, f):
         """
@@ -1234,6 +1256,7 @@ f"""Class patch:
         self.massage_author()
         self.verify_subject()
         self.verify_commit_message()
+        self.verify_tags()
         self.verify_diff()
 
     def format_patch(self):
