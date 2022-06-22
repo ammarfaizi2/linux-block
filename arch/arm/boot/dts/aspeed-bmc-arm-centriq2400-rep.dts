@@ -6,7 +6,7 @@
 
 / {
 	model = "Qualcomm Centriq 2400  REP AST2520";
-	compatible = "qualcomm,centriq2400-rep-bmc", "aspeed,ast2500";
+	compatible = "qcom,centriq2400-rep-bmc", "aspeed,ast2500";
 
 	chosen {
 		stdout-path = &uart5;
