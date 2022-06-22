@@ -986,49 +986,14 @@ static void ctx_flush_and_put(struct io_ring_ctx *ctx, bool *locked)
 	percpu_ref_put(&ctx->refs);
 }
 
-static void handle_prev_tw_list(struct io_wq_work_node *node,
-				struct io_ring_ctx **ctx, bool *uring_locked)
+static unsigned int handle_tw_list(struct llist_node *node,
+				   struct io_ring_ctx **ctx, bool *locked,
+				   struct llist_node *last)
 {
-	if (*ctx && !*uring_locked)
-		spin_lock(&(*ctx)->completion_lock);
+	unsigned int count = 0;
 
-	do {
-		struct io_wq_work_node *next = node->next;
-		struct io_kiocb *req = container_of(node, struct io_kiocb,
-						    io_task_work.node);
-
-		prefetch(container_of(next, struct io_kiocb, io_task_work.node));
-
-		if (req->ctx != *ctx) {
-			if (unlikely(!*uring_locked && *ctx))
-				io_cq_unlock_post(*ctx);
-
-			ctx_flush_and_put(*ctx, uring_locked);
-			*ctx = req->ctx;
-			/* if not contended, grab and improve batching */
-			*uring_locked = mutex_trylock(&(*ctx)->uring_lock);
-			percpu_ref_get(&(*ctx)->refs);
-			if (unlikely(!*uring_locked))
-				io_cq_lock(*ctx);
-		}
-		if (likely(*uring_locked)) {
-			req->io_task_work.func(req, uring_locked);
-		} else {
-			req->cqe.flags = io_put_kbuf_comp(req);
-			__io_req_complete_post(req);
-		}
-		node = next;
-	} while (node);
-
-	if (unlikely(!*uring_locked))
-		io_cq_unlock_post(*ctx);
-}
-
-static void handle_tw_list(struct io_wq_work_node *node,
-			   struct io_ring_ctx **ctx, bool *locked)
-{
-	do {
-		struct io_wq_work_node *next = node->next;
+	while (node != last) {
+		struct llist_node *next = node->next;
 		struct io_kiocb *req = container_of(node, struct io_kiocb,
 						    io_task_work.node);
 
@@ -1043,7 +1008,40 @@ static void handle_tw_list(struct io_wq_work_node *node,
 		}
 		req->io_task_work.func(req, locked);
 		node = next;
-	} while (node);
+		count++;
+	}
+
+	return count;
+}
+
+/**
+ * io_llist_xchg - swap all entries in a lock-less list
+ * @head:	the head of lock-less list to delete all entries
+ * @new:	new entry as the head of the list
+ *
+ * If list is empty, return NULL, otherwise, return the pointer to the first entry.
+ * The order of entries returned is from the newest to the oldest added one.
+ */
+static inline struct llist_node *io_llist_xchg(struct llist_head *head,
+					       struct llist_node *node)
+{
+	return xchg(&head->first, node);
+}
+
+/**
+ * io_llist_xchg - possibly swap all entries in a lock-less list
+ * @head:	the head of lock-less list to delete all entries
+ * @old:	expected old value of the first entry of the list
+ * @new:	new entry as the head of the list
+ *
+ * perform a cmpxchg on the first entry of the list.
+ */
+
+static inline struct llist_node *io_llist_cmpxchg(struct llist_head *head,
+						  struct llist_node *old,
+						  struct llist_node *new)
+{
+	return cmpxchg(&head->first, old, new);
 }
 
 void tctx_task_work(struct callback_head *cb)
@@ -1052,30 +1050,17 @@ void tctx_task_work(struct callback_head *cb)
 	struct io_ring_ctx *ctx = NULL;
 	struct io_uring_task *tctx = container_of(cb, struct io_uring_task,
 						  task_work);
+	struct llist_node fake = {};
+	struct llist_node *node = io_llist_xchg(&tctx->task_list, &fake);
+	unsigned int loops = 1;
+	unsigned int count = handle_tw_list(node, &ctx, &uring_locked, NULL);
 
-	while (1) {
-		struct io_wq_work_node *node1, *node2;
-
-		spin_lock_irq(&tctx->task_lock);
-		node1 = tctx->prio_task_list.first;
-		node2 = tctx->task_list.first;
-		INIT_WQ_LIST(&tctx->task_list);
-		INIT_WQ_LIST(&tctx->prio_task_list);
-		if (!node2 && !node1)
-			tctx->task_running = false;
-		spin_unlock_irq(&tctx->task_lock);
-		if (!node2 && !node1)
-			break;
-
-		if (node1)
-			handle_prev_tw_list(node1, &ctx, &uring_locked);
-		if (node2)
-			handle_tw_list(node2, &ctx, &uring_locked);
-		cond_resched();
-
-		if (data_race(!tctx->task_list.first) &&
-		    data_race(!tctx->prio_task_list.first) && uring_locked)
-			io_submit_flush_completions(ctx);
+	node = io_llist_cmpxchg(&tctx->task_list, &fake, NULL);
+	while (node != &fake) {
+		loops++;
+		node = io_llist_xchg(&tctx->task_list, &fake);
+		count += handle_tw_list(node, &ctx, &uring_locked, &fake);
+		node = io_llist_cmpxchg(&tctx->task_list, &fake, NULL);
 	}
 
 	ctx_flush_and_put(ctx, &uring_locked);
@@ -1083,23 +1068,18 @@ void tctx_task_work(struct callback_head *cb)
 	/* relaxed read is enough as only the task itself sets ->in_idle */
 	if (unlikely(atomic_read(&tctx->in_idle)))
 		io_uring_drop_tctx_refs(current);
+
+	trace_io_uring_task_work_run(tctx, count, loops);
 }
 
-static void __io_req_task_work_add(struct io_kiocb *req,
-				   struct io_uring_task *tctx,
-				   struct io_wq_work_list *list)
+void io_req_task_work_add(struct io_kiocb *req)
 {
+	struct io_uring_task *tctx = req->task->io_uring;
 	struct io_ring_ctx *ctx = req->ctx;
-	struct io_wq_work_node *node;
-	unsigned long flags;
+	struct llist_node *node;
 	bool running;
 
-	spin_lock_irqsave(&tctx->task_lock, flags);
-	wq_list_add_tail(&req->io_task_work.node, list);
-	running = tctx->task_running;
-	if (!running)
-		tctx->task_running = true;
-	spin_unlock_irqrestore(&tctx->task_lock, flags);
+	running = !llist_add(&req->io_task_work.node, &tctx->task_list);
 
 	/* task_work already pending, we're done */
 	if (running)
@@ -1111,10 +1091,8 @@ static void __io_req_task_work_add(struct io_kiocb *req,
 	if (likely(!task_work_add(req->task, &tctx->task_work, ctx->notify_method)))
 		return;
 
-	spin_lock_irqsave(&tctx->task_lock, flags);
-	tctx->task_running = false;
-	node = wq_list_merge(&tctx->prio_task_list, &tctx->task_list);
-	spin_unlock_irqrestore(&tctx->task_lock, flags);
+
+	node = llist_del_all(&tctx->task_list);
 
 	while (node) {
 		req = container_of(node, struct io_kiocb, io_task_work.node);
@@ -1123,23 +1101,6 @@ static void __io_req_task_work_add(struct io_kiocb *req,
 			      &req->ctx->fallback_llist))
 			schedule_delayed_work(&req->ctx->fallback_work, 1);
 	}
-}
-
-void io_req_task_work_add(struct io_kiocb *req)
-{
-	struct io_uring_task *tctx = req->task->io_uring;
-
-	__io_req_task_work_add(req, tctx, &tctx->task_list);
-}
-
-void io_req_task_prio_work_add(struct io_kiocb *req)
-{
-	struct io_uring_task *tctx = req->task->io_uring;
-
-	if (req->ctx->flags & IORING_SETUP_SQPOLL)
-		__io_req_task_work_add(req, tctx, &tctx->prio_task_list);
-	else
-		__io_req_task_work_add(req, tctx, &tctx->task_list);
 }
 
 static void io_req_tw_post(struct io_kiocb *req, bool *locked)
