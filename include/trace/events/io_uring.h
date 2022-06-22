@@ -151,6 +151,8 @@ TRACE_EVENT(io_uring_queue_async_work,
 		__field(  unsigned int,			flags		)
 		__field(  struct io_wq_work *,		work		)
 		__field(  int,				rw		)
+
+		__string( op_str, io_uring_get_opcode(req->opcode)	)
 	),
 
 	TP_fast_assign(
@@ -161,11 +163,13 @@ TRACE_EVENT(io_uring_queue_async_work,
 		__entry->opcode		= req->opcode;
 		__entry->work		= &req->work;
 		__entry->rw		= rw;
+
+		__assign_str(op_str, io_uring_get_opcode(req->opcode));
 	),
 
 	TP_printk("ring %p, request %p, user_data 0x%llx, opcode %s, flags 0x%x, %s queue, work %p",
 		__entry->ctx, __entry->req, __entry->user_data,
-		io_uring_get_opcode(__entry->opcode),
+		__get_str(op_str),
 		__entry->flags, __entry->rw ? "hashed" : "normal", __entry->work)
 );
 
@@ -188,6 +192,8 @@ TRACE_EVENT(io_uring_defer,
 		__field(  void *,		req	)
 		__field(  unsigned long long,	data	)
 		__field(  u8,			opcode	)
+
+		__string( op_str, io_uring_get_opcode(req->opcode) )
 	),
 
 	TP_fast_assign(
@@ -195,11 +201,13 @@ TRACE_EVENT(io_uring_defer,
 		__entry->req	= req;
 		__entry->data	= req->cqe.user_data;
 		__entry->opcode	= req->opcode;
+
+		__assign_str(op_str, io_uring_get_opcode(req->opcode));
 	),
 
 	TP_printk("ring %p, request %p, user_data 0x%llx, opcode %s",
 		__entry->ctx, __entry->req, __entry->data,
-		io_uring_get_opcode(__entry->opcode))
+		__get_str(op_str))
 );
 
 /**
@@ -284,6 +292,8 @@ TRACE_EVENT(io_uring_fail_link,
 		__field(  unsigned long long,	user_data	)
 		__field(  u8,			opcode		)
 		__field(  void *,		link		)
+
+		__string( op_str, io_uring_get_opcode(req->opcode) )
 	),
 
 	TP_fast_assign(
@@ -292,11 +302,13 @@ TRACE_EVENT(io_uring_fail_link,
 		__entry->user_data	= req->cqe.user_data;
 		__entry->opcode		= req->opcode;
 		__entry->link		= link;
+
+		__assign_str(op_str, io_uring_get_opcode(req->opcode));
 	),
 
 	TP_printk("ring %p, request %p, user_data 0x%llx, opcode %s, link %p",
 		__entry->ctx, __entry->req, __entry->user_data,
-		io_uring_get_opcode(__entry->opcode), __entry->link)
+		__get_str(op_str), __entry->link)
 );
 
 /**
@@ -370,6 +382,8 @@ TRACE_EVENT(io_uring_submit_sqe,
 		__field(  u32,			flags		)
 		__field(  bool,			force_nonblock	)
 		__field(  bool,			sq_thread	)
+
+		__string( op_str, io_uring_get_opcode(req->opcode) )
 	),
 
 	TP_fast_assign(
@@ -380,11 +394,13 @@ TRACE_EVENT(io_uring_submit_sqe,
 		__entry->flags		= req->flags;
 		__entry->force_nonblock	= force_nonblock;
 		__entry->sq_thread	= req->ctx->flags & IORING_SETUP_SQPOLL;
+
+		__assign_str(op_str, io_uring_get_opcode(req->opcode));
 	),
 
 	TP_printk("ring %p, req %p, user_data 0x%llx, opcode %s, flags 0x%x, "
 		  "non block %d, sq_thread %d", __entry->ctx, __entry->req,
-		  __entry->user_data, io_uring_get_opcode(__entry->opcode),
+		  __entry->user_data, __get_str(op_str),
 		  __entry->flags, __entry->force_nonblock, __entry->sq_thread)
 );
 
@@ -411,6 +427,8 @@ TRACE_EVENT(io_uring_poll_arm,
 		__field(  u8,			opcode		)
 		__field(  int,			mask		)
 		__field(  int,			events		)
+
+		__string( op_str, io_uring_get_opcode(req->opcode) )
 	),
 
 	TP_fast_assign(
@@ -420,11 +438,13 @@ TRACE_EVENT(io_uring_poll_arm,
 		__entry->opcode		= req->opcode;
 		__entry->mask		= mask;
 		__entry->events		= events;
+
+		__assign_str(op_str, io_uring_get_opcode(req->opcode));
 	),
 
 	TP_printk("ring %p, req %p, user_data 0x%llx, opcode %s, mask 0x%x, events 0x%x",
 		  __entry->ctx, __entry->req, __entry->user_data,
-		  io_uring_get_opcode(__entry->opcode),
+		  __get_str(op_str),
 		  __entry->mask, __entry->events)
 );
 
@@ -447,6 +467,8 @@ TRACE_EVENT(io_uring_task_add,
 		__field(  unsigned long long,	user_data	)
 		__field(  u8,			opcode		)
 		__field(  int,			mask		)
+
+		__string( op_str, io_uring_get_opcode(req->opcode) )
 	),
 
 	TP_fast_assign(
@@ -455,11 +477,13 @@ TRACE_EVENT(io_uring_task_add,
 		__entry->user_data	= req->cqe.user_data;
 		__entry->opcode		= req->opcode;
 		__entry->mask		= mask;
+
+		__assign_str(op_str, io_uring_get_opcode(req->opcode));
 	),
 
 	TP_printk("ring %p, req %p, user_data 0x%llx, opcode %s, mask %x",
 		__entry->ctx, __entry->req, __entry->user_data,
-		io_uring_get_opcode(__entry->opcode),
+		__get_str(op_str),
 		__entry->mask)
 );
 
@@ -495,6 +519,8 @@ TRACE_EVENT(io_uring_req_failed,
 		__field( u64,			pad1		)
 		__field( u64,			addr3		)
 		__field( int,			error		)
+
+		__string( op_str, io_uring_get_opcode(sqe->opcode) )
 	),
 
 	TP_fast_assign(
@@ -514,6 +540,8 @@ TRACE_EVENT(io_uring_req_failed,
 		__entry->pad1		= sqe->__pad2[0];
 		__entry->addr3		= sqe->addr3;
 		__entry->error		= error;
+
+		__assign_str(op_str, io_uring_get_opcode(sqe->opcode));
 	),
 
 	TP_printk("ring %p, req %p, user_data 0x%llx, "
@@ -522,7 +550,7 @@ TRACE_EVENT(io_uring_req_failed,
 		  "personality=%d, file_index=%d, pad=0x%llx, addr3=%llx, "
 		  "error=%d",
 		  __entry->ctx, __entry->req, __entry->user_data,
-		  io_uring_get_opcode(__entry->opcode),
+		  __get_str(op_str),
 		  __entry->flags, __entry->ioprio,
 		  (unsigned long long)__entry->off,
 		  (unsigned long long) __entry->addr, __entry->len,
