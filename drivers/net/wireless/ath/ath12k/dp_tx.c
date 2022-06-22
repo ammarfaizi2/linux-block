@@ -657,21 +657,16 @@ ath12k_dp_tx_get_ring_id_type(struct ath12k_base *ab,
 			      enum htt_srng_ring_type *htt_ring_type,
 			      enum htt_srng_ring_id *htt_ring_id)
 {
-	int lmac_ring_id_offset = 0;
 	int ret = 0;
 
 	switch (ring_type) {
 	case HAL_RXDMA_BUF:
-		lmac_ring_id_offset = mac_id * HAL_SRNG_RINGS_PER_PMAC;
-
 		/* for QCA6390, host fills rx buffer to fw and fw fills to
 		 * rxbuf ring for each rxdma
 		 */
 		if (!ab->hw_params.rx_mac_buf_ring) {
-			if (!(ring_id == (HAL_SRNG_RING_ID_WMAC1_SW2RXDMA0_BUF +
-					  lmac_ring_id_offset) ||
-				ring_id == (HAL_SRNG_RING_ID_WMAC1_SW2RXDMA1_BUF +
-					lmac_ring_id_offset))) {
+			if (!(ring_id == HAL_SRNG_SW2RXDMA_BUF0 ||
+			      ring_id == HAL_SRNG_SW2RXDMA_BUF1)) {
 				ret = -EINVAL;
 			}
 			*htt_ring_id = HTT_RXDMA_HOST_BUF_RING;
