@@ -474,9 +474,9 @@ static int rbio_is_full(struct btrfs_raid_bio *rbio)
 	int ret = 1;
 
 	spin_lock_irqsave(&rbio->bio_list_lock, flags);
-	if (size != rbio->nr_data * rbio->stripe_len)
+	if (size != rbio->nr_data * BTRFS_STRIPE_LEN)
 		ret = 0;
-	BUG_ON(size > rbio->nr_data * rbio->stripe_len);
+	BUG_ON(size > rbio->nr_data * BTRFS_STRIPE_LEN);
 	spin_unlock_irqrestore(&rbio->bio_list_lock, flags);
 
 	return ret;
@@ -913,18 +913,17 @@ static struct sector_ptr *sector_in_rbio(struct btrfs_raid_bio *rbio,
  * this does not allocate any pages for rbio->pages.
  */
 static struct btrfs_raid_bio *alloc_rbio(struct btrfs_fs_info *fs_info,
-					 struct btrfs_io_context *bioc,
-					 u32 stripe_len)
+					 struct btrfs_io_context *bioc)
 {
 	const unsigned int real_stripes = bioc->num_stripes - bioc->num_tgtdevs;
-	const unsigned int stripe_npages = stripe_len >> PAGE_SHIFT;
+	const unsigned int stripe_npages = BTRFS_STRIPE_LEN >> PAGE_SHIFT;
 	const unsigned int num_pages = stripe_npages * real_stripes;
-	const unsigned int stripe_nsectors = stripe_len >> fs_info->sectorsize_bits;
+	const unsigned int stripe_nsectors =
+		BTRFS_STRIPE_LEN >> fs_info->sectorsize_bits;
 	const unsigned int num_sectors = stripe_nsectors * real_stripes;
 	struct btrfs_raid_bio *rbio;
 	void *p;
 
-	ASSERT(IS_ALIGNED(stripe_len, PAGE_SIZE));
 	/* PAGE_SIZE must also be aligned to sectorsize for subpage support */
 	ASSERT(IS_ALIGNED(PAGE_SIZE, fs_info->sectorsize));
 	/*
@@ -948,7 +947,6 @@ static struct btrfs_raid_bio *alloc_rbio(struct btrfs_fs_info *fs_info,
 	INIT_LIST_HEAD(&rbio->stripe_cache);
 	INIT_LIST_HEAD(&rbio->hash_list);
 	rbio->bioc = bioc;
-	rbio->stripe_len = stripe_len;
 	rbio->nr_pages = num_pages;
 	rbio->nr_sectors = num_sectors;
 	rbio->real_stripes = real_stripes;
@@ -1020,7 +1018,6 @@ static int rbio_add_io_sector(struct btrfs_raid_bio *rbio,
 			      struct sector_ptr *sector,
 			      unsigned int stripe_nr,
 			      unsigned int sector_nr,
-			      unsigned long bio_max_len,
 			      unsigned int opf)
 {
 	const u32 sectorsize = rbio->bioc->fs_info->sectorsize;
@@ -1065,7 +1062,8 @@ static int rbio_add_io_sector(struct btrfs_raid_bio *rbio,
 	}
 
 	/* put a new bio on the list */
-	bio = bio_alloc(stripe->dev->bdev, max(bio_max_len >> PAGE_SHIFT, 1UL),
+	bio = bio_alloc(stripe->dev->bdev,
+			max(BTRFS_STRIPE_LEN >> PAGE_SHIFT, 1),
 			opf, GFP_NOFS);
 	bio->bi_iter.bi_sector = disk_start >> 9;
 	bio->bi_private = rbio;
@@ -1287,8 +1285,7 @@ static noinline void finish_rmw(struct btrfs_raid_bio *rbio)
 		}
 
 		ret = rbio_add_io_sector(rbio, &bio_list, sector, stripe,
-					 sectornr, rbio->stripe_len,
-					 REQ_OP_WRITE);
+					 sectornr, REQ_OP_WRITE);
 		if (ret)
 			goto cleanup;
 	}
@@ -1327,8 +1324,7 @@ static noinline void finish_rmw(struct btrfs_raid_bio *rbio)
 
 		ret = rbio_add_io_sector(rbio, &bio_list, sector,
 					 rbio->bioc->tgtdev_map[stripe],
-					 sectornr, rbio->stripe_len,
-					 REQ_OP_WRITE);
+					 sectornr, REQ_OP_WRITE);
 		if (ret)
 			goto cleanup;
 	}
@@ -1373,7 +1369,7 @@ static int find_bio_stripe(struct btrfs_raid_bio *rbio,
 
 	for (i = 0; i < rbio->bioc->num_stripes; i++) {
 		stripe = &rbio->bioc->stripes[i];
-		if (in_range(physical, stripe->physical, rbio->stripe_len) &&
+		if (in_range(physical, stripe->physical, BTRFS_STRIPE_LEN) &&
 		    stripe->dev->bdev && bio->bi_bdev == stripe->dev->bdev) {
 			return i;
 		}
@@ -1395,7 +1391,7 @@ static int find_logical_bio_stripe(struct btrfs_raid_bio *rbio,
 	for (i = 0; i < rbio->nr_data; i++) {
 		u64 stripe_start = rbio->bioc->raid_map[i];
 
-		if (in_range(logical, stripe_start, rbio->stripe_len))
+		if (in_range(logical, stripe_start, BTRFS_STRIPE_LEN))
 			return i;
 	}
 	return -1;
@@ -1580,8 +1576,7 @@ static int raid56_rmw_stripe(struct btrfs_raid_bio *rbio)
 			continue;
 
 		ret = rbio_add_io_sector(rbio, &bio_list, sector,
-			       stripe, sectornr, rbio->stripe_len,
-			       REQ_OP_READ);
+			       stripe, sectornr, REQ_OP_READ);
 		if (ret)
 			goto cleanup;
 	}
@@ -1790,7 +1785,7 @@ static void rbio_add_bio(struct btrfs_raid_bio *rbio, struct bio *orig_bio)
 
 	ASSERT(orig_logical >= full_stripe_start &&
 	       orig_logical + orig_len <= full_stripe_start +
-	       rbio->nr_data * rbio->stripe_len);
+	       rbio->nr_data * BTRFS_STRIPE_LEN);
 
 	bio_list_add(&rbio->bio_list, orig_bio);
 	rbio->bio_list_bytes += orig_bio->bi_iter.bi_size;
@@ -1808,23 +1803,23 @@ static void rbio_add_bio(struct btrfs_raid_bio *rbio, struct bio *orig_bio)
 /*
  * our main entry point for writes from the rest of the FS.
  */
-int raid56_parity_write(struct bio *bio, struct btrfs_io_context *bioc, u32 stripe_len)
+void raid56_parity_write(struct bio *bio, struct btrfs_io_context *bioc)
 {
 	struct btrfs_fs_info *fs_info = bioc->fs_info;
 	struct btrfs_raid_bio *rbio;
 	struct btrfs_plug_cb *plug = NULL;
 	struct blk_plug_cb *cb;
-	int ret;
+	int ret = 0;
 
-	rbio = alloc_rbio(fs_info, bioc, stripe_len);
+	rbio = alloc_rbio(fs_info, bioc);
 	if (IS_ERR(rbio)) {
 		btrfs_put_bioc(bioc);
-		return PTR_ERR(rbio);
+		ret = PTR_ERR(rbio);
+		goto out_dec_counter;
 	}
 	rbio->operation = BTRFS_RBIO_WRITE;
 	rbio_add_bio(rbio, bio);
 
-	btrfs_bio_counter_inc_noblocked(fs_info);
 	rbio->generic_bio_cnt = 1;
 
 	/*
@@ -1834,8 +1829,8 @@ int raid56_parity_write(struct bio *bio, struct btrfs_io_context *bioc, u32 stri
 	if (rbio_is_full(rbio)) {
 		ret = full_stripe_write(rbio);
 		if (ret)
-			btrfs_bio_counter_dec(fs_info);
-		return ret;
+			goto out_dec_counter;
+		return;
 	}
 
 	cb = blk_check_plugged(btrfs_raid_unplug, fs_info, sizeof(*plug));
@@ -1846,13 +1841,18 @@ int raid56_parity_write(struct bio *bio, struct btrfs_io_context *bioc, u32 stri
 			INIT_LIST_HEAD(&plug->rbio_list);
 		}
 		list_add_tail(&rbio->plug_list, &plug->rbio_list);
-		ret = 0;
 	} else {
 		ret = __raid56_parity_write(rbio);
 		if (ret)
-			btrfs_bio_counter_dec(fs_info);
+			goto out_dec_counter;
 	}
-	return ret;
+
+	return;
+
+out_dec_counter:
+	btrfs_bio_counter_dec(fs_info);
+	bio->bi_status = errno_to_blk_status(ret);
+	bio_endio(bio);
 }
 
 /*
@@ -2140,8 +2140,7 @@ static int __raid56_parity_recover(struct btrfs_raid_bio *rbio)
 		}
 		sector = rbio_stripe_sector(rbio, stripe, sectornr);
 		ret = rbio_add_io_sector(rbio, &bio_list, sector, stripe,
-					 sectornr, rbio->stripe_len,
-					 REQ_OP_READ);
+					 sectornr, REQ_OP_READ);
 		if (ret < 0)
 			goto cleanup;
 	}
@@ -2198,23 +2197,23 @@ cleanup:
  * so we assume the bio they send down corresponds to a failed part
  * of the drive.
  */
-int raid56_parity_recover(struct bio *bio, struct btrfs_io_context *bioc,
-			  u32 stripe_len, int mirror_num, int generic_io)
+void raid56_parity_recover(struct bio *bio, struct btrfs_io_context *bioc,
+			   int mirror_num, bool generic_io)
 {
 	struct btrfs_fs_info *fs_info = bioc->fs_info;
 	struct btrfs_raid_bio *rbio;
-	int ret;
 
 	if (generic_io) {
 		ASSERT(bioc->mirror_num == mirror_num);
 		btrfs_bio(bio)->mirror_num = mirror_num;
+	} else {
+		btrfs_get_bioc(bioc);
 	}
 
-	rbio = alloc_rbio(fs_info, bioc, stripe_len);
+	rbio = alloc_rbio(fs_info, bioc);
 	if (IS_ERR(rbio)) {
-		if (generic_io)
-			btrfs_put_bioc(bioc);
-		return PTR_ERR(rbio);
+		bio->bi_status = errno_to_blk_status(PTR_ERR(rbio));
+		goto out_end_bio;
 	}
 
 	rbio->operation = BTRFS_RBIO_READ_REBUILD;
@@ -2226,18 +2225,13 @@ int raid56_parity_recover(struct bio *bio, struct btrfs_io_context *bioc,
 "%s could not find the bad stripe in raid56 so that we cannot recover any more (bio has logical %llu len %llu, bioc has map_type %llu)",
 			   __func__, bio->bi_iter.bi_sector << 9,
 			   (u64)bio->bi_iter.bi_size, bioc->map_type);
-		if (generic_io)
-			btrfs_put_bioc(bioc);
 		kfree(rbio);
-		return -EIO;
+		bio->bi_status = BLK_STS_IOERR;
+		goto out_end_bio;
 	}
 
-	if (generic_io) {
-		btrfs_bio_counter_inc_noblocked(fs_info);
+	if (generic_io)
 		rbio->generic_bio_cnt = 1;
-	} else {
-		btrfs_get_bioc(bioc);
-	}
 
 	/*
 	 * Loop retry:
@@ -2256,24 +2250,20 @@ int raid56_parity_recover(struct bio *bio, struct btrfs_io_context *bioc,
 			rbio->failb--;
 	}
 
-	ret = lock_stripe_add(rbio);
+	if (lock_stripe_add(rbio))
+		return;
 
 	/*
-	 * __raid56_parity_recover will end the bio with
-	 * any errors it hits.  We don't want to return
-	 * its error value up the stack because our caller
-	 * will end up calling bio_endio with any nonzero
-	 * return
+	 * This adds our rbio to the list of rbios that will be handled after
+	 * the current lock owner is done.
 	 */
-	if (ret == 0)
-		__raid56_parity_recover(rbio);
-	/*
-	 * our rbio has been added to the list of
-	 * rbios that will be handled after the
-	 * currently lock owner is done
-	 */
-	return 0;
+	__raid56_parity_recover(rbio);
+	return;
 
+out_end_bio:
+	btrfs_bio_counter_dec(fs_info);
+	btrfs_put_bioc(bioc);
+	bio_endio(bio);
 }
 
 static void rmw_work(struct work_struct *work)
@@ -2304,14 +2294,14 @@ static void read_rebuild_work(struct work_struct *work)
 
 struct btrfs_raid_bio *raid56_parity_alloc_scrub_rbio(struct bio *bio,
 				struct btrfs_io_context *bioc,
-				u32 stripe_len, struct btrfs_device *scrub_dev,
+				struct btrfs_device *scrub_dev,
 				unsigned long *dbitmap, int stripe_nsectors)
 {
 	struct btrfs_fs_info *fs_info = bioc->fs_info;
 	struct btrfs_raid_bio *rbio;
 	int i;
 
-	rbio = alloc_rbio(fs_info, bioc, stripe_len);
+	rbio = alloc_rbio(fs_info, bioc);
 	if (IS_ERR(rbio))
 		return NULL;
 	bio_list_add(&rbio->bio_list, bio);
@@ -2356,7 +2346,7 @@ void raid56_add_scrub_pages(struct btrfs_raid_bio *rbio, struct page *page,
 
 	ASSERT(logical >= rbio->bioc->raid_map[0]);
 	ASSERT(logical + sectorsize <= rbio->bioc->raid_map[0] +
-				rbio->stripe_len * rbio->nr_data);
+				       BTRFS_STRIPE_LEN * rbio->nr_data);
 	stripe_offset = (int)(logical - rbio->bioc->raid_map[0]);
 	index = stripe_offset / sectorsize;
 	rbio->bio_sectors[index].page = page;
@@ -2512,7 +2502,7 @@ writeback:
 
 		sector = rbio_stripe_sector(rbio, rbio->scrubp, sectornr);
 		ret = rbio_add_io_sector(rbio, &bio_list, sector, rbio->scrubp,
-					 sectornr, rbio->stripe_len, REQ_OP_WRITE);
+					 sectornr, REQ_OP_WRITE);
 		if (ret)
 			goto cleanup;
 	}
@@ -2526,7 +2516,7 @@ writeback:
 		sector = rbio_stripe_sector(rbio, rbio->scrubp, sectornr);
 		ret = rbio_add_io_sector(rbio, &bio_list, sector,
 				       bioc->tgtdev_map[rbio->scrubp],
-				       sectornr, rbio->stripe_len, REQ_OP_WRITE);
+				       sectornr, REQ_OP_WRITE);
 		if (ret)
 			goto cleanup;
 	}
@@ -2693,7 +2683,7 @@ static void raid56_parity_scrub_stripe(struct btrfs_raid_bio *rbio)
 			continue;
 
 		ret = rbio_add_io_sector(rbio, &bio_list, sector, stripe,
-					 sectornr, rbio->stripe_len, REQ_OP_READ);
+					 sectornr, REQ_OP_READ);
 		if (ret)
 			goto cleanup;
 	}
@@ -2758,13 +2748,12 @@ void raid56_parity_submit_scrub_rbio(struct btrfs_raid_bio *rbio)
 /* The following code is used for dev replace of a missing RAID 5/6 device. */
 
 struct btrfs_raid_bio *
-raid56_alloc_missing_rbio(struct bio *bio, struct btrfs_io_context *bioc,
-			  u64 length)
+raid56_alloc_missing_rbio(struct bio *bio, struct btrfs_io_context *bioc)
 {
 	struct btrfs_fs_info *fs_info = bioc->fs_info;
 	struct btrfs_raid_bio *rbio;
 
-	rbio = alloc_rbio(fs_info, bioc, length);
+	rbio = alloc_rbio(fs_info, bioc);
 	if (IS_ERR(rbio))
 		return NULL;
 

@@ -5891,7 +5891,6 @@ static struct btrfs_io_context *alloc_btrfs_io_context(struct btrfs_fs_info *fs_
 		sizeof(u64) * (total_stripes),
 		GFP_NOFS|__GFP_NOFAIL);
 
-	atomic_set(&bioc->error, 0);
 	refcount_set(&bioc->refs, 1);
 
 	bioc->fs_info = fs_info;
@@ -6461,6 +6460,7 @@ static int __btrfs_map_block(struct btrfs_fs_info *fs_info,
 		}
 
 	} else if (map->type & BTRFS_BLOCK_GROUP_RAID56_MASK) {
+		ASSERT(map->stripe_len == BTRFS_STRIPE_LEN);
 		if (need_raid_map && (need_full_stripe(op) || mirror_num > 1)) {
 			/* push stripe_nr back to the start of the full stripe */
 			stripe_nr = div64_u64(raid56_full_stripe_start,
@@ -6470,7 +6470,10 @@ static int __btrfs_map_block(struct btrfs_fs_info *fs_info,
 			num_stripes = map->num_stripes;
 			max_errors = btrfs_chunk_max_errors(map);
 
-			*length = map->stripe_len;
+			/* Return the length to the full stripe end */
+			*length = min(logical + *length,
+				      raid56_full_stripe_start + em->start +
+				      data_stripes * stripe_len) - logical;
 			stripe_index = 0;
 			stripe_offset = 0;
 		} else {
@@ -6617,46 +6620,21 @@ static void btrfs_end_bio_work(struct work_struct *work)
 	struct btrfs_bio *bbio =
 		container_of(work, struct btrfs_bio, end_io_work);
 
-	bio_endio(&bbio->bio);
-}
-
-static void btrfs_end_bioc(struct btrfs_io_context *bioc, bool async)
-{
-	struct bio *orig_bio = bioc->orig_bio;
-	struct btrfs_bio *bbio = btrfs_bio(orig_bio);
-
-	bbio->mirror_num = bioc->mirror_num;
-	orig_bio->bi_private = bioc->private;
-	orig_bio->bi_end_io = bioc->end_io;
-
-	/*
-	 * Only send an error to the higher layers if it is beyond the tolerance
-	 * threshold.
-	 */
-	if (atomic_read(&bioc->error) > bioc->max_errors)
-		orig_bio->bi_status = BLK_STS_IOERR;
-	else
-		orig_bio->bi_status = BLK_STS_OK;
-
-	if (btrfs_op(orig_bio) == BTRFS_MAP_READ && async) {
-		INIT_WORK(&bbio->end_io_work, btrfs_end_bio_work);
-		queue_work(btrfs_end_io_wq(bioc), &bbio->end_io_work);
-	} else {
-		bio_endio(orig_bio);
-	}
-
-	btrfs_put_bioc(bioc);
+	bbio->bio.bi_end_io(&bbio->bio);
 }
 
 static void btrfs_end_bio(struct bio *bio)
 {
 	struct btrfs_io_stripe *stripe = bio->bi_private;
 	struct btrfs_io_context *bioc = stripe->bioc;
+	struct bio *orig_bio = bioc->orig_bio;
+	struct btrfs_bio *bbio = btrfs_bio(orig_bio);
 
 	if (bio->bi_status) {
 		atomic_inc(&bioc->error);
-		if (bio->bi_status == BLK_STS_IOERR ||
-		    bio->bi_status == BLK_STS_TARGET) {
+		if (stripe->dev && stripe->dev->bdev &&
+		    (bio->bi_status == BLK_STS_IOERR ||
+		     bio->bi_status == BLK_STS_TARGET)) {
 			if (btrfs_op(bio) == BTRFS_MAP_WRITE)
 				btrfs_dev_stat_inc_and_print(stripe->dev,
 						BTRFS_DEV_STAT_WRITE_ERRS);
@@ -6669,12 +6647,35 @@ static void btrfs_end_bio(struct bio *bio)
 		}
 	}
 
-	if (bio != bioc->orig_bio)
-		bio_put(bio);
-
 	btrfs_bio_counter_dec(bioc->fs_info);
-	if (atomic_dec_and_test(&bioc->stripes_pending))
-		btrfs_end_bioc(bioc, true);
+
+	if (bio != orig_bio) {
+		bio_endio(orig_bio);
+		bio_put(bio);
+		return;
+	}
+
+	/*
+	 * Only send an error to the higher layers if it is beyond the tolerance
+	 * threshold.
+	 */
+	if (atomic_read(&bioc->error) > bioc->max_errors)
+		orig_bio->bi_status = BLK_STS_IOERR;
+	else
+		orig_bio->bi_status = BLK_STS_OK;
+
+	bbio->mirror_num = bioc->mirror_num;
+	orig_bio->bi_end_io = bioc->end_io;
+	orig_bio->bi_private = bioc->private;
+	if (btrfs_op(orig_bio) == BTRFS_MAP_READ) {
+		bbio->device = stripe->dev;
+		INIT_WORK(&bbio->end_io_work, btrfs_end_bio_work);
+		queue_work(btrfs_end_io_wq(bioc), &bbio->end_io_work);
+	} else {
+		orig_bio->bi_end_io(orig_bio);
+	}
+
+	btrfs_put_bioc(bioc);
 }
 
 static void submit_stripe_bio(struct btrfs_io_context *bioc,
@@ -6685,28 +6686,30 @@ static void submit_stripe_bio(struct btrfs_io_context *bioc,
 	u64 physical = bioc->stripes[dev_nr].physical;
 	struct bio *bio;
 
-	if (!dev || !dev->bdev ||
-	    test_bit(BTRFS_DEV_STATE_MISSING, &dev->dev_state) ||
-	    (btrfs_op(orig_bio) == BTRFS_MAP_WRITE &&
-	     !test_bit(BTRFS_DEV_STATE_WRITEABLE, &dev->dev_state))) {
-		atomic_inc(&bioc->error);
-		if (atomic_dec_and_test(&bioc->stripes_pending))
-			btrfs_end_bioc(bioc, false);
-		return;
-	}
-
 	if (clone) {
-		bio = bio_alloc_clone(dev->bdev, orig_bio, GFP_NOFS, &fs_bio_set);
+		bio = bio_alloc_clone(NULL, orig_bio, GFP_NOFS, &fs_bio_set);
+		bio_inc_remaining(orig_bio);
 	} else {
 		bio = orig_bio;
-		bio_set_dev(bio, dev->bdev);
-		btrfs_bio(bio)->device = dev;
 	}
 
 	bioc->stripes[dev_nr].bioc = bioc;
 	bio->bi_private = &bioc->stripes[dev_nr];
 	bio->bi_end_io = btrfs_end_bio;
 	bio->bi_iter.bi_sector = physical >> 9;
+
+	btrfs_bio_counter_inc_noblocked(fs_info);
+
+	if (!dev || !dev->bdev ||
+	    test_bit(BTRFS_DEV_STATE_MISSING, &dev->dev_state) ||
+	    (btrfs_op(bio) == BTRFS_MAP_WRITE &&
+	     !test_bit(BTRFS_DEV_STATE_WRITEABLE, &dev->dev_state))) {
+		bio_io_error(bio);
+		return;
+	}
+
+	bio_set_dev(bio, dev->bdev);
+
 	/*
 	 * For zone append writing, bi_sector must point the beginning of the
 	 * zone
@@ -6722,19 +6725,16 @@ static void submit_stripe_bio(struct btrfs_io_context *bioc,
 		}
 	}
 	btrfs_debug_in_rcu(fs_info,
-	"btrfs_map_bio: rw %d 0x%x, sector=%llu, dev=%lu (%s id %llu), size=%u",
-		bio_op(bio), bio->bi_opf, bio->bi_iter.bi_sector,
+	"%s: rw %d 0x%x, sector=%llu, dev=%lu (%s id %llu), size=%u",
+		__func__, bio_op(bio), bio->bi_opf, bio->bi_iter.bi_sector,
 		(unsigned long)dev->bdev->bd_dev, rcu_str_deref(dev->name),
 		dev->devid, bio->bi_iter.bi_size);
-
-	btrfs_bio_counter_inc_noblocked(fs_info);
 
 	btrfsic_check_bio(bio);
 	submit_bio(bio);
 }
 
-blk_status_t btrfs_map_bio(struct btrfs_fs_info *fs_info, struct bio *bio,
-			   int mirror_num)
+void btrfs_submit_bio(struct btrfs_fs_info *fs_info, struct bio *bio, int mirror_num)
 {
 	u64 logical = bio->bi_iter.bi_sector << 9;
 	u64 length = bio->bi_iter.bi_size;
@@ -6747,26 +6747,25 @@ blk_status_t btrfs_map_bio(struct btrfs_fs_info *fs_info, struct bio *bio,
 	btrfs_bio_counter_inc_blocked(fs_info);
 	ret = __btrfs_map_block(fs_info, btrfs_op(bio), logical,
 				&map_length, &bioc, mirror_num, 1);
-	if (ret)
-		goto out_dec;
+	if (ret) {
+		btrfs_bio_counter_dec(fs_info);
+		bio->bi_status = errno_to_blk_status(ret);
+		bio_endio(bio);
+		return;
+	}
 
 	total_devs = bioc->num_stripes;
 	bioc->orig_bio = bio;
 	bioc->private = bio->bi_private;
 	bioc->end_io = bio->bi_end_io;
-	atomic_set(&bioc->stripes_pending, total_devs);
 
 	if ((bioc->map_type & BTRFS_BLOCK_GROUP_RAID56_MASK) &&
 	    ((btrfs_op(bio) == BTRFS_MAP_WRITE) || (mirror_num > 1))) {
-		/* In this case, map_length has been set to the length of
-		   a single stripe; not the whole write */
-		if (btrfs_op(bio) == BTRFS_MAP_WRITE) {
-			ret = raid56_parity_write(bio, bioc, map_length);
-		} else {
-			ret = raid56_parity_recover(bio, bioc, map_length,
-						    mirror_num, 1);
-		}
-		goto out_dec;
+		if (btrfs_op(bio) == BTRFS_MAP_WRITE)
+			raid56_parity_write(bio, bioc);
+		else
+			raid56_parity_recover(bio, bioc, mirror_num, true);
+		return;
 	}
 
 	if (map_length < length) {
@@ -6781,9 +6780,7 @@ blk_status_t btrfs_map_bio(struct btrfs_fs_info *fs_info, struct bio *bio,
 
 		submit_stripe_bio(bioc, bio, dev_nr, should_clone);
 	}
-out_dec:
 	btrfs_bio_counter_dec(fs_info);
-	return errno_to_blk_status(ret);
 }
 
 static bool dev_args_match_fs_devices(const struct btrfs_dev_lookup_args *args,

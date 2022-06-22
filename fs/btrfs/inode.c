@@ -2664,30 +2664,27 @@ void btrfs_submit_data_write_bio(struct inode *inode, struct bio *bio, int mirro
 	}
 
 	/*
-	 * Rules for async/sync submit:
-	 *   a) write without checksum:			sync submit
-	 *   b) write with checksum:
-	 *      b-1) if bio is issued by fsync:		sync submit
-	 *           (sync_writers != 0)
-	 *      b-2) if root is reloc root:		sync submit
-	 *           (only in case of buffered IO)
-	 *      b-3) otherwise:				async submit
+	 * If we need to checksum, and the I/O is not issued by fsync and
+	 * friends, that is ->sync_writers != 0, defer the submission to a
+	 * workqueue to parallelize it.
+	 *
+	 * Csum items for reloc roots have already been cloned at this point,
+	 * so they are handled as part of the no-checksum case.
 	 */
 	if (!(bi->flags & BTRFS_INODE_NODATASUM) &&
-	    !test_bit(BTRFS_FS_STATE_NO_CSUMS, &fs_info->fs_state)) {
-		if (atomic_read(&bi->sync_writers)) {
-			ret = btrfs_csum_one_bio(bi, bio, (u64)-1, false);
-			if (ret)
-				goto out;
-		} else if (btrfs_is_data_reloc_root(bi->root)) {
-			; /* Csum items have already been cloned */
-		} else {
-			ret = btrfs_wq_submit_bio(inode, bio, mirror_num, 0,
-						  btrfs_submit_bio_start);
+	    !test_bit(BTRFS_FS_STATE_NO_CSUMS, &fs_info->fs_state) &&
+	    !btrfs_is_data_reloc_root(bi->root)) {
+		if (!atomic_read(&bi->sync_writers) &&
+		    btrfs_wq_submit_bio(inode, bio, mirror_num, 0,
+					btrfs_submit_bio_start))
+			return;
+
+		ret = btrfs_csum_one_bio(bi, bio, (u64)-1, false);
+		if (ret)
 			goto out;
-		}
 	}
-	ret = btrfs_map_bio(fs_info, bio, mirror_num);
+	btrfs_submit_bio(fs_info, bio, mirror_num);
+	return;
 out:
 	if (ret) {
 		bio->bi_status = ret;
@@ -2715,14 +2712,13 @@ void btrfs_submit_data_read_bio(struct inode *inode, struct bio *bio,
 	 * not, which is why we ignore skip_sum here.
 	 */
 	ret = btrfs_lookup_bio_sums(inode, bio, NULL);
-	if (ret)
-		goto out;
-	ret = btrfs_map_bio(fs_info, bio, mirror_num);
-out:
 	if (ret) {
 		bio->bi_status = ret;
 		bio_endio(bio);
+		return;
 	}
+
+	btrfs_submit_bio(fs_info, bio, mirror_num);
 }
 
 /*
@@ -7928,8 +7924,7 @@ static void submit_dio_repair_bio(struct inode *inode, struct bio *bio,
 	BUG_ON(bio_op(bio) == REQ_OP_WRITE);
 
 	refcount_inc(&dip->refs);
-	if (btrfs_map_bio(fs_info, bio, mirror_num))
-		refcount_dec(&dip->refs);
+	btrfs_submit_bio(fs_info, bio, mirror_num);
 }
 
 static blk_status_t btrfs_check_read_dio_bio(struct btrfs_dio_private *dip,
@@ -8002,8 +7997,8 @@ static void btrfs_end_dio_bio(struct bio *bio)
 	btrfs_dio_private_put(dip);
 }
 
-static inline blk_status_t btrfs_submit_dio_bio(struct bio *bio,
-		struct inode *inode, u64 file_offset, int async_submit)
+static void btrfs_submit_dio_bio(struct bio *bio, struct inode *inode,
+				 u64 file_offset, int async_submit)
 {
 	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
 	struct btrfs_dio_private *dip = bio->bi_private;
@@ -8014,22 +8009,27 @@ static inline blk_status_t btrfs_submit_dio_bio(struct bio *bio,
 
 	if (btrfs_op(bio) == BTRFS_MAP_WRITE) {
 		/* Check btrfs_submit_data_write_bio() for async submit rules */
-		if (async_submit && !atomic_read(&BTRFS_I(inode)->sync_writers))
-			return btrfs_wq_submit_bio(inode, bio, 0, file_offset,
-					btrfs_submit_bio_start_direct_io);
+		if (async_submit && !atomic_read(&BTRFS_I(inode)->sync_writers) &&
+		    btrfs_wq_submit_bio(inode, bio, 0, file_offset,
+					btrfs_submit_bio_start_direct_io))
+			return;
+
 		/*
 		 * If we aren't doing async submit, calculate the csum of the
 		 * bio now.
 		 */
 		ret = btrfs_csum_one_bio(BTRFS_I(inode), bio, file_offset, false);
-		if (ret)
-			return ret;
+		if (ret) {
+			bio->bi_status = ret;
+			bio_endio(bio);
+			return;
+		}
 	} else {
 		btrfs_bio(bio)->csum = btrfs_csum_ptr(fs_info, dip->csums,
 						      file_offset - dip->file_offset);
 	}
 map:
-	return btrfs_map_bio(fs_info, bio, 0);
+	btrfs_submit_bio(fs_info, bio, 0);
 }
 
 static void btrfs_submit_direct(const struct iomap_iter *iter,
@@ -8142,14 +8142,7 @@ static void btrfs_submit_direct(const struct iomap_iter *iter,
 				async_submit = 1;
 		}
 
-		status = btrfs_submit_dio_bio(bio, inode, file_offset,
-						async_submit);
-		if (status) {
-			bio_put(bio);
-			if (submit_len > 0)
-				refcount_dec(&dip->refs);
-			goto out_err_em;
-		}
+		btrfs_submit_dio_bio(bio, inode, file_offset, async_submit);
 
 		dio_data->submitted += clone_len;
 		clone_offset += clone_len;
@@ -10309,7 +10302,6 @@ static blk_status_t submit_encoded_read_bio(struct btrfs_inode *inode,
 					    struct bio *bio, int mirror_num)
 {
 	struct btrfs_encoded_read_private *priv = bio->bi_private;
-	struct btrfs_bio *bbio = btrfs_bio(bio);
 	struct btrfs_fs_info *fs_info = inode->root->fs_info;
 	blk_status_t ret;
 
@@ -10320,12 +10312,8 @@ static blk_status_t submit_encoded_read_bio(struct btrfs_inode *inode,
 	}
 
 	atomic_inc(&priv->pending);
-	ret = btrfs_map_bio(fs_info, bio, mirror_num);
-	if (ret) {
-		atomic_dec(&priv->pending);
-		btrfs_bio_free_csum(bbio);
-	}
-	return ret;
+	btrfs_submit_bio(fs_info, bio, mirror_num);
+	return BLK_STS_OK;
 }
 
 static blk_status_t btrfs_encoded_read_verify_csum(struct btrfs_bio *bbio)
