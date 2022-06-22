@@ -5399,7 +5399,7 @@ W:	http://www.chelsio.com
 F:	drivers/net/ethernet/chelsio/cxgb3/
 
 CXGB3 ISCSI DRIVER (CXGB3I)
-M:	Karen Xie <kxie@chelsio.com>
+M:	Varun Prakash <varun@chelsio.com>
 L:	linux-scsi@vger.kernel.org
 S:	Supported
 W:	http://www.chelsio.com
@@ -5431,7 +5431,7 @@ W:	http://www.chelsio.com
 F:	drivers/net/ethernet/chelsio/cxgb4/
 
 CXGB4 ISCSI DRIVER (CXGB4I)
-M:	Karen Xie <kxie@chelsio.com>
+M:	Varun Prakash <varun@chelsio.com>
 L:	linux-scsi@vger.kernel.org
 S:	Supported
 W:	http://www.chelsio.com
@@ -20529,6 +20529,13 @@ L:	linux-scsi@vger.kernel.org
 L:	linux-mediatek@lists.infradead.org (moderated for non-subscribers)
 S:	Maintained
 F:	drivers/ufs/host/ufs-mediatek*
+
+UNIVERSAL FLASH STORAGE HOST CONTROLLER DRIVER RENESAS HOOKS
+M:	Yoshihiro Shimoda <yoshihiro.shimoda.uh@renesas.com>
+L:	linux-renesas-soc@vger.kernel.org
+L:	linux-scsi@vger.kernel.org
+S:	Maintained
+F:	drivers/ufs/host/ufs-renesas.c
 
 UNSORTED BLOCK IMAGES (UBI)
 M:	Richard Weinberger <richard@nod.at>
