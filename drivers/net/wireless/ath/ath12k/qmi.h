@@ -204,10 +204,6 @@ struct qmi_wlanfw_qdss_trace_mode_resp_msg_v01 {
 #define QMI_WLFW_HOST_CAP_RESP_V01			0x0034
 #define QMI_WLFW_MAX_NUM_GPIO_V01			32
 #define QMI_IPQ8074_FW_MEM_MODE				0xFF
-#define HOST_DDR_REGION_TYPE				0x1
-#define BDF_MEM_REGION_TYPE				0x2
-#define M3_DUMP_REGION_TYPE				0x3
-#define CALDB_MEM_REGION_TYPE				0x4
 #define QMI_WLANFW_MAX_PLATFORM_NAME_LEN_V01		64
 #define QMI_WLANFW_MAX_HOST_DDR_RANGE_SIZE_V01		3
 #define QDSS_ETR_MEM_REGION_TYPE                        0x6
@@ -215,6 +211,14 @@ struct qmi_wlanfw_qdss_trace_mode_resp_msg_v01 {
 struct qmi_wlanfw_host_ddr_range {
 	u64 start;
 	u64 size;
+};
+
+enum ath12k_qmi_target_mem {
+	HOST_DDR_REGION_TYPE = 0x1,
+	BDF_MEM_REGION_TYPE = 0x2,
+	M3_DUMP_REGION_TYPE = 0x3,
+	CALDB_MEM_REGION_TYPE = 0x4,
+	PAGEABLE_MEM_REGION_TYPE = 0x9,
 };
 
 enum qmi_wlanfw_host_build_type {

@@ -15,6 +15,7 @@
 #define SLEEP_CLOCK_SELECT_INTERNAL_BIT	0x02
 #define HOST_CSTATE_BIT			0x04
 #define PLATFORM_CAP_PCIE_GLOBAL_RESET	0x08
+#define ATH11K_QMI_MAX_CHUNK_SIZE	2097152
 
 bool ath12k_cold_boot_cal = 1;
 module_param_named(cold_boot_cal, ath12k_cold_boot_cal, bool, 0644);
@@ -2394,27 +2395,43 @@ static int ath12k_qmi_alloc_target_mem_chunk(struct ath12k_base *ab)
 
 	for (i = 0; i < ab->qmi.mem_seg_count; i++) {
 		chunk = &ab->qmi.target_mem[i];
-		chunk->v.addr = dma_alloc_coherent(ab->dev,
-						   chunk->size,
-						   &chunk->paddr,
-						   GFP_KERNEL | __GFP_NOWARN);
-		if (!chunk->v.addr) {
-			if (ab->qmi.mem_seg_count <= ATH12K_QMI_FW_MEM_REQ_SEGMENT_CNT) {
-				ath12k_dbg(ab, ATH12K_DBG_QMI,
-					   "qmi dma allocation failed (%d B type %u), will try later with small size\n",
-					    chunk->size,
-					    chunk->type);
-				ath12k_qmi_free_target_mem_chunk(ab);
-				ab->qmi.target_mem_delayed = true;
-				return 0;
+
+		/* Allocate memory for the region and the functionality supported
+		 * on the host. For the non-supported memory region, host does not
+		 * allocate memory, assigns NULL and FW will handle this without crashing.
+		 */
+		switch (chunk->type) {
+		case HOST_DDR_REGION_TYPE:
+		case M3_DUMP_REGION_TYPE:
+		case PAGEABLE_MEM_REGION_TYPE:
+		case CALDB_MEM_REGION_TYPE:
+			chunk->v.addr = dma_alloc_coherent(ab->dev,
+							   chunk->size,
+							   &chunk->paddr,
+							   GFP_KERNEL | __GFP_NOWARN);
+			if (!chunk->v.addr) {
+				if (chunk->size > ATH11K_QMI_MAX_CHUNK_SIZE) {
+					ab->qmi.target_mem_delayed = true;
+					ath12k_warn(ab,
+						    "qmi dma allocation failed (%d B type %u), will try later with small size\n",
+						    chunk->size,
+						    chunk->type);
+					ath12k_qmi_free_target_mem_chunk(ab);
+					return 0;
+				}
+				ath12k_warn(ab, "memory allocation failure for %u size: %d\n",
+					    chunk->type, chunk->size);
+				return -ENOMEM;
 			}
-			ath12k_err(ab, "failed to alloc memory, size: 0x%x, type: %u\n",
-				   chunk->size,
-				   chunk->type);
-			return -EINVAL;
+			break;
+		default:
+			ath12k_warn(ab, "memory type %u not supported\n",
+				    chunk->type);
+			chunk->paddr = 0;
+			chunk->v.addr = NULL;
+			break;
 		}
 	}
-
 	return 0;
 }
 
