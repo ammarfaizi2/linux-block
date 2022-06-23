@@ -12,7 +12,7 @@
 
 static const struct hal_srng_config hw_srng_config_template[] = {
 	/* TODO: max_rings can populated by querying HW capabilities */
-	{ /* REO_DST */
+	[HAL_REO_DST] = {
 		.start_ring_id = HAL_SRNG_RING_ID_REO2SW1,
 		.max_rings = 8,
 		.entry_size = sizeof(struct hal_reo_dest_ring) >> 2,
@@ -20,7 +20,7 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_DST,
 		.max_size = HAL_REO_REO2SW1_RING_BASE_MSB_RING_SIZE,
 	},
-	{ /* REO_EXCEPTION */
+	[HAL_REO_EXCEPTION] = {
 		/* Designating REO2SW0 ring as exception ring.
 		 * Any of theREO2SW rings can be used as exception ring.
 		 */
@@ -31,7 +31,7 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_DST,
 		.max_size = HAL_REO_REO2SW0_RING_BASE_MSB_RING_SIZE,
 	},
-	{ /* REO_REINJECT */
+	[HAL_REO_REINJECT] = {
 		.start_ring_id = HAL_SRNG_RING_ID_SW2REO,
 		.max_rings = 4,
 		.entry_size = sizeof(struct hal_reo_entrance_ring) >> 2,
@@ -39,7 +39,7 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_SRC,
 		.max_size = HAL_REO_SW2REO_RING_BASE_MSB_RING_SIZE,
 	},
-	{ /* REO_CMD */
+	[HAL_REO_CMD] = {
 		.start_ring_id = HAL_SRNG_RING_ID_REO_CMD,
 		.max_rings = 1,
 		.entry_size = (sizeof(struct hal_tlv_64_hdr) +
@@ -48,7 +48,7 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_SRC,
 		.max_size = HAL_REO_CMD_RING_BASE_MSB_RING_SIZE,
 	},
-	{ /* REO_STATUS */
+	[HAL_REO_STATUS] = {
 		.start_ring_id = HAL_SRNG_RING_ID_REO_STATUS,
 		.max_rings = 1,
 		.entry_size = (sizeof(struct hal_tlv_64_hdr) +
@@ -57,7 +57,7 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_DST,
 		.max_size = HAL_REO_STATUS_RING_BASE_MSB_RING_SIZE,
 	},
-	{ /* TCL_DATA */
+	[HAL_TCL_DATA] = {
 		.start_ring_id = HAL_SRNG_RING_ID_SW2TCL1,
 		.max_rings = 6,
 		.entry_size = sizeof(struct hal_tcl_data_cmd) >> 2,
@@ -65,7 +65,7 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_SRC,
 		.max_size = HAL_SW2TCL1_RING_BASE_MSB_RING_SIZE,
 	},
-	{ /* TCL_CMD */
+	[HAL_TCL_CMD] = {
 		.start_ring_id = HAL_SRNG_RING_ID_SW2TCL_CMD,
 		.max_rings = 1,
 		.entry_size = sizeof(struct hal_tcl_gse_cmd) >> 2,
@@ -73,7 +73,7 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_SRC,
 		.max_size = HAL_SW2TCL1_CMD_RING_BASE_MSB_RING_SIZE,
 	},
-	{ /* TCL_STATUS */
+	[HAL_TCL_STATUS] = {
 		.start_ring_id = HAL_SRNG_RING_ID_TCL_STATUS,
 		.max_rings = 1,
 		.entry_size = (sizeof(struct hal_tlv_hdr) +
@@ -82,7 +82,7 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_DST,
 		.max_size = HAL_TCL_STATUS_RING_BASE_MSB_RING_SIZE,
 	},
-	{ /* CE_SRC */
+	[HAL_CE_SRC] = {
 		.start_ring_id = HAL_SRNG_RING_ID_CE0_SRC,
 		.max_rings = 16,
 		.entry_size = sizeof(struct hal_ce_srng_src_desc) >> 2,
@@ -90,7 +90,7 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_SRC,
 		.max_size = HAL_CE_SRC_RING_BASE_MSB_RING_SIZE,
 	},
-	{ /* CE_DST */
+	[HAL_CE_DST] = {
 		.start_ring_id = HAL_SRNG_RING_ID_CE0_DST,
 		.max_rings = 16,
 		.entry_size = sizeof(struct hal_ce_srng_dest_desc) >> 2,
@@ -98,7 +98,7 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_SRC,
 		.max_size = HAL_CE_DST_RING_BASE_MSB_RING_SIZE,
 	},
-	{ /* CE_DST_STATUS */
+	[HAL_CE_DST_STATUS] = {
 		.start_ring_id = HAL_SRNG_RING_ID_CE0_DST_STATUS,
 		.max_rings = 16,
 		.entry_size = sizeof(struct hal_ce_srng_dst_status_desc) >> 2,
@@ -106,7 +106,7 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_DST,
 		.max_size = HAL_CE_DST_STATUS_RING_BASE_MSB_RING_SIZE,
 	},
-	{ /* WBM_IDLE_LINK */
+	[HAL_WBM_IDLE_LINK] = {
 		.start_ring_id = HAL_SRNG_RING_ID_WBM_IDLE_LINK,
 		.max_rings = 1,
 		.entry_size = sizeof(struct hal_wbm_link_desc) >> 2,
@@ -114,7 +114,7 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_SRC,
 		.max_size = HAL_WBM_IDLE_LINK_RING_BASE_MSB_RING_SIZE,
 	},
-	{ /* SW2WBM_RELEASE */
+	[HAL_SW2WBM_RELEASE] = {
 		.start_ring_id = HAL_SRNG_RING_ID_WBM_SW0_RELEASE,
 		.max_rings = 2,
 		.entry_size = sizeof(struct hal_wbm_release_ring) >> 2,
@@ -122,7 +122,7 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_SRC,
 		.max_size = HAL_SW2WBM_RELEASE_RING_BASE_MSB_RING_SIZE,
 	},
-	{ /* WBM2SW_RELEASE */
+	[HAL_WBM2SW_RELEASE] = {
 		.start_ring_id = HAL_SRNG_RING_ID_WBM2SW0_RELEASE,
 		.max_rings = 8,
 		.entry_size = sizeof(struct hal_wbm_release_ring) >> 2,
@@ -130,7 +130,7 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_DST,
 		.max_size = HAL_WBM2SW_RELEASE_RING_BASE_MSB_RING_SIZE,
 	},
-	{ /* RXDMA_BUF */
+	[HAL_RXDMA_BUF] = {
 		.start_ring_id = HAL_SRNG_SW2RXDMA_BUF0,
 		.max_rings = 1,
 		.entry_size = sizeof(struct hal_wbm_buffer_ring) >> 2,
@@ -138,7 +138,7 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_SRC,
 		.max_size = HAL_RXDMA_RING_MAX_SIZE_BE,
 	},
-	{ /* RXDMA_DST */
+	[HAL_RXDMA_DST] = {
 		.start_ring_id = HAL_SRNG_RING_ID_WMAC1_RXDMA2SW0,
 		.max_rings = 0,
 		.entry_size = 0,
@@ -146,39 +146,7 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_DST,
 		.max_size = HAL_RXDMA_RING_MAX_SIZE_BE,
 	},
-	/* RXDMA_MONITOR_BUF */
-	{ 0, },
-	/* RXDMA_MONITOR_STATUS */
-	{ 0, },
-	/* RXDMA_MONITOR_DST */
-	{ 0, },
-	/* RXDMA_MONITOR_DESC */
-	{ 0, },
-	{ /* RXDMA DIR BUF */
-		.start_ring_id = HAL_SRNG_RING_ID_RXDMA_DIR_BUF,
-		.max_rings = 2,
-		.entry_size = 8 >> 2, /* TODO: Define the struct */
-		.mac_type = ATH12K_HAL_SRNG_PMAC,
-		.ring_dir = HAL_SRNG_DIR_SRC,
-		.max_size = HAL_RXDMA_RING_MAX_SIZE_BE,
-	},
-	{ /* PPE2TCL */
-		.start_ring_id = HAL_SRNG_RING_ID_PPE2TCL1,
-		.max_rings = 1,
-		.entry_size = sizeof(struct hal_tcl_entrance_from_ppe_ring) >> 2,
-		.mac_type = ATH12K_HAL_SRNG_PMAC,
-		.ring_dir = HAL_SRNG_DIR_SRC,
-		.max_size = HAL_SW2TCL1_RING_BASE_MSB_RING_SIZE,
-	},
-	{ /* PPE_RELEASE */
-		.start_ring_id = HAL_SRNG_RING_ID_WBM_PPE_RELEASE,
-		.max_rings = 1,
-		.entry_size = sizeof(struct hal_wbm_release_ring) >> 2,
-		.mac_type = ATH12K_HAL_SRNG_PMAC,
-		.ring_dir = HAL_SRNG_DIR_SRC,
-		.max_size = HAL_WBM2PPE_RELEASE_RING_BASE_MSB_RING_SIZE,
-	},
-	{ /* RXDMA_MONITOR_BUF */
+	[HAL_RXDMA_MONITOR_BUF] = {
 		.start_ring_id = HAL_SRNG_SW2RXMON_BUF0,
 		.max_rings = 1,
 		.entry_size = sizeof(struct hal_mon_buf_ring) >> 2,
@@ -186,7 +154,33 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_SRC,
 		.max_size = HAL_RXDMA_RING_MAX_SIZE_BE,
 	},
-	{ /* TX_MONITOR_BUF*/
+	[HAL_RXDMA_MONITOR_STATUS] = { 0, },
+	[HAL_RXDMA_MONITOR_DESC] = { 0, },
+	[HAL_RXDMA_DIR_BUF] = {
+		.start_ring_id = HAL_SRNG_RING_ID_RXDMA_DIR_BUF,
+		.max_rings = 2,
+		.entry_size = 8 >> 2, /* TODO: Define the struct */
+		.mac_type = ATH12K_HAL_SRNG_PMAC,
+		.ring_dir = HAL_SRNG_DIR_SRC,
+		.max_size = HAL_RXDMA_RING_MAX_SIZE_BE,
+	},
+	[HAL_PPE2TCL] = {
+		.start_ring_id = HAL_SRNG_RING_ID_PPE2TCL1,
+		.max_rings = 1,
+		.entry_size = sizeof(struct hal_tcl_entrance_from_ppe_ring) >> 2,
+		.mac_type = ATH12K_HAL_SRNG_PMAC,
+		.ring_dir = HAL_SRNG_DIR_SRC,
+		.max_size = HAL_SW2TCL1_RING_BASE_MSB_RING_SIZE,
+	},
+	[HAL_PPE_RELEASE] = {
+		.start_ring_id = HAL_SRNG_RING_ID_WBM_PPE_RELEASE,
+		.max_rings = 1,
+		.entry_size = sizeof(struct hal_wbm_release_ring) >> 2,
+		.mac_type = ATH12K_HAL_SRNG_PMAC,
+		.ring_dir = HAL_SRNG_DIR_SRC,
+		.max_size = HAL_WBM2PPE_RELEASE_RING_BASE_MSB_RING_SIZE,
+	},
+	[HAL_TX_MONITOR_BUF] = {
 		.start_ring_id = HAL_SRNG_SW2TXMON_BUF0,
 		.max_rings = 1,
 		.entry_size = sizeof(struct hal_mon_buf_ring) >> 2,
@@ -194,7 +188,7 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_SRC,
 		.max_size = HAL_RXDMA_RING_MAX_SIZE_BE,
 	},
-	{ /* RXDMA_MONITOR_DEST */
+	[HAL_RXDMA_MONITOR_DST] = {
 		.start_ring_id = HAL_SRNG_RING_ID_WMAC1_SW2RXMON_BUF0,
 		.max_rings = 1,
 		.entry_size = sizeof(struct hal_mon_dest_desc) >> 2,
@@ -202,7 +196,7 @@ static const struct hal_srng_config hw_srng_config_template[] = {
 		.ring_dir = HAL_SRNG_DIR_DST,
 		.max_size = HAL_RXDMA_RING_MAX_SIZE_BE,
 	},
-	{ /* TX_MONITOR_DEST */
+	[HAL_TX_MONITOR_DST] = {
 		.start_ring_id = HAL_SRNG_RING_ID_WMAC1_TXMON2SW0_BUF0,
 		.max_rings = 1,
 		.entry_size = sizeof(struct hal_mon_dest_desc) >> 2,
