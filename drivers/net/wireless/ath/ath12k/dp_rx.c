@@ -77,58 +77,34 @@ static u16 ath12k_dp_rx_h_seq_no(struct ath12k_base *ab,
 	return ab->hal.ops->rx_desc_get_mpdu_start_seq_no(desc);
 }
 
-static bool ath12k_dp_rx_h_msdu_done(struct hal_rx_desc *desc)
+static bool ath12k_dp_rx_h_msdu_done(struct ath12k_base *ab,
+				     struct hal_rx_desc *desc)
 {
-	return !!FIELD_GET(RX_MSDU_END_INFO14_MSDU_DONE,
-			   __le32_to_cpu(desc->u.qcn92xx.msdu_end.info14));
+	return ab->hal.ops->dp_rx_h_msdu_done(desc);
 }
 
-static bool ath12k_dp_rx_h_l4_cksum_fail(struct hal_rx_desc *desc)
+static bool ath12k_dp_rx_h_l4_cksum_fail(struct ath12k_base *ab,
+					 struct hal_rx_desc *desc)
 {
-	return !!FIELD_GET(RX_MSDU_END_INFO13_TCP_UDP_CKSUM_FAIL,
-			   __le32_to_cpu(desc->u.qcn92xx.msdu_end.info13));
+	return ab->hal.ops->dp_rx_h_l4_cksum_fail(desc);
 }
 
-static bool ath12k_dp_rx_h_ip_cksum_fail(struct hal_rx_desc *desc)
+static bool ath12k_dp_rx_h_ip_cksum_fail(struct ath12k_base *ab,
+					 struct hal_rx_desc *desc)
 {
-	return !!FIELD_GET(RX_MSDU_END_INFO13_IP_CKSUM_FAIL,
-			   __le32_to_cpu(desc->u.qcn92xx.msdu_end.info13));
+	return ab->hal.ops->dp_rx_h_ip_cksum_fail(desc);
 }
 
-static bool ath12k_dp_rx_h_is_decrypted(struct hal_rx_desc *desc)
+static bool ath12k_dp_rx_h_is_decrypted(struct ath12k_base *ab,
+					struct hal_rx_desc *desc)
 {
-	return (FIELD_GET(RX_MSDU_END_INFO14_DECRYPT_STATUS_CODE,
-			  __le32_to_cpu(desc->u.qcn92xx.msdu_end.info14)) ==
-		RX_DESC_DECRYPT_STATUS_CODE_OK);
+	return ab->hal.ops->dp_rx_h_is_decrypted(desc);
 }
 
-u32 ath12k_dp_rx_h_mpdu_err(struct hal_rx_desc *desc)
+u32 ath12k_dp_rx_h_mpdu_err(struct ath12k_base *ab,
+			    struct hal_rx_desc *desc)
 {
-	u32 info = __le32_to_cpu(desc->u.qcn92xx.msdu_end.info13);
-	u32 errmap = 0;
-
-	if (info & RX_MSDU_END_INFO13_FCS_ERR)
-		errmap |= DP_RX_MPDU_ERR_FCS;
-
-	if (info & RX_MSDU_END_INFO13_DECRYPT_ERR)
-		errmap |= DP_RX_MPDU_ERR_DECRYPT;
-
-	if (info & RX_MSDU_END_INFO13_TKIP_MIC_ERR)
-		errmap |= DP_RX_MPDU_ERR_TKIP_MIC;
-
-	if (info & RX_MSDU_END_INFO13_A_MSDU_ERROR)
-		errmap |= DP_RX_MPDU_ERR_AMSDU_ERR;
-
-	if (info & RX_MSDU_END_INFO13_OVERFLOW_ERR)
-		errmap |= DP_RX_MPDU_ERR_OVERFLOW;
-
-	if (info & RX_MSDU_END_INFO13_MSDU_LEN_ERR)
-		errmap |= DP_RX_MPDU_ERR_MSDU_LEN;
-
-	if (info & RX_MSDU_END_INFO13_MPDU_LEN_ERR)
-		errmap |= DP_RX_MPDU_ERR_MPDU_LEN;
-
-	return errmap;
+	return ab->hal.ops->dp_rx_h_mpdu_err(desc);
 }
 
 static u16 ath12k_dp_rx_h_msdu_len(struct ath12k_base *ab,
@@ -1969,10 +1945,11 @@ static struct sk_buff *ath12k_dp_rx_get_msdu_last_buf(struct sk_buff_head *msdu_
 static void ath12k_dp_rx_h_csum_offload(struct ath12k *ar, struct sk_buff *msdu)
 {
 	struct ath12k_skb_rxcb *rxcb = ATH12K_SKB_RXCB(msdu);
+	struct ath12k_base *ab = ar->ab;
 	bool ip_csum_fail, l4_csum_fail;
 
-	ip_csum_fail = ath12k_dp_rx_h_ip_cksum_fail(rxcb->rx_desc);
-	l4_csum_fail = ath12k_dp_rx_h_l4_cksum_fail(rxcb->rx_desc);
+	ip_csum_fail = ath12k_dp_rx_h_ip_cksum_fail(ab, rxcb->rx_desc);
+	l4_csum_fail = ath12k_dp_rx_h_l4_cksum_fail(ab, rxcb->rx_desc);
 
 	msdu->ip_summed = (ip_csum_fail || l4_csum_fail) ?
 			  CHECKSUM_NONE : CHECKSUM_UNNECESSARY;
@@ -2310,6 +2287,7 @@ static void ath12k_dp_rx_h_mpdu(struct ath12k *ar,
 				struct ieee80211_rx_status *rx_status)
 {
 	bool  fill_crypto_hdr;
+	struct ath12k_base *ab = ar->ab;
 	struct ath12k_skb_rxcb *rxcb;
 	enum hal_encrypt_type enctype;
 	bool is_decrypted = false;
@@ -2337,9 +2315,9 @@ static void ath12k_dp_rx_h_mpdu(struct ath12k *ar,
 	}
 	spin_unlock_bh(&ar->ab->base_lock);
 
-	err_bitmap = ath12k_dp_rx_h_mpdu_err(rx_desc);
+	err_bitmap = ath12k_dp_rx_h_mpdu_err(ab, rx_desc);
 	if (enctype != HAL_ENCRYPT_TYPE_OPEN && !err_bitmap)
-		is_decrypted = ath12k_dp_rx_h_is_decrypted(rx_desc);
+		is_decrypted = ath12k_dp_rx_h_is_decrypted(ab, rx_desc);
 
 	/* Clear per-MPDU flags while leaving per-PPDU flags intact */
 	rx_status->flag &= ~(RX_FLAG_FAILED_FCS_CRC |
@@ -2348,9 +2326,9 @@ static void ath12k_dp_rx_h_mpdu(struct ath12k *ar,
 			     RX_FLAG_IV_STRIPPED |
 			     RX_FLAG_MMIC_STRIPPED);
 
-	if (err_bitmap & DP_RX_MPDU_ERR_FCS)
+	if (err_bitmap & HAL_RX_MPDU_ERR_FCS)
 		rx_status->flag |= RX_FLAG_FAILED_FCS_CRC;
-	if (err_bitmap & DP_RX_MPDU_ERR_TKIP_MIC)
+	if (err_bitmap & HAL_RX_MPDU_ERR_TKIP_MIC)
 		rx_status->flag |= RX_FLAG_MMIC_ERROR;
 
 	if (is_decrypted) {
@@ -2594,7 +2572,7 @@ static int ath12k_dp_rx_process_msdu(struct ath12k *ar,
 
 	rx_desc = (struct hal_rx_desc *)msdu->data;
 	lrx_desc = (struct hal_rx_desc *)last_buf->data;
-	if (!ath12k_dp_rx_h_msdu_done(lrx_desc)) {
+	if (!ath12k_dp_rx_h_msdu_done(ab, lrx_desc)) {
 		ath12k_warn(ab, "msdu_done bit in msdu_end is not set\n");
 		ret = -EIO;
 		goto free_out;
@@ -3007,7 +2985,8 @@ static int ath12k_dp_rx_h_defrag(struct ath12k *ar,
 
 		enctype = ath12k_dp_rx_h_enctype(ab, rx_desc);
 		if (enctype != HAL_ENCRYPT_TYPE_OPEN)
-			is_decrypted = ath12k_dp_rx_h_is_decrypted(rx_desc);
+			is_decrypted = ath12k_dp_rx_h_is_decrypted(ab,
+								   rx_desc);
 
 		if (is_decrypted) {
 			if (skb != first_frag)
@@ -3616,7 +3595,7 @@ static int ath12k_dp_rx_h_null_q_desc(struct ath12k *ar, struct sk_buff *msdu,
 	if (rxcb->is_continuation)
 		return -EINVAL;
 
-	if (!ath12k_dp_rx_h_msdu_done(desc)) {
+	if (!ath12k_dp_rx_h_msdu_done(ab, desc)) {
 		ath12k_warn(ar->ab,
 			    "msdu_done bit not set in null_q_des processing\n");
 		__skb_queue_purge(msdu_list);
@@ -3717,6 +3696,7 @@ static void ath12k_dp_rx_h_tkip_mic_err(struct ath12k *ar, struct sk_buff *msdu,
 static bool ath12k_dp_rx_h_rxdma_err(struct ath12k *ar,  struct sk_buff *msdu,
 				     struct ieee80211_rx_status *status)
 {
+	struct ath12k_base *ab = ar->ab;
 	struct ath12k_skb_rxcb *rxcb = ATH12K_SKB_RXCB(msdu);
 	struct hal_rx_desc *rx_desc = (struct hal_rx_desc *)msdu->data;
 	bool drop = false;
@@ -3727,8 +3707,8 @@ static bool ath12k_dp_rx_h_rxdma_err(struct ath12k *ar,  struct sk_buff *msdu,
 	switch (rxcb->err_code) {
 	case HAL_REO_ENTR_RING_RXDMA_ECODE_DECRYPT_ERR:
 	case HAL_REO_ENTR_RING_RXDMA_ECODE_TKIP_MIC_ERR:
-		err_bitmap = ath12k_dp_rx_h_mpdu_err(rx_desc);
-		if (err_bitmap & DP_RX_MPDU_ERR_TKIP_MIC) {
+		err_bitmap = ath12k_dp_rx_h_mpdu_err(ab, rx_desc);
+		if (err_bitmap & HAL_RX_MPDU_ERR_TKIP_MIC) {
 			ath12k_dp_rx_h_tkip_mic_err(ar, msdu, status);
 			break;
 		}

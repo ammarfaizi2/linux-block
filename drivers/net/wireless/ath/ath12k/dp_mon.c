@@ -891,9 +891,9 @@ ath12k_dp_mon_rx_merg_msdus(struct ath12k *ar,
 		goto err_merge_fail;
 
 	rx_desc = (struct hal_rx_desc *)head_msdu->data;
-	err_bitmap = ath12k_dp_rx_h_mpdu_err(rx_desc);
+	err_bitmap = ath12k_dp_rx_h_mpdu_err(ab, rx_desc);
 
-	if (err_bitmap & DP_RX_MPDU_ERR_FCS)
+	if (err_bitmap & HAL_RX_MPDU_ERR_FCS)
 		*fcs_err = true;
 
 	decap_format = ath12k_dp_rx_h_decap_type(ab, rx_desc);

@@ -5,6 +5,7 @@
  */
 #include <linux/dma-mapping.h>
 #include "hal_tx.h"
+#include "hal_rx.h"
 #include "debug.h"
 #include "hal_desc.h"
 #include "hif.h"
@@ -366,12 +367,6 @@ static void ath12k_hw_qcn92xx_rx_desc_copy_end_tlv(struct hal_rx_desc *fdesc,
 	       sizeof(struct rx_msdu_end_qcn92xx));
 }
 
-static u32 ath12k_hw_qcn92xx_rx_desc_get_mpdu_start_tag(struct hal_rx_desc *desc)
-{
-	return FIELD_GET(HAL_TLV_HDR_TAG,
-			 __le64_to_cpu(desc->u.qcn92xx.mpdu_start_tag));
-}
-
 static u32 ath12k_hw_qcn92xx_rx_desc_get_mpdu_ppdu_id(struct hal_rx_desc *desc)
 {
 	return __le16_to_cpu(desc->u.qcn92xx.mpdu_start.phy_ppdu_id);
@@ -394,12 +389,12 @@ static u8 *ath12k_hw_qcn92xx_rx_desc_get_msdu_payload(struct hal_rx_desc *desc)
 
 static u32 ath12k_hw_qcn92xx_rx_desc_get_mpdu_start_offset(void)
 {
-	return offsetof(struct hal_rx_desc_qcn92xx, mpdu_start_tag);
+	return offsetof(struct hal_rx_desc_qcn92xx, mpdu_start);
 }
 
 static u32 ath12k_hw_qcn92xx_rx_desc_get_msdu_end_offset(void)
 {
-	return offsetof(struct hal_rx_desc_qcn92xx, msdu_end_tag);
+	return offsetof(struct hal_rx_desc_qcn92xx, msdu_end);
 }
 
 static bool ath12k_hw_qcn92xx_rx_desc_mac_addr2_valid(struct hal_rx_desc *desc)
@@ -591,6 +586,60 @@ static int ath12k_hal_srng_create_config_qcn92xx(struct ath12k_base *ab)
 	return 0;
 }
 
+static bool ath12k_hw_qcn92xx_dp_rx_h_msdu_done(struct hal_rx_desc *desc)
+{
+	return !!FIELD_GET(RX_MSDU_END_INFO14_MSDU_DONE,
+			   __le32_to_cpu(desc->u.qcn92xx.msdu_end.info14));
+}
+
+static bool ath12k_hw_qcn92xx_dp_rx_h_l4_cksum_fail(struct hal_rx_desc *desc)
+{
+	return !!FIELD_GET(RX_MSDU_END_INFO13_TCP_UDP_CKSUM_FAIL,
+			   __le32_to_cpu(desc->u.qcn92xx.msdu_end.info13));
+}
+
+static bool ath12k_hw_qcn92xx_dp_rx_h_ip_cksum_fail(struct hal_rx_desc *desc)
+{
+	return !!FIELD_GET(RX_MSDU_END_INFO13_IP_CKSUM_FAIL,
+			   __le32_to_cpu(desc->u.qcn92xx.msdu_end.info13));
+}
+
+static bool ath12k_hw_qcn92xx_dp_rx_h_is_decrypted(struct hal_rx_desc *desc)
+{
+	return (FIELD_GET(RX_MSDU_END_INFO14_DECRYPT_STATUS_CODE,
+			  __le32_to_cpu(desc->u.qcn92xx.msdu_end.info14)) ==
+		RX_DESC_DECRYPT_STATUS_CODE_OK);
+}
+
+static u32 ath12k_hw_qcn92xx_dp_rx_h_mpdu_err(struct hal_rx_desc *desc)
+{
+	u32 info = __le32_to_cpu(desc->u.qcn92xx.msdu_end.info13);
+	u32 errmap = 0;
+
+	if (info & RX_MSDU_END_INFO13_FCS_ERR)
+		errmap |= HAL_RX_MPDU_ERR_FCS;
+
+	if (info & RX_MSDU_END_INFO13_DECRYPT_ERR)
+		errmap |= HAL_RX_MPDU_ERR_DECRYPT;
+
+	if (info & RX_MSDU_END_INFO13_TKIP_MIC_ERR)
+		errmap |= HAL_RX_MPDU_ERR_TKIP_MIC;
+
+	if (info & RX_MSDU_END_INFO13_A_MSDU_ERROR)
+		errmap |= HAL_RX_MPDU_ERR_AMSDU_ERR;
+
+	if (info & RX_MSDU_END_INFO13_OVERFLOW_ERR)
+		errmap |= HAL_RX_MPDU_ERR_OVERFLOW;
+
+	if (info & RX_MSDU_END_INFO13_MSDU_LEN_ERR)
+		errmap |= HAL_RX_MPDU_ERR_MSDU_LEN;
+
+	if (info & RX_MSDU_END_INFO13_MPDU_LEN_ERR)
+		errmap |= HAL_RX_MPDU_ERR_MPDU_LEN;
+
+	return errmap;
+}
+
 static const struct hal_ops hal_qcn92xx_ops = {
 	.rx_desc_get_first_msdu = ath12k_hw_qcn92xx_rx_desc_get_first_msdu,
 	.rx_desc_get_last_msdu = ath12k_hw_qcn92xx_rx_desc_get_last_msdu,
@@ -612,7 +661,6 @@ static const struct hal_ops hal_qcn92xx_ops = {
 	.rx_desc_get_mpdu_tid = ath12k_hw_qcn92xx_rx_desc_get_mpdu_tid,
 	.rx_desc_get_mpdu_peer_id = ath12k_hw_qcn92xx_rx_desc_get_mpdu_peer_id,
 	.rx_desc_copy_end_tlv = ath12k_hw_qcn92xx_rx_desc_copy_end_tlv,
-	.rx_desc_get_mpdu_start_tag = ath12k_hw_qcn92xx_rx_desc_get_mpdu_start_tag,
 	.rx_desc_get_mpdu_ppdu_id = ath12k_hw_qcn92xx_rx_desc_get_mpdu_ppdu_id,
 	.rx_desc_set_msdu_len = ath12k_hw_qcn92xx_rx_desc_set_msdu_len,
 	.rx_desc_get_msdu_payload = ath12k_hw_qcn92xx_rx_desc_get_msdu_payload,
@@ -626,6 +674,11 @@ static const struct hal_ops hal_qcn92xx_ops = {
 	.rx_desc_get_mpdu_frame_ctl = ath12k_hw_qcn92xx_rx_desc_get_mpdu_frame_ctl,
 	.create_srng_config = ath12k_hal_srng_create_config_qcn92xx,
 	.tcl_to_wbm_rbm_map = ath12k_hal_qcn92xx_tcl_to_wbm_rbm_map,
+	.dp_rx_h_msdu_done = ath12k_hw_qcn92xx_dp_rx_h_msdu_done,
+	.dp_rx_h_l4_cksum_fail = ath12k_hw_qcn92xx_dp_rx_h_l4_cksum_fail,
+	.dp_rx_h_ip_cksum_fail = ath12k_hw_qcn92xx_dp_rx_h_ip_cksum_fail,
+	.dp_rx_h_is_decrypted = ath12k_hw_qcn92xx_dp_rx_h_is_decrypted,
+	.dp_rx_h_mpdu_err = ath12k_hw_qcn92xx_dp_rx_h_mpdu_err,
 };
 
 static bool ath12k_hw_wcn7850_rx_desc_get_first_msdu(struct hal_rx_desc *desc)
@@ -987,6 +1040,60 @@ static int ath12k_hal_srng_create_config_wcn7850(struct ath12k_base *ab)
 	return 0;
 }
 
+static bool ath12k_hw_wcn7850_dp_rx_h_msdu_done(struct hal_rx_desc *desc)
+{
+	return !!FIELD_GET(RX_MSDU_END_INFO14_MSDU_DONE,
+			   __le32_to_cpu(desc->u.wcn7850.msdu_end.info14));
+}
+
+static bool ath12k_hw_wcn7850_dp_rx_h_l4_cksum_fail(struct hal_rx_desc *desc)
+{
+	return !!FIELD_GET(RX_MSDU_END_INFO13_TCP_UDP_CKSUM_FAIL,
+			   __le32_to_cpu(desc->u.wcn7850.msdu_end.info13));
+}
+
+static bool ath12k_hw_wcn7850_dp_rx_h_ip_cksum_fail(struct hal_rx_desc *desc)
+{
+	return !!FIELD_GET(RX_MSDU_END_INFO13_IP_CKSUM_FAIL,
+			   __le32_to_cpu(desc->u.wcn7850.msdu_end.info13));
+}
+
+static bool ath12k_hw_wcn7850_dp_rx_h_is_decrypted(struct hal_rx_desc *desc)
+{
+	return (FIELD_GET(RX_MSDU_END_INFO14_DECRYPT_STATUS_CODE,
+			  __le32_to_cpu(desc->u.wcn7850.msdu_end.info14)) ==
+		RX_DESC_DECRYPT_STATUS_CODE_OK);
+}
+
+static u32 ath12k_hw_wcn7850_dp_rx_h_mpdu_err(struct hal_rx_desc *desc)
+{
+	u32 info = __le32_to_cpu(desc->u.wcn7850.msdu_end.info13);
+	u32 errmap = 0;
+
+	if (info & RX_MSDU_END_INFO13_FCS_ERR)
+		errmap |= HAL_RX_MPDU_ERR_FCS;
+
+	if (info & RX_MSDU_END_INFO13_DECRYPT_ERR)
+		errmap |= HAL_RX_MPDU_ERR_DECRYPT;
+
+	if (info & RX_MSDU_END_INFO13_TKIP_MIC_ERR)
+		errmap |= HAL_RX_MPDU_ERR_TKIP_MIC;
+
+	if (info & RX_MSDU_END_INFO13_A_MSDU_ERROR)
+		errmap |= HAL_RX_MPDU_ERR_AMSDU_ERR;
+
+	if (info & RX_MSDU_END_INFO13_OVERFLOW_ERR)
+		errmap |= HAL_RX_MPDU_ERR_OVERFLOW;
+
+	if (info & RX_MSDU_END_INFO13_MSDU_LEN_ERR)
+		errmap |= HAL_RX_MPDU_ERR_MSDU_LEN;
+
+	if (info & RX_MSDU_END_INFO13_MPDU_LEN_ERR)
+		errmap |= HAL_RX_MPDU_ERR_MPDU_LEN;
+
+	return errmap;
+}
+
 static const struct hal_ops hal_wcn7850_ops = {
 	.rx_desc_get_first_msdu = ath12k_hw_wcn7850_rx_desc_get_first_msdu,
 	.rx_desc_get_last_msdu = ath12k_hw_wcn7850_rx_desc_get_last_msdu,
@@ -1022,6 +1129,11 @@ static const struct hal_ops hal_wcn7850_ops = {
 	.rx_desc_get_mpdu_frame_ctl = ath12k_hw_wcn7850_rx_desc_get_mpdu_frame_ctl,
 	.create_srng_config = ath12k_hal_srng_create_config_wcn7850,
 	.tcl_to_wbm_rbm_map = ath12k_hal_wcn7850_tcl_to_wbm_rbm_map,
+	.dp_rx_h_msdu_done = ath12k_hw_wcn7850_dp_rx_h_msdu_done,
+	.dp_rx_h_l4_cksum_fail = ath12k_hw_wcn7850_dp_rx_h_l4_cksum_fail,
+	.dp_rx_h_ip_cksum_fail = ath12k_hw_wcn7850_dp_rx_h_ip_cksum_fail,
+	.dp_rx_h_is_decrypted = ath12k_hw_wcn7850_dp_rx_h_is_decrypted,
+	.dp_rx_h_mpdu_err = ath12k_hw_wcn7850_dp_rx_h_mpdu_err,
 };
 
 static int ath12k_hal_alloc_cont_rdp(struct ath12k_base *ab)

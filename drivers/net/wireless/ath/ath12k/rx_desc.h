@@ -1392,9 +1392,7 @@ struct rx_msdu_end_qcn92xx {
  * Need to remove unused qwords and make them compact/aligned
  */
 struct hal_rx_desc_qcn92xx {
-	__le64 msdu_end_tag;
 	struct rx_msdu_end_qcn92xx msdu_end;
-	__le64 mpdu_start_tag;
 	struct rx_mpdu_start_qcn92xx mpdu_start;
 	u8 msdu_payload[0];
 } __packed;

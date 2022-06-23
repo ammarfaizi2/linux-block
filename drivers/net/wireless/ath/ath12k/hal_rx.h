@@ -629,4 +629,13 @@ static inline u32 ath12k_he_ru_tones_to_nl80211_he_ru_alloc(u16 ru_tones)
 #define HE_STA_MCS_KNOWN 0x20
 #define HE_STA_DCM_KNOWN 0x40
 #define HE_STA_CODING_KNOWN 0x80
+
+#define HAL_RX_MPDU_ERR_FCS			BIT(0)
+#define HAL_RX_MPDU_ERR_DECRYPT			BIT(1)
+#define HAL_RX_MPDU_ERR_TKIP_MIC		BIT(2)
+#define HAL_RX_MPDU_ERR_AMSDU_ERR		BIT(3)
+#define HAL_RX_MPDU_ERR_OVERFLOW		BIT(4)
+#define HAL_RX_MPDU_ERR_MSDU_LEN		BIT(5)
+#define HAL_RX_MPDU_ERR_MPDU_LEN		BIT(6)
+#define HAL_RX_MPDU_ERR_UNENCRYPTED_FRAME	BIT(7)
 #endif

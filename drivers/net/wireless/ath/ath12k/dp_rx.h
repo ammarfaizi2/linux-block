@@ -12,15 +12,6 @@
 
 #define DP_MAX_NWIFI_HDR_LEN	30
 
-#define DP_RX_MPDU_ERR_FCS			BIT(0)
-#define DP_RX_MPDU_ERR_DECRYPT			BIT(1)
-#define DP_RX_MPDU_ERR_TKIP_MIC			BIT(2)
-#define DP_RX_MPDU_ERR_AMSDU_ERR		BIT(3)
-#define DP_RX_MPDU_ERR_OVERFLOW			BIT(4)
-#define DP_RX_MPDU_ERR_MSDU_LEN			BIT(5)
-#define DP_RX_MPDU_ERR_MPDU_LEN			BIT(6)
-#define DP_RX_MPDU_ERR_UNENCRYPTED_FRAME	BIT(7)
-
 enum dp_rx_decap_type {
 	DP_RX_DECAP_TYPE_RAW,
 	DP_RX_DECAP_TYPE_NATIVE_WIFI,
@@ -124,7 +115,8 @@ struct ath12k_peer *
 ath12k_dp_rx_h_find_peer(struct ath12k_base *ab, struct sk_buff *msdu);
 u8 ath12k_dp_rx_h_decap_type(struct ath12k_base *ab,
 			     struct hal_rx_desc *desc);
-u32 ath12k_dp_rx_h_mpdu_err(struct hal_rx_desc *desc);
+u32 ath12k_dp_rx_h_mpdu_err(struct ath12k_base *ab,
+			    struct hal_rx_desc *desc);
 void ath12k_dp_rx_h_ppdu(struct ath12k *ar, struct hal_rx_desc *rx_desc,
 			 struct ieee80211_rx_status *rx_status);
 struct ath12k_peer *

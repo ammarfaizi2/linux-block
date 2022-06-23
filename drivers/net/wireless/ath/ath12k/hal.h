@@ -1076,6 +1076,11 @@ struct hal_ops {
 					  u8 *crypto_hdr,
 					  enum hal_encrypt_type enctype);
 	int (*create_srng_config)(struct ath12k_base *ab);
+	bool (*dp_rx_h_msdu_done)(struct hal_rx_desc *desc);
+	bool (*dp_rx_h_l4_cksum_fail)(struct hal_rx_desc *desc);
+	bool (*dp_rx_h_ip_cksum_fail)(struct hal_rx_desc *desc);
+	bool (*dp_rx_h_is_decrypted)(struct hal_rx_desc *desc);
+	u32 (*dp_rx_h_mpdu_err)(struct hal_rx_desc *desc);
 	const struct ath12k_hal_tcl_to_wbm_rbm_map *tcl_to_wbm_rbm_map;
 };
 
