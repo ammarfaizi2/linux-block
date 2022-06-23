@@ -36,9 +36,9 @@ bool add_to_swap(struct folio *folio);
 void *get_shadow_from_swap_cache(swp_entry_t entry);
 int add_to_swap_cache(struct page *page, swp_entry_t entry,
 		      gfp_t gfp, void **shadowp);
-void __delete_from_swap_cache(struct page *page,
+void __delete_from_swap_cache(struct folio *folio,
 			      swp_entry_t entry, void *shadow);
-void delete_from_swap_cache(struct page *page);
+void delete_from_swap_cache(struct folio *folio);
 void clear_shadow_from_swap_cache(int type, unsigned long begin,
 				  unsigned long end);
 void free_swap_cache(struct page *page);
@@ -61,9 +61,9 @@ struct page *swap_cluster_readahead(swp_entry_t entry, gfp_t flag,
 struct page *swapin_readahead(swp_entry_t entry, gfp_t flag,
 			      struct vm_fault *vmf);
 
-static inline unsigned int page_swap_flags(struct page *page)
+static inline unsigned int folio_swap_flags(struct folio *folio)
 {
-	return page_swap_info(page)->flags;
+	return page_swap_info(&folio->page)->flags;
 }
 #else /* CONFIG_SWAP */
 struct swap_iocb;
@@ -135,12 +135,12 @@ static inline int add_to_swap_cache(struct page *page, swp_entry_t entry,
 	return -1;
 }
 
-static inline void __delete_from_swap_cache(struct page *page,
+static inline void __delete_from_swap_cache(struct folio *folio,
 					swp_entry_t entry, void *shadow)
 {
 }
 
-static inline void delete_from_swap_cache(struct page *page)
+static inline void delete_from_swap_cache(struct folio *folio)
 {
 }
 
@@ -149,7 +149,7 @@ static inline void clear_shadow_from_swap_cache(int type, unsigned long begin,
 {
 }
 
-static inline unsigned int page_swap_flags(struct page *page)
+static inline unsigned int folio_swap_flags(struct folio *folio)
 {
 	return 0;
 }
