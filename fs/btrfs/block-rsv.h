@@ -27,7 +27,8 @@ struct btrfs_block_rsv {
 	spinlock_t lock;
 	bool full;
 	bool failfast;
-	unsigned short type;
+	/* Block reserve type, one of BTRFS_BLOCK_RSV_* */
+	u8 type;
 
 	/*
 	 * Qgroup equivalent for @size @reserved
@@ -49,13 +50,12 @@ struct btrfs_block_rsv {
 	u64 qgroup_rsv_reserved;
 };
 
-void btrfs_init_block_rsv(struct btrfs_block_rsv *rsv, unsigned short type);
+void btrfs_init_block_rsv(struct btrfs_block_rsv *rsv, u8 type);
 void btrfs_init_root_block_rsv(struct btrfs_root *root);
 struct btrfs_block_rsv *btrfs_alloc_block_rsv(struct btrfs_fs_info *fs_info,
-					      unsigned short type);
+					      u8 type);
 void btrfs_init_metadata_block_rsv(struct btrfs_fs_info *fs_info,
-				   struct btrfs_block_rsv *rsv,
-				   unsigned short type);
+				   struct btrfs_block_rsv *rsv, u8 type);
 void btrfs_free_block_rsv(struct btrfs_fs_info *fs_info,
 			  struct btrfs_block_rsv *rsv);
 int btrfs_block_rsv_add(struct btrfs_fs_info *fs_info,
