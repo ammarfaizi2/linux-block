@@ -3551,6 +3551,19 @@ void __init console_init(void)
 	}
 }
 
+static int __init printk_activate_kthreads(void)
+{
+	struct console *con;
+
+	console_lock();
+	printk_kthreads_available = true;
+	for_each_console(con)
+		printk_start_kthread(con);
+	console_unlock();
+
+	return 0;
+}
+
 /*
  * Some boot consoles access data that is in the init section and which will
  * be discarded after the initcalls have been run. To make sure that no code
@@ -3567,6 +3580,7 @@ void __init console_init(void)
  */
 static int __init printk_late_init(void)
 {
+	bool no_bootcon = true;
 	struct console *con;
 	int ret;
 
@@ -3588,7 +3602,10 @@ static int __init printk_late_init(void)
 			pr_warn("bootconsole [%s%d] uses init memory and must be disabled even before the real one is ready\n",
 				con->name, con->index);
 			unregister_console(con);
+			continue;
 		}
+
+		no_bootcon = false;
 	}
 	ret = cpuhp_setup_state_nocalls(CPUHP_PRINTK_DEAD, "printk:dead", NULL,
 					console_cpu_notify);
@@ -3597,23 +3614,19 @@ static int __init printk_late_init(void)
 					console_cpu_notify, NULL);
 	WARN_ON(ret < 0);
 	printk_sysctl_init();
+
+	/*
+	 * Boot consoles may be accessing the same hardware as normal
+	 * consoles and thus must not be called in parallel. Therefore
+	 * only activate threaded console printing if it is known that
+	 * there are no boot consoles registered.
+	 */
+	if (no_bootcon)
+		printk_activate_kthreads();
+
 	return 0;
 }
 late_initcall(printk_late_init);
-
-static int __init printk_activate_kthreads(void)
-{
-	struct console *con;
-
-	console_lock();
-	printk_kthreads_available = true;
-	for_each_console(con)
-		printk_start_kthread(con);
-	console_unlock();
-
-	return 0;
-}
-early_initcall(printk_activate_kthreads);
 
 #if defined CONFIG_PRINTK
 /* If @con is specified, only wait for that console. Otherwise wait for all. */
