@@ -811,7 +811,6 @@ static int update_queue(struct device_queue_manager *dqm, struct queue *q,
 	struct mqd_manager *mqd_mgr;
 	struct kfd_process_device *pdd;
 	bool prev_active = false;
-	bool add_queue = false;
 
 	dqm_lock(dqm);
 	pdd = kfd_get_process_device_data(q->device, q->process);
@@ -887,7 +886,7 @@ static int update_queue(struct device_queue_manager *dqm, struct queue *q,
 	if (dqm->sched_policy != KFD_SCHED_POLICY_NO_HWS) {
 		if (!dqm->dev->shared_resources.enable_mes)
 			retval = map_queues_cpsch(dqm);
-		else if (add_queue)
+		else if (q->properties.is_active)
 			retval = add_queue_mes(dqm, q, &pdd->qpd);
 	} else if (q->properties.is_active &&
 		 (q->properties.type == KFD_QUEUE_TYPE_COMPUTE ||
@@ -1873,6 +1872,22 @@ static int destroy_queue_cpsch(struct device_queue_manager *dqm,
 
 	}
 
+	if (q->properties.is_active) {
+		if (!dqm->dev->shared_resources.enable_mes) {
+			retval = execute_queues_cpsch(dqm,
+						      KFD_UNMAP_QUEUES_FILTER_DYNAMIC_QUEUES, 0);
+			if (retval == -ETIME)
+				qpd->reset_wavefronts = true;
+		} else {
+			retval = remove_queue_mes(dqm, q, qpd);
+		}
+
+		if (retval)
+			goto failed_unmap_queue;
+
+		decrement_queue_count(dqm, qpd, q);
+	}
+
 	mqd_mgr = dqm->mqd_mgrs[get_mqd_type_from_queue_type(
 			q->properties.type)];
 
@@ -1886,17 +1901,6 @@ static int destroy_queue_cpsch(struct device_queue_manager *dqm,
 
 	list_del(&q->list);
 	qpd->queue_count--;
-	if (q->properties.is_active) {
-		if (!dqm->dev->shared_resources.enable_mes) {
-			decrement_queue_count(dqm, qpd, q);
-			retval = execute_queues_cpsch(dqm,
-						      KFD_UNMAP_QUEUES_FILTER_DYNAMIC_QUEUES, 0);
-			if (retval == -ETIME)
-				qpd->reset_wavefronts = true;
-		} else {
-			retval = remove_queue_mes(dqm, q, qpd);
-		}
-	}
 
 	/*
 	 * Unconditionally decrement this counter, regardless of the queue's
@@ -1913,6 +1917,7 @@ static int destroy_queue_cpsch(struct device_queue_manager *dqm,
 
 	return retval;
 
+failed_unmap_queue:
 failed_try_destroy_debugged_queue:
 
 	dqm_unlock(dqm);
