@@ -2309,7 +2309,7 @@ static int ath12k_qmi_respond_fw_mem_request(struct ath12k_base *ab)
 	 * failure to FW and FW will then request mulitple blocks of small
 	 * chunk size memory.
 	 */
-	if (!ab->bus_params.fixed_mem_region && ab->qmi.target_mem_delayed) {
+	if (ab->qmi.target_mem_delayed) {
 		delayed = true;
 		ath12k_dbg(ab, ATH12K_DBG_QMI, "qmi delays mem_request %d\n",
 			   ab->qmi.mem_seg_count);
@@ -2317,7 +2317,6 @@ static int ath12k_qmi_respond_fw_mem_request(struct ath12k_base *ab)
 	} else {
 		delayed = false;
 		req->mem_seg_len = ab->qmi.mem_seg_count;
-
 		for (i = 0; i < req->mem_seg_len ; i++) {
 			req->mem_seg[i].addr = ab->qmi.target_mem[i].paddr;
 			req->mem_seg[i].size = ab->qmi.target_mem[i].size;
@@ -2368,20 +2367,13 @@ static void ath12k_qmi_free_target_mem_chunk(struct ath12k_base *ab)
 	int i;
 
 	for (i = 0; i < ab->qmi.mem_seg_count; i++) {
-		if (ab->bus_params.fixed_mem_region) {
-			if (!ab->qmi.target_mem[i].v.ioaddr)
-				continue;
-			iounmap(ab->qmi.target_mem[i].v.ioaddr);
-			ab->qmi.target_mem[i].v.ioaddr = NULL;
-		} else {
-			if (!ab->qmi.target_mem[i].v.addr)
-				continue;
-			dma_free_coherent(ab->dev,
-					  ab->qmi.target_mem[i].size,
-					  ab->qmi.target_mem[i].v.addr,
-					  ab->qmi.target_mem[i].paddr);
-			ab->qmi.target_mem[i].v.addr = NULL;
-		}
+		if (!ab->qmi.target_mem[i].v.addr)
+			continue;
+		dma_free_coherent(ab->dev,
+				  ab->qmi.target_mem[i].size,
+				  ab->qmi.target_mem[i].v.addr,
+				  ab->qmi.target_mem[i].paddr);
+		ab->qmi.target_mem[i].v.addr = NULL;
 	}
 }
 
@@ -2434,68 +2426,14 @@ static int ath12k_qmi_alloc_target_mem_chunk(struct ath12k_base *ab)
 	return 0;
 }
 
-static int ath12k_qmi_assign_target_mem_chunk(struct ath12k_base *ab)
-{
-	struct device *dev = ab->dev;
-	int i, idx;
-	u32 addr = 0;
-
-	for (i = 0, idx = 0; i < ab->qmi.mem_seg_count; i++) {
-		switch (ab->qmi.target_mem[i].type) {
-		case HOST_DDR_REGION_TYPE:
-			if (of_property_read_u32(dev->of_node, "qcom,base-addr", &addr)) {
-				ath12k_warn(ab, "qmi fail to get base-addr from dt\n");
-				return -ENOENT;
-			}
-			ab->qmi.target_mem[idx].paddr = addr;
-			ab->qmi.target_mem[idx].v.ioaddr =
-				ioremap(ab->qmi.target_mem[idx].paddr,
-					ab->qmi.target_mem[i].size);
-			ab->qmi.target_mem[idx].size = ab->qmi.target_mem[i].size;
-			ab->qmi.target_mem[idx].type = ab->qmi.target_mem[i].type;
-			idx++;
-			break;
-		case CALDB_MEM_REGION_TYPE:
-			if (ab->qmi.target_mem[i].size > ATH12K_QMI_CALDB_SIZE) {
-				ath12k_warn(ab, "qmi mem size is low to load caldata\n");
-				return -EINVAL;
-			}
-
-			if (!of_property_read_u32(dev->of_node,
-						  "qcom,caldb-addr", &addr)) {
-				ab->qmi.target_mem[idx].paddr = addr;
-				ab->qmi.target_mem[idx].v.ioaddr =
-						ioremap(ab->qmi.target_mem[idx].paddr,
-							ab->qmi.target_mem[i].size);
-			} else {
-				ab->qmi.target_mem[idx].paddr = 0;
-				ab->qmi.target_mem[idx].v.ioaddr = NULL;
-			}
-
-			ab->qmi.target_mem[idx].size = ab->qmi.target_mem[i].size;
-			ab->qmi.target_mem[idx].type = ab->qmi.target_mem[i].type;
-			idx++;
-			break;
-		default:
-			ath12k_warn(ab, "qmi ignore invalid mem req type %d\n",
-				    ab->qmi.target_mem[i].type);
-			break;
-		}
-	}
-	ab->qmi.mem_seg_count = idx;
-
-	return 0;
-}
-
 static int ath12k_qmi_request_target_cap(struct ath12k_base *ab)
 {
 	struct qmi_wlanfw_cap_req_msg_v01 req;
 	struct qmi_wlanfw_cap_resp_msg_v01 resp;
 	struct qmi_txn txn = {};
-	struct device *dev = ab->dev;
-	unsigned int board_id;
+	unsigned int board_id = ATH12K_BOARD_ID_DEFAULT;
 	int ret = 0;
-	int r, i;
+	int i;
 
 	memset(&req, 0, sizeof(req));
 	memset(&resp, 0, sizeof(resp));
@@ -2533,13 +2471,10 @@ static int ath12k_qmi_request_target_cap(struct ath12k_base *ab)
 		ab->qmi.target.chip_family = resp.chip_info.chip_family;
 	}
 
-	if (!of_property_read_u32(dev->of_node, "qcom,board_id", &board_id) &&
-	    board_id != 0xFF)
-		ab->qmi.target.board_id = board_id;
-	else if (resp.board_info_valid)
+	if (resp.board_info_valid)
 		ab->qmi.target.board_id = resp.board_info.board_id;
 	else
-		ab->qmi.target.board_id = 0xFF;
+		ab->qmi.target.board_id = board_id;
 
 	if (resp.soc_info_valid)
 		ab->qmi.target.soc_id = resp.soc_info.soc_id;
@@ -2581,10 +2516,6 @@ static int ath12k_qmi_request_target_cap(struct ath12k_base *ab)
 		    ab->qmi.target.fw_version,
 		    ab->qmi.target.fw_build_timestamp,
 		    ab->qmi.target.fw_build_id);
-
-	r = ath12k_core_check_dt(ab);
-	if (r)
-		ath12k_dbg(ab, ATH12K_DBG_QMI, "DT bdf variant name not set.\n");
 
 out:
 	return ret;
@@ -3238,20 +3169,11 @@ static void ath12k_qmi_msg_mem_request_cb(struct qmi_handle *qmi_hdl,
 			   msg->mem_seg[i].type, msg->mem_seg[i].size);
 	}
 
-	if (ab->bus_params.fixed_mem_region) {
-		ret = ath12k_qmi_assign_target_mem_chunk(ab);
-		if (ret) {
-			ath12k_warn(ab, "qmi failed to assign target memory: %d\n",
-				    ret);
-			return;
-		}
-	} else {
-		ret = ath12k_qmi_alloc_target_mem_chunk(ab);
-		if (ret) {
-			ath12k_warn(ab, "qmi failed to alloc target memory: %d\n",
-				    ret);
-			return;
-		}
+	ret = ath12k_qmi_alloc_target_mem_chunk(ab);
+	if (ret) {
+		ath12k_warn(ab, "qmi failed to alloc target memory: %d\n",
+			    ret);
+		return;
 	}
 
 	ath12k_qmi_driver_event_post(qmi, ATH12K_QMI_EVENT_REQUEST_MEM, NULL);

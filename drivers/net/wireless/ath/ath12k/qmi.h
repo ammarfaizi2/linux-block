@@ -43,6 +43,8 @@
 #define ATH12K_QMI_TARGET_MEM_MODE_DEFAULT	0
 #define ATH12K_COLD_BOOT_FW_RESET_DELAY		(40 * HZ)
 
+#define ATH12K_BOARD_ID_DEFAULT	0xFF
+
 struct ath12k_base;
 
 enum ath12k_qmi_file_type {

@@ -195,29 +195,6 @@ int ath12k_core_resume(struct ath12k_base *ab)
 	return 0;
 }
 
-int ath12k_core_check_dt(struct ath12k_base *ab)
-{
-	size_t max_len = sizeof(ab->qmi.target.bdf_ext);
-	const char *variant = NULL;
-	struct device_node *node;
-
-	node = ab->dev->of_node;
-	if (!node)
-		return -ENOENT;
-
-	of_property_read_string(node, "qcom,ath12k-calibration-variant",
-				&variant);
-	if (!variant)
-		return -ENODATA;
-
-	if (strscpy(ab->qmi.target.bdf_ext, variant, max_len) < 0)
-		ath12k_dbg(ab, ATH12K_DBG_BOOT,
-			   "bdf variant string is longer than the buffer can accommodate (variant: %s)\n",
-			    variant);
-
-	return 0;
-}
-
 static int ath12k_core_create_board_name(struct ath12k_base *ab, char *name,
 					 size_t name_len)
 {

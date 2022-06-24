@@ -49,7 +49,6 @@ MODULE_DEVICE_TABLE(pci, ath12k_pci_id_table);
 
 static const struct ath12k_bus_params ath12k_pci_bus_params = {
 	.fixed_bdf_addr = false,
-	.fixed_mem_region = false,
 };
 
 /* TODO: revisit IRQ mapping for new SRNG's */
@@ -667,7 +666,6 @@ static int ath12k_pci_config_irq(struct ath12k_base *ab)
 static void ath12k_pci_init_qmi_ce_config(struct ath12k_base *ab)
 {
 	struct ath12k_qmi_ce_cfg *cfg = &ab->qmi.ce_cfg;
-	u32 instance_id = 0;
 
 	cfg->tgt_ce = ab->hw_params.target_ce_config;
 	cfg->tgt_ce_len = ab->hw_params.target_ce_count;
@@ -675,8 +673,6 @@ static void ath12k_pci_init_qmi_ce_config(struct ath12k_base *ab)
 	cfg->svc_to_ce_map = ab->hw_params.svc_to_ce_map;
 	cfg->svc_to_ce_map_len = ab->hw_params.svc_to_ce_map_len;
 	ab->qmi.service_ins_id = ab->hw_params.qmi_service_ins_id;
-	if (!of_property_read_u32(ab->dev->of_node, "qrtr_instance_id", &instance_id))
-		ab->qmi.service_ins_id = instance_id + ATH12K_QMI_WLFW_NODE_ID_BASE;
 }
 
 static void ath12k_pci_ce_irqs_enable(struct ath12k_base *ab)
