@@ -1568,16 +1568,15 @@ unlock_out:
 	return ret;
 }
 
-static bool page_swapped(struct page *page)
+static bool folio_swapped(struct folio *folio)
 {
 	swp_entry_t entry;
 	struct swap_info_struct *si;
 
-	if (!IS_ENABLED(CONFIG_THP_SWAP) || likely(!PageTransCompound(page)))
-		return page_swapcount(page) != 0;
+	if (!IS_ENABLED(CONFIG_THP_SWAP) || likely(!folio_test_large(folio)))
+		return page_swapcount(&folio->page) != 0;
 
-	page = compound_head(page);
-	entry.val = page_private(page);
+	entry = folio_swap_entry(folio);
 	si = _swap_info_get(entry);
 	if (si)
 		return swap_page_trans_huge_swapped(si, entry);
@@ -1590,13 +1589,14 @@ static bool page_swapped(struct page *page)
  */
 int try_to_free_swap(struct page *page)
 {
-	VM_BUG_ON_PAGE(!PageLocked(page), page);
+	struct folio *folio = page_folio(page);
+	VM_BUG_ON_FOLIO(!folio_test_locked(folio), folio);
 
-	if (!PageSwapCache(page))
+	if (!folio_test_swapcache(folio))
 		return 0;
-	if (PageWriteback(page))
+	if (folio_test_writeback(folio))
 		return 0;
-	if (page_swapped(page))
+	if (folio_swapped(folio))
 		return 0;
 
 	/*
@@ -1617,9 +1617,8 @@ int try_to_free_swap(struct page *page)
 	if (pm_suspended_storage())
 		return 0;
 
-	page = compound_head(page);
-	delete_from_swap_cache(page);
-	SetPageDirty(page);
+	delete_from_swap_cache(folio);
+	folio_set_dirty(folio);
 	return 1;
 }
 
@@ -1991,14 +1990,16 @@ static int unuse_mm(struct mm_struct *mm, unsigned int type)
 {
 	struct vm_area_struct *vma;
 	int ret = 0;
+	VMA_ITERATOR(vmi, mm, 0);
 
 	mmap_read_lock(mm);
-	for (vma = mm->mmap; vma; vma = vma->vm_next) {
+	for_each_vma(vmi, vma) {
 		if (vma->anon_vma) {
 			ret = unuse_vma(vma, type);
 			if (ret)
 				break;
 		}
+
 		cond_resched();
 	}
 	mmap_read_unlock(mm);
@@ -2396,6 +2397,7 @@ SYSCALL_DEFINE1(swapoff, const char __user *, specialfile)
 	struct filename *pathname;
 	int err, found = 0;
 	unsigned int old_block_size;
+	unsigned int inuse_pages;
 
 	if (!capable(CAP_SYS_ADMIN))
 		return -EPERM;
@@ -2426,9 +2428,13 @@ SYSCALL_DEFINE1(swapoff, const char __user *, specialfile)
 		spin_unlock(&swap_lock);
 		goto out_dput;
 	}
-	if (!security_vm_enough_memory_mm(current->mm, p->pages))
-		vm_unacct_memory(p->pages);
+
+	total_swap_pages -= p->pages;
+	inuse_pages = READ_ONCE(p->inuse_pages);
+	if (!security_vm_enough_memory_mm(current->mm, inuse_pages))
+		vm_unacct_memory(inuse_pages);
 	else {
+		total_swap_pages += p->pages;
 		err = -ENOMEM;
 		spin_unlock(&swap_lock);
 		goto out_dput;
@@ -2451,7 +2457,6 @@ SYSCALL_DEFINE1(swapoff, const char __user *, specialfile)
 	}
 	plist_del(&p->list, &swap_active_head);
 	atomic_long_sub(p->pages, &nr_swap_pages);
-	total_swap_pages -= p->pages;
 	p->flags &= ~SWP_WRITEOK;
 	spin_unlock(&p->lock);
 	spin_unlock(&swap_lock);
@@ -2640,7 +2645,7 @@ static int swap_show(struct seq_file *swap, void *v)
 	}
 
 	bytes = si->pages << (PAGE_SHIFT - 10);
-	inuse = si->inuse_pages << (PAGE_SHIFT - 10);
+	inuse = READ_ONCE(si->inuse_pages) << (PAGE_SHIFT - 10);
 
 	file = si->swap_file;
 	len = seq_file_path(swap, file, " \t\n\\");
@@ -3259,7 +3264,7 @@ void si_swapinfo(struct sysinfo *val)
 		struct swap_info_struct *si = swap_info[type];
 
 		if ((si->flags & SWP_USED) && !(si->flags & SWP_WRITEOK))
-			nr_to_be_unused += si->inuse_pages;
+			nr_to_be_unused += READ_ONCE(si->inuse_pages);
 	}
 	val->freeswap = atomic_long_read(&nr_swap_pages) + nr_to_be_unused;
 	val->totalswap = total_swap_pages + nr_to_be_unused;
