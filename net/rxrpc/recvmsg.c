@@ -489,29 +489,30 @@ static int rxrpc_recvmsg_data(struct socket *sock, struct rxrpc_call *call,
 			*_offset += copy;
 		}
 
-		if (*_offset >= len) {
+		if (*_offset >= len)
 			trace_rxrpc_recvmsg(call, rxrpc_recvmsg_full, seq,
 					    rx_pkt_offset, rx_pkt_len, 0);
-			ret = 0;
+
+		ret = 0;
+		if (rx_pkt_len == 0) {
+			/* The whole packet has been transferred. */
+			if (!(flags & MSG_PEEK))
+				rxrpc_rotate_rx_window(call);
+			rx_pkt_offset = 0;
+
+			if (rx_pkt_last) {
+				ASSERTCMP(seq, ==, READ_ONCE(call->rx_top));
+				ret = 1;
+				goto out;
+			}
+
+			seq++;
+			continue;
+		}
+
+		if (*_offset >= len)
 			break;
-		}
-
-		if (rx_pkt_len > 0)
-			goto try_another_transfer;
-
-		/* The whole packet has been transferred. */
-		if (!(flags & MSG_PEEK))
-			rxrpc_rotate_rx_window(call);
-		rx_pkt_offset = 0;
-		rx_pkt_len = 0;
-
-		if (rx_pkt_last) {
-			ASSERTCMP(seq, ==, READ_ONCE(call->rx_top));
-			ret = 1;
-			goto out;
-		}
-
-		seq++;
+		goto try_another_transfer;
 	}
 
 out:

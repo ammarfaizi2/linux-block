@@ -1441,8 +1441,13 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 
 	if (!call || refcount_read(&call->ref) == 0) {
 		if (rxrpc_to_client(sp) ||
-		    sp->hdr.type != RXRPC_PACKET_TYPE_DATA)
+		    sp->hdr.type != RXRPC_PACKET_TYPE_DATA) {
+			if (sp->hdr.type == RXRPC_PACKET_TYPE_ACK ||
+			    sp->hdr.type == RXRPC_PACKET_TYPE_ACKALL ||
+			    sp->hdr.type == RXRPC_PACKET_TYPE_ABORT)
+				goto discard;
 			goto bad_message;
+		}
 		if (sp->hdr.seq != 1)
 			goto discard;
 		call = rxrpc_new_incoming_call(local, skb);

@@ -89,6 +89,8 @@ void rxrpc_service_preallocate(struct work_struct *work)
 
 		if (b->kernel_sock) {
 			struct rxrpc_sock *rx = rxrpc_sk(b->kernel_sock);
+
+			rcu_assign_pointer(call->socket, b->kernel_sock);
 			rxrpc_get_call(call, rxrpc_call_get_socket_list);
 			write_lock(&rx->call_lock);
 			list_add(&call->sock_link, &rx->sock_calls);
@@ -358,7 +360,6 @@ void rxrpc_deactivate_service(struct rxrpc_sock *rx)
 		struct rxrpc_call *call =
 			list_entry(b->to_be_accepted.next,
 				   struct rxrpc_call, recvmsg_link);
-		list_del(&call->recvmsg_link);
 		spin_unlock_bh(&b->incoming_lock);
 		if (rxrpc_abort_call("SKR", call, 0, RX_CALL_DEAD, -ECONNRESET))
 			rxrpc_send_abort_packet(call);
@@ -400,25 +401,24 @@ static struct rxrpc_call *rxrpc_alloc_incoming_call(struct rxrpc_service *b,
 	struct rxrpc_call *call;
 	unsigned short call_head, conn_head, peer_head;
 	unsigned short call_tail, conn_tail, peer_tail;
-	unsigned short call_count, conn_count;
+	unsigned short call_count, conn_count, peer_count;
 
-	/* #calls >= #conns >= #peers must hold true. */
 	call_head = smp_load_acquire(&b->call_backlog_head);
 	call_tail = b->call_backlog_tail;
 	call_count = CIRC_CNT(call_head, call_tail, RXRPC_BACKLOG_MAX);
 	conn_head = smp_load_acquire(&b->conn_backlog_head);
 	conn_tail = b->conn_backlog_tail;
 	conn_count = CIRC_CNT(conn_head, conn_tail, RXRPC_BACKLOG_MAX);
-	ASSERTCMP(conn_count, >=, call_count);
 	peer_head = smp_load_acquire(&b->peer_backlog_head);
 	peer_tail = b->peer_backlog_tail;
-	ASSERTCMP(CIRC_CNT(peer_head, peer_tail, RXRPC_BACKLOG_MAX), >=,
-		  conn_count);
+	peer_count = CIRC_CNT(peer_head, peer_tail, RXRPC_BACKLOG_MAX);
 
 	if (call_count == 0)
 		return NULL;
 
 	if (!conn) {
+		if (conn_count == 0 || peer_count == 0)
+			return NULL;
 		if (peer && !rxrpc_get_peer_maybe(peer))
 			peer = NULL;
 		if (!peer) {
@@ -539,7 +539,8 @@ found_service:
 			    sp->hdr.serial, sp->hdr.seq);
 
 	/* Make the call live. */
-	rcu_assign_pointer(call->socket, b->kernel_sock);
+	if (!rcu_access_pointer(call->socket))
+		rcu_assign_pointer(call->socket, b->kernel_sock);
 	rxrpc_incoming_call(call, skb);
 	conn = call->conn;
 

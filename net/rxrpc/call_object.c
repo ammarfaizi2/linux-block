@@ -550,8 +550,11 @@ void rxrpc_release_call(struct rxrpc_call *call)
 	ASSERTCMP(call->state, ==, RXRPC_CALL_COMPLETE);
 
 	spin_lock_bh(&call->lock);
-	if (test_and_set_bit(RXRPC_CALL_RELEASED, &call->flags))
-		BUG();
+	if (test_and_set_bit(RXRPC_CALL_RELEASED, &call->flags)) {
+		spin_unlock_bh(&call->lock);
+		pr_err("Already released c=%08x\n", call->debug_id);
+		return;
+	}
 	spin_unlock_bh(&call->lock);
 
 	rxrpc_put_call_slot(call);
