@@ -1111,7 +1111,9 @@ static long do_fb_ioctl(struct fb_info *info, unsigned int cmd,
 			var.xres_virtual = var.xres;
 		if (var.yres_virtual < var.yres)
 			var.yres_virtual = var.yres;
-		ret = fb_set_var(info, &var);
+		ret = fbcon_modechange_possible(info, &var);
+		if (!ret)
+			ret = fb_set_var(info, &var);
 		if (!ret)
 			fbcon_update_vcs(info, var.activate & FB_ACTIVATE_ALL);
 		unlock_fb_info(info);
