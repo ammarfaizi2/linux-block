@@ -233,7 +233,7 @@ static __cold void io_fallback_req_func(struct work_struct *work)
 	bool locked = false;
 
 	percpu_ref_get(&ctx->refs);
-	llist_for_each_entry_safe(req, tmp, node, io_task_work.fallback_node)
+	llist_for_each_entry_safe(req, tmp, node, io_task_work.node)
 		req->io_task_work.func(req, &locked);
 
 	if (locked) {
@@ -1091,13 +1091,12 @@ void io_req_task_work_add(struct io_kiocb *req)
 	if (likely(!task_work_add(req->task, &tctx->task_work, ctx->notify_method)))
 		return;
 
-
 	node = llist_del_all(&tctx->task_list);
 
 	while (node) {
 		req = container_of(node, struct io_kiocb, io_task_work.node);
 		node = node->next;
-		if (llist_add(&req->io_task_work.fallback_node,
+		if (llist_add(&req->io_task_work.node,
 			      &req->ctx->fallback_llist))
 			schedule_delayed_work(&req->ctx->fallback_work, 1);
 	}
@@ -2206,8 +2205,6 @@ int io_run_task_work_sig(void)
 {
 	if (io_run_task_work())
 		return 1;
-	if (test_thread_flag(TIF_NOTIFY_SIGNAL))
-		return -ERESTARTSYS;
 	if (task_sigpending(current))
 		return -EINTR;
 	return 0;
@@ -3039,27 +3036,23 @@ SYSCALL_DEFINE6(io_uring_enter, unsigned int, fd, u32, to_submit,
 	if (flags & IORING_ENTER_REGISTERED_RING) {
 		struct io_uring_task *tctx = current->io_uring;
 
-		if (!tctx || fd >= IO_RINGFD_REG_MAX)
+		if (unlikely(!tctx || fd >= IO_RINGFD_REG_MAX))
 			return -EINVAL;
 		fd = array_index_nospec(fd, IO_RINGFD_REG_MAX);
 		f.file = tctx->registered_rings[fd];
 		f.flags = 0;
+		if (unlikely(!f.file))
+			return -EBADF;
 	} else {
 		f = fdget(fd);
+		if (unlikely(!f.file))
+			return -EBADF;
+		ret = -EOPNOTSUPP;
+		if (unlikely(!io_is_uring_fops(f.file)))
+			goto out;
 	}
 
-	if (unlikely(!f.file))
-		return -EBADF;
-
-	ret = -EOPNOTSUPP;
-	if (unlikely(!io_is_uring_fops(f.file)))
-		goto out_fput;
-
-	ret = -ENXIO;
 	ctx = f.file->private_data;
-	if (unlikely(!percpu_ref_tryget(&ctx->refs)))
-		goto out_fput;
-
 	ret = -EBADFD;
 	if (unlikely(ctx->flags & IORING_SETUP_R_DISABLED))
 		goto out;
@@ -3144,10 +3137,7 @@ iopoll_locked:
 					  &ctx->check_cq);
 		}
 	}
-
 out:
-	percpu_ref_put(&ctx->refs);
-out_fput:
 	fdput(f);
 	return ret;
 }
@@ -3733,11 +3723,10 @@ static int __io_uring_register(struct io_ring_ctx *ctx, unsigned opcode,
 	int ret;
 
 	/*
-	 * We're inside the ring mutex, if the ref is already dying, then
-	 * someone else killed the ctx or is already going through
-	 * io_uring_register().
+	 * We don't quiesce the refs for register anymore and so it can't be
+	 * dying as we're holding a file ref here.
 	 */
-	if (percpu_ref_is_dying(&ctx->refs))
+	if (WARN_ON_ONCE(percpu_ref_is_dying(&ctx->refs)))
 		return -ENXIO;
 
 	if (ctx->restricted) {
