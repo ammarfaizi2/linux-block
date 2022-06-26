@@ -85,7 +85,7 @@ Running Tests (KUnit Wrapper)
 
 If everything worked correctly, you should see the following:
 
-.. code-block::
+.. code-block:: none
 
 	Generating .config ...
 	Building KUnit Kernel ...
@@ -254,7 +254,5 @@ Next Steps
     examples.
 *   Documentation/dev-tools/kunit/api/index.rst - KUnit APIs
     used for testing.
-*   Documentation/dev-tools/kunit/kunit-tool.rst - kunit_tool helper
-    script.
 *   Documentation/dev-tools/kunit/faq.rst - KUnit common questions and
     answers.
