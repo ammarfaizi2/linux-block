@@ -542,6 +542,7 @@ found_service:
 	if (!rcu_access_pointer(call->socket))
 		rcu_assign_pointer(call->socket, b->kernel_sock);
 	rxrpc_incoming_call(call, skb);
+	trace_rxrpc_accept_call(call);
 	conn = call->conn;
 
 	if (b->notify_new_call)

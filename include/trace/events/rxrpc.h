@@ -1276,6 +1276,32 @@ TRACE_EVENT(rxrpc_connect_call,
 		      __entry->call_id)
 	    );
 
+TRACE_EVENT(rxrpc_accept_call,
+	    TP_PROTO(struct rxrpc_call *call),
+
+	    TP_ARGS(call),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		call		)
+		    __field(unsigned long,		user_call_ID	)
+		    __field(u32,			cid		)
+		    __field(u32,			call_id		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->call = call->debug_id;
+		    __entry->user_call_ID = call->user_call_ID;
+		    __entry->cid = call->cid;
+		    __entry->call_id = call->call_id;
+			   ),
+
+	    TP_printk("c=%08x u=%p %08x:%08x",
+		      __entry->call,
+		      (void *)__entry->user_call_ID,
+		      __entry->cid,
+		      __entry->call_id)
+	    );
+
 TRACE_EVENT(rxrpc_resend,
 	    TP_PROTO(struct rxrpc_call *call, int ix),
 

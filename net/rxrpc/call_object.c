@@ -173,7 +173,7 @@ struct rxrpc_call *rxrpc_alloc_call(struct rxrpc_local *local, gfp_t gfp,
 	rwlock_init(&call->state_lock);
 	call->tx_total_len = -1;
 	call->next_rx_timo = 20 * HZ;
-	call->next_req_timo = 1 * HZ;
+	call->next_req_timo = 10 * HZ;
 
 	memset(&call->sock_node, 0xed, sizeof(call->sock_node));
 
