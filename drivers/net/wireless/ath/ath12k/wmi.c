@@ -351,7 +351,7 @@ static int ath12k_wmi_cmd_send_nowait(struct ath12k_pdev_wmi *wmi, struct sk_buf
 	int ret;
 	u32 cmd = 0;
 
-	if (skb_push(skb, sizeof(struct wmi_cmd_hdr)) == NULL)
+	if (!skb_push(skb, sizeof(struct wmi_cmd_hdr)))
 		return -ENOMEM;
 
 	cmd |= FIELD_PREP(WMI_CMD_HDR_CMD_ID, cmd_id);
@@ -7108,7 +7108,7 @@ static void ath12k_wmi_tlv_op_rx(struct ath12k_base *ab, struct sk_buff *skb)
 	cmd_hdr = (struct wmi_cmd_hdr *)skb->data;
 	id = FIELD_GET(WMI_CMD_HDR_CMD_ID, (cmd_hdr->cmd_id));
 
-	if (skb_pull(skb, sizeof(struct wmi_cmd_hdr)) == NULL)
+	if (!skb_pull(skb, sizeof(struct wmi_cmd_hdr)))
 		goto out;
 
 	switch (id) {

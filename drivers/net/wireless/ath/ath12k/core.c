@@ -246,7 +246,7 @@ const struct firmware *ath12k_core_firmware_request(struct ath12k_base *ab,
 	char path[100];
 	int ret;
 
-	if (file == NULL)
+	if (!file)
 		return ERR_PTR(-ENOENT);
 
 	ath12k_core_create_firmware_path(ab, file, path, sizeof(path));

@@ -545,7 +545,7 @@ void ath12k_dp_tx_completion_handler(struct ath12k_base *ab, int ring_id)
 			ATH12K_TX_COMPL_NEXT(tx_ring->tx_status_head);
 	}
 
-	if ((ath12k_hal_srng_dst_peek(ab, status_ring) != NULL) &&
+	if (ath12k_hal_srng_dst_peek(ab, status_ring) &&
 	    (ATH12K_TX_COMPL_NEXT(tx_ring->tx_status_head) == tx_ring->tx_status_tail)) {
 		/* TODO: Process pending tx_status messages when kfifo_is_full() */
 		ath12k_warn(ab, "Unable to process some of the tx_status ring desc because status_fifo is full\n");

@@ -2377,7 +2377,7 @@ ath12k_dp_mon_rx_update_user_stats(struct ath12k *ar,
 
 	peer = ath12k_peer_find_by_ast(ar->ab, user_stats->ast_index);
 
-	if (peer == NULL) {
+	if (!peer) {
 		ath12k_warn(ar->ab, "peer ast idx %d can't be found\n",
 			    user_stats->ast_index);
 		return;

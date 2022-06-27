@@ -548,7 +548,7 @@ ath12k_ce_alloc_ring(struct ath12k_base *ab, int nentries, int desc_sz)
 	dma_addr_t base_addr;
 
 	ce_ring = kzalloc(struct_size(ce_ring, skb, nentries), GFP_KERNEL);
-	if (ce_ring == NULL)
+	if (!ce_ring)
 		return ERR_PTR(-ENOMEM);
 
 	ce_ring->nentries = nentries;
