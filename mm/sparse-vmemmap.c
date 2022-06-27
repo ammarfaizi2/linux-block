@@ -208,8 +208,8 @@ static int vmemmap_remap_range(unsigned long start, unsigned long end,
 	unsigned long next;
 	pgd_t *pgd;
 
-	VM_BUG_ON(!IS_ALIGNED(start, PAGE_SIZE));
-	VM_BUG_ON(!IS_ALIGNED(end, PAGE_SIZE));
+	VM_BUG_ON(!PAGE_ALIGNED(start));
+	VM_BUG_ON(!PAGE_ALIGNED(end));
 
 	pgd = pgd_offset_k(addr);
 	do {
@@ -745,7 +745,7 @@ static int __meminit vmemmap_populate_compound_pages(unsigned long start_pfn,
 
 	size = min(end - start, pgmap_vmemmap_nr(pgmap) * sizeof(struct page));
 	for (addr = start; addr < end; addr += size) {
-		unsigned long next = addr, last = addr + size;
+		unsigned long next, last = addr + size;
 
 		/* Populate the head page vmemmap page */
 		pte = vmemmap_populate_address(addr, node, NULL, NULL);
@@ -760,7 +760,7 @@ static int __meminit vmemmap_populate_compound_pages(unsigned long start_pfn,
 
 		/*
 		 * Reuse the previous page for the rest of tail pages
-		 * See layout diagram in Documentation/vm/vmemmap_dedup.rst
+		 * See layout diagram in Documentation/mm/vmemmap_dedup.rst
 		 */
 		next += PAGE_SIZE;
 		rc = vmemmap_populate_range(next, last, node, NULL,
