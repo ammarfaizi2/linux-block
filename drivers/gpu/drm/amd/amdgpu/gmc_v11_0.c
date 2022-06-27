@@ -37,6 +37,7 @@
 #include "nbio_v4_3.h"
 #include "gfxhub_v3_0.h"
 #include "mmhub_v3_0.h"
+#include "mmhub_v3_0_1.h"
 #include "mmhub_v3_0_2.h"
 #include "athub_v3_0.h"
 
@@ -258,6 +259,12 @@ static void gmc_v11_0_flush_vm_hub(struct amdgpu_device *adev, uint32_t vmid,
 static void gmc_v11_0_flush_gpu_tlb(struct amdgpu_device *adev, uint32_t vmid,
 					uint32_t vmhub, uint32_t flush_type)
 {
+	struct amdgpu_ring *ring = adev->mman.buffer_funcs_ring;
+	struct dma_fence *fence;
+	struct amdgpu_job *job;
+
+	int r;
+
 	if ((vmhub == AMDGPU_GFXHUB_0) && !adev->gfx.is_poweron)
 		return;
 
@@ -281,8 +288,51 @@ static void gmc_v11_0_flush_gpu_tlb(struct amdgpu_device *adev, uint32_t vmid,
 	}
 
 	mutex_lock(&adev->mman.gtt_window_lock);
-	gmc_v11_0_flush_vm_hub(adev, vmid, vmhub, 0);
+
+	if (vmhub == AMDGPU_MMHUB_0) {
+		gmc_v11_0_flush_vm_hub(adev, vmid, AMDGPU_MMHUB_0, 0);
+		mutex_unlock(&adev->mman.gtt_window_lock);
+		return;
+	}
+
+	BUG_ON(vmhub != AMDGPU_GFXHUB_0);
+
+	if (!adev->mman.buffer_funcs_enabled ||
+	    !adev->ib_pool_ready ||
+	    amdgpu_in_reset(adev) ||
+	    ring->sched.ready == false) {
+		gmc_v11_0_flush_vm_hub(adev, vmid, AMDGPU_GFXHUB_0, 0);
+		mutex_unlock(&adev->mman.gtt_window_lock);
+		return;
+	}
+
+	r = amdgpu_job_alloc_with_ib(adev, 16 * 4, AMDGPU_IB_POOL_IMMEDIATE,
+				     &job);
+	if (r)
+		goto error_alloc;
+
+	job->vm_pd_addr = amdgpu_gmc_pd_addr(adev->gart.bo);
+	job->vm_needs_flush = true;
+	job->ibs->ptr[job->ibs->length_dw++] = ring->funcs->nop;
+	amdgpu_ring_pad_ib(ring, &job->ibs[0]);
+	r = amdgpu_job_submit(job, &adev->mman.entity,
+			      AMDGPU_FENCE_OWNER_UNDEFINED, &fence);
+	if (r)
+		goto error_submit;
+
 	mutex_unlock(&adev->mman.gtt_window_lock);
+
+	dma_fence_wait(fence, false);
+	dma_fence_put(fence);
+
+	return;
+
+error_submit:
+	amdgpu_job_free(job);
+
+error_alloc:
+	mutex_unlock(&adev->mman.gtt_window_lock);
+	DRM_ERROR("Error flushing GPU TLB using the SDMA (%d)!\n", r);
 	return;
 }
 
@@ -343,7 +393,6 @@ static int gmc_v11_0_flush_gpu_tlb_pasid(struct amdgpu_device *adev,
 				gmc_v11_0_flush_gpu_tlb(adev, vmid,
 						AMDGPU_GFXHUB_0, flush_type);
 			}
-			break;
 		}
 	}
 
@@ -548,6 +597,9 @@ static void gmc_v11_0_set_umc_funcs(struct amdgpu_device *adev)
 static void gmc_v11_0_set_mmhub_funcs(struct amdgpu_device *adev)
 {
 	switch (adev->ip_versions[MMHUB_HWIP][0]) {
+	case IP_VERSION(3, 0, 1):
+		adev->mmhub.funcs = &mmhub_v3_0_1_funcs;
+		break;
 	case IP_VERSION(3, 0, 2):
 		adev->mmhub.funcs = &mmhub_v3_0_2_funcs;
 		break;

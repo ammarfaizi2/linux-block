@@ -125,6 +125,7 @@ struct nv_wm_range_entry {
 		double pstate_latency_us;
 		double sr_exit_time_us;
 		double sr_enter_plus_exit_time_us;
+		double fclk_change_latency_us;
 	} dml_input;
 };
 
@@ -142,6 +143,7 @@ struct clk_state_registers_and_bypass {
 	uint32_t dprefclk;
 	uint32_t dispclk;
 	uint32_t dppclk;
+	uint32_t dtbclk;
 
 	uint32_t dppclk_bypass;
 	uint32_t dcfclk_bypass;
@@ -242,6 +244,9 @@ struct clk_mgr_funcs {
 	void (*set_low_power_state)(struct clk_mgr *clk_mgr);
 
 	void (*init_clocks)(struct clk_mgr *clk_mgr);
+
+	void (*dump_clk_registers)(struct clk_state_registers_and_bypass *regs_and_bypass,
+			struct clk_mgr *clk_mgr_base, struct clk_log_info *log_info);
 
 	void (*enable_pme_wa) (struct clk_mgr *clk_mgr);
 	void (*get_clock)(struct clk_mgr *clk_mgr,
