@@ -137,12 +137,21 @@ int scmi_driver_register(struct scmi_driver *driver, struct module *owner,
 {
 	int retval;
 
-	if (!driver->probe)
+	if (!driver->probe || !driver->id_table)
 		return -EINVAL;
 
+	if (driver->setup) {
+		retval = driver->setup();
+		if (retval)
+			return retval;
+	}
+
 	retval = scmi_protocol_device_request(driver->id_table);
-	if (retval)
+	if (retval) {
+		if (driver->teardown)
+			driver->teardown();
 		return retval;
+	}
 
 	driver->driver.bus = &scmi_bus_type;
 	driver->driver.name = driver->name;
@@ -161,6 +170,8 @@ void scmi_driver_unregister(struct scmi_driver *driver)
 {
 	driver_unregister(&driver->driver);
 	scmi_protocol_device_unrequest(driver->id_table);
+	if (driver->teardown)
+		driver->teardown();
 }
 EXPORT_SYMBOL_GPL(scmi_driver_unregister);
 

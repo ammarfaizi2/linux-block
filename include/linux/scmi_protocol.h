@@ -810,6 +810,8 @@ struct scmi_device_id {
 
 struct scmi_driver {
 	const char *name;
+	int (*setup)(void);
+	void (*teardown)(void);
 	int (*probe)(struct scmi_device *sdev);
 	void (*remove)(struct scmi_device *sdev);
 	const struct scmi_device_id *id_table;
