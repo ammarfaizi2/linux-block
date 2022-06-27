@@ -653,9 +653,8 @@ int ath12k_htc_connect_service(struct ath12k_htc *htc,
 		return -EPROTO;
 	}
 
-	assigned_eid = (enum ath12k_htc_ep_id)FIELD_GET(
-						HTC_SVC_RESP_MSG_ENDPOINTID,
-						resp_msg->flags_len);
+	assigned_eid = (enum ath12k_htc_ep_id)FIELD_GET(HTC_SVC_RESP_MSG_ENDPOINTID,
+							resp_msg->flags_len);
 
 	max_msg_size = FIELD_GET(HTC_SVC_RESP_MSG_MAXMSGSIZE,
 				 resp_msg->flags_len);

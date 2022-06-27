@@ -1878,8 +1878,7 @@ static struct qmi_elem_info qmi_wlanfw_wlan_cfg_req_msg_v01_ei[] = {
 	{
 		.data_type	= QMI_STRUCT,
 		.elem_len	= QMI_WLANFW_MAX_NUM_CE_V01,
-		.elem_size	= sizeof(
-				struct qmi_wlanfw_ce_tgt_pipe_cfg_s_v01),
+		.elem_size	= sizeof(struct qmi_wlanfw_ce_tgt_pipe_cfg_s_v01),
 		.array_type	= VAR_LEN_ARRAY,
 		.tlv_type	= 0x11,
 		.offset		= offsetof(struct qmi_wlanfw_wlan_cfg_req_msg_v01,

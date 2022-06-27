@@ -1771,12 +1771,12 @@ void ath12k_hal_setup_link_idle_list(struct ath12k_base *ab,
 
 	for (i = 1; i < nsbufs; i++) {
 		link_addr->info0 = sbuf[i].paddr & HAL_ADDR_LSB_REG_MASK;
-		link_addr->info1 = FIELD_PREP(
-				HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32,
-				(u64)sbuf[i].paddr >> HAL_ADDR_MSB_REG_SHIFT) |
-				FIELD_PREP(
-				HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_MATCH_TAG,
-				BASE_ADDR_MATCH_TAG_VAL);
+
+		link_addr->info1 =
+			FIELD_PREP(HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32,
+				   (u64)sbuf[i].paddr >> HAL_ADDR_MSB_REG_SHIFT) |
+			FIELD_PREP(HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_MATCH_TAG,
+				   BASE_ADDR_MATCH_TAG_VAL);
 
 		link_addr = (void *)sbuf[i].vaddr +
 			     HAL_WBM_IDLE_SCATTER_BUF_SIZE;
@@ -1799,12 +1799,10 @@ void ath12k_hal_setup_link_idle_list(struct ath12k_base *ab,
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
 			   HAL_WBM_SCATTERED_RING_BASE_MSB(ab),
-			   FIELD_PREP(
-				HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32,
-				(u64)sbuf[0].paddr >> HAL_ADDR_MSB_REG_SHIFT) |
-				FIELD_PREP(
-				HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_MATCH_TAG,
-				BASE_ADDR_MATCH_TAG_VAL));
+			   FIELD_PREP(HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32,
+				      (u64)sbuf[0].paddr >> HAL_ADDR_MSB_REG_SHIFT) |
+			   FIELD_PREP(HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_MATCH_TAG,
+				      BASE_ADDR_MATCH_TAG_VAL));
 
 	/* Setup head and tail pointers for the idle list */
 	ath12k_hif_write32(ab,
@@ -1815,10 +1813,9 @@ void ath12k_hal_setup_link_idle_list(struct ath12k_base *ab,
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
 			   HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX1(ab),
-			   FIELD_PREP(
-				HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32,
-				((u64)sbuf[nsbufs - 1].paddr >>
-				 HAL_ADDR_MSB_REG_SHIFT)) |
+			   FIELD_PREP(HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32,
+				      ((u64)sbuf[nsbufs - 1].paddr >>
+				       HAL_ADDR_MSB_REG_SHIFT)) |
 			   FIELD_PREP(HAL_WBM_SCATTERED_DESC_HEAD_P_OFFSET_IX1,
 				      (end_offset >> 2)));
 	ath12k_hif_write32(ab,
@@ -1835,9 +1832,8 @@ void ath12k_hal_setup_link_idle_list(struct ath12k_base *ab,
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
 			   HAL_WBM_SCATTERED_DESC_PTR_TAIL_INFO_IX1(ab),
-			   FIELD_PREP(
-				HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32,
-				((u64)sbuf[0].paddr >> HAL_ADDR_MSB_REG_SHIFT)) |
+			   FIELD_PREP(HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32,
+				      ((u64)sbuf[0].paddr >> HAL_ADDR_MSB_REG_SHIFT)) |
 			   FIELD_PREP(HAL_WBM_SCATTERED_DESC_TAIL_P_OFFSET_IX1,
 				      0));
 	ath12k_hif_write32(ab,

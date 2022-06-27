@@ -780,12 +780,10 @@ int ath12k_dp_tx_htt_srng_setup(struct ath12k_base *ab, u32 ring_id,
 				 params.num_entries * ring_entry_sz);
 	cmd->info1 |= FIELD_PREP(HTT_SRNG_SETUP_CMD_INFO1_RING_FLAGS_MSI_SWAP,
 				 !!(params.flags & HAL_SRNG_FLAGS_MSI_SWAP));
-	cmd->info1 |= FIELD_PREP(
-			HTT_SRNG_SETUP_CMD_INFO1_RING_FLAGS_TLV_SWAP,
-			!!(params.flags & HAL_SRNG_FLAGS_DATA_TLV_SWAP));
-	cmd->info1 |= FIELD_PREP(
-			HTT_SRNG_SETUP_CMD_INFO1_RING_FLAGS_HOST_FW_SWAP,
-			!!(params.flags & HAL_SRNG_FLAGS_RING_PTR_SWAP));
+	cmd->info1 |= FIELD_PREP(HTT_SRNG_SETUP_CMD_INFO1_RING_FLAGS_TLV_SWAP,
+				 !!(params.flags & HAL_SRNG_FLAGS_DATA_TLV_SWAP));
+	cmd->info1 |= FIELD_PREP(HTT_SRNG_SETUP_CMD_INFO1_RING_FLAGS_HOST_FW_SWAP,
+				 !!(params.flags & HAL_SRNG_FLAGS_RING_PTR_SWAP));
 	if (htt_ring_type == HTT_SW_TO_HW_RING)
 		cmd->info1 |= HTT_SRNG_SETUP_CMD_INFO1_RING_LOOP_CNT_DIS;
 
@@ -799,18 +797,15 @@ int ath12k_dp_tx_htt_srng_setup(struct ath12k_base *ab, u32 ring_id,
 	cmd->ring_msi_addr_hi = upper_32_bits(params.msi_addr);
 	cmd->msi_data = params.msi_data;
 
-	cmd->intr_info = FIELD_PREP(
-			HTT_SRNG_SETUP_CMD_INTR_INFO_BATCH_COUNTER_THRESH,
-			params.intr_batch_cntr_thres_entries * ring_entry_sz);
-	cmd->intr_info |= FIELD_PREP(
-			HTT_SRNG_SETUP_CMD_INTR_INFO_INTR_TIMER_THRESH,
-			params.intr_timer_thres_us >> 3);
+	cmd->intr_info = FIELD_PREP(HTT_SRNG_SETUP_CMD_INTR_INFO_BATCH_COUNTER_THRESH,
+				    params.intr_batch_cntr_thres_entries * ring_entry_sz);
+	cmd->intr_info |= FIELD_PREP(HTT_SRNG_SETUP_CMD_INTR_INFO_INTR_TIMER_THRESH,
+				     params.intr_timer_thres_us >> 3);
 
 	cmd->info2 = 0;
 	if (params.flags & HAL_SRNG_FLAGS_LOW_THRESH_INTR_EN) {
-		cmd->info2 = FIELD_PREP(
-				HTT_SRNG_SETUP_CMD_INFO2_INTR_LOW_THRESH,
-				params.low_threshold);
+		cmd->info2 = FIELD_PREP(HTT_SRNG_SETUP_CMD_INFO2_INTR_LOW_THRESH,
+					params.low_threshold);
 	}
 
 	ath12k_dbg(ab, ATH12K_DBG_HAL,

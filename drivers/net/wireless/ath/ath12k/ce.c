@@ -568,12 +568,12 @@ ath12k_ce_alloc_ring(struct ath12k_base *ab, int nentries, int desc_sz)
 
 	ce_ring->base_addr_ce_space_unaligned = base_addr;
 
-	ce_ring->base_addr_owner_space = PTR_ALIGN(
-			ce_ring->base_addr_owner_space_unaligned,
-			CE_DESC_RING_ALIGN);
-	ce_ring->base_addr_ce_space = ALIGN(
-			ce_ring->base_addr_ce_space_unaligned,
-			CE_DESC_RING_ALIGN);
+	ce_ring->base_addr_owner_space =
+		PTR_ALIGN(ce_ring->base_addr_owner_space_unaligned,
+			  CE_DESC_RING_ALIGN);
+
+	ce_ring->base_addr_ce_space = ALIGN(ce_ring->base_addr_ce_space_unaligned,
+					    CE_DESC_RING_ALIGN);
 
 	return ce_ring;
 }

@@ -3081,10 +3081,9 @@ ath12k_wmi_send_obss_spr_cmd(struct ath12k *ar, u32 vdev_id,
 	return ret;
 }
 
-int
-ath12k_wmi_send_obss_color_collision_cfg_cmd(struct ath12k *ar, u32 vdev_id,
-					     u8 bss_color, u32 period,
-					     bool enable)
+int ath12k_wmi_obss_color_cfg_cmd(struct ath12k *ar, u32 vdev_id,
+				  u8 bss_color, u32 period,
+				  bool enable)
 {
 	struct ath12k_pdev_wmi *wmi = ar->wmi;
 	struct ath12k_base *ab = wmi->wmi_ab->ab;

@@ -1452,6 +1452,7 @@ static void ath12k_peer_assoc_h_vht(struct ath12k *ar,
 	struct cfg80211_chan_def def;
 	enum nl80211_band band;
 	const u16 *vht_mcs_mask;
+	u16 tx_mcs_map;
 	u8 ampdu_factor;
 	u8 max_nss, vht_mcs;
 	int i;
@@ -1512,8 +1513,9 @@ static void ath12k_peer_assoc_h_vht(struct ath12k *ar,
 	arg->rx_max_rate = __le16_to_cpu(vht_cap->vht_mcs.rx_highest);
 	arg->rx_mcs_set = __le16_to_cpu(vht_cap->vht_mcs.rx_mcs_map);
 	arg->tx_max_rate = __le16_to_cpu(vht_cap->vht_mcs.tx_highest);
-	arg->tx_mcs_set = ath12k_peer_assoc_h_vht_limit(
-		__le16_to_cpu(vht_cap->vht_mcs.tx_mcs_map), vht_mcs_mask);
+
+	tx_mcs_map = __le16_to_cpu(vht_cap->vht_mcs.tx_mcs_map);
+	arg->tx_mcs_set = ath12k_peer_assoc_h_vht_limit(tx_mcs_map, vht_mcs_mask);
 
 	/* In IPQ8074 platform, VHT mcs rate 10 and 11 is enabled by default.
 	 * VHT mcs rate 10 and 11 is not suppoerted in 11ac standard.
@@ -2436,10 +2438,11 @@ static void ath12k_mac_op_bss_info_changed(struct ieee80211_hw *hw,
 
 	if (changed & BSS_CHANGED_HE_BSS_COLOR) {
 		if (vif->type == NL80211_IFTYPE_AP) {
-			ret = ath12k_wmi_send_obss_color_collision_cfg_cmd(
-				ar, arvif->vdev_id, info->he_bss_color.color,
-				ATH12K_BSS_COLOR_COLLISION_DETECTION_AP_PERIOD_MS,
-				info->he_bss_color.enabled);
+			ret = ath12k_wmi_obss_color_cfg_cmd(ar,
+							    arvif->vdev_id,
+							    info->he_bss_color.color,
+							    ATH12K_BSS_COLOR_AP_PERIODS,
+							    info->he_bss_color.enabled);
 			if (ret)
 				ath12k_warn(ar->ab, "failed to set bss color collision on vdev %i: %d\n",
 					    arvif->vdev_id,  ret);
@@ -2450,9 +2453,11 @@ static void ath12k_mac_op_bss_info_changed(struct ieee80211_hw *hw,
 			if (ret)
 				ath12k_warn(ar->ab, "failed to enable bss color change on vdev %i: %d\n",
 					    arvif->vdev_id,  ret);
-			ret = ath12k_wmi_send_obss_color_collision_cfg_cmd(
-				ar, arvif->vdev_id, 0,
-				ATH12K_BSS_COLOR_COLLISION_DETECTION_STA_PERIOD_MS, 1);
+			ret = ath12k_wmi_obss_color_cfg_cmd(ar,
+							    arvif->vdev_id,
+							    0,
+							    ATH12K_BSS_COLOR_STA_PERIODS,
+							    1);
 			if (ret)
 				ath12k_warn(ar->ab, "failed to set bss color collision on vdev %i: %d\n",
 					    arvif->vdev_id,  ret);

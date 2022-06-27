@@ -4881,8 +4881,8 @@ struct wmi_obss_spatial_reuse_params_cmd {
 #define ATH12K_OBSS_COLOR_COLLISION_DETECTION_DISABLE		0
 #define ATH12K_OBSS_COLOR_COLLISION_DETECTION			1
 
-#define ATH12K_BSS_COLOR_COLLISION_DETECTION_STA_PERIOD_MS	10000
-#define ATH12K_BSS_COLOR_COLLISION_DETECTION_AP_PERIOD_MS	5000
+#define ATH12K_BSS_COLOR_STA_PERIODS				10000
+#define ATH12K_BSS_COLOR_AP_PERIODS				5000
 
 struct wmi_obss_color_collision_cfg_params_cmd {
 	u32 tlv_header;
@@ -5421,9 +5421,9 @@ int ath12k_wmi_send_twt_enable_cmd(struct ath12k *ar, u32 pdev_id);
 int ath12k_wmi_send_twt_disable_cmd(struct ath12k *ar, u32 pdev_id);
 int ath12k_wmi_send_obss_spr_cmd(struct ath12k *ar, u32 vdev_id,
 				 struct ieee80211_he_obss_pd *he_obss_pd);
-int ath12k_wmi_send_obss_color_collision_cfg_cmd(struct ath12k *ar, u32 vdev_id,
-						 u8 bss_color, u32 period,
-						 bool enable);
+int ath12k_wmi_obss_color_cfg_cmd(struct ath12k *ar, u32 vdev_id,
+				  u8 bss_color, u32 period,
+				  bool enable);
 int ath12k_wmi_send_bss_color_change_enable_cmd(struct ath12k *ar, u32 vdev_id,
 						bool enable);
 int ath12k_wmi_pdev_lro_cfg(struct ath12k *ar, int pdev_id);

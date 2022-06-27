@@ -1271,7 +1271,7 @@ ath12k_update_per_peer_tx_stats(struct ath12k *ar,
 	struct htt_ppdu_stats_common *common = &ppdu_stats->common;
 	int ret;
 	u8 flags, mcs, nss, bw, sgi, dcm, rate_idx = 0;
-	u32 succ_bytes = 0;
+	u32 v, succ_bytes = 0;
 	u16 rate = 0, succ_pkts = 0;
 	u32 tx_duration = 0;
 	u8 tid = HTT_PPDU_STATS_NON_QOS_TID;
@@ -1381,9 +1381,9 @@ ath12k_update_per_peer_tx_stats(struct ath12k *ar,
 		arsta->txrate.flags = RATE_INFO_FLAGS_HE_MCS;
 		arsta->txrate.he_dcm = dcm;
 		arsta->txrate.he_gi = ath12k_he_gi_to_nl80211_he_gi(sgi);
-		arsta->txrate.he_ru_alloc = ath12k_he_ru_tones_to_nl80211_he_ru_alloc(
-						(user_rate->ru_end -
-						 user_rate->ru_start) + 1);
+		v = ath12k_he_ru_tones_to_nl80211_he_ru_alloc((user_rate->ru_end -
+							       user_rate->ru_start) + 1);
+		arsta->txrate.he_ru_alloc = v;
 		break;
 	}
 
