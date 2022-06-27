@@ -1051,7 +1051,7 @@
 			operating-points-v2 = <&gpu_sdm630_opp_table>;
 
 			gpu_sdm630_opp_table: opp-table {
-				compatible  = "operating-points-v2";
+				compatible = "operating-points-v2";
 				opp-775000000 {
 					opp-hz = /bits/ 64 <775000000>;
 					opp-level = <RPM_SMD_LEVEL_TURBO>;

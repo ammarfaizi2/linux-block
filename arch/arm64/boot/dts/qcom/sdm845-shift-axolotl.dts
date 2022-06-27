@@ -48,7 +48,7 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&volume_up_gpio>;
 
-		vol-up {
+		key-vol-up {
 			label = "volume_up";
 			linux,code = <KEY_VOLUMEUP>;
 			gpios = <&pm8998_gpio 6 GPIO_ACTIVE_LOW>;
@@ -468,7 +468,7 @@
 };
 
 &i2c5 {
-	status="okay";
+	status = "okay";
 
 	touchscreen@38 {
 		compatible = "focaltech,fts8719";
