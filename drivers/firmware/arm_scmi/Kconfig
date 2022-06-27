@@ -42,6 +42,19 @@ config ARM_SCMI_HAVE_MSG
 	  This declares whether a message passing based transport for SCMI is
 	  available.
 
+config ARM_SCMI_AVOID_FASTCHANNELS
+	bool "Avoid using SCMI FastChannels even when available"
+	help
+	  Avoid using SCMI FastChannels even if advertised as available by
+	  the platform.
+
+	  On systems where the SCMI platform advertises the availability of
+	  FastChannels, supported SCMI commands can be issued triggering a
+	  one-way FastChannel request, much more quickly than using a
+	  regular SCMI message transfer.
+	  When set to Y forces the OSPM to use instead regular SCMI message
+	  transfers even if FastChannels are available. If unsure say N.
+
 config ARM_SCMI_TRANSPORT_MAILBOX
 	bool "SCMI transport based on Mailbox"
 	depends on MAILBOX

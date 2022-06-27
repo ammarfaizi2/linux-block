@@ -1319,6 +1319,12 @@ scmi_common_fastchannel_init(const struct scmi_protocol_handle *ph,
 	struct scmi_msg_resp_desc_fc *resp;
 	const struct scmi_protocol_instance *pi = ph_to_pi(ph);
 
+	if (IS_ENABLED(CONFIG_ARM_SCMI_AVOID_FASTCHANNELS)) {
+		dev_warn_once(ph->dev,
+			      "FastChannels usage disabled in Kconfig.\n");
+		return;
+	}
+
 	if (!p_addr) {
 		ret = -EINVAL;
 		goto err_out;
