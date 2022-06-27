@@ -75,54 +75,52 @@ struct wmi_tlv_dma_buf_release_parse {
 };
 
 static const struct wmi_tlv_policy wmi_tlv_policies[] = {
-	[WMI_TAG_ARRAY_BYTE]
-		= { .min_len = 0 },
-	[WMI_TAG_ARRAY_UINT32]
-		= { .min_len = 0 },
-	[WMI_TAG_SERVICE_READY_EVENT]
-		= { .min_len = sizeof(struct wmi_service_ready_event) },
-	[WMI_TAG_SERVICE_READY_EXT_EVENT]
-		= { .min_len =  sizeof(struct wmi_service_ready_ext_event) },
-	[WMI_TAG_SOC_MAC_PHY_HW_MODE_CAPS]
-		= { .min_len = sizeof(struct wmi_soc_mac_phy_hw_mode_caps) },
-	[WMI_TAG_SOC_HAL_REG_CAPABILITIES]
-		= { .min_len = sizeof(struct wmi_soc_hal_reg_capabilities) },
-	[WMI_TAG_VDEV_START_RESPONSE_EVENT]
-		= { .min_len = sizeof(struct wmi_vdev_start_resp_event) },
-	[WMI_TAG_PEER_DELETE_RESP_EVENT]
-		= { .min_len = sizeof(struct wmi_peer_delete_resp_event) },
-	[WMI_TAG_OFFLOAD_BCN_TX_STATUS_EVENT]
-		= { .min_len = sizeof(struct wmi_bcn_tx_status_event) },
-	[WMI_TAG_VDEV_STOPPED_EVENT]
-		= { .min_len = sizeof(struct wmi_vdev_stopped_event) },
+	[WMI_TAG_ARRAY_BYTE] = { .min_len = 0 },
+	[WMI_TAG_ARRAY_UINT32] = { .min_len = 0 },
+	[WMI_TAG_SERVICE_READY_EVENT] = {
+		.min_len = sizeof(struct wmi_service_ready_event) },
+	[WMI_TAG_SERVICE_READY_EXT_EVENT] = {
+		.min_len = sizeof(struct wmi_service_ready_ext_event) },
+	[WMI_TAG_SOC_MAC_PHY_HW_MODE_CAPS] = {
+		.min_len = sizeof(struct wmi_soc_mac_phy_hw_mode_caps) },
+	[WMI_TAG_SOC_HAL_REG_CAPABILITIES] = {
+		.min_len = sizeof(struct wmi_soc_hal_reg_capabilities) },
+	[WMI_TAG_VDEV_START_RESPONSE_EVENT] = {
+		.min_len = sizeof(struct wmi_vdev_start_resp_event) },
+	[WMI_TAG_PEER_DELETE_RESP_EVENT] = {
+		.min_len = sizeof(struct wmi_peer_delete_resp_event) },
+	[WMI_TAG_OFFLOAD_BCN_TX_STATUS_EVENT] = {
+		.min_len = sizeof(struct wmi_bcn_tx_status_event) },
+	[WMI_TAG_VDEV_STOPPED_EVENT] = {
+		.min_len = sizeof(struct wmi_vdev_stopped_event) },
 	[WMI_TAG_REG_CHAN_LIST_CC_EXT_EVENT] = {
 		.min_len = sizeof(struct wmi_reg_chan_list_cc_ext_event) },
-	[WMI_TAG_MGMT_RX_HDR]
-		= { .min_len = sizeof(struct wmi_mgmt_rx_hdr) },
-	[WMI_TAG_MGMT_TX_COMPL_EVENT]
-		= { .min_len = sizeof(struct wmi_mgmt_tx_compl_event) },
-	[WMI_TAG_SCAN_EVENT]
-		= { .min_len = sizeof(struct wmi_scan_event) },
-	[WMI_TAG_PEER_STA_KICKOUT_EVENT]
-		= { .min_len = sizeof(struct wmi_peer_sta_kickout_event) },
-	[WMI_TAG_ROAM_EVENT]
-		= { .min_len = sizeof(struct wmi_roam_event) },
-	[WMI_TAG_CHAN_INFO_EVENT]
-		= { .min_len = sizeof(struct wmi_chan_info_event) },
-	[WMI_TAG_PDEV_BSS_CHAN_INFO_EVENT]
-		= { .min_len = sizeof(struct wmi_pdev_bss_chan_info_event) },
-	[WMI_TAG_VDEV_INSTALL_KEY_COMPLETE_EVENT]
-		= { .min_len = sizeof(struct wmi_vdev_install_key_compl_event) },
+	[WMI_TAG_MGMT_RX_HDR] = {
+		.min_len = sizeof(struct wmi_mgmt_rx_hdr) },
+	[WMI_TAG_MGMT_TX_COMPL_EVENT] = {
+		.min_len = sizeof(struct wmi_mgmt_tx_compl_event) },
+	[WMI_TAG_SCAN_EVENT] = {
+		.min_len = sizeof(struct wmi_scan_event) },
+	[WMI_TAG_PEER_STA_KICKOUT_EVENT] = {
+		.min_len = sizeof(struct wmi_peer_sta_kickout_event) },
+	[WMI_TAG_ROAM_EVENT] = {
+		.min_len = sizeof(struct wmi_roam_event) },
+	[WMI_TAG_CHAN_INFO_EVENT] = {
+		.min_len = sizeof(struct wmi_chan_info_event) },
+	[WMI_TAG_PDEV_BSS_CHAN_INFO_EVENT] = {
+		.min_len = sizeof(struct wmi_pdev_bss_chan_info_event) },
+	[WMI_TAG_VDEV_INSTALL_KEY_COMPLETE_EVENT] = {
+		.min_len = sizeof(struct wmi_vdev_install_key_compl_event) },
 	[WMI_TAG_READY_EVENT] = {
 		.min_len = sizeof(struct wmi_ready_event_min) },
-	[WMI_TAG_SERVICE_AVAILABLE_EVENT]
-		= {.min_len = sizeof(struct wmi_service_available_event) },
-	[WMI_TAG_PEER_ASSOC_CONF_EVENT]
-		= { .min_len = sizeof(struct wmi_peer_assoc_conf_event) },
-	[WMI_TAG_STATS_EVENT]
-		= { .min_len = sizeof(struct wmi_stats_event) },
-	[WMI_TAG_PDEV_CTL_FAILSAFE_CHECK_EVENT]
-		= { .min_len = sizeof(struct wmi_pdev_ctl_failsafe_chk_event) },
+	[WMI_TAG_SERVICE_AVAILABLE_EVENT] = {
+		.min_len = sizeof(struct wmi_service_available_event) },
+	[WMI_TAG_PEER_ASSOC_CONF_EVENT] = {
+		.min_len = sizeof(struct wmi_peer_assoc_conf_event) },
+	[WMI_TAG_STATS_EVENT] = {
+		.min_len = sizeof(struct wmi_stats_event) },
+	[WMI_TAG_PDEV_CTL_FAILSAFE_CHECK_EVENT] = {
+		.min_len = sizeof(struct wmi_pdev_ctl_failsafe_chk_event) },
 	[WMI_TAG_HOST_SWFDA_EVENT] = {
 		.min_len = sizeof(struct wmi_fils_discovery_event) },
 	[WMI_TAG_OFFLOAD_PRB_RSP_TX_STATUS_EVENT] = {
