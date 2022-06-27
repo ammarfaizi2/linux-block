@@ -55,7 +55,7 @@ struct dp_reo_cmd {
 	struct list_head list;
 	struct dp_rx_tid data;
 	int cmd_num;
-	void (*handler)(struct ath12k_dp *, void *,
+	void (*handler)(struct ath12k_dp *dp, void *ctx,
 			enum hal_reo_cmd_status status);
 };
 

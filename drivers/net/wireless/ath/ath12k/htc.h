@@ -226,9 +226,9 @@ enum ath12k_htc_ep_id {
 };
 
 struct ath12k_htc_ep_ops {
-	void (*ep_tx_complete)(struct ath12k_base *, struct sk_buff *);
-	void (*ep_rx_complete)(struct ath12k_base *, struct sk_buff *);
-	void (*ep_tx_credits)(struct ath12k_base *);
+	void (*ep_tx_complete)(struct ath12k_base *ab, struct sk_buff *skb);
+	void (*ep_rx_complete)(struct ath12k_base *ab, struct sk_buff *skb);
+	void (*ep_tx_credits)(struct ath12k_base *ab);
 };
 
 /* service connection information */

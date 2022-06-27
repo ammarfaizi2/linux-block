@@ -52,7 +52,7 @@ struct ath12k_dbring {
 	u32 buf_align;
 	u32 num_resp_per_event;
 	u32 event_timeout_ms;
-	int (*handler)(struct ath12k *, struct ath12k_dbring_data *);
+	int (*handler)(struct ath12k *ar, struct ath12k_dbring_data *data);
 };
 
 int ath12k_dbring_set_cfg(struct ath12k *ar,

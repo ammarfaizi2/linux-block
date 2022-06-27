@@ -608,8 +608,8 @@ void ath12k_dp_tx_completion_handler(struct ath12k_base *ab, int ring_id)
 int ath12k_dp_tx_send_reo_cmd(struct ath12k_base *ab, struct dp_rx_tid *rx_tid,
 			      enum hal_reo_cmd_type type,
 			      struct ath12k_hal_reo_cmd *cmd,
-			      void (*cb)(struct ath12k_dp *, void *,
-					 enum hal_reo_cmd_status))
+			      void (*cb)(struct ath12k_dp *dp, void *ctx,
+					 enum hal_reo_cmd_status status))
 {
 	struct ath12k_dp *dp = &ab->dp;
 	struct dp_reo_cmd *dp_cmd;
