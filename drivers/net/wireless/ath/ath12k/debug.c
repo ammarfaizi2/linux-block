@@ -64,7 +64,7 @@ void __ath12k_dbg(struct ath12k_base *ab, enum ath12k_debug_mask mask,
 	vaf.va = &args;
 
 	if (ath12k_debug_mask & mask)
-		dev_printk(KERN_DEBUG, ab->dev, "%pV", &vaf);
+		dev_dbg(ab->dev, "%pV", &vaf);
 
 	/* TODO: trace log */
 
@@ -94,7 +94,7 @@ void ath12k_dbg_dump(struct ath12k_base *ab,
 			hex_dump_to_buffer(ptr, len - (ptr - buf), 16, 1,
 					   linebuf + linebuflen,
 					   sizeof(linebuf) - linebuflen, true);
-			dev_printk(KERN_DEBUG, ab->dev, "%s\n", linebuf);
+			dev_dbg(ab->dev, "%s\n", linebuf);
 		}
 	}
 }
