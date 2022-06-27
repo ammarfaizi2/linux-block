@@ -1515,8 +1515,7 @@ struct hal_ce_srng_src_desc {
 	u32 flags; /* %HAL_CE_SRC_DESC_FLAGS_ */
 } __packed;
 
-/*
- * hal_ce_srng_src_desc
+/* hal_ce_srng_src_desc
  *
  * buffer_addr_lo
  *		LSB 32 bits of the 40 Bit Pointer to the source buffer

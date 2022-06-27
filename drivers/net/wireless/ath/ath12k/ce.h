@@ -27,8 +27,7 @@
 
 void ath12k_ce_byte_swap(void *mem, u32 len);
 
-/*
- * Directions for interconnect pipe configuration.
+/* Directions for interconnect pipe configuration.
  * These definitions may be used during configuration and are shared
  * between Host and Target.
  *
@@ -58,8 +57,7 @@ void ath12k_ce_byte_swap(void *mem, u32 len);
 
 struct ath12k_base;
 
-/*
- * Establish a mapping between a service/direction and a pipe.
+/* Establish a mapping between a service/direction and a pipe.
  * Configuration information for a Copy Engine pipe and services.
  * Passed from Host to Target through QMI message and must be in
  * little endian format.
@@ -70,8 +68,7 @@ struct service_to_pipe {
 	__le32 pipenum;
 };
 
-/*
- * Configuration information for a Copy Engine pipe.
+/* Configuration information for a Copy Engine pipe.
  * Passed from Host to Target through QMI message during startup (one per CE).
  *
  * NOTE: Structure is shared between Host software and Target firmware!
@@ -92,8 +89,7 @@ struct ce_attr {
 	/* #entries in source ring - Must be a power of 2 */
 	unsigned int src_nentries;
 
-	/*
-	 * Max source send size for this CE.
+	/* Max source send size for this CE.
 	 * This is also the minimum size of a destination buffer.
 	 */
 	unsigned int src_sz_max;

@@ -68,8 +68,8 @@ struct wmi_tlv {
 #define WMI_APPEND_TO_EXISTING_CHAN_LIST_FLAG 1
 
 #define WMI_BA_MODE_BUFFER_SIZE_256  3
-/*
- * HW mode config type replicated from FW header
+
+/* HW mode config type replicated from FW header
  * @WMI_HOST_HW_MODE_SINGLE: Only one PHY is active.
  * @WMI_HOST_HW_MODE_DBS: Both PHYs are active in different bands,
  *                        one in 2G and another in 5G.
@@ -120,9 +120,6 @@ enum {
 	WMI_HOST_WLAN_2G_5G_CAP	= 0x3,
 };
 
-/*
- * wmi command groups.
- */
 enum wmi_cmd_group {
 	/* 0 to 2 are reserved */
 	WMI_GRP_START = 0x3,
@@ -4198,9 +4195,6 @@ struct wmi_probe_resp_tx_status_event {
 	u32 tx_status;
 } __packed;
 
-/*
- * PDEV statistics
- */
 struct wmi_pdev_stats_base {
 	s32 chan_nf;
 	u32 tx_frame_count; /* Cycles spent transmitting frames */
