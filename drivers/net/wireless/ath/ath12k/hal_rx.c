@@ -457,7 +457,6 @@ void ath12k_hal_rx_msdu_link_desc_set(struct ath12k_base *ab, void *desc,
 	dst_desc->buf_addr_info = src_desc->buf_addr_info;
 	dst_desc->info0 |= FIELD_PREP(HAL_WBM_RELEASE_INFO0_REL_SRC_MODULE,
 				      HAL_WBM_REL_SRC_MODULE_SW) |
-			   FIELD_PREP(HAL_WBM_RELEASE_INFO0_BM_ACTION, action) |
 			   FIELD_PREP(HAL_WBM_RELEASE_INFO0_DESC_TYPE,
 				      HAL_WBM_REL_DESC_TYPE_MSDU_LINK);
 }
