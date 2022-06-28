@@ -1980,7 +1980,7 @@ static void __iscsi_unbind_session(struct work_struct *work)
 	scsi_remove_target(&session->dev);
 
 	if (session->ida_used)
-		ida_simple_remove(&iscsi_sess_ida, target_id);
+		ida_free(&iscsi_sess_ida, target_id);
 
 unbind_session_exit:
 	iscsi_session_event(session, ISCSI_KEVENT_UNBIND_SESSION);
@@ -2049,7 +2049,7 @@ int iscsi_add_session(struct iscsi_cls_session *session, unsigned int target_id)
 		return -ENOMEM;
 
 	if (target_id == ISCSI_MAX_TARGET) {
-		id = ida_simple_get(&iscsi_sess_ida, 0, 0, GFP_KERNEL);
+		id = ida_alloc(&iscsi_sess_ida, GFP_KERNEL);
 
 		if (id < 0) {
 			iscsi_cls_session_printk(KERN_ERR, session,
@@ -2088,7 +2088,7 @@ release_dev:
 	device_del(&session->dev);
 release_ida:
 	if (session->ida_used)
-		ida_simple_remove(&iscsi_sess_ida, session->target_id);
+		ida_free(&iscsi_sess_ida, session->target_id);
 destroy_wq:
 	destroy_workqueue(session->workq);
 	return err;
@@ -4812,7 +4812,7 @@ free_priv:
 }
 EXPORT_SYMBOL_GPL(iscsi_register_transport);
 
-int iscsi_unregister_transport(struct iscsi_transport *tt)
+void iscsi_unregister_transport(struct iscsi_transport *tt)
 {
 	struct iscsi_internal *priv;
 	unsigned long flags;
@@ -4835,8 +4835,6 @@ int iscsi_unregister_transport(struct iscsi_transport *tt)
 	sysfs_remove_group(&priv->dev.kobj, &iscsi_transport_group);
 	device_unregister(&priv->dev);
 	mutex_unlock(&rx_queue_mutex);
-
-	return 0;
 }
 EXPORT_SYMBOL_GPL(iscsi_unregister_transport);
 
