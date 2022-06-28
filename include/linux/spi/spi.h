@@ -17,6 +17,7 @@
 
 #include <uapi/linux/spi/spi.h>
 #include <linux/acpi.h>
+#include <linux/u64_stats_sync.h>
 
 struct dma_chan;
 struct software_node;
@@ -34,7 +35,8 @@ extern struct bus_type spi_bus_type;
 
 /**
  * struct spi_statistics - statistics for spi transfers
- * @lock:          lock protecting this structure
+ * @syncp:         seqcount to protect members in this struct for per-cpu udate
+ *                 on 32-bit systems
  *
  * @messages:      number of spi-messages handled
  * @transfers:     number of spi_transfers handled
@@ -59,37 +61,48 @@ extern struct bus_type spi_bus_type;
  *                 maxsize limit
  */
 struct spi_statistics {
-	spinlock_t		lock; /* lock for the whole structure */
+	struct u64_stats_sync	syncp;
 
-	unsigned long		messages;
-	unsigned long		transfers;
-	unsigned long		errors;
-	unsigned long		timedout;
+	u64_stats_t		messages;
+	u64_stats_t		transfers;
+	u64_stats_t		errors;
+	u64_stats_t		timedout;
 
-	unsigned long		spi_sync;
-	unsigned long		spi_sync_immediate;
-	unsigned long		spi_async;
+	u64_stats_t		spi_sync;
+	u64_stats_t		spi_sync_immediate;
+	u64_stats_t		spi_async;
 
-	unsigned long long	bytes;
-	unsigned long long	bytes_rx;
-	unsigned long long	bytes_tx;
+	u64_stats_t		bytes;
+	u64_stats_t		bytes_rx;
+	u64_stats_t		bytes_tx;
 
 #define SPI_STATISTICS_HISTO_SIZE 17
-	unsigned long transfer_bytes_histo[SPI_STATISTICS_HISTO_SIZE];
+	u64_stats_t	transfer_bytes_histo[SPI_STATISTICS_HISTO_SIZE];
 
-	unsigned long transfers_split_maxsize;
+	u64_stats_t	transfers_split_maxsize;
 };
 
-#define SPI_STATISTICS_ADD_TO_FIELD(stats, field, count)	\
-	do {							\
-		unsigned long flags;				\
-		spin_lock_irqsave(&(stats)->lock, flags);	\
-		(stats)->field += count;			\
-		spin_unlock_irqrestore(&(stats)->lock, flags);	\
+#define SPI_STATISTICS_ADD_TO_FIELD(pcpu_stats, field, count)		\
+	do {								\
+		struct spi_statistics *__lstats;			\
+		get_cpu();						\
+		__lstats = this_cpu_ptr(pcpu_stats);			\
+		u64_stats_update_begin(&__lstats->syncp);		\
+		u64_stats_add(&__lstats->field, count);			\
+		u64_stats_update_end(&__lstats->syncp);			\
+		put_cpu();						\
 	} while (0)
 
-#define SPI_STATISTICS_INCREMENT_FIELD(stats, field)	\
-	SPI_STATISTICS_ADD_TO_FIELD(stats, field, 1)
+#define SPI_STATISTICS_INCREMENT_FIELD(pcpu_stats, field)		\
+	do {								\
+		struct spi_statistics *__lstats;			\
+		get_cpu();						\
+		__lstats = this_cpu_ptr(pcpu_stats);			\
+		u64_stats_update_begin(&__lstats->syncp);		\
+		u64_stats_inc(&__lstats->field);			\
+		u64_stats_update_end(&__lstats->syncp);			\
+		put_cpu();						\
+	} while (0)
 
 /**
  * struct spi_delay - SPI delay information
@@ -149,7 +162,7 @@ extern int spi_delay_exec(struct spi_delay *_delay, struct spi_transfer *xfer);
  * @cs_inactive: delay to be introduced by the controller after CS is
  *	deasserted. If @cs_change_delay is used from @spi_transfer, then the
  *	two delays will be added up.
- * @statistics: statistics for the spi_device
+ * @pcpu_statistics: statistics for the spi_device
  *
  * A @spi_device is used to interchange data between an SPI slave
  * (usually a discrete chip) and CPU memory.
@@ -194,7 +207,7 @@ struct spi_device {
 	struct spi_delay	cs_inactive;
 
 	/* the statistics */
-	struct spi_statistics	statistics;
+	struct spi_statistics __percpu	*pcpu_statistics;
 
 	/*
 	 * likely need more hooks for more protocol options affecting how
@@ -370,10 +383,14 @@ extern struct spi_device *spi_new_ancillary_device(struct spi_device *spi, u8 ch
  * @pump_messages: work struct for scheduling work to the message pump
  * @queue_lock: spinlock to syncronise access to message queue
  * @queue: message queue
- * @idling: the device is entering idle state
  * @cur_msg: the currently in-flight message
- * @cur_msg_prepared: spi_prepare_message was called for the currently
- *                    in-flight message
+ * @cur_msg_completion: a completion for the current in-flight message
+ * @cur_msg_incomplete: Flag used internally to opportunistically skip
+ *	the @cur_msg_completion. This flag is used to check if the driver has
+ *	already called spi_finalize_current_message().
+ * @cur_msg_need_completion: Flag used internally to opportunistically skip
+ *	the @cur_msg_completion. This flag is used to signal the context that
+ *	is running spi_finalize_current_message() that it needs to complete()
  * @cur_msg_mapped: message has been mapped for DMA
  * @last_cs: the last chip_select that is recorded by set_cs, -1 on non chip
  *           selected
@@ -433,7 +450,7 @@ extern struct spi_device *spi_new_ancillary_device(struct spi_device *spi, u8 ch
  * @max_native_cs: When cs_gpiods is used, and this field is filled in,
  *	spi_register_controller() will validate all native CS (including the
  *	unused native CS) against this value.
- * @statistics: statistics for the spi_controller
+ * @pcpu_statistics: statistics for the spi_controller
  * @dma_tx: DMA transmit channel
  * @dma_rx: DMA receive channel
  * @dummy_rx: dummy receive buffer for full-duplex devices
@@ -450,6 +467,8 @@ extern struct spi_device *spi_new_ancillary_device(struct spi_device *spi, u8 ch
  * @irq_flags: Interrupt enable state during PTP system timestamping
  * @fallback: fallback to pio if dma transfer return failure with
  *	SPI_TRANS_FAIL_NO_START.
+ * @queue_empty: signal green light for opportunistically skipping the queue
+ *	for spi_sync transfers.
  *
  * Each SPI controller can communicate with one or more @spi_device
  * children.  These make a small bus, sharing MOSI, MISO and SCK signals
@@ -603,12 +622,13 @@ struct spi_controller {
 	spinlock_t			queue_lock;
 	struct list_head		queue;
 	struct spi_message		*cur_msg;
-	bool				idling;
+	struct completion               cur_msg_completion;
+	bool				cur_msg_incomplete;
+	bool				cur_msg_need_completion;
 	bool				busy;
 	bool				running;
 	bool				rt;
 	bool				auto_runtime_pm;
-	bool                            cur_msg_prepared;
 	bool				cur_msg_mapped;
 	char				last_cs;
 	bool				last_cs_mode_high;
@@ -647,7 +667,7 @@ struct spi_controller {
 	s8			max_native_cs;
 
 	/* statistics */
-	struct spi_statistics	statistics;
+	struct spi_statistics __percpu	*pcpu_statistics;
 
 	/* DMA channels for use with core dmaengine helpers */
 	struct dma_chan		*dma_tx;
@@ -667,6 +687,9 @@ struct spi_controller {
 
 	/* Interrupt enable state during PTP system timestamping */
 	unsigned long		irq_flags;
+
+	/* Flag for enabling opportunistic skipping of the queue in spi_sync */
+	bool			queue_empty;
 };
 
 static inline void *spi_controller_get_devdata(struct spi_controller *ctlr)
@@ -975,6 +998,7 @@ struct spi_transfer {
  * @queue: for use by whichever driver currently owns the message
  * @state: for use by whichever driver currently owns the message
  * @resources: for resource management when the spi message is processed
+ * @prepared: spi_prepare_message was called for the this message
  *
  * A @spi_message is used to execute an atomic sequence of data transfers,
  * each represented by a struct spi_transfer.  The sequence is "atomic"
@@ -1024,6 +1048,9 @@ struct spi_message {
 
 	/* list of spi_res reources when the spi message is processed */
 	struct list_head        resources;
+
+	/* spi_prepare_message was called for this message */
+	bool			prepared;
 };
 
 static inline void spi_message_init_no_memset(struct spi_message *m)
@@ -1127,7 +1154,7 @@ spi_max_transfer_size(struct spi_device *spi)
 	if (ctlr->max_transfer_size)
 		tr_max = ctlr->max_transfer_size(spi);
 
-	/* transfer size limit must not be greater than messsage size limit */
+	/* transfer size limit must not be greater than message size limit */
 	return min(tr_max, msg_max);
 }
 
