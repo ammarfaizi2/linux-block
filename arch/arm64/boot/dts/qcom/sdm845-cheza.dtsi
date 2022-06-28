@@ -119,7 +119,7 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&pen_eject_odl>;
 
-		pen-insert {
+		switch-pen-insert {
 			label = "Pen Insert";
 			/* Insert = low, eject = high */
 			gpios = <&tlmm 119 GPIO_ACTIVE_LOW>;
@@ -130,7 +130,7 @@
 	};
 
 	panel: panel {
-		compatible ="innolux,p120zdg-bf1";
+		compatible = "innolux,p120zdg-bf1";
 		power-supply = <&pp3300_dx_edp>;
 		backlight = <&backlight>;
 		no-hpd;

@@ -20,11 +20,11 @@
 		serial0 = &blsp1_uart2;
 		serial1 = &blsp1_uart1;
 		usid0 = &pm8916_0;
-		i2c0	= &blsp_i2c2;
-		i2c1	= &blsp_i2c6;
-		i2c3	= &blsp_i2c4;
-		spi0	= &blsp_spi5;
-		spi1	= &blsp_spi3;
+		i2c0 = &blsp_i2c2;
+		i2c1 = &blsp_i2c6;
+		i2c3 = &blsp_i2c4;
+		spi0 = &blsp_spi5;
+		spi1 = &blsp_spi3;
 	};
 
 	chosen {
@@ -92,14 +92,12 @@
 
 	gpio-keys {
 		compatible = "gpio-keys";
-		#address-cells = <1>;
-		#size-cells = <0>;
 		autorepeat;
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&msm_key_volp_n_default>;
 
-		button@0 {
+		button {
 			label = "Volume Up";
 			linux,code = <KEY_VOLUMEUP>;
 			gpios = <&msmgpio 107 GPIO_ACTIVE_LOW>;
