@@ -3960,7 +3960,7 @@ void ath12k_dp_rx_free(struct ath12k_base *ab)
 			ath12k_dp_srng_cleanup(ab, &dp->rx_mac_buf_ring[i]);
 	}
 
-	for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++)
+	for (i = 0; i < ab->hw_params.num_rxdma_dst_ring; i++)
 		ath12k_dp_srng_cleanup(ab, &dp->rxdma_err_dst_ring[i]);
 
 	ath12k_dp_srng_cleanup(ab, &dp->rxdma_mon_buf_ring.refill_buf_ring);
