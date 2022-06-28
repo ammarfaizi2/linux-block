@@ -315,6 +315,8 @@ static void dp_display_unbind(struct device *dev, struct device *master,
 
 	dp_power_client_deinit(dp->power);
 	dp_aux_unregister(dp->aux);
+	dp->drm_dev = NULL;
+	dp->aux->drm_dev = NULL;
 	priv->dp[dp->id] = NULL;
 }
 
@@ -989,7 +991,7 @@ enum drm_mode_status dp_bridge_mode_valid(struct drm_bridge *bridge,
 		return MODE_OK;
 
 	if (mode->clock > DP_MAX_PIXEL_CLK_KHZ)
-		return MODE_BAD;
+		return MODE_CLOCK_HIGH;
 
 	dp_display = container_of(dp, struct dp_display_private, dp_display);
 	link_info = &dp_display->panel->link_info;
