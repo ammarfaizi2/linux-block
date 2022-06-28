@@ -8,6 +8,7 @@
 
 #include <linux/dma-mapping.h>
 #include <linux/pgtable.h>
+#include <linux/slab.h>
 
 struct cma;
 
@@ -274,6 +275,33 @@ static inline bool dev_is_dma_coherent(struct device *dev)
 	return true;
 }
 #endif /* CONFIG_ARCH_HAS_DMA_COHERENCE_H */
+
+/*
+ * Check whether the given size, assuming it is for a kmalloc()'ed object, is
+ * safe for non-coherent DMA or needs bouncing.
+ */
+static inline bool dma_kmalloc_needs_bounce(struct device *dev, size_t size,
+					    enum dma_data_direction dir)
+{
+	/*
+	 * Architectures with DMA-safe ARCH_KMALLOC_MINALIGN don't need
+	 * additional checks for bouncing, similarly for coherent DMA or
+	 * DMA_TO_DEVICE direction.
+	 */
+	if (ARCH_KMALLOC_MINALIGN >= ARCH_DMA_MINALIGN ||
+	    dir == DMA_TO_DEVICE || dev_is_dma_coherent(dev))
+		return false;
+
+	/*
+	 * Larger kmalloc() sizes are guaranteed to be aligned to
+	 * ARCH_DMA_MINALIGN.
+	 */
+	if (size >= 2 * ARCH_DMA_MINALIGN ||
+	    IS_ALIGNED(kmalloc_size_roundup(size), cache_line_size()))
+		return false;
+
+	return true;
+}
 
 void *arch_dma_alloc(struct device *dev, size_t size, dma_addr_t *dma_handle,
 		gfp_t gfp, unsigned long attrs);
