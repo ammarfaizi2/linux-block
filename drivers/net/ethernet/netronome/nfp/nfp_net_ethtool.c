@@ -1460,6 +1460,55 @@ static int nfp_net_set_channels(struct net_device *netdev,
 	return nfp_net_set_num_rings(nn, total_rx, total_tx);
 }
 
+static void nfp_port_get_pauseparam(struct net_device *netdev,
+				    struct ethtool_pauseparam *pause)
+{
+	struct nfp_eth_table_port *eth_port;
+	struct nfp_port *port;
+
+	port = nfp_port_from_netdev(netdev);
+	eth_port = nfp_port_get_eth_port(port);
+	if (!eth_port)
+		return;
+
+	/* Currently pause frame support is fixed */
+	pause->autoneg = AUTONEG_DISABLE;
+	pause->rx_pause = 1;
+	pause->tx_pause = 1;
+}
+
+static int nfp_net_set_phys_id(struct net_device *netdev,
+			       enum ethtool_phys_id_state state)
+{
+	struct nfp_eth_table_port *eth_port;
+	struct nfp_port *port;
+	int err;
+
+	port = nfp_port_from_netdev(netdev);
+	eth_port = __nfp_port_get_eth_port(port);
+	if (!eth_port)
+		return -EOPNOTSUPP;
+
+	switch (state) {
+	case ETHTOOL_ID_ACTIVE:
+		/* Control LED to blink */
+		err = nfp_eth_set_idmode(port->app->cpp, eth_port->index, 1);
+		break;
+
+	case ETHTOOL_ID_INACTIVE:
+		/* Control LED to normal mode */
+		err = nfp_eth_set_idmode(port->app->cpp, eth_port->index, 0);
+		break;
+
+	case ETHTOOL_ID_ON:
+	case ETHTOOL_ID_OFF:
+	default:
+		return -EOPNOTSUPP;
+	}
+
+	return err;
+}
+
 static const struct ethtool_ops nfp_net_ethtool_ops = {
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS |
 				     ETHTOOL_COALESCE_MAX_FRAMES |
@@ -1492,6 +1541,8 @@ static const struct ethtool_ops nfp_net_ethtool_ops = {
 	.set_link_ksettings	= nfp_net_set_link_ksettings,
 	.get_fecparam		= nfp_port_get_fecparam,
 	.set_fecparam		= nfp_port_set_fecparam,
+	.get_pauseparam		= nfp_port_get_pauseparam,
+	.set_phys_id		= nfp_net_set_phys_id,
 };
 
 const struct ethtool_ops nfp_port_ethtool_ops = {
@@ -1509,6 +1560,8 @@ const struct ethtool_ops nfp_port_ethtool_ops = {
 	.set_link_ksettings	= nfp_net_set_link_ksettings,
 	.get_fecparam		= nfp_port_get_fecparam,
 	.set_fecparam		= nfp_port_set_fecparam,
+	.get_pauseparam		= nfp_port_get_pauseparam,
+	.set_phys_id		= nfp_net_set_phys_id,
 };
 
 void nfp_net_set_ethtool_ops(struct net_device *netdev)
