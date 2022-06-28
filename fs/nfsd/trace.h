@@ -9,6 +9,7 @@
 #define _NFSD_TRACE_H
 
 #include <linux/tracepoint.h>
+#include <trace/events/fs.h>
 
 #include "export.h"
 #include "nfsfh.h"
@@ -1020,22 +1021,28 @@ TRACE_EVENT(nfsd_file_is_cached,
 );
 
 TRACE_EVENT(nfsd_file_fsnotify_handle_event,
-	TP_PROTO(struct inode *inode, u32 mask),
+	TP_PROTO(
+		const struct inode *inode,
+		u32 mask
+	),
 	TP_ARGS(inode, mask),
 	TP_STRUCT__entry(
-		__field(struct inode *, inode)
+		__field(const struct inode *, inode)
 		__field(unsigned int, nlink)
-		__field(umode_t, mode)
-		__field(u32, mask)
+		__field(unsigned long, mode)
+		__field(unsigned long, mask)
 	),
 	TP_fast_assign(
 		__entry->inode = inode;
 		__entry->nlink = inode->i_nlink;
-		__entry->mode = inode->i_mode;
+		__entry->mode = inode->i_mode & S_IFMT;
 		__entry->mask = mask;
 	),
-	TP_printk("inode=%p nlink=%u mode=0%ho mask=0x%x", __entry->inode,
-			__entry->nlink, __entry->mode, __entry->mask)
+	TP_printk("inode=%p nlink=%u mode=%s mask=%s",
+		__entry->inode, __entry->nlink,
+		show_fs_file_type(__entry->mode),
+		show_fs_notify_flags(__entry->mask)
+	)
 );
 
 DECLARE_EVENT_CLASS(nfsd_file_gc_class,

@@ -120,3 +120,40 @@
 		{ LOOKUP_BENEATH,	"BENEATH" }, \
 		{ LOOKUP_IN_ROOT,	"IN_ROOT" }, \
 		{ LOOKUP_CACHED,	"CACHED" })
+
+#define show_fs_file_type(x) \
+	__print_symbolic(x, \
+		{ S_IFLNK,		"LNK" }, \
+		{ S_IFREG,		"REG" }, \
+		{ S_IFDIR,		"DIR" }, \
+		{ S_IFCHR,		"CHR" }, \
+		{ S_IFBLK,		"BLK" }, \
+		{ S_IFIFO,		"FIFO" }, \
+		{ S_IFSOCK,		"SOCK" })
+
+#define show_fs_notify_flags(x) \
+	__print_flags(x, "|", \
+		{ FS_ACCESS,		"ACCESS" }, \
+		{ FS_MODIFY,		"MODIFY" }, \
+		{ FS_ATTRIB,		"ATTRIB" }, \
+		{ FS_CLOSE_WRITE,	"CLOSE_WRITE" }, \
+		{ FS_CLOSE_NOWRITE,	"CLOSE_NOWRITE" }, \
+		{ FS_OPEN,		"OPEN" }, \
+		{ FS_MOVED_FROM,	"MOVED_FROM" }, \
+		{ FS_MOVED_TO,		"MOVED_TO" }, \
+		{ FS_CREATE,		"CREATE" }, \
+		{ FS_DELETE,		"DELETE" }, \
+		{ FS_DELETE_SELF,	"DELETE_SELF" }, \
+		{ FS_MOVE_SELF,		"MOVE_SELF" }, \
+		{ FS_OPEN_EXEC,		"OPEN_EXEC" }, \
+		{ FS_UNMOUNT,		"UNMOUNT" }, \
+		{ FS_Q_OVERFLOW,	"Q_OVERFLOW" }, \
+		{ FS_ERROR,		"ERROR" }, \
+		{ FS_IN_IGNORED,	"IN_IGNORED" }, \
+		{ FS_OPEN_PERM,		"OPEN_PERM" }, \
+		{ FS_ACCESS_PERM,	"ACCESS_PERM" }, \
+		{ FS_OPEN_EXEC_PERM,	"OPEN_EXEC_PERM" }, \
+		{ FS_EVENT_ON_CHILD,	"EVENT_ON_CHILD" }, \
+		{ FS_RENAME,		"RENAME" }, \
+		{ FS_DN_MULTISHOT,	"DN_MULTISHOT" }, \
+		{ FS_ISDIR,		"ISDIR" })
