@@ -795,7 +795,13 @@ static const struct sysfs_ops queue_sysfs_ops = {
 	.store	= queue_attr_store,
 };
 
+static const struct attribute_group *blk_queue_attr_groups[] = {
+	&queue_attr_group,
+	NULL
+};
+
 struct kobj_type blk_queue_ktype = {
+	.default_groups = blk_queue_attr_groups,
 	.sysfs_ops	= &queue_sysfs_ops,
 	.release	= blk_release_queue,
 };
@@ -806,32 +812,17 @@ struct kobj_type blk_queue_ktype = {
  */
 int blk_register_queue(struct gendisk *disk)
 {
-	int ret;
-	struct device *dev = disk_to_dev(disk);
 	struct request_queue *q = disk->queue;
-
-	ret = blk_trace_init_sysfs(dev);
-	if (ret)
-		return ret;
+	int ret;
 
 	mutex_lock(&q->sysfs_dir_lock);
 
-	ret = kobject_add(&q->kobj, kobject_get(&dev->kobj), "%s", "queue");
-	if (ret < 0) {
-		blk_trace_remove_sysfs(dev);
+	ret = kobject_add(&q->kobj, &disk_to_dev(disk)->kobj, "queue");
+	if (ret < 0)
 		goto unlock;
-	}
-
-	ret = sysfs_create_group(&q->kobj, &queue_attr_group);
-	if (ret) {
-		blk_trace_remove_sysfs(dev);
-		kobject_del(&q->kobj);
-		kobject_put(&dev->kobj);
-		goto unlock;
-	}
 
 	if (queue_is_mq(q))
-		__blk_mq_register_dev(dev, q);
+		blk_mq_sysfs_register(disk);
 	mutex_lock(&q->sysfs_lock);
 
 	mutex_lock(&q->debugfs_mutex);
@@ -890,8 +881,6 @@ put_dev:
 	mutex_unlock(&q->sysfs_lock);
 	mutex_unlock(&q->sysfs_dir_lock);
 	kobject_del(&q->kobj);
-	blk_trace_remove_sysfs(dev);
-	kobject_put(&dev->kobj);
 
 	return ret;
 }
@@ -929,9 +918,8 @@ void blk_unregister_queue(struct gendisk *disk)
 	 * structures that can be modified through sysfs.
 	 */
 	if (queue_is_mq(q))
-		blk_mq_unregister_dev(disk_to_dev(disk), q);
+		blk_mq_sysfs_unregister(disk);
 	blk_crypto_sysfs_unregister(q);
-	blk_trace_remove_sysfs(disk_to_dev(disk));
 
 	mutex_lock(&q->sysfs_lock);
 	elv_unregister_queue(q);
@@ -950,6 +938,4 @@ void blk_unregister_queue(struct gendisk *disk)
 	q->sched_debugfs_dir = NULL;
 	q->rqos_debugfs_dir = NULL;
 	mutex_unlock(&q->debugfs_mutex);
-
-	kobject_put(&disk_to_dev(disk)->kobj);
 }
