@@ -19,7 +19,7 @@ die()
     exit $exitcode
 }
 
-check_test_requirements()
+check_supported_x86_64()
 {
     local config="/proc/config.gz"
     [[ -f "${config}" ]] || config="/boot/config-$(uname -r)"
@@ -30,9 +30,24 @@ check_test_requirements()
     local pg_table_levels=$(gzip -dcfq "${config}" | grep PGTABLE_LEVELS | cut -d'=' -f 2)
 
     if [[ "${pg_table_levels}" -lt 5 ]]; then
-        echo "$0: PG_TABLE_LEVELS=${pg_table_levels}, must be >= 5 to run this test"
+        echo "$0: PGTABLE_LEVELS=${pg_table_levels}, must be >= 5 to run this test"
         exit $ksft_skip
     fi
+}
+
+check_test_requirements()
+{
+    # The test supports x86_64 and powerpc64. We currently have no useful
+    # eligibility check for powerpc64, and the test itself will reject other
+    # architectures.
+    case `uname -m` in
+        "x86_64")
+            check_supported_x86_64
+        ;;
+        *)
+            return 0
+        ;;
+    esac
 }
 
 check_test_requirements
