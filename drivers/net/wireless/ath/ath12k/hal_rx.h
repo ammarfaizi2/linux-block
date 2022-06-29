@@ -470,6 +470,45 @@ struct hal_rx_msdu_list {
 	u8 rbm[HAL_RX_NUM_MSDU_DESC];
 };
 
+#define HAL_RX_FBM_ACK_INFO0_ADDR1_31_0		GENMASK(31, 0)
+#define HAL_RX_FBM_ACK_INFO1_ADDR1_47_32	GENMASK(15, 0)
+#define HAL_RX_FBM_ACK_INFO1_ADDR2_15_0		GENMASK(31, 16)
+#define HAL_RX_FBM_ACK_INFO2_ADDR2_47_16	GENMASK(31, 0)
+
+struct hal_rx_frame_bitmap_ack {
+	__le32 reserved;
+	__le32 info0;
+	__le32 info1;
+	__le32 info2;
+	__le32 reserved1[10];
+} __packed;
+
+#define HAL_RX_RESP_REQ_INFO0_PPDU_ID		GENMASK(15, 0)
+#define HAL_RX_RESP_REQ_INFO0_RECEPTION_TYPE	BIT(16)
+#define HAL_RX_RESP_REQ_INFO1_DURATION		GENMASK(15, 0)
+#define HAL_RX_RESP_REQ_INFO1_RATE_MCS		GENMASK(24, 21)
+#define HAL_RX_RESP_REQ_INFO1_SGI		GENMASK(26, 25)
+#define HAL_RX_RESP_REQ_INFO1_STBC		BIT(27)
+#define HAL_RX_RESP_REQ_INFO1_LDPC		BIT(28)
+#define HAL_RX_RESP_REQ_INFO1_IS_AMPDU		BIT(29)
+#define HAL_RX_RESP_REQ_INFO2_NUM_USER		GENMASK(6, 0)
+#define HAL_RX_RESP_REQ_INFO3_ADDR1_31_0	GENMASK(31, 0)
+#define HAL_RX_RESP_REQ_INFO4_ADDR1_47_32	GENMASK(15, 0)
+#define HAL_RX_RESP_REQ_INFO4_ADDR1_15_0	GENMASK(31, 16)
+#define HAL_RX_RESP_REQ_INFO5_ADDR1_47_16	GENMASK(31, 0)
+
+struct hal_rx_resp_req_info {
+	__le32 info0;
+	__le32 reserved[1];
+	__le32 info1;
+	__le32 info2;
+	__le32 reserved1[2];
+	__le32 info3;
+	__le32 info4;
+	__le32 info5;
+	__le32 reserved2[5];
+} __packed;
+
 void ath12k_hal_reo_status_queue_stats(struct ath12k_base *ab, u32 *reo_desc,
 				       struct hal_reo_status *status);
 void ath12k_hal_reo_flush_queue_status(struct ath12k_base *ab, u32 *reo_desc,
@@ -539,6 +578,15 @@ static inline u32 ath12k_he_ru_tones_to_nl80211_he_ru_alloc(u16 ru_tones)
 #define REO_QUEUE_DESC_MAGIC_DEBUG_PATTERN_1 0xADBEEF
 #define REO_QUEUE_DESC_MAGIC_DEBUG_PATTERN_2 0xBDBEEF
 #define REO_QUEUE_DESC_MAGIC_DEBUG_PATTERN_3 0xCDBEEF
+
+#define HAL_RX_UL_OFDMA_USER_INFO_V0_W0_VALID		BIT(30)
+#define HAL_RX_UL_OFDMA_USER_INFO_V0_W0_VER		BIT(31)
+#define HAL_RX_UL_OFDMA_USER_INFO_V0_W1_NSS		GENMASK(2, 0)
+#define HAL_RX_UL_OFDMA_USER_INFO_V0_W1_MCS		GENMASK(6, 3)
+#define HAL_RX_UL_OFDMA_USER_INFO_V0_W1_LDPC		BIT(7)
+#define HAL_RX_UL_OFDMA_USER_INFO_V0_W1_DCM		BIT(8)
+#define HAL_RX_UL_OFDMA_USER_INFO_V0_W1_RU_START	GENMASK(15, 9)
+#define HAL_RX_UL_OFDMA_USER_INFO_V0_W1_RU_SIZE		GENMASK(18, 16)
 
 /* HE Radiotap data1 Mask */
 #define HE_SU_FORMAT_TYPE 0x0000

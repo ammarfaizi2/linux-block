@@ -66,6 +66,108 @@ struct hal_tx_status {
 	u32 rate_stats;
 };
 
+#define HAL_TX_PHY_DESC_INFO0_BF_TYPE		GENMASK(17, 16)
+#define HAL_TX_PHY_DESC_INFO0_PREAMBLE_11B	BIT(20)
+#define HAL_TX_PHY_DESC_INFO0_PKT_TYPE		GENMASK(24, 21)
+#define HAL_TX_PHY_DESC_INFO0_BANDWIDTH		GENMASK(30, 28)
+#define HAL_TX_PHY_DESC_INFO1_MCS		GENMASK(3, 0)
+#define HAL_TX_PHY_DESC_INFO1_STBC		BIT(6)
+#define HAL_TX_PHY_DESC_INFO2_NSS		GENMASK(23, 21)
+#define HAL_TX_PHY_DESC_INFO3_AP_PKT_BW		GENMASK(6, 4)
+#define HAL_TX_PHY_DESC_INFO3_LTF_SIZE		GENMASK(20, 19)
+#define HAL_TX_PHY_DESC_INFO3_ACTIVE_CHANNEL	GENMASK(17, 15)
+
+struct hal_tx_phy_desc {
+	__le32 info0;
+	__le32 info1;
+	__le32 info2;
+	__le32 info3;
+} __packed;
+
+#define HAL_TX_FES_STAT_PROT_INFO0_STRT_FRM_TS_15_0	GENMASK(15, 0)
+#define HAL_TX_FES_STAT_PROT_INFO0_STRT_FRM_TS_31_16	GENMASK(31, 16)
+#define HAL_TX_FES_STAT_PROT_INFO1_END_FRM_TS_15_0	GENMASK(15, 0)
+#define HAL_TX_FES_STAT_PROT_INFO1_END_FRM_TS_31_16	GENMASK(31, 16)
+
+struct hal_tx_fes_status_prot {
+	__le64 reserved;
+	__le32 info0;
+	__le32 info1;
+	__le32 reserved1[11];
+} __packed;
+
+#define HAL_TX_FES_STAT_USR_PPDU_INFO0_DURATION		GENMASK(15, 0)
+
+struct hal_tx_fes_status_user_ppdu {
+	__le64 reserved;
+	__le32 info0;
+	__le32 reserved1[3];
+} __packed;
+
+#define HAL_TX_FES_STAT_STRT_INFO0_PROT_TS_LOWER_32	GENMASK(31, 0)
+#define HAL_TX_FES_STAT_STRT_INFO1_PROT_TS_UPPER_32	GENMASK(31, 0)
+
+struct hal_tx_fes_status_start_prot {
+	__le32 info0;
+	__le32 info1;
+	__le64 reserved;
+} __packed;
+
+#define HAL_TX_FES_STATUS_START_INFO0_MEDIUM_PROT_TYPE	GENMASK(29, 27)
+
+struct hal_tx_fes_status_start {
+	__le32 reserved;
+	__le32 info0;
+	__le64 reserved1;
+} __packed;
+
+#define HAL_TX_Q_EXT_INFO0_FRAME_CTRL		GENMASK(15, 0)
+#define HAL_TX_Q_EXT_INFO0_QOS_CTRL		GENMASK(31, 16)
+#define HAL_TX_Q_EXT_INFO1_AMPDU_FLAG		BIT(0)
+
+struct hal_tx_queue_exten {
+	__le32 info0;
+	__le32 info1;
+} __packed;
+
+#define HAL_TX_FES_SETUP_INFO0_NUM_OF_USERS	GENMASK(28, 23)
+
+struct hal_tx_fes_setup {
+	__le32 schedule_id;
+	__le32 info0;
+	__le64 reserved;
+} __packed;
+
+#define HAL_TX_PPDU_SETUP_INFO0_MEDIUM_PROT_TYPE	GENMASK(2, 0)
+#define HAL_TX_PPDU_SETUP_INFO1_PROT_FRAME_ADDR1_31_0	GENMASK(31, 0)
+#define HAL_TX_PPDU_SETUP_INFO2_PROT_FRAME_ADDR1_47_32	GENMASK(15, 0)
+#define HAL_TX_PPDU_SETUP_INFO2_PROT_FRAME_ADDR2_15_0	GENMASK(31, 16)
+#define HAL_TX_PPDU_SETUP_INFO3_PROT_FRAME_ADDR2_47_16	GENMASK(31, 0)
+#define HAL_TX_PPDU_SETUP_INFO4_PROT_FRAME_ADDR3_31_0	GENMASK(31, 0)
+#define HAL_TX_PPDU_SETUP_INFO5_PROT_FRAME_ADDR3_47_32	GENMASK(15, 0)
+#define HAL_TX_PPDU_SETUP_INFO5_PROT_FRAME_ADDR4_15_0	GENMASK(31, 16)
+#define HAL_TX_PPDU_SETUP_INFO6_PROT_FRAME_ADDR4_47_16	GENMASK(31, 0)
+
+struct hal_tx_pcu_ppdu_setup_init {
+	__le32 info0;
+	__le32 info1;
+	__le32 info2;
+	__le32 info3;
+	__le32 reserved;
+	__le32 info4;
+	__le32 info5;
+	__le32 info6;
+} __packed;
+
+#define HAL_TX_FES_STATUS_END_INFO0_START_TIMESTAMP_15_0	GENMASK(15, 0)
+#define HAL_TX_FES_STATUS_END_INFO0_START_TIMESTAMP_31_16	GENMASK(31, 16)
+
+struct hal_tx_fes_status_end {
+	__le32 reserved[2];
+	__le32 info0;
+	__le32 reserved1[19];
+} __packed;
+
 #define HAL_TX_BANK_CONFIG_EPD			BIT(0)
 #define HAL_TX_BANK_CONFIG_ENCAP_TYPE		GENMASK(2, 1)
 #define HAL_TX_BANK_CONFIG_ENCRYPT_TYPE		GENMASK(6, 3)

@@ -7,6 +7,7 @@
 #include "dp_mon.h"
 #include "debug.h"
 #include "dp_rx.h"
+#include "dp_tx.h"
 #include "peer.h"
 
 static inline void
@@ -798,8 +799,8 @@ ath12k_dp_mon_rx_parse_status_tlv(struct ath12k_base *ab,
 		break;
 	case HAL_MON_BUF_ADDR: {
 		struct dp_rxdma_ring *buf_ring = &ab->dp.rxdma_mon_buf_ring;
-		struct hal_mon_packet_info *packet_info =
-			(struct hal_mon_packet_info *)tlv_data;
+		struct dp_mon_packet_info *packet_info =
+			(struct dp_mon_packet_info *)tlv_data;
 		int buf_id = u32_get_bits(packet_info->cookie,
 					  DP_RXDMA_BUF_COOKIE_BUF_ID);
 		struct sk_buff *msdu;
@@ -1516,13 +1517,13 @@ static int
 ath12k_dp_mon_tx_gen_4addr_qos_null_frame(struct dp_mon_tx_ppdu_info *tx_ppdu_info)
 {
 	struct sk_buff *skb;
-	struct ieee80211_qosframe_addr4 *qhdr;
+	struct dp_mon_qosframe_addr4 *qhdr;
 
 	skb = ath12k_dp_mon_tx_alloc_skb();
 	if (!skb)
 		return -ENOMEM;
 
-	qhdr = (struct ieee80211_qosframe_addr4 *)skb->data;
+	qhdr = (struct dp_mon_qosframe_addr4 *)skb->data;
 	memset(qhdr, 0, MAX_DUMMY_FRM_BODY);
 	qhdr->frame_control =
 		cpu_to_le16(IEEE80211_FTYPE_DATA | IEEE80211_STYPE_QOS_NULLFUNC);
@@ -1545,13 +1546,13 @@ static int
 ath12k_dp_mon_tx_gen_ack_frame(struct dp_mon_tx_ppdu_info *tx_ppdu_info)
 {
 	struct sk_buff *skb;
-	struct ieee80211_frame_min_one *fbmhdr;
+	struct dp_mon_frame_min_one *fbmhdr;
 
 	skb = ath12k_dp_mon_tx_alloc_skb();
 	if (!skb)
 		return -ENOMEM;
 
-	fbmhdr = (struct ieee80211_frame_min_one *)skb->data;
+	fbmhdr = (struct dp_mon_frame_min_one *)skb->data;
 	memset(fbmhdr, 0, MAX_DUMMY_FRM_BODY);
 	fbmhdr->frame_control =
 		cpu_to_le16(IEEE80211_FTYPE_DATA | IEEE80211_STYPE_QOS_CFACK);
@@ -1575,18 +1576,18 @@ ath12k_dp_mon_tx_gen_prot_frame(struct dp_mon_tx_ppdu_info *tx_ppdu_info)
 	int ret = 0;
 
 	switch (tx_ppdu_info->rx_status.medium_prot_type) {
-	case HAL_MON_TX_MEDIUM_RTS_LEGACY:
-	case HAL_MON_TX_MEDIUM_RTS_11AC_STATIC_BW:
-	case HAL_MON_TX_MEDIUM_RTS_11AC_DYNAMIC_BW:
+	case DP_MON_TX_MEDIUM_RTS_LEGACY:
+	case DP_MON_TX_MEDIUM_RTS_11AC_STATIC_BW:
+	case DP_MON_TX_MEDIUM_RTS_11AC_DYNAMIC_BW:
 		ret = ath12k_dp_mon_tx_gen_rts_frame(tx_ppdu_info);
 		break;
-	case HAL_MON_TX_MEDIUM_CTS2SELF:
+	case DP_MON_TX_MEDIUM_CTS2SELF:
 		ret = ath12k_dp_mon_tx_gen_cts2self_frame(tx_ppdu_info);
 		break;
-	case HAL_MON_TX_MEDIUM_QOS_NULL_NO_ACK_3ADDR:
+	case DP_MON_TX_MEDIUM_QOS_NULL_NO_ACK_3ADDR:
 		ret = ath12k_dp_mon_tx_gen_3addr_qos_null_frame(tx_ppdu_info);
 		break;
-	case HAL_MON_TX_MEDIUM_QOS_NULL_NO_ACK_4ADDR:
+	case DP_MON_TX_MEDIUM_QOS_NULL_NO_ACK_4ADDR:
 		ret = ath12k_dp_mon_tx_gen_4addr_qos_null_frame(tx_ppdu_info);
 		break;
 	}
@@ -1594,13 +1595,13 @@ ath12k_dp_mon_tx_gen_prot_frame(struct dp_mon_tx_ppdu_info *tx_ppdu_info)
 	return ret;
 }
 
-static enum hal_tx_tlv_status
+static enum dp_mon_tx_tlv_status
 ath12k_dp_mon_tx_parse_status_tlv(struct ath12k_base *ab,
 				  struct ath12k_mon_data *pmon,
 				  u16 tlv_tag, u8 *tlv_data, u32 userid)
 {
 	struct dp_mon_tx_ppdu_info *tx_ppdu_info;
-	enum hal_tx_tlv_status status = HAL_TX_MON_STATUS_PPDU_NOT_DONE;
+	enum dp_mon_tx_tlv_status status = DP_MON_TX_STATUS_PPDU_NOT_DONE;
 	u32 info[7];
 
 	tx_ppdu_info = ath12k_dp_mon_hal_tx_ppdu_info(pmon, tlv_tag);
@@ -1614,7 +1615,7 @@ ath12k_dp_mon_tx_parse_status_tlv(struct ath12k_base *ab,
 		tx_ppdu_info->ppdu_id = __le32_to_cpu(tx_fes_setup->schedule_id);
 		tx_ppdu_info->num_users =
 			u32_get_bits(info[0], HAL_TX_FES_SETUP_INFO0_NUM_OF_USERS);
-		status = HAL_MON_TX_FES_SETUP;
+		status = DP_MON_TX_FES_SETUP;
 		break;
 	}
 
@@ -1632,7 +1633,7 @@ ath12k_dp_mon_tx_parse_status_tlv(struct ath12k_base *ab,
 				     HAL_TX_FES_STATUS_END_INFO0_START_TIMESTAMP_31_16);
 
 		tx_ppdu_info->rx_status.ppdu_ts = (tst_15_0 | (tst_31_16 << 16));
-		status = HAL_MON_TX_FES_STATUS_END;
+		status = DP_MON_TX_FES_STATUS_END;
 		break;
 	}
 
@@ -1678,7 +1679,7 @@ ath12k_dp_mon_tx_parse_status_tlv(struct ath12k_base *ab,
 
 		if (tx_ppdu_info->rx_status.reception_type == 0)
 			ath12k_dp_mon_tx_gen_cts2self_frame(tx_ppdu_info);
-		status = HAL_MON_RX_RESPONSE_REQUIRED_INFO;
+		status = DP_MON_RX_RESPONSE_REQUIRED_INFO;
 		break;
 	}
 
@@ -1899,15 +1900,15 @@ ath12k_dp_mon_tx_parse_status_tlv(struct ath12k_base *ab,
 
 		mon_mpdu = kzalloc(sizeof(*mon_mpdu), GFP_ATOMIC);
 		if (!mon_mpdu)
-			return HAL_TX_MON_STATUS_PPDU_NOT_DONE;
-		status = HAL_MON_TX_MPDU_START;
+			return DP_MON_TX_STATUS_PPDU_NOT_DONE;
+		status = DP_MON_TX_MPDU_START;
 		break;
 	}
 
 	case HAL_MON_BUF_ADDR: {
 		struct dp_rxdma_ring *buf_ring = &ab->dp.tx_mon_buf_ring;
-		struct hal_mon_packet_info *packet_info =
-			(struct hal_mon_packet_info *)tlv_data;
+		struct dp_mon_packet_info *packet_info =
+			(struct dp_mon_packet_info *)tlv_data;
 		int buf_id = u32_get_bits(packet_info->cookie,
 					  DP_RXDMA_BUF_COOKIE_BUF_ID);
 		struct sk_buff *msdu;
@@ -1921,7 +1922,7 @@ ath12k_dp_mon_tx_parse_status_tlv(struct ath12k_base *ab,
 		if (unlikely(!msdu)) {
 			ath12k_warn(ab, "montior destination with invalid buf_id %d\n",
 				    buf_id);
-			return HAL_TX_MON_STATUS_PPDU_NOT_DONE;
+			return DP_MON_TX_STATUS_PPDU_NOT_DONE;
 		}
 
 		rxcb = ATH12K_SKB_RXCB(msdu);
@@ -1937,7 +1938,7 @@ ath12k_dp_mon_tx_parse_status_tlv(struct ath12k_base *ab,
 		mon_mpdu->tail = msdu;
 
 		ath12k_dp_mon_buf_replenish(ab, buf_ring, 1);
-		status = HAL_MON_TX_BUFFER_ADDR;
+		status = DP_MON_TX_BUFFER_ADDR;
 		break;
 	}
 
@@ -1950,12 +1951,12 @@ ath12k_dp_mon_tx_parse_status_tlv(struct ath12k_base *ab,
 	return status;
 }
 
-enum hal_tx_tlv_status
+enum dp_mon_tx_tlv_status
 ath12k_dp_mon_tx_status_get_num_user(u16 tlv_tag,
 				     struct hal_tlv_hdr *tx_tlv,
 				     u8 *num_users)
 {
-	u32 tlv_status = HAL_TX_MON_STATUS_PPDU_NOT_DONE;
+	u32 tlv_status = DP_MON_TX_STATUS_PPDU_NOT_DONE;
 	u32 info0;
 
 	switch (tlv_tag) {
@@ -1966,13 +1967,13 @@ ath12k_dp_mon_tx_status_get_num_user(u16 tlv_tag,
 		info0 = __le32_to_cpu(tx_fes_setup->info0);
 
 		*num_users = u32_get_bits(info0, HAL_TX_FES_SETUP_INFO0_NUM_OF_USERS);
-		tlv_status = HAL_MON_TX_FES_SETUP;
+		tlv_status = DP_MON_TX_FES_SETUP;
 		break;
 	}
 
 	case HAL_RX_RESPONSE_REQUIRED_INFO: {
 		// need to update *num_users
-		tlv_status = HAL_MON_RX_RESPONSE_REQUIRED_INFO;
+		tlv_status = DP_MON_RX_RESPONSE_REQUIRED_INFO;
 		break;
 	}
 	}
@@ -2017,7 +2018,7 @@ ath12k_dp_mon_tx_parse_mon_status(struct ath12k *ar,
 	u16 tlv_len;
 	u32 tlv_userid = 0;
 	u8 num_user;
-	u32 tlv_status = HAL_TX_MON_STATUS_PPDU_NOT_DONE;
+	u32 tlv_status = DP_MON_TX_STATUS_PPDU_NOT_DONE;
 
 	tx_prot_ppdu_info = ath12k_dp_mon_tx_get_ppdu_info(pmon, ppdu_id,
 							   DP_MON_TX_PROT_PPDU_INFO);
@@ -2028,7 +2029,7 @@ ath12k_dp_mon_tx_parse_mon_status(struct ath12k *ar,
 	tlv_tag = u32_get_bits(tlv->tl, HAL_TLV_HDR_TAG);
 
 	tlv_status = ath12k_dp_mon_tx_status_get_num_user(tlv_tag, tlv, &num_user);
-	if (tlv_status == HAL_TX_MON_STATUS_PPDU_NOT_DONE || !num_user)
+	if (tlv_status == DP_MON_TX_STATUS_PPDU_NOT_DONE || !num_user)
 		return -EINVAL;
 
 	tx_data_ppdu_info = ath12k_dp_mon_tx_get_ppdu_info(pmon, ppdu_id,
@@ -2049,7 +2050,7 @@ ath12k_dp_mon_tx_parse_mon_status(struct ath12k *ar,
 		ptr = PTR_ALIGN(ptr, HAL_TLV_ALIGN);
 		if ((ptr - skb->data) >= DP_TX_MONITOR_BUF_SIZE)
 			break;
-	} while (tlv_status != HAL_MON_TX_FES_STATUS_END);
+	} while (tlv_status != DP_MON_TX_FES_STATUS_END);
 
 	ath12k_dp_mon_tx_process_ppdu_info(ar, mac_id, napi, tx_data_ppdu_info);
 	ath12k_dp_mon_tx_process_ppdu_info(ar, mac_id, napi, tx_prot_ppdu_info);
