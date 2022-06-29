@@ -1106,6 +1106,11 @@ static long do_fb_ioctl(struct fb_info *info, unsigned int cmd,
 			return -EFAULT;
 		console_lock();
 		lock_fb_info(info);
+		/* adjust virtual screen size if user missed it */
+		if (var.xres_virtual < var.xres)
+			var.xres_virtual = var.xres;
+		if (var.yres_virtual < var.yres)
+			var.yres_virtual = var.yres;
 		ret = fb_set_var(info, &var);
 		if (!ret)
 			fbcon_update_vcs(info, var.activate & FB_ACTIVATE_ALL);
