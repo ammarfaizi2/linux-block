@@ -73,6 +73,7 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.num_tcl_banks = 48,
 		.fix_l1ss = false,
 		.max_tx_ring = 4,
+		.static_window_map = true,
 	},
 	{
 		.name = "wcn7850 hw2.0",
@@ -116,6 +117,7 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.num_tcl_banks = 7,
 		.fix_l1ss = false,
 		.max_tx_ring = 3,
+		.static_window_map = false,
 	},
 };
 
@@ -1041,8 +1043,7 @@ void ath12k_core_free(struct ath12k_base *ab)
 }
 
 struct ath12k_base *ath12k_core_alloc(struct device *dev, size_t priv_size,
-				      enum ath12k_bus bus,
-				      const struct ath12k_bus_params *bus_params)
+				      enum ath12k_bus bus)
 {
 	struct ath12k_base *ab;
 
@@ -1077,7 +1078,6 @@ struct ath12k_base *ath12k_core_alloc(struct device *dev, size_t priv_size,
 	init_completion(&ab->wow.wakeup_completed);
 
 	ab->dev = dev;
-	ab->bus_params = *bus_params;
 	ab->hif.bus = bus;
 
 	return ab;

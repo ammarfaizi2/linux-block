@@ -47,10 +47,6 @@ static const struct pci_device_id ath12k_pci_id_table[] = {
 
 MODULE_DEVICE_TABLE(pci, ath12k_pci_id_table);
 
-static const struct ath12k_bus_params ath12k_pci_bus_params = {
-	.fixed_bdf_addr = false,
-};
-
 /* TODO: revisit IRQ mapping for new SRNG's */
 static const struct ath12k_msi_config ath12k_msi_config[] = {
 	{
@@ -1077,7 +1073,7 @@ u32 ath12k_pci_read32(struct ath12k_base *ab, u32 offset)
 	if (offset < WINDOW_START) {
 		val = ioread32(ab->mem + offset);
 	} else {
-		if (ab->bus_params.static_window_map)
+		if (ab->hw_params.static_window_map)
 			window_start = ath12k_pci_get_window_start(ab, offset);
 		else
 			window_start = WINDOW_START;
@@ -1121,7 +1117,7 @@ void ath12k_pci_write32(struct ath12k_base *ab, u32 offset, u32 value)
 	if (offset < WINDOW_START) {
 		iowrite32(value, ab->mem + offset);
 	} else {
-		if (ab->bus_params.static_window_map)
+		if (ab->hw_params.static_window_map)
 			window_start = ath12k_pci_get_window_start(ab, offset);
 		else
 			window_start = WINDOW_START;
@@ -1170,7 +1166,7 @@ int ath12k_pci_power_up(struct ath12k_base *ab)
 		return ret;
 	}
 
-	if (ab->bus_params.static_window_map)
+	if (ab->hw_params.static_window_map)
 		ath12k_pci_select_static_window(ab_pci);
 
 	return 0;
@@ -1218,8 +1214,7 @@ static int ath12k_pci_probe(struct pci_dev *pdev,
 
 	dev_warn(&pdev->dev, "WARNING: ath12k PCI support is experimental!\n");
 
-	ab = ath12k_core_alloc(&pdev->dev, sizeof(*ab_pci), ATH12K_BUS_PCI,
-			       &ath12k_pci_bus_params);
+	ab = ath12k_core_alloc(&pdev->dev, sizeof(*ab_pci), ATH12K_BUS_PCI);
 	if (!ab) {
 		dev_err(&pdev->dev, "failed to allocate ath12k base\n");
 		return -ENOMEM;
@@ -1244,12 +1239,10 @@ static int ath12k_pci_probe(struct pci_dev *pdev,
 	switch (pci_dev->device) {
 	case QCN92XX_DEVICE_ID:
 		ab_pci->msi_config = &ath12k_msi_config[0];
-		ab->bus_params.static_window_map = true;
 		ab->hw_rev = ATH12K_HW_QCN92XX_HW10;
 		break;
 	case WCN7850_DEVICE_ID:
 		ab_pci->msi_config = &ath12k_msi_config[0];
-		ab->bus_params.static_window_map = false;
 		ab->hw_rev = ATH12K_HW_WCN7850_HW20;
 		break;
 

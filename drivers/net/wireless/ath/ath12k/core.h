@@ -649,12 +649,6 @@ struct ath12k_board_data {
 	size_t len;
 };
 
-/* BRINGUP: we support only one bus (PCI) so remove this struct */
-struct ath12k_bus_params {
-	bool fixed_bdf_addr;
-	bool static_window_map;
-};
-
 struct ath12k_bp_stats {
 	/* Head Pointer reported by the last HTT Backpressure event for the ring */
 	u16 hp;
@@ -747,7 +741,6 @@ struct ath12k_base {
 	int bd_api;
 
 	struct ath12k_hw_params hw_params;
-	struct ath12k_bus_params bus_params;
 
 	const struct firmware *cal_file;
 
@@ -934,8 +927,7 @@ int ath12k_core_pre_init(struct ath12k_base *ab);
 int ath12k_core_init(struct ath12k_base *ath12k);
 void ath12k_core_deinit(struct ath12k_base *ath12k);
 struct ath12k_base *ath12k_core_alloc(struct device *dev, size_t priv_size,
-				      enum ath12k_bus bus,
-				      const struct ath12k_bus_params *bus_params);
+				      enum ath12k_bus bus);
 void ath12k_core_free(struct ath12k_base *ath12k);
 int ath12k_core_fetch_board_data_api_1(struct ath12k_base *ab,
 				       struct ath12k_board_data *bd,

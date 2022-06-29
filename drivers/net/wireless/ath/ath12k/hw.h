@@ -177,6 +177,7 @@ struct ath12k_hw_params {
 	u32 num_tcl_banks;
 	bool fix_l1ss;
 	u32 max_tx_ring;
+	bool static_window_map;
 };
 
 /* BRINGUP: move to dp.h */

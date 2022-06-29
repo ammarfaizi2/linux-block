@@ -2528,7 +2528,6 @@ static int ath12k_qmi_load_file_target_mem(struct ath12k_base *ab,
 	struct qmi_wlanfw_bdf_download_resp_msg_v01 resp;
 	struct qmi_txn txn = {};
 	const u8 *temp = data;
-	void __iomem *bdf_addr = NULL;
 	int ret;
 	u32 remaining = len;
 
@@ -2536,15 +2535,6 @@ static int ath12k_qmi_load_file_target_mem(struct ath12k_base *ab,
 	if (!req)
 		return -ENOMEM;
 	memset(&resp, 0, sizeof(resp));
-
-	if (ab->bus_params.fixed_bdf_addr) {
-		bdf_addr = ioremap(ab->hw_params.bdf_addr, ab->hw_params.fw.board_size);
-		if (!bdf_addr) {
-			ath12k_warn(ab, "qmi ioremap error for BDF\n");
-			ret = -EIO;
-			goto out_req;
-		}
-	}
 
 	while (remaining) {
 		req->valid = 1;
@@ -2566,20 +2556,12 @@ static int ath12k_qmi_load_file_target_mem(struct ath12k_base *ab,
 			req->end = 1;
 		}
 
-		if ((ab->bus_params.fixed_bdf_addr) ||
-		    (type == ATH12K_QMI_FILE_TYPE_EEPROM)) {
+		if (type == ATH12K_QMI_FILE_TYPE_EEPROM) {
 			req->data_valid = 0;
 			req->end = 1;
 			req->data_len = ATH12K_QMI_MAX_BDF_FILE_NAME_SIZE;
 		} else {
 			memcpy(req->data, temp, req->data_len);
-		}
-
-		if (ab->bus_params.fixed_bdf_addr) {
-			if (type == ATH12K_QMI_FILE_TYPE_CALDATA)
-				bdf_addr += ab->hw_params.fw.cal_offset;
-
-			memcpy_toio(bdf_addr, temp, len);
 		}
 
 		ret = qmi_txn_init(&ab->qmi.handle, &txn,
@@ -2611,22 +2593,15 @@ static int ath12k_qmi_load_file_target_mem(struct ath12k_base *ab,
 			goto out;
 		}
 
-		if (ab->bus_params.fixed_bdf_addr) {
-			remaining = 0;
-		} else {
-			remaining -= req->data_len;
-			temp += req->data_len;
-			req->seg_id++;
-			ath12k_dbg(ab, ATH12K_DBG_QMI,
-				   "qmi bdf download request remaining %i\n",
-				   remaining);
-		}
+		remaining -= req->data_len;
+		temp += req->data_len;
+		req->seg_id++;
+		ath12k_dbg(ab, ATH12K_DBG_QMI,
+			   "qmi bdf download request remaining %i\n",
+			   remaining);
 	}
 
 out:
-	if (ab->bus_params.fixed_bdf_addr)
-		iounmap(bdf_addr);
-out_req:
 	kfree(req);
 	return ret;
 }
@@ -3113,12 +3088,10 @@ static int ath12k_qmi_event_load_bdf(struct ath12k_qmi *qmi)
 		return ret;
 	}
 
-	if (!ab->bus_params.fixed_bdf_addr) {
-		ret = ath12k_qmi_load_bdf_qmi(ab, ATH12K_QMI_BDF_TYPE_REGDB);
-		if (ret < 0) {
-			ath12k_warn(ab, "qmi failed to load regdb file:%d\n", ret);
-			return ret;
-		}
+	ret = ath12k_qmi_load_bdf_qmi(ab, ATH12K_QMI_BDF_TYPE_REGDB);
+	if (ret < 0) {
+		ath12k_warn(ab, "qmi failed to load regdb file:%d\n", ret);
+		return ret;
 	}
 
 	ret = ath12k_qmi_load_bdf_qmi(ab, ATH12K_QMI_BDF_TYPE_ELF);
