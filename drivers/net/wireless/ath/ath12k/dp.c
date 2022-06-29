@@ -388,9 +388,9 @@ inc_ref_and_return:
 	if (configure_register)
 		ath12k_hal_tx_configure_bank_register(ab, bank_config, bank_id);
 
-	ath12k_info(ab, "found TCL bank at index %d, input:0x%x match:0x%x num_users %u",
-		    bank_id, bank_config, dp->bank_profiles[bank_id].bank_config,
-		    dp->bank_profiles[bank_id].num_users);
+	ath12k_dbg(ab, ATH12K_DBG_DP_HTT, "dp_htt tcl bank_id %d input 0x%x match 0x%x num_users %u",
+		   bank_id, bank_config, dp->bank_profiles[bank_id].bank_config,
+		   dp->bank_profiles[bank_id].num_users);
 
 	return bank_id;
 }
