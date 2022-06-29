@@ -1827,7 +1827,8 @@ void ath12k_dp_htt_htc_t2h_msg_handler(struct ath12k_base *ab,
 		ath12k_htt_vdev_txrx_stats_handler(ab, skb);
 		break;
 	default:
-		ath12k_warn(ab, "htt event %d not handled\n", type);
+		ath12k_dbg(ab, ATH12K_DBG_DP_HTT, "dp_htt event %d not handled\n",
+			   type);
 		break;
 	}
 
