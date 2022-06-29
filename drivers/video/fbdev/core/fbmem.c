@@ -1006,6 +1006,12 @@ fb_set_var(struct fb_info *info, struct fb_var_screeninfo *var)
 	if (var->xres < 8 || var->yres < 8)
 		return -EINVAL;
 
+	/* make sure virtual resolution >= physical resolution */
+	if (WARN_ON(var->xres_virtual < var->xres))
+		var->xres_virtual = var->xres;
+	if (WARN_ON(var->yres_virtual < var->yres))
+		var->yres_virtual = var->yres;
+
 	/* Too huge resolution causes multiplication overflow. */
 	if (check_mul_overflow(var->xres, var->yres, &unused) ||
 	    check_mul_overflow(var->xres_virtual, var->yres_virtual, &unused))
