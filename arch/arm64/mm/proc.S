@@ -249,8 +249,10 @@ SYM_FUNC_END(idmap_cpu_replace_ttbr1)
  *
  * Called exactly once from stop_machine context by each CPU found during boot.
  */
-__idmap_kpti_flag:
-	.long	1
+	.pushsection	".data", "aw", %progbits
+SYM_DATA(__idmap_kpti_flag, .long 1)
+	.popsection
+
 SYM_FUNC_START(idmap_kpti_install_ng_mappings)
 	cpu		.req	w0
 	temp_pte	.req	x0
@@ -273,7 +275,7 @@ SYM_FUNC_START(idmap_kpti_install_ng_mappings)
 
 	mov	x5, x3				// preserve temp_pte arg
 	mrs	swapper_ttb, ttbr1_el1
-	adr	flag_ptr, __idmap_kpti_flag
+	adr_l	flag_ptr, __idmap_kpti_flag
 
 	cbnz	cpu, __idmap_kpti_secondary
 
@@ -470,7 +472,7 @@ SYM_FUNC_START(__cpu_setup)
 	add		x9, x9, #64
 	tcr_set_t1sz	tcr, x9
 #else
-	ldr_l		x9, idmap_t0sz
+	idmap_get_t0sz	x9
 #endif
 	tcr_set_t0sz	tcr, x9
 
