@@ -21,8 +21,8 @@
  * @len: Length of the modification
  * @worker: The worker function to handle the write(s)
  *
- * Allocate a write operation, set it up and add it to the list on a write
- * request.
+ * Allocate a write operation, set it up and add it to the list on the last
+ * chain of a write request.
  */
 struct netfs_io_subrequest *netfs_create_write_request(struct netfs_io_request *wreq,
 						       enum netfs_io_source dest,
@@ -30,6 +30,7 @@ struct netfs_io_subrequest *netfs_create_write_request(struct netfs_io_request *
 						       work_func_t worker)
 {
 	struct netfs_io_subrequest *subreq;
+	struct netfs_io_chain *chain = &wreq->chains[wreq->nr_chains - 1];
 
 	subreq = netfs_alloc_subrequest(wreq);
 	if (subreq) {
@@ -37,7 +38,7 @@ struct netfs_io_subrequest *netfs_create_write_request(struct netfs_io_request *
 		subreq->source	= dest;
 		subreq->start	= start;
 		subreq->len	= len;
-		subreq->debug_index = wreq->subreq_counter++;
+		subreq->debug_index = chain->subreq_counter++;
 
 		switch (subreq->source) {
 		case NETFS_UPLOAD_TO_SERVER:
@@ -73,10 +74,11 @@ struct netfs_io_subrequest *netfs_create_write_request(struct netfs_io_request *
 		}
 
 		trace_netfs_sreq_ref(wreq->debug_id, subreq->debug_index,
-				     refcount_read(&subreq->ref),
+				     subreq->chain, refcount_read(&subreq->ref),
 				     netfs_sreq_trace_new);
 		atomic_inc(&wreq->nr_outstanding);
-		list_add_tail(&subreq->rreq_link, &wreq->subrequests);
+		subreq->chain = wreq->nr_chains - 1;
+		list_add_tail(&subreq->chain_link, &chain->subrequests);
 		trace_netfs_sreq(subreq, netfs_sreq_trace_prepare);
 	}
 
@@ -92,48 +94,56 @@ static void netfs_write_terminated(struct netfs_io_request *wreq, bool was_async
 {
 	struct netfs_io_subrequest *subreq;
 	struct netfs_inode *ctx = netfs_inode(wreq->inode);
-	size_t transferred = 0;
+	unsigned int c;
 
 	_enter("R=%x[]", wreq->debug_id);
 
 	trace_netfs_rreq(wreq, netfs_rreq_trace_write_done);
 
-	list_for_each_entry(subreq, &wreq->subrequests, rreq_link) {
-		if (subreq->error || subreq->transferred == 0)
-			break;
-		transferred += subreq->transferred;
-		if (subreq->transferred < subreq->len)
-			break;
-	}
-	wreq->transferred = transferred;
+	for (c = 0; c < wreq->nr_chains; c++) {
+		struct netfs_io_chain *chain = &wreq->chains[c];
+		size_t transferred = 0;
 
-	list_for_each_entry(subreq, &wreq->subrequests, rreq_link) {
-		if (!subreq->error)
-			continue;
-		switch (subreq->source) {
-		case NETFS_UPLOAD_TO_SERVER:
-			/* Depending on the type of failure, this may prevent
-			 * writeback completion unless we're in disconnected
-			 * mode.
-			 */
-			if (!wreq->error)
-				wreq->error = subreq->error;
-			break;
-
-		case NETFS_WRITE_TO_CACHE:
-			/* Failure doesn't prevent writeback completion unless
-			 * we're in disconnected mode.
-			 */
-			if (subreq->error != -ENOBUFS)
-				ctx->ops->invalidate_cache(wreq);
-			break;
-
-		default:
-			WARN_ON_ONCE(1);
-			if (!wreq->error)
-				wreq->error = -EIO;
-			return;
+		list_for_each_entry(subreq, &chain->subrequests, chain_link) {
+			if (subreq->error || subreq->transferred == 0)
+				break;
+			transferred += subreq->transferred;
+			if (subreq->transferred < subreq->len)
+				break;
 		}
+		chain->transferred = transferred;
+
+		list_for_each_entry(subreq, &chain->subrequests, chain_link) {
+			if (!subreq->error)
+				continue;
+			switch (chain->source) {
+			case NETFS_UPLOAD_TO_SERVER:
+				/* Depending on the type of failure, this may prevent
+				 * writeback completion unless we're in disconnected
+				 * mode.
+				 */
+				if (!chain->error)
+					chain->error = subreq->error;
+				break;
+
+			case NETFS_WRITE_TO_CACHE:
+				/* Failure doesn't prevent writeback completion unless
+				 * we're in disconnected mode.
+				 */
+				if (chain->error != -ENOBUFS)
+					ctx->ops->invalidate_cache(wreq);
+				break;
+
+			default:
+				WARN_ON_ONCE(1);
+				if (!chain->error)
+					chain->error = -EIO;
+				return;
+			}
+		}
+
+		if (chain->error && !wreq->error)
+			wreq->error = chain->error;
 	}
 
 	wreq->cleanup(wreq);
@@ -278,7 +288,8 @@ void netfs_queue_write_request(struct netfs_io_subrequest *subreq)
 EXPORT_SYMBOL(netfs_queue_write_request);
 
 /*
- * Set up a op for writing to the cache.
+ * Set up a op for writing to the cache.  This will stick the writes on chain 0
+ * and bump all the uploads over to chains 1+.
  */
 static void netfs_set_up_write_to_cache(struct netfs_io_request *wreq)
 {
@@ -310,6 +321,7 @@ static void netfs_set_up_write_to_cache(struct netfs_io_request *wreq)
 		return;
 	}
 
+	/* Add to chain 0. */
 	ret = cres->ops->prepare_write(cres, &start, &len, i_size_read(wreq->inode),
 				       true);
 	if (ret < 0) {
@@ -318,6 +330,7 @@ static void netfs_set_up_write_to_cache(struct netfs_io_request *wreq)
 	}
 
 	netfs_queue_write_request(subreq);
+	wreq->nr_chains++;
 }
 
 /*

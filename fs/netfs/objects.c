@@ -22,6 +22,7 @@ struct netfs_io_request *netfs_alloc_request(struct address_space *mapping,
 	struct inode *inode = file ? file_inode(file) : mapping->host;
 	struct netfs_inode *ctx = netfs_inode(inode);
 	struct netfs_io_request *rreq;
+	unsigned int i;
 	bool is_dio = (origin == NETFS_DIO_READ || origin == NETFS_DIO_WRITE);
 	bool cached = !is_dio && netfs_is_cache_enabled(ctx);
 	int ret;
@@ -41,7 +42,10 @@ struct netfs_io_request *netfs_alloc_request(struct address_space *mapping,
 	rreq->debug_id	= atomic_inc_return(&debug_ids);
 	xa_init(&rreq->buffer);
 	xa_init(&rreq->bounce);
-	INIT_LIST_HEAD(&rreq->subrequests);
+	rreq->chains	= rreq->chain;
+	rreq->nr_chains	= 1;
+	for (i = 0; i < ARRAY_SIZE(rreq->chain); i++)
+		INIT_LIST_HEAD(&rreq->chain[i].subrequests);
 	INIT_LIST_HEAD(&rreq->regions);
 	refcount_set(&rreq->ref, 1);
 
@@ -79,14 +83,22 @@ void netfs_get_request(struct netfs_io_request *rreq, enum netfs_rreq_ref_trace 
 void netfs_clear_subrequests(struct netfs_io_request *rreq, bool was_async)
 {
 	struct netfs_io_subrequest *subreq;
+	unsigned int i;
 
-	while (!list_empty(&rreq->subrequests)) {
-		subreq = list_first_entry(&rreq->subrequests,
-					  struct netfs_io_subrequest, rreq_link);
-		list_del(&subreq->rreq_link);
-		netfs_put_subrequest(subreq, was_async,
-				     netfs_sreq_trace_put_clear);
+	for (i = 0; i < rreq->nr_chains; i++) {
+		struct netfs_io_chain *chain = &rreq->chains[i];
+
+		while (!list_empty(&chain->subrequests)) {
+			subreq = list_first_entry(&chain->subrequests,
+						  struct netfs_io_subrequest, chain_link);
+			list_del(&subreq->chain_link);
+			netfs_put_subrequest(subreq, was_async,
+					     netfs_sreq_trace_put_clear);
+		}
 	}
+
+	if (rreq->chains != rreq->chain)
+		kfree(rreq->chains);
 }
 
 static void netfs_clear_regions(struct netfs_io_request *rreq)
@@ -163,7 +175,7 @@ struct netfs_io_subrequest *netfs_alloc_subrequest(struct netfs_io_request *rreq
 			 GFP_KERNEL);
 	if (subreq) {
 		INIT_WORK(&subreq->work, NULL);
-		INIT_LIST_HEAD(&subreq->rreq_link);
+		INIT_LIST_HEAD(&subreq->chain_link);
 		refcount_set(&subreq->ref, 2);
 		subreq->rreq = rreq;
 		netfs_get_request(rreq, netfs_rreq_trace_get_subreq);
@@ -179,8 +191,8 @@ void netfs_get_subrequest(struct netfs_io_subrequest *subreq,
 	int r;
 
 	__refcount_inc(&subreq->ref, &r);
-	trace_netfs_sreq_ref(subreq->rreq->debug_id, subreq->debug_index, r + 1,
-			     what);
+	trace_netfs_sreq_ref(subreq->rreq->debug_id, subreq->debug_index,
+			     subreq->chain, r + 1, what);
 }
 
 static void netfs_free_subrequest(struct netfs_io_subrequest *subreq,
@@ -197,13 +209,14 @@ static void netfs_free_subrequest(struct netfs_io_subrequest *subreq,
 void netfs_put_subrequest(struct netfs_io_subrequest *subreq, bool was_async,
 			  enum netfs_sreq_ref_trace what)
 {
+	unsigned char chain = subreq->chain;
 	unsigned int debug_index = subreq->debug_index;
 	unsigned int debug_id = subreq->rreq->debug_id;
 	bool dead;
 	int r;
 
 	dead = __refcount_dec_and_test(&subreq->ref, &r);
-	trace_netfs_sreq_ref(debug_id, debug_index, r - 1, what);
+	trace_netfs_sreq_ref(debug_id, debug_index, chain, r - 1, what);
 	if (dead)
 		netfs_free_subrequest(subreq, was_async);
 }

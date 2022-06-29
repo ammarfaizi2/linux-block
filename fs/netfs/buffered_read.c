@@ -16,6 +16,7 @@
 void netfs_rreq_unlock_folios(struct netfs_io_request *rreq)
 {
 	struct netfs_io_subrequest *subreq;
+	struct netfs_io_chain *chain = &rreq->chain[0];
 	struct folio *folio;
 	unsigned int iopos, account = 0;
 	pgoff_t start_page = rreq->start / PAGE_SIZE;
@@ -26,7 +27,7 @@ void netfs_rreq_unlock_folios(struct netfs_io_request *rreq)
 
 	if (test_bit(NETFS_RREQ_FAILED, &rreq->flags)) {
 		__clear_bit(NETFS_RREQ_COPY_TO_CACHE, &rreq->flags);
-		list_for_each_entry(subreq, &rreq->subrequests, rreq_link) {
+		list_for_each_entry(subreq, &chain->subrequests, chain_link) {
 			__clear_bit(NETFS_SREQ_COPY_TO_CACHE, &subreq->flags);
 		}
 	}
@@ -37,8 +38,8 @@ void netfs_rreq_unlock_folios(struct netfs_io_request *rreq)
 	 * complicated by the possibility that we might have huge pages with a
 	 * mixture inside.
 	 */
-	subreq = list_first_entry(&rreq->subrequests,
-				  struct netfs_io_subrequest, rreq_link);
+	subreq = list_first_entry(&chain->subrequests,
+				  struct netfs_io_subrequest, chain_link);
 	iopos = 0;
 	subreq_failed = (subreq->error < 0);
 
@@ -62,8 +63,8 @@ void netfs_rreq_unlock_folios(struct netfs_io_request *rreq)
 
 			account += subreq->transferred;
 			iopos += subreq->len;
-			if (!list_is_last(&subreq->rreq_link, &rreq->subrequests)) {
-				subreq = list_next_entry(subreq, rreq_link);
+			if (!list_is_last(&subreq->chain_link, &chain->subrequests)) {
+				subreq = list_next_entry(subreq, chain_link);
 				subreq_failed = (subreq->error < 0);
 			} else {
 				subreq = NULL;

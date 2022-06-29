@@ -272,6 +272,7 @@ TRACE_EVENT(netfs_sreq,
 		    __field(unsigned short,		index		)
 		    __field(short,			error		)
 		    __field(unsigned short,		flags		)
+		    __field(unsigned char,		chain		)
 		    __field(enum netfs_io_source,	source		)
 		    __field(enum netfs_sreq_trace,	what		)
 		    __field(size_t,			len		)
@@ -282,6 +283,7 @@ TRACE_EVENT(netfs_sreq,
 	    TP_fast_assign(
 		    __entry->rreq	= sreq->rreq->debug_id;
 		    __entry->index	= sreq->debug_index;
+		    __entry->chain	= sreq->chain;
 		    __entry->error	= sreq->error;
 		    __entry->flags	= sreq->flags;
 		    __entry->source	= sreq->source;
@@ -291,8 +293,8 @@ TRACE_EVENT(netfs_sreq,
 		    __entry->start	= sreq->start;
 			   ),
 
-	    TP_printk("R=%08x[%u] %s %s f=%02x s=%llx %zx/%zx e=%d",
-		      __entry->rreq, __entry->index,
+	    TP_printk("R=%08x[%c%u] %s %s f=%02x s=%llx %zx/%zx e=%d",
+		      __entry->rreq, 'A' + __entry->chain, __entry->index,
 		      __print_symbolic(__entry->source, netfs_sreq_sources),
 		      __print_symbolic(__entry->what, netfs_sreq_traces),
 		      __entry->flags,
@@ -312,6 +314,7 @@ TRACE_EVENT(netfs_failure,
 		    __field(short,			index		)
 		    __field(short,			error		)
 		    __field(unsigned short,		flags		)
+		    __field(unsigned char,		chain		)
 		    __field(enum netfs_io_source,	source		)
 		    __field(enum netfs_failure,		what		)
 		    __field(size_t,			len		)
@@ -322,6 +325,7 @@ TRACE_EVENT(netfs_failure,
 	    TP_fast_assign(
 		    __entry->rreq	= rreq->debug_id;
 		    __entry->index	= sreq ? sreq->debug_index : -1;
+		    __entry->chain	= sreq->chain;
 		    __entry->error	= error;
 		    __entry->flags	= sreq ? sreq->flags : 0;
 		    __entry->source	= sreq ? sreq->source : NETFS_INVALID_READ;
@@ -331,8 +335,8 @@ TRACE_EVENT(netfs_failure,
 		    __entry->start	= sreq ? sreq->start : 0;
 			   ),
 
-	    TP_printk("R=%08x[%d] %s f=%02x s=%llx %zx/%zx %s e=%d",
-		      __entry->rreq, __entry->index,
+	    TP_printk("R=%08x[%c%d] %s f=%02x s=%llx %zx/%zx %s e=%d",
+		      __entry->rreq, 'A' + __entry->chain, __entry->index,
 		      __print_symbolic(__entry->source, netfs_sreq_sources),
 		      __entry->flags,
 		      __entry->start, __entry->transferred, __entry->len,
@@ -366,26 +370,29 @@ TRACE_EVENT(netfs_rreq_ref,
 
 TRACE_EVENT(netfs_sreq_ref,
 	    TP_PROTO(unsigned int rreq_debug_id, unsigned int subreq_debug_index,
-		     int ref, enum netfs_sreq_ref_trace what),
+		     unsigned char chain, int ref, enum netfs_sreq_ref_trace what),
 
-	    TP_ARGS(rreq_debug_id, subreq_debug_index, ref, what),
+	    TP_ARGS(rreq_debug_id, subreq_debug_index, chain, ref, what),
 
 	    TP_STRUCT__entry(
 		    __field(unsigned int,		rreq		)
 		    __field(unsigned int,		subreq		)
 		    __field(int,			ref		)
+		    __field(unsigned char,		chain		)
 		    __field(enum netfs_sreq_ref_trace,	what		)
 			     ),
 
 	    TP_fast_assign(
 		    __entry->rreq	= rreq_debug_id;
 		    __entry->subreq	= subreq_debug_index;
+		    __entry->chain	= chain;
 		    __entry->ref	= ref;
 		    __entry->what	= what;
 			   ),
 
-	    TP_printk("R=%08x[%x] %s r=%u",
+	    TP_printk("R=%08x[%c%x] %s r=%u",
 		      __entry->rreq,
+		      'A' + __entry->chain,
 		      __entry->subreq,
 		      __print_symbolic(__entry->what, netfs_sreq_ref_traces),
 		      __entry->ref)

@@ -165,6 +165,7 @@ static void netfs_reset_subreq_iter(struct netfs_io_request *rreq,
 static bool netfs_rreq_perform_resubmissions(struct netfs_io_request *rreq)
 {
 	struct netfs_io_subrequest *subreq;
+	struct netfs_io_chain *chain = &rreq->chain[0];
 
 	WARN_ON(in_interrupt());
 
@@ -176,7 +177,7 @@ static bool netfs_rreq_perform_resubmissions(struct netfs_io_request *rreq)
 	atomic_inc(&rreq->nr_outstanding);
 
 	__clear_bit(NETFS_RREQ_INCOMPLETE_IO, &rreq->flags);
-	list_for_each_entry(subreq, &rreq->subrequests, rreq_link) {
+	list_for_each_entry(subreq, &chain->subrequests, chain_link) {
 		if (subreq->error) {
 			if (subreq->source != NETFS_READ_FROM_CACHE)
 				break;
@@ -207,12 +208,13 @@ static bool netfs_rreq_perform_resubmissions(struct netfs_io_request *rreq)
 static void netfs_rreq_is_still_valid(struct netfs_io_request *rreq)
 {
 	struct netfs_io_subrequest *subreq;
+	struct netfs_io_chain *chain = &rreq->chain[0];
 
 	if (!rreq->netfs_ops->is_still_valid ||
 	    rreq->netfs_ops->is_still_valid(rreq))
 		return;
 
-	list_for_each_entry(subreq, &rreq->subrequests, rreq_link) {
+	list_for_each_entry(subreq, &chain->subrequests, chain_link) {
 		if (subreq->source == NETFS_READ_FROM_CACHE) {
 			subreq->error = -ESTALE;
 			__set_bit(NETFS_RREQ_INCOMPLETE_IO, &rreq->flags);
@@ -226,13 +228,14 @@ static void netfs_rreq_is_still_valid(struct netfs_io_request *rreq)
 static void netfs_rreq_assess_dio(struct netfs_io_request *rreq)
 {
 	struct netfs_io_subrequest *subreq;
+	struct netfs_io_chain *chain = &rreq->chain[0];
 	unsigned int i;
 	size_t transferred = 0;
 
 	for (i = 0; i < rreq->direct_bv_count; i++)
 		flush_dcache_page(rreq->direct_bv[i].bv_page);
 
-	list_for_each_entry(subreq, &rreq->subrequests, rreq_link) {
+	list_for_each_entry(subreq, &chain->subrequests, chain_link) {
 		if (subreq->error || subreq->transferred == 0)
 			break;
 		transferred += subreq->transferred;
@@ -633,22 +636,22 @@ invalid:
 /*
  * Slice off a piece of a read request and submit an I/O request for it.
  */
-static bool netfs_rreq_submit_slice(struct netfs_io_request *rreq,
-				    unsigned int *_debug_index)
+static bool netfs_rreq_submit_slice(struct netfs_io_request *rreq)
 {
 	struct netfs_io_subrequest *subreq;
+	struct netfs_io_chain *chain = &rreq->chain[0];
 	enum netfs_io_source source;
 
 	subreq = netfs_alloc_subrequest(rreq);
 	if (!subreq)
 		return false;
 
-	subreq->debug_index	= (*_debug_index)++;
+	subreq->debug_index	= chain->subreq_counter++;
 	subreq->start		= rreq->start + rreq->submitted;
 	subreq->len		= rreq->len   - rreq->submitted;
 
 	_debug("slice %llx,%zx,%zx", subreq->start, subreq->len, rreq->submitted);
-	list_add_tail(&subreq->rreq_link, &rreq->subrequests);
+	list_add_tail(&subreq->chain_link, &chain->subrequests);
 
 	/* Call out to the cache to find out what it can do with the remaining
 	 * subset.  It tells us in subreq->flags what it decided should be done
@@ -698,7 +701,6 @@ subreq_failed:
  */
 ssize_t netfs_begin_read(struct netfs_io_request *rreq, bool sync)
 {
-	unsigned int debug_index = 0;
 	ssize_t ret;
 
 	_enter("R=%x %llx-%llx",
@@ -724,7 +726,7 @@ ssize_t netfs_begin_read(struct netfs_io_request *rreq, bool sync)
 		if (rreq->origin == NETFS_DIO_READ &&
 		    rreq->start + rreq->submitted >= rreq->i_size)
 			break;
-		if (!netfs_rreq_submit_slice(rreq, &debug_index))
+		if (!netfs_rreq_submit_slice(rreq))
 			break;
 		if (test_bit(NETFS_RREQ_BLOCKED, &rreq->flags) &&
 		    test_bit(NETFS_RREQ_NONBLOCK, &rreq->flags))

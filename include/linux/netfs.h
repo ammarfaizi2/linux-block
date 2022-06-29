@@ -174,7 +174,7 @@ struct netfs_cache_resources {
 struct netfs_io_subrequest {
 	struct work_struct	work;
 	struct netfs_io_request *rreq;		/* Supervising I/O request */
-	struct list_head	rreq_link;	/* Link in rreq->subrequests */
+	struct list_head	chain_link;	/* Link in chain->subrequests */
 	struct iov_iter		iter;		/* Iterator for this subrequest */
 	loff_t			start;		/* Where to start the I/O */
 	size_t			len;		/* Size of the I/O */
@@ -184,6 +184,7 @@ struct netfs_io_subrequest {
 	unsigned short		debug_index;	/* Index in list (for debugging output) */
 	unsigned int		max_nr_segs;	/* 0 or max number of segments in an iterator */
 	enum netfs_io_source	source;		/* Where to read from/write to */
+	u8			chain;		/* Index into rreq->chains[] */
 	unsigned long		flags;
 #define NETFS_SREQ_COPY_TO_CACHE	0	/* Set if should copy the data to the cache */
 #define NETFS_SREQ_CLEAR_TAIL		1	/* Set if the rest of the read should be cleared */
@@ -191,6 +192,21 @@ struct netfs_io_subrequest {
 #define NETFS_SREQ_SEEK_DATA_READ	3	/* Set if ->read() should SEEK_DATA first */
 #define NETFS_SREQ_NO_PROGRESS		4	/* Set if we didn't manage to read any data */
 #define NETFS_SREQ_ONDEMAND		5	/* Set if it's from on-demand read mode */
+};
+
+/*
+ * Chain of I/O subrequests.  When reading, there will normally only be a
+ * single chain, but when writing, multiple parallel chains might be employed,
+ * each targeting a different destination (e.g. a server and the local cache).
+ *
+ * The subrequests in the chain should be sorted in order of start offset.
+ */
+struct netfs_io_chain {
+	struct list_head	subrequests;
+	enum netfs_io_source	source;		/* Where to read from/write to */
+	unsigned short		subreq_counter;	/* Next subreq->debug_index */
+	short			error;		/* Cumulative error */
+	size_t			transferred;	/* Amount to be indicated as transferred */
 };
 
 enum netfs_io_origin {
@@ -236,7 +252,8 @@ struct netfs_io_request {
 	struct list_head	wb_link;	/* Link in ictx->writebacks */
 	struct list_head	proc_link;	/* Link in netfs_iorequests */
 	struct list_head	regions;	/* List of regions to be uploaded */
-	struct list_head	subrequests;	/* Contributory I/O operations */
+	struct netfs_io_chain	*chains;	/* Contributory I/O operations */
+	struct netfs_io_chain	chain[2];	/* Preallocated chains */
 	struct xarray		buffer;		/* Buffer to hold raw data */
 	struct xarray		bounce;		/* Bounce buffer (eg. for crypto/compression) */
 	struct bio_vec		*direct_bv;	/* DIO buffer list (when handling iovec-iter) */
@@ -247,7 +264,6 @@ struct netfs_io_request {
 	unsigned int		rsize;		/* Maximum read size (0 for none) */
 	unsigned int		wsize;		/* Maximum write size (0 for none) */
 	unsigned int		alignment;	/* Preferred alignment (1 for none) */
-	unsigned int		subreq_counter;	/* Next subreq->debug_index */
 	atomic_t		nr_outstanding;	/* Number of ops in progress */
 	size_t			submitted;	/* Amount submitted for I/O so far */
 	size_t			len;		/* Length of the request */
@@ -255,6 +271,7 @@ struct netfs_io_request {
 	short			error;		/* 0 or error that occurred */
 	enum netfs_io_origin	origin;		/* Origin of the request */
 	enum netfs_buffering	buffering;	/* Method of buffering */
+	u8			nr_chains;
 	loff_t			i_size;		/* Size of the file */
 	loff_t			start;		/* Start position */
 	pgoff_t			first;		/* First page included */

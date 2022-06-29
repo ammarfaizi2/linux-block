@@ -943,28 +943,29 @@ static void netfs_copy_to_cache(struct netfs_io_request *rreq,
 void netfs_rreq_do_write_to_cache(struct netfs_io_request *rreq)
 {
 	struct netfs_io_subrequest *subreq, *next, *p;
+	struct netfs_io_chain *chain = &rreq->chain[0];
 
 	trace_netfs_rreq(rreq, netfs_rreq_trace_copy_mark);
 
-	list_for_each_entry_safe(subreq, p, &rreq->subrequests, rreq_link) {
+	list_for_each_entry_safe(subreq, p, &chain->subrequests, chain_link) {
 		if (!test_bit(NETFS_SREQ_COPY_TO_CACHE, &subreq->flags)) {
-			list_del_init(&subreq->rreq_link);
+			list_del_init(&subreq->chain_link);
 			netfs_put_subrequest(subreq, false,
 					     netfs_sreq_trace_put_no_copy);
 		}
 	}
 
-	list_for_each_entry(subreq, &rreq->subrequests, rreq_link) {
+	list_for_each_entry(subreq, &chain->subrequests, chain_link) {
 		loff_t start = subreq->start;
 		size_t len = subreq->len;
 
 		/* Amalgamate adjacent writes */
-		while (!list_is_last(&subreq->rreq_link, &rreq->subrequests)) {
-			next = list_next_entry(subreq, rreq_link);
+		while (!list_is_last(&subreq->chain_link, &chain->subrequests)) {
+			next = list_next_entry(subreq, chain_link);
 			if (next->start != start + len)
 				break;
 			len += next->len;
-			list_del_init(&next->rreq_link);
+			list_del_init(&next->chain_link);
 			netfs_put_subrequest(next, false,
 					     netfs_sreq_trace_put_merged);
 		}
