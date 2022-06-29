@@ -388,6 +388,9 @@ int lpi_pinctrl_probe(struct platform_device *pdev)
 	pctrl->data = data;
 	pctrl->dev = &pdev->dev;
 
+	data->is_clk_optional = of_property_read_bool(dev->of_node,
+						      "qcom,adsp-bypass-mode");
+
 	pctrl->clks[0].id = "core";
 	pctrl->clks[1].id = "audio";
 
