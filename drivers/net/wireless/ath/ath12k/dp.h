@@ -364,8 +364,8 @@ struct ath12k_dp {
 	struct list_head reo_cmd_list;
 	struct list_head reo_cmd_cache_flush_list;
 	u32 reo_cmd_cache_flush_count;
-	/**
-	 * protects access to below fields,
+
+	/* protects access to below fields,
 	 * - reo_cmd_list
 	 * - reo_cmd_cache_flush_list
 	 * - reo_cmd_cache_flush_count
@@ -1658,8 +1658,7 @@ struct htt_ppdu_stats_info {
 	struct list_head list;
 };
 
-/**
- * @brief target -> host packet log message
+/* @brief target -> host packet log message
  *
  * @details
  * The following field definitions describe the format of the packet log
@@ -1774,8 +1773,7 @@ struct ath12k_htt_mlo_offset_msg {
 	__le32 mlo_comp_timer;
 } __packed;
 
-/**
- * @brief host -> target FW extended statistics retrieve
+/* @brief host -> target FW extended statistics retrieve
  *
  * @details
  * The following field definitions describe the format of the HTT host
@@ -1930,8 +1928,7 @@ struct htt_h2t_msg_type_vdev_txrx_stats_req {
 	u32 vdev_id_hi_bitmask;
 };
 
-/**
- * @brief target -> host extended statistics upload
+/* @brief target -> host extended statistics upload
  *
  * @details
  * The following field definitions describe the format of the HTT target
