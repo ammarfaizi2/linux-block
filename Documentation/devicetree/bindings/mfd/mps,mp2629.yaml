@@ -19,6 +19,7 @@ description: |
 properties:
   compatible:
     const: mps,mp2629
+    const: mps,mp2733
 
   reg:
     maxItems: 1
