@@ -138,6 +138,8 @@
 	EM(netfs_dirty_trace_merged_prev_super,	"MRG PRV SU")	\
 	EM(netfs_dirty_trace_modified,		"MODIFIED  ")	\
 	EM(netfs_dirty_trace_overlay_flush,	"OVERLAY FL")	\
+	EM(netfs_dirty_trace_redirty_insert,	"REDRTY INS")	\
+	EM(netfs_dirty_trace_redirty_merge,	"REDRTY MRG")	\
 	EM(netfs_dirty_trace_split,		"SPLIT     ")	\
 	EM(netfs_dirty_trace_split_c2c,		"SPLIT C2C ")	\
 	EM(netfs_dirty_trace_split_off_back,	"SPLIT BACK")	\

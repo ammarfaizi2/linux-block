@@ -102,14 +102,167 @@ static void netfs_clean_dirty_range(struct netfs_io_request *wreq)
 }
 
 /*
+ * Redirty the folios associated with a dirty range.
+ */
+static void netfs_redirty_folios(struct netfs_io_request *wreq,
+				 pgoff_t first, pgoff_t last)
+{
+	struct folio *folio;
+	unsigned long index;
+
+	xa_for_each_range(&wreq->buffer, index, folio, first, last) {
+		if (xa_get_mark(&wreq->buffer, index, NETFS_BUF_PAGECACHE_MARK)) {
+			filemap_dirty_folio(folio->mapping, folio);
+			folio_account_redirty(folio);
+			folio_end_writeback(folio);
+		}
+	}
+}
+
+/*
  * The write failed to some extent.  We need to work out which bits we managed
  * to do - for instance, we might have managed to write stuff to the cache, but
  * not upload to the server.
  */
 static void netfs_redirty_range(struct netfs_io_request *wreq)
 {
+	struct netfs_io_chain *chain;
+	struct netfs_dirty_region *d, *d2, *w, *w2, *tmp;
+	struct netfs_inode *ctx = netfs_inode(wreq->inode);
+	unsigned int c;
+	bool upload_failed = false;
+	LIST_HEAD(discards);
+
 	trace_netfs_rreq(wreq, netfs_rreq_trace_redirty);
-	BUG();
+
+	if (list_empty(&wreq->regions))
+		return netfs_clean_dirty_range(wreq);
+
+	/* If an upload failed, we need to ask the filesystem how it wants to
+	 * handle things.  It has two choices: redirty everything or leave
+	 * everything clean.
+	 */
+	for (c = 0; c < wreq->nr_chains; c++) {
+		chain = &wreq->chains[c];
+		if (chain->source != NETFS_WRITE_TO_CACHE && chain->error)
+			upload_failed = true;
+	}
+
+	if (!upload_failed ||
+	    !wreq->netfs_ops->redirty_on_failure ||
+	    !wreq->netfs_ops->redirty_on_failure(wreq))
+		return netfs_clean_dirty_range(wreq);
+
+	/* First of all, we step through the list of regions that were to be
+	 * written back and see if we can discard/shorten anything that got
+	 * partially stored.
+	 *
+	 * Don't retry write failures to the cache.  If the cache got a fatal
+	 * error, it will have gone offline and retrying is pointless; if it
+	 * ran out of space, it probably won't be able to supply us with space
+	 * on the second attempt.
+	 */
+	list_for_each_entry_safe(w, tmp, &wreq->regions, dirty_link) {
+		if (w->type == NETFS_COPY_TO_CACHE) {
+			list_del_init(&w->dirty_link);
+			netfs_put_dirty_region(ctx, w, netfs_region_trace_put_clear);
+		}
+	}
+
+	if (list_empty(&wreq->regions))
+		return;
+
+	/* Mark the pages dirty again. */
+	list_for_each_entry(w, &wreq->regions, dirty_link) {
+		netfs_redirty_folios(wreq, w->first, w->last);
+	}
+
+	/* Step through the the uncompleted regions and reintegrate them into
+	 * the dirty list.
+	 */
+	spin_lock(&ctx->dirty_lock);
+
+	w = list_first_entry(&wreq->regions, struct netfs_dirty_region, dirty_link);
+	d = list_first_entry_or_null(&ctx->dirty_regions,
+				     struct netfs_dirty_region, dirty_link);
+
+	while (d && w) {
+		w2 = netfs_rreq_next_region(wreq, w);
+
+		/* Dirty region before writeback region and not touching. */
+		if (d->last < w->first && d->last != w->first - 1) {
+			d = netfs_next_region(ctx, d);
+			if (!d)
+				break;
+			continue;
+		}
+
+		/* Dirty region overlaps with writeback region.  If two regions
+		 * overlap, they *must* be compatible, otherwise the new
+		 * changes would not get applied until this request completes.
+		 */
+		if (d->first <= w->last) {
+			if (d->last == w->first - 1 &&
+			    !netfs_are_regions_mergeable(ctx, d, d2)) {
+				d = netfs_next_region(ctx, d);
+				if (!d)
+					break;
+				continue;
+			}
+
+			d->first = min(d->first, w->first);
+			d->last  = max(d->last, w->last);
+			d->from  = min(d->from, w->from);
+			d->to    = max(d->to, w->to);
+			trace_netfs_dirty(ctx, d, w, netfs_dirty_trace_redirty_merge);
+
+			while ((d2 = netfs_next_region(ctx, d)) &&
+			       d->last >= d2->first - 1 &&
+			       netfs_are_regions_mergeable(ctx, d, d2)
+			       ) {
+				d->last = d2->last;
+				d->to   = d2->to;
+				list_move(&d2->dirty_link, &discards);
+				trace_netfs_dirty(ctx, d, d2, netfs_dirty_trace_bridged);
+			}
+
+			list_move_tail(&w->dirty_link, &discards);
+			w = w2;
+			continue;
+		}
+
+		/* Dirty region after writeback region and touching. */
+		if (d->first == w->last + 1) {
+			if (netfs_are_regions_mergeable(ctx, d, d2)) {
+				d->first = min(d->first, w->first);
+				d->from  = min(d->from, w->from);
+				trace_netfs_dirty(ctx, d, w, netfs_dirty_trace_redirty_merge);
+				list_move_tail(&w->dirty_link, &discards);
+				w = w2;
+				continue;
+			}
+		}
+
+		/* Dirty region after writeback and not touching. */
+		list_move_tail(&w->dirty_link, &d->dirty_link);
+		trace_netfs_dirty(ctx, w, NULL, netfs_dirty_trace_redirty_insert);
+		w = w2;
+	}
+
+	if (w && !d) {
+		list_for_each_entry_from(w, &wreq->regions, dirty_link) {
+			trace_netfs_dirty(ctx, w, NULL, netfs_dirty_trace_redirty_insert);
+		}
+		list_splice_tail_init(&wreq->regions, &ctx->dirty_regions);
+	}
+
+	spin_unlock(&ctx->dirty_lock);
+
+	while ((d = list_first_entry_or_null(&discards,
+					     struct netfs_dirty_region, dirty_link))) {
+		list_del_init(&d->dirty_link);
+		netfs_put_dirty_region(ctx, d, netfs_region_trace_put_merged);
+	}
 }
 
 static void netfs_cleanup_buffered_write(struct netfs_io_request *wreq)

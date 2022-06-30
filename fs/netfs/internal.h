@@ -263,6 +263,15 @@ static inline struct netfs_dirty_region *netfs_next_region(struct netfs_inode *c
 	return list_next_entry(region, dirty_link);
 }
 
+static inline
+struct netfs_dirty_region *netfs_rreq_next_region(struct netfs_io_request *rreq,
+						  struct netfs_dirty_region *region)
+{
+	if (list_is_last(&region->dirty_link, &rreq->regions))
+		return NULL;
+	return list_next_entry(region, dirty_link);
+}
+
 /*****************************************************************************/
 /*
  * debug tracing

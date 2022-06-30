@@ -339,6 +339,8 @@ static void netfs_set_up_write_to_cache(struct netfs_io_request *wreq)
  * All the folios in the bounding box have had a ref taken on them and those
  * covering the dirty region have been marked as being written back and their
  * dirty bits provisionally cleared.
+ *
+ * Note that ->nr_chains has been initialised to 1.
  */
 static void netfs_writeback(struct netfs_io_request *wreq)
 {
@@ -360,8 +362,10 @@ static void netfs_writeback(struct netfs_io_request *wreq)
 	/* However, we don't necessarily write all of the region to the server.
 	 * Caching of reads is being managed this way also.
 	 */
-	if (test_bit(NETFS_RREQ_UPLOAD_TO_SERVER, &wreq->flags))
+	if (test_bit(NETFS_RREQ_UPLOAD_TO_SERVER, &wreq->flags)) {
+		wreq->chains[wreq->nr_chains - 1].source = NETFS_UPLOAD_TO_SERVER;
 		ctx->ops->create_write_requests(wreq);
+	}
 
 out:
 	if (atomic_dec_and_test(&wreq->nr_outstanding))

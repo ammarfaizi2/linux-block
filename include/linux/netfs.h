@@ -346,6 +346,7 @@ struct netfs_request_ops {
 	/* Write request handling */
 	void (*create_write_requests)(struct netfs_io_request *wreq);
 	void (*invalidate_cache)(struct netfs_io_request *wreq);
+	bool (*redirty_on_failure)(struct netfs_io_request *wreq);
 
 	/* Content encryption */
 	int (*encrypt_block)(struct netfs_io_request *wreq, loff_t pos, size_t len,
