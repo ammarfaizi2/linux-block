@@ -125,9 +125,8 @@ int netfs_xa_store_and_mark(struct xarray *xa, unsigned long index,
 			    struct folio *folio, bool put_mark,
 			    bool pagecache_mark, bool dirty_mark,
 			    gfp_t gfp_mask);
-int netfs_add_folios_to_buffer(struct xarray *buffer,
-			       struct address_space *mapping,
-			       pgoff_t index, pgoff_t to, gfp_t gfp_mask);
+int netfs_add_folios_to_buffer(struct xarray *buffer, pgoff_t index, pgoff_t to,
+			       gfp_t gfp_mask);
 int netfs_set_up_buffer(struct xarray *buffer,
 			struct address_space *mapping,
 			struct readahead_control *ractl,

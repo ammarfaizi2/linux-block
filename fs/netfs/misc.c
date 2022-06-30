@@ -49,9 +49,8 @@ retry:
  * request.  The folios are marked with NETFS_BUF_PUT_MARK so that we know that
  * these need freeing later.
  */
-int netfs_add_folios_to_buffer(struct xarray *buffer,
-			       struct address_space *mapping,
-			       pgoff_t index, pgoff_t to, gfp_t gfp_mask)
+int netfs_add_folios_to_buffer(struct xarray *buffer, pgoff_t index, pgoff_t to,
+			       gfp_t gfp_mask)
 {
 	struct folio *folio;
 	int ret;
@@ -61,7 +60,7 @@ int netfs_add_folios_to_buffer(struct xarray *buffer,
 
 	do {
 		/* TODO: Figure out what order folio can be allocated here */
-		folio = filemap_alloc_folio(readahead_gfp_mask(mapping), 0);
+		folio = filemap_alloc_folio(gfp_mask, 0);
 		if (!folio)
 			return -ENOMEM;
 		folio->index = index;
@@ -95,13 +94,13 @@ int netfs_set_up_buffer(struct xarray *buffer,
 	pgoff_t want_index = have_index;
 	int ret;
 
-	ret = netfs_add_folios_to_buffer(buffer, mapping, want_index,
-					 have_index - 1, gfp_mask);
+	ret = netfs_add_folios_to_buffer(buffer, want_index, have_index - 1,
+					 gfp_mask);
 	if (ret < 0)
 		return ret;
 	have_folios += have_index - want_index;
 
-	ret = netfs_add_folios_to_buffer(buffer, mapping,
+	ret = netfs_add_folios_to_buffer(buffer,
 					 have_index + have_folios,
 					 want_index + want_folios - 1,
 					 gfp_mask);
@@ -234,3 +233,27 @@ int netfs_wait_for_credit(struct writeback_control *wbc)
 
 	return 0;
 }
+
+/**
+ * netfs_clear_inode - Clear the netfs context when an inode is torn down.
+ * @ctx: The inode to clear
+ *
+ * If an inode gets deleted, then it may still be dirty and have outstanding
+ * dirty regions when it comes to clearance.
+ */
+void netfs_clear_inode(struct netfs_inode *ctx)
+{
+	struct netfs_dirty_region *region;
+
+	trace_netfs_clear_inode(ctx);
+
+	while ((region = list_first_entry_or_null(&ctx->dirty_regions,
+						  struct netfs_dirty_region,
+						  dirty_link))) {
+		list_del_init(&region->dirty_link);
+		netfs_put_dirty_region(ctx, region, netfs_region_trace_put_clear);
+	}
+
+	clear_inode(&ctx->inode);
+}
+EXPORT_SYMBOL(netfs_clear_inode);

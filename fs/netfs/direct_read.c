@@ -214,8 +214,8 @@ ssize_t netfs_direct_read_iter(struct kiocb *iocb, struct iov_iter *iter)
 		_debug("bounce %llx-%llx %lx-%lx",
 		       rreq->start, end, rreq->first, rreq->last);
 
-		ret = netfs_add_folios_to_buffer(&rreq->bounce, rreq->mapping,
-						 rreq->first, rreq->last, GFP_KERNEL);
+		ret = netfs_add_folios_to_buffer(&rreq->bounce, rreq->first,
+						 rreq->last, GFP_KERNEL);
 		if (ret < 0)
 			goto out;
 		break;

@@ -451,6 +451,7 @@ extern struct netfs_io_subrequest *netfs_create_write_request(
 extern void netfs_write_subrequest_terminated(void *_op, ssize_t transferred_or_error,
 					      bool was_async);
 extern void netfs_queue_write_request(struct netfs_io_subrequest *subreq);
+extern void netfs_clear_inode(struct netfs_inode *ctx);
 
 /**
  * netfs_inode - Get the netfs inode context from the inode

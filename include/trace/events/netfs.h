@@ -523,6 +523,27 @@ TRACE_EVENT(netfs_write_iter,
 		      __entry->start, __entry->len, __entry->flags)
 	    );
 
+TRACE_EVENT(netfs_writepages,
+	    TP_PROTO(const struct address_space *mapping,
+		     struct writeback_control *wbc),
+
+	    TP_ARGS(mapping, wbc),
+
+	    TP_STRUCT__entry(
+		    __field(ino_t,			ino		)
+		    __field(pgoff_t,			wb_index	)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->ino	= mapping->host->i_ino;
+		    __entry->wb_index	= mapping->writeback_index;
+			   ),
+
+	    TP_printk("i=%lx wi=%lx",
+		      __entry->ino,
+		      __entry->wb_index)
+	    );
+
 TRACE_EVENT(netfs_wb_page,
 	    TP_PROTO(const struct netfs_io_request *wreq,
 		     const struct folio *folio),
@@ -569,6 +590,56 @@ TRACE_EVENT(netfs_folio_dirty,
 		      __entry->inode,
 		      __print_symbolic(__entry->what, netfs_folio_traces),
 		      __entry->first, __entry->first + __entry->npages - 1)
+	    );
+
+TRACE_EVENT(netfs_write_inode,
+	    TP_PROTO(const struct netfs_inode *ctx),
+
+	    TP_ARGS(ctx),
+
+	    TP_STRUCT__entry(
+		    __field(ino_t,			ino		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->ino	= ctx->inode.i_ino;
+			   ),
+
+	    TP_printk("i=%lx", __entry->ino)
+	    );
+
+TRACE_EVENT(netfs_dirty_inode,
+	    TP_PROTO(const struct netfs_inode *ctx),
+
+	    TP_ARGS(ctx),
+
+	    TP_STRUCT__entry(
+		    __field(ino_t,			ino		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->ino	= ctx->inode.i_ino;
+			   ),
+
+	    TP_printk("i=%lx", __entry->ino)
+	    );
+
+TRACE_EVENT(netfs_clear_inode,
+	    TP_PROTO(const struct netfs_inode *ctx),
+
+	    TP_ARGS(ctx),
+
+	    TP_STRUCT__entry(
+		    __field(ino_t,			ino		)
+		    __field(unsigned long,		i_state		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->ino	= ctx->inode.i_ino;
+		    __entry->i_state	= ctx->inode.i_state;
+			   ),
+
+	    TP_printk("i=%lx st=%lx", __entry->ino, __entry->i_state)
 	    );
 
 #undef EM

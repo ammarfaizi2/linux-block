@@ -853,6 +853,8 @@ int netfs_writepages(struct address_space *mapping,
 	       wbc->tagged_writepages,
 	       wbc->range_cyclic);
 
+	trace_netfs_writepages(mapping, wbc);
+
 	if (wbc->range_cyclic) {
 		first = round_down(mapping->writeback_index, min_bsize);
 		last  = ULONG_MAX;

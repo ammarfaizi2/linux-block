@@ -17,6 +17,7 @@
 #include <linux/swap.h>
 #include <linux/netfs.h>
 #include "internal.h"
+#include <trace/events/netfs.h>
 
 static int afs_file_mmap(struct file *file, struct vm_area_struct *vma);
 static int afs_symlink_read_folio(struct file *file, struct folio *folio);
@@ -432,8 +433,14 @@ const struct netfs_request_ops afs_req_ops = {
 
 int afs_write_inode(struct inode *inode, struct writeback_control *wbc)
 {
+	trace_netfs_write_inode(netfs_inode(inode));
 	fscache_unpin_writeback(wbc, afs_vnode_cache(AFS_FS_I(inode)));
 	return 0;
+}
+
+void afs_dirty_inode(struct inode *inode, int flags)
+{
+	trace_netfs_dirty_inode(netfs_inode(inode));
 }
 
 static void afs_add_open_mmap(struct afs_vnode *vnode)

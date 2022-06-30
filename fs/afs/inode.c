@@ -816,7 +816,7 @@ void afs_evict_inode(struct inode *inode)
 
 	afs_set_cache_aux(vnode, &aux);
 	fscache_clear_inode_writeback(afs_vnode_cache(vnode), inode, &aux);
-	clear_inode(inode);
+	netfs_clear_inode(&vnode->netfs);
 
 	while (!list_empty(&vnode->wb_keys)) {
 		struct afs_wb_key *wbk = list_entry(vnode->wb_keys.next,
