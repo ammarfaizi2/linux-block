@@ -33,6 +33,13 @@
 #define AMDGPU_MES_MAX_GFX_PIPES            2
 #define AMDGPU_MES_MAX_SDMA_PIPES           2
 
+#define AMDGPU_MES_API_VERSION_SHIFT	12
+#define AMDGPU_MES_FEAT_VERSION_SHIFT	24
+
+#define AMDGPU_MES_VERSION_MASK		0x00000fff
+#define AMDGPU_MES_API_VERSION_MASK	0x00fff000
+#define AMDGPU_MES_FEAT_VERSION_MASK	0xff000000
+
 enum amdgpu_mes_priority_level {
 	AMDGPU_MES_PRIORITY_LEVEL_LOW       = 0,
 	AMDGPU_MES_PRIORITY_LEVEL_NORMAL    = 1,
@@ -64,6 +71,9 @@ struct amdgpu_mes {
 	struct ida                      doorbell_ida;
 
 	spinlock_t                      queue_id_lock;
+
+	uint32_t			sched_version;
+	uint32_t			kiq_version;
 
 	uint32_t                        total_max_queue;
 	uint32_t                        doorbell_id_offset;
@@ -166,6 +176,7 @@ struct amdgpu_mes_queue_properties {
 	uint64_t                hqd_base_gpu_addr;
 	uint64_t                rptr_gpu_addr;
 	uint64_t                wptr_gpu_addr;
+	uint64_t                wptr_mc_addr;
 	uint32_t                queue_size;
 	uint64_t                eop_gpu_addr;
 	uint32_t                hqd_pipe_priority;
@@ -198,12 +209,14 @@ struct mes_add_queue_input {
 	uint32_t	doorbell_offset;
 	uint64_t	mqd_addr;
 	uint64_t	wptr_addr;
+	uint64_t	wptr_mc_addr;
 	uint32_t	queue_type;
 	uint32_t	paging;
 	uint32_t        gws_base;
 	uint32_t        gws_size;
 	uint64_t	tba_addr;
 	uint64_t	tma_addr;
+	uint32_t	is_kfd_process;
 };
 
 struct mes_remove_queue_input {
