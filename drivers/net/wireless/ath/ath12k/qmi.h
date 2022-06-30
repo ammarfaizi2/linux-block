@@ -205,7 +205,6 @@ struct qmi_wlanfw_qdss_trace_mode_resp_msg_v01 {
 #define QMI_WLANFW_HOST_CAP_RESP_MSG_V01_MAX_LEN	7
 #define QMI_WLFW_HOST_CAP_RESP_V01			0x0034
 #define QMI_WLFW_MAX_NUM_GPIO_V01			32
-#define QMI_IPQ8074_FW_MEM_MODE				0xFF
 #define QMI_WLANFW_MAX_PLATFORM_NAME_LEN_V01		64
 #define QMI_WLANFW_MAX_HOST_DDR_RANGE_SIZE_V01		3
 #define QDSS_ETR_MEM_REGION_TYPE                        0x6
