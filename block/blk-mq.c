@@ -42,6 +42,7 @@
 #include "blk-stat.h"
 #include "blk-mq-sched.h"
 #include "blk-rq-qos.h"
+#include "blk-ioprio.h"
 
 static DEFINE_PER_CPU(struct llist_head, blk_cpu_done);
 
@@ -2085,14 +2086,10 @@ static void __blk_mq_delay_run_hw_queue(struct blk_mq_hw_ctx *hctx, bool async,
 		return;
 
 	if (!async && !(hctx->flags & BLK_MQ_F_BLOCKING)) {
-		int cpu = get_cpu();
-		if (cpumask_test_cpu(cpu, hctx->cpumask)) {
+		if (cpumask_test_cpu(raw_smp_processor_id(), hctx->cpumask)) {
 			__blk_mq_run_hw_queue(hctx);
-			put_cpu();
 			return;
 		}
-
-		put_cpu();
 	}
 
 	kblockd_mod_delayed_work_on(blk_mq_hctx_next_cpu(hctx), &hctx->run_work,
@@ -2156,7 +2153,7 @@ static struct blk_mq_hw_ctx *blk_mq_get_sq_hctx(struct request_queue *q)
 	 * just causes lock contention inside the scheduler and pointless cache
 	 * bouncing.
 	 */
-	struct blk_mq_hw_ctx *hctx = blk_mq_map_queue(q, 0, ctx);
+	struct blk_mq_hw_ctx *hctx = ctx->hctxs[HCTX_TYPE_DEFAULT];
 
 	if (!blk_mq_hctx_stopped(hctx))
 		return hctx;
@@ -2783,6 +2780,14 @@ static inline struct request *blk_mq_get_cached_request(struct request_queue *q,
 	return rq;
 }
 
+static void bio_set_ioprio(struct bio *bio)
+{
+	/* Nobody set ioprio so far? Initialize it based on task's nice value */
+	if (IOPRIO_PRIO_CLASS(bio->bi_ioprio) == IOPRIO_CLASS_NONE)
+		bio->bi_ioprio = get_current_ioprio();
+	blkcg_set_ioprio(bio);
+}
+
 /**
  * blk_mq_submit_bio - Create and send a request to block device.
  * @bio: Bio pointer.
@@ -2811,6 +2816,8 @@ void blk_mq_submit_bio(struct bio *bio)
 
 	if (!bio_integrity_prep(bio))
 		return;
+
+	bio_set_ioprio(bio);
 
 	rq = blk_mq_get_cached_request(q, plug, &bio, nr_segs);
 	if (!rq) {
@@ -3895,7 +3902,7 @@ static struct request_queue *blk_mq_init_queue_data(struct blk_mq_tag_set *set,
 	q->queuedata = queuedata;
 	ret = blk_mq_init_allocated_queue(set, q);
 	if (ret) {
-		blk_cleanup_queue(q);
+		blk_put_queue(q);
 		return ERR_PTR(ret);
 	}
 	return q;
@@ -3906,6 +3913,35 @@ struct request_queue *blk_mq_init_queue(struct blk_mq_tag_set *set)
 	return blk_mq_init_queue_data(set, NULL);
 }
 EXPORT_SYMBOL(blk_mq_init_queue);
+
+/**
+ * blk_mq_destroy_queue - shutdown a request queue
+ * @q: request queue to shutdown
+ *
+ * This shuts down a request queue allocated by blk_mq_init_queue() and drops
+ * the initial reference.  All future requests will failed with -ENODEV.
+ *
+ * Context: can sleep
+ */
+void blk_mq_destroy_queue(struct request_queue *q)
+{
+	WARN_ON_ONCE(!queue_is_mq(q));
+	WARN_ON_ONCE(blk_queue_registered(q));
+
+	might_sleep();
+
+	blk_queue_flag_set(QUEUE_FLAG_DYING, q);
+	blk_queue_start_drain(q);
+	blk_freeze_queue(q);
+
+	blk_sync_queue(q);
+	blk_mq_cancel_work_sync(q);
+	blk_mq_exit_queue(q);
+
+	/* @q is and will stay empty, shutdown and put */
+	blk_put_queue(q);
+}
+EXPORT_SYMBOL(blk_mq_destroy_queue);
 
 struct gendisk *__blk_mq_alloc_disk(struct blk_mq_tag_set *set, void *queuedata,
 		struct lock_class_key *lkclass)
@@ -3919,12 +3955,22 @@ struct gendisk *__blk_mq_alloc_disk(struct blk_mq_tag_set *set, void *queuedata,
 
 	disk = __alloc_disk_node(q, set->numa_node, lkclass);
 	if (!disk) {
-		blk_cleanup_queue(q);
+		blk_put_queue(q);
 		return ERR_PTR(-ENOMEM);
 	}
+	set_bit(GD_OWNS_QUEUE, &disk->state);
 	return disk;
 }
 EXPORT_SYMBOL(__blk_mq_alloc_disk);
+
+struct gendisk *blk_mq_alloc_disk_for_queue(struct request_queue *q,
+		struct lock_class_key *lkclass)
+{
+	if (!blk_get_queue(q))
+		return NULL;
+	return __alloc_disk_node(q, NUMA_NO_NODE, lkclass);
+}
+EXPORT_SYMBOL(blk_mq_alloc_disk_for_queue);
 
 static struct blk_mq_hw_ctx *blk_mq_alloc_and_init_hctx(
 		struct blk_mq_tag_set *set, struct request_queue *q,
@@ -4513,7 +4559,7 @@ static void __blk_mq_update_nr_hw_queues(struct blk_mq_tag_set *set,
 
 	list_for_each_entry(q, &set->tag_list, tag_set_list) {
 		blk_mq_debugfs_unregister_hctxs(q);
-		blk_mq_sysfs_unregister(q);
+		blk_mq_sysfs_unregister_hctxs(q);
 	}
 
 	prev_nr_hw_queues = set->nr_hw_queues;
@@ -4544,7 +4590,7 @@ fallback:
 
 reregister:
 	list_for_each_entry(q, &set->tag_list, tag_set_list) {
-		blk_mq_sysfs_register(q);
+		blk_mq_sysfs_register_hctxs(q);
 		blk_mq_debugfs_register_hctxs(q);
 	}
 
