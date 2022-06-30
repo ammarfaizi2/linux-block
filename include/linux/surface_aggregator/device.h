@@ -148,17 +148,30 @@ struct ssam_device_uid {
 #define SSAM_SDEV(cat, tid, iid, fun) \
 	SSAM_DEVICE(SSAM_DOMAIN_SERIALHUB, SSAM_SSH_TC_##cat, tid, iid, fun)
 
+/*
+ * enum ssam_device_flags - Flags for SSAM client devices.
+ * @SSAM_DEVICE_HOT_REMOVED_BIT:
+ *	The device has been hot-removed. Further communication with it may time
+ *	out and should be avoided.
+ */
+enum ssam_device_flags {
+	SSAM_DEVICE_HOT_REMOVED_BIT = 0,
+};
+
 /**
  * struct ssam_device - SSAM client device.
- * @dev:  Driver model representation of the device.
- * @ctrl: SSAM controller managing this device.
- * @uid:  UID identifying the device.
+ * @dev:   Driver model representation of the device.
+ * @ctrl:  SSAM controller managing this device.
+ * @uid:   UID identifying the device.
+ * @flags: Device state flags, see &enum ssam_device_flags.
  */
 struct ssam_device {
 	struct device dev;
 	struct ssam_controller *ctrl;
 
 	struct ssam_device_uid uid;
+
+	unsigned long flags;
 };
 
 /**
@@ -177,6 +190,8 @@ struct ssam_device_driver {
 	void (*remove)(struct ssam_device *sdev);
 };
 
+#ifdef CONFIG_SURFACE_AGGREGATOR_BUS
+
 extern struct bus_type ssam_bus_type;
 extern const struct device_type ssam_device_type;
 
@@ -192,6 +207,15 @@ static inline bool is_ssam_device(struct device *d)
 {
 	return d->type == &ssam_device_type;
 }
+
+#else /* CONFIG_SURFACE_AGGREGATOR_BUS */
+
+static inline bool is_ssam_device(struct device *d)
+{
+	return false;
+}
+
+#endif /* CONFIG_SURFACE_AGGREGATOR_BUS */
 
 /**
  * to_ssam_device() - Casts the given device to a SSAM client device.
@@ -239,6 +263,35 @@ struct ssam_device *ssam_device_alloc(struct ssam_controller *ctrl,
 
 int ssam_device_add(struct ssam_device *sdev);
 void ssam_device_remove(struct ssam_device *sdev);
+
+/**
+ * ssam_device_mark_hot_removed() - Mark the given device as hot-removed.
+ * @sdev: The device to mark as hot-removed.
+ *
+ * Mark the device as having been hot-removed. This signals drivers using the
+ * device that communication with the device should be avoided and may lead to
+ * timeouts.
+ */
+static inline void ssam_device_mark_hot_removed(struct ssam_device *sdev)
+{
+	dev_dbg(&sdev->dev, "marking device as hot-removed\n");
+	set_bit(SSAM_DEVICE_HOT_REMOVED_BIT, &sdev->flags);
+}
+
+/**
+ * ssam_device_is_hot_removed() - Check if the given device has been
+ * hot-removed.
+ * @sdev: The device to check.
+ *
+ * Checks if the given device has been marked as hot-removed. See
+ * ssam_device_mark_hot_removed() for more details.
+ *
+ * Return: Returns ``true`` if the device has been marked as hot-removed.
+ */
+static inline bool ssam_device_is_hot_removed(struct ssam_device *sdev)
+{
+	return test_bit(SSAM_DEVICE_HOT_REMOVED_BIT, &sdev->flags);
+}
 
 /**
  * ssam_device_get() - Increment reference count of SSAM client device.
@@ -429,5 +482,71 @@ static inline void ssam_remove_clients(struct device *dev) {}
 		return __raw_##name(sdev->ctrl, sdev->uid.target,	\
 				    sdev->uid.instance, ret);		\
 	}
+
+
+/* -- Helpers for client-device notifiers. ---------------------------------- */
+
+/**
+ * ssam_device_notifier_register() - Register an event notifier for the
+ * specified client device.
+ * @sdev: The device the notifier should be registered on.
+ * @n:    The event notifier to register.
+ *
+ * Register an event notifier. Increment the usage counter of the associated
+ * SAM event if the notifier is not marked as an observer. If the event is not
+ * marked as an observer and is currently not enabled, it will be enabled
+ * during this call. If the notifier is marked as an observer, no attempt will
+ * be made at enabling any event and no reference count will be modified.
+ *
+ * Notifiers marked as observers do not need to be associated with one specific
+ * event, i.e. as long as no event matching is performed, only the event target
+ * category needs to be set.
+ *
+ * Return: Returns zero on success, %-ENOSPC if there have already been
+ * %INT_MAX notifiers for the event ID/type associated with the notifier block
+ * registered, %-ENOMEM if the corresponding event entry could not be
+ * allocated, %-ENODEV if the device is marked as hot-removed. If this is the
+ * first time that a notifier block is registered for the specific associated
+ * event, returns the status of the event-enable EC-command.
+ */
+static inline int ssam_device_notifier_register(struct ssam_device *sdev,
+						struct ssam_event_notifier *n)
+{
+	/*
+	 * Note that this check does not provide any guarantees whatsoever as
+	 * hot-removal could happen at any point and we can't protect against
+	 * it. Nevertheless, if we can detect hot-removal, bail early to avoid
+	 * communication timeouts.
+	 */
+	if (ssam_device_is_hot_removed(sdev))
+		return -ENODEV;
+
+	return ssam_notifier_register(sdev->ctrl, n);
+}
+
+/**
+ * ssam_device_notifier_unregister() - Unregister an event notifier for the
+ * specified client device.
+ * @sdev: The device the notifier has been registered on.
+ * @n:    The event notifier to unregister.
+ *
+ * Unregister an event notifier. Decrement the usage counter of the associated
+ * SAM event if the notifier is not marked as an observer. If the usage counter
+ * reaches zero, the event will be disabled.
+ *
+ * In case the device has been marked as hot-removed, the event will not be
+ * disabled on the EC, as in those cases any attempt at doing so may time out.
+ *
+ * Return: Returns zero on success, %-ENOENT if the given notifier block has
+ * not been registered on the controller. If the given notifier block was the
+ * last one associated with its specific event, returns the status of the
+ * event-disable EC-command.
+ */
+static inline int ssam_device_notifier_unregister(struct ssam_device *sdev,
+						  struct ssam_event_notifier *n)
+{
+	return __ssam_notifier_unregister(sdev->ctrl, n,
+					  !ssam_device_is_hot_removed(sdev));
+}
 
 #endif /* _LINUX_SURFACE_AGGREGATOR_DEVICE_H */
