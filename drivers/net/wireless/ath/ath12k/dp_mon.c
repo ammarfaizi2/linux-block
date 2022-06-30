@@ -326,7 +326,7 @@ static void ath12k_dp_mon_parse_he_sig_mu(u8 *tlv_data,
 			HE_TXOP_KNOWN |
 			HE_MIDABLE_PERIODICITY_KNOWN;
 
-	/*data3*/
+	/* data3 */
 	ppdu_info->he_data3 = u32_get_bits(info0, HAL_RX_HE_SIG_A_MU_DL_INFO0_BSS_COLOR);
 	value = u32_get_bits(info0, HAL_RX_HE_SIG_A_MU_DL_INFO0_UL_FLAG);
 	value = value << HE_DL_UL_SHIFT;
@@ -340,12 +340,12 @@ static void ath12k_dp_mon_parse_he_sig_mu(u8 *tlv_data,
 	value = value << HE_STBC_SHIFT;
 	ppdu_info->he_data3 |= value;
 
-	/*data4*/
+	/* data4 */
 	ppdu_info->he_data4 = u32_get_bits(info0,
 					   HAL_RX_HE_SIG_A_MU_DL_INFO0_SPATIAL_REUSE);
 	ppdu_info->he_data4 = value;
 
-	/*data5*/
+	/* data5 */
 	value = u32_get_bits(info0, HAL_RX_HE_SIG_A_MU_DL_INFO0_TRANSMIT_BW);
 	ppdu_info->he_data5 = value;
 	ppdu_info->bw = value;
