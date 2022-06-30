@@ -828,7 +828,6 @@ void ath12k_ce_get_shadow_config(struct ath12k_base *ab,
 	/* get the shadow configuration */
 	ath12k_hal_srng_get_shadow_config(ab, shadow_cfg, shadow_cfg_len);
 }
-EXPORT_SYMBOL(ath12k_ce_get_shadow_config);
 
 int ath12k_ce_init_pipes(struct ath12k_base *ab)
 {
