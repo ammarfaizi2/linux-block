@@ -592,15 +592,8 @@ static irqreturn_t mxc_jpeg_dec_irq(int irq, void *priv)
 	dev_dbg(dev, "Irq %d on slot %d.\n", irq, slot);
 
 	ctx = v4l2_m2m_get_curr_priv(jpeg->m2m_dev);
-	if (!ctx) {
-		dev_err(dev,
-			"Instance released before the end of transaction.\n");
-		/* soft reset only resets internal state, not registers */
-		mxc_jpeg_sw_reset(reg);
-		/* clear all interrupts */
-		writel(0xFFFFFFFF, reg + MXC_SLOT_OFFSET(slot, SLOT_STATUS));
+	if (WARN_ON(!ctx))
 		goto job_unlock;
-	}
 
 	if (slot != ctx->slot) {
 		/* TODO investigate when adding multi-instance support */
@@ -673,6 +666,7 @@ static irqreturn_t mxc_jpeg_dec_irq(int irq, void *priv)
 	buf_state = VB2_BUF_STATE_DONE;
 
 buffers_done:
+	mxc_jpeg_disable_irq(reg, ctx->slot);
 	jpeg->slot_data[slot].used = false; /* unused, but don't free */
 	mxc_jpeg_check_and_set_last_buffer(ctx, src_buf, dst_buf);
 	v4l2_m2m_src_buf_remove(ctx->fh.m2m_ctx);
@@ -2211,12 +2205,14 @@ static int mxc_jpeg_probe(struct platform_device *pdev)
 	jpeg->clk_ipg = devm_clk_get(dev, "ipg");
 	if (IS_ERR(jpeg->clk_ipg)) {
 		dev_err(dev, "failed to get clock: ipg\n");
+		ret = PTR_ERR(jpeg->clk_ipg);
 		goto err_clk;
 	}
 
 	jpeg->clk_per = devm_clk_get(dev, "per");
 	if (IS_ERR(jpeg->clk_per)) {
 		dev_err(dev, "failed to get clock: per\n");
+		ret = PTR_ERR(jpeg->clk_per);
 		goto err_clk;
 	}
 
