@@ -3976,7 +3976,7 @@ void ath12k_dp_rx_pdev_free(struct ath12k_base *ab, int mac_id)
 	ath12k_dp_rx_pdev_srng_free(ar);
 }
 
-int ath12k_dp_rxdma_ring_sel_config_qcn92xx(struct ath12k_base *ab)
+int ath12k_dp_rxdma_ring_sel_config_qcn9274(struct ath12k_base *ab)
 {
 	struct ath12k_dp *dp = &ab->dp;
 	struct htt_rx_ring_tlv_filter tlv_filter = {0};

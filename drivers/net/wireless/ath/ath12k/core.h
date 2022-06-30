@@ -113,7 +113,7 @@ struct ath12k_skb_rxcb {
 };
 
 enum ath12k_hw_rev {
-	ATH12K_HW_QCN92XX_HW10,
+	ATH12K_HW_QCN9274_HW10,
 	ATH12K_HW_WCN7850_HW20
 };
 
@@ -916,8 +916,8 @@ struct ath12k_fw_stats_bcn {
 	u32 tx_bcn_outage_cnt;
 };
 
-extern const struct ce_pipe_config ath12k_target_ce_config_wlan_qcn92xx[];
-extern const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_qcn92xx[];
+extern const struct ce_pipe_config ath12k_target_ce_config_wlan_qcn9274[];
+extern const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_qcn9274[];
 
 extern const struct ce_pipe_config ath12k_target_ce_config_wlan_wcn7850[];
 extern const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_wcn7850[];

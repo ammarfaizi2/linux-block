@@ -12,29 +12,29 @@
 #include "ce.h"
 #include "hw.h"
 
-static u8 ath12k_hw_qcn92xx_mac_from_pdev_id(int pdev_idx)
+static u8 ath12k_hw_qcn9274_mac_from_pdev_id(int pdev_idx)
 {
 	return pdev_idx;
 }
 
-static int ath12k_hw_mac_id_to_pdev_id_qcn92xx(struct ath12k_hw_params *hw,
+static int ath12k_hw_mac_id_to_pdev_id_qcn9274(struct ath12k_hw_params *hw,
 					       int mac_id)
 {
 	return mac_id;
 }
 
-static int ath12k_hw_mac_id_to_srng_id_qcn92xx(struct ath12k_hw_params *hw,
+static int ath12k_hw_mac_id_to_srng_id_qcn9274(struct ath12k_hw_params *hw,
 					       int mac_id)
 {
 	return 0;
 }
 
-static u8 ath12k_hw_get_ring_selector_qcn92xx(struct sk_buff *skb)
+static u8 ath12k_hw_get_ring_selector_qcn9274(struct sk_buff *skb)
 {
 	return smp_processor_id();
 }
 
-static bool ath12k_dp_srng_is_comp_ring_qcn92xx(int ring_num)
+static bool ath12k_dp_srng_is_comp_ring_qcn9274(int ring_num)
 {
 	if (ring_num < 3 || ring_num == 4)
 		return true;
@@ -67,17 +67,17 @@ static bool ath12k_dp_srng_is_comp_ring_wcn7850(int ring_num)
 	return false;
 }
 
-const struct ath12k_hw_ops qcn92xx_ops = {
-	.get_hw_mac_from_pdev_id = ath12k_hw_qcn92xx_mac_from_pdev_id,
-	.mac_id_to_pdev_id = ath12k_hw_mac_id_to_pdev_id_qcn92xx,
-	.mac_id_to_srng_id = ath12k_hw_mac_id_to_srng_id_qcn92xx,
-	.rxdma_ring_sel_config = ath12k_dp_rxdma_ring_sel_config_qcn92xx,
-	.get_ring_selector = ath12k_hw_get_ring_selector_qcn92xx,
-	.dp_srng_is_tx_comp_ring = ath12k_dp_srng_is_comp_ring_qcn92xx,
+const struct ath12k_hw_ops qcn9274_ops = {
+	.get_hw_mac_from_pdev_id = ath12k_hw_qcn9274_mac_from_pdev_id,
+	.mac_id_to_pdev_id = ath12k_hw_mac_id_to_pdev_id_qcn9274,
+	.mac_id_to_srng_id = ath12k_hw_mac_id_to_srng_id_qcn9274,
+	.rxdma_ring_sel_config = ath12k_dp_rxdma_ring_sel_config_qcn9274,
+	.get_ring_selector = ath12k_hw_get_ring_selector_qcn9274,
+	.dp_srng_is_tx_comp_ring = ath12k_dp_srng_is_comp_ring_qcn9274,
 };
 
 const struct ath12k_hw_ops wcn7850_ops = {
-	.get_hw_mac_from_pdev_id = ath12k_hw_qcn92xx_mac_from_pdev_id,
+	.get_hw_mac_from_pdev_id = ath12k_hw_qcn9274_mac_from_pdev_id,
 	.mac_id_to_pdev_id = ath12k_hw_mac_id_to_pdev_id_wcn7850,
 	.mac_id_to_srng_id = ath12k_hw_mac_id_to_srng_id_wcn7850,
 	.rxdma_ring_sel_config = ath12k_dp_rxdma_ring_sel_config_wcn7850,
@@ -112,7 +112,7 @@ const struct ath12k_hw_ops wcn7850_ops = {
 #define ATH12K_TX_MON_RING_MASK_1 0x2
 
 /* Target firmware's Copy Engine configuration. */
-const struct ce_pipe_config ath12k_target_ce_config_wlan_qcn92xx[] = {
+const struct ce_pipe_config ath12k_target_ce_config_wlan_qcn9274[] = {
 	/* CE0: host->target HTC control and raw streams */
 	{
 		.pipenum = __cpu_to_le32(0),
@@ -336,7 +336,7 @@ const struct ce_pipe_config ath12k_target_ce_config_wlan_wcn7850[] = {
  * This table is derived from the CE_PCI TABLE, above.
  * It is passed to the Target at startup for use by firmware.
  */
-const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_qcn92xx[] = {
+const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_qcn9274[] = {
 	{
 		__cpu_to_le32(ATH12K_HTC_SVC_ID_WMI_DATA_VO),
 		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
@@ -528,7 +528,7 @@ const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_wcn7850[] = {
 	},
 };
 
-const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_qcn92xx = {
+const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_qcn9274 = {
 	.tx  = {
 		ATH12K_TX_RING_MASK_0,
 		ATH12K_TX_RING_MASK_1,
@@ -599,7 +599,7 @@ const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_wcn7850 = {
 	},
 };
 
-const struct ath12k_hw_regs qcn92xx_regs = {
+const struct ath12k_hw_regs qcn9274_regs = {
 	/* SW2TCL(x) R0 ring configuration address */
 	.hal_tcl1_ring_id = 0x00000908,
 	.hal_tcl1_ring_misc = 0x00000910,
@@ -675,7 +675,7 @@ const struct ath12k_hw_regs wcn7850_regs = {
 	.pcie_pcs_osc_dtct_config_base = 0x01e0f45c,
 };
 
-const struct ath12k_hw_hal_params ath12k_hw_hal_params_qcn92xx = {
+const struct ath12k_hw_hal_params ath12k_hw_hal_params_qcn9274 = {
 	.rx_buf_rbm = HAL_RX_BUF_RBM_SW3_BM,
 	.wbm2sw_cc_enable = HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW0_EN |
 			    HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW1_EN |

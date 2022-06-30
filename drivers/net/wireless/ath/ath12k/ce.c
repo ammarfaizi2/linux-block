@@ -8,7 +8,7 @@
 #include "debug.h"
 #include "hif.h"
 
-const struct ce_attr ath12k_host_ce_config_qcn92xx[] = {
+const struct ce_attr ath12k_host_ce_config_qcn9274[] = {
 	/* CE0: host->target HTC control and raw streams */
 	{
 		.flags = CE_ATTR_FLAGS,

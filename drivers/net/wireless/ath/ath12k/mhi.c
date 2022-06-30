@@ -14,7 +14,7 @@
 
 #define MHI_TIMEOUT_DEFAULT_MS	90000
 
-static struct mhi_channel_config ath12k_mhi_channels_qcn92xx[] = {
+static struct mhi_channel_config ath12k_mhi_channels_qcn9274[] = {
 	{
 		.num = 0,
 		.name = "LOOPBACK",
@@ -73,7 +73,7 @@ static struct mhi_channel_config ath12k_mhi_channels_qcn92xx[] = {
 	},
 };
 
-static struct mhi_event_config ath12k_mhi_events_qcn92xx[] = {
+static struct mhi_event_config ath12k_mhi_events_qcn9274[] = {
 	{
 		.num_elements = 32,
 		.irq_moderation_ms = 0,
@@ -96,15 +96,15 @@ static struct mhi_event_config ath12k_mhi_events_qcn92xx[] = {
 	},
 };
 
-static struct mhi_controller_config ath12k_mhi_config_qcn92xx = {
+static struct mhi_controller_config ath12k_mhi_config_qcn9274 = {
 	.max_channels = 30,
 	.timeout_ms = 10000,
 	.use_bounce_buf = false,
 	.buf_len = 0,
-	.num_channels = ARRAY_SIZE(ath12k_mhi_channels_qcn92xx),
-	.ch_cfg = ath12k_mhi_channels_qcn92xx,
-	.num_events = ARRAY_SIZE(ath12k_mhi_events_qcn92xx),
-	.event_cfg = ath12k_mhi_events_qcn92xx,
+	.num_channels = ARRAY_SIZE(ath12k_mhi_channels_qcn9274),
+	.ch_cfg = ath12k_mhi_channels_qcn9274,
+	.num_events = ARRAY_SIZE(ath12k_mhi_events_qcn9274),
+	.event_cfg = ath12k_mhi_events_qcn9274,
 };
 
 static struct mhi_channel_config ath12k_mhi_channels_wcn7850[] = {
@@ -387,8 +387,8 @@ int ath12k_mhi_register(struct ath12k_pci *ab_pci)
 	mhi_ctrl->write_reg = ath12k_mhi_op_write_reg;
 
 	switch (ab->hw_rev) {
-	case ATH12K_HW_QCN92XX_HW10:
-		ath12k_mhi_config = &ath12k_mhi_config_qcn92xx;
+	case ATH12K_HW_QCN9274_HW10:
+		ath12k_mhi_config = &ath12k_mhi_config_qcn9274;
 		break;
 	case ATH12K_HW_WCN7850_HW20:
 		ath12k_mhi_config = &ath12k_mhi_config_wcn7850;

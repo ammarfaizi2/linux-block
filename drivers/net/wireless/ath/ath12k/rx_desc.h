@@ -116,7 +116,7 @@ enum rx_desc_decrypt_status_code {
 
 #define RX_MPDU_START_INFO8_AUTH_TO_SEND_WDS		BIT(0)
 
-struct rx_mpdu_start_qcn92xx {
+struct rx_mpdu_start_qcn9274 {
 	__le32 info0;
 	__le32 reo_queue_desc_lo;
 	__le32 info1;
@@ -736,7 +736,7 @@ enum rx_msdu_start_reception_type {
 #define RX_MSDU_END_INFO14_RX_BITMAP_NOT_UPDED	BIT(13)
 #define RX_MSDU_END_INFO14_MSDU_DONE		BIT(31)
 
-struct rx_msdu_end_qcn92xx {
+struct rx_msdu_end_qcn9274 {
 	__le16 info0;
 	__le16 phy_ppdu_id;
 	__le16 ip_hdr_cksum;
@@ -1391,9 +1391,9 @@ struct rx_msdu_end_qcn92xx {
  * By default these tlv's are not aligned to 128b boundary
  * Need to remove unused qwords and make them compact/aligned
  */
-struct hal_rx_desc_qcn92xx {
-	struct rx_msdu_end_qcn92xx msdu_end;
-	struct rx_mpdu_start_qcn92xx mpdu_start;
+struct hal_rx_desc_qcn9274 {
+	struct rx_msdu_end_qcn9274 msdu_end;
+	struct rx_mpdu_start_qcn9274 mpdu_start;
 	u8 msdu_payload[0];
 } __packed;
 
@@ -1410,17 +1410,17 @@ struct rx_pkt_hdr_tlv {
 
 struct hal_rx_desc_wcn7850 {
 	__le64 msdu_end_tag;
-	struct rx_msdu_end_qcn92xx msdu_end;
+	struct rx_msdu_end_qcn9274 msdu_end;
 	u8 rx_padding0[RX_BE_PADDING0_BYTES];
 	__le64 mpdu_start_tag;
-	struct rx_mpdu_start_qcn92xx mpdu_start;
+	struct rx_mpdu_start_qcn9274 mpdu_start;
 	struct rx_pkt_hdr_tlv	 pkt_hdr_tlv;
 	u8 msdu_payload[0];
 };
 
 struct hal_rx_desc {
 	union {
-		struct hal_rx_desc_qcn92xx qcn92xx;
+		struct hal_rx_desc_qcn9274 qcn9274;
 		struct hal_rx_desc_wcn7850 wcn7850;
 	} u;
 } __packed;

@@ -832,8 +832,8 @@ ath12k_dp_mon_rx_parse_status_tlv(struct ath12k_base *ab,
 		break;
 	}
 	case HAL_RX_MSDU_END: {
-		struct rx_msdu_end_qcn92xx *msdu_end =
-			(struct rx_msdu_end_qcn92xx *)tlv_data;
+		struct rx_msdu_end_qcn9274 *msdu_end =
+			(struct rx_msdu_end_qcn9274 *)tlv_data;
 		bool is_first_msdu_in_mpdu;
 		u16 msdu_end_info;
 

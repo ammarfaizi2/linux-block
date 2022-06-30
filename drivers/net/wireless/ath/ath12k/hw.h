@@ -181,7 +181,7 @@ struct ath12k_hw_params {
 };
 
 /* BRINGUP: move to dp.h */
-int ath12k_dp_rxdma_ring_sel_config_qcn92xx(struct ath12k_base *ab);
+int ath12k_dp_rxdma_ring_sel_config_qcn9274(struct ath12k_base *ab);
 int ath12k_dp_rxdma_ring_sel_config_wcn7850(struct ath12k_base *ab);
 
 struct ath12k_hw_ops {
@@ -193,13 +193,13 @@ struct ath12k_hw_ops {
 	bool (*dp_srng_is_tx_comp_ring)(int ring_num);
 };
 
-extern const struct ath12k_hw_ops qcn92xx_ops;
+extern const struct ath12k_hw_ops qcn9274_ops;
 extern const struct ath12k_hw_ops wcn7850_ops;
 
-extern const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_qcn92xx;
+extern const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_qcn9274;
 extern const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_wcn7850;
 
-extern const struct ath12k_hw_hal_params ath12k_hw_hal_params_qcn92xx;
+extern const struct ath12k_hw_hal_params ath12k_hw_hal_params_qcn9274;
 extern const struct ath12k_hw_hal_params ath12k_hw_hal_params_wcn7850;
 
 static inline
@@ -282,6 +282,6 @@ struct ath12k_hw_regs {
 	u32 pcie_pcs_osc_dtct_config_base;
 };
 
-extern const struct ath12k_hw_regs qcn92xx_regs;
+extern const struct ath12k_hw_regs qcn9274_regs;
 extern const struct ath12k_hw_regs wcn7850_regs;
 #endif

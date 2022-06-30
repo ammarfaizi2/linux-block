@@ -129,7 +129,7 @@ static const struct wmi_tlv_policy wmi_tlv_policies[] = {
 		.min_len = sizeof(struct wmi_vdev_delete_resp_event) },
 };
 
-static void ath12k_init_wmi_config_qcn92xx(struct ath12k_base *ab,
+static void ath12k_init_wmi_config_qcn9274(struct ath12k_base *ab,
 					   struct target_resource_config *config)
 {
 	config->num_vdevs = ab->num_radios * TARGET_NUM_VDEVS;
@@ -230,8 +230,8 @@ static void ath12k_init_wmi_config_wcn7850(struct ath12k_base *ab,
 	config->num_keep_alive_pattern = 0;
 }
 
-static const struct wmi_ops wmi_qcn92xx_ops = {
-	.wmi_init_config = ath12k_init_wmi_config_qcn92xx,
+static const struct wmi_ops wmi_qcn9274_ops = {
+	.wmi_init_config = ath12k_init_wmi_config_qcn9274,
 };
 
 static const struct wmi_ops wmi_wcn7850_ops = {
@@ -7400,8 +7400,8 @@ int ath12k_wmi_attach(struct ath12k_base *ab)
 	ab->wmi_ab.preferred_hw_mode = WMI_HOST_HW_MODE_MAX;
 
 	switch (ab->hw_rev) {
-	case ATH12K_HW_QCN92XX_HW10:
-		ab->wmi_ab.ops = &wmi_qcn92xx_ops;
+	case ATH12K_HW_QCN9274_HW10:
+		ab->wmi_ab.ops = &wmi_qcn9274_ops;
 		break;
 	case ATH12K_HW_WCN7850_HW20:
 		ab->wmi_ab.ops = &wmi_wcn7850_ops;
