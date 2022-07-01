@@ -68,7 +68,7 @@ static bool ath12k_dp_srng_is_comp_ring_wcn7850(int ring_num)
 	return false;
 }
 
-const struct ath12k_hw_ops qcn9274_ops = {
+static const struct ath12k_hw_ops qcn9274_ops = {
 	.get_hw_mac_from_pdev_id = ath12k_hw_qcn9274_mac_from_pdev_id,
 	.mac_id_to_pdev_id = ath12k_hw_mac_id_to_pdev_id_qcn9274,
 	.mac_id_to_srng_id = ath12k_hw_mac_id_to_srng_id_qcn9274,
@@ -77,7 +77,7 @@ const struct ath12k_hw_ops qcn9274_ops = {
 	.dp_srng_is_tx_comp_ring = ath12k_dp_srng_is_comp_ring_qcn9274,
 };
 
-const struct ath12k_hw_ops wcn7850_ops = {
+static const struct ath12k_hw_ops wcn7850_ops = {
 	.get_hw_mac_from_pdev_id = ath12k_hw_qcn9274_mac_from_pdev_id,
 	.mac_id_to_pdev_id = ath12k_hw_mac_id_to_pdev_id_wcn7850,
 	.mac_id_to_srng_id = ath12k_hw_mac_id_to_srng_id_wcn7850,
@@ -113,7 +113,7 @@ const struct ath12k_hw_ops wcn7850_ops = {
 #define ATH12K_TX_MON_RING_MASK_1 0x2
 
 /* Target firmware's Copy Engine configuration. */
-const struct ce_pipe_config ath12k_target_ce_config_wlan_qcn9274[] = {
+static const struct ce_pipe_config ath12k_target_ce_config_wlan_qcn9274[] = {
 	/* CE0: host->target HTC control and raw streams */
 	{
 		.pipenum = __cpu_to_le32(0),
@@ -240,7 +240,7 @@ const struct ce_pipe_config ath12k_target_ce_config_wlan_qcn9274[] = {
 };
 
 /* Target firmware's Copy Engine configuration. */
-const struct ce_pipe_config ath12k_target_ce_config_wlan_wcn7850[] = {
+static const struct ce_pipe_config ath12k_target_ce_config_wlan_wcn7850[] = {
 	/* CE0: host->target HTC control and raw streams */
 	{
 		.pipenum = __cpu_to_le32(0),
@@ -337,7 +337,7 @@ const struct ce_pipe_config ath12k_target_ce_config_wlan_wcn7850[] = {
  * This table is derived from the CE_PCI TABLE, above.
  * It is passed to the Target at startup for use by firmware.
  */
-const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_qcn9274[] = {
+static const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_qcn9274[] = {
 	{
 		__cpu_to_le32(ATH12K_HTC_SVC_ID_WMI_DATA_VO),
 		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
@@ -448,7 +448,7 @@ const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_qcn9274[] = {
 	},
 };
 
-const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_wcn7850[] = {
+static const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_wcn7850[] = {
 	{
 		__cpu_to_le32(ATH12K_HTC_SVC_ID_WMI_DATA_VO),
 		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
@@ -529,7 +529,7 @@ const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_wcn7850[] = {
 	},
 };
 
-const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_qcn9274 = {
+static const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_qcn9274 = {
 	.tx  = {
 		ATH12K_TX_RING_MASK_0,
 		ATH12K_TX_RING_MASK_1,
@@ -572,7 +572,7 @@ const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_qcn9274 = {
 	},
 };
 
-const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_wcn7850 = {
+static const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_wcn7850 = {
 	.tx  = {
 		ATH12K_TX_RING_MASK_0,
 		ATH12K_TX_RING_MASK_2,
@@ -600,7 +600,7 @@ const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_wcn7850 = {
 	},
 };
 
-const struct ath12k_hw_regs qcn9274_regs = {
+static const struct ath12k_hw_regs qcn9274_regs = {
 	/* SW2TCL(x) R0 ring configuration address */
 	.hal_tcl1_ring_id = 0x00000908,
 	.hal_tcl1_ring_misc = 0x00000910,
@@ -638,7 +638,7 @@ const struct ath12k_hw_regs qcn9274_regs = {
 	.pcie_pcs_osc_dtct_config_base = 0x01e0d45c,
 };
 
-const struct ath12k_hw_regs wcn7850_regs = {
+static const struct ath12k_hw_regs wcn7850_regs = {
 	/* SW2TCL(x) R0 ring configuration address */
 	.hal_tcl1_ring_id = 0x00000908,
 	.hal_tcl1_ring_misc = 0x00000910,
@@ -676,7 +676,7 @@ const struct ath12k_hw_regs wcn7850_regs = {
 	.pcie_pcs_osc_dtct_config_base = 0x01e0f45c,
 };
 
-const struct ath12k_hw_hal_params ath12k_hw_hal_params_qcn9274 = {
+static const struct ath12k_hw_hal_params ath12k_hw_hal_params_qcn9274 = {
 	.rx_buf_rbm = HAL_RX_BUF_RBM_SW3_BM,
 	.wbm2sw_cc_enable = HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW0_EN |
 			    HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW1_EN |
@@ -685,7 +685,7 @@ const struct ath12k_hw_hal_params ath12k_hw_hal_params_qcn9274 = {
 			    HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW4_EN,
 };
 
-const struct ath12k_hw_hal_params ath12k_hw_hal_params_wcn7850 = {
+static const struct ath12k_hw_hal_params ath12k_hw_hal_params_wcn7850 = {
 	.rx_buf_rbm = HAL_RX_BUF_RBM_SW1_BM,
 	.wbm2sw_cc_enable = HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW0_EN |
 			    HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW2_EN |

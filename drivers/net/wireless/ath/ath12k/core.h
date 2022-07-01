@@ -916,12 +916,6 @@ struct ath12k_fw_stats_bcn {
 	u32 tx_bcn_outage_cnt;
 };
 
-extern const struct ce_pipe_config ath12k_target_ce_config_wlan_qcn9274[];
-extern const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_qcn9274[];
-
-extern const struct ce_pipe_config ath12k_target_ce_config_wlan_wcn7850[];
-extern const struct service_to_pipe ath12k_target_service_to_ce_map_wlan_wcn7850[];
-
 int ath12k_core_qmi_firmware_ready(struct ath12k_base *ab);
 int ath12k_core_pre_init(struct ath12k_base *ab);
 int ath12k_core_init(struct ath12k_base *ath12k);
