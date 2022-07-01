@@ -148,10 +148,10 @@ void inet_sock_destruct(struct sock *sk)
 		return;
 	}
 
-	WARN_ON(atomic_read(&sk->sk_rmem_alloc));
-	WARN_ON(refcount_read(&sk->sk_wmem_alloc));
-	WARN_ON(sk->sk_wmem_queued);
-	WARN_ON(sk_forward_alloc_get(sk));
+	WARN_ON_ONCE(atomic_read(&sk->sk_rmem_alloc));
+	WARN_ON_ONCE(refcount_read(&sk->sk_wmem_alloc));
+	WARN_ON_ONCE(sk->sk_wmem_queued);
+	WARN_ON_ONCE(sk_forward_alloc_get(sk));
 
 	kfree(rcu_dereference_protected(inet->inet_opt, 1));
 	dst_release(rcu_dereference_protected(sk->sk_dst_cache, 1));
@@ -1928,6 +1928,8 @@ static int __init inet_init(void)
 	int rc;
 
 	sock_skb_cb_check_size(sizeof(struct inet_skb_parm));
+
+	raw_hashinfo_init(&raw_v4_hashinfo);
 
 	rc = proto_register(&tcp_prot, 1);
 	if (rc)
