@@ -148,6 +148,7 @@ struct netfs_inode {
 	unsigned long		flags;
 #define NETFS_ICTX_ENCRYPTED	0		/* The file contents are encrypted */
 #define NETFS_ICTX_DO_RMW	1		/* Set if RMW required (no write streaming) */
+#define NETFS_ICTX_ODIRECT	2		/* Set if inode in direct I/O mode */
 	unsigned char		min_bshift;	/* log2 min block size for bounding box or 0 */
 	unsigned char		obj_bshift;	/* log2 storage object shift (ceph/pnfs) or 0 */
 	unsigned char		crypto_bshift;	/* log2 of crypto block size */
@@ -539,5 +540,13 @@ static inline struct fscache_cookie *netfs_i_cookie(struct netfs_inode *ctx)
 	return NULL;
 #endif
 }
+
+/* inode locking for buffered/direct I/O */
+void netfs_start_io_read(struct inode *inode);
+void netfs_end_io_read(struct inode *inode);
+void netfs_start_io_write(struct inode *inode);
+void netfs_end_io_write(struct inode *inode);
+void netfs_start_io_direct(struct inode *inode);
+void netfs_end_io_direct(struct inode *inode);
 
 #endif /* _LINUX_NETFS_H */

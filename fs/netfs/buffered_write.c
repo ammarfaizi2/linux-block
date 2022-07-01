@@ -11,6 +11,7 @@
 #include <linux/pagemap.h>
 #include <linux/slab.h>
 #include <linux/backing-dev.h>
+#include <linux/netfs.h>
 #include "internal.h"
 
 static inline bool netfs_bounds_dont_touch(const struct netfs_dirty_region *a,
@@ -799,19 +800,19 @@ error_folio:
 }
 
 /**
- * netfs_file_write_iter - write data to a file
+ * netfs_file_write_iter_locked - write data to a file
  * @iocb:	IO state structure
  * @from:	iov_iter with data to write
  *
  * This is a wrapper around __generic_file_write_iter() to be used by most
- * filesystems. It takes care of syncing the file in case of O_SYNC file and
- * acquires i_mutex as needed.
+ * filesystems that want to deal with the locking themselves. It takes care
+ * of syncing the file in case of O_SYNC.
  * Return:
  * * negative error code if no data has been written at all of
  *   vfs_fsync_range() failed for a synchronous write
  * * number of bytes written, even for truncated writes
  */
-ssize_t netfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ssize_t netfs_file_write_iter_locked(struct kiocb *iocb, struct iov_iter *from)
 {
 	struct file *file = iocb->ki_filp;
 	struct inode *inode = file->f_mapping->host;
@@ -820,10 +821,9 @@ ssize_t netfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 
 	_enter("%llx,%zx,%llx", iocb->ki_pos, iov_iter_count(from), i_size_read(inode));
 
-	inode_lock(inode);
 	ret = generic_write_checks(iocb, from);
 	if (ret <= 0)
-		goto error_unlock;
+		return ret;
 
 	trace_netfs_write_iter(iocb, from);
 
@@ -848,12 +848,43 @@ ssize_t netfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 		ret = netfs_perform_write(iocb, from);
 
 error:
-	inode_unlock(inode);
 	/* TODO: Wait for DSYNC region here. */
 	current->backing_dev_info = NULL;
 	return ret;
-error_unlock:
-	inode_unlock(inode);
+}
+EXPORT_SYMBOL(netfs_file_write_iter_locked);
+
+/**
+ * netfs_file_write_iter - write data to a file
+ * @iocb:	IO state structure
+ * @from:	iov_iter with data to write
+ *
+ * This is a wrapper around __generic_file_write_iter() to be used by most
+ * filesystems. It takes care of syncing the file in case of O_SYNC file and
+ * acquires i_mutex as needed.
+ * Return:
+ * * negative error code if no data has been written at all of
+ *   vfs_fsync_range() failed for a synchronous write
+ * * number of bytes written, even for truncated writes
+ */
+ssize_t netfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+{
+	ssize_t ret;
+	bool direct = (iocb->ki_flags & (IOCB_DIRECT | IOCB_APPEND)) == IOCB_DIRECT;
+	struct inode *inode = file_inode(iocb->ki_filp);
+
+	if (direct)
+		netfs_start_io_direct(inode);
+	else
+		netfs_start_io_write(inode);
+
+	ret = netfs_file_write_iter_locked(iocb, from);
+
+	if (direct)
+		netfs_end_io_direct(inode);
+	else
+		netfs_end_io_write(inode);
+
 	return ret;
 }
 EXPORT_SYMBOL(netfs_file_write_iter);

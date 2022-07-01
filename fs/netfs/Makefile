@@ -8,6 +8,7 @@ netfs-y := \
 	direct_read.o \
 	direct_write.o \
 	io.o \
+	io_lock.o \
 	main.o \
 	misc.o \
 	objects.o \
