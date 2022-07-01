@@ -96,7 +96,7 @@ static struct mhi_event_config ath12k_mhi_events_qcn9274[] = {
 	},
 };
 
-static struct mhi_controller_config ath12k_mhi_config_qcn9274 = {
+struct mhi_controller_config ath12k_mhi_config_qcn9274 = {
 	.max_channels = 30,
 	.timeout_ms = 10000,
 	.use_bounce_buf = false,
@@ -189,7 +189,7 @@ static struct mhi_event_config ath12k_mhi_events_wcn7850[] = {
 	},
 };
 
-static struct mhi_controller_config ath12k_mhi_config_wcn7850 = {
+struct mhi_controller_config ath12k_mhi_config_wcn7850 = {
 	.max_channels = 128,
 	.timeout_ms = 2000,
 	.use_bounce_buf = false,
@@ -351,7 +351,6 @@ int ath12k_mhi_register(struct ath12k_pci *ab_pci)
 {
 	struct ath12k_base *ab = ab_pci->ab;
 	struct mhi_controller *mhi_ctrl;
-	struct mhi_controller_config *ath12k_mhi_config;
 	int ret;
 
 	mhi_ctrl = mhi_alloc_controller();
@@ -386,19 +385,7 @@ int ath12k_mhi_register(struct ath12k_pci *ab_pci)
 	mhi_ctrl->read_reg = ath12k_mhi_op_read_reg;
 	mhi_ctrl->write_reg = ath12k_mhi_op_write_reg;
 
-	switch (ab->hw_rev) {
-	case ATH12K_HW_QCN9274_HW10:
-		ath12k_mhi_config = &ath12k_mhi_config_qcn9274;
-		break;
-	case ATH12K_HW_WCN7850_HW20:
-		ath12k_mhi_config = &ath12k_mhi_config_wcn7850;
-		break;
-	default:
-		ath12k_err(ab, "failed to find mhi config for hw_rev = %x\n", ab->hw_rev);
-		return -ENOENT;
-	}
-
-	ret = mhi_register_controller(mhi_ctrl, ath12k_mhi_config);
+	ret = mhi_register_controller(mhi_ctrl, ab->hw_params->mhi_config);
 	if (ret) {
 		ath12k_err(ab, "failed to register to mhi bus, err = %d\n", ret);
 		mhi_free_controller(mhi_ctrl);

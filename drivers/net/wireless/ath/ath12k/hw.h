@@ -7,6 +7,8 @@
 #ifndef ATH12K_HW_H
 #define ATH12K_HW_H
 
+#include <linux/mhi.h>
+
 #include "wmi.h"
 #include "hal.h"
 
@@ -178,6 +180,8 @@ struct ath12k_hw_params {
 	bool fix_l1ss;
 	u32 max_tx_ring;
 	bool static_window_map;
+
+	struct mhi_controller_config *mhi_config;
 };
 
 /* BRINGUP: move to dp.h */

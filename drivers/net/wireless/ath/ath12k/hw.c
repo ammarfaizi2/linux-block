@@ -12,6 +12,7 @@
 #include "core.h"
 #include "ce.h"
 #include "hw.h"
+#include "mhi.h"
 
 static u8 ath12k_hw_qcn9274_mac_from_pdev_id(int pdev_idx)
 {
@@ -736,6 +737,7 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.fix_l1ss = false,
 		.max_tx_ring = 4,
 		.static_window_map = true,
+		.mhi_config = &ath12k_mhi_config_qcn9274,
 	},
 	{
 		.name = "wcn7850 hw2.0",
@@ -780,6 +782,7 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.fix_l1ss = false,
 		.max_tx_ring = 3,
 		.static_window_map = false,
+		.mhi_config = &ath12k_mhi_config_wcn7850,
 	},
 };
 
