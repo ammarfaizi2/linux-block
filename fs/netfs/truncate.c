@@ -50,7 +50,7 @@ static void netfs_assess_truncation(struct netfs_inode *ctx,
 	loff_t cur_i_size = treq->i_size;
 	loff_t new_i_size = treq->start;
 
-	kenter("%llx,%llx,%llx,%lx", cur_i_size, new_i_size, remote_i_size, min_bsize);
+	_enter("%llx,%llx,%llx,%lx", cur_i_size, new_i_size, remote_i_size, min_bsize);
 
 	if (new_i_size > cur_i_size) {
 		/* Simplest case: The increase in file size fits in the same

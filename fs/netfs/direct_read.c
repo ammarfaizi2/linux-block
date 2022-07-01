@@ -158,7 +158,7 @@ ssize_t netfs_direct_read_iter(struct kiocb *iocb, struct iov_iter *iter)
 		rreq->buffering = buffering[async][aligned];
 	}
 
-	kdebug("remote_i %llx %llx %llx",
+	_debug("remote_i %llx %llx %llx",
 	       ctx->remote_i_size, rreq->i_size, i_size_read(&ctx->inode));
 
 	/* If this is an async op, we have to keep track of the destination

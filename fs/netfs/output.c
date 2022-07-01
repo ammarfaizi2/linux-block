@@ -95,6 +95,7 @@ static void netfs_write_terminated(struct netfs_io_request *wreq, bool was_async
 	struct netfs_io_subrequest *subreq;
 	struct netfs_inode *ctx = netfs_inode(wreq->inode);
 	unsigned int c;
+	size_t uploaded = ULONG_MAX;
 
 	_enter("R=%x[]", wreq->debug_id);
 
@@ -102,28 +103,30 @@ static void netfs_write_terminated(struct netfs_io_request *wreq, bool was_async
 
 	for (c = 0; c < wreq->nr_chains; c++) {
 		struct netfs_io_chain *chain = &wreq->chains[c];
-		size_t transferred = 0;
 
 		list_for_each_entry(subreq, &chain->subrequests, chain_link) {
-			if (subreq->error || subreq->transferred == 0)
+			chain->transferred += subreq->transferred;
+			if (subreq->error) {
+				chain->error = subreq->error;
 				break;
-			transferred += subreq->transferred;
+			}
 			if (subreq->transferred < subreq->len)
 				break;
 		}
-		chain->transferred = transferred;
 
-		list_for_each_entry(subreq, &chain->subrequests, chain_link) {
-			if (!subreq->error)
-				continue;
+		if (chain->transferred < uploaded)
+			uploaded = chain->transferred;
+		_debug("R=%x %zu %zu %d %u",
+		       wreq->debug_id, chain->transferred, uploaded,
+		       chain->error, chain->source);
+
+		if (chain->error) {
 			switch (chain->source) {
 			case NETFS_UPLOAD_TO_SERVER:
 				/* Depending on the type of failure, this may prevent
 				 * writeback completion unless we're in disconnected
 				 * mode.
 				 */
-				if (!chain->error)
-					chain->error = subreq->error;
 				break;
 
 			case NETFS_WRITE_TO_CACHE:
@@ -142,10 +145,12 @@ static void netfs_write_terminated(struct netfs_io_request *wreq, bool was_async
 			}
 		}
 
-		if (chain->error && !wreq->error)
+		if (chain->error && !wreq->error &&
+		    chain->source != NETFS_WRITE_TO_CACHE)
 			wreq->error = chain->error;
 	}
 
+	wreq->transferred = uploaded;
 	wreq->cleanup(wreq);
 
 	_debug("finished");

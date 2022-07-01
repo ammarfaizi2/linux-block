@@ -126,7 +126,7 @@ static int afs_store_data(struct afs_vnode *vnode, struct iov_iter *iter, loff_t
 		return ret;
 	}
 
-	op = afs_alloc_operation(wbk->key, vnode->volume);
+	op = afs_alloc_operation(wbk ? wbk->key : NULL, vnode->volume);
 	if (IS_ERR(op)) {
 		afs_put_wb_key(wbk);
 		return -ENOMEM;
@@ -160,7 +160,7 @@ try_next_key:
 		ret = afs_get_writeback_key(vnode, &wbk);
 		if (ret == 0) {
 			key_put(op->key);
-			op->key = key_get(wbk->key);
+			op->key = key_get(wbk ? wbk->key : NULL);
 			goto try_next_key;
 		}
 		break;

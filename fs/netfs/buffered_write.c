@@ -272,8 +272,11 @@ void netfs_split_off_front(struct netfs_inode *ctx,
 			   pgoff_t front_last,
 			   enum netfs_dirty_trace why)
 {
-	BUG_ON(back->first > front_last);
-	BUG_ON(back->last < front_last);
+	if (WARN_ON(back->first > front_last) ||
+	    WARN_ON(back->last < front_last)) {
+		spin_unlock(&ctx->dirty_lock);
+		BUG();
+	}
 
 	front->debug_id = atomic_inc_return(&netfs_region_debug_ids);
 	front->type	= back->type;

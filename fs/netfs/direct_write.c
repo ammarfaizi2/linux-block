@@ -14,6 +14,8 @@ static void netfs_cleanup_dio_write(struct netfs_io_request *wreq)
 	struct inode *inode = wreq->inode;
 	unsigned long long end = wreq->start + wreq->len;
 
+	_enter("R=%08x, %zx", wreq->debug_id, wreq->transferred);
+
 	if (!wreq->error &&
 	    i_size_read(inode) < end) {
 		if (wreq->netfs_ops->update_i_size)
@@ -21,6 +23,11 @@ static void netfs_cleanup_dio_write(struct netfs_io_request *wreq)
 		else
 			i_size_write(inode, end);
 	}
+
+	wreq->iocb->ki_pos += wreq->transferred;
+	if (wreq->iocb->ki_complete)
+		wreq->iocb->ki_complete(
+			wreq->iocb, wreq->error ? wreq->error : wreq->transferred);
 }
 
 /*
@@ -111,6 +118,8 @@ ssize_t netfs_direct_write_iter(struct kiocb *iocb, struct iov_iter *iter)
 				   start, end - start, NETFS_DIO_WRITE);
 	if (IS_ERR(wreq))
 		return PTR_ERR(wreq);
+
+	wreq->iocb = iocb;
 
 	ret = -ENOMEM;
 	region = netfs_alloc_dirty_region(GFP_KERNEL);
@@ -263,5 +272,6 @@ ssize_t netfs_direct_write_iter(struct kiocb *iocb, struct iov_iter *iter)
 
 out:
 	netfs_put_request(wreq, false, netfs_rreq_trace_put_hold);
+	_leave(" = %zd", ret);
 	return ret;
 }
