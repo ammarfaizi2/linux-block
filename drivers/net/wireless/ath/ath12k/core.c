@@ -991,7 +991,7 @@ static int ath12k_init_hw_params(struct ath12k_base *ab)
 
 	ab->hw_params = hw_params;
 
-	ath12k_dbg(ab, ATH12K_DBG_BOOT, "Hardware name %s\n", ab->hw_params->name);
+	ath12k_info(ab, "Hardware name: %s\n", ab->hw_params->name);
 
 	return 0;
 }
