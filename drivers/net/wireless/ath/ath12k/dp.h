@@ -222,7 +222,7 @@ struct ath12k_pdev_dp {
 #define DP_RXDMA_BUF_COOKIE_BUF_ID	GENMASK(17, 0)
 #define DP_RXDMA_BUF_COOKIE_PDEV_ID	GENMASK(19, 18)
 
-#define DP_HW2SW_MACID(mac_id) ((mac_id) ? ((mac_id) - 1) : 0)
+#define DP_HW2SW_MACID(mac_id) ({ typeof(mac_id) x = (mac_id); x ? x - 1 : 0; })
 #define DP_SW2HW_MACID(mac_id) ((mac_id) + 1)
 
 #define DP_TX_DESC_ID_MAC_ID  GENMASK(1, 0)
