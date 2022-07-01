@@ -181,6 +181,9 @@ int fscache_begin_cache_operation(struct netfs_io_request *rreq)
 {
 	struct netfs_inode *ctx = netfs_inode(rreq->inode);
 
+	if (netfs_i_cookie(ctx) == NULL)
+		return -ENOBUFS;
+
 	switch (rreq->origin) {
 	case NETFS_READAHEAD:
 	case NETFS_READPAGE:
