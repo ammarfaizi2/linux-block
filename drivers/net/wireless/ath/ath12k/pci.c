@@ -1212,8 +1212,6 @@ static int ath12k_pci_probe(struct pci_dev *pdev,
 	struct ath12k_pci *ab_pci;
 	int ret;
 
-	dev_warn(&pdev->dev, "WARNING: ath12k PCI support is experimental!\n");
-
 	ab = ath12k_core_alloc(&pdev->dev, sizeof(*ab_pci), ATH12K_BUS_PCI);
 	if (!ab) {
 		dev_err(&pdev->dev, "failed to allocate ath12k base\n");
