@@ -118,7 +118,7 @@ struct dp_link_desc_bank {
 #define DP_LINK_DESC_SHIFT	3
 
 #define DP_LINK_DESC_COOKIE_SET(id, page) \
-	(((id + DP_LINK_DESC_START) << DP_LINK_DESC_SHIFT) | page)
+	((((id) + DP_LINK_DESC_START) << DP_LINK_DESC_SHIFT) | (page))
 
 #define DP_LINK_DESC_BANK_MASK	GENMASK(2, 0)
 
