@@ -738,6 +738,7 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.max_tx_ring = 4,
 		.static_window_map = true,
 		.mhi_config = &ath12k_mhi_config_qcn9274,
+		.wmi_init = ath12k_wmi_init_qcn9274,
 	},
 	{
 		.name = "wcn7850 hw2.0",
@@ -783,6 +784,7 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.max_tx_ring = 3,
 		.static_window_map = false,
 		.mhi_config = &ath12k_mhi_config_wcn7850,
+		.wmi_init = ath12k_wmi_init_wcn7850,
 	},
 };
 

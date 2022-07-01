@@ -5081,11 +5081,6 @@ struct target_resource_config {
 	u32 twt_ap_sta_count;
 };
 
-struct wmi_ops {
-	void (*wmi_init_config)(struct ath12k_base *ab,
-				struct target_resource_config *config);
-};
-
 #define WMI_MAX_MEM_REQS 32
 
 #define MAX_RADIOS 3
@@ -5112,7 +5107,6 @@ struct ath12k_wmi_base {
 	struct target_resource_config wlan_resource_config;
 
 	struct ath12k_targ_cap *targ_cap;
-	const struct wmi_ops *ops;
 };
 
 /* WOW structures */
@@ -5280,6 +5274,10 @@ struct wmi_wow_ev_arg {
 
 #define ATH12K_FW_STATS_BUF_SIZE (1024 * 1024)
 
+void ath12k_wmi_init_qcn9274(struct ath12k_base *ab,
+			     struct target_resource_config *config);
+void ath12k_wmi_init_wcn7850(struct ath12k_base *ab,
+			     struct target_resource_config *config);
 int ath12k_wmi_cmd_send(struct ath12k_pdev_wmi *wmi, struct sk_buff *skb,
 			u32 cmd_id);
 struct sk_buff *ath12k_wmi_alloc_skb(struct ath12k_wmi_base *wmi_sc, u32 len);

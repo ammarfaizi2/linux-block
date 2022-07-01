@@ -129,8 +129,8 @@ static const struct wmi_tlv_policy wmi_tlv_policies[] = {
 		.min_len = sizeof(struct wmi_vdev_delete_resp_event) },
 };
 
-static void ath12k_init_wmi_config_qcn9274(struct ath12k_base *ab,
-					   struct target_resource_config *config)
+void ath12k_wmi_init_qcn9274(struct ath12k_base *ab,
+			     struct target_resource_config *config)
 {
 	config->num_vdevs = ab->num_radios * TARGET_NUM_VDEVS;
 
@@ -184,8 +184,8 @@ static void ath12k_init_wmi_config_qcn9274(struct ath12k_base *ab,
 	config->twt_ap_sta_count = 1000;
 }
 
-static void ath12k_init_wmi_config_wcn7850(struct ath12k_base *ab,
-					   struct target_resource_config *config)
+void ath12k_wmi_init_wcn7850(struct ath12k_base *ab,
+			     struct target_resource_config *config)
 {
 	config->num_vdevs = 4;
 	config->num_peers = 16;
@@ -229,14 +229,6 @@ static void ath12k_init_wmi_config_wcn7850(struct ath12k_base *ab,
 	config->num_wow_filters = 0x16;
 	config->num_keep_alive_pattern = 0;
 }
-
-static const struct wmi_ops wmi_qcn9274_ops = {
-	.wmi_init_config = ath12k_init_wmi_config_qcn9274,
-};
-
-static const struct wmi_ops wmi_wcn7850_ops = {
-	.wmi_init_config = ath12k_init_wmi_config_wcn7850,
-};
 
 #define PRIMAP(_hw_mode_) \
 	[_hw_mode_] = _hw_mode_##_PRI
@@ -3599,7 +3591,7 @@ int ath12k_wmi_cmd_init(struct ath12k_base *ab)
 	memset(&init_param, 0, sizeof(init_param));
 	memset(&config, 0, sizeof(config));
 
-	wmi_sc->ops->wmi_init_config(ab, &config);
+	ab->hw_params->wmi_init(ab, &config);
 
 	memcpy(&wmi_sc->wlan_resource_config, &config, sizeof(config));
 
@@ -7396,18 +7388,6 @@ int ath12k_wmi_attach(struct ath12k_base *ab)
 
 	ab->wmi_ab.ab = ab;
 	ab->wmi_ab.preferred_hw_mode = WMI_HOST_HW_MODE_MAX;
-
-	switch (ab->hw_rev) {
-	case ATH12K_HW_QCN9274_HW10:
-		ab->wmi_ab.ops = &wmi_qcn9274_ops;
-		break;
-	case ATH12K_HW_WCN7850_HW20:
-		ab->wmi_ab.ops = &wmi_wcn7850_ops;
-		break;
-	default:
-		ath12k_err(ab, "wmi_ops failure for hw_rev %d", ab->hw_rev);
-		return -EINVAL;
-	}
 
 	/* It's overwritten when service_ext_ready is handled */
 	if (ab->hw_params->single_pdev_only)

@@ -182,6 +182,9 @@ struct ath12k_hw_params {
 	bool static_window_map;
 
 	struct mhi_controller_config *mhi_config;
+
+	void (*wmi_init)(struct ath12k_base *ab,
+			 struct target_resource_config *config);
 };
 
 /* BRINGUP: move to dp.h */
