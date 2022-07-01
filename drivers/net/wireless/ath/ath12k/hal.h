@@ -1031,7 +1031,6 @@ struct ath12k_hal {
 	/* shadow register configuration */
 	u32 shadow_reg_addr[HAL_SHADOW_NUM_REGS];
 	int num_shadow_reg_configured;
-	const struct hal_ops *ops;
 };
 
 /* Maps WBM ring number and Return Buffer Manager Id per TCL ring */
@@ -1087,6 +1086,9 @@ struct hal_ops {
 	u32 (*dp_rx_h_mpdu_err)(struct hal_rx_desc *desc);
 	const struct ath12k_hal_tcl_to_wbm_rbm_map *tcl_to_wbm_rbm_map;
 };
+
+extern const struct hal_ops hal_qcn9274_ops;
+extern const struct hal_ops hal_wcn7850_ops;
 
 u32 ath12k_hal_reo_qdesc_size(u32 ba_window_size, u8 tid);
 void ath12k_hal_reo_qdesc_setup(void *vaddr, int tid, u32 ba_window_size,

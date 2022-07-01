@@ -921,7 +921,7 @@ ath12k_dp_mon_rx_merg_msdus(struct ath12k *ar,
 		u8 qos_pkt = 0;
 
 		rx_desc = (struct hal_rx_desc *)head_msdu->data;
-		hdr_desc = ab->hal.ops->rx_desc_get_msdu_payload(rx_desc);
+		hdr_desc = ab->hw_params->hal_ops->rx_desc_get_msdu_payload(rx_desc);
 
 		/* Base size */
 		wh = (struct ieee80211_hdr_3addr *)hdr_desc;

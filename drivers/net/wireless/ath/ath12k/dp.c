@@ -454,6 +454,7 @@ static void ath12k_dp_srng_common_cleanup(struct ath12k_base *ab)
 static int ath12k_dp_srng_common_setup(struct ath12k_base *ab)
 {
 	struct ath12k_dp *dp = &ab->dp;
+	const struct ath12k_hal_tcl_to_wbm_rbm_map *map;
 	struct hal_srng *srng;
 	int i, ret, tx_comp_ring_num;
 	u32 ring_hash_map;
@@ -482,7 +483,8 @@ static int ath12k_dp_srng_common_setup(struct ath12k_base *ab)
 	}
 
 	for (i = 0; i < ab->hw_params->max_tx_ring; i++) {
-		tx_comp_ring_num = ab->hal.ops->tcl_to_wbm_rbm_map[i].wbm_ring_num;
+		map = ab->hw_params->hal_ops->tcl_to_wbm_rbm_map;
+		tx_comp_ring_num = map[i].wbm_ring_num;
 
 		ret = ath12k_dp_srng_setup(ab, &dp->tx_ring[i].tcl_data_ring,
 					   HAL_TCL_DATA, i, 0,
@@ -869,7 +871,7 @@ int ath12k_dp_service_srng(struct ath12k_base *ab,
 
 	while (i < ab->hw_params->max_tx_ring) {
 		if (ab->hw_params->ring_mask->tx[grp_id] &
-			BIT(ab->hal.ops->tcl_to_wbm_rbm_map[i].wbm_ring_num))
+			BIT(ab->hw_params->hal_ops->tcl_to_wbm_rbm_map[i].wbm_ring_num))
 			ath12k_dp_tx_completion_handler(ab, i);
 		i++;
 	}

@@ -185,6 +185,8 @@ struct ath12k_hw_params {
 
 	void (*wmi_init)(struct ath12k_base *ab,
 			 struct target_resource_config *config);
+
+	const struct hal_ops *hal_ops;
 };
 
 /* BRINGUP: move to dp.h */

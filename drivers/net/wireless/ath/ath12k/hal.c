@@ -634,7 +634,7 @@ static u32 ath12k_hw_qcn9274_dp_rx_h_mpdu_err(struct hal_rx_desc *desc)
 	return errmap;
 }
 
-static const struct hal_ops hal_qcn9274_ops = {
+const struct hal_ops hal_qcn9274_ops = {
 	.rx_desc_get_first_msdu = ath12k_hw_qcn9274_rx_desc_get_first_msdu,
 	.rx_desc_get_last_msdu = ath12k_hw_qcn9274_rx_desc_get_last_msdu,
 	.rx_desc_get_l3_pad_bytes = ath12k_hw_qcn9274_rx_desc_get_l3_pad_bytes,
@@ -1088,7 +1088,7 @@ static u32 ath12k_hw_wcn7850_dp_rx_h_mpdu_err(struct hal_rx_desc *desc)
 	return errmap;
 }
 
-static const struct hal_ops hal_wcn7850_ops = {
+const struct hal_ops hal_wcn7850_ops = {
 	.rx_desc_get_first_msdu = ath12k_hw_wcn7850_rx_desc_get_first_msdu,
 	.rx_desc_get_last_msdu = ath12k_hw_wcn7850_rx_desc_get_last_msdu,
 	.rx_desc_get_l3_pad_bytes = ath12k_hw_wcn7850_rx_desc_get_l3_pad_bytes,
@@ -2108,19 +2108,7 @@ int ath12k_hal_srng_init(struct ath12k_base *ab)
 
 	memset(hal, 0, sizeof(*hal));
 
-	switch (ab->hw_rev) {
-	case ATH12K_HW_QCN9274_HW10:
-		ab->hal.ops = &hal_qcn9274_ops;
-		break;
-	case ATH12K_HW_WCN7850_HW20:
-		ab->hal.ops = &hal_wcn7850_ops;
-		break;
-	default:
-		ath12k_err(ab, "hal_ops failure for hw_rev %d", ab->hw_rev);
-		return -EINVAL;
-	}
-
-	ret = ab->hal.ops->create_srng_config(ab);
+	ret = ab->hw_params->hal_ops->create_srng_config(ab);
 	if (ret)
 		goto err_hal;
 
