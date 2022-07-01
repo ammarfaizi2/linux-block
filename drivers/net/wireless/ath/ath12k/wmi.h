@@ -4556,13 +4556,6 @@ enum wmi_sta_powersave_param {
 	WMI_STA_PS_PARAM_UAPSD = 4,
 };
 
-#define WMI_UAPSD_AC_TYPE_DELI 0
-#define WMI_UAPSD_AC_TYPE_TRIG 1
-
-#define WMI_UAPSD_AC_BIT_MASK(ac, type) \
-	((type ==  WMI_UAPSD_AC_TYPE_DELI) ? \
-	 (1 << (ac << 1)) : (1 << ((ac << 1) + 1)))
-
 enum wmi_sta_ps_param_uapsd {
 	WMI_STA_PS_UAPSD_AC0_DELIVERY_EN = (1 << 0),
 	WMI_STA_PS_UAPSD_AC0_TRIGGER_EN  = (1 << 1),
@@ -4572,30 +4565,6 @@ enum wmi_sta_ps_param_uapsd {
 	WMI_STA_PS_UAPSD_AC2_TRIGGER_EN  = (1 << 5),
 	WMI_STA_PS_UAPSD_AC3_DELIVERY_EN = (1 << 6),
 	WMI_STA_PS_UAPSD_AC3_TRIGGER_EN  = (1 << 7),
-};
-
-#define WMI_STA_UAPSD_MAX_INTERVAL_MSEC UINT_MAX
-
-struct wmi_sta_uapsd_auto_trig_param {
-	u32 wmm_ac;
-	u32 user_priority;
-	u32 service_interval;
-	u32 suspend_interval;
-	u32 delay_interval;
-};
-
-struct wmi_sta_uapsd_auto_trig_cmd_fixed_param {
-	u32 vdev_id;
-	struct wmi_mac_addr peer_macaddr;
-	u32 num_ac;
-};
-
-struct wmi_sta_uapsd_auto_trig_arg {
-	u32 wmm_ac;
-	u32 user_priority;
-	u32 service_interval;
-	u32 suspend_interval;
-	u32 delay_interval;
 };
 
 enum wmi_sta_ps_param_tx_wake_threshold {
