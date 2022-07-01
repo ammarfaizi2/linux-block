@@ -545,11 +545,6 @@ static int ath12k_dp_rx_pdev_srng_alloc(struct ath12k *ar)
 	int ret;
 	u32 mac_id = dp->mac_id;
 
-	/* if rxdma1_enable is false, then it doesn't need
-	 * to setup rxdam_mon_buf_ring, rxdma_mon_dst_ring
-	 * and rxdma_mon_desc_ring.
-	 * init reap timer for QCA6390.
-	 */
 	if (!ar->ab->hw_params->rxdma1_enable) {
 		//init mon status buffer reap timer
 		timer_setup(&ar->ab->mon_reap_timer,

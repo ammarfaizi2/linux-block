@@ -4024,7 +4024,9 @@ static int ath12k_wmi_tlv_ext_soc_hal_reg_caps_parse(struct ath12k_base *soc,
 
 		soc->num_radios++;
 
-		/* For QCA6390, save mac_phy capability in the same pdev */
+		/* For single_pdev_only targets,
+		 * save mac_phy capability in the same pdev
+		 */
 		if (soc->hw_params->single_pdev_only)
 			pdev_index = 0;
 		else
@@ -4034,10 +4036,6 @@ static int ath12k_wmi_tlv_ext_soc_hal_reg_caps_parse(struct ath12k_base *soc,
 		phy_id_map >>= 1;
 	}
 
-	/* For QCA6390, set num_radios to 1 because host manages
-	 * both 2G and 5G radio in one pdev.
-	 * Set pdev_id = 0 and 0 means soc level.
-	 */
 	if (soc->hw_params->single_pdev_only) {
 		soc->num_radios = 1;
 		soc->pdevs[0].pdev_id = 0;

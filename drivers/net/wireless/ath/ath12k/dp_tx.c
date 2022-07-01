@@ -661,7 +661,7 @@ ath12k_dp_tx_get_ring_id_type(struct ath12k_base *ab,
 
 	switch (ring_type) {
 	case HAL_RXDMA_BUF:
-		/* for QCA6390, host fills rx buffer to fw and fw fills to
+		/* for some targets, host fills rx buffer to fw and fw fills to
 		 * rxbuf ring for each rxdma
 		 */
 		if (!ab->hw_params->rx_mac_buf_ring) {

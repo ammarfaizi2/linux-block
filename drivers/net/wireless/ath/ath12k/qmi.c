@@ -2304,10 +2304,10 @@ static int ath12k_qmi_respond_fw_mem_request(struct ath12k_base *ab)
 
 	memset(&resp, 0, sizeof(resp));
 
-	/* For QCA6390 by default FW requests a block of ~4M contiguous
-	 * DMA memory, it's hard to allocate from OS. So host returns
-	 * failure to FW and FW will then request mulitple blocks of small
-	 * chunk size memory.
+	/* Some targets by default request a block of big contiguous
+	 * DMA memory, it's hard to allocate from kernel. So host returns
+	 * failure to firmware and firmware then request multiple blocks of
+	 * small chunk size memory.
 	 */
 	if (ab->qmi.target_mem_delayed) {
 		delayed = true;
