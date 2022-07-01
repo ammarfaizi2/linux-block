@@ -3608,7 +3608,7 @@ int ath12k_wmi_cmd_init(struct ath12k_base *ab)
 	init_param.hw_mode_id = wmi_sc->preferred_hw_mode;
 	init_param.mem_chunks = wmi_sc->mem_chunks;
 
-	if (ab->hw_params.single_pdev_only)
+	if (ab->hw_params->single_pdev_only)
 		init_param.hw_mode_id = WMI_HOST_HW_MODE_MAX;
 
 	init_param.num_band_to_mac = ab->num_radios;
@@ -4025,7 +4025,7 @@ static int ath12k_wmi_tlv_ext_soc_hal_reg_caps_parse(struct ath12k_base *soc,
 		soc->num_radios++;
 
 		/* For QCA6390, save mac_phy capability in the same pdev */
-		if (soc->hw_params.single_pdev_only)
+		if (soc->hw_params->single_pdev_only)
 			pdev_index = 0;
 		else
 			pdev_index = soc->num_radios;
@@ -4038,7 +4038,7 @@ static int ath12k_wmi_tlv_ext_soc_hal_reg_caps_parse(struct ath12k_base *soc,
 	 * both 2G and 5G radio in one pdev.
 	 * Set pdev_id = 0 and 0 means soc level.
 	 */
-	if (soc->hw_params.single_pdev_only) {
+	if (soc->hw_params->single_pdev_only) {
 		soc->num_radios = 1;
 		soc->pdevs[0].pdev_id = 0;
 	}
@@ -5933,8 +5933,8 @@ static int ath12k_reg_chan_list_event(struct ath12k_base *ab, struct sk_buff *sk
 		 * is true. If pdev_idx is valid but not 0, discard the
 		 * event. Otherwise, it goes to fallback.
 		 */
-		if (ab->hw_params.single_pdev_only &&
-		    pdev_idx < ab->hw_params.num_rxmda_per_pdev)
+		if (ab->hw_params->single_pdev_only &&
+		    pdev_idx < ab->hw_params->num_rxmda_per_pdev)
 			goto mem_free;
 		else
 			goto fallback;
@@ -7353,7 +7353,7 @@ int ath12k_wmi_connect(struct ath12k_base *ab)
 	u8 wmi_ep_count;
 
 	wmi_ep_count = ab->htc.wmi_ep_count;
-	if (wmi_ep_count > ab->hw_params.max_radios)
+	if (wmi_ep_count > ab->hw_params->max_radios)
 		return -1;
 
 	for (i = 0; i < wmi_ep_count; i++)
@@ -7375,7 +7375,7 @@ int ath12k_wmi_pdev_attach(struct ath12k_base *ab,
 {
 	struct ath12k_pdev_wmi *wmi_handle;
 
-	if (pdev_id >= ab->hw_params.max_radios)
+	if (pdev_id >= ab->hw_params->max_radios)
 		return -EINVAL;
 
 	wmi_handle = &ab->wmi_ab.wmi[pdev_id];
@@ -7412,7 +7412,7 @@ int ath12k_wmi_attach(struct ath12k_base *ab)
 	}
 
 	/* It's overwritten when service_ext_ready is handled */
-	if (ab->hw_params.single_pdev_only)
+	if (ab->hw_params->single_pdev_only)
 		ab->wmi_ab.preferred_hw_mode = WMI_HOST_HW_MODE_SINGLE;
 
 	/* TODO: Init remaining wmi soc resources required */

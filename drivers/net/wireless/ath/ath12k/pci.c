@@ -264,7 +264,7 @@ static int ath12k_pci_fix_l1ss(struct ath12k_base *ab)
 {
 	int ret;
 
-	if (!ab->hw_params.fix_l1ss)
+	if (!ab->hw_params->fix_l1ss)
 		return 0;
 
 	ret = ath12k_pci_set_link_reg(ab,
@@ -392,7 +392,7 @@ static void ath12k_pci_free_irq(struct ath12k_base *ab)
 {
 	int i, irq_idx;
 
-	for (i = 0; i < ab->hw_params.ce_count; i++) {
+	for (i = 0; i < ab->hw_params->ce_count; i++) {
 		if (ath12k_ce_get_attr_flags(ab, i) & CE_ATTR_DIS_INTR)
 			continue;
 		irq_idx = ATH12K_PCI_IRQ_CE0_OFFSET + i;
@@ -422,7 +422,7 @@ static void ath12k_pci_ce_irqs_disable(struct ath12k_base *ab)
 {
 	int i;
 
-	for (i = 0; i < ab->hw_params.ce_count; i++) {
+	for (i = 0; i < ab->hw_params->ce_count; i++) {
 		if (ath12k_ce_get_attr_flags(ab, i) & CE_ATTR_DIS_INTR)
 			continue;
 		ath12k_pci_ce_irq_disable(ab, i);
@@ -434,7 +434,7 @@ static void ath12k_pci_sync_ce_irqs(struct ath12k_base *ab)
 	int i;
 	int irq_idx;
 
-	for (i = 0; i < ab->hw_params.ce_count; i++) {
+	for (i = 0; i < ab->hw_params->ce_count; i++) {
 		if (ath12k_ce_get_attr_flags(ab, i) & CE_ATTR_DIS_INTR)
 			continue;
 
@@ -568,13 +568,13 @@ static int ath12k_pci_ext_irq_config(struct ath12k_base *ab)
 		netif_napi_add(&irq_grp->napi_ndev, &irq_grp->napi,
 			       ath12k_pci_ext_grp_napi_poll, NAPI_POLL_WEIGHT);
 
-		if (ab->hw_params.ring_mask->tx[i] ||
-		    ab->hw_params.ring_mask->rx[i] ||
-		    ab->hw_params.ring_mask->rx_err[i] ||
-		    ab->hw_params.ring_mask->rx_wbm_rel[i] ||
-		    ab->hw_params.ring_mask->reo_status[i] ||
-		    ab->hw_params.ring_mask->host2rxdma[i] ||
-		    ab->hw_params.ring_mask->rx_mon_dest[i]) {
+		if (ab->hw_params->ring_mask->tx[i] ||
+		    ab->hw_params->ring_mask->rx[i] ||
+		    ab->hw_params->ring_mask->rx_err[i] ||
+		    ab->hw_params->ring_mask->rx_wbm_rel[i] ||
+		    ab->hw_params->ring_mask->reo_status[i] ||
+		    ab->hw_params->ring_mask->host2rxdma[i] ||
+		    ab->hw_params->ring_mask->rx_mon_dest[i]) {
 			num_irq = 1;
 		}
 
@@ -625,7 +625,7 @@ static int ath12k_pci_config_irq(struct ath12k_base *ab)
 
 	/* Configure CE irqs */
 
-	for (i = 0, msi_data_idx = 0; i < ab->hw_params.ce_count; i++) {
+	for (i = 0, msi_data_idx = 0; i < ab->hw_params->ce_count; i++) {
 		if (ath12k_ce_get_attr_flags(ab, i) & CE_ATTR_DIS_INTR)
 			continue;
 
@@ -663,19 +663,19 @@ static void ath12k_pci_init_qmi_ce_config(struct ath12k_base *ab)
 {
 	struct ath12k_qmi_ce_cfg *cfg = &ab->qmi.ce_cfg;
 
-	cfg->tgt_ce = ab->hw_params.target_ce_config;
-	cfg->tgt_ce_len = ab->hw_params.target_ce_count;
+	cfg->tgt_ce = ab->hw_params->target_ce_config;
+	cfg->tgt_ce_len = ab->hw_params->target_ce_count;
 
-	cfg->svc_to_ce_map = ab->hw_params.svc_to_ce_map;
-	cfg->svc_to_ce_map_len = ab->hw_params.svc_to_ce_map_len;
-	ab->qmi.service_ins_id = ab->hw_params.qmi_service_ins_id;
+	cfg->svc_to_ce_map = ab->hw_params->svc_to_ce_map;
+	cfg->svc_to_ce_map_len = ab->hw_params->svc_to_ce_map_len;
+	ab->qmi.service_ins_id = ab->hw_params->qmi_service_ins_id;
 }
 
 static void ath12k_pci_ce_irqs_enable(struct ath12k_base *ab)
 {
 	int i;
 
-	for (i = 0; i < ab->hw_params.ce_count; i++) {
+	for (i = 0; i < ab->hw_params->ce_count; i++) {
 		if (ath12k_ce_get_attr_flags(ab, i) & CE_ATTR_DIS_INTR)
 			continue;
 		ath12k_pci_ce_irq_enable(ab, i);
@@ -863,7 +863,7 @@ static void ath12k_pci_kill_tasklets(struct ath12k_base *ab)
 {
 	int i;
 
-	for (i = 0; i < ab->hw_params.ce_count; i++) {
+	for (i = 0; i < ab->hw_params->ce_count; i++) {
 		struct ath12k_ce_pipe *ce_pipe = &ab->ce.ce_pipe[i];
 
 		if (ath12k_ce_get_attr_flags(ab, i) & CE_ATTR_DIS_INTR)
@@ -887,8 +887,8 @@ int ath12k_pci_map_service_to_pipe(struct ath12k_base *ab, u16 service_id,
 	bool ul_set = false, dl_set = false;
 	int i;
 
-	for (i = 0; i < ab->hw_params.svc_to_ce_map_len; i++) {
-		entry = &ab->hw_params.svc_to_ce_map[i];
+	for (i = 0; i < ab->hw_params->svc_to_ce_map_len; i++) {
+		entry = &ab->hw_params->svc_to_ce_map[i];
 
 		if (__le32_to_cpu(entry->service_id) != service_id)
 			continue;
@@ -980,7 +980,7 @@ void ath12k_pci_get_ce_msi_idx(struct ath12k_base *ab, u32 ce_id,
 {
 	u32 i, msi_data_idx;
 
-	for (i = 0, msi_data_idx = 0; i < ab->hw_params.ce_count; i++) {
+	for (i = 0, msi_data_idx = 0; i < ab->hw_params->ce_count; i++) {
 		if (ath12k_ce_get_attr_flags(ab, i) & CE_ATTR_DIS_INTR)
 			continue;
 
@@ -1073,7 +1073,7 @@ u32 ath12k_pci_read32(struct ath12k_base *ab, u32 offset)
 	if (offset < WINDOW_START) {
 		val = ioread32(ab->mem + offset);
 	} else {
-		if (ab->hw_params.static_window_map)
+		if (ab->hw_params->static_window_map)
 			window_start = ath12k_pci_get_window_start(ab, offset);
 		else
 			window_start = WINDOW_START;
@@ -1117,7 +1117,7 @@ void ath12k_pci_write32(struct ath12k_base *ab, u32 offset, u32 value)
 	if (offset < WINDOW_START) {
 		iowrite32(value, ab->mem + offset);
 	} else {
-		if (ab->hw_params.static_window_map)
+		if (ab->hw_params->static_window_map)
 			window_start = ath12k_pci_get_window_start(ab, offset);
 		else
 			window_start = WINDOW_START;
@@ -1166,7 +1166,7 @@ int ath12k_pci_power_up(struct ath12k_base *ab)
 		return ret;
 	}
 
-	if (ab->hw_params.static_window_map)
+	if (ab->hw_params->static_window_map)
 		ath12k_pci_select_static_window(ab_pci);
 
 	return 0;

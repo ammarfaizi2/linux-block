@@ -157,11 +157,11 @@ int ath12k_dp_tx(struct ath12k *ar, struct ath12k_vif *arvif,
 	 * If all rings are full, we drop the packet.
 	 * //TODO Add throttling logic when all rings are full
 	 */
-	ring_selector = ab->hw_params.hw_ops->get_ring_selector(skb);
+	ring_selector = ab->hw_params->hw_ops->get_ring_selector(skb);
 
 tcl_ring_sel:
 	tcl_ring_retry = false;
-	ti.ring_id = ring_selector % ab->hw_params.max_tx_ring;
+	ti.ring_id = ring_selector % ab->hw_params->max_tx_ring;
 
 	ring_map |= BIT(ti.ring_id);
 	ti.rbm_id = ab->hal.ops->tcl_to_wbm_rbm_map[ti.ring_id].rbm_id;
@@ -300,8 +300,8 @@ tcl_ring_sel:
 		 * checking this ring earlier for each pkt tx.
 		 * Restart ring selection if some rings are not checked yet.
 		 */
-		if (ring_map != (BIT(ab->hw_params.max_tx_ring) - 1) &&
-		    ab->hw_params.tcl_ring_retry) {
+		if (ring_map != (BIT(ab->hw_params->max_tx_ring) - 1) &&
+		    ab->hw_params->tcl_ring_retry) {
 			tcl_ring_retry = true;
 			ring_selector++;
 		}
@@ -664,7 +664,7 @@ ath12k_dp_tx_get_ring_id_type(struct ath12k_base *ab,
 		/* for QCA6390, host fills rx buffer to fw and fw fills to
 		 * rxbuf ring for each rxdma
 		 */
-		if (!ab->hw_params.rx_mac_buf_ring) {
+		if (!ab->hw_params->rx_mac_buf_ring) {
 			if (!(ring_id == HAL_SRNG_SW2RXDMA_BUF0 ||
 			      ring_id == HAL_SRNG_SW2RXDMA_BUF1)) {
 				ret = -EINVAL;
@@ -883,7 +883,7 @@ int ath12k_dp_tx_htt_h2t_ppdu_stats_req(struct ath12k *ar, u32 mask)
 	int ret;
 	int i;
 
-	for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++) {
+	for (i = 0; i < ab->hw_params->num_rxmda_per_pdev; i++) {
 		skb = ath12k_htc_alloc_skb(ab, len);
 		if (!skb)
 			return -ENOMEM;
@@ -1134,7 +1134,7 @@ int ath12k_dp_tx_htt_rx_monitor_mode_ring_config(struct ath12k *ar, bool reset)
 					HTT_RX_MON_MO_DATA_FILTER_FLASG3;
 	}
 
-	if (ab->hw_params.rxdma1_enable) {
+	if (ab->hw_params->rxdma1_enable) {
 		ret = ath12k_dp_tx_htt_rx_filter_setup(ar->ab, ring_id, 0,
 						       HAL_RXDMA_MONITOR_BUF,
 						       DP_RXDMA_REFILL_RING_SIZE,
@@ -1262,7 +1262,7 @@ int ath12k_dp_tx_htt_tx_monitor_mode_ring_config(struct ath12k *ar, bool reset)
 	 * here
 	 */
 
-	if (ab->hw_params.rxdma1_enable) {
+	if (ab->hw_params->rxdma1_enable) {
 		ret = ath12k_dp_tx_htt_tx_filter_setup(ar->ab, ring_id, 0,
 						       HAL_TX_MONITOR_BUF,
 						       DP_RXDMA_REFILL_RING_SIZE,

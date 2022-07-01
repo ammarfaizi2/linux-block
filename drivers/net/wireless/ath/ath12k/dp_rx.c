@@ -58,7 +58,7 @@ static bool ath12k_dp_rx_h_more_frags(struct ath12k_base *ab,
 {
 	struct ieee80211_hdr *hdr;
 
-	hdr = (struct ieee80211_hdr *)(skb->data + ab->hw_params.hal_desc_sz);
+	hdr = (struct ieee80211_hdr *)(skb->data + ab->hw_params->hal_desc_sz);
 	return ieee80211_has_morefrags(hdr->frame_control);
 }
 
@@ -67,7 +67,7 @@ static u16 ath12k_dp_rx_h_frag_no(struct ath12k_base *ab,
 {
 	struct ieee80211_hdr *hdr;
 
-	hdr = (struct ieee80211_hdr *)(skb->data + ab->hw_params.hal_desc_sz);
+	hdr = (struct ieee80211_hdr *)(skb->data + ab->hw_params->hal_desc_sz);
 	return le16_to_cpu(hdr->seq_ctrl) & IEEE80211_SCTL_FRAG;
 }
 
@@ -237,7 +237,7 @@ static void ath12k_dp_service_mon_ring(struct timer_list *t)
 	struct ath12k_base *ab = from_timer(ab, t, mon_reap_timer);
 	int i;
 
-	for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++)
+	for (i = 0; i < ab->hw_params->num_rxmda_per_pdev; i++)
 		ath12k_dp_mon_process_ring(ab, i, NULL, DP_MON_SERVICE_BUDGET,
 					   ATH12K_DP_RX_MONITOR_MODE);
 
@@ -251,7 +251,7 @@ static int ath12k_dp_purge_mon_ring(struct ath12k_base *ab)
 	unsigned long timeout = jiffies + msecs_to_jiffies(DP_MON_PURGE_TIMEOUT_MS);
 
 	do {
-		for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++)
+		for (i = 0; i < ab->hw_params->num_rxmda_per_pdev; i++)
 			reaped += ath12k_dp_mon_process_ring(ab, i, NULL,
 							     DP_MON_SERVICE_BUDGET,
 							     ATH12K_DP_RX_MONITOR_MODE);
@@ -450,7 +450,7 @@ static int ath12k_dp_rxdma_ring_buf_setup(struct ath12k_base *ab,
 		ath12k_dp_mon_buf_replenish(ab, rx_ring, num_entries);
 	else
 		ath12k_dp_rxbufs_replenish(ab, 0, rx_ring, num_entries,
-					   ab->hw_params.hal_params->rx_buf_rbm,
+					   ab->hw_params->hal_params->rx_buf_rbm,
 					   ringtype == HAL_RXDMA_BUF);
 	return 0;
 }
@@ -469,7 +469,7 @@ static int ath12k_dp_rxdma_buf_setup(struct ath12k_base *ab)
 		return ret;
 	}
 
-	if (ab->hw_params.rxdma1_enable) {
+	if (ab->hw_params->rxdma1_enable) {
 		rx_ring = &dp->rxdma_mon_buf_ring;
 		ret = ath12k_dp_rxdma_ring_buf_setup(ab, rx_ring,
 						     HAL_RXDMA_MONITOR_BUF);
@@ -498,7 +498,7 @@ static void ath12k_dp_rx_pdev_srng_free(struct ath12k *ar)
 	struct ath12k_base *ab = ar->ab;
 	int i;
 
-	for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++) {
+	for (i = 0; i < ab->hw_params->num_rxmda_per_pdev; i++) {
 		ath12k_dp_srng_cleanup(ab, &dp->rxdma_mon_dst_ring[i]);
 		ath12k_dp_srng_cleanup(ab, &dp->tx_mon_dst_ring[i]);
 	}
@@ -550,14 +550,14 @@ static int ath12k_dp_rx_pdev_srng_alloc(struct ath12k *ar)
 	 * and rxdma_mon_desc_ring.
 	 * init reap timer for QCA6390.
 	 */
-	if (!ar->ab->hw_params.rxdma1_enable) {
+	if (!ar->ab->hw_params->rxdma1_enable) {
 		//init mon status buffer reap timer
 		timer_setup(&ar->ab->mon_reap_timer,
 			    ath12k_dp_service_mon_ring, 0);
 		return 0;
 	}
 
-	for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++) {
+	for (i = 0; i < ab->hw_params->num_rxmda_per_pdev; i++) {
 		ret = ath12k_dp_srng_setup(ar->ab,
 					   &dp->rxdma_mon_dst_ring[i],
 					   HAL_RXDMA_MONITOR_DST,
@@ -721,7 +721,7 @@ static void ath12k_peer_rx_tid_qref_setup(struct ath12k_base *ab, u16 peer_id, u
 	struct ath12k_reo_queue_ref *qref;
 	struct ath12k_dp *dp = &ab->dp;
 
-	if (!ab->hw_params.reoq_lut_support)
+	if (!ab->hw_params->reoq_lut_support)
 		return;
 
 	//TODO based on ML peer or not, select the LUT. below assumes non ML peer
@@ -738,7 +738,7 @@ static void ath12k_peer_rx_tid_qref_reset(struct ath12k_base *ab, u16 peer_id, u
 	struct ath12k_reo_queue_ref *qref;
 	struct ath12k_dp *dp = &ab->dp;
 
-	if (!ab->hw_params.reoq_lut_support)
+	if (!ab->hw_params->reoq_lut_support)
 		return;
 
 	//TODO based on ML peer or not, select the LUT. below assumes non ML peer
@@ -908,7 +908,7 @@ int ath12k_peer_rx_tid_setup(struct ath12k *ar, const u8 *peer_mac, int vdev_id,
 		return -ENOENT;
 	}
 
-	if (ab->hw_params.reoq_lut_support && !dp->reoq_lut.vaddr) {
+	if (ab->hw_params->reoq_lut_support && !dp->reoq_lut.vaddr) {
 		spin_unlock_bh(&ab->base_lock);
 		ath12k_warn(ab, "reo qref table is not setup\n");
 		return -EINVAL;
@@ -973,7 +973,7 @@ int ath12k_peer_rx_tid_setup(struct ath12k *ar, const u8 *peer_mac, int vdev_id,
 	rx_tid->size = hw_desc_sz;
 	rx_tid->active = true;
 
-	if (ab->hw_params.reoq_lut_support) {
+	if (ab->hw_params->reoq_lut_support) {
 		/* Update the REO queue LUT at the corresponding peer id
 		 * and tid with qaddr.
 		 */
@@ -1846,7 +1846,7 @@ static int ath12k_dp_rx_msdu_coalesce(struct ath12k *ar,
 	int buf_first_hdr_len, buf_first_len;
 	struct hal_rx_desc *ldesc;
 	int space_extra, rem_len, buf_len;
-	u32 hal_rx_desc_sz = ar->ab->hw_params.hal_desc_sz;
+	u32 hal_rx_desc_sz = ar->ab->hw_params->hal_desc_sz;
 
 	/* As the msdu is spread across multiple rx buffers,
 	 * find the offset to the start of msdu for computing
@@ -2556,7 +2556,7 @@ static int ath12k_dp_rx_process_msdu(struct ath12k *ar,
 	u8 l3_pad_bytes;
 	u16 msdu_len;
 	int ret;
-	u32 hal_rx_desc_sz = ar->ab->hw_params.hal_desc_sz;
+	u32 hal_rx_desc_sz = ar->ab->hw_params->hal_desc_sz;
 
 	last_buf = ath12k_dp_rx_get_msdu_last_buf(msdu_list, msdu);
 	if (!last_buf) {
@@ -2772,7 +2772,7 @@ try_again:
 
 	//TODO Move to implicit BM?
 	ath12k_dp_rxbufs_replenish(ab, i, rx_ring, num_buffs_reaped,
-				   ab->hw_params.hal_params->rx_buf_rbm, true);
+				   ab->hw_params->hal_params->rx_buf_rbm, true);
 
 	ath12k_dp_rx_process_received_packets(ab, napi, &msdu_list,
 					      ring_id);
@@ -2881,7 +2881,7 @@ static int ath12k_dp_rx_h_verify_tkip_mic(struct ath12k *ar, struct ath12k_peer 
 	u8 mic[IEEE80211_CCMP_MIC_LEN];
 	int head_len, tail_len, ret;
 	size_t data_len;
-	u32 hdr_len, hal_rx_desc_sz = ar->ab->hw_params.hal_desc_sz;
+	u32 hdr_len, hal_rx_desc_sz = ar->ab->hw_params->hal_desc_sz;
 	u8 *key, *data;
 	u8 key_idx;
 
@@ -2931,7 +2931,7 @@ static void ath12k_dp_rx_h_undecap_frag(struct ath12k *ar, struct sk_buff *msdu,
 	struct ieee80211_hdr *hdr;
 	size_t hdr_len;
 	size_t crypto_len;
-	u32 hal_rx_desc_sz = ar->ab->hw_params.hal_desc_sz;
+	u32 hal_rx_desc_sz = ar->ab->hw_params->hal_desc_sz;
 
 	if (!flags)
 		return;
@@ -2969,7 +2969,7 @@ static int ath12k_dp_rx_h_defrag(struct ath12k *ar,
 	bool is_decrypted = false;
 	int msdu_len = 0;
 	int extra_space;
-	u32 flags, hal_rx_desc_sz = ar->ab->hw_params.hal_desc_sz;
+	u32 flags, hal_rx_desc_sz = ar->ab->hw_params->hal_desc_sz;
 
 	first_frag = skb_peek(&rx_tid->rx_frags);
 	last_frag = skb_peek_tail(&rx_tid->rx_frags);
@@ -3044,7 +3044,7 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar, struct dp_rx_ti
 	struct ath12k_rx_desc_info *desc_info;
 	u8 dst_ind;
 
-	hal_rx_desc_sz = ab->hw_params.hal_desc_sz;
+	hal_rx_desc_sz = ab->hw_params->hal_desc_sz;
 	link_desc_banks = dp->link_desc_banks;
 	reo_dest_ring = rx_tid->dst_ring_desc;
 
@@ -3189,7 +3189,7 @@ static u64 ath12k_dp_rx_h_get_pn(struct ath12k *ar, struct sk_buff *skb)
 	struct ieee80211_hdr *hdr;
 	u64 pn = 0;
 	u8 *ehdr;
-	u32 hal_rx_desc_sz = ar->ab->hw_params.hal_desc_sz;
+	u32 hal_rx_desc_sz = ar->ab->hw_params->hal_desc_sz;
 
 	hdr = (struct ieee80211_hdr *)(skb->data + hal_rx_desc_sz);
 	ehdr = skb->data + hal_rx_desc_sz + ieee80211_hdrlen(hdr->frame_control);
@@ -3364,7 +3364,7 @@ ath12k_dp_process_rx_err_buf(struct ath12k *ar, u32 *ring_desc,
 	struct ath12k_skb_rxcb *rxcb;
 	struct hal_rx_desc *rx_desc;
 	u16 msdu_len;
-	u32 hal_rx_desc_sz = ab->hw_params.hal_desc_sz;
+	u32 hal_rx_desc_sz = ab->hw_params->hal_desc_sz;
 	struct hal_reo_dest_ring desc = *(struct hal_reo_dest_ring *)ring_desc;
 	struct ath12k_rx_desc_info *desc_info;
 
@@ -3481,7 +3481,7 @@ int ath12k_dp_process_rx_err(struct ath12k_base *ab, struct napi_struct *napi,
 						 &rbm);
 		if (rbm != HAL_RX_BUF_RBM_WBM_CHIP0_IDLE_DESC_LIST &&
 		    rbm != HAL_RX_BUF_RBM_SW3_BM &&
-		    rbm != ab->hw_params.hal_params->rx_buf_rbm) {
+		    rbm != ab->hw_params->hal_params->rx_buf_rbm) {
 			ab->soc_stats.invalid_rbm++;
 			ath12k_warn(ab, "invalid return buffer manager %d\n", rbm);
 			ath12k_dp_rx_link_desc_return(ab, desc,
@@ -3528,7 +3528,7 @@ exit:
 	rx_ring = &dp->rx_refill_buf_ring;
 
 	ath12k_dp_rxbufs_replenish(ab, 0, rx_ring, tot_n_bufs_reaped,
-				   ab->hw_params.hal_params->rx_buf_rbm, true);
+				   ab->hw_params->hal_params->rx_buf_rbm, true);
 
 	return tot_n_bufs_reaped;
 }
@@ -3542,7 +3542,7 @@ static void ath12k_dp_rx_null_q_desc_sg_drop(struct ath12k *ar,
 	int n_buffs;
 
 	n_buffs = DIV_ROUND_UP(msdu_len,
-			       (DP_RX_BUFFER_SIZE - ar->ab->hw_params.hal_desc_sz));
+			       (DP_RX_BUFFER_SIZE - ar->ab->hw_params->hal_desc_sz));
 
 	skb_queue_walk_safe(msdu_list, skb, tmp) {
 		rxcb = ATH12K_SKB_RXCB(skb);
@@ -3566,7 +3566,7 @@ static int ath12k_dp_rx_h_null_q_desc(struct ath12k *ar, struct sk_buff *msdu,
 	struct hal_rx_desc *desc = (struct hal_rx_desc *)msdu->data;
 	u8 l3pad_bytes;
 	struct ath12k_skb_rxcb *rxcb = ATH12K_SKB_RXCB(msdu);
-	u32 hal_rx_desc_sz = ar->ab->hw_params.hal_desc_sz;
+	u32 hal_rx_desc_sz = ar->ab->hw_params->hal_desc_sz;
 
 	msdu_len = ath12k_dp_rx_h_msdu_len(ab, desc);
 	peer_id = ath12k_dp_rx_h_peer_id(ab, desc);
@@ -3670,7 +3670,7 @@ static void ath12k_dp_rx_h_tkip_mic_err(struct ath12k *ar, struct sk_buff *msdu,
 	struct hal_rx_desc *desc = (struct hal_rx_desc *)msdu->data;
 	u8 l3pad_bytes;
 	struct ath12k_skb_rxcb *rxcb = ATH12K_SKB_RXCB(msdu);
-	u32 hal_rx_desc_sz = ar->ab->hw_params.hal_desc_sz;
+	u32 hal_rx_desc_sz = ar->ab->hw_params->hal_desc_sz;
 
 	rxcb->is_first_msdu = ath12k_dp_rx_h_first_msdu(ab, desc);
 	rxcb->is_last_msdu = ath12k_dp_rx_h_last_msdu(ab, desc);
@@ -3846,7 +3846,7 @@ int ath12k_dp_rx_process_wbm_err(struct ath12k_base *ab,
 		goto done;
 
 	ath12k_dp_rxbufs_replenish(ab, 0, rx_ring, num_buffs_reaped,
-				   ab->hw_params.hal_params->rx_buf_rbm, true);
+				   ab->hw_params->hal_params->rx_buf_rbm, true);
 
 	rcu_read_lock();
 	for (i = 0; i <  ab->num_radios; i++) {
@@ -3956,12 +3956,12 @@ void ath12k_dp_rx_free(struct ath12k_base *ab)
 
 	ath12k_dp_srng_cleanup(ab, &dp->rx_refill_buf_ring.refill_buf_ring);
 
-	for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++) {
-		if (ab->hw_params.rx_mac_buf_ring)
+	for (i = 0; i < ab->hw_params->num_rxmda_per_pdev; i++) {
+		if (ab->hw_params->rx_mac_buf_ring)
 			ath12k_dp_srng_cleanup(ab, &dp->rx_mac_buf_ring[i]);
 	}
 
-	for (i = 0; i < ab->hw_params.num_rxdma_dst_ring; i++)
+	for (i = 0; i < ab->hw_params->num_rxdma_dst_ring; i++)
 		ath12k_dp_srng_cleanup(ab, &dp->rxdma_err_dst_ring[i]);
 
 	ath12k_dp_srng_cleanup(ab, &dp->rxdma_mon_buf_ring.refill_buf_ring);
@@ -3983,7 +3983,7 @@ int ath12k_dp_rxdma_ring_sel_config_qcn9274(struct ath12k_base *ab)
 	struct htt_rx_ring_tlv_filter tlv_filter = {0};
 	u32 ring_id;
 	int ret;
-	u32 hal_rx_desc_sz = ab->hw_params.hal_desc_sz;
+	u32 hal_rx_desc_sz = ab->hw_params->hal_desc_sz;
 
 	ring_id = dp->rx_refill_buf_ring.refill_buf_ring.ring_id;
 
@@ -4017,7 +4017,7 @@ int ath12k_dp_rxdma_ring_sel_config_wcn7850(struct ath12k_base *ab)
 	struct htt_rx_ring_tlv_filter tlv_filter = {0};
 	u32 ring_id;
 	int ret;
-	u32 hal_rx_desc_sz = ab->hw_params.hal_desc_sz;
+	u32 hal_rx_desc_sz = ab->hw_params->hal_desc_sz;
 	int i;
 
 	ring_id = dp->rx_refill_buf_ring.refill_buf_ring.ring_id;
@@ -4041,7 +4041,7 @@ int ath12k_dp_rxdma_ring_sel_config_wcn7850(struct ath12k_base *ab)
 	 * and modify the rx_desc struct
 	 */
 
-	for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++) {
+	for (i = 0; i < ab->hw_params->num_rxmda_per_pdev; i++) {
 		ring_id = dp->rx_mac_buf_ring[i].ring_id;
 		ret = ath12k_dp_tx_htt_rx_filter_setup(ab, ring_id, i,
 						       HAL_RXDMA_BUF,
@@ -4067,8 +4067,8 @@ int ath12k_dp_rx_htt_setup(struct ath12k_base *ab)
 		return ret;
 	}
 
-	if (ab->hw_params.rx_mac_buf_ring) {
-		for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++) {
+	if (ab->hw_params->rx_mac_buf_ring) {
+		for (i = 0; i < ab->hw_params->num_rxmda_per_pdev; i++) {
 			ring_id = dp->rx_mac_buf_ring[i].ring_id;
 			ret = ath12k_dp_tx_htt_srng_setup(ab, ring_id,
 							  i, HAL_RXDMA_BUF);
@@ -4080,7 +4080,7 @@ int ath12k_dp_rx_htt_setup(struct ath12k_base *ab)
 		}
 	}
 
-	for (i = 0; i < ab->hw_params.num_rxdma_dst_ring; i++) {
+	for (i = 0; i < ab->hw_params->num_rxdma_dst_ring; i++) {
 		ring_id = dp->rxdma_err_dst_ring[i].ring_id;
 		ret = ath12k_dp_tx_htt_srng_setup(ab, ring_id,
 						  i, HAL_RXDMA_DST);
@@ -4091,7 +4091,7 @@ int ath12k_dp_rx_htt_setup(struct ath12k_base *ab)
 		}
 	}
 
-	if (ab->hw_params.rxdma1_enable) {
+	if (ab->hw_params->rxdma1_enable) {
 		ring_id = dp->rxdma_mon_buf_ring.refill_buf_ring.ring_id;
 		ret = ath12k_dp_tx_htt_srng_setup(ab, ring_id,
 						  0, HAL_RXDMA_MONITOR_BUF);
@@ -4111,7 +4111,7 @@ int ath12k_dp_rx_htt_setup(struct ath12k_base *ab)
 		}
 	}
 
-	ret = ab->hw_params.hw_ops->rxdma_ring_sel_config(ab);
+	ret = ab->hw_params->hw_ops->rxdma_ring_sel_config(ab);
 	if (ret) {
 		ath12k_warn(ab, "failed to setup rxdma ring selection config\n");
 		return ret;
@@ -4143,8 +4143,8 @@ int ath12k_dp_rx_alloc(struct ath12k_base *ab)
 		return ret;
 	}
 
-	if (ab->hw_params.rx_mac_buf_ring) {
-		for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++) {
+	if (ab->hw_params->rx_mac_buf_ring) {
+		for (i = 0; i < ab->hw_params->num_rxmda_per_pdev; i++) {
 			ret = ath12k_dp_srng_setup(ab,
 						   &dp->rx_mac_buf_ring[i],
 						   HAL_RXDMA_BUF, 1,
@@ -4157,7 +4157,7 @@ int ath12k_dp_rx_alloc(struct ath12k_base *ab)
 		}
 	}
 
-	for (i = 0; i < ab->hw_params.num_rxdma_dst_ring; i++) {
+	for (i = 0; i < ab->hw_params->num_rxdma_dst_ring; i++) {
 		ret = ath12k_dp_srng_setup(ab, &dp->rxdma_err_dst_ring[i],
 					   HAL_RXDMA_DST, 0, i,
 					   DP_RXDMA_ERR_DST_RING_SIZE);
@@ -4167,7 +4167,7 @@ int ath12k_dp_rx_alloc(struct ath12k_base *ab)
 		}
 	}
 
-	if (ab->hw_params.rxdma1_enable) {
+	if (ab->hw_params->rxdma1_enable) {
 		ret = ath12k_dp_srng_setup(ab,
 					   &dp->rxdma_mon_buf_ring.refill_buf_ring,
 					   HAL_RXDMA_MONITOR_BUF, 0, 0,
@@ -4210,10 +4210,10 @@ int ath12k_dp_rx_pdev_alloc(struct ath12k_base *ab, int mac_id)
 		return ret;
 	}
 
-	if (!ab->hw_params.rxdma1_enable)
+	if (!ab->hw_params->rxdma1_enable)
 		goto out;
 
-	for (i = 0; i < ab->hw_params.num_rxmda_per_pdev; i++) {
+	for (i = 0; i < ab->hw_params->num_rxmda_per_pdev; i++) {
 		ring_id = dp->rxdma_mon_dst_ring[i].ring_id;
 		ret = ath12k_dp_tx_htt_srng_setup(ab, ring_id,
 						  mac_id + i,
@@ -4269,7 +4269,7 @@ int ath12k_dp_rx_pdev_mon_attach(struct ath12k *ar)
 	/* if rxdma1_enable is false, no need to setup
 	 * rxdma_mon_desc_ring.
 	 */
-	if (!ar->ab->hw_params.rxdma1_enable)
+	if (!ar->ab->hw_params->rxdma1_enable)
 		return 0;
 
 	pmon->mon_last_linkdesc_paddr = 0;

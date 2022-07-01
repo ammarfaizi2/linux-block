@@ -186,8 +186,8 @@ int ath12k_dp_rxdma_ring_sel_config_wcn7850(struct ath12k_base *ab);
 
 struct ath12k_hw_ops {
 	u8 (*get_hw_mac_from_pdev_id)(int pdev_id);
-	int (*mac_id_to_pdev_id)(struct ath12k_hw_params *hw, int mac_id);
-	int (*mac_id_to_srng_id)(struct ath12k_hw_params *hw, int mac_id);
+	int (*mac_id_to_pdev_id)(const struct ath12k_hw_params *hw, int mac_id);
+	int (*mac_id_to_srng_id)(const struct ath12k_hw_params *hw, int mac_id);
 	int (*rxdma_ring_sel_config)(struct ath12k_base *ab);
 	u8 (*get_ring_selector)(struct sk_buff *skb);
 	bool (*dp_srng_is_tx_comp_ring)(int ring_num);
@@ -203,7 +203,7 @@ extern const struct ath12k_hw_hal_params ath12k_hw_hal_params_qcn9274;
 extern const struct ath12k_hw_hal_params ath12k_hw_hal_params_wcn7850;
 
 static inline
-int ath12k_hw_get_mac_from_pdev_id(struct ath12k_hw_params *hw,
+int ath12k_hw_get_mac_from_pdev_id(const struct ath12k_hw_params *hw,
 				   int pdev_idx)
 {
 	if (hw->hw_ops->get_hw_mac_from_pdev_id)
@@ -212,7 +212,7 @@ int ath12k_hw_get_mac_from_pdev_id(struct ath12k_hw_params *hw,
 	return 0;
 }
 
-static inline int ath12k_hw_mac_id_to_pdev_id(struct ath12k_hw_params *hw,
+static inline int ath12k_hw_mac_id_to_pdev_id(const struct ath12k_hw_params *hw,
 					      int mac_id)
 {
 	if (hw->hw_ops->mac_id_to_pdev_id)
@@ -221,7 +221,7 @@ static inline int ath12k_hw_mac_id_to_pdev_id(struct ath12k_hw_params *hw,
 	return 0;
 }
 
-static inline int ath12k_hw_mac_id_to_srng_id(struct ath12k_hw_params *hw,
+static inline int ath12k_hw_mac_id_to_srng_id(const struct ath12k_hw_params *hw,
 					      int mac_id)
 {
 	if (hw->hw_ops->mac_id_to_srng_id)

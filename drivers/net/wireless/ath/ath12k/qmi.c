@@ -2094,7 +2094,7 @@ static int ath12k_qmi_send_qdss_config(struct ath12k_base *ab)
 	int ret;
 
 	snprintf(filename, sizeof(filename),
-		 "%s/%s/%s", ATH12K_FW_DIR, ab->hw_params.fw.dir,
+		 "%s/%s/%s", ATH12K_FW_DIR, ab->hw_params->fw.dir,
 		 ATH12K_QMI_DEFAULT_QDSS_CONFIG_FILE_NAME);
 	ret = request_firmware(&fw_entry, filename, dev);
 	ath12k_dbg(ab, ATH12K_DBG_BOOT, "boot firmware request %s size %zu\n",
@@ -2175,7 +2175,7 @@ static int ath12k_qmi_host_cap_send(struct ath12k_base *ab)
 	/* BRINGUP: here we are piggybacking a lot of stuff using
 	 * internal_sleep_clock, should it be split?
 	 */
-	if (ab->hw_params.internal_sleep_clock) {
+	if (ab->hw_params->internal_sleep_clock) {
 		req.nm_modem_valid = 1;
 
 		/* Notify firmware that this is non-qualcomm platform. */
@@ -2649,7 +2649,7 @@ static int ath12k_qmi_load_bdf_qmi(struct ath12k_base *ab,
 	ath12k_dbg(ab, ATH12K_DBG_QMI, "qmi bdf_type %d\n", type);
 
 	fw_size = bd.len;
-	fw_size = min_t(u32, ab->hw_params.fw.board_size, bd.len);
+	fw_size = min_t(u32, ab->hw_params->fw.board_size, bd.len);
 
 	ret = ath12k_qmi_load_file_target_mem(ab, bd.data, fw_size, type);
 	if (ret < 0) {
@@ -2657,7 +2657,7 @@ static int ath12k_qmi_load_bdf_qmi(struct ath12k_base *ab,
 		goto out;
 	}
 
-	if (!ab->hw_params.download_calib)
+	if (!ab->hw_params->download_calib)
 		goto out;
 
 	file_type = ATH12K_QMI_FILE_TYPE_CALDATA;
@@ -2702,7 +2702,7 @@ static int ath12k_qmi_load_bdf_qmi(struct ath12k_base *ab,
 		}
 
 success:
-		fw_size = min_t(u32, ab->hw_params.fw.board_size, fw_entry->size);
+		fw_size = min_t(u32, ab->hw_params->fw.board_size, fw_entry->size);
 		tmp = fw_entry->data;
 	}
 
@@ -2919,7 +2919,7 @@ static int ath12k_qmi_wlanfw_wlan_cfg_send(struct ath12k_base *ab)
 	}
 
 	/* set shadow v2 configuration */
-	if (ab->hw_params.supports_shadow_regs) {
+	if (ab->hw_params->supports_shadow_regs) {
 		req->shadow_reg_v2_valid = 1;
 		req->shadow_reg_v2_len = min_t(u32,
 					       ab->qmi.ce_cfg.shadow_reg_v2_len,
@@ -3309,7 +3309,7 @@ static void ath12k_qmi_driver_event_work(struct work_struct *work)
 			}
 
 			if (ath12k_cold_boot_cal && ab->qmi.cal_done == 0 &&
-			    ab->hw_params.cold_boot_calib) {
+			    ab->hw_params->cold_boot_calib) {
 				ath12k_qmi_process_coldboot_calibration(ab);
 			} else {
 				clear_bit(ATH12K_FLAG_CRASH_FLUSH,

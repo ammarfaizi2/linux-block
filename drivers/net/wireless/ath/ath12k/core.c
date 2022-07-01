@@ -124,7 +124,7 @@ int ath12k_core_suspend(struct ath12k_base *ab)
 {
 	int ret;
 
-	if (!ab->hw_params.supports_suspend)
+	if (!ab->hw_params->supports_suspend)
 		return -EOPNOTSUPP;
 
 	/* TODO: there can frames in queues so for now add delay as a hack.
@@ -168,7 +168,7 @@ int ath12k_core_resume(struct ath12k_base *ab)
 {
 	int ret;
 
-	if (!ab->hw_params.supports_suspend)
+	if (!ab->hw_params->supports_suspend)
 		return -EOPNOTSUPP;
 
 	ret = ath12k_hif_resume(ab);
@@ -468,7 +468,7 @@ int ath12k_core_fetch_bdf(struct ath12k_base *ab, struct ath12k_board_data *bd)
 	ret = ath12k_core_fetch_board_data_api_1(ab, bd, ATH12K_DEFAULT_BOARD_FILE);
 	if (ret) {
 		ath12k_err(ab, "failed to fetch board-2.bin or board.bin from %s\n",
-			   ab->hw_params.fw.dir);
+			   ab->hw_params->fw.dir);
 		return ret;
 	}
 
@@ -635,7 +635,7 @@ static int ath12k_core_start(struct ath12k_base *ab,
 	}
 
 	/* put hardware to DBS mode */
-	if (ab->hw_params.single_pdev_only) {
+	if (ab->hw_params->single_pdev_only) {
 		ret = ath12k_wmi_set_hw_mode(ab, WMI_HOST_HW_MODE_DBS);
 		if (ret) {
 			ath12k_err(ab, "failed to send dbs mode: %d\n", ret);
@@ -989,9 +989,9 @@ static int ath12k_init_hw_params(struct ath12k_base *ab)
 		return -EINVAL;
 	}
 
-	ab->hw_params = *hw_params;
+	ab->hw_params = hw_params;
 
-	ath12k_dbg(ab, ATH12K_DBG_BOOT, "Hardware name %s\n", ab->hw_params.name);
+	ath12k_dbg(ab, ATH12K_DBG_BOOT, "Hardware name %s\n", ab->hw_params->name);
 
 	return 0;
 }

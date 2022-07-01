@@ -36,17 +36,17 @@
 #define PCIE_INT_CLEAR_ALL			0xffffffff
 
 #define PCIE_QSERDES_COM_SYSCLK_EN_SEL_REG(ab) \
-	((ab)->hw_params.regs->pcie_qserdes_sysclk_en_sel)
+	((ab)->hw_params->regs->pcie_qserdes_sysclk_en_sel)
 #define PCIE_QSERDES_COM_SYSCLK_EN_SEL_VAL	0x10
 #define PCIE_QSERDES_COM_SYSCLK_EN_SEL_MSK	0xffffffff
 #define PCIE_PCS_OSC_DTCT_CONFIG1_REG(ab) \
-	((ab)->hw_params.regs->pcie_pcs_osc_dtct_config_base)
+	((ab)->hw_params->regs->pcie_pcs_osc_dtct_config_base)
 #define PCIE_PCS_OSC_DTCT_CONFIG1_VAL		0x02
 #define PCIE_PCS_OSC_DTCT_CONFIG2_REG(ab) \
-	((ab)->hw_params.regs->pcie_pcs_osc_dtct_config_base + 0x4)
+	((ab)->hw_params->regs->pcie_pcs_osc_dtct_config_base + 0x4)
 #define PCIE_PCS_OSC_DTCT_CONFIG2_VAL		0x52
 #define PCIE_PCS_OSC_DTCT_CONFIG4_REG(ab) \
-	((ab)->hw_params.regs->pcie_pcs_osc_dtct_config_base + 0xc)
+	((ab)->hw_params->regs->pcie_pcs_osc_dtct_config_base + 0xc)
 #define PCIE_PCS_OSC_DTCT_CONFIG4_VAL		0xff
 #define PCIE_PCS_OSC_DTCT_CONFIG_MSK		0x000000ff
 

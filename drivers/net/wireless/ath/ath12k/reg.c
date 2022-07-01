@@ -728,7 +728,7 @@ void ath12k_reg_free(struct ath12k_base *ab)
 {
 	int i;
 
-	for (i = 0; i < ab->hw_params.max_radios; i++) {
+	for (i = 0; i < ab->hw_params->max_radios; i++) {
 		kfree(ab->default_regd[i]);
 		kfree(ab->new_regd[i]);
 	}

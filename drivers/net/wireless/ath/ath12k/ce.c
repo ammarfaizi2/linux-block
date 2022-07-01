@@ -500,24 +500,24 @@ static int ath12k_ce_init_ring(struct ath12k_base *ab,
 	params.ring_base_vaddr = ce_ring->base_addr_owner_space;
 	params.num_entries = ce_ring->nentries;
 
-	if (!(CE_ATTR_DIS_INTR & ab->hw_params.host_ce_config[ce_id].flags))
+	if (!(CE_ATTR_DIS_INTR & ab->hw_params->host_ce_config[ce_id].flags))
 		ath12k_ce_srng_msi_ring_params_setup(ab, ce_id, &params);
 
 	switch (type) {
 	case HAL_CE_SRC:
-		if (!(CE_ATTR_DIS_INTR & ab->hw_params.host_ce_config[ce_id].flags))
+		if (!(CE_ATTR_DIS_INTR & ab->hw_params->host_ce_config[ce_id].flags))
 			params.intr_batch_cntr_thres_entries = 1;
 		break;
 	case HAL_CE_DST:
-		params.max_buffer_len = ab->hw_params.host_ce_config[ce_id].src_sz_max;
-		if (!(ab->hw_params.host_ce_config[ce_id].flags & CE_ATTR_DIS_INTR)) {
+		params.max_buffer_len = ab->hw_params->host_ce_config[ce_id].src_sz_max;
+		if (!(ab->hw_params->host_ce_config[ce_id].flags & CE_ATTR_DIS_INTR)) {
 			params.intr_timer_thres_us = 1024;
 			params.flags |= HAL_SRNG_FLAGS_LOW_THRESH_INTR_EN;
 			params.low_threshold = ce_ring->nentries - 3;
 		}
 		break;
 	case HAL_CE_DST_STATUS:
-		if (!(ab->hw_params.host_ce_config[ce_id].flags & CE_ATTR_DIS_INTR)) {
+		if (!(ab->hw_params->host_ce_config[ce_id].flags & CE_ATTR_DIS_INTR)) {
 			params.intr_batch_cntr_thres_entries = 1;
 			params.intr_timer_thres_us = 0x1000;
 		}
@@ -581,7 +581,7 @@ ath12k_ce_alloc_ring(struct ath12k_base *ab, int nentries, int desc_sz)
 static int ath12k_ce_alloc_pipe(struct ath12k_base *ab, int ce_id)
 {
 	struct ath12k_ce_pipe *pipe = &ab->ce.ce_pipe[ce_id];
-	const struct ce_attr *attr = &ab->hw_params.host_ce_config[ce_id];
+	const struct ce_attr *attr = &ab->hw_params->host_ce_config[ce_id];
 	struct ath12k_ce_ring *ring;
 	int nentries;
 	int desc_sz;
@@ -750,7 +750,7 @@ void ath12k_ce_cleanup_pipes(struct ath12k_base *ab)
 	struct ath12k_ce_pipe *pipe;
 	int pipe_num;
 
-	for (pipe_num = 0; pipe_num < ab->hw_params.ce_count; pipe_num++) {
+	for (pipe_num = 0; pipe_num < ab->hw_params->ce_count; pipe_num++) {
 		pipe = &ab->ce.ce_pipe[pipe_num];
 		ath12k_ce_rx_pipe_cleanup(pipe);
 
@@ -767,7 +767,7 @@ void ath12k_ce_rx_post_buf(struct ath12k_base *ab)
 	int i;
 	int ret;
 
-	for (i = 0; i < ab->hw_params.ce_count; i++) {
+	for (i = 0; i < ab->hw_params->ce_count; i++) {
 		pipe = &ab->ce.ce_pipe[i];
 		ret = ath12k_ce_rx_post_pipe(pipe);
 		if (ret) {
@@ -795,11 +795,11 @@ static void ath12k_ce_shadow_config(struct ath12k_base *ab)
 {
 	int i;
 
-	for (i = 0; i < ab->hw_params.ce_count; i++) {
-		if (ab->hw_params.host_ce_config[i].src_nentries)
+	for (i = 0; i < ab->hw_params->ce_count; i++) {
+		if (ab->hw_params->host_ce_config[i].src_nentries)
 			ath12k_hal_srng_update_shadow_config(ab, HAL_CE_SRC, i);
 
-		if (ab->hw_params.host_ce_config[i].dest_nentries) {
+		if (ab->hw_params->host_ce_config[i].dest_nentries) {
 			ath12k_hal_srng_update_shadow_config(ab, HAL_CE_DST, i);
 			ath12k_hal_srng_update_shadow_config(ab, HAL_CE_DST_STATUS, i);
 		}
@@ -809,7 +809,7 @@ static void ath12k_ce_shadow_config(struct ath12k_base *ab)
 void ath12k_ce_get_shadow_config(struct ath12k_base *ab,
 				 u32 **shadow_cfg, u32 *shadow_cfg_len)
 {
-	if (!ab->hw_params.supports_shadow_regs)
+	if (!ab->hw_params->supports_shadow_regs)
 		return;
 
 	ath12k_hal_srng_get_shadow_config(ab, shadow_cfg, shadow_cfg_len);
@@ -838,7 +838,7 @@ int ath12k_ce_init_pipes(struct ath12k_base *ab)
 	ath12k_ce_get_shadow_config(ab, &ab->qmi.ce_cfg.shadow_reg_v2,
 				    &ab->qmi.ce_cfg.shadow_reg_v2_len);
 
-	for (i = 0; i < ab->hw_params.ce_count; i++) {
+	for (i = 0; i < ab->hw_params->ce_count; i++) {
 		pipe = &ab->ce.ce_pipe[i];
 
 		if (pipe->src_ring) {
@@ -896,7 +896,7 @@ void ath12k_ce_free_pipes(struct ath12k_base *ab)
 	int desc_sz;
 	int i;
 
-	for (i = 0; i < ab->hw_params.ce_count; i++) {
+	for (i = 0; i < ab->hw_params->ce_count; i++) {
 		pipe = &ab->ce.ce_pipe[i];
 
 		if (pipe->src_ring) {
@@ -944,8 +944,8 @@ int ath12k_ce_alloc_pipes(struct ath12k_base *ab)
 
 	spin_lock_init(&ab->ce.ce_lock);
 
-	for (i = 0; i < ab->hw_params.ce_count; i++) {
-		attr = &ab->hw_params.host_ce_config[i];
+	for (i = 0; i < ab->hw_params->ce_count; i++) {
+		attr = &ab->hw_params->host_ce_config[i];
 		pipe = &ab->ce.ce_pipe[i];
 		pipe->pipe_num = i;
 		pipe->ab = ab;
@@ -983,8 +983,8 @@ void ath12k_ce_byte_swap(void *mem, u32 len)
 
 int ath12k_ce_get_attr_flags(struct ath12k_base *ab, int ce_id)
 {
-	if (ce_id >= ab->hw_params.ce_count)
+	if (ce_id >= ab->hw_params->ce_count)
 		return -EINVAL;
 
-	return ab->hw_params.host_ce_config[ce_id].flags;
+	return ab->hw_params->host_ce_config[ce_id].flags;
 }

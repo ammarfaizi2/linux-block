@@ -740,7 +740,7 @@ struct ath12k_base {
 	bool pdevs_macaddr_valid;
 	int bd_api;
 
-	struct ath12k_hw_params hw_params;
+	const struct ath12k_hw_params *hw_params;
 
 	const struct firmware *cal_file;
 
@@ -981,7 +981,7 @@ static inline struct ath12k_vif *ath12k_vif_to_arvif(struct ieee80211_vif *vif)
 static inline struct ath12k *ath12k_ab_to_ar(struct ath12k_base *ab,
 					     int mac_id)
 {
-	return ab->pdevs[ath12k_hw_mac_id_to_pdev_id(&ab->hw_params, mac_id)].ar;
+	return ab->pdevs[ath12k_hw_mac_id_to_pdev_id(ab->hw_params, mac_id)].ar;
 }
 
 static inline void ath12k_core_create_firmware_path(struct ath12k_base *ab,
@@ -989,7 +989,7 @@ static inline void ath12k_core_create_firmware_path(struct ath12k_base *ab,
 						    void *buf, size_t buf_len)
 {
 	snprintf(buf, buf_len, "%s/%s/%s", ATH12K_FW_DIR,
-		 ab->hw_params.fw.dir, filename);
+		 ab->hw_params->fw.dir, filename);
 }
 
 static inline const char *ath12k_bus_str(enum ath12k_bus bus)

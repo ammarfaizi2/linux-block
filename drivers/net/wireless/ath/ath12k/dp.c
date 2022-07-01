@@ -131,30 +131,30 @@ static int ath12k_dp_srng_calculate_msi_group(struct ath12k_base *ab,
 	switch (type) {
 	case HAL_WBM2SW_RELEASE:
 		if (ring_num == HAL_WBM2SW_REL_ERR_RING_NUM) {
-			grp_mask = &ab->hw_params.ring_mask->rx_wbm_rel[0];
+			grp_mask = &ab->hw_params->ring_mask->rx_wbm_rel[0];
 			ring_num = 0;
 		} else {
-			grp_mask = &ab->hw_params.ring_mask->tx[0];
+			grp_mask = &ab->hw_params->ring_mask->tx[0];
 		}
 		break;
 	case HAL_REO_EXCEPTION:
-		grp_mask = &ab->hw_params.ring_mask->rx_err[0];
+		grp_mask = &ab->hw_params->ring_mask->rx_err[0];
 		break;
 	case HAL_REO_DST:
-		grp_mask = &ab->hw_params.ring_mask->rx[0];
+		grp_mask = &ab->hw_params->ring_mask->rx[0];
 		break;
 	case HAL_REO_STATUS:
-		grp_mask = &ab->hw_params.ring_mask->reo_status[0];
+		grp_mask = &ab->hw_params->ring_mask->reo_status[0];
 		break;
 	case HAL_RXDMA_MONITOR_STATUS:
 	case HAL_RXDMA_MONITOR_DST:
-		grp_mask = &ab->hw_params.ring_mask->rx_mon_dest[0];
+		grp_mask = &ab->hw_params->ring_mask->rx_mon_dest[0];
 		break;
 	case HAL_TX_MONITOR_DST:
-		grp_mask = &ab->hw_params.ring_mask->tx_mon_dest[0];
+		grp_mask = &ab->hw_params->ring_mask->tx_mon_dest[0];
 		break;
 	case HAL_RXDMA_BUF:
-		grp_mask = &ab->hw_params.ring_mask->host2rxdma[0];
+		grp_mask = &ab->hw_params->ring_mask->host2rxdma[0];
 		break;
 	case HAL_RXDMA_MONITOR_BUF:
 	case HAL_TCL_DATA:
@@ -266,7 +266,7 @@ int ath12k_dp_srng_setup(struct ath12k_base *ab, struct dp_srng *ring,
 		params.intr_timer_thres_us = HAL_SRNG_INT_TIMER_THRESHOLD_RX;
 		break;
 	case HAL_WBM2SW_RELEASE:
-		if (ab->hw_params.hw_ops->dp_srng_is_tx_comp_ring(ring_num)) {
+		if (ab->hw_params->hw_ops->dp_srng_is_tx_comp_ring(ring_num)) {
 			params.intr_batch_cntr_thres_entries =
 					HAL_SRNG_INT_BATCH_THRESHOLD_TX;
 			params.intr_timer_thres_us =
@@ -412,7 +412,7 @@ static void ath12k_dp_deinit_bank_profiles(struct ath12k_base *ab)
 static int ath12k_dp_init_bank_profiles(struct ath12k_base *ab)
 {
 	struct ath12k_dp *dp = &ab->dp;
-	u32 num_tcl_banks = ab->hw_params.num_tcl_banks;
+	u32 num_tcl_banks = ab->hw_params->num_tcl_banks;
 	int i;
 
 	dp->num_bank_profiles = num_tcl_banks;
@@ -440,7 +440,7 @@ static void ath12k_dp_srng_common_cleanup(struct ath12k_base *ab)
 	ath12k_dp_srng_cleanup(ab, &dp->wbm_desc_rel_ring);
 	ath12k_dp_srng_cleanup(ab, &dp->tcl_cmd_ring);
 	ath12k_dp_srng_cleanup(ab, &dp->tcl_status_ring);
-	for (i = 0; i < ab->hw_params.max_tx_ring; i++) {
+	for (i = 0; i < ab->hw_params->max_tx_ring; i++) {
 		ath12k_dp_srng_cleanup(ab, &dp->tx_ring[i].tcl_data_ring);
 		ath12k_dp_srng_cleanup(ab, &dp->tx_ring[i].tcl_comp_ring);
 	}
@@ -481,7 +481,7 @@ static int ath12k_dp_srng_common_setup(struct ath12k_base *ab)
 		goto err;
 	}
 
-	for (i = 0; i < ab->hw_params.max_tx_ring; i++) {
+	for (i = 0; i < ab->hw_params->max_tx_ring; i++) {
 		tx_comp_ring_num = ab->hal.ops->tcl_to_wbm_rbm_map[i].wbm_ring_num;
 
 		ret = ath12k_dp_srng_setup(ab, &dp->tx_ring[i].tcl_data_ring,
@@ -867,14 +867,14 @@ int ath12k_dp_service_srng(struct ath12k_base *ab,
 	int tot_work_done = 0;
 	bool flag;
 
-	while (i < ab->hw_params.max_tx_ring) {
-		if (ab->hw_params.ring_mask->tx[grp_id] &
+	while (i < ab->hw_params->max_tx_ring) {
+		if (ab->hw_params->ring_mask->tx[grp_id] &
 			BIT(ab->hal.ops->tcl_to_wbm_rbm_map[i].wbm_ring_num))
 			ath12k_dp_tx_completion_handler(ab, i);
 		i++;
 	}
 
-	if (ab->hw_params.ring_mask->rx_err[grp_id]) {
+	if (ab->hw_params->ring_mask->rx_err[grp_id]) {
 		work_done = ath12k_dp_process_rx_err(ab, napi, budget);
 		budget -= work_done;
 		tot_work_done += work_done;
@@ -882,7 +882,7 @@ int ath12k_dp_service_srng(struct ath12k_base *ab,
 			goto done;
 	}
 
-	if (ab->hw_params.ring_mask->rx_wbm_rel[grp_id]) {
+	if (ab->hw_params->ring_mask->rx_wbm_rel[grp_id]) {
 		work_done = ath12k_dp_rx_process_wbm_err(ab,
 							 napi,
 							 budget);
@@ -893,8 +893,8 @@ int ath12k_dp_service_srng(struct ath12k_base *ab,
 			goto done;
 	}
 
-	if (ab->hw_params.ring_mask->rx[grp_id]) {
-		i =  fls(ab->hw_params.ring_mask->rx[grp_id]) - 1;
+	if (ab->hw_params->ring_mask->rx[grp_id]) {
+		i =  fls(ab->hw_params->ring_mask->rx[grp_id]) - 1;
 		work_done = ath12k_dp_process_rx(ab, i, napi,
 						 budget);
 		budget -= work_done;
@@ -903,14 +903,14 @@ int ath12k_dp_service_srng(struct ath12k_base *ab,
 			goto done;
 	}
 
-	if (ab->hw_params.ring_mask->rx_mon_dest[grp_id]) {
+	if (ab->hw_params->ring_mask->rx_mon_dest[grp_id]) {
 		for (i = 0; i < ab->num_radios; i++) {
-			for (j = 0; j < ab->hw_params.num_rxmda_per_pdev; j++) {
-				int id = i * ab->hw_params.num_rxmda_per_pdev + j;
+			for (j = 0; j < ab->hw_params->num_rxmda_per_pdev; j++) {
+				int id = i * ab->hw_params->num_rxmda_per_pdev + j;
 
 				flag = ATH12K_DP_RX_MONITOR_MODE;
 
-				if (ab->hw_params.ring_mask->rx_mon_dest[grp_id] &
+				if (ab->hw_params->ring_mask->rx_mon_dest[grp_id] &
 					BIT(id)) {
 					work_done =
 					ath12k_dp_mon_process_ring(ab, id, napi, budget,
@@ -925,14 +925,14 @@ int ath12k_dp_service_srng(struct ath12k_base *ab,
 		}
 	}
 
-	if (ab->hw_params.ring_mask->tx_mon_dest[grp_id]) {
+	if (ab->hw_params->ring_mask->tx_mon_dest[grp_id]) {
 		for (i = 0; i < ab->num_radios; i++) {
-			for (j = 0; j < ab->hw_params.num_rxmda_per_pdev; j++) {
-				int id = i * ab->hw_params.num_rxmda_per_pdev + j;
+			for (j = 0; j < ab->hw_params->num_rxmda_per_pdev; j++) {
+				int id = i * ab->hw_params->num_rxmda_per_pdev + j;
 
 				flag = ATH12K_DP_TX_MONITOR_MODE;
 
-				if (ab->hw_params.ring_mask->tx_mon_dest[grp_id] &
+				if (ab->hw_params->ring_mask->tx_mon_dest[grp_id] &
 					BIT(id)) {
 					work_done =
 					ath12k_dp_mon_process_ring(ab, id, napi, budget,
@@ -947,15 +947,15 @@ int ath12k_dp_service_srng(struct ath12k_base *ab,
 		}
 	}
 
-	if (ab->hw_params.ring_mask->reo_status[grp_id])
+	if (ab->hw_params->ring_mask->reo_status[grp_id])
 		ath12k_dp_process_reo_status(ab);
 
-	if (ab->hw_params.ring_mask->host2rxdma[grp_id]) {
+	if (ab->hw_params->ring_mask->host2rxdma[grp_id]) {
 		struct ath12k_dp *dp = &ab->dp;
 		struct dp_rxdma_ring *rx_ring = &dp->rx_refill_buf_ring;
 
 		ath12k_dp_rxbufs_replenish(ab, 0, rx_ring, 0,
-					   ab->hw_params.hal_params->rx_buf_rbm,
+					   ab->hw_params->hal_params->rx_buf_rbm,
 					   true);
 	}
 
@@ -1164,7 +1164,7 @@ static void ath12k_dp_reoq_lut_cleanup(struct ath12k_base *ab)
 {
 	struct ath12k_dp *dp = &ab->dp;
 
-	if (!ab->hw_params.reoq_lut_support)
+	if (!ab->hw_params->reoq_lut_support)
 		return;
 
 	if (!dp->reoq_lut.vaddr)
@@ -1192,7 +1192,7 @@ void ath12k_dp_free(struct ath12k_base *ab)
 
 	ath12k_dp_reo_cmd_list_cleanup(ab);
 
-	for (i = 0; i < ab->hw_params.max_tx_ring; i++)
+	for (i = 0; i < ab->hw_params->max_tx_ring; i++)
 		kfree(dp->tx_ring[i].tx_status);
 
 	ath12k_dp_rx_free(ab);
@@ -1240,7 +1240,7 @@ void ath12k_dp_cc_config(struct ath12k_base *ab)
 	/* Enable Cookie conversion for WBM2SW Rings */
 	val = ath12k_hif_read32(ab, wbm_base + HAL_WBM_SW_COOKIE_CONVERT_CFG);
 	val |= FIELD_PREP(HAL_WBM_SW_COOKIE_CONV_CFG_GLOBAL_EN, 1) |
-	       ab->hw_params.hal_params->wbm2sw_cc_enable;
+	       ab->hw_params->hal_params->wbm2sw_cc_enable;
 
 	ath12k_hif_write32(ab, wbm_base + HAL_WBM_SW_COOKIE_CONVERT_CFG, val);
 }
@@ -1416,7 +1416,7 @@ static int ath12k_dp_reoq_lut_setup(struct ath12k_base *ab)
 {
 	struct ath12k_dp *dp = &ab->dp;
 
-	if (!ab->hw_params.reoq_lut_support)
+	if (!ab->hw_params->reoq_lut_support)
 		return 0;
 
 	dp->reoq_lut.vaddr = dma_alloc_coherent(ab->dev,
@@ -1492,7 +1492,7 @@ int ath12k_dp_alloc(struct ath12k_base *ab)
 		goto fail_cmn_srng_cleanup;
 	}
 
-	for (i = 0; i < ab->hw_params.max_tx_ring; i++) {
+	for (i = 0; i < ab->hw_params->max_tx_ring; i++) {
 		dp->tx_ring[i].tcl_data_ring_id = i;
 
 		dp->tx_ring[i].tx_status_head = 0;

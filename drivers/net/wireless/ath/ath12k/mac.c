@@ -518,7 +518,7 @@ struct ath12k *ath12k_mac_get_ar_by_pdev_id(struct ath12k_base *ab, u32 pdev_id)
 	int i;
 	struct ath12k_pdev *pdev;
 
-	if (ab->hw_params.single_pdev_only) {
+	if (ab->hw_params->single_pdev_only) {
 		pdev = rcu_dereference(ab->pdevs_active[0]);
 		return pdev ? pdev->ar : NULL;
 	}
@@ -3371,7 +3371,7 @@ static int ath12k_mac_station_add(struct ath12k *ar,
 		goto free_peer;
 	}
 
-	if (ab->hw_params.vdev_start_delay &&
+	if (ab->hw_params->vdev_start_delay &&
 	    !arvif->is_started &&
 	    arvif->vdev_type != WMI_VDEV_TYPE_AP) {
 		ret = ath12k_start_vdev_delay(ar->hw, vif);
@@ -3954,7 +3954,7 @@ static void ath12k_mac_setup_ht_vht_cap(struct ath12k *ar,
 	}
 
 	if (cap->supported_bands & WMI_HOST_WLAN_5G_CAP &&
-	    (ar->ab->hw_params.single_pdev_only ||
+	    (ar->ab->hw_params->single_pdev_only ||
 	     !ar->supports_6ghz)) {
 		band = &ar->mac.sbands[NL80211_BAND_5GHZ];
 		ht_cap = cap->band[NL80211_BAND_5GHZ].ht_cap_info;
@@ -4625,7 +4625,7 @@ static int ath12k_mac_op_start(struct ieee80211_hw *hw)
 	ath12k_wmi_pdev_lro_cfg(ar, ar->pdev->pdev_id);
 
 	/* allow device to enter IMPS */
-	if (ab->hw_params.idle_ps) {
+	if (ab->hw_params->idle_ps) {
 		ret = ath12k_wmi_pdev_set_param(ar, WMI_PDEV_PARAM_IDLE_PS_CONFIG,
 						1, pdev->pdev_id);
 		if (ret) {
@@ -5720,7 +5720,7 @@ ath12k_mac_op_assign_vif_chanctx(struct ieee80211_hw *hw,
 		   ctx, arvif->vdev_id);
 
 	/* for QCA6390 bss peer must be created before vdev_start */
-	if (ab->hw_params.vdev_start_delay &&
+	if (ab->hw_params->vdev_start_delay &&
 	    arvif->vdev_type != WMI_VDEV_TYPE_AP &&
 	    arvif->vdev_type != WMI_VDEV_TYPE_MONITOR &&
 	    !ath12k_peer_find_by_vdev_id(ab, arvif->vdev_id)) {
@@ -5734,7 +5734,7 @@ ath12k_mac_op_assign_vif_chanctx(struct ieee80211_hw *hw,
 		goto out;
 	}
 
-	if (ab->hw_params.vdev_start_delay &&
+	if (ab->hw_params->vdev_start_delay &&
 	    (arvif->vdev_type == WMI_VDEV_TYPE_AP ||
 	    arvif->vdev_type == WMI_VDEV_TYPE_MONITOR)) {
 		param.vdev_id = arvif->vdev_id;
@@ -5798,7 +5798,7 @@ ath12k_mac_op_unassign_vif_chanctx(struct ieee80211_hw *hw,
 
 	WARN_ON(!arvif->is_started);
 
-	if (ab->hw_params.vdev_start_delay &&
+	if (ab->hw_params->vdev_start_delay &&
 	    arvif->vdev_type == WMI_VDEV_TYPE_MONITOR &&
 	    ath12k_peer_find_by_addr(ab, ar->mac_addr))
 		ath12k_peer_delete(ar, arvif->vdev_id, ar->mac_addr);
@@ -5821,7 +5821,7 @@ ath12k_mac_op_unassign_vif_chanctx(struct ieee80211_hw *hw,
 
 	arvif->is_started = false;
 
-	if (ab->hw_params.vdev_start_delay &&
+	if (ab->hw_params->vdev_start_delay &&
 	    arvif->vdev_type == WMI_VDEV_TYPE_MONITOR)
 		ath12k_wmi_vdev_down(ar, arvif->vdev_id);
 
@@ -6506,7 +6506,7 @@ static int ath12k_mac_setup_channels_rates(struct ath12k *ar,
 		band->bitrates = ath12k_g_rates;
 		ar->hw->wiphy->bands[NL80211_BAND_2GHZ] = band;
 
-		if (ar->ab->hw_params.single_pdev_only) {
+		if (ar->ab->hw_params->single_pdev_only) {
 			phy_id = ath12k_get_phy_id(ar, WMI_HOST_WLAN_2G_CAP);
 			reg_cap = &ar->ab->hal_reg_cap[phy_id];
 		}
@@ -6555,7 +6555,7 @@ static int ath12k_mac_setup_channels_rates(struct ath12k *ar,
 			band->bitrates = ath12k_a_rates;
 			ar->hw->wiphy->bands[NL80211_BAND_5GHZ] = band;
 
-			if (ar->ab->hw_params.single_pdev_only) {
+			if (ar->ab->hw_params->single_pdev_only) {
 				phy_id = ath12k_get_phy_id(ar, WMI_HOST_WLAN_5G_CAP);
 				reg_cap = &ar->ab->hal_reg_cap[phy_id];
 			}
@@ -6595,7 +6595,7 @@ static int ath12k_mac_setup_iface_combinations(struct ath12k *ar)
 	limits[1].types |= BIT(NL80211_IFTYPE_AP);
 
 	if (IS_ENABLED(CONFIG_MAC80211_MESH) &&
-	    ab->hw_params.interface_modes & BIT(NL80211_IFTYPE_MESH_POINT))
+	    ab->hw_params->interface_modes & BIT(NL80211_IFTYPE_MESH_POINT))
 		limits[1].types |= BIT(NL80211_IFTYPE_MESH_POINT);
 
 	combinations[0].limits = limits;
@@ -6728,7 +6728,7 @@ static int __ath12k_mac_register(struct ath12k *ar)
 	ar->hw->wiphy->available_antennas_rx = cap->rx_chain_mask;
 	ar->hw->wiphy->available_antennas_tx = cap->tx_chain_mask;
 
-	ar->hw->wiphy->interface_modes = ab->hw_params.interface_modes;
+	ar->hw->wiphy->interface_modes = ab->hw_params->interface_modes;
 
 	ieee80211_hw_set(ar->hw, SIGNAL_DBM);
 	ieee80211_hw_set(ar->hw, SUPPORTS_PS);
@@ -6823,7 +6823,7 @@ static int __ath12k_mac_register(struct ath12k *ar)
 		goto err_free_if_combs;
 	}
 
-	if (!ab->hw_params.supports_monitor)
+	if (!ab->hw_params->supports_monitor)
 		/* There's a race between calling ieee80211_register_hw()
 		 * and here where the monitor mode is enabled for a little
 		 * while. But that time is so short and in practise it make
@@ -6926,7 +6926,7 @@ int ath12k_mac_allocate(struct ath12k_base *ab)
 		ar->ab = ab;
 		ar->pdev = pdev;
 		ar->pdev_idx = i;
-		ar->lmac_id = ath12k_hw_get_mac_from_pdev_id(&ab->hw_params, i);
+		ar->lmac_id = ath12k_hw_get_mac_from_pdev_id(ab->hw_params, i);
 
 		ar->wmi = &ab->wmi_ab.wmi[i];
 		/* FIXME wmi[0] is already initialized during attach,

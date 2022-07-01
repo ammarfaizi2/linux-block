@@ -1911,7 +1911,7 @@ int ath12k_hal_srng_setup(struct ath12k_base *ab, enum hal_ring_type type,
 		srng->u.src_ring.low_threshold = params->low_threshold *
 						 srng->entry_size;
 		if (srng_config->mac_type == ATH12K_HAL_SRNG_UMAC) {
-			if (!ab->hw_params.supports_shadow_regs)
+			if (!ab->hw_params->supports_shadow_regs)
 				srng->u.src_ring.hp_addr =
 					(u32 *)((unsigned long)ab->mem + reg_base);
 			else
@@ -1941,7 +1941,7 @@ int ath12k_hal_srng_setup(struct ath12k_base *ab, enum hal_ring_type type,
 		srng->u.dst_ring.cached_hp = 0;
 		srng->u.dst_ring.hp_addr = (void *)(hal->rdp.vaddr + ring_id);
 		if (srng_config->mac_type == ATH12K_HAL_SRNG_UMAC) {
-			if (!ab->hw_params.supports_shadow_regs)
+			if (!ab->hw_params->supports_shadow_regs)
 				srng->u.dst_ring.tp_addr =
 					(u32 *)((unsigned long)ab->mem + reg_base +
 					(HAL_REO1_RING_TP - HAL_REO1_RING_HP));
@@ -2161,7 +2161,7 @@ void ath12k_hal_dump_srng_stats(struct ath12k_base *ab)
 	int i;
 
 	ath12k_err(ab, "Last interrupt received for each CE:\n");
-	for (i = 0; i < ab->hw_params.ce_count; i++) {
+	for (i = 0; i < ab->hw_params->ce_count; i++) {
 		ce_pipe = &ab->ce.ce_pipe[i];
 
 		if (ath12k_ce_get_attr_flags(ab, i) & CE_ATTR_DIS_INTR)

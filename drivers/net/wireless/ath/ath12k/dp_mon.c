@@ -865,7 +865,7 @@ static void ath12k_dp_mon_rx_msdus_set_payload(struct ath12k *ar, struct sk_buff
 {
 	u32 rx_pkt_offset, l2_hdr_offset;
 
-	rx_pkt_offset = ar->ab->hw_params.hal_desc_sz;
+	rx_pkt_offset = ar->ab->hw_params->hal_desc_sz;
 	l2_hdr_offset = ath12k_dp_rx_h_l3pad(ar->ab,
 					     (struct hal_rx_desc *)msdu->data);
 	skb_pull(msdu, rx_pkt_offset + l2_hdr_offset);
@@ -2085,7 +2085,7 @@ int ath12k_dp_mon_srng_process(struct ath12k *ar, int mac_id, int *budget,
 	memset(ppdu_info, 0, sizeof(*ppdu_info));
 	ppdu_info->peer_id = HAL_INVALID_PEERID;
 
-	srng_id = ath12k_hw_mac_id_to_srng_id(&ab->hw_params, mac_id);
+	srng_id = ath12k_hw_mac_id_to_srng_id(ab->hw_params, mac_id);
 
 	if (flag == ATH12K_DP_RX_MONITOR_MODE) {
 		mon_dst_ring = &pdev_dp->rxdma_mon_dst_ring[srng_id];
@@ -2499,7 +2499,7 @@ int ath12k_dp_mon_rx_process_stats(struct ath12k *ar, int mac_id,
 	bool end_of_ppdu;
 	u32 hal_status;
 
-	srng_id = ath12k_hw_mac_id_to_srng_id(&ab->hw_params, mac_id);
+	srng_id = ath12k_hw_mac_id_to_srng_id(ab->hw_params, mac_id);
 	mon_dst_ring = &pdev_dp->rxdma_mon_dst_ring[srng_id];
 	buf_ring = &dp->rxdma_mon_buf_ring;
 

@@ -59,25 +59,26 @@ struct ath12k_base;
 #define HAL_TCL1_RING_DSCP_TID_MAP		0x00000240
 #define HAL_TCL1_RING_BASE_LSB			0x00000900
 #define HAL_TCL1_RING_BASE_MSB			0x00000904
-#define HAL_TCL1_RING_ID(ab)			((ab)->hw_params.regs->hal_tcl1_ring_id)
-#define HAL_TCL1_RING_MISC(ab)			((ab)->hw_params.regs->hal_tcl1_ring_misc)
+#define HAL_TCL1_RING_ID(ab)			((ab)->hw_params->regs->hal_tcl1_ring_id)
+#define HAL_TCL1_RING_MISC(ab) \
+	((ab)->hw_params->regs->hal_tcl1_ring_misc)
 #define HAL_TCL1_RING_TP_ADDR_LSB(ab) \
-	((ab)->hw_params.regs->hal_tcl1_ring_tp_addr_lsb)
+	((ab)->hw_params->regs->hal_tcl1_ring_tp_addr_lsb)
 #define HAL_TCL1_RING_TP_ADDR_MSB(ab) \
-	((ab)->hw_params.regs->hal_tcl1_ring_tp_addr_msb)
+	((ab)->hw_params->regs->hal_tcl1_ring_tp_addr_msb)
 #define HAL_TCL1_RING_CONSUMER_INT_SETUP_IX0(ab) \
-	((ab)->hw_params.regs->hal_tcl1_ring_consumer_int_setup_ix0)
+	((ab)->hw_params->regs->hal_tcl1_ring_consumer_int_setup_ix0)
 #define HAL_TCL1_RING_CONSUMER_INT_SETUP_IX1(ab) \
-	((ab)->hw_params.regs->hal_tcl1_ring_consumer_int_setup_ix1)
+	((ab)->hw_params->regs->hal_tcl1_ring_consumer_int_setup_ix1)
 #define HAL_TCL1_RING_MSI1_BASE_LSB(ab) \
-	((ab)->hw_params.regs->hal_tcl1_ring_msi1_base_lsb)
+	((ab)->hw_params->regs->hal_tcl1_ring_msi1_base_lsb)
 #define HAL_TCL1_RING_MSI1_BASE_MSB(ab) \
-	((ab)->hw_params.regs->hal_tcl1_ring_msi1_base_msb)
+	((ab)->hw_params->regs->hal_tcl1_ring_msi1_base_msb)
 #define HAL_TCL1_RING_MSI1_DATA(ab) \
-	((ab)->hw_params.regs->hal_tcl1_ring_msi1_data)
+	((ab)->hw_params->regs->hal_tcl1_ring_msi1_data)
 #define HAL_TCL2_RING_BASE_LSB			0x00000978
 #define HAL_TCL_RING_BASE_LSB(ab) \
-	((ab)->hw_params.regs->hal_tcl_ring_base_lsb)
+	((ab)->hw_params->regs->hal_tcl_ring_base_lsb)
 
 #define HAL_TCL1_RING_MSI1_BASE_LSB_OFFSET(ab)				\
 	(HAL_TCL1_RING_MSI1_BASE_LSB(ab) - HAL_TCL1_RING_BASE_LSB)
@@ -111,7 +112,7 @@ struct ath12k_base;
 
 /* TCL STATUS ring address */
 #define HAL_TCL_STATUS_RING_BASE_LSB(ab) \
-	((ab)->hw_params.regs->hal_tcl_status_ring_base_lsb)
+	((ab)->hw_params->regs->hal_tcl_status_ring_base_lsb)
 #define HAL_TCL_STATUS_RING_HP			0x00002048
 
 /* PPE2TCL1 Ring address */
@@ -210,36 +211,36 @@ struct ath12k_base;
 
 /* WBM Idle R0 address */
 #define HAL_WBM_IDLE_LINK_RING_BASE_LSB(ab) \
-	((ab)->hw_params.regs->hal_wbm_idle_ring_base_lsb)
+	((ab)->hw_params->regs->hal_wbm_idle_ring_base_lsb)
 #define HAL_WBM_IDLE_LINK_RING_MISC_ADDR(ab) \
-	((ab)->hw_params.regs->hal_wbm_idle_ring_misc_addr)
+	((ab)->hw_params->regs->hal_wbm_idle_ring_misc_addr)
 #define HAL_WBM_R0_IDLE_LIST_CONTROL_ADDR(ab) \
-	((ab)->hw_params.regs->hal_wbm_r0_idle_list_cntl_addr)
+	((ab)->hw_params->regs->hal_wbm_r0_idle_list_cntl_addr)
 #define HAL_WBM_R0_IDLE_LIST_SIZE_ADDR(ab) \
-	((ab)->hw_params.regs->hal_wbm_r0_idle_list_size_addr)
+	((ab)->hw_params->regs->hal_wbm_r0_idle_list_size_addr)
 #define HAL_WBM_SCATTERED_RING_BASE_LSB(ab) \
-	((ab)->hw_params.regs->hal_wbm_scattered_ring_base_lsb)
+	((ab)->hw_params->regs->hal_wbm_scattered_ring_base_lsb)
 #define HAL_WBM_SCATTERED_RING_BASE_MSB(ab) \
-	((ab)->hw_params.regs->hal_wbm_scattered_ring_base_msb)
+	((ab)->hw_params->regs->hal_wbm_scattered_ring_base_msb)
 #define HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX0(ab) \
-	((ab)->hw_params.regs->hal_wbm_scattered_desc_head_info_ix0)
+	((ab)->hw_params->regs->hal_wbm_scattered_desc_head_info_ix0)
 #define HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX1(ab) \
-	((ab)->hw_params.regs->hal_wbm_scattered_desc_head_info_ix1)
+	((ab)->hw_params->regs->hal_wbm_scattered_desc_head_info_ix1)
 #define HAL_WBM_SCATTERED_DESC_PTR_TAIL_INFO_IX0(ab) \
-	((ab)->hw_params.regs->hal_wbm_scattered_desc_tail_info_ix0)
+	((ab)->hw_params->regs->hal_wbm_scattered_desc_tail_info_ix0)
 #define HAL_WBM_SCATTERED_DESC_PTR_TAIL_INFO_IX1(ab) \
-	((ab)->hw_params.regs->hal_wbm_scattered_desc_tail_info_ix1)
+	((ab)->hw_params->regs->hal_wbm_scattered_desc_tail_info_ix1)
 #define HAL_WBM_SCATTERED_DESC_PTR_HP_ADDR(ab) \
-	((ab)->hw_params.regs->hal_wbm_scattered_desc_ptr_hp_addr)
+	((ab)->hw_params->regs->hal_wbm_scattered_desc_ptr_hp_addr)
 
 /* WBM Idle R2 address */
 #define HAL_WBM_IDLE_LINK_RING_HP		0x000030b8
 
 /* SW2WBM R0 release address */
 #define HAL_WBM_SW_RELEASE_RING_BASE_LSB(ab) \
-	((ab)->hw_params.regs->hal_wbm_sw_release_ring_base_lsb)
+	((ab)->hw_params->regs->hal_wbm_sw_release_ring_base_lsb)
 #define HAL_WBM_SW1_RELEASE_RING_BASE_LSB(ab) \
-	((ab)->hw_params.regs->hal_wbm_sw1_release_ring_base_lsb)
+	((ab)->hw_params->regs->hal_wbm_sw1_release_ring_base_lsb)
 
 /* SW2WBM R2 release address */
 #define HAL_WBM_SW_RELEASE_RING_HP		0x00003010
@@ -247,10 +248,10 @@ struct ath12k_base;
 
 /* WBM2SW R0 release address */
 #define HAL_WBM0_RELEASE_RING_BASE_LSB(ab) \
-	((ab)->hw_params.regs->hal_wbm0_release_ring_base_lsb)
+	((ab)->hw_params->regs->hal_wbm0_release_ring_base_lsb)
 
 #define HAL_WBM1_RELEASE_RING_BASE_LSB(ab) \
-	((ab)->hw_params.regs->hal_wbm1_release_ring_base_lsb)
+	((ab)->hw_params->regs->hal_wbm1_release_ring_base_lsb)
 
 /* WBM2SW R2 release address */
 #define HAL_WBM0_RELEASE_RING_HP		0x000030c8

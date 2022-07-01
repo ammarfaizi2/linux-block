@@ -17,13 +17,13 @@ static u8 ath12k_hw_qcn9274_mac_from_pdev_id(int pdev_idx)
 	return pdev_idx;
 }
 
-static int ath12k_hw_mac_id_to_pdev_id_qcn9274(struct ath12k_hw_params *hw,
+static int ath12k_hw_mac_id_to_pdev_id_qcn9274(const struct ath12k_hw_params *hw,
 					       int mac_id)
 {
 	return mac_id;
 }
 
-static int ath12k_hw_mac_id_to_srng_id_qcn9274(struct ath12k_hw_params *hw,
+static int ath12k_hw_mac_id_to_srng_id_qcn9274(const struct ath12k_hw_params *hw,
 					       int mac_id)
 {
 	return 0;
@@ -42,13 +42,13 @@ static bool ath12k_dp_srng_is_comp_ring_qcn9274(int ring_num)
 	return false;
 }
 
-static int ath12k_hw_mac_id_to_pdev_id_wcn7850(struct ath12k_hw_params *hw,
+static int ath12k_hw_mac_id_to_pdev_id_wcn7850(const struct ath12k_hw_params *hw,
 					       int mac_id)
 {
 	return 0;
 }
 
-static int ath12k_hw_mac_id_to_srng_id_wcn7850(struct ath12k_hw_params *hw,
+static int ath12k_hw_mac_id_to_srng_id_wcn7850(const struct ath12k_hw_params *hw,
 					       int mac_id)
 {
 	return mac_id;
