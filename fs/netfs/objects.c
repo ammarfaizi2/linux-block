@@ -10,6 +10,11 @@
 
 atomic_t netfs_region_debug_ids;
 
+static void netfs_init_req_work(struct work_struct *work)
+{
+	pr_info("New req work queued!\n");
+}
+
 /*
  * Allocate an I/O request and initialise it.
  */
@@ -47,6 +52,7 @@ struct netfs_io_request *netfs_alloc_request(struct address_space *mapping,
 	for (i = 0; i < ARRAY_SIZE(rreq->chain); i++)
 		INIT_LIST_HEAD(&rreq->chain[i].subrequests);
 	INIT_LIST_HEAD(&rreq->regions);
+	INIT_WORK(&rreq->work, netfs_init_req_work);
 	refcount_set(&rreq->ref, 1);
 
 	__set_bit(NETFS_RREQ_IN_PROGRESS, &rreq->flags);
@@ -153,7 +159,7 @@ void netfs_put_request(struct netfs_io_request *rreq, bool was_async,
 		trace_netfs_rreq_ref(debug_id, r - 1, what);
 		if (dead) {
 			if (was_async) {
-				rreq->work.func = netfs_free_request;
+				INIT_WORK(&rreq->work, netfs_free_request);
 				if (!queue_work(system_unbound_wq, &rreq->work))
 					BUG();
 			} else {
@@ -163,6 +169,11 @@ void netfs_put_request(struct netfs_io_request *rreq, bool was_async,
 	}
 }
 EXPORT_SYMBOL(netfs_put_request);
+
+static void netfs_init_subreq_work(struct work_struct *work)
+{
+	pr_info("New subreq work queued!\n");
+}
 
 /*
  * Allocate and partially initialise an I/O request structure.
@@ -175,7 +186,7 @@ struct netfs_io_subrequest *netfs_alloc_subrequest(struct netfs_io_request *rreq
 			 sizeof(struct netfs_io_subrequest),
 			 GFP_KERNEL);
 	if (subreq) {
-		INIT_WORK(&subreq->work, NULL);
+		INIT_WORK(&subreq->work, netfs_init_subreq_work);
 		INIT_LIST_HEAD(&subreq->chain_link);
 		refcount_set(&subreq->ref, 2);
 		subreq->rreq = rreq;

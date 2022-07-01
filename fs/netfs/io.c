@@ -109,7 +109,7 @@ static void netfs_rreq_write_to_cache_work(struct work_struct *work)
 
 static void netfs_rreq_write_to_cache(struct netfs_io_request *rreq)
 {
-	rreq->work.func = netfs_rreq_write_to_cache_work;
+	INIT_WORK(&rreq->work, netfs_rreq_write_to_cache_work);
 	if (!queue_work(system_unbound_wq, &rreq->work))
 		BUG();
 }
