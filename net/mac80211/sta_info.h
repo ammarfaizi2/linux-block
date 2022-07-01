@@ -491,6 +491,7 @@ struct ieee80211_fragment_cache {
  *	same for non-MLD STA. This is used as key for searching link STA
  * @link_id: Link ID uniquely identifying the link STA. This is 0 for non-MLD
  *	and set to the corresponding vif LinkId for MLD STA
+ * @link_hash_node: hash node for rhashtable
  * @sta: Points to the STA info
  * @gtk: group keys negotiated with this station, if any
  * @tx_stats: TX statistics
@@ -516,13 +517,14 @@ struct ieee80211_fragment_cache {
  * @status_stats.last_ack_signal: last ACK signal
  * @status_stats.ack_signal_filled: last ACK signal validity
  * @status_stats.avg_ack_signal: average ACK signal
+ * @pub: public (driver visible) link STA data
  * TODO Move other link params from sta_info as required for MLD operation
  */
 struct link_sta_info {
 	u8 addr[ETH_ALEN];
 	u8 link_id;
 
-	/* TODO rhash head/node for finding link_sta based on addr */
+	struct rhlist_head link_hash_node;
 
 	struct sta_info *sta;
 	struct ieee80211_key __rcu *gtk[NUM_DEFAULT_KEYS +
@@ -561,6 +563,8 @@ struct link_sta_info {
 	} tx_stats;
 
 	enum ieee80211_sta_rx_bandwidth cur_max_bandwidth;
+
+	struct ieee80211_link_sta *pub;
 };
 
 /**
@@ -623,7 +627,6 @@ struct link_sta_info {
  * @tdls_chandef: a TDLS peer can have a wider chandef that is compatible to
  *	the BSS one.
  * @frags: fragment cache
- * @multi_link_sta: Identifies if this sta is a MLD STA or regular STA
  * @deflink: This is the default link STA information, for non MLO STA all link
  *	specific STA information is accessed through @deflink or through
  *	link[0] which points to address of @deflink. For MLO Link STA
@@ -708,9 +711,8 @@ struct sta_info {
 
 	struct ieee80211_fragment_cache frags;
 
-	bool multi_link_sta;
 	struct link_sta_info deflink;
-	struct link_sta_info *link[MAX_STA_LINKS];
+	struct link_sta_info __rcu *link[IEEE80211_MLD_MAX_NUM_LINKS];
 
 	/* keep last! */
 	struct ieee80211_sta sta;
@@ -823,6 +825,17 @@ struct sta_info *sta_info_get_by_addrs(struct ieee80211_local *local,
 	rhl_for_each_entry_rcu(_sta, _tmp,				\
 			       sta_info_hash_lookup(local, _addr), hash_node)
 
+struct rhlist_head *link_sta_info_hash_lookup(struct ieee80211_local *local,
+					      const u8 *addr);
+
+#define for_each_link_sta_info(local, _addr, _sta, _tmp)		\
+	rhl_for_each_entry_rcu(_sta, _tmp,				\
+			       link_sta_info_hash_lookup(local, _addr),	\
+			       link_hash_node)
+
+struct link_sta_info *
+link_sta_info_get_bss(struct ieee80211_sub_if_data *sdata, const u8 *addr);
+
 /*
  * Get STA info by index, BROKEN!
  */
@@ -833,7 +846,7 @@ struct sta_info *sta_info_get_by_idx(struct ieee80211_sub_if_data *sdata,
  * until sta_info_insert().
  */
 struct sta_info *sta_info_alloc(struct ieee80211_sub_if_data *sdata,
-				const u8 *addr, gfp_t gfp);
+				const u8 *addr, int link_id, gfp_t gfp);
 
 void sta_info_free(struct ieee80211_local *local, struct sta_info *sta);
 
@@ -891,7 +904,10 @@ u32 sta_get_expected_throughput(struct sta_info *sta);
 
 void ieee80211_sta_expire(struct ieee80211_sub_if_data *sdata,
 			  unsigned long exp_time);
-u8 sta_info_tx_streams(struct sta_info *sta);
+
+int ieee80211_sta_allocate_link(struct sta_info *sta, unsigned int link_id);
+int ieee80211_sta_activate_link(struct sta_info *sta, unsigned int link_id);
+void ieee80211_sta_remove_link(struct sta_info *sta, unsigned int link_id);
 
 void ieee80211_sta_ps_deliver_wakeup(struct sta_info *sta);
 void ieee80211_sta_ps_deliver_poll_response(struct sta_info *sta);
