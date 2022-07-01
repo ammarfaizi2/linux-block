@@ -935,4 +935,3 @@ MODULE_DESCRIPTION("Qualcomm SPMI PMIC voltage ADC driver");
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Stanimir Varbanov <svarbanov@mm-sol.com>");
 MODULE_AUTHOR("Ivan T. Ivanov <iivanov@mm-sol.com>");
-MODULE_IMPORT_NS(IIO_QCOM_VADC);
