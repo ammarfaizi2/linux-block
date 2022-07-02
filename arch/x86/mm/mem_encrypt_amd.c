@@ -26,6 +26,7 @@
 #include <asm/tlbflush.h>
 #include <asm/fixmap.h>
 #include <asm/setup.h>
+#include <asm/mem_encrypt.h>
 #include <asm/bootparam.h>
 #include <asm/set_memory.h>
 #include <asm/cacheflush.h>
@@ -483,8 +484,6 @@ void __init early_set_mem_enc_dec_hypercall(unsigned long vaddr, int npages, boo
 {
 	enc_dec_hypercall(vaddr, npages, enc);
 }
-
-void add_encrypt_protection_map(void);
 
 void __init sme_early_init(void)
 {
