@@ -462,7 +462,7 @@
 		};
 	};
 
-	cpu0_opp_table: cpu0_opp_table {
+	cpu0_opp_table: opp-table-cpu0 {
 		compatible = "operating-points-v2";
 		opp-shared;
 
@@ -557,7 +557,7 @@
 		};
 	};
 
-	cpu4_opp_table: cpu4_opp_table {
+	cpu4_opp_table: opp-table-cpu4 {
 		compatible = "operating-points-v2";
 		opp-shared;
 
@@ -1104,7 +1104,7 @@
 			clock-names = "core";
 		};
 
-		qup_opp_table: qup-opp-table {
+		qup_opp_table: opp-table-qup {
 			compatible = "operating-points-v2";
 
 			opp-50000000 {
@@ -3551,7 +3551,7 @@
 			};
 		};
 
-		sdhc_2: sdhci@8804000 {
+		sdhc_2: mmc@8804000 {
 			compatible = "qcom,sdm845-sdhci", "qcom,sdhci-msm-v5";
 			reg = <0 0x08804000 0 0x1000>;
 
@@ -3569,7 +3569,7 @@
 
 			status = "disabled";
 
-			sdhc2_opp_table: sdhc2-opp-table {
+			sdhc2_opp_table: opp-table {
 				compatible = "operating-points-v2";
 
 				opp-9600000 {
@@ -3594,7 +3594,7 @@
 			};
 		};
 
-		qspi_opp_table: qspi-opp-table {
+		qspi_opp_table: opp-table-qspi {
 			compatible = "operating-points-v2";
 
 			opp-19200000 {
@@ -3640,7 +3640,7 @@
 			qcom,apps-ch-pipes = <0x780000>;
 			qcom,ea-pc = <0x270>;
 			status = "okay";
-			dmas =	<&slimbam 3>, <&slimbam 4>,
+			dmas = <&slimbam 3>, <&slimbam 4>,
 				<&slimbam 5>, <&slimbam 6>;
 			dma-names = "rx", "tx", "tx2", "rx2";
 
@@ -3655,13 +3655,13 @@
 
 				wcd9340_ifd: ifd@0{
 					compatible = "slim217,250";
-					reg  = <0 0>;
+					reg = <0 0>;
 				};
 
 				wcd9340: codec@1{
 					compatible = "slim217,250";
-					reg  = <1 0>;
-					slim-ifc-dev  = <&wcd9340_ifd>;
+					reg = <1 0>;
+					slim-ifc-dev = <&wcd9340_ifd>;
 
 					#sound-dai-cells = <1>;
 
@@ -3692,8 +3692,8 @@
 						reg = <0xc85 0x40>;
 						interrupts-extended = <&wcd9340 20>;
 
-						qcom,dout-ports	= <6>;
-						qcom,din-ports	= <2>;
+						qcom,dout-ports = <6>;
+						qcom,din-ports = <2>;
 						qcom,ports-sinterval-low =/bits/ 8  <0x07 0x1F 0x3F 0x7 0x1F 0x3F 0x0F 0x0F>;
 						qcom,ports-offset1 = /bits/ 8 <0x01 0x02 0x0C 0x6 0x12 0x0D 0x07 0x0A >;
 						qcom,ports-offset2 = /bits/ 8 <0x00 0x00 0x1F 0x00 0x00 0x1F 0x00 0x00>;
@@ -3971,7 +3971,7 @@
 				compatible = "venus-encoder";
 			};
 
-			venus_opp_table: venus-opp-table {
+			venus_opp_table: opp-table {
 				compatible = "operating-points-v2";
 
 				opp-100000000 {
@@ -4208,7 +4208,7 @@
 			clock-names = "bi_tcxo";
 		};
 
-		dsi_opp_table: dsi-opp-table {
+		dsi_opp_table: opp-table-dsi {
 			compatible = "operating-points-v2";
 
 			opp-19200000 {
@@ -4244,12 +4244,9 @@
 
 			power-domains = <&dispcc MDSS_GDSC>;
 
-			clocks = <&gcc GCC_DISP_AHB_CLK>,
+			clocks = <&dispcc DISP_CC_MDSS_AHB_CLK>,
 				 <&dispcc DISP_CC_MDSS_MDP_CLK>;
 			clock-names = "iface", "core";
-
-			assigned-clocks = <&dispcc DISP_CC_MDSS_MDP_CLK>;
-			assigned-clock-rates = <300000000>;
 
 			interrupts = <GIC_SPI 83 IRQ_TYPE_LEVEL_HIGH>;
 			interrupt-controller;
@@ -4281,10 +4278,8 @@
 					 <&dispcc DISP_CC_MDSS_VSYNC_CLK>;
 				clock-names = "gcc-bus", "iface", "bus", "core", "vsync";
 
-				assigned-clocks = <&dispcc DISP_CC_MDSS_MDP_CLK>,
-						  <&dispcc DISP_CC_MDSS_VSYNC_CLK>;
-				assigned-clock-rates = <300000000>,
-						       <19200000>;
+				assigned-clocks = <&dispcc DISP_CC_MDSS_VSYNC_CLK>;
+				assigned-clock-rates = <19200000>;
 				operating-points-v2 = <&mdp_opp_table>;
 				power-domains = <&rpmhpd SDM845_CX>;
 
@@ -4310,7 +4305,7 @@
 					};
 				};
 
-				mdp_opp_table: mdp-opp-table {
+				mdp_opp_table: opp-table {
 					compatible = "operating-points-v2";
 
 					opp-19200000 {
@@ -4574,7 +4569,7 @@
 		};
 
 		gmu: gmu@506a000 {
-			compatible="qcom,adreno-gmu-630.2", "qcom,adreno-gmu";
+			compatible = "qcom,adreno-gmu-630.2", "qcom,adreno-gmu";
 
 			reg = <0 0x506a000 0 0x30000>,
 			      <0 0xb280000 0 0x10000>,
@@ -4721,8 +4716,8 @@
 			cell-index = <0>;
 		};
 
-		imem@146bf000 {
-			compatible = "simple-mfd";
+		sram@146bf000 {
+			compatible = "qcom,sdm845-imem", "syscon", "simple-mfd";
 			reg = <0 0x146bf000 0 0x1000>;
 
 			#address-cells = <1>;
@@ -4939,7 +4934,7 @@
 			compatible = "qcom,bam-v1.7.0";
 			qcom,controlled-remotely;
 			reg = <0 0x17184000 0 0x2a000>;
-			num-channels  = <31>;
+			num-channels = <31>;
 			interrupts = <GIC_SPI 164 IRQ_TYPE_LEVEL_HIGH>;
 			#dma-cells = <1>;
 			qcom,ee = <1>;
@@ -4948,9 +4943,9 @@
 		};
 
 		timer@17c90000 {
-			#address-cells = <2>;
-			#size-cells = <2>;
-			ranges;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges = <0 0 0 0x20000000>;
 			compatible = "arm,armv7-timer-mem";
 			reg = <0 0x17c90000 0 0x1000>;
 
@@ -4958,49 +4953,49 @@
 				frame-number = <0>;
 				interrupts = <GIC_SPI 7 IRQ_TYPE_LEVEL_HIGH>,
 					     <GIC_SPI 6 IRQ_TYPE_LEVEL_HIGH>;
-				reg = <0 0x17ca0000 0 0x1000>,
-				      <0 0x17cb0000 0 0x1000>;
+				reg = <0x17ca0000 0x1000>,
+				      <0x17cb0000 0x1000>;
 			};
 
 			frame@17cc0000 {
 				frame-number = <1>;
 				interrupts = <GIC_SPI 8 IRQ_TYPE_LEVEL_HIGH>;
-				reg = <0 0x17cc0000 0 0x1000>;
+				reg = <0x17cc0000 0x1000>;
 				status = "disabled";
 			};
 
 			frame@17cd0000 {
 				frame-number = <2>;
 				interrupts = <GIC_SPI 9 IRQ_TYPE_LEVEL_HIGH>;
-				reg = <0 0x17cd0000 0 0x1000>;
+				reg = <0x17cd0000 0x1000>;
 				status = "disabled";
 			};
 
 			frame@17ce0000 {
 				frame-number = <3>;
 				interrupts = <GIC_SPI 10 IRQ_TYPE_LEVEL_HIGH>;
-				reg = <0 0x17ce0000 0 0x1000>;
+				reg = <0x17ce0000 0x1000>;
 				status = "disabled";
 			};
 
 			frame@17cf0000 {
 				frame-number = <4>;
 				interrupts = <GIC_SPI 11 IRQ_TYPE_LEVEL_HIGH>;
-				reg = <0 0x17cf0000 0 0x1000>;
+				reg = <0x17cf0000 0x1000>;
 				status = "disabled";
 			};
 
 			frame@17d00000 {
 				frame-number = <5>;
 				interrupts = <GIC_SPI 12 IRQ_TYPE_LEVEL_HIGH>;
-				reg = <0 0x17d00000 0 0x1000>;
+				reg = <0x17d00000 0x1000>;
 				status = "disabled";
 			};
 
 			frame@17d10000 {
 				frame-number = <6>;
 				interrupts = <GIC_SPI 13 IRQ_TYPE_LEVEL_HIGH>;
-				reg = <0 0x17d10000 0 0x1000>;
+				reg = <0x17d10000 0x1000>;
 				status = "disabled";
 			};
 		};
