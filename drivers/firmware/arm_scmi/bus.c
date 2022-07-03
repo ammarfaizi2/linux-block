@@ -19,6 +19,11 @@ static DEFINE_IDA(scmi_bus_id);
 static DEFINE_IDR(scmi_protocols);
 static DEFINE_SPINLOCK(protocol_lock);
 
+/* Track globally the creation of SCMI SystemPower related devices */
+static bool scmi_syspower_registered;
+/* Protect access to scmi_syspower_registered */
+static DEFINE_MUTEX(scmi_syspower_mtx);
+
 static const struct scmi_device_id *
 scmi_dev_match_id(struct scmi_device *scmi_dev, struct scmi_driver *scmi_drv)
 {
@@ -132,12 +137,21 @@ int scmi_driver_register(struct scmi_driver *driver, struct module *owner,
 {
 	int retval;
 
-	if (!driver->probe)
+	if (!driver->probe || !driver->id_table)
 		return -EINVAL;
 
+	if (driver->setup) {
+		retval = driver->setup();
+		if (retval)
+			return retval;
+	}
+
 	retval = scmi_protocol_device_request(driver->id_table);
-	if (retval)
+	if (retval) {
+		if (driver->teardown)
+			driver->teardown();
 		return retval;
+	}
 
 	driver->driver.bus = &scmi_bus_type;
 	driver->driver.name = driver->name;
@@ -156,6 +170,8 @@ void scmi_driver_unregister(struct scmi_driver *driver)
 {
 	driver_unregister(&driver->driver);
 	scmi_protocol_device_unrequest(driver->id_table);
+	if (driver->teardown)
+		driver->teardown();
 }
 EXPORT_SYMBOL_GPL(scmi_driver_unregister);
 
@@ -196,11 +212,31 @@ scmi_device_create(struct device_node *np, struct device *parent, int protocol,
 	scmi_dev->dev.release = scmi_device_release;
 	dev_set_name(&scmi_dev->dev, "scmi_dev.%d", id);
 
+	mutex_lock(&scmi_syspower_mtx);
+	if (protocol == SCMI_PROTOCOL_SYSTEM && scmi_syspower_registered) {
+		dev_warn(parent,
+			 "SCMI SystemPower protocol device must be unique !\n");
+
+		mutex_unlock(&scmi_syspower_mtx);
+		ida_free(&scmi_bus_id, id);
+		kfree_const(scmi_dev->name);
+		kfree(scmi_dev);
+		return NULL;
+	}
+
 	retval = device_register(&scmi_dev->dev);
-	if (retval)
+	if (retval) {
+		mutex_unlock(&scmi_syspower_mtx);
 		goto put_dev;
+	}
+
+	if (protocol == SCMI_PROTOCOL_SYSTEM)
+		scmi_syspower_registered = true;
+
+	mutex_unlock(&scmi_syspower_mtx);
 
 	return scmi_dev;
+
 put_dev:
 	kfree_const(scmi_dev->name);
 	put_device(&scmi_dev->dev);
@@ -210,6 +246,10 @@ put_dev:
 
 void scmi_device_destroy(struct scmi_device *scmi_dev)
 {
+	mutex_lock(&scmi_syspower_mtx);
+	if (scmi_dev->protocol_id == SCMI_PROTOCOL_SYSTEM)
+		scmi_syspower_registered = false;
+	mutex_unlock(&scmi_syspower_mtx);
 	kfree_const(scmi_dev->name);
 	scmi_handle_put(scmi_dev->handle);
 	ida_free(&scmi_bus_id, scmi_dev->id);
