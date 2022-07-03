@@ -1102,6 +1102,7 @@ static int acpi_dev_for_one_check(struct device *dev, void *context)
 
 	return adwc->fn(to_acpi_device(dev), adwc->data);
 }
+EXPORT_SYMBOL_GPL(acpi_dev_for_each_child);
 
 int acpi_dev_for_each_child(struct acpi_device *adev,
 			    int (*fn)(struct acpi_device *, void *), void *data)
@@ -1112,6 +1113,18 @@ int acpi_dev_for_each_child(struct acpi_device *adev,
 	};
 
 	return device_for_each_child(&adev->dev, &adwc, acpi_dev_for_one_check);
+}
+
+int acpi_dev_for_each_child_reverse(struct acpi_device *adev,
+				    int (*fn)(struct acpi_device *, void *),
+				    void *data)
+{
+	struct acpi_dev_walk_context adwc = {
+		.fn = fn,
+		.data = data,
+	};
+
+	return device_for_each_child_reverse(&adev->dev, &adwc, acpi_dev_for_one_check);
 }
 
 /* --------------------------------------------------------------------------
