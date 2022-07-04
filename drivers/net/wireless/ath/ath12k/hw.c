@@ -8,6 +8,7 @@
 #include <linux/bitops.h>
 #include <linux/bitfield.h>
 
+#include "debug.h"
 #include "core.h"
 #include "ce.h"
 #include "hw.h"
@@ -691,3 +692,118 @@ const struct ath12k_hw_hal_params ath12k_hw_hal_params_wcn7850 = {
 			    HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW3_EN |
 			    HAL_WBM_SW_COOKIE_CONV_CFG_WBM2SW4_EN,
 };
+
+static const struct ath12k_hw_params ath12k_hw_params[] = {
+	{
+		.name = "qcn9274 hw1.0",
+		.hw_rev = ATH12K_HW_QCN9274_HW10,
+		.fw = {
+			.dir = "QCN9274/hw1.0",
+			.board_size = 256 * 1024,
+			.cal_offset = 128 * 1024,
+		},
+		.max_radios = 1,
+		.single_pdev_only = false,
+		.qmi_service_ins_id = ATH12K_QMI_WLFW_SERVICE_INS_ID_V01_QCN9274,
+		.hw_ops = &qcn9274_ops,
+		.ring_mask = &ath12k_hw_ring_mask_qcn9274,
+		.internal_sleep_clock = false,
+		.regs = &qcn9274_regs,
+		.host_ce_config = ath12k_host_ce_config_qcn9274,
+		.ce_count = 16,
+		.target_ce_config = ath12k_target_ce_config_wlan_qcn9274,
+		.target_ce_count = 12,
+		.svc_to_ce_map = ath12k_target_service_to_ce_map_wlan_qcn9274,
+		.svc_to_ce_map_len = 18,
+		.hal_params = &ath12k_hw_hal_params_qcn9274,
+		.rxdma1_enable = false,
+		.num_rxmda_per_pdev = 1,
+		.num_rxdma_dst_ring = 0,
+		.rx_mac_buf_ring = false,
+		.vdev_start_delay = false,
+		.interface_modes = BIT(NL80211_IFTYPE_STATION) |
+					BIT(NL80211_IFTYPE_AP),
+		.supports_monitor = false,
+		.idle_ps = false,
+		.cold_boot_calib = false,
+		.download_calib = true,
+		.supports_suspend = false,
+		.tcl_ring_retry = true,
+		.reoq_lut_support = false,
+		.supports_shadow_regs = false,
+		.hal_desc_sz = sizeof(struct hal_rx_desc_qcn9274),
+		.num_tcl_banks = 48,
+		.fix_l1ss = false,
+		.max_tx_ring = 4,
+		.static_window_map = true,
+	},
+	{
+		.name = "wcn7850 hw2.0",
+		.hw_rev = ATH12K_HW_WCN7850_HW20,
+		.fw = {
+			.dir = "WCN7850/hw2.0",
+			.board_size = 256 * 1024,
+			.cal_offset = 256 * 1024,
+		},
+		.max_radios = 1,
+		.single_pdev_only = true,
+		.qmi_service_ins_id = ATH12K_QMI_WLFW_SERVICE_INS_ID_V01_WCN7850,
+		.hw_ops = &wcn7850_ops,
+		.ring_mask = &ath12k_hw_ring_mask_wcn7850,
+		.internal_sleep_clock = true,
+		.regs = &wcn7850_regs,
+		.host_ce_config = ath12k_host_ce_config_wcn7850,
+		.ce_count = 9,
+		.target_ce_config = ath12k_target_ce_config_wlan_wcn7850,
+		.target_ce_count = 9,
+		.svc_to_ce_map = ath12k_target_service_to_ce_map_wlan_wcn7850,
+		.svc_to_ce_map_len = 14,
+		.hal_params = &ath12k_hw_hal_params_wcn7850,
+		.rxdma1_enable = false,
+		.num_rxmda_per_pdev = 2,
+		.num_rxdma_dst_ring = 1,
+		.rx_mac_buf_ring = true,
+		.vdev_start_delay = true,
+		.interface_modes = BIT(NL80211_IFTYPE_STATION) |
+					BIT(NL80211_IFTYPE_AP) |
+					BIT(NL80211_IFTYPE_MESH_POINT),
+		.supports_monitor = false,
+		.idle_ps = false,
+		.cold_boot_calib = false,
+		.download_calib = false,
+		.supports_suspend = false,
+		.tcl_ring_retry = false,
+		.reoq_lut_support = false,
+		.supports_shadow_regs = true,
+		.hal_desc_sz = sizeof(struct hal_rx_desc_wcn7850),
+		.num_tcl_banks = 7,
+		.fix_l1ss = false,
+		.max_tx_ring = 3,
+		.static_window_map = false,
+	},
+};
+
+int ath12k_hw_init(struct ath12k_base *ab)
+{
+	const struct ath12k_hw_params *hw_params = NULL;
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(ath12k_hw_params); i++) {
+		hw_params = &ath12k_hw_params[i];
+
+		if (hw_params->hw_rev == ab->hw_rev)
+			break;
+	}
+
+	if (i == ARRAY_SIZE(ath12k_hw_params)) {
+		ath12k_err(ab, "Unsupported hardware version: 0x%x\n", ab->hw_rev);
+		return -EINVAL;
+	}
+
+	ab->hw_params = hw_params;
+
+	ath12k_info(ab, "Hardware name: %s\n", ab->hw_params->name);
+
+	return 0;
+}
+

@@ -284,4 +284,7 @@ struct ath12k_hw_regs {
 
 extern const struct ath12k_hw_regs qcn9274_regs;
 extern const struct ath12k_hw_regs wcn7850_regs;
+
+int ath12k_hw_init(struct ath12k_base *ab);
+
 #endif
