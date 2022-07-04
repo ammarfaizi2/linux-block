@@ -2432,8 +2432,7 @@ static void return_unused_surplus_pages(struct hstate *h,
 	/* Uncommit the reservation */
 	h->resv_huge_pages -= unused_resv_pages;
 
-	/* Cannot return gigantic pages currently */
-	if (hstate_is_gigantic(h))
+	if (hstate_is_gigantic(h) && !gigantic_page_runtime_supported())
 		goto out;
 
 	/*
@@ -3315,7 +3314,8 @@ static int set_max_huge_pages(struct hstate *h, unsigned long count, int nid,
 	 * the user tries to allocate gigantic pages but let the user free the
 	 * boottime allocated gigantic pages.
 	 */
-	if (hstate_is_gigantic(h) && !IS_ENABLED(CONFIG_CONTIG_ALLOC)) {
+	if (hstate_is_gigantic(h) && (!IS_ENABLED(CONFIG_CONTIG_ALLOC) ||
+				      !gigantic_page_runtime_supported())) {
 		if (count > persistent_huge_pages(h)) {
 			spin_unlock_irq(&hugetlb_lock);
 			mutex_unlock(&h->resize_lock);
@@ -3361,6 +3361,19 @@ static int set_max_huge_pages(struct hstate *h, unsigned long count, int nid,
 		/* Bail for signals. Probably ctrl-c from user */
 		if (signal_pending(current))
 			goto out;
+	}
+
+	/*
+	 * We can not decrease gigantic pool size if runtime modification
+	 * is not supported.
+	 */
+	if (hstate_is_gigantic(h) && !gigantic_page_runtime_supported()) {
+		if (count < persistent_huge_pages(h)) {
+			spin_unlock_irq(&hugetlb_lock);
+			mutex_unlock(&h->resize_lock);
+			NODEMASK_FREE(node_alloc_noretry);
+			return -EINVAL;
+		}
 	}
 
 	/*
