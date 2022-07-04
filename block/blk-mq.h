@@ -86,16 +86,16 @@ static inline struct blk_mq_hw_ctx *blk_mq_map_queue_type(struct request_queue *
 	return xa_load(&q->hctx_table, q->tag_set->map[type].mq_map[cpu]);
 }
 
-static inline enum hctx_type blk_mq_get_hctx_type(unsigned int flags)
+static inline enum hctx_type blk_mq_get_hctx_type(unsigned int opf)
 {
 	enum hctx_type type = HCTX_TYPE_DEFAULT;
 
 	/*
 	 * The caller ensure that if REQ_POLLED, poll must be enabled.
 	 */
-	if (flags & REQ_POLLED)
+	if (opf & REQ_POLLED)
 		type = HCTX_TYPE_POLL;
-	else if ((flags & REQ_OP_MASK) == REQ_OP_READ)
+	else if ((opf & REQ_OP_MASK) == REQ_OP_READ)
 		type = HCTX_TYPE_READ;
 	return type;
 }
@@ -103,14 +103,14 @@ static inline enum hctx_type blk_mq_get_hctx_type(unsigned int flags)
 /*
  * blk_mq_map_queue() - map (cmd_flags,type) to hardware queue
  * @q: request queue
- * @flags: request command flags
+ * @opf: operation type (REQ_OP_*) and flags (e.g. REQ_POLLED).
  * @ctx: software queue cpu ctx
  */
 static inline struct blk_mq_hw_ctx *blk_mq_map_queue(struct request_queue *q,
-						     unsigned int flags,
+						     unsigned int opf,
 						     struct blk_mq_ctx *ctx)
 {
-	return ctx->hctxs[blk_mq_get_hctx_type(flags)];
+	return ctx->hctxs[blk_mq_get_hctx_type(opf)];
 }
 
 /*
@@ -118,9 +118,10 @@ static inline struct blk_mq_hw_ctx *blk_mq_map_queue(struct request_queue *q,
  */
 extern void blk_mq_sysfs_init(struct request_queue *q);
 extern void blk_mq_sysfs_deinit(struct request_queue *q);
-extern int __blk_mq_register_dev(struct device *dev, struct request_queue *q);
-extern int blk_mq_sysfs_register(struct request_queue *q);
-extern void blk_mq_sysfs_unregister(struct request_queue *q);
+int blk_mq_sysfs_register(struct gendisk *disk);
+void blk_mq_sysfs_unregister(struct gendisk *disk);
+int blk_mq_sysfs_register_hctxs(struct request_queue *q);
+void blk_mq_sysfs_unregister_hctxs(struct request_queue *q);
 extern void blk_mq_hctx_kobj_init(struct blk_mq_hw_ctx *hctx);
 void blk_mq_free_plug_rqs(struct blk_plug *plug);
 void blk_mq_flush_plug_list(struct blk_plug *plug, bool from_schedule);
