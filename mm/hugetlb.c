@@ -1535,17 +1535,15 @@ static void __update_and_free_page(struct hstate *h, struct page *page)
 	if (hstate_is_gigantic(h) && !gigantic_page_runtime_supported())
 		return;
 
-	if (hugetlb_vmemmap_restore(h, page)) {
-		spin_lock_irq(&hugetlb_lock);
-		/*
-		 * If we cannot allocate vmemmap pages, just refuse to free the
-		 * page and put the page back on the hugetlb free list and treat
-		 * as a surplus page.
-		 */
-		add_hugetlb_page(h, page, true);
-		spin_unlock_irq(&hugetlb_lock);
-		return;
-	}
+	if (hugetlb_vmemmap_restore(h, page))
+		goto fail;
+
+	/*
+	 * Move PageHWPoison flag from head page to the raw error pages,
+	 * which makes any healthy subpages reusable.
+	 */
+	if (unlikely(PageHWPoison(page) && hugetlb_clear_page_hwpoison(page)))
+		goto fail;
 
 	for (i = 0; i < pages_per_huge_page(h);
 	     i++, subpage = mem_map_next(subpage, page, i)) {
@@ -1566,6 +1564,16 @@ static void __update_and_free_page(struct hstate *h, struct page *page)
 	} else {
 		__free_pages(page, huge_page_order(h));
 	}
+	return;
+fail:
+	spin_lock_irq(&hugetlb_lock);
+	/*
+	 * If we cannot allocate vmemmap pages or cannot identify raw hwpoison
+	 * subpages reliably, just refuse to free the page and put the page
+	 * back on the hugetlb free list and treat as a surplus page.
+	 */
+	add_hugetlb_page(h, page, true);
+	spin_unlock_irq(&hugetlb_lock);
 }
 
 /*
@@ -2109,15 +2117,6 @@ retry:
 		 */
 		rc = hugetlb_vmemmap_restore(h, head);
 		if (!rc) {
-			/*
-			 * Move PageHWPoison flag from head page to the raw
-			 * error page, which makes any subpages rather than
-			 * the error page reusable.
-			 */
-			if (PageHWPoison(head) && page != head) {
-				SetPageHWPoison(page);
-				ClearPageHWPoison(head);
-			}
 			update_and_free_page(h, head, false);
 		} else {
 			spin_lock_irq(&hugetlb_lock);
