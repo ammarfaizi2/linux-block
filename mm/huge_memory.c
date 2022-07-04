@@ -681,7 +681,7 @@ static inline void split_queue_unlock_irqrestore(struct deferred_split *queue,
 void prep_transhuge_page(struct page *page)
 {
 	/*
-	 * we use page->mapping and page->indexlru in second tail page
+	 * we use page->mapping and page->index in second tail page
 	 * as list_head: assuming THP order >= 2
 	 */
 
