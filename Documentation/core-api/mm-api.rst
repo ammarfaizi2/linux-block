@@ -22,16 +22,16 @@ Memory Allocation Controls
 .. kernel-doc:: include/linux/gfp.h
    :internal:
 
-.. kernel-doc:: include/linux/gfp.h
+.. kernel-doc:: include/linux/gfp_flags.h
    :doc: Page mobility and placement hints
 
-.. kernel-doc:: include/linux/gfp.h
+.. kernel-doc:: include/linux/gfp_flags.h
    :doc: Watermark modifiers
 
-.. kernel-doc:: include/linux/gfp.h
+.. kernel-doc:: include/linux/gfp_flags.h
    :doc: Reclaim modifiers
 
-.. kernel-doc:: include/linux/gfp.h
+.. kernel-doc:: include/linux/gfp_flags.h
    :doc: Useful GFP flag combinations
 
 The Slab Cache
