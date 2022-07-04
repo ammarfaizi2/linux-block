@@ -2177,7 +2177,7 @@ static int _opp_set_clknames(struct opp_table *opp_table, struct device *dev,
 		count = 1;
 
 	/* Fail early for invalid configurations */
-	if (!count || (config_clks && count == 1) || (!config_clks && count > 1))
+	if (!count || (!config_clks && count > 1))
 		return -EINVAL;
 
 	/* Another CPU that shares the OPP table has set the clkname ? */
@@ -2203,10 +2203,12 @@ static int _opp_set_clknames(struct opp_table *opp_table, struct device *dev,
 	}
 
 	opp_table->clk_count = count;
+	opp_table->config_clks = config_clks;
 
 	/* Set generic single clk set here */
 	if (count == 1) {
-		opp_table->config_clks = _opp_config_clk_single;
+		if (!opp_table->config_clks)
+			opp_table->config_clks = _opp_config_clk_single;
 
 		/*
 		 * We could have just dropped the "clk" field and used "clks"
@@ -2221,8 +2223,6 @@ static int _opp_set_clknames(struct opp_table *opp_table, struct device *dev,
 		 * too.
 		 */
 		opp_table->clk = opp_table->clks[0];
-	} else {
-		opp_table->config_clks = config_clks;
 	}
 
 	return 0;
