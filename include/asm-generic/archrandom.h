@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_ARCHRANDOM_H
-#define _ASM_ARCHRANDOM_H
+#ifndef __ASM_GENERIC_ARCHRANDOM_H__
+#define __ASM_GENERIC_ARCHRANDOM_H__
 
 static inline bool __must_check arch_get_random_long(unsigned long *v)
 {
@@ -22,9 +22,4 @@ static inline bool __must_check arch_get_random_seed_int(unsigned int *v)
 	return false;
 }
 
-static inline bool __init smccc_probe_trng(void)
-{
-	return false;
-}
-
-#endif /* _ASM_ARCHRANDOM_H */
+#endif
