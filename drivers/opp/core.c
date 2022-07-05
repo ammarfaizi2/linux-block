@@ -1360,8 +1360,7 @@ void _get_opp_table_kref(struct opp_table *opp_table)
 }
 
 static struct opp_table *_update_opp_table_clk(struct device *dev,
-					       struct opp_table *opp_table,
-					       bool getclk)
+					       struct opp_table *opp_table)
 {
 	int ret;
 
@@ -1369,8 +1368,7 @@ static struct opp_table *_update_opp_table_clk(struct device *dev,
 	 * Return early if we don't need to get clk or we have already done it
 	 * earlier.
 	 */
-	if (!getclk || IS_ERR(opp_table) || !IS_ERR(opp_table->clk) ||
-	    opp_table->clks)
+	if (IS_ERR(opp_table) || !IS_ERR(opp_table->clk) || opp_table->clks)
 		return opp_table;
 
 	/* Find clk for the device */
@@ -1409,8 +1407,7 @@ static struct opp_table *_update_opp_table_clk(struct device *dev,
  * uses the opp_tables_busy flag to indicate if another creator is in the middle
  * of adding an OPP table and others should wait for it to finish.
  */
-struct opp_table *_add_opp_table_indexed(struct device *dev, int index,
-					 bool getclk)
+struct opp_table *_add_opp_table_indexed(struct device *dev, int index)
 {
 	struct opp_table *opp_table;
 
@@ -1457,12 +1454,12 @@ again:
 unlock:
 	mutex_unlock(&opp_table_lock);
 
-	return _update_opp_table_clk(dev, opp_table, getclk);
+	return _update_opp_table_clk(dev, opp_table);
 }
 
-static struct opp_table *_add_opp_table(struct device *dev, bool getclk)
+static struct opp_table *_add_opp_table(struct device *dev)
 {
-	return _add_opp_table_indexed(dev, 0, getclk);
+	return _add_opp_table_indexed(dev, 0);
 }
 
 struct opp_table *dev_pm_opp_get_opp_table(struct device *dev)
@@ -2444,7 +2441,7 @@ int dev_pm_opp_set_config(struct device *dev, struct dev_pm_opp_config *config)
 	if (!data)
 		return -ENOMEM;
 
-	opp_table = _add_opp_table(dev, false);
+	opp_table = _add_opp_table(dev);
 	if (IS_ERR(opp_table)) {
 		kfree(data);
 		return PTR_ERR(opp_table);
@@ -2735,7 +2732,7 @@ int dev_pm_opp_add(struct device *dev, unsigned long freq, unsigned long u_volt)
 	struct opp_table *opp_table;
 	int ret;
 
-	opp_table = _add_opp_table(dev, true);
+	opp_table = _add_opp_table(dev);
 	if (IS_ERR(opp_table))
 		return PTR_ERR(opp_table);
 
