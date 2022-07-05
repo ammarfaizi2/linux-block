@@ -314,13 +314,6 @@ struct mlx5_reg_host_endianness {
 	u8      rsvd[15];
 };
 
-#define CAP_MASK(pos, size) ((u64)((1 << (size)) - 1) << (pos))
-
-enum {
-	MLX5_CAP_BITS_RW_MASK = CAP_MASK(MLX5_CAP_OFF_CMDIF_CSUM, 2) |
-				MLX5_DEV_CAP_FLAG_DCT,
-};
-
 static u16 to_fw_pkey_sz(struct mlx5_core_dev *dev, u32 size)
 {
 	switch (size) {
@@ -1257,6 +1250,7 @@ static void mlx5_unload(struct mlx5_core_dev *dev)
 {
 	mlx5_sf_dev_table_destroy(dev);
 	mlx5_sriov_detach(dev);
+	mlx5_eswitch_disable(dev->priv.eswitch);
 	mlx5_lag_remove_mdev(dev);
 	mlx5_ec_cleanup(dev);
 	mlx5_sf_hw_table_destroy(dev);
