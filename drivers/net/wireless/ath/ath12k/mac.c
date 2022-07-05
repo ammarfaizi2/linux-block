@@ -4658,7 +4658,7 @@ static void ath12k_mac_op_stop(struct ieee80211_hw *hw)
 
 	mutex_lock(&ar->conf_mutex);
 	ret = ath12k_mac_config_mon_status_default(ar, false);
-	if (ret)
+	if (ret && (ret != -ENOTSUPP))
 		ath12k_err(ar->ab, "failed to clear rx_filter for monitor status ring: (%d)\n",
 			   ret);
 
