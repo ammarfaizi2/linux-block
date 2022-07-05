@@ -650,7 +650,7 @@
 		};
 
 		qfprom@74000 {
-			compatible = "qcom,qfprom";
+			compatible = "qcom,msm8996-qfprom", "qcom,qfprom";
 			reg = <0x00074000 0x8ff>;
 			#address-cells = <1>;
 			#size-cells = <1>;
@@ -751,6 +751,22 @@
 			#reset-cells = <1>;
 			#power-domain-cells = <1>;
 			reg = <0x008c0000 0x40000>;
+			clocks = <&xo_board>,
+				 <&gcc GCC_MMSS_NOC_CFG_AHB_CLK>,
+				 <&gcc GPLL0>,
+				 <&dsi0_phy 1>,
+				 <&dsi0_phy 0>,
+				 <0>,
+				 <0>,
+				 <0>;
+			clock-names = "xo",
+				      "gcc_mmss_noc_cfg_ahb_clk",
+				      "gpll0",
+				      "dsi0pll",
+				      "dsi0pllbyte",
+				      "dsi1pll",
+				      "dsi1pllbyte",
+				      "hdmipll";
 			assigned-clocks = <&mmcc MMPLL9_PLL>,
 					  <&mmcc MMPLL1_PLL>,
 					  <&mmcc MMPLL3_PLL>,
@@ -779,8 +795,9 @@
 			interrupt-controller;
 			#interrupt-cells = <1>;
 
-			clocks = <&mmcc MDSS_AHB_CLK>;
-			clock-names = "iface";
+			clocks = <&mmcc MDSS_AHB_CLK>,
+				 <&mmcc MDSS_MDP_CLK>;
+			clock-names = "iface", "core";
 
 			#address-cells = <1>;
 			#size-cells = <1>;
@@ -829,6 +846,13 @@
 						reg = <1>;
 						mdp5_intf1_out: endpoint {
 							remote-endpoint = <&dsi0_in>;
+						};
+					};
+
+					port@2 {
+						reg = <2>;
+						mdp5_intf2_out: endpoint {
+							remote-endpoint = <&dsi1_in>;
 						};
 					};
 				};
@@ -900,6 +924,72 @@
 				status = "disabled";
 			};
 
+			dsi1: dsi@996000 {
+				compatible = "qcom,mdss-dsi-ctrl";
+				reg = <0x00996000 0x400>;
+				reg-names = "dsi_ctrl";
+
+				interrupt-parent = <&mdss>;
+				interrupts = <4>;
+
+				clocks = <&mmcc MDSS_MDP_CLK>,
+					 <&mmcc MDSS_BYTE1_CLK>,
+					 <&mmcc MDSS_AHB_CLK>,
+					 <&mmcc MDSS_AXI_CLK>,
+					 <&mmcc MMSS_MISC_AHB_CLK>,
+					 <&mmcc MDSS_PCLK1_CLK>,
+					 <&mmcc MDSS_ESC1_CLK>;
+				clock-names = "mdp_core",
+					      "byte",
+					      "iface",
+					      "bus",
+					      "core_mmss",
+					      "pixel",
+					      "core";
+
+				phys = <&dsi1_phy>;
+				phy-names = "dsi";
+				status = "disabled";
+
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				ports {
+					#address-cells = <1>;
+					#size-cells = <0>;
+
+					port@0 {
+						reg = <0>;
+						dsi1_in: endpoint {
+							remote-endpoint = <&mdp5_intf2_out>;
+						};
+					};
+
+					port@1 {
+						reg = <1>;
+						dsi1_out: endpoint {
+						};
+					};
+				};
+			};
+
+			dsi1_phy: dsi-phy@996400 {
+				compatible = "qcom,dsi-phy-14nm";
+				reg = <0x00996400 0x100>,
+				      <0x00996500 0x300>,
+				      <0x00996800 0x188>;
+				reg-names = "dsi_phy",
+					    "dsi_phy_lane",
+					    "dsi_pll";
+
+				#clock-cells = <1>;
+				#phy-cells = <0>;
+
+				clocks = <&mmcc MDSS_AHB_CLK>, <&rpmcc RPM_SMD_BB_CLK1>;
+				clock-names = "iface", "ref";
+				status = "disabled";
+			};
+
 			hdmi: hdmi-tx@9a0000 {
 				compatible = "qcom,hdmi-tx-8996";
 				reg =	<0x009a0000 0x50c>,
@@ -925,7 +1015,6 @@
 					"extp";
 
 				phys = <&hdmi_phy>;
-				phy-names = "hdmi_phy";
 				#sound-dai-cells = <1>;
 
 				status = "disabled";
@@ -1001,7 +1090,7 @@
 			#cooling-cells = <2>;
 
 			gpu_opp_table: opp-table {
-				compatible  ="operating-points-v2";
+				compatible = "operating-points-v2";
 
 				/*
 				 * 624Mhz and 560Mhz are only available on speed
@@ -1623,7 +1712,7 @@
 					<&gcc GCC_PCIE_0_MSTR_AXI_CLK>,
 					<&gcc GCC_PCIE_0_SLV_AXI_CLK>;
 
-				clock-names =  "pipe",
+				clock-names = "pipe",
 						"aux",
 						"cfg",
 						"bus_master",
@@ -1637,7 +1726,7 @@
 				bus-range = <0x00 0xff>;
 				num-lanes = <1>;
 
-				status  = "disabled";
+				status = "disabled";
 
 				reg = <0x00608000 0x2000>,
 				      <0x0d000000 0xf1d>,
@@ -1677,7 +1766,7 @@
 					<&gcc GCC_PCIE_1_MSTR_AXI_CLK>,
 					<&gcc GCC_PCIE_1_SLV_AXI_CLK>;
 
-				clock-names =  "pipe",
+				clock-names = "pipe",
 						"aux",
 						"cfg",
 						"bus_master",
@@ -1727,7 +1816,7 @@
 					<&gcc GCC_PCIE_2_MSTR_AXI_CLK>,
 					<&gcc GCC_PCIE_2_SLV_AXI_CLK>;
 
-				clock-names =  "pipe",
+				clock-names = "pipe",
 						"aux",
 						"cfg",
 						"bus_master",
@@ -2804,7 +2893,7 @@
 			status = "disabled";
 		};
 
-		sdhc1: sdhci@7464900 {
+		sdhc1: mmc@7464900 {
 			compatible = "qcom,msm8996-sdhci", "qcom,sdhci-msm-v4";
 			reg = <0x07464900 0x11c>, <0x07464000 0x800>;
 			reg-names = "hc_mem", "core_mem";
@@ -2817,6 +2906,7 @@
 			clocks = <&gcc GCC_SDCC1_AHB_CLK>,
 				<&gcc GCC_SDCC1_APPS_CLK>,
 				<&rpmcc RPM_SMD_BB_CLK1>;
+			resets = <&gcc GCC_SDCC1_BCR>;
 
 			pinctrl-names = "default", "sleep";
 			pinctrl-0 = <&sdc1_state_on>;
@@ -2827,7 +2917,7 @@
 			status = "disabled";
 		};
 
-		sdhc2: sdhci@74a4900 {
+		sdhc2: mmc@74a4900 {
 			compatible = "qcom,msm8996-sdhci", "qcom,sdhci-msm-v4";
 			reg = <0x074a4900 0x314>, <0x074a4000 0x800>;
 			reg-names = "hc_mem", "core_mem";
@@ -2840,6 +2930,7 @@
 			clocks = <&gcc GCC_SDCC2_AHB_CLK>,
 				<&gcc GCC_SDCC2_APPS_CLK>,
 				<&rpmcc RPM_SMD_BB_CLK1>;
+			resets = <&gcc GCC_SDCC2_BCR>;
 
 			pinctrl-names = "default", "sleep";
 			pinctrl-0 = <&sdc2_state_on>;
@@ -3084,7 +3175,7 @@
 			compatible = "qcom,bam-v1.7.0";
 			qcom,controlled-remotely;
 			reg = <0x09184000 0x32000>;
-			num-channels  = <31>;
+			num-channels = <31>;
 			interrupts = <0 164 IRQ_TYPE_LEVEL_HIGH>;
 			#dma-cells = <1>;
 			qcom,ee = <1>;
@@ -3096,7 +3187,7 @@
 			reg = <0x091c0000 0x2C000>;
 			reg-names = "ctrl";
 			interrupts = <0 163 IRQ_TYPE_LEVEL_HIGH>;
-			dmas =	<&slimbam 3>, <&slimbam 4>,
+			dmas = <&slimbam 3>, <&slimbam 4>,
 				<&slimbam 5>, <&slimbam 6>;
 			dma-names = "rx", "tx", "tx2", "rx2";
 			#address-cells = <1>;
@@ -3108,7 +3199,7 @@
 
 				tasha_ifd: tas-ifd {
 					compatible = "slim217,1a0";
-					reg  = <0 0>;
+					reg = <0 0>;
 				};
 
 				wcd9335: codec@1{
@@ -3116,17 +3207,17 @@
 					pinctrl-names = "default";
 
 					compatible = "slim217,1a0";
-					reg  = <1 0>;
+					reg = <1 0>;
 
 					interrupt-parent = <&tlmm>;
 					interrupts = <54 IRQ_TYPE_LEVEL_HIGH>,
 						     <53 IRQ_TYPE_LEVEL_HIGH>;
-					interrupt-names  = "intr1", "intr2";
+					interrupt-names = "intr1", "intr2";
 					interrupt-controller;
 					#interrupt-cells = <1>;
 					reset-gpios = <&tlmm 64 0>;
 
-					slim-ifc-dev  = <&tasha_ifd>;
+					slim-ifc-dev = <&tasha_ifd>;
 
 					#sound-dai-cells = <1>;
 				};
