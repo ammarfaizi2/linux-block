@@ -190,31 +190,33 @@ dc = None
 # my words
 dc_words = [ "ACPI", "AER", "allocator", "AMD", "AMD64",
          # that's some stupid dictionary
-         "amongst", "AMX", "APEI", "arm64", "asm", "BHB",
-         "binutils", "bitmask", "bitfield", "bool", "breakpoint", "brk",
-         "cacheline", "CLAC", "clocksource", "CMCI", "cmdline", "Coccinelle", "codename", "config", "CPER",
-         "CPPC", "CPUID", "CSM", "DCT", "devicetree",
+         "amongst", "AMX", "APEI", "arm64", "asm",
+         "binutils", "bitmask", "bitfield", "bool", "breakpoint", "brk", "btree",
+         "cacheline", "callee", "CLAC", "clocksource", "CMCI", "cmdline", "Coccinelle", "codename",
+         "config", "CPER", "CPPC", "CPUID", "CSM", "DCT", "devicetree",
          "DF", "distro", "DMA", "DIMM", "e820", "EAX", "EBDA", "ECC", "EDAC", "EHCI", "enablement",
-         "ENDBR", "ENQCMD", "EPT",
+         "ENDBR", "ENQCMD", "EPT", "ERMS",
          "fixup", "gcc", "GHES", "goto", "GPR", "GUID", "hotplug", "hugepage", "Hygon",
-         "hypercall", "HyperV", "HV", "hwpoison", "i387", "i915", "I/O", "IBT", "IMA", "init", "inlined",
-         "IRET", "IRQ",
-         "kallsyms", "KASAN", "KASLR", "Kconfig", "kdump", "kexec", "kmemleak", "KVM",
+         "hypercall", "HyperV", "HV", "hwpoison", "i387", "i915", "I/O", "IBPB", "IBT", "IMA", "init", "inlined",
+         "INT3", "IRET", "IOMMU", "IRQ",
+         "kallsyms", "KASAN", "KASLR", "Kconfig", "kdump", "kexec", "kmemleak", "kobject", "kPTI", "KVM",
          "LFENCE", "libc", "linux", "livepatch", "LSB", "lvalue", "maintainership",
-         "MCE", "MDS", "MMIO", "modpost", "MOVDIR64B", "MSR", "MTRR", "NMI", "noinstr",
-         "NX", "objtool", "OEM", "ok", "oneliner", "OVMF", "pahole", "pdf", "percpu", "perf", "PPIN",
+         "MCE", "MDS", "MMIO", "modpost", "ModRM", "MOVDIR64B", "MSR", "MTRR",
+         "NMI", "NOHZ", "noinstr", "NOP", "NX",
+         "objtool", "OEM", "ok", "oneliner", "OVMF", "pahole", "passthrough", "pdf", "percpu", "perf", "PPIN",
          "preemptible",
          "prepend", # derived from append, not in the dictionaries
-         "PTE", "ptrace",
-         "PV", "PVALIDATE", "QOS", "repurposing", "RCU", "RET", "retpoline", "rFLAGS", "RTM",
+         "PTE",
+         "PV", "PVALIDATE", "QOS", "refcount", "repurposing", "RCU", "RET", "retpoline", "rFLAGS", "RSB", "RTM",
          "runtime", "Ryzen",
-         "selftest", "SGX", "sideband", "SIGSEGV", "Skylake", "Smatch", "SNP", "SPDX", "SRAR", "SRBDS", "STAC",
-         "STI", "STLF", "stringify", "struct", "SVA", "SWAPGS", "swiotlb",
+         "scalable", "selftest", "SETcc",
+         "SGX", "sideband", "SIGSEGV", "Skylake", "Smatch", "SNP", "SPDX", "SRAR", "SRBDS", "SLS", "STAC",
+         "STLF", "stringify", "struct", "SWAPGS", "swiotlb",
          "symtab", "Synopsys", "SYSENTER", "sysfs", "TAA", "TCC", "TDCALL", "TDGETVEINFO", "TDVMCALL", "TLB", "TODO",
-         "TPM", "tracepoint", "TSC", "UC", "uncacheable", "uncore", "unmapping",
+         "TPM", "tracepoint", "TSC", "UC", "uarch", "uncacheable", "uncore", "unmapping",
          # too late for that one to enforce even as the dictionary says it is wrong
          "untrusted", "unwinder", "userspace", "vCPU", "VERW", "VLA",
-         "VMCALL", "VMCB", "VMENTER", "VMLAUNCH", "VMSA", "VMware", "vsyscall", "vTOM",
+         "VMCALL", "VMENTER", "VMLAUNCH", "VMSA", "VMware", "vsyscall", "vTOM",
          "WBINVD", "WRMSR",
          "XCR0", "Xeon",
          "XSS", "XSTATE" ]
@@ -235,18 +237,19 @@ regexes_pats = [ r'^U?ABI$',
             r'^AP[IMU]$',
             r'^AVX(512)?(-FP16)?$',
             r'BIOS(e[sn])?', r'boot(loader|up)', r'boot_params([\.\w_]+)?$', r'BS[PS]$',
-            r'^cpuinfo(_x86)?$',
+            r'^B[HT]B$',
+            r'^C[1-6]$', r'^cpuinfo(_x86)?$', r'^CR[1-4]$',
             r'default_(attrs|groups)', r'^DDR([1-5])?$',
             r'^S?DRAM$',
             r'^[Ee].g.$', r'^[eE]?IBRS$', r'^E?VEX$',
-            r'^F[PR]U$',
+            r'^F[PR]U$', r'^[pf]trace$',
             r'^GHC(B|I)$',
             r'^HL[ET]$',
             r'^Icelake(-D)?$', r'I[DS]T', r'init(ializer|rd|ramfs)?',
             r'^(in|off)lining$',
-            r'(?i)^jmp$', r'^k[cm]alloc$',
+            r'(?i)^jmp$', r'^(k[cm]|vm)alloc$',
             r'^[ku]probes?$', r'S?MCA$', r'^[Mm]em(block|cpy|move|remap|set|type)$',
-            r'^microarchitectur(al|e)$',
+            r'^microarchitectur(al|e)$', r'^mispredict(ed)?$',
             r'MOVSB?',
             r'^param(s)?$',
             r'^([Pp]ara)?virt(ualiz(ed|ing|ation))?$',
@@ -254,10 +257,11 @@ regexes_pats = [ r'^U?ABI$',
             r'(?i)^pasid$', r'^PCIe?$', r'PS[CP]', r'^P[MU]D$',
             r'RD(MSR|RAND|SEED)$', r'^RMP(ADJUST)?$',
             r'sev_(features|status)', r'^SEV(-(ES|SNP))?$', r'^SM[ET]$',
-            r'^SM[AE]P$', r'^[Ss]pectre(_v2)*$', r'^str(lcat|tab)$',
+            r'^SM[AE]P$', r'^[Ss]pectre(_v2)*$', r'^STI(BP)?$',
+            r'^str(lcat|tab)$', r'^SV[AM]$',
             r'T[DS]X', r'^u(16|32|64)$', r'^UM[CL]$',
-            r'^U?EFI$', r'^v?syscall$', r'^VMG?E(xit|XIT)$', r'^VM[MX]?$',
-            r'^VMPL([0-3])?$', r'^x86(-(32|64))?$', r'^(Xen|XENPV)$', r'^XSAVE[CS]?$' ]
+            r'^U?EFI$', r'^v?syscall$', r'^VMC[BS]$', r'^VMG?E(xit|XIT)$', r'^VM[MX]?$',
+            r'^VMPL([0-3])?$', r'^x86(-(32|64))?$', r'^(Xen(PV)?|XENPV)$', r'^XSAVE[CS]?$' ]
 
 def load_spellchecker():
     global dc, regexes, regexes_pats, rex_abs_fnames, rex_amd_fam, rex_asm_dir, rex_brackets, \
@@ -890,6 +894,7 @@ f"""Class patch:
         """
 
         rex_from = re.compile(r'^\s?From:\s?(.*)', re.I)
+        rex_subj = re.compile(r'\s?Subject:\s?(.*)', re.I)
 
         for line in plines:
             # Scan for a potential new From:
@@ -898,8 +903,15 @@ f"""Class patch:
                 new_from = m.group(1)
                 if new_from != self.sender:
                     self.author = new_from
-                    print(f"Found new author: [{new_from}]")
+                    info(f"Found new author: [{new_from}]")
                     plines.remove(line)
+
+            # Scan for a potential new subject
+            m = rex_subj.match(line)
+            if m:
+                self.orig_subject = m.group(1)
+                info(f"Found new Subject: [{ self.orig_subject }]")
+                plines.remove(line)
 
         self.commit_msg = "\n".join(plines[:])
 
@@ -1127,7 +1139,7 @@ f"""Class patch:
         # WIP: make sure there's no second ':' in the subject
         # needs improving
         if not re.match(r'^x86(/[\w/-]+)?:[^:]*$', self.subject):
-            err(f"Subject prefix wrong: [{ self.subject }]")
+            warn(f"Subject prefix wrong: [{ self.subject }]")
 
     def verify_commit_message(self):
         """
@@ -1169,18 +1181,21 @@ f"""Class patch:
                 continue
 
             if tag == "Signed-off-by":
+                # Sender name might be in "" due to a middle initial
+                sender = re.sub(r'"', "", self.sender)
+
                 for sob in od[tag]:
-                    if self.sender == sob:
+                    if sender == sob:
                         return
 
                     # see if at least the names match, i.e., using different email addresses
-                    sender_name = re.sub(rex_remove_email_addr, r'\1', self.sender)
+                    sender_name = re.sub(rex_remove_email_addr, r'\1', sender)
                     sob_name    = re.sub(rex_remove_email_addr, r'\1', sob)
 
                     if sender_name == sob_name:
                         return
 
-                warn(f"Sender { self.sender } hasn't signed off on the patch!")
+                warn(f"Sender { sender } hasn't signed off on the patch!")
 
     def format_tags(self, f):
         """
@@ -1288,7 +1303,7 @@ f"""Class patch:
 
         self_subject = f"Subject: { self.subject }"
         info(" | " + self_subject)
-        f_out.write(self_subject + "\n")
+        f_out.write(self_subject + "\n\n")
 
         info(" |")
         info(" | PATCH CONTENTS:")
@@ -1455,7 +1470,7 @@ def check_for_asserts(pfile, h):
     if not h.added:
         return
 
-    rex_bug_ons = re.compile(r'^\+.*BUG(_ON)?\(.*\).*$')
+    rex_bug_ons = re.compile(r'^\+.*\WBUG(_ON)?\(.*\).*$')
 
     for line in h.target_lines():
         l = str(line)
