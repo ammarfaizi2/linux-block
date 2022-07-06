@@ -1664,6 +1664,7 @@ unlock:
 EXPORT_SYMBOL_GPL(mf_dax_kill_procs);
 #endif /* CONFIG_FS_DAX */
 
+#ifdef CONFIG_HUGETLB_PAGE
 /*
  * Struct raw_hwp_page represents information about "raw error page",
  * constructing singly linked list originated from ->private field of
@@ -1797,7 +1798,6 @@ out:
 	return ret;
 }
 
-#ifdef CONFIG_HUGETLB_PAGE
 /*
  * Taking refcount of hugetlb pages needs extra care about race conditions
  * with basic operations like hugepage allocation/free/demotion.
@@ -1893,8 +1893,9 @@ static inline int try_memory_failure_hugetlb(unsigned long pfn, int flags, int *
 	return 0;
 }
 
-static inline void free_raw_hwp_pages(struct page *hpage, bool move_flag)
+static inline long free_raw_hwp_pages(struct page *hpage, bool move_flag)
 {
+	return 0;
 }
 #endif	/* CONFIG_HUGETLB_PAGE */
 
