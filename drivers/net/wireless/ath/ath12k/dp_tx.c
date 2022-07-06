@@ -1007,43 +1007,6 @@ err_free:
 }
 
 int
-ath12k_dp_tx_htt_h2t_vdev_stats_ol_req(struct ath12k *ar, u64 reset_bitmask)
-{
-	struct ath12k_base *ab = ar->ab;
-	struct htt_h2t_msg_type_vdev_txrx_stats_req *cmd;
-	struct ath12k_dp *dp = &ab->dp;
-	struct sk_buff *skb;
-	int len = sizeof(*cmd), ret;
-
-	skb = ath12k_htc_alloc_skb(ab, len);
-	if (!skb)
-		return -ENOMEM;
-
-	skb_put(skb, len);
-	cmd->hdr = FIELD_PREP(HTT_H2T_VDEV_TXRX_HDR_MSG_TYPE,
-			      HTT_H2T_MSG_TYPE_VDEV_TXRX_STATS_CFG);
-	cmd->hdr |= FIELD_PREP(HTT_H2T_VDEV_TXRX_HDR_PDEV_ID,
-			       ar->pdev->pdev_id);
-	cmd->hdr |= FIELD_PREP(HTT_H2T_VDEV_TXRX_HDR_ENABLE, true);
-	cmd->hdr |= FIELD_PREP(HTT_H2T_VDEV_TXRX_HDR_INTERVAL,
-			       ATH12K_STATS_TIMER_DUR_1SEC);
-	cmd->hdr |= FIELD_PREP(HTT_H2T_VDEV_TXRX_HDR_RESET_STATS, true);
-	cmd->vdev_id_lo_bitmask = (reset_bitmask & HTT_H2T_VDEV_TXRX_LO_BITMASK);
-	cmd->vdev_id_hi_bitmask = ((reset_bitmask &
-				    HTT_H2T_VDEV_TXRX_HI_BITMASK) >> 32);
-
-	ret = ath12k_htc_send(&ab->htc, dp->eid, skb);
-	if (ret) {
-		ath12k_warn(ab, "failed to send htt type vdev stats offload request: %d",
-			    ret);
-		dev_kfree_skb_any(skb);
-		return ret;
-	}
-
-	return 0;
-}
-
-int
 ath12k_dp_tx_htt_h2t_ext_stats_req(struct ath12k *ar, u8 type,
 				   struct htt_ext_stats_cfg_params *cfg_params,
 				   u64 cookie)
