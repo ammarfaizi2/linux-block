@@ -57,6 +57,7 @@ typedef __u32 __bitwise req_flags_t;
 #define RQF_TIMED_OUT		((__force req_flags_t)(1 << 21))
 /* queue has elevator attached */
 #define RQF_ELV			((__force req_flags_t)(1 << 22))
+#define RQF_RESV			((__force req_flags_t)(1 << 23))
 
 /* flags that prevent us from merging requests: */
 #define RQF_NOMERGE_FLAGS \
@@ -519,7 +520,7 @@ struct blk_mq_queue_data {
 	bool last;
 };
 
-typedef bool (busy_tag_iter_fn)(struct request *, void *, bool);
+typedef bool (busy_tag_iter_fn)(struct request *, void *);
 
 /**
  * struct blk_mq_ops - Callback functions that implements block driver
@@ -574,7 +575,7 @@ struct blk_mq_ops {
 	/**
 	 * @timeout: Called on request timeout.
 	 */
-	enum blk_eh_timer_return (*timeout)(struct request *, bool);
+	enum blk_eh_timer_return (*timeout)(struct request *);
 
 	/**
 	 * @poll: Called to poll for completion of a specific tag.
@@ -823,6 +824,11 @@ void blk_mq_end_request_batch(struct io_comp_batch *ib);
 static inline bool blk_mq_need_time_stamp(struct request *rq)
 {
 	return (rq->rq_flags & (RQF_IO_STAT | RQF_STATS | RQF_ELV));
+}
+
+static inline bool blk_mq_is_reserved_rq(struct request *rq)
+{
+	return rq->rq_flags & RQF_RESV;
 }
 
 /*
