@@ -2675,6 +2675,7 @@ int ath12k_dp_process_rx(struct ath12k_base *ab, int ring_id,
 	int mac_id;
 	u32 *rx_desc;
 	int i;
+	u64 desc_va;
 
 	__skb_queue_head_init(&msdu_list);
 
@@ -2696,8 +2697,8 @@ try_again:
 		mac_id = u32_get_bits(desc.info0,
 				      HAL_REO_DEST_RING_INFO0_SRC_LINK_ID);
 
-		desc_info = (struct ath12k_rx_desc_info *)((u64)desc.buf_va_hi << 32 |
-				desc.buf_va_lo);
+		desc_va = ((u64)desc.buf_va_hi << 32 | desc.buf_va_lo);
+		desc_info = (struct ath12k_rx_desc_info *)((unsigned long)desc_va);
 
 		/* retry manual desc retrieval */
 		if (!desc_info)
@@ -3370,12 +3371,13 @@ ath12k_dp_process_rx_err_buf(struct ath12k *ar, u32 *ring_desc,
 	u32 hal_rx_desc_sz = ab->hw_params->hal_desc_sz;
 	struct hal_reo_dest_ring desc = *(struct hal_reo_dest_ring *)ring_desc;
 	struct ath12k_rx_desc_info *desc_info;
+	u64 desc_va;
 
 	/* TODO check if hw cc will not happen for exception, in that case
 	 * always perform manual conversion
 	 */
-	desc_info = (struct ath12k_rx_desc_info *)((u64)desc.buf_va_hi << 32 |
-			desc.buf_va_lo);
+	desc_va = ((u64)desc.buf_va_hi << 32 | desc.buf_va_lo);
+	desc_info = (struct ath12k_rx_desc_info *)((unsigned long)desc_va);
 
 	/* retry manual desc retrieval */
 	if (!desc_info)

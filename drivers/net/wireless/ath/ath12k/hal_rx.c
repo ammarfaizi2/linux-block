@@ -360,6 +360,7 @@ int ath12k_hal_wbm_desc_parse_err(struct ath12k_base *ab, void *desc,
 	enum hal_wbm_rel_desc_type type;
 	enum hal_wbm_rel_src_module rel_src;
 	bool hw_cc_done;
+	u64 desc_va;
 
 	type = FIELD_GET(HAL_WBM_RELEASE_INFO0_DESC_TYPE,
 			 wbm_desc->info0);
@@ -402,9 +403,9 @@ int ath12k_hal_wbm_desc_parse_err(struct ath12k_base *ab, void *desc,
 		rel_info->cookie = FIELD_GET(HAL_WBM_RELEASE_RX_CC_INFO1_COOKIE,
 					     wbm_cc_desc->info1);
 
+		desc_va = ((u64)wbm_cc_desc->buf_va_hi << 32 | wbm_cc_desc->buf_va_lo);
 		rel_info->rx_desc =
-			(struct ath12k_rx_desc_info *)((u64)wbm_cc_desc->buf_va_hi << 32 |
-				wbm_cc_desc->buf_va_lo);
+			(struct ath12k_rx_desc_info *)((unsigned long)desc_va);
 	}
 
 	rel_info->err_rel_src = rel_src;
