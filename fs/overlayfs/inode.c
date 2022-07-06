@@ -454,23 +454,67 @@ ssize_t ovl_listxattr(struct dentry *dentry, char *list, size_t size)
 	return res;
 }
 
+static void ovl_get_acl_idmapped_mnt(struct user_namespace *mnt_userns,
+				     struct posix_acl *acl)
+{
+	unsigned int i;
+
+	for (i = 0; i < acl->a_count; i++) {
+		struct posix_acl_entry *e = &acl->a_entries[i];
+		switch (e->e_tag) {
+		case ACL_USER:
+			e->e_uid = mapped_kuid_fs(mnt_userns, &init_user_ns,
+						  e->e_uid);
+			break;
+		case ACL_GROUP:
+			e->e_gid = mapped_kgid_fs(mnt_userns, &init_user_ns,
+						  e->e_gid);
+			break;
+		}
+	}
+}
+
 struct posix_acl *ovl_get_acl(struct inode *inode, int type, bool rcu)
 {
 	struct inode *realinode = ovl_inode_real(inode);
 	const struct cred *old_cred;
-	struct posix_acl *acl;
+	struct posix_acl *acl, *acl_dup;
+	struct path realpath;
+	bool idmapped;
 
 	if (!IS_ENABLED(CONFIG_FS_POSIX_ACL) || !IS_POSIXACL(realinode))
 		return NULL;
 
-	if (rcu)
-		return get_cached_acl_rcu(realinode, type);
+	ovl_i_path_real(inode, &realpath);
+	idmapped = is_idmapped_mnt(realpath.mnt);
+	if (rcu) {
+		/*
+		 * We need to drop out of rcu path walk so we can do
+		 * allocations below.
+		 */
+		if (idmapped)
+			return ERR_PTR(-ECHILD);
 
-	old_cred = ovl_override_creds(inode->i_sb);
-	acl = get_acl(realinode, type);
-	revert_creds(old_cred);
+		acl = get_cached_acl_rcu(realinode, type);
+	} else {
+		old_cred = ovl_override_creds(inode->i_sb);
+		acl = get_acl(realinode, type);
+		revert_creds(old_cred);
+	}
+	/*
+	 * If this is and error, there are no acls or this isn't an idmapped
+	 * layer we don't need to allocate anything.
+	 */
+	if (IS_ERR_OR_NULL(acl) || !idmapped)
+		return acl;
 
-	return acl;
+	acl_dup = posix_acl_clone(acl, GFP_KERNEL);
+	if (!acl_dup)
+		acl_dup = ERR_PTR(-ENOMEM);
+	else /* Take the layer's idmapping into account.e */
+		ovl_get_acl_idmapped_mnt(mnt_user_ns(realpath.mnt), acl_dup);
+	posix_acl_release(acl);
+	return acl_dup;
 }
 
 int ovl_update_time(struct inode *inode, struct timespec64 *ts, int flags)
