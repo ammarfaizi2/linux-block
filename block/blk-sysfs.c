@@ -325,17 +325,17 @@ static ssize_t queue_zoned_show(struct request_queue *q, char *page)
 
 static ssize_t queue_nr_zones_show(struct request_queue *q, char *page)
 {
-	return queue_var_show(blk_queue_nr_zones(q), page);
+	return queue_var_show(disk_nr_zones(q->disk), page);
 }
 
 static ssize_t queue_max_open_zones_show(struct request_queue *q, char *page)
 {
-	return queue_var_show(queue_max_open_zones(q), page);
+	return queue_var_show(bdev_max_open_zones(q->disk->part0), page);
 }
 
 static ssize_t queue_max_active_zones_show(struct request_queue *q, char *page)
 {
-	return queue_var_show(queue_max_active_zones(q), page);
+	return queue_var_show(bdev_max_active_zones(q->disk->part0), page);
 }
 
 static ssize_t queue_nomerges_show(struct request_queue *q, char *page)
@@ -775,8 +775,6 @@ static void blk_release_queue(struct kobject *kobj)
 
 	blk_free_queue_stats(q->stats);
 	kfree(q->poll_stat);
-
-	blk_queue_free_zone_bitmaps(q);
 
 	if (queue_is_mq(q))
 		blk_mq_release(q);

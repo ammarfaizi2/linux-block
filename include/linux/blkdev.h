@@ -164,6 +164,29 @@ struct gendisk {
 #ifdef  CONFIG_BLK_DEV_INTEGRITY
 	struct kobject integrity_kobj;
 #endif	/* CONFIG_BLK_DEV_INTEGRITY */
+
+#ifdef CONFIG_BLK_DEV_ZONED
+	/*
+	 * Zoned block device information for request dispatch control.
+	 * nr_zones is the total number of zones of the device. This is always
+	 * 0 for regular block devices. conv_zones_bitmap is a bitmap of nr_zones
+	 * bits which indicates if a zone is conventional (bit set) or
+	 * sequential (bit clear). seq_zones_wlock is a bitmap of nr_zones
+	 * bits which indicates if a zone is write locked, that is, if a write
+	 * request targeting the zone was dispatched.
+	 *
+	 * Reads of this information must be protected with blk_queue_enter() /
+	 * blk_queue_exit(). Modifying this information is only allowed while
+	 * no requests are being processed. See also blk_mq_freeze_queue() and
+	 * blk_mq_unfreeze_queue().
+	 */
+	unsigned int		nr_zones;
+	unsigned int		max_open_zones;
+	unsigned int		max_active_zones;
+	unsigned long		*conv_zones_bitmap;
+	unsigned long		*seq_zones_wlock;
+#endif /* CONFIG_BLK_DEV_ZONED */
+
 #if IS_ENABLED(CONFIG_CDROM)
 	struct cdrom_device_info *cdi;
 #endif
@@ -291,14 +314,14 @@ struct queue_limits {
 typedef int (*report_zones_cb)(struct blk_zone *zone, unsigned int idx,
 			       void *data);
 
-void blk_queue_set_zoned(struct gendisk *disk, enum blk_zoned_model model);
+void disk_set_zoned(struct gendisk *disk, enum blk_zoned_model model);
 
 #ifdef CONFIG_BLK_DEV_ZONED
 
 #define BLK_ALL_ZONES  ((unsigned int)-1)
 int blkdev_report_zones(struct block_device *bdev, sector_t sector,
 			unsigned int nr_zones, report_zones_cb cb, void *data);
-unsigned int blkdev_nr_zones(struct gendisk *disk);
+unsigned int bdev_nr_zones(struct block_device *bdev);
 extern int blkdev_zone_mgmt(struct block_device *bdev, enum req_opf op,
 			    sector_t sectors, sector_t nr_sectors,
 			    gfp_t gfp_mask);
@@ -312,7 +335,7 @@ extern int blkdev_zone_mgmt_ioctl(struct block_device *bdev, fmode_t mode,
 
 #else /* CONFIG_BLK_DEV_ZONED */
 
-static inline unsigned int blkdev_nr_zones(struct gendisk *disk)
+static inline unsigned int bdev_nr_zones(struct block_device *bdev)
 {
 	return 0;
 }
@@ -466,31 +489,6 @@ struct request_queue {
 	struct queue_limits	limits;
 
 	unsigned int		required_elevator_features;
-
-#ifdef CONFIG_BLK_DEV_ZONED
-	/*
-	 * Zoned block device information for request dispatch control.
-	 * nr_zones is the total number of zones of the device. This is always
-	 * 0 for regular block devices. conv_zones_bitmap is a bitmap of nr_zones
-	 * bits which indicates if a zone is conventional (bit set) or
-	 * sequential (bit clear). seq_zones_wlock is a bitmap of nr_zones
-	 * bits which indicates if a zone is write locked, that is, if a write
-	 * request targeting the zone was dispatched. All three fields are
-	 * initialized by the low level device driver (e.g. scsi/sd.c).
-	 * Stacking drivers (device mappers) may or may not initialize
-	 * these fields.
-	 *
-	 * Reads of this information must be protected with blk_queue_enter() /
-	 * blk_queue_exit(). Modifying this information is only allowed while
-	 * no requests are being processed. See also blk_mq_freeze_queue() and
-	 * blk_mq_unfreeze_queue().
-	 */
-	unsigned int		nr_zones;
-	unsigned long		*conv_zones_bitmap;
-	unsigned long		*seq_zones_wlock;
-	unsigned int		max_open_zones;
-	unsigned int		max_active_zones;
-#endif /* CONFIG_BLK_DEV_ZONED */
 
 	int			node;
 #ifdef CONFIG_BLK_DEV_IO_TRACE
@@ -667,76 +665,69 @@ static inline bool blk_queue_is_zoned(struct request_queue *q)
 	}
 }
 
-static inline sector_t blk_queue_zone_sectors(struct request_queue *q)
-{
-	return blk_queue_is_zoned(q) ? q->limits.chunk_sectors : 0;
-}
-
 #ifdef CONFIG_BLK_DEV_ZONED
-static inline unsigned int blk_queue_nr_zones(struct request_queue *q)
+static inline unsigned int disk_nr_zones(struct gendisk *disk)
 {
-	return blk_queue_is_zoned(q) ? q->nr_zones : 0;
+	return blk_queue_is_zoned(disk->queue) ? disk->nr_zones : 0;
 }
 
-static inline unsigned int blk_queue_zone_no(struct request_queue *q,
-					     sector_t sector)
+static inline unsigned int disk_zone_no(struct gendisk *disk, sector_t sector)
 {
-	if (!blk_queue_is_zoned(q))
+	if (!blk_queue_is_zoned(disk->queue))
 		return 0;
-	return sector >> ilog2(q->limits.chunk_sectors);
+	return sector >> ilog2(disk->queue->limits.chunk_sectors);
 }
 
-static inline bool blk_queue_zone_is_seq(struct request_queue *q,
-					 sector_t sector)
+static inline bool disk_zone_is_seq(struct gendisk *disk, sector_t sector)
 {
-	if (!blk_queue_is_zoned(q))
+	if (!blk_queue_is_zoned(disk->queue))
 		return false;
-	if (!q->conv_zones_bitmap)
+	if (!disk->conv_zones_bitmap)
 		return true;
-	return !test_bit(blk_queue_zone_no(q, sector), q->conv_zones_bitmap);
+	return !test_bit(disk_zone_no(disk, sector), disk->conv_zones_bitmap);
 }
 
-static inline void blk_queue_max_open_zones(struct request_queue *q,
+static inline void disk_set_max_open_zones(struct gendisk *disk,
 		unsigned int max_open_zones)
 {
-	q->max_open_zones = max_open_zones;
+	disk->max_open_zones = max_open_zones;
 }
 
-static inline unsigned int queue_max_open_zones(const struct request_queue *q)
-{
-	return q->max_open_zones;
-}
-
-static inline void blk_queue_max_active_zones(struct request_queue *q,
+static inline void disk_set_max_active_zones(struct gendisk *disk,
 		unsigned int max_active_zones)
 {
-	q->max_active_zones = max_active_zones;
+	disk->max_active_zones = max_active_zones;
 }
 
-static inline unsigned int queue_max_active_zones(const struct request_queue *q)
+static inline unsigned int bdev_max_open_zones(struct block_device *bdev)
 {
-	return q->max_active_zones;
+	return bdev->bd_disk->max_open_zones;
 }
+
+static inline unsigned int bdev_max_active_zones(struct block_device *bdev)
+{
+	return bdev->bd_disk->max_active_zones;
+}
+
 #else /* CONFIG_BLK_DEV_ZONED */
-static inline unsigned int blk_queue_nr_zones(struct request_queue *q)
+static inline unsigned int disk_nr_zones(struct gendisk *disk)
 {
 	return 0;
 }
-static inline bool blk_queue_zone_is_seq(struct request_queue *q,
-					 sector_t sector)
+static inline bool disk_zone_is_seq(struct gendisk *disk, sector_t sector)
 {
 	return false;
 }
-static inline unsigned int blk_queue_zone_no(struct request_queue *q,
-					     sector_t sector)
+static inline unsigned int disk_zone_no(struct gendisk *disk, sector_t sector)
 {
 	return 0;
 }
-static inline unsigned int queue_max_open_zones(const struct request_queue *q)
+static inline unsigned int bdev_max_open_zones(struct block_device *bdev)
 {
 	return 0;
 }
-static inline unsigned int queue_max_active_zones(const struct request_queue *q)
+
+static inline unsigned int bdev_max_active_zones(struct block_device *bdev)
 {
 	return 0;
 }
@@ -899,23 +890,18 @@ static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
 	return bdev->bd_queue;	/* this is never NULL */
 }
 
-#ifdef CONFIG_BLK_DEV_ZONED
-
 /* Helper to convert BLK_ZONE_ZONE_XXX to its string format XXX */
 const char *blk_zone_cond_str(enum blk_zone_cond zone_cond);
 
 static inline unsigned int bio_zone_no(struct bio *bio)
 {
-	return blk_queue_zone_no(bdev_get_queue(bio->bi_bdev),
-				 bio->bi_iter.bi_sector);
+	return disk_zone_no(bio->bi_bdev->bd_disk, bio->bi_iter.bi_sector);
 }
 
 static inline unsigned int bio_zone_is_seq(struct bio *bio)
 {
-	return blk_queue_zone_is_seq(bdev_get_queue(bio->bi_bdev),
-				     bio->bi_iter.bi_sector);
+	return disk_zone_is_seq(bio->bi_bdev->bd_disk, bio->bi_iter.bi_sector);
 }
-#endif /* CONFIG_BLK_DEV_ZONED */
 
 /*
  * Return how much of the chunk is left to be used for I/O at a given offset.
@@ -1312,27 +1298,9 @@ static inline sector_t bdev_zone_sectors(struct block_device *bdev)
 {
 	struct request_queue *q = bdev_get_queue(bdev);
 
-	if (q)
-		return blk_queue_zone_sectors(q);
-	return 0;
-}
-
-static inline unsigned int bdev_max_open_zones(struct block_device *bdev)
-{
-	struct request_queue *q = bdev_get_queue(bdev);
-
-	if (q)
-		return queue_max_open_zones(q);
-	return 0;
-}
-
-static inline unsigned int bdev_max_active_zones(struct block_device *bdev)
-{
-	struct request_queue *q = bdev_get_queue(bdev);
-
-	if (q)
-		return queue_max_active_zones(q);
-	return 0;
+	if (!blk_queue_is_zoned(q))
+		return 0;
+	return q->limits.chunk_sectors;
 }
 
 static inline int queue_dma_alignment(const struct request_queue *q)
