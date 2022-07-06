@@ -463,12 +463,16 @@ static void ovl_get_acl_idmapped_mnt(struct user_namespace *mnt_userns,
 		struct posix_acl_entry *e = &acl->a_entries[i];
 		switch (e->e_tag) {
 		case ACL_USER:
+			pr_err("ACL_USER-BEGIN: e_uid(%d)\n", __kuid_val(e->e_uid));
 			e->e_uid = mapped_kuid_fs(mnt_userns, &init_user_ns,
 						  e->e_uid);
+			pr_err("ACL_USER-END: e_uid(%d)\n", __kuid_val(e->e_uid));
 			break;
 		case ACL_GROUP:
+			pr_err("ACL_USER-BEGIN: e_gid(%d)\n", __kgid_val(e->e_gid));
 			e->e_gid = mapped_kgid_fs(mnt_userns, &init_user_ns,
 						  e->e_gid);
+			pr_err("ACL_USER-END: e_gid(%d)\n", __kgid_val(e->e_gid));
 			break;
 		}
 	}
@@ -492,8 +496,10 @@ struct posix_acl *ovl_get_acl(struct inode *inode, int type, bool rcu)
 		 * We need to drop out of rcu path walk so we can do
 		 * allocations below.
 		 */
-		if (idmapped)
+		if (idmapped) {
+			pr_err("DROP OUT\n");
 			return ERR_PTR(-ECHILD);
+		}
 
 		acl = get_cached_acl_rcu(realinode, type);
 	} else {
