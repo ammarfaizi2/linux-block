@@ -126,7 +126,7 @@ SYM_CODE_START_LOCAL(__finalise_el2)
 
 	// Full FP in SM?
 	mrs_s	x1, SYS_ID_AA64SMFR0_EL1
-	__check_override id_aa64smfr0 ID_AA64SMFR0_FA64_SHIFT 1 .Linit_sme_fa64 .Lskip_sme_fa64
+	__check_override id_aa64smfr0 ID_AA64SMFR0_EL1_FA64_SHIFT 1 .Linit_sme_fa64 .Lskip_sme_fa64
 
 .Linit_sme_fa64:
 	orr	x0, x0, SMCR_ELx_FA64_MASK

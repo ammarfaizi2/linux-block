@@ -98,7 +98,7 @@ static const struct ftr_set_desc pfr1 __initconst = {
 	.name		= "id_aa64pfr1",
 	.override	= &id_aa64pfr1_override,
 	.fields		= {
-	        FIELD("bt", ID_AA64PFR1_BT_SHIFT, NULL),
+		FIELD("bt", ID_AA64PFR1_BT_SHIFT, NULL ),
 		FIELD("mte", ID_AA64PFR1_MTE_SHIFT, NULL),
 		FIELD("sme", ID_AA64PFR1_SME_SHIFT, pfr1_sme_filter),
 		{}
@@ -109,10 +109,10 @@ static const struct ftr_set_desc isar1 __initconst = {
 	.name		= "id_aa64isar1",
 	.override	= &id_aa64isar1_override,
 	.fields		= {
-	        FIELD("gpi", ID_AA64ISAR1_GPI_SHIFT, NULL),
-	        FIELD("gpa", ID_AA64ISAR1_GPA_SHIFT, NULL),
-	        FIELD("api", ID_AA64ISAR1_API_SHIFT, NULL),
-	        FIELD("apa", ID_AA64ISAR1_APA_SHIFT, NULL),
+		FIELD("gpi", ID_AA64ISAR1_EL1_GPI_SHIFT, NULL),
+		FIELD("gpa", ID_AA64ISAR1_EL1_GPA_SHIFT, NULL),
+		FIELD("api", ID_AA64ISAR1_EL1_API_SHIFT, NULL),
+		FIELD("apa", ID_AA64ISAR1_EL1_APA_SHIFT, NULL),
 		{}
 	},
 };
@@ -121,8 +121,8 @@ static const struct ftr_set_desc isar2 __initconst = {
 	.name		= "id_aa64isar2",
 	.override	= &id_aa64isar2_override,
 	.fields		= {
-	        FIELD("gpa3", ID_AA64ISAR2_GPA3_SHIFT, NULL),
-	        FIELD("apa3", ID_AA64ISAR2_APA3_SHIFT, NULL),
+		FIELD("gpa3", ID_AA64ISAR2_EL1_GPA3_SHIFT, NULL),
+		FIELD("apa3", ID_AA64ISAR2_EL1_APA3_SHIFT, NULL),
 		{}
 	},
 };
@@ -132,7 +132,7 @@ static const struct ftr_set_desc smfr0 __initconst = {
 	.override	= &id_aa64smfr0_override,
 	.fields		= {
 		/* FA64 is a one bit field... :-/ */
-	        { "fa64", ID_AA64SMFR0_FA64_SHIFT, 1, },
+		{ "fa64", ID_AA64SMFR0_EL1_FA64_SHIFT, 1, },
 		{}
 	},
 };
