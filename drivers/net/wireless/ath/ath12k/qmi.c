@@ -2088,39 +2088,26 @@ out:
 
 static int ath12k_qmi_send_qdss_config(struct ath12k_base *ab)
 {
-	struct device *dev = ab->dev;
-	const struct firmware *fw_entry;
-	char filename[ATH12K_QMI_MAX_QDSS_CONFIG_FILE_NAME_SIZE];
+	unsigned int config_len;
+	const char *config;
 	int ret;
 
-	snprintf(filename, sizeof(filename),
-		 "%s/%s/%s", ATH12K_FW_DIR, ab->hw_params->fw.dir,
-		 ATH12K_QMI_DEFAULT_QDSS_CONFIG_FILE_NAME);
-	ret = request_firmware(&fw_entry, filename, dev);
-	ath12k_dbg(ab, ATH12K_DBG_BOOT, "boot firmware request %s size %zu\n",
-		   filename, fw_entry->size);
-	if (ret) {
-		/* for backward compatibility */
-		snprintf(filename, sizeof(filename),
-			 "%s", ATH12K_QMI_DEFAULT_QDSS_CONFIG_FILE_NAME);
-		ret = request_firmware(&fw_entry, filename, dev);
-		ath12k_dbg(ab, ATH12K_DBG_BOOT, "boot firmware request %s size %zu\n",
-			   filename, fw_entry->size);
-		if (ret) {
-			ath12k_warn(ab, "qmi failed to load QDSS config: %s\n", filename);
-			return ret;
-		}
-	}
+	config = ab->hw_params->qdss_config;
+	if (!config)
+		/* this hw doesn't need qdss config */
+		return 0;
 
-	ret = ath12k_qmi_send_qdss_trace_config_download_req(ab, fw_entry->data,
-							     fw_entry->size);
+	config_len = ab->hw_params->qdss_config_len;
+
+	ret = ath12k_qmi_send_qdss_trace_config_download_req(ab,
+							     config,
+							     config_len);
 	if (ret < 0) {
 		ath12k_warn(ab, "qmi failed to load QDSS config to FW: %d\n", ret);
-		goto out;
+		return ret;
 	}
-out:
-	release_firmware(fw_entry);
-	return ret;
+
+	return 0;
 }
 
 static void ath12k_host_cap_parse_mlo(struct qmi_wlanfw_host_cap_req_msg_v01 *req)
@@ -3110,7 +3097,7 @@ static int ath12k_qmi_event_load_bdf(struct ath12k_qmi *qmi)
 		return ret;
 	}
 
-	/* BRINGUP: QDSS should be removed */
+	/* TODO: QDSS should be removed after WCN7850 firmware is fixed */
 	ret = ath12k_qmi_send_qdss_config(ab);
 	if (ret < 0) {
 		ath12k_warn(ab, "Failed to download QDSS config to FW: %d\n", ret);

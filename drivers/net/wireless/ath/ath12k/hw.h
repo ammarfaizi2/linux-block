@@ -186,6 +186,9 @@ struct ath12k_hw_params {
 			 struct target_resource_config *config);
 
 	const struct hal_ops *hal_ops;
+
+	const char *qdss_config;
+	unsigned int qdss_config_len;
 };
 
 /* BRINGUP: move to dp.h */
