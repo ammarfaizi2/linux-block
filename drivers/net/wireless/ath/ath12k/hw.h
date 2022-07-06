@@ -133,7 +133,6 @@ struct ath12k_hw_hal_params {
 struct ath12k_hw_params {
 	const char *name;
 	u16 hw_rev;
-	u8 max_radios;
 
 	struct {
 		const char *dir;
@@ -141,13 +140,15 @@ struct ath12k_hw_params {
 		size_t cal_offset;
 	} fw;
 
-	const struct ath12k_hw_ops *hw_ops;
-	const struct ath12k_hw_ring_mask *ring_mask;
-
+	u8 max_radios;
+	bool single_pdev_only;
+	u32 qmi_service_ins_id;
 	bool internal_sleep_clock;
 
+	const struct ath12k_hw_ops *hw_ops;
+	const struct ath12k_hw_ring_mask *ring_mask;
 	const struct ath12k_hw_regs *regs;
-	u32 qmi_service_ins_id;
+
 	const struct ce_attr *host_ce_config;
 	u32 ce_count;
 	const struct ce_pipe_config *target_ce_config;
@@ -157,8 +158,6 @@ struct ath12k_hw_params {
 
 	const struct ath12k_hw_hal_params *hal_params;
 
-	bool single_pdev_only;
-
 	bool rxdma1_enable;
 	int num_rxmda_per_pdev;
 	int num_rxdma_dst_ring;
@@ -167,6 +166,7 @@ struct ath12k_hw_params {
 
 	u16 interface_modes;
 	bool supports_monitor;
+
 	bool idle_ps;
 	bool cold_boot_calib;
 	bool download_calib;
@@ -174,6 +174,7 @@ struct ath12k_hw_params {
 	bool tcl_ring_retry;
 	bool reoq_lut_support;
 	bool supports_shadow_regs;
+
 	u32 hal_desc_sz;
 	u32 num_tcl_banks;
 	bool fix_l1ss;
