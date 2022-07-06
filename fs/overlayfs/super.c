@@ -1960,6 +1960,22 @@ static struct dentry *ovl_get_root(struct super_block *sb,
 	return root;
 }
 
+static bool ovl_has_idmapped_layers(struct ovl_fs *ofs)
+{
+	const struct vfsmount *mnt = ovl_upper_mnt(ofs);
+	unsigned int i;
+
+	if (mnt && is_idmapped_mnt(mnt))
+		return true;
+
+	for (i = 1; i < ofs->numlayer; i++) {
+		if (is_idmapped_mnt(ofs->layers[i].mnt))
+			return true;
+	}
+
+	return false;
+}
+
 static int ovl_fill_super(struct super_block *sb, void *data, int silent)
 {
 	struct path upperpath = { };
@@ -2129,7 +2145,10 @@ static int ovl_fill_super(struct super_block *sb, void *data, int silent)
 	sb->s_xattr = ofs->config.userxattr ? ovl_user_xattr_handlers :
 		ovl_trusted_xattr_handlers;
 	sb->s_fs_info = ofs;
-	sb->s_flags |= SB_POSIXACL;
+	if (ovl_has_idmapped_layers(ofs))
+		pr_warn("POSIX ACLs are not yet supported with idmapped layers, mounting without ACL support.\n");
+	else
+		sb->s_flags |= SB_POSIXACL;
 	sb->s_iflags |= SB_I_SKIP_SYNC;
 
 	err = -ENOMEM;
