@@ -4090,11 +4090,12 @@ static __le16 ath12k_mac_setup_he_6ghz_cap(struct ath12k_pdev_cap *pcap,
 		bcap->he_6ghz_capa |=
 			FIELD_PREP(IEEE80211_HE_6GHZ_CAP_SM_PS,
 				   WLAN_HT_CAP_SM_PS_DISABLED);
-	val = FIELD_GET(IEEE80211_VHT_CAP_MAX_A_MPDU_LENGTH_EXPONENT_MASK,
-			pcap->vht_cap);
+	val = u32_get_bits(pcap->vht_cap,
+			   IEEE80211_VHT_CAP_MAX_A_MPDU_LENGTH_EXPONENT_MASK);
 	bcap->he_6ghz_capa |=
 		FIELD_PREP(IEEE80211_HE_6GHZ_CAP_MAX_AMPDU_LEN_EXP, val);
-	val = FIELD_GET(IEEE80211_VHT_CAP_MAX_MPDU_MASK, pcap->vht_cap);
+	val = u32_get_bits(pcap->vht_cap,
+			   IEEE80211_VHT_CAP_MAX_MPDU_MASK);
 	bcap->he_6ghz_capa |=
 		FIELD_PREP(IEEE80211_HE_6GHZ_CAP_MAX_MPDU_LEN, val);
 	if (pcap->vht_cap & IEEE80211_VHT_CAP_RX_ANTENNA_PATTERN)

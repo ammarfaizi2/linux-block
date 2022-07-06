@@ -261,7 +261,7 @@ void ath12k_htc_rx_completion_handler(struct ath12k_base *ab,
 	hdr = (struct ath12k_htc_hdr *)skb->data;
 	skb_pull(skb, sizeof(*hdr));
 
-	eid = FIELD_GET(HTC_HDR_ENDPOINTID, hdr->htc_info);
+	eid = u32_get_bits(hdr->htc_info, HTC_HDR_ENDPOINTID);
 
 	if (eid >= ATH12K_HTC_EP_COUNT) {
 		ath12k_warn(ab, "HTC Rx: invalid eid %d\n", eid);
@@ -270,7 +270,7 @@ void ath12k_htc_rx_completion_handler(struct ath12k_base *ab,
 
 	ep = &htc->endpoint[eid];
 
-	payload_len = FIELD_GET(HTC_HDR_PAYLOADLEN, hdr->htc_info);
+	payload_len = u32_get_bits(hdr->htc_info, HTC_HDR_PAYLOADLEN);
 
 	if (payload_len + sizeof(*hdr) > ATH12K_HTC_MAX_LEN) {
 		ath12k_warn(ab, "HTC rx frame too long, len: %zu\n",
@@ -285,13 +285,14 @@ void ath12k_htc_rx_completion_handler(struct ath12k_base *ab,
 	}
 
 	/* get flags to check for trailer */
-	trailer_present = (FIELD_GET(HTC_HDR_FLAGS, hdr->htc_info)) &
+	trailer_present = (u32_get_bits(hdr->htc_info, HTC_HDR_FLAGS)) &
 			  ATH12K_HTC_FLAG_TRAILER_PRESENT;
 
 	if (trailer_present) {
 		u8 *trailer;
 
-		trailer_len = FIELD_GET(HTC_HDR_CONTROLBYTES0, hdr->ctrl_info);
+		trailer_len = u32_get_bits(hdr->ctrl_info,
+					   HTC_HDR_CONTROLBYTES0);
 		min_len = sizeof(struct ath12k_htc_record_hdr);
 
 		if ((trailer_len < min_len) ||
@@ -320,7 +321,7 @@ void ath12k_htc_rx_completion_handler(struct ath12k_base *ab,
 	if (eid == ATH12K_HTC_EP_0) {
 		struct ath12k_htc_msg *msg = (struct ath12k_htc_msg *)skb->data;
 
-		switch (FIELD_GET(HTC_MSG_MESSAGEID, msg->msg_svc_id)) {
+		switch (u32_get_bits(msg->msg_svc_id, HTC_MSG_MESSAGEID)) {
 		case ATH12K_HTC_MSG_READY_ID:
 		case ATH12K_HTC_MSG_CONNECT_SERVICE_RESP_ID:
 			/* handle HTC control message */
@@ -351,8 +352,8 @@ void ath12k_htc_rx_completion_handler(struct ath12k_base *ab,
 		case ATH12K_HTC_MSG_WAKEUP_FROM_SUSPEND_ID:
 			break;
 		default:
-			ath12k_warn(ab, "ignoring unsolicited htc ep0 event %ld\n",
-				    FIELD_GET(HTC_MSG_MESSAGEID, msg->msg_svc_id));
+			ath12k_warn(ab, "ignoring unsolicited htc ep0 event %u\n",
+				    u32_get_bits(msg->msg_svc_id, HTC_MSG_MESSAGEID));
 			break;
 		}
 		goto out;
@@ -517,10 +518,10 @@ int ath12k_htc_wait_target(struct ath12k_htc *htc)
 	}
 
 	ready = (struct ath12k_htc_ready *)htc->control_resp_buffer;
-	message_id   = FIELD_GET(HTC_MSG_MESSAGEID, ready->id_credit_count);
-	credit_count = FIELD_GET(HTC_READY_MSG_CREDITCOUNT,
-				 ready->id_credit_count);
-	credit_size  = FIELD_GET(HTC_READY_MSG_CREDITSIZE, ready->size_ep);
+	message_id   = u32_get_bits(ready->id_credit_count, HTC_MSG_MESSAGEID);
+	credit_count = u32_get_bits(ready->id_credit_count,
+				    HTC_READY_MSG_CREDITCOUNT);
+	credit_size  = u32_get_bits(ready->size_ep, HTC_READY_MSG_CREDITSIZE);
 
 	if (message_id != ATH12K_HTC_MSG_READY_ID) {
 		ath12k_warn(ab, "Invalid HTC ready msg: 0x%x\n", message_id);
@@ -625,9 +626,9 @@ int ath12k_htc_connect_service(struct ath12k_htc *htc,
 
 	/* we controlled the buffer creation, it's aligned */
 	resp_msg = (struct ath12k_htc_conn_svc_resp *)htc->control_resp_buffer;
-	message_id = FIELD_GET(HTC_MSG_MESSAGEID, resp_msg->msg_svc_id);
-	service_id = FIELD_GET(HTC_SVC_RESP_MSG_SERVICEID,
-			       resp_msg->msg_svc_id);
+	message_id = u32_get_bits(resp_msg->msg_svc_id, HTC_MSG_MESSAGEID);
+	service_id = u32_get_bits(resp_msg->msg_svc_id,
+				  HTC_SVC_RESP_MSG_SERVICEID);
 
 	if ((message_id != ATH12K_HTC_MSG_CONNECT_SERVICE_RESP_ID) ||
 	    (htc->control_resp_len < sizeof(*resp_msg))) {
@@ -636,13 +637,13 @@ int ath12k_htc_connect_service(struct ath12k_htc *htc,
 	}
 
 	ath12k_dbg(ab, ATH12K_DBG_HTC,
-		   "HTC Service %s connect response: status: 0x%lx, assigned ep: 0x%lx\n",
+		   "HTC Service %s connect response: status: %u, assigned ep: %u\n",
 		   htc_service_name(service_id),
-		   FIELD_GET(HTC_SVC_RESP_MSG_STATUS, resp_msg->flags_len),
-		   FIELD_GET(HTC_SVC_RESP_MSG_ENDPOINTID, resp_msg->flags_len));
+		   u32_get_bits(resp_msg->flags_len, HTC_SVC_RESP_MSG_STATUS),
+		   u32_get_bits(resp_msg->flags_len, HTC_SVC_RESP_MSG_ENDPOINTID));
 
-	conn_resp->connect_resp_code = FIELD_GET(HTC_SVC_RESP_MSG_STATUS,
-						 resp_msg->flags_len);
+	conn_resp->connect_resp_code = u32_get_bits(resp_msg->flags_len,
+						    HTC_SVC_RESP_MSG_STATUS);
 
 	/* check response status */
 	if (conn_resp->connect_resp_code != ATH12K_HTC_CONN_SVC_STATUS_SUCCESS) {
@@ -652,11 +653,11 @@ int ath12k_htc_connect_service(struct ath12k_htc *htc,
 		return -EPROTO;
 	}
 
-	assigned_eid = (enum ath12k_htc_ep_id)FIELD_GET(HTC_SVC_RESP_MSG_ENDPOINTID,
-							resp_msg->flags_len);
+	assigned_eid = (enum ath12k_htc_ep_id)u32_get_bits(resp_msg->flags_len,
+							   HTC_SVC_RESP_MSG_ENDPOINTID);
 
-	max_msg_size = FIELD_GET(HTC_SVC_RESP_MSG_MAXMSGSIZE,
-				 resp_msg->flags_len);
+	max_msg_size = u32_get_bits(resp_msg->flags_len,
+				    HTC_SVC_RESP_MSG_MAXMSGSIZE);
 
 setup:
 
@@ -674,14 +675,14 @@ setup:
 
 	/* return assigned endpoint to caller */
 	conn_resp->eid = assigned_eid;
-	conn_resp->max_msg_len = FIELD_GET(HTC_SVC_RESP_MSG_MAXMSGSIZE,
-					   resp_msg->flags_len);
+	conn_resp->max_msg_len = u32_get_bits(resp_msg->flags_len,
+					      HTC_SVC_RESP_MSG_MAXMSGSIZE);
 
 	/* setup the endpoint */
 	ep->service_id = conn_req->service_id;
 	ep->max_tx_queue_depth = conn_req->max_send_queue_depth;
-	ep->max_ep_message_len = FIELD_GET(HTC_SVC_RESP_MSG_MAXMSGSIZE,
-					   resp_msg->flags_len);
+	ep->max_ep_message_len = u32_get_bits(resp_msg->flags_len,
+					      HTC_SVC_RESP_MSG_MAXMSGSIZE);
 	ep->tx_credits = tx_alloc;
 
 	/* copy all the callbacks */

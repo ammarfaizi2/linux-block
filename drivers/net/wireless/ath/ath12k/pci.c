@@ -123,7 +123,7 @@ static void ath12k_pci_select_window(struct ath12k_pci *ab_pci, u32 offset)
 {
 	struct ath12k_base *ab = ab_pci->ab;
 
-	u32 window = FIELD_GET(WINDOW_VALUE_MASK, offset);
+	u32 window = u32_get_bits(offset, WINDOW_VALUE_MASK);
 	u32 static_window;
 
 	lockdep_assert_held(&ab_pci->window_lock);
@@ -142,8 +142,8 @@ static void ath12k_pci_select_window(struct ath12k_pci *ab_pci, u32 offset)
 
 static void ath12k_pci_select_static_window(struct ath12k_pci *ab_pci)
 {
-	u32 umac_window = FIELD_GET(WINDOW_VALUE_MASK, HAL_SEQ_WCSS_UMAC_OFFSET);
-	u32 ce_window = FIELD_GET(WINDOW_VALUE_MASK, HAL_CE_WFSS_CE_REG_BASE);
+	u32 umac_window = u32_get_bits(HAL_SEQ_WCSS_UMAC_OFFSET, WINDOW_VALUE_MASK);
+	u32 ce_window = u32_get_bits(HAL_CE_WFSS_CE_REG_BASE, WINDOW_VALUE_MASK);
 	u32 window;
 
 	window = (umac_window << 12) | (ce_window << 6);
