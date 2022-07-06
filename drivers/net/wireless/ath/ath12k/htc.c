@@ -110,7 +110,6 @@ int ath12k_htc_send(struct ath12k_htc *htc,
 
 	ath12k_htc_prepare_tx_skb(ep, skb);
 
-	skb_cb->eid = eid;
 	skb_cb->paddr = dma_map_single(dev, skb->data, skb->len, DMA_TO_DEVICE);
 	ret = dma_mapping_error(dev, skb_cb->paddr);
 	if (ret) {
