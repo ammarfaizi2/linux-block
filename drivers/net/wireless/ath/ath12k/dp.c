@@ -1258,8 +1258,8 @@ static u8 *ath12k_dp_cc_find_desc(struct ath12k_base *ab, u32 cookie)
 	u16 spt_page_id, spt_idx;
 	u8 *spt_va;
 
-	spt_idx = FIELD_GET(ATH12k_DP_CC_COOKIE_SPT, cookie);
-	spt_page_id = FIELD_GET(ATH12K_DP_CC_COOKIE_PPT, cookie);
+	spt_idx = u32_get_bits(cookie, ATH12k_DP_CC_COOKIE_SPT);
+	spt_page_id = u32_get_bits(cookie, ATH12K_DP_CC_COOKIE_PPT);
 
 	spt_va = (u8 *)dp->spt_info[spt_page_id].vaddr;
 

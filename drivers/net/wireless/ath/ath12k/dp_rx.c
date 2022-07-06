@@ -1238,8 +1238,8 @@ int ath12k_dp_htt_tlv_iter(struct ath12k_base *ab, const void *ptr, size_t len,
 			return -EINVAL;
 		}
 		tlv = (struct htt_tlv *)ptr;
-		tlv_tag = FIELD_GET(HTT_TLV_TAG, tlv->header);
-		tlv_len = FIELD_GET(HTT_TLV_LEN, tlv->header);
+		tlv_tag = u32_get_bits(tlv->header, HTT_TLV_TAG);
+		tlv_len = u32_get_bits(tlv->header, HTT_TLV_LEN);
 		ptr += sizeof(*tlv);
 		len -= sizeof(*tlv);
 
@@ -1291,10 +1291,10 @@ ath12k_update_per_peer_tx_stats(struct ath12k *ar,
 	if (usr_stats->tlv_flags &
 	    BIT(HTT_PPDU_STATS_TAG_USR_COMPLTN_ACK_BA_STATUS)) {
 		succ_bytes = usr_stats->ack_ba.success_bytes;
-		succ_pkts = FIELD_GET(HTT_PPDU_STATS_ACK_BA_INFO_NUM_MSDU_M,
-				      usr_stats->ack_ba.info);
-		tid = FIELD_GET(HTT_PPDU_STATS_ACK_BA_INFO_TID_NUM,
-				usr_stats->ack_ba.info);
+		succ_pkts = u32_get_bits(usr_stats->ack_ba.info,
+					 HTT_PPDU_STATS_ACK_BA_INFO_NUM_MSDU_M);
+		tid = u32_get_bits(usr_stats->ack_ba.info,
+				   HTT_PPDU_STATS_ACK_BA_INFO_TID_NUM);
 	}
 
 	if (common->fes_duration_us)
@@ -1495,8 +1495,8 @@ static int ath12k_htt_pull_ppdu_stats(struct ath12k_base *ab,
 	u32 ppdu_id, len;
 
 	msg = (struct ath12k_htt_ppdu_stats_msg *)skb->data;
-	len = FIELD_GET(HTT_T2H_PPDU_STATS_INFO_PAYLOAD_SIZE, msg->info);
-	pdev_id = FIELD_GET(HTT_T2H_PPDU_STATS_INFO_PDEV_ID, msg->info);
+	len = u32_get_bits(msg->info, HTT_T2H_PPDU_STATS_INFO_PAYLOAD_SIZE);
+	pdev_id = u32_get_bits(msg->info, HTT_T2H_PPDU_STATS_INFO_PDEV_ID);
 	ppdu_id = msg->ppdu_id;
 
 	rcu_read_lock();
@@ -1578,7 +1578,7 @@ static void ath12k_htt_pktlog(struct ath12k_base *ab, struct sk_buff *skb)
 	struct ath12k *ar;
 	u8 pdev_id;
 
-	pdev_id = FIELD_GET(HTT_T2H_PPDU_STATS_INFO_PDEV_ID, data->hdr);
+	pdev_id = u32_get_bits(data->hdr, HTT_T2H_PPDU_STATS_INFO_PDEV_ID);
 	ar = ath12k_mac_get_ar_by_pdev_id(ab, pdev_id);
 	if (!ar) {
 		ath12k_warn(ab, "invalid pdev id %d on htt pktlog\n", pdev_id);
@@ -1599,13 +1599,13 @@ static void ath12k_htt_backpressure_event_handler(struct ath12k_base *ab,
 	u32 backpressure_time;
 	struct ath12k_bp_stats *bp_stats;
 
-	pdev_id = FIELD_GET(HTT_BACKPRESSURE_EVENT_PDEV_ID_M, *data);
-	ring_type = FIELD_GET(HTT_BACKPRESSURE_EVENT_RING_TYPE_M, *data);
-	ring_id = FIELD_GET(HTT_BACKPRESSURE_EVENT_RING_ID_M, *data);
+	pdev_id = u32_get_bits(*data, HTT_BACKPRESSURE_EVENT_PDEV_ID_M);
+	ring_type = u32_get_bits(*data, HTT_BACKPRESSURE_EVENT_RING_TYPE_M);
+	ring_id = u32_get_bits(*data, HTT_BACKPRESSURE_EVENT_RING_ID_M);
 	++data;
 
-	hp = FIELD_GET(HTT_BACKPRESSURE_EVENT_HP_M, *data);
-	tp = FIELD_GET(HTT_BACKPRESSURE_EVENT_TP_M, *data);
+	hp = u32_get_bits(*data, HTT_BACKPRESSURE_EVENT_HP_M);
+	tp = u32_get_bits(*data, HTT_BACKPRESSURE_EVENT_TP_M);
 	++data;
 
 	backpressure_time = *data;
@@ -1648,8 +1648,8 @@ static void ath12k_htt_mlo_offset_event_handler(struct ath12k_base *ab,
 	u8 pdev_id;
 
 	msg = (struct ath12k_htt_mlo_offset_msg *)skb->data;
-	pdev_id = FIELD_GET(HTT_T2H_MLO_OFFSET_INFO_PDEV_ID,
-			    __le32_to_cpu(msg->info));
+	pdev_id = u32_get_bits(__le32_to_cpu(msg->info),
+			       HTT_T2H_MLO_OFFSET_INFO_PDEV_ID);
 	ar = ath12k_mac_get_ar_by_pdev_id(ab, pdev_id);
 
 	if (!ar) {
@@ -1746,7 +1746,7 @@ void ath12k_dp_htt_htc_t2h_msg_handler(struct ath12k_base *ab,
 {
 	struct ath12k_dp *dp = &ab->dp;
 	struct htt_resp_msg *resp = (struct htt_resp_msg *)skb->data;
-	enum htt_t2h_msg_type type = FIELD_GET(HTT_T2H_MSG_TYPE, *(u32 *)resp);
+	enum htt_t2h_msg_type type = u32_get_bits(*(u32 *)resp, HTT_T2H_MSG_TYPE);
 	u16 peer_id;
 	u8 vdev_id;
 	u8 mac_addr[ETH_ALEN];
@@ -1766,39 +1766,39 @@ void ath12k_dp_htt_htc_t2h_msg_handler(struct ath12k_base *ab,
 		break;
 	/* TODO: remove unused peer map versions after testing */
 	case HTT_T2H_MSG_TYPE_PEER_MAP:
-		vdev_id = FIELD_GET(HTT_T2H_PEER_MAP_INFO_VDEV_ID,
-				    resp->peer_map_ev.info);
-		peer_id = FIELD_GET(HTT_T2H_PEER_MAP_INFO_PEER_ID,
-				    resp->peer_map_ev.info);
-		peer_mac_h16 = FIELD_GET(HTT_T2H_PEER_MAP_INFO1_MAC_ADDR_H16,
-					 resp->peer_map_ev.info1);
+		vdev_id = u32_get_bits(resp->peer_map_ev.info,
+				       HTT_T2H_PEER_MAP_INFO_VDEV_ID);
+		peer_id = u32_get_bits(resp->peer_map_ev.info,
+				       HTT_T2H_PEER_MAP_INFO_PEER_ID);
+		peer_mac_h16 = u32_get_bits(resp->peer_map_ev.info1,
+					    HTT_T2H_PEER_MAP_INFO1_MAC_ADDR_H16);
 		ath12k_dp_get_mac_addr(resp->peer_map_ev.mac_addr_l32,
 				       peer_mac_h16, mac_addr);
 		ath12k_peer_map_event(ab, vdev_id, peer_id, mac_addr, 0, 0);
 		break;
 	case HTT_T2H_MSG_TYPE_PEER_MAP2:
-		vdev_id = FIELD_GET(HTT_T2H_PEER_MAP_INFO_VDEV_ID,
-				    resp->peer_map_ev.info);
-		peer_id = FIELD_GET(HTT_T2H_PEER_MAP_INFO_PEER_ID,
-				    resp->peer_map_ev.info);
-		peer_mac_h16 = FIELD_GET(HTT_T2H_PEER_MAP_INFO1_MAC_ADDR_H16,
-					 resp->peer_map_ev.info1);
+		vdev_id = u32_get_bits(resp->peer_map_ev.info,
+				       HTT_T2H_PEER_MAP_INFO_VDEV_ID);
+		peer_id = u32_get_bits(resp->peer_map_ev.info,
+				       HTT_T2H_PEER_MAP_INFO_PEER_ID);
+		peer_mac_h16 = u32_get_bits(resp->peer_map_ev.info1,
+					    HTT_T2H_PEER_MAP_INFO1_MAC_ADDR_H16);
 		ath12k_dp_get_mac_addr(resp->peer_map_ev.mac_addr_l32,
 				       peer_mac_h16, mac_addr);
-		ast_hash = FIELD_GET(HTT_T2H_PEER_MAP_INFO2_AST_HASH_VAL,
-				     resp->peer_map_ev.info2);
-		hw_peer_id = FIELD_GET(HTT_T2H_PEER_MAP_INFO1_HW_PEER_ID,
-				       resp->peer_map_ev.info1);
+		ast_hash = u32_get_bits(resp->peer_map_ev.info2,
+					HTT_T2H_PEER_MAP_INFO2_AST_HASH_VAL);
+		hw_peer_id = u32_get_bits(resp->peer_map_ev.info1,
+					  HTT_T2H_PEER_MAP_INFO1_HW_PEER_ID);
 		ath12k_peer_map_event(ab, vdev_id, peer_id, mac_addr, ast_hash,
 				      hw_peer_id);
 		break;
 	case HTT_T2H_MSG_TYPE_PEER_MAP3:
-		vdev_id = FIELD_GET(HTT_T2H_PEER_MAP_INFO_VDEV_ID,
-				    resp->peer_map_ev.info);
-		peer_id = FIELD_GET(HTT_T2H_PEER_MAP_INFO_PEER_ID,
-				    resp->peer_map_ev.info);
-		peer_mac_h16 = FIELD_GET(HTT_T2H_PEER_MAP_INFO1_MAC_ADDR_H16,
-					 resp->peer_map_ev.info1);
+		vdev_id = u32_get_bits(resp->peer_map_ev.info,
+				       HTT_T2H_PEER_MAP_INFO_VDEV_ID);
+		peer_id = u32_get_bits(resp->peer_map_ev.info,
+				       HTT_T2H_PEER_MAP_INFO_PEER_ID);
+		peer_mac_h16 = u32_get_bits(resp->peer_map_ev.info1,
+					    HTT_T2H_PEER_MAP_INFO1_MAC_ADDR_H16);
 		ath12k_dp_get_mac_addr(resp->peer_map_ev.mac_addr_l32,
 				       peer_mac_h16, mac_addr);
 		ath12k_peer_map_event(ab, vdev_id, peer_id, mac_addr, ast_hash,
@@ -1806,8 +1806,8 @@ void ath12k_dp_htt_htc_t2h_msg_handler(struct ath12k_base *ab,
 		break;
 	case HTT_T2H_MSG_TYPE_PEER_UNMAP:
 	case HTT_T2H_MSG_TYPE_PEER_UNMAP2:
-		peer_id = FIELD_GET(HTT_T2H_PEER_UNMAP_INFO_PEER_ID,
-				    resp->peer_unmap_ev.info);
+		peer_id = u32_get_bits(resp->peer_unmap_ev.info,
+				       HTT_T2H_PEER_UNMAP_INFO_PEER_ID);
 		ath12k_peer_unmap_event(ab, peer_id);
 		break;
 	case HTT_T2H_MSG_TYPE_PPDU_STATS_IND:
@@ -2690,11 +2690,11 @@ try_again:
 		enum hal_reo_dest_ring_push_reason push_reason;
 		u32 cookie;
 
-		cookie = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE,
-				   desc.buf_addr_info.info1);
+		cookie = u32_get_bits(desc.buf_addr_info.info1,
+				      BUFFER_ADDR_INFO1_SW_COOKIE);
 
-		mac_id = FIELD_GET(HAL_REO_DEST_RING_INFO0_SRC_LINK_ID,
-				   desc.info0);
+		mac_id = u32_get_bits(desc.info0,
+				      HAL_REO_DEST_RING_INFO0_SRC_LINK_ID);
 
 		desc_info = (struct ath12k_rx_desc_info *)((u64)desc.buf_va_hi << 32 |
 				desc.buf_va_lo);
@@ -2720,8 +2720,8 @@ try_again:
 
 		num_buffs_reaped++;
 
-		push_reason = FIELD_GET(HAL_REO_DEST_RING_INFO0_PUSH_REASON,
-					desc.info0);
+		push_reason = u32_get_bits(desc.info0,
+					   HAL_REO_DEST_RING_INFO0_PUSH_REASON);
 		if (push_reason !=
 		    HAL_REO_DEST_RING_PUSH_REASON_ROUTING_INSTRUCTION) {
 			dev_kfree_skb_any(msdu);
@@ -2736,9 +2736,10 @@ try_again:
 		rxcb->is_continuation = !!(desc.rx_msdu_info.info0 &
 					   RX_MSDU_DESC_INFO0_MSDU_CONTINUATION);
 		rxcb->mac_id = mac_id;
-		rxcb->peer_id = FIELD_GET(RX_MPDU_DESC_META_DATA_PEER_ID,
-					  desc.rx_mpdu_info.peer_meta_data);
-		rxcb->tid = FIELD_GET(RX_MPDU_DESC_INFO0_TID, desc.rx_mpdu_info.info0);
+		rxcb->peer_id = u32_get_bits(desc.rx_mpdu_info.peer_meta_data,
+					     RX_MPDU_DESC_META_DATA_PEER_ID);
+		rxcb->tid = u32_get_bits(desc.rx_mpdu_info.info0,
+					 RX_MPDU_DESC_INFO0_TID);
 
 		__skb_queue_tail(&msdu_list, msdu);
 
@@ -3040,7 +3041,7 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar, struct dp_rx_ti
 	struct hal_srng *srng;
 	dma_addr_t link_paddr, buf_paddr;
 	u32 desc_bank, msdu_info, msdu_ext_info, mpdu_info;
-	u32 cookie, hal_rx_desc_sz;
+	u32 cookie, hal_rx_desc_sz, dest_ring_info0;
 	int ret;
 	struct ath12k_rx_desc_info *desc_info;
 	u8 dst_ind;
@@ -3050,13 +3051,13 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar, struct dp_rx_ti
 	reo_dest_ring = rx_tid->dst_ring_desc;
 
 	ath12k_hal_rx_reo_ent_paddr_get(ab, reo_dest_ring, &link_paddr, &cookie);
-	desc_bank = FIELD_GET(DP_LINK_DESC_BANK_MASK, cookie);
+	desc_bank = u32_get_bits(cookie, DP_LINK_DESC_BANK_MASK);
 
 	msdu_link = (struct hal_rx_msdu_link *)(link_desc_banks[desc_bank].vaddr +
 			(link_paddr - link_desc_banks[desc_bank].paddr));
 	msdu0 = &msdu_link->msdu_link[0];
 	msdu_ext_info = msdu0->rx_msdu_ext_info.info0;
-	dst_ind = FIELD_GET(RX_MSDU_EXT_DESC_INFO0_REO_DEST_IND, msdu_ext_info);
+	dst_ind = u32_get_bits(msdu_ext_info, RX_MSDU_EXT_DESC_INFO0_REO_DEST_IND);
 
 	memset(msdu0, 0, sizeof(*msdu0));
 
@@ -3137,9 +3138,10 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar, struct dp_rx_ti
 
 	reo_ent_ring->info1 = FIELD_PREP(HAL_REO_ENTR_RING_INFO1_MPDU_SEQ_NUM,
 					 rx_tid->cur_sn);
+	dest_ring_info0 = u32_get_bits(reo_dest_ring->info0,
+				       HAL_REO_DEST_RING_INFO0_SRC_LINK_ID);
 	reo_ent_ring->info2 = FIELD_PREP(HAL_REO_ENTR_RING_INFO2_SRC_LINK_ID,
-					 FIELD_GET(HAL_REO_DEST_RING_INFO0_SRC_LINK_ID,
-						   reo_dest_ring->info0));
+					 dest_ring_info0);
 	ath12k_hal_srng_access_end(ab, srng);
 	spin_unlock_bh(&srng->lock);
 
@@ -3503,8 +3505,8 @@ int ath12k_dp_process_rx_err(struct ath12k_base *ab, struct napi_struct *napi,
 		}
 
 		for (i = 0; i < num_msdus; i++) {
-			mac_id = FIELD_GET(HAL_REO_DEST_RING_INFO0_SRC_LINK_ID,
-					   reo_desc->info0);
+			mac_id = u32_get_bits(reo_desc->info0,
+					      HAL_REO_DEST_RING_INFO0_SRC_LINK_ID);
 
 			ar = ab->pdevs[mac_id].ar;
 
@@ -3890,7 +3892,7 @@ void ath12k_dp_process_reo_status(struct ath12k_base *ab)
 	ath12k_hal_srng_access_begin(ab, srng);
 
 	while ((reo_desc = ath12k_hal_srng_dst_get_next_entry(ab, srng))) {
-		tag = FIELD_GET(HAL_SRNG_TLV_HDR_TAG, *reo_desc);
+		tag = u32_get_bits(*reo_desc, HAL_SRNG_TLV_HDR_TAG);
 
 		switch (tag) {
 		case HAL_REO_GET_QUEUE_STATS_STATUS:

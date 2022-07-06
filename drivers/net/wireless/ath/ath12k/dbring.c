@@ -298,7 +298,7 @@ int ath12k_dbring_buffer_release_event(struct ath12k_base *ab,
 
 		ath12k_hal_rx_buf_addr_info_get(&desc, &paddr, &cookie, &rbm);
 
-		buf_id = FIELD_GET(DP_RXDMA_BUF_COOKIE_BUF_ID, cookie);
+		buf_id = u32_get_bits(cookie, DP_RXDMA_BUF_COOKIE_BUF_ID);
 
 		spin_lock_bh(&ring->idr_lock);
 		buff = idr_find(&ring->bufs_idr, buf_id);

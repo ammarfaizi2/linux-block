@@ -407,16 +407,16 @@ ath12k_dp_tx_process_htt_tx_complete(struct ath12k_base *ab,
 
 	status_desc = desc + HTT_TX_WBM_COMP_STATUS_OFFSET;
 
-	wbm_status = FIELD_GET(HTT_TX_WBM_COMP_INFO0_STATUS,
-			       status_desc->info0);
+	wbm_status = u32_get_bits(status_desc->info0,
+				  HTT_TX_WBM_COMP_INFO0_STATUS);
 
 	switch (wbm_status) {
 	case HAL_WBM_REL_HTT_TX_COMP_STATUS_OK:
 	case HAL_WBM_REL_HTT_TX_COMP_STATUS_DROP:
 	case HAL_WBM_REL_HTT_TX_COMP_STATUS_TTL:
 		ts.acked = (wbm_status == HAL_WBM_REL_HTT_TX_COMP_STATUS_OK);
-		ts.ack_rssi = FIELD_GET(HTT_TX_WBM_COMP_INFO2_ACK_RSSI,
-					status_desc->info2);
+		ts.ack_rssi = u32_get_bits(status_desc->info2,
+					   HTT_TX_WBM_COMP_INFO2_ACK_RSSI);
 		ath12k_dp_tx_htt_tx_complete_buf(ab, msdu, tx_ring, &ts);
 		break;
 	case HAL_WBM_REL_HTT_TX_COMP_STATUS_REINJ:
@@ -500,7 +500,7 @@ static void ath12k_dp_tx_status_parse(struct ath12k_base *ab,
 				      struct hal_tx_status *ts)
 {
 	ts->buf_rel_source =
-		FIELD_GET(HAL_WBM_COMPL_TX_INFO0_REL_SRC_MODULE, desc->info0);
+		u32_get_bits(desc->info0, HAL_WBM_COMPL_TX_INFO0_REL_SRC_MODULE);
 	if (ts->buf_rel_source != HAL_WBM_REL_SRC_MODULE_FW &&
 	    ts->buf_rel_source != HAL_WBM_REL_SRC_MODULE_TQM)
 		return;
@@ -508,11 +508,11 @@ static void ath12k_dp_tx_status_parse(struct ath12k_base *ab,
 	if (ts->buf_rel_source == HAL_WBM_REL_SRC_MODULE_FW)
 		return;
 
-	ts->status = FIELD_GET(HAL_WBM_COMPL_TX_INFO0_TQM_RELEASE_REASON,
-			       desc->info0);
+	ts->status = u32_get_bits(desc->info0,
+				  HAL_WBM_COMPL_TX_INFO0_TQM_RELEASE_REASON);
 
-	ts->ppdu_id = FIELD_GET(HAL_WBM_COMPL_TX_INFO1_TQM_STATUS_NUMBER,
-				desc->info1);
+	ts->ppdu_id = u32_get_bits(desc->info1,
+				   HAL_WBM_COMPL_TX_INFO1_TQM_STATUS_NUMBER);
 	if (desc->rate_stats.info0 & HAL_TX_RATE_STATS_INFO0_VALID)
 		ts->rate_stats = desc->rate_stats.info0;
 	else
@@ -564,15 +564,15 @@ void ath12k_dp_tx_completion_handler(struct ath12k_base *ab, int ring_id)
 		tx_status = &tx_ring->tx_status[tx_ring->tx_status_tail];
 		ath12k_dp_tx_status_parse(ab, tx_status, &ts);
 
-		if (FIELD_GET(HAL_WBM_COMPL_TX_INFO0_CC_DONE, tx_status->info0)) {
+		if (u32_get_bits(tx_status->info0, HAL_WBM_COMPL_TX_INFO0_CC_DONE)) {
 			/* HW done cookie conversion */
 			tx_desc = (struct ath12k_tx_desc_info *)
 					(tx_status->buf_va_lo |
 					(((u64)tx_status->buf_va_hi) << 32));
 		} else {
 			/* SW does cookie conversion to VA */
-			desc_id = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE,
-					    tx_status->buf_va_hi);
+			desc_id = u32_get_bits(tx_status->buf_va_hi,
+					       BUFFER_ADDR_INFO1_SW_COOKIE);
 
 			tx_desc = ath12k_dp_get_tx_desc(ab, desc_id);
 		}
