@@ -234,78 +234,6 @@ static void ath12k_pci_clear_dbg_registers(struct ath12k_base *ab)
 	ath12k_dbg(ab, ATH12K_DBG_PCI, "soc reset cause:%d\n", val);
 }
 
-static int ath12k_pci_set_link_reg(struct ath12k_base *ab,
-				   u32 offset, u32 value, u32 mask)
-{
-	u32 v;
-	int i;
-
-	v = ath12k_pci_read32(ab, offset);
-	if ((v & mask) == value)
-		return 0;
-
-	for (i = 0; i < 10; i++) {
-		ath12k_pci_write32(ab, offset, (v & ~mask) | value);
-
-		v = ath12k_pci_read32(ab, offset);
-		if ((v & mask) == value)
-			return 0;
-
-		mdelay(2);
-	}
-
-	ath12k_warn(ab, "failed to set pcie link register 0x%08x: 0x%08x != 0x%08x\n",
-		    offset, v & mask, value);
-
-	return -ETIMEDOUT;
-}
-
-static int ath12k_pci_fix_l1ss(struct ath12k_base *ab)
-{
-	int ret;
-
-	if (!ab->hw_params->fix_l1ss)
-		return 0;
-
-	ret = ath12k_pci_set_link_reg(ab,
-				      PCIE_QSERDES_COM_SYSCLK_EN_SEL_REG(ab),
-				      PCIE_QSERDES_COM_SYSCLK_EN_SEL_VAL,
-				      PCIE_QSERDES_COM_SYSCLK_EN_SEL_MSK);
-	if (ret) {
-		ath12k_warn(ab, "failed to set sysclk: %d\n", ret);
-		return ret;
-	}
-
-	ret = ath12k_pci_set_link_reg(ab,
-				      PCIE_PCS_OSC_DTCT_CONFIG1_REG(ab),
-				      PCIE_PCS_OSC_DTCT_CONFIG1_VAL,
-				      PCIE_PCS_OSC_DTCT_CONFIG_MSK);
-	if (ret) {
-		ath12k_warn(ab, "failed to set dtct config1 error: %d\n", ret);
-		return ret;
-	}
-
-	ret = ath12k_pci_set_link_reg(ab,
-				      PCIE_PCS_OSC_DTCT_CONFIG2_REG(ab),
-				      PCIE_PCS_OSC_DTCT_CONFIG2_VAL,
-				      PCIE_PCS_OSC_DTCT_CONFIG_MSK);
-	if (ret) {
-		ath12k_warn(ab, "failed to set dtct config2: %d\n", ret);
-		return ret;
-	}
-
-	ret = ath12k_pci_set_link_reg(ab,
-				      PCIE_PCS_OSC_DTCT_CONFIG4_REG(ab),
-				      PCIE_PCS_OSC_DTCT_CONFIG4_VAL,
-				      PCIE_PCS_OSC_DTCT_CONFIG_MSK);
-	if (ret) {
-		ath12k_warn(ab, "failed to set dtct config4: %d\n", ret);
-		return ret;
-	}
-
-	return 0;
-}
-
 static void ath12k_pci_enable_ltssm(struct ath12k_base *ab)
 {
 	u32 val;
@@ -365,7 +293,6 @@ static void ath12k_pci_sw_reset(struct ath12k_base *ab, bool power_on)
 		ath12k_pci_enable_ltssm(ab);
 		ath12k_pci_clear_all_intrs(ab);
 		ath12k_pci_set_wlaon_pwr_ctrl(ab);
-		ath12k_pci_fix_l1ss(ab);
 	}
 
 	ath12k_mhi_clear_vector(ab);
