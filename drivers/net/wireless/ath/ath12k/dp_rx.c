@@ -328,8 +328,10 @@ int ath12k_dp_rxbufs_replenish(struct ath12k_base *ab, int mac_id,
 
 			/* Get desc from free list and store in used list
 			 * for cleanup purposes
+			 *
+			 * TODO: pass the removed descs rather than
+			 * add/read to optimize
 			 */
-			//TODO pass the removed descs rather than add/read to optimize
 			rx_desc = list_first_entry_or_null(&dp->rx_desc_free_list,
 							   struct ath12k_rx_desc_info,
 							   list);
@@ -546,7 +548,7 @@ static int ath12k_dp_rx_pdev_srng_alloc(struct ath12k *ar)
 	u32 mac_id = dp->mac_id;
 
 	if (!ar->ab->hw_params->rxdma1_enable) {
-		//init mon status buffer reap timer
+		/* init mon status buffer reap timer */
 		timer_setup(&ar->ab->mon_reap_timer,
 			    ath12k_dp_service_mon_ring, 0);
 		return 0;
@@ -719,7 +721,9 @@ static void ath12k_peer_rx_tid_qref_setup(struct ath12k_base *ab, u16 peer_id, u
 	if (!ab->hw_params->reoq_lut_support)
 		return;
 
-	//TODO based on ML peer or not, select the LUT. below assumes non ML peer
+	/* TODO: based on ML peer or not, select the LUT. below assumes non
+	 * ML peer
+	 */
 	qref = (struct ath12k_reo_queue_ref *)dp->reoq_lut.vaddr +
 			(peer_id * (IEEE80211_NUM_TIDS + 1) + tid);
 
@@ -736,7 +740,9 @@ static void ath12k_peer_rx_tid_qref_reset(struct ath12k_base *ab, u16 peer_id, u
 	if (!ab->hw_params->reoq_lut_support)
 		return;
 
-	//TODO based on ML peer or not, select the LUT. below assumes non ML peer
+	/* TODO: based on ML peer or not, select the LUT. below assumes non
+	 * ML peer
+	 */
 	qref = (struct ath12k_reo_queue_ref *)dp->reoq_lut.vaddr +
 			(peer_id * (IEEE80211_NUM_TIDS + 1) + tid);
 
@@ -1758,7 +1764,7 @@ void ath12k_dp_htt_htc_t2h_msg_handler(struct ath12k_base *ab,
 						  resp->version_msg.version);
 		complete(&dp->htt_tgt_version_received);
 		break;
-	//TODO remove unused peer map versions after testing
+	/* TODO: remove unused peer map versions after testing */
 	case HTT_T2H_MSG_TYPE_PEER_MAP:
 		vdev_id = FIELD_GET(HTT_T2H_PEER_MAP_INFO_VDEV_ID,
 				    resp->peer_map_ev.info);
@@ -2765,7 +2771,7 @@ try_again:
 	if (!total_msdu_reaped)
 		goto exit;
 
-	//TODO Move to implicit BM?
+	/* TODO: Move to implicit BM? */
 	ath12k_dp_rxbufs_replenish(ab, i, rx_ring, num_buffs_reaped,
 				   ab->hw_params->hal_params->rx_buf_rbm, true);
 

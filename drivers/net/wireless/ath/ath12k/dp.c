@@ -1502,7 +1502,9 @@ int ath12k_dp_alloc(struct ath12k_base *ab)
 		dp->tx_ring[i].tx_status = kmalloc(size, GFP_KERNEL);
 		if (!dp->tx_ring[i].tx_status) {
 			ret = -ENOMEM;
-			//FIXME The allocated tx status is not freed properly here
+			/* FIXME The allocated tx status is not freed
+			 * properly here
+			 */
 			goto fail_cmn_reoq_cleanup;
 		}
 	}

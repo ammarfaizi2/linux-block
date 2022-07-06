@@ -1972,7 +1972,7 @@ ath12k_dp_mon_tx_status_get_num_user(u16 tlv_tag,
 	}
 
 	case HAL_RX_RESPONSE_REQUIRED_INFO: {
-		// need to update *num_users
+		/* TODO: need to update *num_users */
 		tlv_status = DP_MON_RX_RESPONSE_REQUIRED_INFO;
 		break;
 	}

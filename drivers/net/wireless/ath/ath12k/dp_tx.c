@@ -155,7 +155,7 @@ int ath12k_dp_tx(struct ath12k *ar, struct ath12k_vif *arvif,
 	 * the smp_processor_id(). In case that ring
 	 * is full/busy, we resort to other available rings.
 	 * If all rings are full, we drop the packet.
-	 * //TODO Add throttling logic when all rings are full
+	 * TODO: Add throttling logic when all rings are full
 	 */
 	ring_selector = ab->hw_params->hw_ops->get_ring_selector(skb);
 
