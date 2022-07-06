@@ -119,7 +119,7 @@ static const char *irq_name[ATH12K_IRQ_NUM_MAX] = {
 	"tcl2host-status-ring",
 };
 
-static inline void ath12k_pci_select_window(struct ath12k_pci *ab_pci, u32 offset)
+static void ath12k_pci_select_window(struct ath12k_pci *ab_pci, u32 offset)
 {
 	struct ath12k_base *ab = ab_pci->ab;
 
@@ -140,7 +140,7 @@ static inline void ath12k_pci_select_window(struct ath12k_pci *ab_pci, u32 offse
 	}
 }
 
-static inline void ath12k_pci_select_static_window(struct ath12k_pci *ab_pci)
+static void ath12k_pci_select_static_window(struct ath12k_pci *ab_pci)
 {
 	u32 umac_window = FIELD_GET(WINDOW_VALUE_MASK, HAL_SEQ_WCSS_UMAC_OFFSET);
 	u32 ce_window = FIELD_GET(WINDOW_VALUE_MASK, HAL_CE_WFSS_CE_REG_BASE);
@@ -155,8 +155,8 @@ static inline void ath12k_pci_select_static_window(struct ath12k_pci *ab_pci)
 	iowrite32(WINDOW_ENABLE_BIT | window, ab_pci->ab->mem + WINDOW_REG_ADDRESS);
 }
 
-static inline u32 ath12k_pci_get_window_start(struct ath12k_base *ab,
-					      u32 offset)
+static u32 ath12k_pci_get_window_start(struct ath12k_base *ab,
+				       u32 offset)
 {
 	u32 window_start;
 

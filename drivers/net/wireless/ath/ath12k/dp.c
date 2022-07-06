@@ -1266,7 +1266,7 @@ static u8 *ath12k_dp_cc_find_desc(struct ath12k_base *ab, u32 cookie)
 	return (spt_va + spt_idx * sizeof(u64));
 }
 
-inline struct ath12k_rx_desc_info *ath12k_dp_get_rx_desc(struct ath12k_base *ab,
+struct ath12k_rx_desc_info *ath12k_dp_get_rx_desc(struct ath12k_base *ab,
 						  u32 cookie)
 {
 	u8 *desc_addr_ptr;
@@ -1275,7 +1275,7 @@ inline struct ath12k_rx_desc_info *ath12k_dp_get_rx_desc(struct ath12k_base *ab,
 	return *(struct ath12k_rx_desc_info **)desc_addr_ptr;
 }
 
-inline struct ath12k_tx_desc_info *ath12k_dp_get_tx_desc(struct ath12k_base *ab,
+struct ath12k_tx_desc_info *ath12k_dp_get_tx_desc(struct ath12k_base *ab,
 						  u32 desc_id)
 {
 	u8 *desc_addr_ptr;

@@ -1120,8 +1120,8 @@ int ath12k_dp_peer_rx_pn_replay_config(struct ath12k_vif *arvif,
 	return ret;
 }
 
-static inline int ath12k_get_ppdu_user_index(struct htt_ppdu_stats *ppdu_stats,
-					     u16 peer_id)
+static int ath12k_get_ppdu_user_index(struct htt_ppdu_stats *ppdu_stats,
+				      u16 peer_id)
 {
 	int i;
 

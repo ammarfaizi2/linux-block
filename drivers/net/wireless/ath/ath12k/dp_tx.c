@@ -495,9 +495,9 @@ exit:
 	rcu_read_unlock();
 }
 
-static inline void ath12k_dp_tx_status_parse(struct ath12k_base *ab,
-					     struct hal_wbm_completion_ring_tx *desc,
-					     struct hal_tx_status *ts)
+static void ath12k_dp_tx_status_parse(struct ath12k_base *ab,
+				      struct hal_wbm_completion_ring_tx *desc,
+				      struct hal_tx_status *ts)
 {
 	ts->buf_rel_source =
 		FIELD_GET(HAL_WBM_COMPL_TX_INFO0_REL_SRC_MODULE, desc->info0);

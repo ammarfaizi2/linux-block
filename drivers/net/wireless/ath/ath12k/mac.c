@@ -714,7 +714,7 @@ void ath12k_mac_peer_cleanup_all(struct ath12k *ar)
 	ar->num_stations = 0;
 }
 
-static inline int ath12k_mac_vdev_setup_sync(struct ath12k *ar)
+static int ath12k_mac_vdev_setup_sync(struct ath12k *ar)
 {
 	lockdep_assert_held(&ar->conf_mutex);
 

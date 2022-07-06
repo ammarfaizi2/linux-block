@@ -1787,10 +1787,9 @@ int ath12k_wmi_vdev_install_key(struct ath12k *ar,
 	return ret;
 }
 
-static inline void
-ath12k_wmi_copy_peer_flags(struct wmi_peer_assoc_complete_cmd *cmd,
-			   struct peer_assoc_params *param,
-			   bool hw_crypto_disabled)
+static void ath12k_wmi_copy_peer_flags(struct wmi_peer_assoc_complete_cmd *cmd,
+				       struct peer_assoc_params *param,
+				       bool hw_crypto_disabled)
 {
 	cmd->peer_flags = 0;
 
@@ -2064,9 +2063,8 @@ void ath12k_wmi_start_scan_init(struct ath12k *ar,
 	eth_broadcast_addr(arg->bssid_list[0].addr);
 }
 
-static inline void
-ath12k_wmi_copy_scan_event_cntrl_flags(struct wmi_start_scan_cmd *cmd,
-				       struct scan_req_params *param)
+static void ath12k_wmi_copy_scan_event_cntrl_flags(struct wmi_start_scan_cmd *cmd,
+						   struct scan_req_params *param)
 {
 	/* Scan events subscription */
 	if (param->scan_ev_started)
@@ -6122,7 +6120,7 @@ static void ath12k_vdev_delete_resp_event(struct ath12k_base *ab,
 		   vdev_id);
 }
 
-static inline const char *ath12k_wmi_vdev_resp_print(u32 vdev_resp_status)
+static const char *ath12k_wmi_vdev_resp_print(u32 vdev_resp_status)
 {
 	switch (vdev_resp_status) {
 	case WMI_VDEV_START_RESPONSE_INVALID_VDEVID:
