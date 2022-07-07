@@ -195,6 +195,15 @@ struct resource_funcs {
 	enum dc_status (*add_dsc_to_stream_resource)(
 			struct dc *dc, struct dc_state *state,
 			struct dc_stream_state *stream);
+
+	void (*add_phantom_pipes)(
+            struct dc *dc,
+            struct dc_state *context,
+            display_e2e_pipe_params_st *pipes,
+			unsigned int pipe_cnt,
+            unsigned int index);
+
+	bool (*remove_phantom_pipes)(struct dc *dc, struct dc_state *context);
 };
 
 struct audio_support{
