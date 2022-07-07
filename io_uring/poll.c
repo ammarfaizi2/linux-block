@@ -593,6 +593,7 @@ static struct async_poll *io_req_alloc_apoll(struct io_kiocb *req,
 		apoll = hlist_entry(ctx->apoll_cache.list.first,
 						struct async_poll, cache_list);
 		hlist_del(&apoll->cache_list);
+		ctx->apoll_cache.nr_cached--;
 	} else {
 		apoll = kmalloc(sizeof(*apoll), GFP_ATOMIC);
 		if (unlikely(!apoll))
@@ -969,4 +970,5 @@ void io_flush_apoll_cache(struct io_ring_ctx *ctx)
 		hlist_del(&apoll->cache_list);
 		kfree(apoll);
 	}
+	ctx->apoll_cache.nr_cached = 0;
 }

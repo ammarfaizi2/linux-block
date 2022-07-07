@@ -1181,8 +1181,12 @@ void io_free_batch_list(struct io_ring_ctx *ctx, struct io_wq_work_node *node)
 
 				if (apoll->double_poll)
 					kfree(apoll->double_poll);
-				hlist_add_head(&apoll->cache_list,
-						&ctx->apoll_cache.list);
+				if (io_alloc_cache_store(&ctx->apoll_cache)) {
+					hlist_add_head(&apoll->cache_list,
+							&ctx->apoll_cache.list);
+				} else {
+					kfree(apoll);
+				}
 				req->flags &= ~REQ_F_POLLED;
 			}
 			if (req->flags & IO_REQ_LINK_FLAGS)
