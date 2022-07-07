@@ -1216,7 +1216,6 @@ static inline int scrub_nr_raid_mirrors(struct btrfs_io_context *bioc)
 
 static inline void scrub_stripe_index_and_offset(u64 logical, u64 map_type,
 						 u64 *raid_map,
-						 u64 mapped_length,
 						 int nstripes, int mirror,
 						 int *stripe_index,
 						 u64 *stripe_offset)
@@ -1231,7 +1230,7 @@ static inline void scrub_stripe_index_and_offset(u64 logical, u64 map_type,
 				continue;
 
 			if (logical >= raid_map[i] &&
-			    logical < raid_map[i] + mapped_length)
+			    logical < raid_map[i] + BTRFS_STRIPE_LEN)
 				break;
 		}
 
@@ -1335,7 +1334,6 @@ leave_nomem:
 			scrub_stripe_index_and_offset(logical,
 						      bioc->map_type,
 						      bioc->raid_map,
-						      mapped_length,
 						      bioc->num_stripes -
 						      bioc->num_tgtdevs,
 						      mirror_index,
@@ -1378,19 +1376,12 @@ static int scrub_submit_raid56_bio_wait(struct btrfs_fs_info *fs_info,
 					struct scrub_sector *sector)
 {
 	DECLARE_COMPLETION_ONSTACK(done);
-	int ret;
-	int mirror_num;
 
 	bio->bi_iter.bi_sector = sector->logical >> 9;
 	bio->bi_private = &done;
 	bio->bi_end_io = scrub_bio_wait_endio;
-
-	mirror_num = sector->sblock->sectors[0]->mirror_num;
-	ret = raid56_parity_recover(bio, sector->recover->bioc,
-				    sector->recover->map_length,
-				    mirror_num, 0);
-	if (ret)
-		return ret;
+	raid56_parity_recover(bio, sector->recover->bioc,
+			      sector->sblock->sectors[0]->mirror_num, false);
 
 	wait_for_completion_io(&done);
 	return blk_status_to_errno(bio->bi_status);
@@ -2195,7 +2186,7 @@ static void scrub_missing_raid56_pages(struct scrub_block *sblock)
 	bio->bi_private = sblock;
 	bio->bi_end_io = scrub_missing_raid56_end_io;
 
-	rbio = raid56_alloc_missing_rbio(bio, bioc, length);
+	rbio = raid56_alloc_missing_rbio(bio, bioc);
 	if (!rbio)
 		goto rbio_out;
 
@@ -2829,7 +2820,7 @@ static void scrub_parity_check_and_repair(struct scrub_parity *sparity)
 	bio->bi_private = sparity;
 	bio->bi_end_io = scrub_parity_bio_endio;
 
-	rbio = raid56_parity_alloc_scrub_rbio(bio, bioc, length,
+	rbio = raid56_parity_alloc_scrub_rbio(bio, bioc,
 					      sparity->scrub_dev,
 					      &sparity->dbitmap,
 					      sparity->nsectors);
