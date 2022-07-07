@@ -40,7 +40,6 @@
 
 /* UFS PHY registers */
 #define PHY_PLL_LOCK_STATUS	0x1e
-#define PHY_CDR_LOCK_STATUS	0x5e
 
 #define PHY_PLL_LOCK_BIT	BIT(5)
 #define PHY_CDR_LOCK_BIT	BIT(4)
@@ -101,14 +100,17 @@ struct samsung_ufs_phy_cfg {
 	u8 id;
 };
 
+struct samsung_ufs_phy_pmu_isol {
+	u32 offset;
+	u32 mask;
+	u32 en;
+};
+
 struct samsung_ufs_phy_drvdata {
-	const struct samsung_ufs_phy_cfg **cfg;
-	struct pmu_isol {
-		u32 offset;
-		u32 mask;
-		u32 en;
-	} isol;
+	const struct samsung_ufs_phy_cfg **cfgs;
+	struct samsung_ufs_phy_pmu_isol isol;
 	bool has_symbol_clk;
+	u32 cdr_lock_status_offset;
 };
 
 struct samsung_ufs_phy {
@@ -121,8 +123,9 @@ struct samsung_ufs_phy {
 	struct clk *rx0_symbol_clk;
 	struct clk *rx1_symbol_clk;
 	const struct samsung_ufs_phy_drvdata *drvdata;
-	struct samsung_ufs_phy_cfg **cfg;
-	const struct pmu_isol *isol;
+	const struct samsung_ufs_phy_cfg * const *cfgs;
+	struct samsung_ufs_phy_pmu_isol isol;
+	bool has_symbol_clk;
 	u8 lane_cnt;
 	int ufs_phy_state;
 	enum phy_mode mode;
@@ -136,11 +139,12 @@ static inline struct samsung_ufs_phy *get_samsung_ufs_phy(struct phy *phy)
 static inline void samsung_ufs_phy_ctrl_isol(
 		struct samsung_ufs_phy *phy, u32 isol)
 {
-	regmap_update_bits(phy->reg_pmu, phy->isol->offset,
-			   phy->isol->mask, isol ? 0 : phy->isol->en);
+	regmap_update_bits(phy->reg_pmu, phy->isol.offset,
+			   phy->isol.mask, isol ? 0 : phy->isol.en);
 }
 
 extern const struct samsung_ufs_phy_drvdata exynos7_ufs_phy;
 extern const struct samsung_ufs_phy_drvdata exynosautov9_ufs_phy;
+extern const struct samsung_ufs_phy_drvdata fsd_ufs_phy;
 
 #endif /* _PHY_SAMSUNG_UFS_ */

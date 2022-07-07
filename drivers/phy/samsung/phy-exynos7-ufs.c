@@ -11,6 +11,8 @@
 #define EXYNOS7_EMBEDDED_COMBO_PHY_CTRL_MASK	0x1
 #define EXYNOS7_EMBEDDED_COMBO_PHY_CTRL_EN	BIT(0)
 
+#define EXYNOS7_EMBEDDED_COMBO_PHY_CDR_LOCK_STATUS	0x5e
+
 /* Calibration for phy initialization */
 static const struct samsung_ufs_phy_cfg exynos7_pre_init_cfg[] = {
 	PHY_COMN_REG_CFG(0x00f, 0xfa, PWR_MODE_ANY),
@@ -67,11 +69,12 @@ static const struct samsung_ufs_phy_cfg *exynos7_ufs_phy_cfgs[CFG_TAG_MAX] = {
 };
 
 const struct samsung_ufs_phy_drvdata exynos7_ufs_phy = {
-	.cfg = exynos7_ufs_phy_cfgs,
+	.cfgs = exynos7_ufs_phy_cfgs,
 	.isol = {
 		.offset = EXYNOS7_EMBEDDED_COMBO_PHY_CTRL,
 		.mask = EXYNOS7_EMBEDDED_COMBO_PHY_CTRL_MASK,
 		.en = EXYNOS7_EMBEDDED_COMBO_PHY_CTRL_EN,
 	},
 	.has_symbol_clk = 1,
+	.cdr_lock_status_offset = EXYNOS7_EMBEDDED_COMBO_PHY_CDR_LOCK_STATUS,
 };
