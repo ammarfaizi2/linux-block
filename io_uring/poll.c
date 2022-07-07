@@ -589,10 +589,10 @@ static struct async_poll *io_req_alloc_apoll(struct io_kiocb *req,
 		apoll = req->apoll;
 		kfree(apoll->double_poll);
 	} else if (!(issue_flags & IO_URING_F_UNLOCKED) &&
-		   !list_empty(&ctx->apoll_cache)) {
-		apoll = list_first_entry(&ctx->apoll_cache, struct async_poll,
-						poll.wait.entry);
-		list_del_init(&apoll->poll.wait.entry);
+		   !hlist_empty(&ctx->apoll_cache.list)) {
+		apoll = hlist_entry(ctx->apoll_cache.list.first,
+						struct async_poll, cache_list);
+		hlist_del(&apoll->cache_list);
 	} else {
 		apoll = kmalloc(sizeof(*apoll), GFP_ATOMIC);
 		if (unlikely(!apoll))
@@ -963,10 +963,10 @@ void io_flush_apoll_cache(struct io_ring_ctx *ctx)
 {
 	struct async_poll *apoll;
 
-	while (!list_empty(&ctx->apoll_cache)) {
-		apoll = list_first_entry(&ctx->apoll_cache, struct async_poll,
-						poll.wait.entry);
-		list_del(&apoll->poll.wait.entry);
+	while (!hlist_empty(&ctx->apoll_cache.list)) {
+		apoll = hlist_entry(ctx->apoll_cache.list.first,
+						struct async_poll, cache_list);
+		hlist_del(&apoll->cache_list);
 		kfree(apoll);
 	}
 }

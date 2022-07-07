@@ -14,7 +14,10 @@ struct io_poll {
 };
 
 struct async_poll {
-	struct io_poll		poll;
+	union {
+		struct io_poll		poll;
+		struct hlist_node	cache_list;
+	};
 	struct io_poll		*double_poll;
 };
 
