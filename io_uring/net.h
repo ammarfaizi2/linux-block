@@ -5,7 +5,10 @@
 
 #if defined(CONFIG_NET)
 struct io_async_msghdr {
-	struct iovec			fast_iov[UIO_FASTIOV];
+	union {
+		struct iovec		fast_iov[UIO_FASTIOV];
+		struct hlist_node	cache_list;
+	};
 	/* points to an allocated iov, if NULL we use fast_iov instead */
 	struct iovec			*free_iov;
 	struct sockaddr __user		*uaddr;
@@ -40,4 +43,10 @@ int io_socket(struct io_kiocb *req, unsigned int issue_flags);
 int io_connect_prep_async(struct io_kiocb *req);
 int io_connect_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe);
 int io_connect(struct io_kiocb *req, unsigned int issue_flags);
+
+void io_flush_netmsg_cache(struct io_ring_ctx *ctx);
+#else
+static inline void io_flush_netmsg_cache(struct io_ring_ctx *ctx)
+{
+}
 #endif
