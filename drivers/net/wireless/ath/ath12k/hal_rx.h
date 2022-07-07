@@ -26,16 +26,16 @@ struct hal_rx_wbm_rel_info {
 #define HAL_RX_MAX_NSS 8
 
 #define HAL_RX_MPDU_INFO_PN_GET_BYTE1(__val) \
-	FIELD_GET(GENMASK(7, 0), __le32_to_cpu(__val))
+	le32_get_bits((__val), GENMASK(7, 0))
 
 #define HAL_RX_MPDU_INFO_PN_GET_BYTE2(__val) \
-	FIELD_GET(GENMASK(15, 8), __le32_to_cpu(__val))
+	le32_get_bits((__val), GENMASK(15, 8))
 
 #define HAL_RX_MPDU_INFO_PN_GET_BYTE3(__val) \
-	FIELD_GET(GENMASK(23, 16), __le32_to_cpu(__val))
+	le32_get_bits((__val), GENMASK(23, 16))
 
 #define HAL_RX_MPDU_INFO_PN_GET_BYTE4(__val) \
-	FIELD_GET(GENMASK(31, 24), __le32_to_cpu(__val))
+	le32_get_bits((__val), GENMASK(31, 24))
 
 struct hal_rx_mon_status_tlv_hdr {
 	u32 hdr;
