@@ -19,11 +19,6 @@ int ath12k_dp_tx_htt_h2t_ver_req_msg(struct ath12k_base *ab);
 int ath12k_dp_tx(struct ath12k *ar, struct ath12k_vif *arvif,
 		 struct sk_buff *skb);
 void ath12k_dp_tx_completion_handler(struct ath12k_base *ab, int ring_id);
-int ath12k_dp_tx_send_reo_cmd(struct ath12k_base *ab, struct dp_rx_tid *rx_tid,
-			      enum hal_reo_cmd_type type,
-			      struct ath12k_hal_reo_cmd *cmd,
-			      void (*cb)(struct ath12k_dp *dp, void *ctx,
-					 enum hal_reo_cmd_status status));
 
 int ath12k_dp_tx_htt_h2t_ppdu_stats_req(struct ath12k *ar, u32 mask);
 int

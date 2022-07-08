@@ -12,6 +12,44 @@
 
 #define DP_MAX_NWIFI_HDR_LEN	30
 
+struct ath12k_dp_rx_tid {
+	u8 tid;
+	u32 *vaddr;
+	dma_addr_t paddr;
+	u32 size;
+	u32 ba_win_sz;
+	bool active;
+
+	/* Info related to rx fragments */
+	u32 cur_sn;
+	u16 last_frag_no;
+	u16 rx_frag_bitmap;
+
+	struct sk_buff_head rx_frags;
+	struct hal_reo_dest_ring *dst_ring_desc;
+
+	/* Timer info related to fragments */
+	struct timer_list frag_timer;
+	struct ath12k_base *ab;
+};
+
+struct ath12k_dp_rx_reo_cache_flush_elem {
+	struct list_head list;
+	struct ath12k_dp_rx_tid data;
+	unsigned long ts;
+};
+
+struct ath12k_dp_rx_reo_cmd {
+	struct list_head list;
+	struct ath12k_dp_rx_tid data;
+	int cmd_num;
+	void (*handler)(struct ath12k_dp *dp, void *ctx,
+			enum hal_reo_cmd_status status);
+};
+
+#define ATH12K_DP_RX_REO_DESC_FREE_THRES  64
+#define ATH12K_DP_RX_REO_DESC_FREE_TIMEOUT_MS 1000
+
 enum dp_rx_decap_type {
 	DP_RX_DECAP_TYPE_RAW,
 	DP_RX_DECAP_TYPE_NATIVE_WIFI,
@@ -71,12 +109,12 @@ int ath12k_dp_peer_rx_pn_replay_config(struct ath12k_vif *arvif,
 				       const u8 *peer_addr,
 				       enum set_key_cmd key_cmd,
 				       struct ieee80211_key_conf *key);
-void ath12k_peer_rx_tid_cleanup(struct ath12k *ar, struct ath12k_peer *peer);
-void ath12k_peer_rx_tid_delete(struct ath12k *ar,
-			       struct ath12k_peer *peer, u8 tid);
-int ath12k_peer_rx_tid_setup(struct ath12k *ar, const u8 *peer_mac, int vdev_id,
-			     u8 tid, u32 ba_win_sz, u16 ssn,
-			     enum hal_pn_type pn_type);
+void ath12k_dp_rx_peer_tid_cleanup(struct ath12k *ar, struct ath12k_peer *peer);
+void ath12k_dp_rx_peer_tid_delete(struct ath12k *ar,
+				  struct ath12k_peer *peer, u8 tid);
+int ath12k_dp_rx_peer_tid_setup(struct ath12k *ar, const u8 *peer_mac, int vdev_id,
+				u8 tid, u32 ba_win_sz, u16 ssn,
+				enum hal_pn_type pn_type);
 void ath12k_dp_htt_htc_t2h_msg_handler(struct ath12k_base *ab,
 				       struct sk_buff *skb);
 int ath12k_dp_pdev_reo_setup(struct ath12k_base *ab);
@@ -86,8 +124,8 @@ int ath12k_dp_rx_alloc(struct ath12k_base *ab);
 void ath12k_dp_rx_free(struct ath12k_base *ab);
 int ath12k_dp_rx_pdev_alloc(struct ath12k_base *ab, int pdev_idx);
 void ath12k_dp_rx_pdev_free(struct ath12k_base *ab, int pdev_idx);
-void ath12k_dp_reo_cmd_list_cleanup(struct ath12k_base *ab);
-void ath12k_dp_process_reo_status(struct ath12k_base *ab);
+void ath12k_dp_rx_reo_cmd_list_cleanup(struct ath12k_base *ab);
+void ath12k_dp_rx_process_reo_status(struct ath12k_base *ab);
 int ath12k_dp_rx_process_wbm_err(struct ath12k_base *ab,
 				 struct napi_struct *napi, int budget);
 int ath12k_dp_process_rx_err(struct ath12k_base *ab, struct napi_struct *napi,

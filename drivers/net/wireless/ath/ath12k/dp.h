@@ -19,45 +19,8 @@ struct ath12k_vif;
 struct hal_tcl_status_ring;
 struct ath12k_ext_irq_grp;
 
-struct dp_rx_tid {
-	u8 tid;
-	u32 *vaddr;
-	dma_addr_t paddr;
-	u32 size;
-	u32 ba_win_sz;
-	bool active;
-
-	/* Info related to rx fragments */
-	u32 cur_sn;
-	u16 last_frag_no;
-	u16 rx_frag_bitmap;
-
-	struct sk_buff_head rx_frags;
-	struct hal_reo_dest_ring *dst_ring_desc;
-
-	/* Timer info related to fragments */
-	struct timer_list frag_timer;
-	struct ath12k_base *ab;
-};
-
-#define DP_REO_DESC_FREE_THRESHOLD  64
-#define DP_REO_DESC_FREE_TIMEOUT_MS 1000
 #define DP_MON_PURGE_TIMEOUT_MS     100
 #define DP_MON_SERVICE_BUDGET       128
-
-struct dp_reo_cache_flush_elem {
-	struct list_head list;
-	struct dp_rx_tid data;
-	unsigned long ts;
-};
-
-struct dp_reo_cmd {
-	struct list_head list;
-	struct dp_rx_tid data;
-	int cmd_num;
-	void (*handler)(struct ath12k_dp *dp, void *ctx,
-			enum hal_reo_cmd_status status);
-};
 
 struct dp_srng {
 	u32 *vaddr_unaligned;

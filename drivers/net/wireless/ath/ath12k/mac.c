@@ -704,7 +704,7 @@ void ath12k_mac_peer_cleanup_all(struct ath12k *ar)
 
 	spin_lock_bh(&ab->base_lock);
 	list_for_each_entry_safe(peer, tmp, &ab->peers, list) {
-		ath12k_peer_rx_tid_cleanup(ar, peer);
+		ath12k_dp_rx_peer_tid_cleanup(ar, peer);
 		list_del(&peer->list);
 		kfree(peer);
 	}

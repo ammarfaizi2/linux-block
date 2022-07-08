@@ -7,6 +7,8 @@
 #ifndef ATH12K_PEER_H
 #define ATH12K_PEER_H
 
+#include "dp_rx.h"
+
 struct ppdu_user_delayba {
 	u8 reserved0;
 	u16 sw_peer_id;
@@ -30,7 +32,7 @@ struct ath12k_peer {
 
 	/* protected by ab->data_lock */
 	struct ieee80211_key_conf *keys[WMI_MAX_KEY_INDEX + 1];
-	struct dp_rx_tid rx_tid[IEEE80211_NUM_TIDS + 1];
+	struct ath12k_dp_rx_tid rx_tid[IEEE80211_NUM_TIDS + 1];
 
 	/* Info used in MMIC verification of
 	 * RX fragments

@@ -581,11 +581,11 @@ static int ath12k_dp_rx_pdev_srng_alloc(struct ath12k *ar)
 	return 0;
 }
 
-void ath12k_dp_reo_cmd_list_cleanup(struct ath12k_base *ab)
+void ath12k_dp_rx_reo_cmd_list_cleanup(struct ath12k_base *ab)
 {
 	struct ath12k_dp *dp = &ab->dp;
-	struct dp_reo_cmd *cmd, *tmp;
-	struct dp_reo_cache_flush_elem *cmd_cache, *tmp_cache;
+	struct ath12k_dp_rx_reo_cmd *cmd, *tmp;
+	struct ath12k_dp_rx_reo_cache_flush_elem *cmd_cache, *tmp_cache;
 
 	spin_lock_bh(&dp->reo_cmd_lock);
 	list_for_each_entry_safe(cmd, tmp, &dp->reo_cmd_list, list) {
@@ -611,7 +611,7 @@ void ath12k_dp_reo_cmd_list_cleanup(struct ath12k_base *ab)
 static void ath12k_dp_reo_cmd_free(struct ath12k_dp *dp, void *ctx,
 				   enum hal_reo_cmd_status status)
 {
-	struct dp_rx_tid *rx_tid = ctx;
+	struct ath12k_dp_rx_tid *rx_tid = ctx;
 
 	if (status != HAL_REO_CMD_SUCCESS)
 		ath12k_warn(dp->ab, "failed to flush rx tid hw desc, tid %d status %d\n",
@@ -622,8 +622,53 @@ static void ath12k_dp_reo_cmd_free(struct ath12k_dp *dp, void *ctx,
 	kfree(rx_tid->vaddr);
 }
 
+static int ath12k_dp_reo_cmd_send(struct ath12k_base *ab, struct ath12k_dp_rx_tid *rx_tid,
+				  enum hal_reo_cmd_type type,
+				  struct ath12k_hal_reo_cmd *cmd,
+				  void (*cb)(struct ath12k_dp *dp, void *ctx,
+					     enum hal_reo_cmd_status status))
+{
+	struct ath12k_dp *dp = &ab->dp;
+	struct ath12k_dp_rx_reo_cmd *dp_cmd;
+	struct hal_srng *cmd_ring;
+	int cmd_num;
+
+	cmd_ring = &ab->hal.srng_list[dp->reo_cmd_ring.ring_id];
+	cmd_num = ath12k_hal_reo_cmd_send(ab, cmd_ring, type, cmd);
+
+	/* cmd_num should start from 1, during failure return the error code */
+	if (cmd_num < 0)
+		return cmd_num;
+
+	/* reo cmd ring descriptors has cmd_num starting from 1 */
+	if (cmd_num == 0)
+		return -EINVAL;
+
+	if (!cb)
+		return 0;
+
+	/* Can this be optimized so that we keep the pending command list only
+	 * for tid delete command to free up the resoruce on the command status
+	 * indication?
+	 */
+	dp_cmd = kzalloc(sizeof(*dp_cmd), GFP_ATOMIC);
+
+	if (!dp_cmd)
+		return -ENOMEM;
+
+	memcpy(&dp_cmd->data, rx_tid, sizeof(struct ath12k_dp_rx_tid));
+	dp_cmd->cmd_num = cmd_num;
+	dp_cmd->handler = cb;
+
+	spin_lock_bh(&dp->reo_cmd_lock);
+	list_add_tail(&dp_cmd->list, &dp->reo_cmd_list);
+	spin_unlock_bh(&dp->reo_cmd_lock);
+
+	return 0;
+}
+
 static void ath12k_dp_reo_cache_flush(struct ath12k_base *ab,
-				      struct dp_rx_tid *rx_tid)
+				      struct ath12k_dp_rx_tid *rx_tid)
 {
 	struct ath12k_hal_reo_cmd cmd = {0};
 	unsigned long tot_desc_sz, desc_sz;
@@ -636,9 +681,9 @@ static void ath12k_dp_reo_cache_flush(struct ath12k_base *ab,
 		tot_desc_sz -= desc_sz;
 		cmd.addr_lo = lower_32_bits(rx_tid->paddr + tot_desc_sz);
 		cmd.addr_hi = upper_32_bits(rx_tid->paddr);
-		ret = ath12k_dp_tx_send_reo_cmd(ab, rx_tid,
-						HAL_REO_CMD_FLUSH_CACHE, &cmd,
-						NULL);
+		ret = ath12k_dp_reo_cmd_send(ab, rx_tid,
+					     HAL_REO_CMD_FLUSH_CACHE, &cmd,
+					     NULL);
 		if (ret)
 			ath12k_warn(ab,
 				    "failed to send HAL_REO_CMD_FLUSH_CACHE, tid %d (%d)\n",
@@ -649,9 +694,9 @@ static void ath12k_dp_reo_cache_flush(struct ath12k_base *ab,
 	cmd.addr_lo = lower_32_bits(rx_tid->paddr);
 	cmd.addr_hi = upper_32_bits(rx_tid->paddr);
 	cmd.flag |= HAL_REO_CMD_FLG_NEED_STATUS;
-	ret = ath12k_dp_tx_send_reo_cmd(ab, rx_tid,
-					HAL_REO_CMD_FLUSH_CACHE,
-					&cmd, ath12k_dp_reo_cmd_free);
+	ret = ath12k_dp_reo_cmd_send(ab, rx_tid,
+				     HAL_REO_CMD_FLUSH_CACHE,
+				     &cmd, ath12k_dp_reo_cmd_free);
 	if (ret) {
 		ath12k_err(ab, "failed to send HAL_REO_CMD_FLUSH_CACHE cmd, tid %d (%d)\n",
 			   rx_tid->tid, ret);
@@ -665,8 +710,8 @@ static void ath12k_dp_rx_tid_del_func(struct ath12k_dp *dp, void *ctx,
 				      enum hal_reo_cmd_status status)
 {
 	struct ath12k_base *ab = dp->ab;
-	struct dp_rx_tid *rx_tid = ctx;
-	struct dp_reo_cache_flush_elem *elem, *tmp;
+	struct ath12k_dp_rx_tid *rx_tid = ctx;
+	struct ath12k_dp_rx_reo_cache_flush_elem *elem, *tmp;
 
 	if (status == HAL_REO_CMD_DRAIN) {
 		goto free_desc;
@@ -691,9 +736,9 @@ static void ath12k_dp_rx_tid_del_func(struct ath12k_dp *dp, void *ctx,
 	/* Flush and invalidate aged REO desc from HW cache */
 	list_for_each_entry_safe(elem, tmp, &dp->reo_cmd_cache_flush_list,
 				 list) {
-		if (dp->reo_cmd_cache_flush_count > DP_REO_DESC_FREE_THRESHOLD ||
+		if (dp->reo_cmd_cache_flush_count > ATH12K_DP_RX_REO_DESC_FREE_THRES ||
 		    time_after(jiffies, elem->ts +
-			       msecs_to_jiffies(DP_REO_DESC_FREE_TIMEOUT_MS))) {
+			       msecs_to_jiffies(ATH12K_DP_RX_REO_DESC_FREE_TIMEOUT_MS))) {
 			list_del(&elem->list);
 			dp->reo_cmd_cache_flush_count--;
 			spin_unlock_bh(&dp->reo_cmd_lock);
@@ -751,11 +796,11 @@ static void ath12k_peer_rx_tid_qref_reset(struct ath12k_base *ab, u16 peer_id, u
 		      FIELD_PREP(DP_REO_QREF_NUM, tid);
 }
 
-void ath12k_peer_rx_tid_delete(struct ath12k *ar,
-			       struct ath12k_peer *peer, u8 tid)
+void ath12k_dp_rx_peer_tid_delete(struct ath12k *ar,
+				  struct ath12k_peer *peer, u8 tid)
 {
 	struct ath12k_hal_reo_cmd cmd = {0};
-	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
+	struct ath12k_dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 	int ret;
 
 	if (!rx_tid->active)
@@ -765,9 +810,9 @@ void ath12k_peer_rx_tid_delete(struct ath12k *ar,
 	cmd.addr_lo = lower_32_bits(rx_tid->paddr);
 	cmd.addr_hi = upper_32_bits(rx_tid->paddr);
 	cmd.upd0 |= HAL_REO_CMD_UPD0_VLD;
-	ret = ath12k_dp_tx_send_reo_cmd(ar->ab, rx_tid,
-					HAL_REO_CMD_UPDATE_RX_QUEUE, &cmd,
-					ath12k_dp_rx_tid_del_func);
+	ret = ath12k_dp_reo_cmd_send(ar->ab, rx_tid,
+				     HAL_REO_CMD_UPDATE_RX_QUEUE, &cmd,
+				     ath12k_dp_rx_tid_del_func);
 	if (ret) {
 		ath12k_err(ar->ab, "failed to send HAL_REO_CMD_UPDATE_RX_QUEUE cmd, tid %d (%d)\n",
 			   tid, ret);
@@ -813,7 +858,8 @@ exit:
 	return ret;
 }
 
-static void ath12k_dp_rx_frags_cleanup(struct dp_rx_tid *rx_tid, bool rel_link_desc)
+static void ath12k_dp_rx_frags_cleanup(struct ath12k_dp_rx_tid *rx_tid,
+				       bool rel_link_desc)
 {
 	struct ath12k_base *ab = rx_tid->ab;
 
@@ -833,9 +879,9 @@ static void ath12k_dp_rx_frags_cleanup(struct dp_rx_tid *rx_tid, bool rel_link_d
 	__skb_queue_purge(&rx_tid->rx_frags);
 }
 
-void ath12k_peer_rx_tid_cleanup(struct ath12k *ar, struct ath12k_peer *peer)
+void ath12k_dp_rx_peer_tid_cleanup(struct ath12k *ar, struct ath12k_peer *peer)
 {
-	struct dp_rx_tid *rx_tid;
+	struct ath12k_dp_rx_tid *rx_tid;
 	int i;
 
 	lockdep_assert_held(&ar->ab->base_lock);
@@ -843,7 +889,7 @@ void ath12k_peer_rx_tid_cleanup(struct ath12k *ar, struct ath12k_peer *peer)
 	for (i = 0; i <= IEEE80211_NUM_TIDS; i++) {
 		rx_tid = &peer->rx_tid[i];
 
-		ath12k_peer_rx_tid_delete(ar, peer, i);
+		ath12k_dp_rx_peer_tid_delete(ar, peer, i);
 		ath12k_dp_rx_frags_cleanup(rx_tid, true);
 
 		spin_unlock_bh(&ar->ab->base_lock);
@@ -854,7 +900,7 @@ void ath12k_peer_rx_tid_cleanup(struct ath12k *ar, struct ath12k_peer *peer)
 
 static int ath12k_peer_rx_tid_reo_update(struct ath12k *ar,
 					 struct ath12k_peer *peer,
-					 struct dp_rx_tid *rx_tid,
+					 struct ath12k_dp_rx_tid *rx_tid,
 					 u32 ba_win_sz, u16 ssn,
 					 bool update_ssn)
 {
@@ -872,9 +918,9 @@ static int ath12k_peer_rx_tid_reo_update(struct ath12k *ar,
 		cmd.upd2 = FIELD_PREP(HAL_REO_CMD_UPD2_SSN, ssn);
 	}
 
-	ret = ath12k_dp_tx_send_reo_cmd(ar->ab, rx_tid,
-					HAL_REO_CMD_UPDATE_RX_QUEUE, &cmd,
-					NULL);
+	ret = ath12k_dp_reo_cmd_send(ar->ab, rx_tid,
+				     HAL_REO_CMD_UPDATE_RX_QUEUE, &cmd,
+				     NULL);
 	if (ret) {
 		ath12k_warn(ar->ab, "failed to update rx tid queue, tid %d (%d)\n",
 			    rx_tid->tid, ret);
@@ -886,14 +932,14 @@ static int ath12k_peer_rx_tid_reo_update(struct ath12k *ar,
 	return 0;
 }
 
-int ath12k_peer_rx_tid_setup(struct ath12k *ar, const u8 *peer_mac, int vdev_id,
-			     u8 tid, u32 ba_win_sz, u16 ssn,
-			     enum hal_pn_type pn_type)
+int ath12k_dp_rx_peer_tid_setup(struct ath12k *ar, const u8 *peer_mac, int vdev_id,
+				u8 tid, u32 ba_win_sz, u16 ssn,
+				enum hal_pn_type pn_type)
 {
 	struct ath12k_base *ab = ar->ab;
 	struct ath12k_dp *dp = &ab->dp;
 	struct ath12k_peer *peer;
-	struct dp_rx_tid *rx_tid;
+	struct ath12k_dp_rx_tid *rx_tid;
 	u32 hw_desc_sz;
 	u32 *addr_aligned;
 	void *vaddr;
@@ -1002,9 +1048,9 @@ int ath12k_dp_rx_ampdu_start(struct ath12k *ar,
 	int vdev_id = arsta->arvif->vdev_id;
 	int ret;
 
-	ret = ath12k_peer_rx_tid_setup(ar, params->sta->addr, vdev_id,
-				       params->tid, params->buf_size,
-				       params->ssn, arsta->pn_type);
+	ret = ath12k_dp_rx_peer_tid_setup(ar, params->sta->addr, vdev_id,
+					  params->tid, params->buf_size,
+					  params->ssn, arsta->pn_type);
 	if (ret)
 		ath12k_warn(ab, "failed to setup rx tid %d\n", ret);
 
@@ -1057,7 +1103,7 @@ int ath12k_dp_peer_rx_pn_replay_config(struct ath12k_vif *arvif,
 	struct ath12k_base *ab = ar->ab;
 	struct ath12k_hal_reo_cmd cmd = {0};
 	struct ath12k_peer *peer;
-	struct dp_rx_tid *rx_tid;
+	struct ath12k_dp_rx_tid *rx_tid;
 	u8 tid;
 	int ret = 0;
 
@@ -1105,9 +1151,9 @@ int ath12k_dp_peer_rx_pn_replay_config(struct ath12k_vif *arvif,
 			continue;
 		cmd.addr_lo = lower_32_bits(rx_tid->paddr);
 		cmd.addr_hi = upper_32_bits(rx_tid->paddr);
-		ret = ath12k_dp_tx_send_reo_cmd(ab, rx_tid,
-						HAL_REO_CMD_UPDATE_RX_QUEUE,
-						&cmd, NULL);
+		ret = ath12k_dp_reo_cmd_send(ab, rx_tid,
+					     HAL_REO_CMD_UPDATE_RX_QUEUE,
+					     &cmd, NULL);
 		if (ret) {
 			ath12k_warn(ab, "failed to configure rx tid %d queue for pn replay detection %d\n",
 				    tid, ret);
@@ -2786,7 +2832,7 @@ exit:
 
 static void ath12k_dp_rx_frag_timer(struct timer_list *timer)
 {
-	struct dp_rx_tid *rx_tid = from_timer(rx_tid, timer, frag_timer);
+	struct ath12k_dp_rx_tid *rx_tid = from_timer(rx_tid, timer, frag_timer);
 
 	spin_lock_bh(&rx_tid->ab->base_lock);
 	if (rx_tid->last_frag_no &&
@@ -2803,7 +2849,7 @@ int ath12k_peer_rx_frag_setup(struct ath12k *ar, const u8 *peer_mac, int vdev_id
 	struct ath12k_base *ab = ar->ab;
 	struct crypto_shash *tfm;
 	struct ath12k_peer *peer;
-	struct dp_rx_tid *rx_tid;
+	struct ath12k_dp_rx_tid *rx_tid;
 	int i;
 
 	tfm = crypto_alloc_shash("michael_mic", 0, 0);
@@ -2961,7 +3007,7 @@ static void ath12k_dp_rx_h_undecap_frag(struct ath12k *ar, struct sk_buff *msdu,
 
 static int ath12k_dp_rx_h_defrag(struct ath12k *ar,
 				 struct ath12k_peer *peer,
-				 struct dp_rx_tid *rx_tid,
+				 struct ath12k_dp_rx_tid *rx_tid,
 				 struct sk_buff **defrag_skb)
 {
 	struct ath12k_base *ab = ar->ab;
@@ -3028,7 +3074,8 @@ static int ath12k_dp_rx_h_defrag(struct ath12k *ar,
 	return 0;
 }
 
-static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar, struct dp_rx_tid *rx_tid,
+static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar,
+					      struct ath12k_dp_rx_tid *rx_tid,
 					      struct sk_buff *defrag_skb)
 {
 	struct ath12k_base *ab = ar->ab;
@@ -3209,7 +3256,7 @@ static u64 ath12k_dp_rx_h_get_pn(struct ath12k *ar, struct sk_buff *skb)
 }
 
 static bool
-ath12k_dp_rx_h_defrag_validate_incr_pn(struct ath12k *ar, struct dp_rx_tid *rx_tid)
+ath12k_dp_rx_h_defrag_validate_incr_pn(struct ath12k *ar, struct ath12k_dp_rx_tid *rx_tid)
 {
 	struct ath12k_base *ab = ar->ab;
 	enum hal_encrypt_type encrypt_type;
@@ -3248,7 +3295,7 @@ static int ath12k_dp_rx_frag_h_mpdu(struct ath12k *ar,
 	struct ath12k_base *ab = ar->ab;
 	struct hal_rx_desc *rx_desc;
 	struct ath12k_peer *peer;
-	struct dp_rx_tid *rx_tid;
+	struct ath12k_dp_rx_tid *rx_tid;
 	struct sk_buff *defrag_skb = NULL;
 	u32 peer_id;
 	u16 seqno, frag_no;
@@ -3875,11 +3922,11 @@ done:
 	return total_num_buffs_reaped;
 }
 
-void ath12k_dp_process_reo_status(struct ath12k_base *ab)
+void ath12k_dp_rx_process_reo_status(struct ath12k_base *ab)
 {
 	struct ath12k_dp *dp = &ab->dp;
 	struct hal_srng *srng;
-	struct dp_reo_cmd *cmd, *tmp;
+	struct ath12k_dp_rx_reo_cmd *cmd, *tmp;
 	bool found = false;
 	u32 *reo_desc;
 	u16 tag;

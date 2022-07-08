@@ -36,7 +36,7 @@ void ath12k_dp_peer_cleanup(struct ath12k *ar, int vdev_id, const u8 *addr)
 		return;
 	}
 
-	ath12k_peer_rx_tid_cleanup(ar, peer);
+	ath12k_dp_rx_peer_tid_cleanup(ar, peer);
 	crypto_free_shash(peer->tfm_mmic);
 	spin_unlock_bh(&ab->base_lock);
 }
@@ -61,8 +61,8 @@ int ath12k_dp_peer_setup(struct ath12k *ar, int vdev_id, const u8 *addr)
 	}
 
 	for (tid = 0; tid <= IEEE80211_NUM_TIDS; tid++) {
-		ret = ath12k_peer_rx_tid_setup(ar, addr, vdev_id, tid, 1, 0,
-					       HAL_PN_TYPE_NONE);
+		ret = ath12k_dp_rx_peer_tid_setup(ar, addr, vdev_id, tid, 1, 0,
+						  HAL_PN_TYPE_NONE);
 		if (ret) {
 			ath12k_warn(ab, "failed to setup rxd tid queue for tid %d: %d\n",
 				    tid, ret);
@@ -91,7 +91,7 @@ peer_clean:
 	}
 
 	for (; tid >= 0; tid--)
-		ath12k_peer_rx_tid_delete(ar, peer, tid);
+		ath12k_dp_rx_peer_tid_delete(ar, peer, tid);
 
 	spin_unlock_bh(&ab->base_lock);
 
@@ -950,7 +950,7 @@ int ath12k_dp_service_srng(struct ath12k_base *ab,
 	}
 
 	if (ab->hw_params->ring_mask->reo_status[grp_id])
-		ath12k_dp_process_reo_status(ab);
+		ath12k_dp_rx_process_reo_status(ab);
 
 	if (ab->hw_params->ring_mask->host2rxdma[grp_id]) {
 		struct ath12k_dp *dp = &ab->dp;
@@ -1192,7 +1192,7 @@ void ath12k_dp_free(struct ath12k_base *ab)
 	ath12k_dp_deinit_bank_profiles(ab);
 	ath12k_dp_srng_common_cleanup(ab);
 
-	ath12k_dp_reo_cmd_list_cleanup(ab);
+	ath12k_dp_rx_reo_cmd_list_cleanup(ab);
 
 	for (i = 0; i < ab->hw_params->max_tx_ring; i++)
 		kfree(dp->tx_ring[i].tx_status);

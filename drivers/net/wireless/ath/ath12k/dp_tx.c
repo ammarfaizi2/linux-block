@@ -8,7 +8,6 @@
 #include "dp_tx.h"
 #include "debug.h"
 #include "hw.h"
-#include "peer.h"
 
 static enum hal_tcl_encap_type
 ath12k_dp_tx_get_encap_type(struct ath12k_vif *arvif, struct sk_buff *skb)
@@ -604,51 +603,6 @@ void ath12k_dp_tx_completion_handler(struct ath12k_base *ab, int ring_id)
 
 		ath12k_dp_tx_complete_msdu(ar, msdu, &ts);
 	}
-}
-
-int ath12k_dp_tx_send_reo_cmd(struct ath12k_base *ab, struct dp_rx_tid *rx_tid,
-			      enum hal_reo_cmd_type type,
-			      struct ath12k_hal_reo_cmd *cmd,
-			      void (*cb)(struct ath12k_dp *dp, void *ctx,
-					 enum hal_reo_cmd_status status))
-{
-	struct ath12k_dp *dp = &ab->dp;
-	struct dp_reo_cmd *dp_cmd;
-	struct hal_srng *cmd_ring;
-	int cmd_num;
-
-	cmd_ring = &ab->hal.srng_list[dp->reo_cmd_ring.ring_id];
-	cmd_num = ath12k_hal_reo_cmd_send(ab, cmd_ring, type, cmd);
-
-	/* cmd_num should start from 1, during failure return the error code */
-	if (cmd_num < 0)
-		return cmd_num;
-
-	/* reo cmd ring descriptors has cmd_num starting from 1 */
-	if (cmd_num == 0)
-		return -EINVAL;
-
-	if (!cb)
-		return 0;
-
-	/* Can this be optimized so that we keep the pending command list only
-	 * for tid delete command to free up the resoruce on the command status
-	 * indication?
-	 */
-	dp_cmd = kzalloc(sizeof(*dp_cmd), GFP_ATOMIC);
-
-	if (!dp_cmd)
-		return -ENOMEM;
-
-	memcpy(&dp_cmd->data, rx_tid, sizeof(struct dp_rx_tid));
-	dp_cmd->cmd_num = cmd_num;
-	dp_cmd->handler = cb;
-
-	spin_lock_bh(&dp->reo_cmd_lock);
-	list_add_tail(&dp_cmd->list, &dp->reo_cmd_list);
-	spin_unlock_bh(&dp->reo_cmd_lock);
-
-	return 0;
 }
 
 static int
