@@ -2178,7 +2178,6 @@ struct wmi_host_mem_chunk {
 };
 
 struct wmi_init_cmd_param {
-	u32 tlv_header;
 	struct target_resource_config *res_cfg;
 	u8 num_mem_chunks;
 	struct wmi_host_mem_chunk *mem_chunks;
