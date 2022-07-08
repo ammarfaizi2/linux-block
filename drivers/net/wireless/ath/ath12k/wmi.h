@@ -2906,36 +2906,6 @@ enum wmi_bss_chan_info_req_type {
 	WMI_BSS_SURVEY_REQ_TYPE_READ_CLEAR,
 };
 
-struct wmi_gpio_config_cmd_param {
-	u32 tlv_header;
-	u32 gpio_num;
-	u32 input;
-	u32 pull_type;
-	u32 intr_mode;
-};
-
-struct gpio_output_params {
-	u32 gpio_num;
-	u32 set;
-};
-
-struct wmi_gpio_output_cmd_param {
-	u32 tlv_header;
-	u32 gpio_num;
-	u32 set;
-};
-
-struct set_fwtest_params {
-	u32 arg;
-	u32 value;
-};
-
-struct wmi_fwtest_set_param_cmd_param {
-	u32 tlv_header;
-	u32 param_id;
-	u32 param_value;
-};
-
 struct wmi_pdev_set_param_cmd {
 	u32 tlv_header;
 	u32 pdev_id;
@@ -3634,12 +3604,6 @@ struct wmi_scan_chan_list_cmd {
 #define WMI_TX_PARAMS_DWORD1_PREAMBLE_TYPE	GENMASK(19, 15)
 #define WMI_TX_PARAMS_DWORD1_FRAME_TYPE		BIT(20)
 #define WMI_TX_PARAMS_DWORD1_RSVD		GENMASK(31, 21)
-
-struct wmi_mgmt_send_params {
-	u32 tlv_header;
-	u32 tx_params_dword0;
-	u32 tx_params_dword1;
-};
 
 struct wmi_mgmt_send_cmd {
 	u32 tlv_header;
