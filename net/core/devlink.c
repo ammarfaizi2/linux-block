@@ -5690,21 +5690,28 @@ static int __devlink_snapshot_id_increment(struct devlink *devlink, u32 id)
 {
 	unsigned long count;
 	void *p;
+	int err;
 
-	devl_assert_locked(devlink);
-
+	xa_lock(&devlink->snapshot_ids);
 	p = xa_load(&devlink->snapshot_ids, id);
-	if (WARN_ON(!p))
-		return -EINVAL;
+	if (WARN_ON(!p)) {
+		err = -EINVAL;
+		goto unlock;
+	}
 
-	if (WARN_ON(!xa_is_value(p)))
-		return -EINVAL;
+	if (WARN_ON(!xa_is_value(p))) {
+		err = -EINVAL;
+		goto unlock;
+	}
 
 	count = xa_to_value(p);
 	count++;
 
-	return xa_err(xa_store(&devlink->snapshot_ids, id, xa_mk_value(count),
-			       GFP_KERNEL));
+	err = xa_err(__xa_store(&devlink->snapshot_ids, id, xa_mk_value(count),
+				GFP_KERNEL));
+unlock:
+	xa_unlock(&devlink->snapshot_ids);
+	return err;
 }
 
 /**
@@ -5727,25 +5734,26 @@ static void __devlink_snapshot_id_decrement(struct devlink *devlink, u32 id)
 	unsigned long count;
 	void *p;
 
-	devl_assert_locked(devlink);
-
+	xa_lock(&devlink->snapshot_ids);
 	p = xa_load(&devlink->snapshot_ids, id);
 	if (WARN_ON(!p))
-		return;
+		goto unlock;
 
 	if (WARN_ON(!xa_is_value(p)))
-		return;
+		goto unlock;
 
 	count = xa_to_value(p);
 
 	if (count > 1) {
 		count--;
-		xa_store(&devlink->snapshot_ids, id, xa_mk_value(count),
-			 GFP_KERNEL);
+		__xa_store(&devlink->snapshot_ids, id, xa_mk_value(count),
+			   GFP_KERNEL);
 	} else {
 		/* If this was the last user, we can erase this id */
-		xa_erase(&devlink->snapshot_ids, id);
+		__xa_erase(&devlink->snapshot_ids, id);
 	}
+unlock:
+	xa_unlock(&devlink->snapshot_ids);
 }
 
 /**
@@ -5766,13 +5774,17 @@ static void __devlink_snapshot_id_decrement(struct devlink *devlink, u32 id)
  */
 static int __devlink_snapshot_id_insert(struct devlink *devlink, u32 id)
 {
-	devl_assert_locked(devlink);
+	int err;
 
-	if (xa_load(&devlink->snapshot_ids, id))
+	xa_lock(&devlink->snapshot_ids);
+	if (xa_load(&devlink->snapshot_ids, id)) {
+		xa_unlock(&devlink->snapshot_ids);
 		return -EEXIST;
-
-	return xa_err(xa_store(&devlink->snapshot_ids, id, xa_mk_value(0),
-			       GFP_KERNEL));
+	}
+	err = xa_err(__xa_store(&devlink->snapshot_ids, id, xa_mk_value(0),
+				GFP_KERNEL));
+	xa_unlock(&devlink->snapshot_ids);
+	return err;
 }
 
 /**
@@ -5793,8 +5805,6 @@ static int __devlink_snapshot_id_insert(struct devlink *devlink, u32 id)
  */
 static int __devlink_region_snapshot_id_get(struct devlink *devlink, u32 *id)
 {
-	devl_assert_locked(devlink);
-
 	return xa_alloc(&devlink->snapshot_ids, id, xa_mk_value(1),
 			xa_limit_32b, GFP_KERNEL);
 }
@@ -11226,13 +11236,7 @@ EXPORT_SYMBOL_GPL(devlink_region_destroy);
  */
 int devlink_region_snapshot_id_get(struct devlink *devlink, u32 *id)
 {
-	int err;
-
-	devl_lock(devlink);
-	err = __devlink_region_snapshot_id_get(devlink, id);
-	devl_unlock(devlink);
-
-	return err;
+	return __devlink_region_snapshot_id_get(devlink, id);
 }
 EXPORT_SYMBOL_GPL(devlink_region_snapshot_id_get);
 
@@ -11248,9 +11252,7 @@ EXPORT_SYMBOL_GPL(devlink_region_snapshot_id_get);
  */
 void devlink_region_snapshot_id_put(struct devlink *devlink, u32 id)
 {
-	devl_lock(devlink);
 	__devlink_snapshot_id_decrement(devlink, id);
-	devl_unlock(devlink);
 }
 EXPORT_SYMBOL_GPL(devlink_region_snapshot_id_put);
 
