@@ -23,8 +23,6 @@
  *
  */
 
-#include <linux/slab.h>
-
 #include "dm_services.h"
 
 #include "resource.h"
@@ -67,6 +65,8 @@
 #include "dcn31/dcn31_resource.h"
 #include "dcn315/dcn315_resource.h"
 #include "dcn316/dcn316_resource.h"
+#include "../dcn32/dcn32_resource.h"
+#include "../dcn321/dcn321_resource.h"
 
 #define DC_LOGGER_INIT(logger)
 
@@ -162,7 +162,11 @@ enum dce_version resource_parse_asic_id(struct hw_asic_id asic_id)
 		if (ASICREV_IS_GC_10_3_7(asic_id.hw_internal_rev))
 			dc_version = DCN_VERSION_3_16;
 		break;
-
+	case AMDGPU_FAMILY_GC_11_0_0:
+		dc_version = DCN_VERSION_3_2;
+		if (ASICREV_IS_GC_11_0_2(asic_id.hw_internal_rev))
+			dc_version = DCN_VERSION_3_21;
+		break;
 	default:
 		dc_version = DCE_VERSION_UNKNOWN;
 		break;
@@ -257,6 +261,12 @@ struct resource_pool *dc_create_resource_pool(struct dc  *dc,
 		break;
 	case DCN_VERSION_3_16:
 		res_pool = dcn316_create_resource_pool(init_data, dc);
+		break;
+	case DCN_VERSION_3_2:
+		res_pool = dcn32_create_resource_pool(init_data, dc);
+		break;
+	case DCN_VERSION_3_21:
+		res_pool = dcn321_create_resource_pool(init_data, dc);
 		break;
 #endif
 	default:
@@ -1690,6 +1700,9 @@ bool dc_is_stream_unchanged(
 	if (memcmp(&old_stream->audio_info, &stream->audio_info, sizeof(stream->audio_info)) != 0)
 		return false;
 
+	if (old_stream->odm_2to1_policy_applied != stream->odm_2to1_policy_applied)
+		return false;
+
 	return true;
 }
 
@@ -1870,6 +1883,12 @@ static int acquire_first_free_pipe(
 				pipe_ctx->plane_res.mpcc_inst = pool->dpps[i]->inst;
 			pipe_ctx->pipe_idx = i;
 
+			if (i >= pool->timing_generator_count) {
+				int tg_inst = pool->timing_generator_count - 1;
+
+				pipe_ctx->stream_res.tg = pool->timing_generators[tg_inst];
+				pipe_ctx->stream_res.opp = pool->opps[tg_inst];
+			}
 
 			pipe_ctx->stream = stream;
 			return i;
@@ -1982,6 +2001,7 @@ enum dc_status dc_remove_stream_from_ctx(
 				dc->res_pool,
 			del_pipe->stream_res.stream_enc,
 			false);
+
 	if (is_dp_128b_132b_signal(del_pipe)) {
 		update_hpo_dp_stream_engine_usage(
 			&new_ctx->res_ctx, dc->res_pool,
@@ -2147,7 +2167,7 @@ static int acquire_resource_from_hw_enabled_state(
 
 		if (pipe_ctx->stream_res.tg->funcs->get_optc_source)
 			pipe_ctx->stream_res.tg->funcs->get_optc_source(pipe_ctx->stream_res.tg,
-					&numPipes, &id_src[0], &id_src[1]);
+						&numPipes, &id_src[0], &id_src[1]);
 
 		if (id_src[0] == 0xf && id_src[1] == 0xf) {
 			id_src[0] = tg_inst;
@@ -2158,6 +2178,8 @@ static int acquire_resource_from_hw_enabled_state(
 			//Check if src id invalid
 			if (id_src[i] == 0xf)
 				return -1;
+
+			pipe_ctx = &res_ctx->pipe_ctx[id_src[i]];
 
 			pipe_ctx->stream_res.tg = pool->timing_generators[tg_inst];
 			pipe_ctx->plane_res.mi = pool->mis[id_src[i]];
@@ -2172,13 +2194,17 @@ static int acquire_resource_from_hw_enabled_state(
 
 				if (pool->mpc->funcs->read_mpcc_state) {
 					struct mpcc_state s = {0};
+
 					pool->mpc->funcs->read_mpcc_state(pool->mpc, pipe_ctx->plane_res.mpcc_inst, &s);
+
 					if (s.dpp_id < MAX_MPCC)
 						pool->mpc->mpcc_array[pipe_ctx->plane_res.mpcc_inst].dpp_id =
 								s.dpp_id;
+
 					if (s.bot_mpcc_id < MAX_MPCC)
 						pool->mpc->mpcc_array[pipe_ctx->plane_res.mpcc_inst].mpcc_bot =
 								&pool->mpc->mpcc_array[s.bot_mpcc_id];
+
 					if (s.opp_id < MAX_OPP)
 						pipe_ctx->stream_res.opp->mpc_tree_params.opp_id = s.opp_id;
 				}
@@ -2187,6 +2213,7 @@ static int acquire_resource_from_hw_enabled_state(
 
 			if (id_src[i] >= pool->timing_generator_count) {
 				id_src[i] = pool->timing_generator_count - 1;
+
 				pipe_ctx->stream_res.tg = pool->timing_generators[id_src[i]];
 				pipe_ctx->stream_res.opp = pool->opps[id_src[i]];
 			}
@@ -2487,6 +2514,8 @@ static void set_avi_info_frame(
 	union hdmi_info_packet hdmi_info;
 	union display_content_support support = {0};
 	unsigned int vic = pipe_ctx->stream->timing.vic;
+	unsigned int rid = pipe_ctx->stream->timing.rid;
+	unsigned int fr_ind = pipe_ctx->stream->timing.fr_index;
 	enum dc_timing_3d_format format;
 
 	memset(&hdmi_info, 0, sizeof(union hdmi_info_packet));
@@ -2679,6 +2708,15 @@ static void set_avi_info_frame(
 		hdmi_info.bits.header.length = 14;
 	}
 
+	if (rid != 0 && fr_ind != 0) {
+		hdmi_info.bits.header.version = 5;
+		hdmi_info.bits.header.length = 15;
+
+		hdmi_info.bits.FR0_FR3 = fr_ind & 0xF;
+		hdmi_info.bits.FR4 = (fr_ind >> 4) & 0x1;
+		hdmi_info.bits.RID0_RID5 = rid;
+	}
+
 	/* pixel repetition
 	 * PR0 - PR3 start from 0 whereas pHwPathMode->mode.timing.flags.pixel
 	 * repetition start from 1 */
@@ -2777,6 +2815,26 @@ static void set_vsc_info_packet(
 
 	*info_packet = stream->vsc_infopacket;
 }
+static void set_hfvs_info_packet(
+		struct dc_info_packet *info_packet,
+		struct dc_stream_state *stream)
+{
+	if (!stream->hfvsif_infopacket.valid)
+		return;
+
+	*info_packet = stream->hfvsif_infopacket;
+}
+
+
+static void set_vtem_info_packet(
+		struct dc_info_packet *info_packet,
+		struct dc_stream_state *stream)
+{
+	if (!stream->vtem_infopacket.valid)
+		return;
+
+	*info_packet = stream->vtem_infopacket;
+}
 
 void dc_resource_state_destruct(struct dc_state *context)
 {
@@ -2857,7 +2915,8 @@ void resource_build_info_frame(struct pipe_ctx *pipe_ctx)
 	info->spd.valid = false;
 	info->hdrsmd.valid = false;
 	info->vsc.valid = false;
-
+	info->hfvsif.valid = false;
+	info->vtem.valid = false;
 	signal = pipe_ctx->stream->signal;
 
 	/* HDMi and DP have different info packets*/
@@ -2865,6 +2924,8 @@ void resource_build_info_frame(struct pipe_ctx *pipe_ctx)
 		set_avi_info_frame(&info->avi, pipe_ctx);
 
 		set_vendor_info_packet(&info->vendor, pipe_ctx->stream);
+		set_hfvs_info_packet(&info->hfvsif, pipe_ctx->stream);
+		set_vtem_info_packet(&info->vtem, pipe_ctx->stream);
 
 		set_spd_info_packet(&info->spd, pipe_ctx->stream);
 
@@ -2972,12 +3033,11 @@ bool pipe_need_reprogram(
 	if (pipe_ctx_old->stream->ctx->dc->res_pool->funcs->link_encs_assign) {
 		bool need_reprogram = false;
 		struct dc *dc = pipe_ctx_old->stream->ctx->dc;
-		enum link_enc_cfg_mode mode = dc->current_state->res_ctx.link_enc_cfg_ctx.mode;
+		struct link_encoder *link_enc_prev =
+			link_enc_cfg_get_link_enc_used_by_stream_current(dc, pipe_ctx_old->stream);
 
-		dc->current_state->res_ctx.link_enc_cfg_ctx.mode = LINK_ENC_CFG_STEADY;
-		if (link_enc_cfg_get_link_enc_used_by_stream(dc, pipe_ctx_old->stream) != pipe_ctx->stream->link_enc)
+		if (link_enc_prev != pipe_ctx->stream->link_enc)
 			need_reprogram = true;
-		dc->current_state->res_ctx.link_enc_cfg_ctx.mode = mode;
 
 		return need_reprogram;
 	}
