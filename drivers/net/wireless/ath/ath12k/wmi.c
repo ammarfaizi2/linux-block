@@ -2817,8 +2817,7 @@ ath12k_wmi_send_thermal_mitigation_param_cmd(struct ath12k *ar,
 	struct sk_buff *skb;
 	int i, ret, len;
 
-	len = sizeof(*cmd) + TLV_HDR_SIZE +
-	      THERMAL_LEVELS * sizeof(struct wmi_therm_throt_level_config_info);
+	len = sizeof(*cmd) + TLV_HDR_SIZE + THERMAL_LEVELS * sizeof(*lvl_conf);
 
 	skb = ath12k_wmi_alloc_skb(wmi->wmi_ab, len);
 	if (!skb)
@@ -2837,8 +2836,7 @@ ath12k_wmi_send_thermal_mitigation_param_cmd(struct ath12k *ar,
 
 	tlv = (struct wmi_tlv *)(skb->data + sizeof(*cmd));
 	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_STRUCT,
-					 THERMAL_LEVELS *
-					 sizeof(struct wmi_therm_throt_level_config_info));
+					 THERMAL_LEVELS * sizeof(*lvl_conf));
 
 	lvl_conf = (struct wmi_therm_throt_level_config_info *)(skb->data +
 								sizeof(*cmd) +
