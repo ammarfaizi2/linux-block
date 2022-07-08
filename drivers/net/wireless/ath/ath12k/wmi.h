@@ -37,7 +37,7 @@ struct ath12k_fw_stats;
 #define WMI_TLV_VDEV_PARAM_UNSUPPORTED 0
 
 struct wmi_cmd_hdr {
-	u32 cmd_id;
+	__le32 cmd_id;
 } __packed;
 
 struct wmi_tlv {

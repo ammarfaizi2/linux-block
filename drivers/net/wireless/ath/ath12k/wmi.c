@@ -350,15 +350,12 @@ static int ath12k_wmi_cmd_send_nowait(struct ath12k_pdev_wmi *wmi, struct sk_buf
 	struct ath12k_base *ab = wmi->wmi_ab->ab;
 	struct wmi_cmd_hdr *cmd_hdr;
 	int ret;
-	u32 cmd = 0;
 
 	if (!skb_push(skb, sizeof(struct wmi_cmd_hdr)))
 		return -ENOMEM;
 
-	cmd |= u32_encode_bits(cmd_id, WMI_CMD_HDR_CMD_ID);
-
 	cmd_hdr = (struct wmi_cmd_hdr *)skb->data;
-	cmd_hdr->cmd_id = cmd;
+	cmd_hdr->cmd_id = le32_encode_bits(cmd_id, WMI_CMD_HDR_CMD_ID);
 
 	memset(skb_cb, 0, sizeof(*skb_cb));
 	ret = ath12k_htc_send(&ab->htc, wmi->eid, skb);
@@ -7047,7 +7044,7 @@ static void ath12k_wmi_tlv_op_rx(struct ath12k_base *ab, struct sk_buff *skb)
 	enum wmi_tlv_event_id id;
 
 	cmd_hdr = (struct wmi_cmd_hdr *)skb->data;
-	id = u32_get_bits(cmd_hdr->cmd_id, WMI_CMD_HDR_CMD_ID);
+	id = le32_get_bits(cmd_hdr->cmd_id, WMI_CMD_HDR_CMD_ID);
 
 	if (!skb_pull(skb, sizeof(struct wmi_cmd_hdr)))
 		goto out;
