@@ -263,8 +263,8 @@ ath12k_wmi_tlv_iter(struct ath12k_base *ab, const void *ptr, size_t len,
 		}
 
 		tlv = ptr;
-		tlv_tag = FIELD_GET(WMI_TLV_TAG, tlv->header);
-		tlv_len = FIELD_GET(WMI_TLV_LEN, tlv->header);
+		tlv_tag = u32_get_bits(tlv->header, WMI_TLV_TAG);
+		tlv_len = u32_get_bits(tlv->header, WMI_TLV_LEN);
 		ptr += sizeof(*tlv);
 		len -= sizeof(*tlv);
 
@@ -4326,29 +4326,29 @@ static struct cur_reg_rule
 
 	for (count = 0; count < num_reg_rules; count++) {
 		reg_rule_ptr[count].start_freq =
-			FIELD_GET(REG_RULE_START_FREQ,
-				  wmi_reg_rule[count].freq_info);
+			u32_get_bits(wmi_reg_rule[count].freq_info,
+				     REG_RULE_START_FREQ);
 		reg_rule_ptr[count].end_freq =
-			FIELD_GET(REG_RULE_END_FREQ,
-				  wmi_reg_rule[count].freq_info);
+			u32_get_bits(wmi_reg_rule[count].freq_info,
+				     REG_RULE_END_FREQ);
 		reg_rule_ptr[count].max_bw =
-			FIELD_GET(REG_RULE_MAX_BW,
-				  wmi_reg_rule[count].bw_pwr_info);
+			u32_get_bits(wmi_reg_rule[count].bw_pwr_info,
+				     REG_RULE_MAX_BW);
 		reg_rule_ptr[count].reg_power =
-			FIELD_GET(REG_RULE_REG_PWR,
-				  wmi_reg_rule[count].bw_pwr_info);
+			u32_get_bits(wmi_reg_rule[count].bw_pwr_info,
+				     REG_RULE_REG_PWR);
 		reg_rule_ptr[count].ant_gain =
-			FIELD_GET(REG_RULE_ANT_GAIN,
-				  wmi_reg_rule[count].bw_pwr_info);
+			u32_get_bits(wmi_reg_rule[count].bw_pwr_info,
+				     REG_RULE_ANT_GAIN);
 		reg_rule_ptr[count].flags =
-			FIELD_GET(REG_RULE_FLAGS,
-				  wmi_reg_rule[count].flag_info);
+			u32_get_bits(wmi_reg_rule[count].flag_info,
+				     REG_RULE_FLAGS);
 		reg_rule_ptr[count].psd_flag =
-			FIELD_GET(REG_RULE_PSD_INFO,
-				  wmi_reg_rule[count].psd_power_info);
+			u32_get_bits(wmi_reg_rule[count].psd_power_info,
+				     REG_RULE_PSD_INFO);
 		reg_rule_ptr[count].psd_eirp =
-			FIELD_GET(REG_RULE_PSD_EIRP,
-				  wmi_reg_rule[count].psd_power_info);
+			u32_get_bits(wmi_reg_rule[count].psd_power_info,
+				     REG_RULE_PSD_EIRP);
 	}
 
 	return reg_rule_ptr;
@@ -7091,7 +7091,7 @@ static void ath12k_wmi_tlv_op_rx(struct ath12k_base *ab, struct sk_buff *skb)
 	enum wmi_tlv_event_id id;
 
 	cmd_hdr = (struct wmi_cmd_hdr *)skb->data;
-	id = FIELD_GET(WMI_CMD_HDR_CMD_ID, (cmd_hdr->cmd_id));
+	id = u32_get_bits(cmd_hdr->cmd_id, WMI_CMD_HDR_CMD_ID);
 
 	if (!skb_pull(skb, sizeof(struct wmi_cmd_hdr)))
 		goto out;
