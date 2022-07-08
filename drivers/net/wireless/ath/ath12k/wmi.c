@@ -135,6 +135,11 @@ static u32 ath12k_wmi_tlv_hdr(u32 cmd, u32 len)
 		FIELD_PREP(WMI_TLV_LEN, len);
 }
 
+static u32 ath12k_wmi_tlv_cmd_hdr(u32 cmd, u32 len)
+{
+	return ath12k_wmi_tlv_hdr(cmd, len - TLV_HDR_SIZE);
+}
+
 void ath12k_wmi_init_qcn9274(struct ath12k_base *ab,
 			     struct target_resource_config *config)
 {
@@ -697,8 +702,8 @@ int ath12k_wmi_mgmt_send(struct ath12k *ar, u32 vdev_id, u32 buf_id,
 		return -ENOMEM;
 
 	cmd = (struct wmi_mgmt_send_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_MGMT_TX_SEND_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_MGMT_TX_SEND_CMD,
+						 sizeof(*cmd));
 	cmd->vdev_id = vdev_id;
 	cmd->desc_id = buf_id;
 	cmd->chanfreq = 0;
@@ -748,8 +753,8 @@ int ath12k_wmi_vdev_create(struct ath12k *ar, u8 *macaddr,
 		return -ENOMEM;
 
 	cmd = (struct wmi_vdev_create_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_VDEV_CREATE_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_CREATE_CMD,
+						 sizeof(*cmd));
 
 	cmd->vdev_id = param->if_id;
 	cmd->vdev_type = param->type;
@@ -768,9 +773,8 @@ int ath12k_wmi_vdev_create(struct ath12k *ar, u8 *macaddr,
 	ptr += TLV_HDR_SIZE;
 	txrx_streams = ptr;
 	len = sizeof(*txrx_streams);
-	txrx_streams->tlv_header =
-		FIELD_PREP(WMI_TLV_TAG, WMI_TAG_VDEV_TXRX_STREAMS) |
-		FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
+	txrx_streams->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_TXRX_STREAMS,
+							  len);
 	txrx_streams->band = WMI_TPC_CHAINMASK_CONFIG_BAND_2G;
 	txrx_streams->supported_tx_streams =
 				 param->chains[NL80211_BAND_2GHZ].tx;
@@ -778,9 +782,8 @@ int ath12k_wmi_vdev_create(struct ath12k *ar, u8 *macaddr,
 				 param->chains[NL80211_BAND_2GHZ].rx;
 
 	txrx_streams++;
-	txrx_streams->tlv_header =
-		FIELD_PREP(WMI_TLV_TAG, WMI_TAG_VDEV_TXRX_STREAMS) |
-		FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
+	txrx_streams->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_TXRX_STREAMS,
+							  len);
 	txrx_streams->band = WMI_TPC_CHAINMASK_CONFIG_BAND_5G;
 	txrx_streams->supported_tx_streams =
 				 param->chains[NL80211_BAND_5GHZ].tx;
@@ -814,8 +817,8 @@ int ath12k_wmi_vdev_delete(struct ath12k *ar, u8 vdev_id)
 		return -ENOMEM;
 
 	cmd = (struct wmi_vdev_delete_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_VDEV_DELETE_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_DELETE_CMD,
+						 sizeof(*cmd));
 	cmd->vdev_id = vdev_id;
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_VDEV_DELETE_CMDID);
@@ -842,8 +845,8 @@ int ath12k_wmi_vdev_stop(struct ath12k *ar, u8 vdev_id)
 
 	cmd = (struct wmi_vdev_stop_cmd *)skb->data;
 
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_VDEV_STOP_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_STOP_CMD,
+						 sizeof(*cmd));
 	cmd->vdev_id = vdev_id;
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_VDEV_STOP_CMDID);
@@ -870,8 +873,8 @@ int ath12k_wmi_vdev_down(struct ath12k *ar, u8 vdev_id)
 
 	cmd = (struct wmi_vdev_down_cmd *)skb->data;
 
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_VDEV_DOWN_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_DOWN_CMD,
+						 sizeof(*cmd));
 	cmd->vdev_id = vdev_id;
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_VDEV_DOWN_CMDID);
@@ -947,9 +950,8 @@ int ath12k_wmi_vdev_start(struct ath12k *ar, struct wmi_vdev_start_req_arg *arg,
 		return -ENOMEM;
 
 	cmd = (struct wmi_vdev_start_request_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-				     WMI_TAG_VDEV_START_REQUEST_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_START_REQUEST_CMD,
+						 sizeof(*cmd));
 	cmd->vdev_id = arg->vdev_id;
 	cmd->beacon_interval = arg->bcn_intval;
 	cmd->bcn_tx_rate = arg->bcn_tx_rate;
@@ -979,9 +981,8 @@ int ath12k_wmi_vdev_start(struct ath12k *ar, struct wmi_vdev_start_req_arg *arg,
 
 	ath12k_wmi_put_wmi_channel(chan, arg);
 
-	chan->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_CHANNEL) |
-			   FIELD_PREP(WMI_TLV_LEN,
-				      sizeof(*chan) - TLV_HDR_SIZE);
+	chan->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_CHANNEL,
+						  sizeof(*chan));
 	ptr += sizeof(*chan);
 
 	tlv = ptr;
@@ -1025,8 +1026,8 @@ int ath12k_wmi_vdev_up(struct ath12k *ar, u32 vdev_id, u32 aid, const u8 *bssid)
 
 	cmd = (struct wmi_vdev_up_cmd *)skb->data;
 
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_VDEV_UP_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_UP_CMD,
+						 sizeof(*cmd));
 	cmd->vdev_id = vdev_id;
 	cmd->vdev_assoc_id = aid;
 
@@ -1058,8 +1059,8 @@ int ath12k_wmi_send_peer_create_cmd(struct ath12k *ar,
 		return -ENOMEM;
 
 	cmd = (struct wmi_peer_create_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PEER_CREATE_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PEER_CREATE_CMD,
+						 sizeof(*cmd));
 
 	ether_addr_copy(cmd->peer_macaddr.addr, param->peer_addr);
 	cmd->peer_type = param->peer_type;
@@ -1091,8 +1092,8 @@ int ath12k_wmi_send_peer_delete_cmd(struct ath12k *ar,
 		return -ENOMEM;
 
 	cmd = (struct wmi_peer_delete_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PEER_DELETE_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PEER_DELETE_CMD,
+						 sizeof(*cmd));
 
 	ether_addr_copy(cmd->peer_macaddr.addr, peer_addr);
 	cmd->vdev_id = vdev_id;
@@ -1123,9 +1124,8 @@ int ath12k_wmi_send_pdev_set_regdomain(struct ath12k *ar,
 		return -ENOMEM;
 
 	cmd = (struct wmi_pdev_set_regdomain_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-				     WMI_TAG_PDEV_SET_REGDOMAIN_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_SET_REGDOMAIN_CMD,
+						 sizeof(*cmd));
 
 	cmd->reg_domain = param->current_rd_in_use;
 	cmd->reg_domain_2g = param->current_rd_2g;
@@ -1163,8 +1163,8 @@ int ath12k_wmi_set_peer_param(struct ath12k *ar, const u8 *peer_addr,
 		return -ENOMEM;
 
 	cmd = (struct wmi_peer_set_param_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PEER_SET_PARAM_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PEER_SET_PARAM_CMD,
+						 sizeof(*cmd));
 	ether_addr_copy(cmd->peer_macaddr.addr, peer_addr);
 	cmd->vdev_id = vdev_id;
 	cmd->param_id = param_id;
@@ -1197,8 +1197,8 @@ int ath12k_wmi_send_peer_flush_tids_cmd(struct ath12k *ar,
 		return -ENOMEM;
 
 	cmd = (struct wmi_peer_flush_tids_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PEER_FLUSH_TIDS_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PEER_FLUSH_TIDS_CMD,
+						 sizeof(*cmd));
 
 	ether_addr_copy(cmd->peer_macaddr.addr, peer_addr);
 	cmd->peer_tid_bitmap = param->peer_tid_bitmap;
@@ -1233,9 +1233,8 @@ int ath12k_wmi_peer_rx_reorder_queue_setup(struct ath12k *ar,
 		return -ENOMEM;
 
 	cmd = (struct wmi_peer_reorder_queue_setup_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-				     WMI_TAG_REORDER_QUEUE_SETUP_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_REORDER_QUEUE_SETUP_CMD,
+						 sizeof(*cmd));
 
 	ether_addr_copy(cmd->peer_macaddr.addr, addr);
 	cmd->vdev_id = vdev_id;
@@ -1275,9 +1274,8 @@ ath12k_wmi_rx_reord_queue_remove(struct ath12k *ar,
 		return -ENOMEM;
 
 	cmd = (struct wmi_peer_reorder_queue_remove_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-				     WMI_TAG_REORDER_QUEUE_REMOVE_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_REORDER_QUEUE_REMOVE_CMD,
+						 sizeof(*cmd));
 
 	ether_addr_copy(cmd->peer_macaddr.addr, param->peer_macaddr);
 	cmd->vdev_id = param->vdev_id;
@@ -1311,8 +1309,8 @@ int ath12k_wmi_pdev_set_param(struct ath12k *ar, u32 param_id,
 		return -ENOMEM;
 
 	cmd = (struct wmi_pdev_set_param_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PDEV_SET_PARAM_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_SET_PARAM_CMD,
+						 sizeof(*cmd));
 	cmd->pdev_id = pdev_id;
 	cmd->param_id = param_id;
 	cmd->param_value = param_value;
@@ -1342,8 +1340,8 @@ int ath12k_wmi_pdev_set_ps_mode(struct ath12k *ar, int vdev_id, u32 enable)
 		return -ENOMEM;
 
 	cmd = (struct wmi_pdev_set_ps_mode_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_STA_POWERSAVE_MODE_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_STA_POWERSAVE_MODE_CMD,
+						 sizeof(*cmd));
 	cmd->vdev_id = vdev_id;
 	cmd->sta_ps_mode = enable;
 
@@ -1374,8 +1372,8 @@ int ath12k_wmi_pdev_suspend(struct ath12k *ar, u32 suspend_opt,
 
 	cmd = (struct wmi_pdev_suspend_cmd *)skb->data;
 
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PDEV_SUSPEND_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_SUSPEND_CMD,
+						 sizeof(*cmd));
 
 	cmd->suspend_opt = suspend_opt;
 	cmd->pdev_id = pdev_id;
@@ -1405,8 +1403,8 @@ int ath12k_wmi_pdev_resume(struct ath12k *ar, u32 pdev_id)
 
 	cmd = (struct wmi_pdev_resume_cmd *)skb->data;
 
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PDEV_RESUME_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_RESUME_CMD,
+						 sizeof(*cmd));
 	cmd->pdev_id = pdev_id;
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
@@ -1439,9 +1437,8 @@ int ath12k_wmi_pdev_bss_chan_info_request(struct ath12k *ar,
 
 	cmd = (struct wmi_pdev_bss_chan_info_req_cmd *)skb->data;
 
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-				     WMI_TAG_PDEV_BSS_CHAN_INFO_REQUEST) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_BSS_CHAN_INFO_REQUEST,
+						 sizeof(*cmd));
 	cmd->req_type = type;
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
@@ -1471,8 +1468,8 @@ int ath12k_wmi_send_set_ap_ps_param_cmd(struct ath12k *ar, u8 *peer_addr,
 		return -ENOMEM;
 
 	cmd = (struct wmi_ap_ps_peer_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_AP_PS_PEER_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_AP_PS_PEER_CMD,
+						 sizeof(*cmd));
 
 	cmd->vdev_id = param->vdev_id;
 	ether_addr_copy(cmd->peer_macaddr.addr, peer_addr);
@@ -1506,9 +1503,8 @@ int ath12k_wmi_set_sta_ps_param(struct ath12k *ar, u32 vdev_id,
 		return -ENOMEM;
 
 	cmd = (struct wmi_sta_powersave_param_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-				     WMI_TAG_STA_POWERSAVE_PARAM_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_STA_POWERSAVE_PARAM_CMD,
+						 sizeof(*cmd));
 
 	cmd->vdev_id = vdev_id;
 	cmd->param = param;
@@ -1541,8 +1537,8 @@ int ath12k_wmi_force_fw_hang_cmd(struct ath12k *ar, u32 type, u32 delay_time_ms)
 		return -ENOMEM;
 
 	cmd = (struct wmi_force_fw_hang_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_FORCE_FW_HANG_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_FORCE_FW_HANG_CMD,
+						 len);
 
 	cmd->type = type;
 	cmd->delay_time_ms = delay_time_ms;
@@ -1569,8 +1565,8 @@ int ath12k_wmi_vdev_set_param_cmd(struct ath12k *ar, u32 vdev_id,
 		return -ENOMEM;
 
 	cmd = (struct wmi_vdev_set_param_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_VDEV_SET_PARAM_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_SET_PARAM_CMD,
+						 sizeof(*cmd));
 
 	cmd->vdev_id = vdev_id;
 	cmd->param_id = param_id;
@@ -1603,8 +1599,8 @@ int ath12k_wmi_send_stats_request_cmd(struct ath12k *ar,
 		return -ENOMEM;
 
 	cmd = (struct wmi_request_stats_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_REQUEST_STATS_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_REQUEST_STATS_CMD,
+						 sizeof(*cmd));
 
 	cmd->stats_id = param->stats_id;
 	cmd->vdev_id = param->vdev_id;
@@ -1635,8 +1631,8 @@ int ath12k_wmi_send_pdev_temperature_cmd(struct ath12k *ar)
 		return -ENOMEM;
 
 	cmd = (struct wmi_get_pdev_temperature_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PDEV_GET_TEMPERATURE_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_GET_TEMPERATURE_CMD,
+						 sizeof(*cmd));
 	cmd->pdev_id = ar->pdev->pdev_id;
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_PDEV_GET_TEMPERATURE_CMDID);
@@ -1664,9 +1660,8 @@ int ath12k_wmi_send_bcn_offload_control_cmd(struct ath12k *ar,
 		return -ENOMEM;
 
 	cmd = (struct wmi_bcn_offload_ctrl_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-				     WMI_TAG_BCN_OFFLOAD_CTRL_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_BCN_OFFLOAD_CTRL_CMD,
+						 sizeof(*cmd));
 
 	cmd->vdev_id = vdev_id;
 	cmd->bcn_ctrl_op = bcn_ctrl_op;
@@ -1705,8 +1700,8 @@ int ath12k_wmi_bcn_tmpl(struct ath12k *ar, u32 vdev_id,
 		return -ENOMEM;
 
 	cmd = (struct wmi_bcn_tmpl_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_BCN_TMPL_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_BCN_TMPL_CMD,
+						 sizeof(*cmd));
 	cmd->vdev_id = vdev_id;
 	cmd->tim_ie_offset = offs->tim_offset;
 	cmd->csa_switch_count_offset = offs->cntdwn_counter_offs[0];
@@ -1717,9 +1712,8 @@ int ath12k_wmi_bcn_tmpl(struct ath12k *ar, u32 vdev_id,
 
 	bcn_prb_info = ptr;
 	len = sizeof(*bcn_prb_info);
-	bcn_prb_info->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-					      WMI_TAG_BCN_PRB_INFO) |
-				   FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
+	bcn_prb_info->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_BCN_PRB_INFO,
+							  len);
 	bcn_prb_info->caps = 0;
 	bcn_prb_info->erp = 0;
 
@@ -1755,8 +1749,8 @@ int ath12k_wmi_vdev_install_key(struct ath12k *ar,
 		return -ENOMEM;
 
 	cmd = (struct wmi_vdev_install_key_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_VDEV_INSTALL_KEY_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_INSTALL_KEY_CMD,
+						 sizeof(*cmd));
 	cmd->vdev_id = arg->vdev_id;
 	ether_addr_copy(cmd->peer_macaddr.addr, arg->macaddr);
 	cmd->key_idx = arg->key_idx;
@@ -1903,9 +1897,8 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 	ptr = skb->data;
 
 	cmd = ptr;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-				     WMI_TAG_PEER_ASSOC_COMPLETE_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PEER_ASSOC_COMPLETE_CMD,
+						 sizeof(*cmd));
 
 	cmd->vdev_id = param->vdev_id;
 
@@ -1965,8 +1958,8 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 
 	mcs = ptr;
 
-	mcs->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_VHT_RATE_SET) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*mcs) - TLV_HDR_SIZE);
+	mcs->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VHT_RATE_SET,
+						 sizeof(*mcs));
 
 	cmd->peer_nss = param->peer_nss;
 
@@ -1996,10 +1989,8 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 	/* Loop through the HE rate set */
 	for (i = 0; i < param->peer_he_mcs_count; i++) {
 		he_mcs = ptr;
-		he_mcs->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-						WMI_TAG_HE_RATE_SET) |
-				     FIELD_PREP(WMI_TLV_LEN,
-						sizeof(*he_mcs) - TLV_HDR_SIZE);
+		he_mcs->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_HE_RATE_SET,
+							    sizeof(*he_mcs));
 
 		he_mcs->rx_mcs_set = param->peer_he_rx_mcs_set[i];
 		he_mcs->tx_mcs_set = param->peer_he_tx_mcs_set[i];
@@ -2186,8 +2177,8 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 	ptr = skb->data;
 
 	cmd = ptr;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_START_SCAN_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_START_SCAN_CMD,
+						 sizeof(*cmd));
 
 	cmd->scan_id = params->scan_id;
 	cmd->scan_req_id = params->scan_req_id;
@@ -2328,8 +2319,8 @@ int ath12k_wmi_send_scan_stop_cmd(struct ath12k *ar,
 
 	cmd = (struct wmi_stop_scan_cmd *)skb->data;
 
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_STOP_SCAN_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_STOP_SCAN_CMD,
+						 sizeof(*cmd));
 
 	cmd->vdev_id = param->vdev_id;
 	cmd->requestor = param->requester;
@@ -2395,8 +2386,8 @@ int ath12k_wmi_send_scan_chan_list_cmd(struct ath12k *ar,
 			return -ENOMEM;
 
 		cmd = (struct wmi_scan_chan_list_cmd *)skb->data;
-		cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_SCAN_CHAN_LIST_CMD) |
-			FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+		cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_SCAN_CHAN_LIST_CMD,
+							 sizeof(*cmd));
 		cmd->pdev_id = chan_list->pdev_id;
 		cmd->num_scan_chans = num_send_chans;
 		if (num_sends)
@@ -2410,18 +2401,16 @@ int ath12k_wmi_send_scan_chan_list_cmd(struct ath12k *ar,
 
 		len = sizeof(*chan_info) * num_send_chans;
 		tlv = ptr;
-		tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_STRUCT) |
-			      FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
+		tlv->header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_ARRAY_STRUCT,
+						     len);
 		ptr += TLV_HDR_SIZE;
 
 		for (i = 0; i < num_send_chans; ++i) {
 			chan_info = ptr;
 			memset(chan_info, 0, sizeof(*chan_info));
 			len = sizeof(*chan_info);
-			chan_info->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-							   WMI_TAG_CHANNEL) |
-						FIELD_PREP(WMI_TLV_LEN,
-							   len - TLV_HDR_SIZE);
+			chan_info->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_CHANNEL,
+								       len);
 
 			reg1 = &chan_info->reg_info_1;
 			reg2 = &chan_info->reg_info_2;
@@ -2494,9 +2483,8 @@ int ath12k_wmi_send_wmm_update_cmd_tlv(struct ath12k *ar, u32 vdev_id,
 		return -ENOMEM;
 
 	cmd = (struct wmi_vdev_set_wmm_params_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-				     WMI_TAG_VDEV_SET_WMM_PARAMS_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_SET_WMM_PARAMS_CMD,
+						 sizeof(*cmd));
 
 	cmd->vdev_id = vdev_id;
 	cmd->wmm_param_type = 0;
@@ -2519,10 +2507,8 @@ int ath12k_wmi_send_wmm_update_cmd_tlv(struct ath12k *ar, u32 vdev_id,
 
 		wmm_param = (struct wmi_wmm_params *)&cmd->wmm_params[ac];
 		wmm_param->tlv_header =
-				FIELD_PREP(WMI_TLV_TAG,
-					   WMI_TAG_VDEV_SET_WMM_PARAMS_CMD) |
-				FIELD_PREP(WMI_TLV_LEN,
-					   sizeof(*wmm_param) - TLV_HDR_SIZE);
+			ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_SET_WMM_PARAMS_CMD,
+					       sizeof(*wmm_param));
 
 		wmm_param->aifs = wmi_wmm_arg->aifs;
 		wmm_param->cwmin = wmi_wmm_arg->cwmin;
@@ -2562,9 +2548,8 @@ int ath12k_wmi_send_dfs_phyerr_offload_enable_cmd(struct ath12k *ar,
 
 	cmd = (struct wmi_dfs_phyerr_offload_cmd *)skb->data;
 	cmd->tlv_header =
-		FIELD_PREP(WMI_TLV_TAG,
-			   WMI_TAG_PDEV_DFS_PHYERR_OFFLOAD_ENABLE_CMD) |
-		FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+		ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_DFS_PHYERR_OFFLOAD_ENABLE_CMD,
+				       sizeof(*cmd));
 
 	cmd->pdev_id = pdev_id;
 
@@ -2595,8 +2580,8 @@ int ath12k_wmi_delba_send(struct ath12k *ar, u32 vdev_id, const u8 *mac,
 		return -ENOMEM;
 
 	cmd = (struct wmi_delba_send_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_DELBA_SEND_CMD) |
-			FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_DELBA_SEND_CMD,
+						 sizeof(*cmd));
 	cmd->vdev_id = vdev_id;
 	ether_addr_copy(cmd->peer_macaddr.addr, mac);
 	cmd->tid = tid;
@@ -2632,8 +2617,8 @@ int ath12k_wmi_addba_set_resp(struct ath12k *ar, u32 vdev_id, const u8 *mac,
 
 	cmd = (struct wmi_addba_setresponse_cmd *)skb->data;
 	cmd->tlv_header =
-		FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ADDBA_SETRESPONSE_CMD) |
-		FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+		ath12k_wmi_tlv_cmd_hdr(WMI_TAG_ADDBA_SETRESPONSE_CMD,
+				       sizeof(*cmd));
 	cmd->vdev_id = vdev_id;
 	ether_addr_copy(cmd->peer_macaddr.addr, mac);
 	cmd->tid = tid;
@@ -2667,8 +2652,8 @@ int ath12k_wmi_addba_send(struct ath12k *ar, u32 vdev_id, const u8 *mac,
 		return -ENOMEM;
 
 	cmd = (struct wmi_addba_send_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ADDBA_SEND_CMD) |
-		FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_ADDBA_SEND_CMD,
+						 sizeof(*cmd));
 	cmd->vdev_id = vdev_id;
 	ether_addr_copy(cmd->peer_macaddr.addr, mac);
 	cmd->tid = tid;
@@ -2702,8 +2687,8 @@ int ath12k_wmi_addba_clear_resp(struct ath12k *ar, u32 vdev_id, const u8 *mac)
 
 	cmd = (struct wmi_addba_clear_resp_cmd *)skb->data;
 	cmd->tlv_header =
-		FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ADDBA_CLEAR_RESP_CMD) |
-		FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+		ath12k_wmi_tlv_cmd_hdr(WMI_TAG_ADDBA_CLEAR_RESP_CMD,
+				       sizeof(*cmd));
 	cmd->vdev_id = vdev_id;
 	ether_addr_copy(cmd->peer_macaddr.addr, mac);
 
@@ -2739,8 +2724,8 @@ int ath12k_wmi_pdev_peer_pktlog_filter(struct ath12k *ar, u8 *addr, u8 enable)
 
 	cmd = (struct wmi_pdev_pktlog_filter_cmd *)skb->data;
 
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PDEV_PEER_PKTLOG_FILTER_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_PEER_PKTLOG_FILTER_CMD,
+						 sizeof(*cmd));
 
 	cmd->pdev_id = DP_HW2SW_MACID(ar->pdev->pdev_id);
 	cmd->num_mac = 1;
@@ -2755,9 +2740,8 @@ int ath12k_wmi_pdev_peer_pktlog_filter(struct ath12k *ar, u8 *addr, u8 enable)
 	info = ptr;
 
 	ether_addr_copy(info->peer_macaddr.addr, addr);
-	info->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PDEV_PEER_PKTLOG_FILTER_INFO) |
-			   FIELD_PREP(WMI_TLV_LEN,
-				      sizeof(*info) - TLV_HDR_SIZE);
+	info->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_PEER_PKTLOG_FILTER_INFO,
+						  sizeof(*info));
 
 	ret = ath12k_wmi_cmd_send(wmi, skb,
 				  WMI_PDEV_PKTLOG_FILTER_CMDID);
@@ -2784,9 +2768,8 @@ ath12k_wmi_send_init_country_cmd(struct ath12k *ar,
 
 	cmd = (struct wmi_init_country_cmd *)skb->data;
 	cmd->tlv_header =
-		FIELD_PREP(WMI_TLV_TAG,
-			   WMI_TAG_SET_INIT_COUNTRY_CMD) |
-		FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+		ath12k_wmi_tlv_cmd_hdr(WMI_TAG_SET_INIT_COUNTRY_CMD,
+				       sizeof(*cmd));
 
 	cmd->pdev_id = ar->pdev->pdev_id;
 
@@ -2843,8 +2826,8 @@ ath12k_wmi_send_thermal_mitigation_param_cmd(struct ath12k *ar,
 
 	cmd = (struct wmi_therm_throt_config_request_cmd *)skb->data;
 
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_THERM_THROT_CONFIG_REQUEST) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_THERM_THROT_CONFIG_REQUEST,
+						 sizeof(*cmd));
 
 	cmd->pdev_id = ar->pdev->pdev_id;
 	cmd->enable = param->enable;
@@ -2862,8 +2845,8 @@ ath12k_wmi_send_thermal_mitigation_param_cmd(struct ath12k *ar,
 								TLV_HDR_SIZE);
 	for (i = 0; i < THERMAL_LEVELS; i++) {
 		lvl_conf->tlv_header =
-			FIELD_PREP(WMI_TLV_TAG, WMI_TAG_THERM_THROT_LEVEL_CONFIG_INFO) |
-			FIELD_PREP(WMI_TLV_LEN, sizeof(*lvl_conf) - TLV_HDR_SIZE);
+			ath12k_wmi_tlv_cmd_hdr(WMI_TAG_THERM_THROT_LEVEL_CONFIG_INFO,
+					       sizeof(*lvl_conf));
 
 		lvl_conf->temp_lwm = param->levelconf[i].tmplwm;
 		lvl_conf->temp_hwm = param->levelconf[i].tmphwm;
@@ -2899,8 +2882,8 @@ int ath12k_wmi_pdev_pktlog_enable(struct ath12k *ar, u32 pktlog_filter)
 
 	cmd = (struct wmi_pktlog_enable_cmd *)skb->data;
 
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PDEV_PKTLOG_ENABLE_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_PKTLOG_ENABLE_CMD,
+						 sizeof(*cmd));
 
 	cmd->pdev_id = DP_HW2SW_MACID(ar->pdev->pdev_id);
 	cmd->evlist = pktlog_filter;
@@ -2929,8 +2912,8 @@ int ath12k_wmi_pdev_pktlog_disable(struct ath12k *ar)
 
 	cmd = (struct wmi_pktlog_disable_cmd *)skb->data;
 
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PDEV_PKTLOG_DISABLE_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_PKTLOG_DISABLE_CMD,
+						 sizeof(*cmd));
 
 	cmd->pdev_id = DP_HW2SW_MACID(ar->pdev->pdev_id);
 
@@ -2960,8 +2943,8 @@ ath12k_wmi_send_twt_enable_cmd(struct ath12k *ar, u32 pdev_id)
 		return -ENOMEM;
 
 	cmd = (struct wmi_twt_enable_params_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_TWT_ENABLE_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_TWT_ENABLE_CMD,
+						 len);
 	cmd->pdev_id = pdev_id;
 	cmd->sta_cong_timer_ms = ATH12K_TWT_DEF_STA_CONG_TIMER_MS;
 	cmd->default_slot_size = ATH12K_TWT_DEF_DEFAULT_SLOT_SIZE;
@@ -3011,8 +2994,8 @@ ath12k_wmi_send_twt_disable_cmd(struct ath12k *ar, u32 pdev_id)
 		return -ENOMEM;
 
 	cmd = (struct wmi_twt_disable_params_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_TWT_DISABLE_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_TWT_DISABLE_CMD,
+						 len);
 	cmd->pdev_id = pdev_id;
 
 	ret = ath12k_wmi_cmd_send(wmi, skb,
@@ -3041,9 +3024,8 @@ ath12k_wmi_send_obss_spr_cmd(struct ath12k *ar, u32 vdev_id,
 		return -ENOMEM;
 
 	cmd = (struct wmi_obss_spatial_reuse_params_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-				     WMI_TAG_OBSS_SPATIAL_REUSE_SET_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_OBSS_SPATIAL_REUSE_SET_CMD,
+						 len);
 	cmd->vdev_id = vdev_id;
 	cmd->enable = he_obss_pd->enable;
 	cmd->obss_min = he_obss_pd->min_offset;
@@ -3076,9 +3058,8 @@ int ath12k_wmi_obss_color_cfg_cmd(struct ath12k *ar, u32 vdev_id,
 		return -ENOMEM;
 
 	cmd = (struct wmi_obss_color_collision_cfg_params_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-				     WMI_TAG_OBSS_COLOR_COLLISION_DET_CONFIG) |
-			  FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_OBSS_COLOR_COLLISION_DET_CONFIG,
+						 len);
 	cmd->vdev_id = vdev_id;
 	cmd->evt_type = enable ? ATH12K_OBSS_COLOR_COLLISION_DETECTION :
 				 ATH12K_OBSS_COLOR_COLLISION_DETECTION_DISABLE;
@@ -3118,8 +3099,8 @@ int ath12k_wmi_send_bss_color_change_enable_cmd(struct ath12k *ar, u32 vdev_id,
 		return -ENOMEM;
 
 	cmd = (struct wmi_bss_color_change_enable_params_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_BSS_COLOR_CHANGE_ENABLE) |
-			  FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_BSS_COLOR_CHANGE_ENABLE,
+						 len);
 	cmd->vdev_id = vdev_id;
 	cmd->enable = enable ? 1 : 0;
 
@@ -3157,9 +3138,8 @@ int ath12k_wmi_fils_discovery_tmpl(struct ath12k *ar, u32 vdev_id,
 		return -ENOMEM;
 
 	cmd = (struct wmi_fils_discovery_tmpl_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-				     WMI_TAG_FILS_DISCOVERY_TMPL_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_FILS_DISCOVERY_TMPL_CMD,
+						 sizeof(*cmd));
 	cmd->vdev_id = vdev_id;
 	cmd->buf_len = tmpl->len;
 	ptr = skb->data + sizeof(*cmd);
@@ -3199,8 +3179,8 @@ int ath12k_wmi_probe_resp_tmpl(struct ath12k *ar, u32 vdev_id,
 		return -ENOMEM;
 
 	cmd = (struct wmi_probe_tmpl_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PRB_TMPL_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PRB_TMPL_CMD,
+						 sizeof(*cmd));
 	cmd->vdev_id = vdev_id;
 	cmd->buf_len = tmpl->len;
 
@@ -3208,9 +3188,8 @@ int ath12k_wmi_probe_resp_tmpl(struct ath12k *ar, u32 vdev_id,
 
 	probe_info = ptr;
 	len = sizeof(*probe_info);
-	probe_info->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-					    WMI_TAG_BCN_PRB_INFO) |
-				 FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
+	probe_info->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_BCN_PRB_INFO,
+							len);
 	probe_info->caps = 0;
 	probe_info->erp = 0;
 
@@ -3249,8 +3228,8 @@ int ath12k_wmi_fils_discovery(struct ath12k *ar, u32 vdev_id, u32 interval,
 		return -ENOMEM;
 
 	cmd = (struct wmi_fils_discovery_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ENABLE_FILS_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_ENABLE_FILS_CMD,
+						 len);
 	cmd->vdev_id = vdev_id;
 	cmd->interval = interval;
 	cmd->config = unsol_bcast_probe_resp_enabled;
@@ -3392,16 +3371,16 @@ static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
 
 	cmd = (struct wmi_init_cmd *)skb->data;
 
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_INIT_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_INIT_CMD,
+						 sizeof(*cmd));
 
 	ptr = skb->data + sizeof(*cmd);
 	cfg = ptr;
 
 	ath12k_wmi_copy_resource_config(cfg, param->res_cfg);
 
-	cfg->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_RESOURCE_CONFIG) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cfg) - TLV_HDR_SIZE);
+	cfg->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_RESOURCE_CONFIG,
+						 sizeof(*cfg));
 
 	ptr += sizeof(*cfg);
 	host_mem_chunks = ptr + TLV_HDR_SIZE;
@@ -3432,10 +3411,8 @@ static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
 
 	if (param->hw_mode_id != WMI_HOST_HW_MODE_MAX) {
 		hw_mode = (struct wmi_pdev_set_hw_mode_cmd_param *)ptr;
-		hw_mode->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-						 WMI_TAG_PDEV_SET_HW_MODE_CMD) |
-				      FIELD_PREP(WMI_TLV_LEN,
-						 sizeof(*hw_mode) - TLV_HDR_SIZE);
+		hw_mode->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_SET_HW_MODE_CMD,
+							     sizeof(*hw_mode));
 
 		hw_mode->hw_mode_index = param->hw_mode_id;
 		hw_mode->num_band_to_mac = param->num_band_to_mac;
@@ -3452,10 +3429,9 @@ static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
 		for (idx = 0; idx < param->num_band_to_mac; idx++) {
 			band_to_mac = (void *)ptr;
 
-			band_to_mac->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-							     WMI_TAG_PDEV_BAND_TO_MAC) |
-						  FIELD_PREP(WMI_TLV_LEN,
-							     len - TLV_HDR_SIZE);
+			band_to_mac->tlv_header =
+				ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_BAND_TO_MAC,
+						       len);
 			band_to_mac->pdev_id = param->band_to_mac[idx].pdev_id;
 			band_to_mac->start_freq =
 				param->band_to_mac[idx].start_freq;
@@ -3486,8 +3462,8 @@ int ath12k_wmi_pdev_lro_cfg(struct ath12k *ar,
 		return -ENOMEM;
 
 	cmd = (struct ath12k_wmi_pdev_lro_config_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_LRO_INFO_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_LRO_INFO_CMD,
+						 sizeof(*cmd));
 
 	get_random_bytes(cmd->th_4, sizeof(uint32_t) * ATH12K_IPV4_TH_SEED_SIZE);
 	get_random_bytes(cmd->th_6, sizeof(uint32_t) * ATH12K_IPV6_TH_SEED_SIZE);
@@ -3550,8 +3526,8 @@ int ath12k_wmi_set_hw_mode(struct ath12k_base *ab,
 
 	cmd = (struct wmi_pdev_set_hw_mode_cmd_param *)skb->data;
 
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PDEV_SET_HW_MODE_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_SET_HW_MODE_CMD,
+						 sizeof(*cmd));
 
 	cmd->pdev_id = WMI_PDEV_ID_SOC;
 	cmd->hw_mode_index = mode;
@@ -3604,9 +3580,8 @@ int ath12k_wmi_vdev_spectral_conf(struct ath12k *ar,
 		return -ENOMEM;
 
 	cmd = (struct ath12k_wmi_vdev_spectral_conf_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-				     WMI_TAG_VDEV_SPECTRAL_CONFIGURE_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_SPECTRAL_CONFIGURE_CMD,
+						 sizeof(*cmd));
 
 	memcpy(&cmd->param, param, sizeof(*param));
 
@@ -3640,9 +3615,8 @@ int ath12k_wmi_vdev_spectral_enable(struct ath12k *ar, u32 vdev_id,
 		return -ENOMEM;
 
 	cmd = (struct ath12k_wmi_vdev_spectral_enable_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-				     WMI_TAG_VDEV_SPECTRAL_ENABLE_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_SPECTRAL_ENABLE_CMD,
+						 sizeof(*cmd));
 
 	cmd->vdev_id = vdev_id;
 	cmd->trigger_cmd = trigger;
@@ -3678,8 +3652,8 @@ int ath12k_wmi_pdev_dma_ring_cfg(struct ath12k *ar,
 		return -ENOMEM;
 
 	cmd = (struct ath12k_wmi_pdev_dma_ring_cfg_req_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_DMA_RING_CFG_REQ) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_DMA_RING_CFG_REQ,
+						 sizeof(*cmd));
 
 	cmd->pdev_id		= param->pdev_id;
 	cmd->module_id		= param->module_id;
@@ -7249,8 +7223,8 @@ ath12k_wmi_send_unit_test_cmd(struct ath12k *ar,
 		return -ENOMEM;
 
 	cmd = (struct wmi_unit_test_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_UNIT_TEST_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(ut_cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_UNIT_TEST_CMD,
+						 sizeof(ut_cmd));
 
 	cmd->vdev_id = ut_cmd.vdev_id;
 	cmd->module_id = ut_cmd.module_id;
@@ -7406,9 +7380,8 @@ int ath12k_wmi_wow_host_wakeup_ind(struct ath12k *ar)
 		return -ENOMEM;
 
 	cmd = (struct wmi_wow_host_wakeup_ind *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-				     WMI_TAG_WOW_HOSTWAKEUP_FROM_SLEEP_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_WOW_HOSTWAKEUP_FROM_SLEEP_CMD,
+						 sizeof(*cmd));
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI, "wmi tlv wow host wakeup ind\n");
 
@@ -7427,8 +7400,8 @@ int ath12k_wmi_wow_enable(struct ath12k *ar)
 		return -ENOMEM;
 
 	cmd = (struct wmi_wow_enable_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_WOW_ENABLE_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_WOW_ENABLE_CMD,
+						 sizeof(*cmd));
 
 	cmd->enable = 1;
 	cmd->pause_iface_config = WOW_IFACE_PAUSE_ENABLED;
