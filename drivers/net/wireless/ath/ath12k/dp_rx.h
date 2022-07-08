@@ -159,12 +159,4 @@ void ath12k_dp_rx_h_ppdu(struct ath12k *ar, struct hal_rx_desc *rx_desc,
 			 struct ieee80211_rx_status *rx_status);
 struct ath12k_peer *
 ath12k_dp_rx_h_find_peer(struct ath12k_base *ab, struct sk_buff *msdu);
-bool ath12k_dp_rx_h_first_msdu(struct ath12k_base *ab,
-			       struct hal_rx_desc *desc);
-void ath12k_htt_vdev_txrx_stats_handler(struct ath12k_base *ab,
-					struct sk_buff *skb);
-void ath12k_copy_to_delay_stats(struct ath12k_peer *peer,
-				struct htt_ppdu_user_stats *usr_stats);
-void ath12k_copy_to_bar(struct ath12k_peer *peer,
-			struct htt_ppdu_user_stats *usr_stats);
 #endif /* ATH12K_DP_RX_H */

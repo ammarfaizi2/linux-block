@@ -167,8 +167,8 @@ u8 ath12k_dp_rx_h_l3pad(struct ath12k_base *ab,
 	return ab->hw_params->hal_ops->rx_desc_get_l3_pad_bytes(desc);
 }
 
-bool ath12k_dp_rx_h_first_msdu(struct ath12k_base *ab,
-			       struct hal_rx_desc *desc)
+static bool ath12k_dp_rx_h_first_msdu(struct ath12k_base *ab,
+				      struct hal_rx_desc *desc)
 {
 	return ab->hw_params->hal_ops->rx_desc_get_first_msdu(desc);
 }
@@ -1499,8 +1499,8 @@ struct htt_ppdu_stats_info *ath12k_dp_htt_get_ppdu_desc(struct ath12k *ar,
 	return ppdu_info;
 }
 
-void ath12k_copy_to_delay_stats(struct ath12k_peer *peer,
-				struct htt_ppdu_user_stats *usr_stats)
+static void ath12k_copy_to_delay_stats(struct ath12k_peer *peer,
+				       struct htt_ppdu_user_stats *usr_stats)
 {
 	peer->ppdu_stats_delayba.sw_peer_id = usr_stats->rate.sw_peer_id;
 	peer->ppdu_stats_delayba.info0 = usr_stats->rate.info0;
@@ -1513,8 +1513,8 @@ void ath12k_copy_to_delay_stats(struct ath12k_peer *peer,
 	peer->delayba_flag = true;
 }
 
-void ath12k_copy_to_bar(struct ath12k_peer *peer,
-			struct htt_ppdu_user_stats *usr_stats)
+static void ath12k_copy_to_bar(struct ath12k_peer *peer,
+			       struct htt_ppdu_user_stats *usr_stats)
 {
 	usr_stats->rate.sw_peer_id = peer->ppdu_stats_delayba.sw_peer_id;
 	usr_stats->rate.info0 = peer->ppdu_stats_delayba.info0;
@@ -1718,8 +1718,8 @@ static void ath12k_htt_mlo_offset_event_handler(struct ath12k_base *ab,
 	spin_unlock_bh(&ab->base_lock);
 }
 
-void ath12k_htt_vdev_txrx_stats_handler(struct ath12k_base *ab,
-					struct sk_buff *skb)
+static void ath12k_htt_vdev_txrx_stats_handler(struct ath12k_base *ab,
+					       struct sk_buff *skb)
 {
 	struct htt_t2h_vdev_txrx_stats_ind *vdev_tlv;
 	struct htt_t2h_vdev_common_stats_tlv *soc_tlv;
