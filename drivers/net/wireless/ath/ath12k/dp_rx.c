@@ -268,11 +268,11 @@ static int ath12k_dp_purge_mon_ring(struct ath12k_base *ab)
 }
 
 /* Returns number of Rx buffers replenished */
-int ath12k_dp_rxbufs_replenish(struct ath12k_base *ab, int mac_id,
-			       struct dp_rxdma_ring *rx_ring,
-			       int req_entries,
-			       enum hal_rx_buf_return_buf_manager mgr,
-			       bool hw_cc)
+int ath12k_dp_rx_bufs_replenish(struct ath12k_base *ab, int mac_id,
+				struct dp_rxdma_ring *rx_ring,
+				int req_entries,
+				enum hal_rx_buf_return_buf_manager mgr,
+				bool hw_cc)
 {
 	struct hal_srng *srng;
 	u32 *desc;
@@ -451,9 +451,9 @@ static int ath12k_dp_rxdma_ring_buf_setup(struct ath12k_base *ab,
 	if ((ringtype == HAL_RXDMA_MONITOR_BUF) || (ringtype == HAL_TX_MONITOR_BUF))
 		ath12k_dp_mon_buf_replenish(ab, rx_ring, num_entries);
 	else
-		ath12k_dp_rxbufs_replenish(ab, 0, rx_ring, num_entries,
-					   ab->hw_params->hal_params->rx_buf_rbm,
-					   ringtype == HAL_RXDMA_BUF);
+		ath12k_dp_rx_bufs_replenish(ab, 0, rx_ring, num_entries,
+					    ab->hw_params->hal_params->rx_buf_rbm,
+					    ringtype == HAL_RXDMA_BUF);
 	return 0;
 }
 
@@ -506,7 +506,7 @@ static void ath12k_dp_rx_pdev_srng_free(struct ath12k *ar)
 	}
 }
 
-void ath12k_dp_pdev_reo_cleanup(struct ath12k_base *ab)
+void ath12k_dp_rx_pdev_reo_cleanup(struct ath12k_base *ab)
 {
 	struct ath12k_dp *dp = &ab->dp;
 	int i;
@@ -515,7 +515,7 @@ void ath12k_dp_pdev_reo_cleanup(struct ath12k_base *ab)
 		ath12k_dp_srng_cleanup(ab, &dp->reo_dst_ring[i]);
 }
 
-int ath12k_dp_pdev_reo_setup(struct ath12k_base *ab)
+int ath12k_dp_rx_pdev_reo_setup(struct ath12k_base *ab)
 {
 	struct ath12k_dp *dp = &ab->dp;
 	int ret;
@@ -534,7 +534,7 @@ int ath12k_dp_pdev_reo_setup(struct ath12k_base *ab)
 	return 0;
 
 err_reo_cleanup:
-	ath12k_dp_pdev_reo_cleanup(ab);
+	ath12k_dp_rx_pdev_reo_cleanup(ab);
 
 	return ret;
 }
@@ -1094,7 +1094,7 @@ int ath12k_dp_rx_ampdu_stop(struct ath12k *ar,
 	return ret;
 }
 
-int ath12k_dp_peer_rx_pn_replay_config(struct ath12k_vif *arvif,
+int ath12k_dp_rx_peer_pn_replay_config(struct ath12k_vif *arvif,
 				       const u8 *peer_addr,
 				       enum set_key_cmd key_cmd,
 				       struct ieee80211_key_conf *key)
@@ -2239,15 +2239,15 @@ static void ath12k_dp_rx_h_undecap_eth(struct ath12k *ar,
 	u8 da[ETH_ALEN];
 	u8 sa[ETH_ALEN];
 	struct ath12k_skb_rxcb *rxcb = ATH12K_SKB_RXCB(msdu);
-	struct ath12k_dp_rfc1042_hdr rfc = {0xaa, 0xaa, 0x03, {0x00, 0x00, 0x00}};
+	struct ath12k_dp_rx_rfc1042_hdr rfc = {0xaa, 0xaa, 0x03, {0x00, 0x00, 0x00}};
 
 	eth = (struct ethhdr *)msdu->data;
 	ether_addr_copy(da, eth->h_dest);
 	ether_addr_copy(sa, eth->h_source);
 	rfc.snap_type = eth->h_proto;
 	skb_pull(msdu, sizeof(struct ethhdr));
-	memcpy(skb_push(msdu, sizeof(struct ath12k_dp_rfc1042_hdr)), &rfc,
-	       sizeof(struct ath12k_dp_rfc1042_hdr));
+	memcpy(skb_push(msdu, sizeof(struct ath12k_dp_rx_rfc1042_hdr)), &rfc,
+	       sizeof(struct ath12k_dp_rx_rfc1042_hdr));
 	ath12k_get_dot11_hdr_from_rx_desc(ar, msdu, rxcb, status, enctype);
 
 	/* original 802.11 header has a different DA and in
@@ -2705,7 +2705,7 @@ static void ath12k_dp_rx_process_received_packets(struct ath12k_base *ab,
 	rcu_read_unlock();
 }
 
-int ath12k_dp_process_rx(struct ath12k_base *ab, int ring_id,
+int ath12k_dp_rx_process(struct ath12k_base *ab, int ring_id,
 			 struct napi_struct *napi, int budget)
 {
 	struct ath12k_rx_desc_info *desc_info;
@@ -2820,8 +2820,8 @@ try_again:
 		goto exit;
 
 	/* TODO: Move to implicit BM? */
-	ath12k_dp_rxbufs_replenish(ab, i, rx_ring, num_buffs_reaped,
-				   ab->hw_params->hal_params->rx_buf_rbm, true);
+	ath12k_dp_rx_bufs_replenish(ab, i, rx_ring, num_buffs_reaped,
+				    ab->hw_params->hal_params->rx_buf_rbm, true);
 
 	ath12k_dp_rx_process_received_packets(ab, napi, &msdu_list,
 					      ring_id);
@@ -2844,7 +2844,7 @@ static void ath12k_dp_rx_frag_timer(struct timer_list *timer)
 	spin_unlock_bh(&rx_tid->ab->base_lock);
 }
 
-int ath12k_peer_rx_frag_setup(struct ath12k *ar, const u8 *peer_mac, int vdev_id)
+int ath12k_dp_rx_peer_frag_setup(struct ath12k *ar, const u8 *peer_mac, int vdev_id)
 {
 	struct ath12k_base *ab = ar->ab;
 	struct crypto_shash *tfm;
@@ -3482,7 +3482,7 @@ exit:
 	return 0;
 }
 
-int ath12k_dp_process_rx_err(struct ath12k_base *ab, struct napi_struct *napi,
+int ath12k_dp_rx_process_err(struct ath12k_base *ab, struct napi_struct *napi,
 			     int budget)
 {
 	u32 msdu_cookies[HAL_NUM_RX_MSDUS_PER_LINK_DESC];
@@ -3579,8 +3579,8 @@ exit:
 
 	rx_ring = &dp->rx_refill_buf_ring;
 
-	ath12k_dp_rxbufs_replenish(ab, 0, rx_ring, tot_n_bufs_reaped,
-				   ab->hw_params->hal_params->rx_buf_rbm, true);
+	ath12k_dp_rx_bufs_replenish(ab, 0, rx_ring, tot_n_bufs_reaped,
+				    ab->hw_params->hal_params->rx_buf_rbm, true);
 
 	return tot_n_bufs_reaped;
 }
@@ -3897,8 +3897,8 @@ int ath12k_dp_rx_process_wbm_err(struct ath12k_base *ab,
 	if (!total_num_buffs_reaped)
 		goto done;
 
-	ath12k_dp_rxbufs_replenish(ab, 0, rx_ring, num_buffs_reaped,
-				   ab->hw_params->hal_params->rx_buf_rbm, true);
+	ath12k_dp_rx_bufs_replenish(ab, 0, rx_ring, num_buffs_reaped,
+				    ab->hw_params->hal_params->rx_buf_rbm, true);
 
 	rcu_read_lock();
 	for (i = 0; i <  ab->num_radios; i++) {

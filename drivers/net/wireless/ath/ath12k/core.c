@@ -395,7 +395,7 @@ static void ath12k_core_stop(struct ath12k_base *ab)
 
 	ath12k_hif_stop(ab);
 	ath12k_wmi_detach(ab);
-	ath12k_dp_pdev_reo_cleanup(ab);
+	ath12k_dp_rx_pdev_reo_cleanup(ab);
 
 	/* De-Init of components as needed */
 }
@@ -526,7 +526,7 @@ static int ath12k_core_start(struct ath12k_base *ab,
 
 	ath12k_dp_pdev_pre_alloc(ab);
 
-	ret = ath12k_dp_pdev_reo_setup(ab);
+	ret = ath12k_dp_rx_pdev_reo_setup(ab);
 	if (ret) {
 		ath12k_err(ab, "failed to initialize reo destination rings: %d\n", ret);
 		goto err_mac_destroy;
@@ -564,7 +564,7 @@ static int ath12k_core_start(struct ath12k_base *ab,
 	return 0;
 
 err_reo_cleanup:
-	ath12k_dp_pdev_reo_cleanup(ab);
+	ath12k_dp_rx_pdev_reo_cleanup(ab);
 err_mac_destroy:
 	ath12k_mac_destroy(ab);
 err_hif_stop:
@@ -668,7 +668,7 @@ static int ath12k_core_reconfigure_on_crash(struct ath12k_base *ab)
 	ath12k_dp_pdev_free(ab);
 	ath12k_hif_stop(ab);
 	ath12k_wmi_detach(ab);
-	ath12k_dp_pdev_reo_cleanup(ab);
+	ath12k_dp_rx_pdev_reo_cleanup(ab);
 	mutex_unlock(&ab->core_lock);
 
 	ath12k_dp_free(ab);

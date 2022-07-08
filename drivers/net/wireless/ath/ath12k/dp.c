@@ -70,7 +70,7 @@ int ath12k_dp_peer_setup(struct ath12k *ar, int vdev_id, const u8 *addr)
 		}
 	}
 
-	ret = ath12k_peer_rx_frag_setup(ar, addr, vdev_id);
+	ret = ath12k_dp_rx_peer_frag_setup(ar, addr, vdev_id);
 	if (ret) {
 		ath12k_warn(ab, "failed to setup rx defrag context\n");
 		return ret;
@@ -877,7 +877,7 @@ int ath12k_dp_service_srng(struct ath12k_base *ab,
 	}
 
 	if (ab->hw_params->ring_mask->rx_err[grp_id]) {
-		work_done = ath12k_dp_process_rx_err(ab, napi, budget);
+		work_done = ath12k_dp_rx_process_err(ab, napi, budget);
 		budget -= work_done;
 		tot_work_done += work_done;
 		if (budget <= 0)
@@ -897,7 +897,7 @@ int ath12k_dp_service_srng(struct ath12k_base *ab,
 
 	if (ab->hw_params->ring_mask->rx[grp_id]) {
 		i =  fls(ab->hw_params->ring_mask->rx[grp_id]) - 1;
-		work_done = ath12k_dp_process_rx(ab, i, napi,
+		work_done = ath12k_dp_rx_process(ab, i, napi,
 						 budget);
 		budget -= work_done;
 		tot_work_done += work_done;
@@ -956,9 +956,9 @@ int ath12k_dp_service_srng(struct ath12k_base *ab,
 		struct ath12k_dp *dp = &ab->dp;
 		struct dp_rxdma_ring *rx_ring = &dp->rx_refill_buf_ring;
 
-		ath12k_dp_rxbufs_replenish(ab, 0, rx_ring, 0,
-					   ab->hw_params->hal_params->rx_buf_rbm,
-					   true);
+		ath12k_dp_rx_bufs_replenish(ab, 0, rx_ring, 0,
+					    ab->hw_params->hal_params->rx_buf_rbm,
+					    true);
 	}
 
 	/* TODO: Implement handler for other interrupts */

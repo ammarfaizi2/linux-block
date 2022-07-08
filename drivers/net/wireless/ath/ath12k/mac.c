@@ -2946,7 +2946,7 @@ static int ath12k_mac_op_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 		goto exit;
 	}
 
-	ret = ath12k_dp_peer_rx_pn_replay_config(arvif, peer_addr, cmd, key);
+	ret = ath12k_dp_rx_peer_pn_replay_config(arvif, peer_addr, cmd, key);
 	if (ret) {
 		ath12k_warn(ab, "failed to offload PN replay detection %d\n", ret);
 		goto exit;
