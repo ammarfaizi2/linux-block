@@ -1816,11 +1816,10 @@ int btrfs_rmap_block(struct btrfs_fs_info *fs_info, u64 chunk_start,
 		stripe_nr = physical - map->stripes[i].physical;
 		stripe_nr = div64_u64_rem(stripe_nr, map->stripe_len, &offset);
 
-		if (map->type & BTRFS_BLOCK_GROUP_RAID10) {
+		if (map->type & (BTRFS_BLOCK_GROUP_RAID0 |
+				 BTRFS_BLOCK_GROUP_RAID10)) {
 			stripe_nr = stripe_nr * map->num_stripes + i;
 			stripe_nr = div_u64(stripe_nr, map->sub_stripes);
-		} else if (map->type & BTRFS_BLOCK_GROUP_RAID0) {
-			stripe_nr = stripe_nr * map->num_stripes + i;
 		}
 		/*
 		 * The remaining case would be for RAID56, multiply by
@@ -3761,6 +3760,7 @@ int btrfs_chunk_alloc(struct btrfs_trans_handle *trans, u64 flags,
 			 * attempt.
 			 */
 			wait_for_alloc = true;
+			force = CHUNK_ALLOC_NO_FORCE;
 			spin_unlock(&space_info->lock);
 			mutex_lock(&fs_info->chunk_mutex);
 			mutex_unlock(&fs_info->chunk_mutex);
