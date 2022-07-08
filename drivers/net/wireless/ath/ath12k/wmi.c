@@ -129,6 +129,12 @@ static const struct wmi_tlv_policy wmi_tlv_policies[] = {
 		.min_len = sizeof(struct wmi_vdev_delete_resp_event) },
 };
 
+static u32 ath12k_wmi_tlv_hdr(u32 cmd, u32 len)
+{
+	return FIELD_PREP(WMI_TLV_TAG, cmd) |
+		FIELD_PREP(WMI_TLV_LEN, len);
+}
+
 void ath12k_wmi_init_qcn9274(struct ath12k_base *ab,
 			     struct target_resource_config *config)
 {
@@ -703,8 +709,7 @@ int ath12k_wmi_mgmt_send(struct ath12k *ar, u32 vdev_id, u32 buf_id,
 	cmd->tx_params_valid = 0;
 
 	frame_tlv = (struct wmi_tlv *)(skb->data + sizeof(*cmd));
-	frame_tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_BYTE) |
-			    FIELD_PREP(WMI_TLV_LEN, buf_len);
+	frame_tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_BYTE, buf_len);
 
 	memcpy(frame_tlv->value, frame->data, buf_len);
 
@@ -758,8 +763,7 @@ int ath12k_wmi_vdev_create(struct ath12k *ar, u8 *macaddr,
 	len = WMI_NUM_SUPPORTED_BAND_MAX * sizeof(*txrx_streams);
 
 	tlv = ptr;
-	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_STRUCT) |
-		      FIELD_PREP(WMI_TLV_LEN, len);
+	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_STRUCT, len);
 
 	ptr += TLV_HDR_SIZE;
 	txrx_streams = ptr;
@@ -981,8 +985,7 @@ int ath12k_wmi_vdev_start(struct ath12k *ar, struct wmi_vdev_start_req_arg *arg,
 	ptr += sizeof(*chan);
 
 	tlv = ptr;
-	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_STRUCT) |
-		      FIELD_PREP(WMI_TLV_LEN, 0);
+	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_STRUCT, 0);
 
 	/* Note: This is a nested TLV containing:
 	 * [wmi_tlv][wmi_p2p_noa_descriptor][wmi_tlv]..
@@ -1723,8 +1726,7 @@ int ath12k_wmi_bcn_tmpl(struct ath12k *ar, u32 vdev_id,
 	ptr += sizeof(*bcn_prb_info);
 
 	tlv = ptr;
-	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_BYTE) |
-		      FIELD_PREP(WMI_TLV_LEN, aligned_len);
+	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_BYTE, aligned_len);
 	memcpy(tlv->value, bcn->data, bcn->len);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_BCN_TMPL_CMDID);
@@ -1769,8 +1771,7 @@ int ath12k_wmi_vdev_install_key(struct ath12k *ar,
 		       sizeof(struct wmi_key_seq_counter));
 
 	tlv = (struct wmi_tlv *)(skb->data + sizeof(*cmd));
-	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_BYTE) |
-		      FIELD_PREP(WMI_TLV_LEN, key_len_aligned);
+	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_BYTE, key_len_aligned);
 	memcpy(tlv->value, (u8 *)arg->key_data, key_len_aligned);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_VDEV_INSTALL_KEY_CMDID);
@@ -1941,8 +1942,7 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 	ptr += sizeof(*cmd);
 
 	tlv = ptr;
-	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_BYTE) |
-		      FIELD_PREP(WMI_TLV_LEN, peer_legacy_rates_align);
+	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_BYTE, peer_legacy_rates_align);
 
 	ptr += TLV_HDR_SIZE;
 
@@ -1954,8 +1954,7 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 	ptr += peer_legacy_rates_align;
 
 	tlv = ptr;
-	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_BYTE) |
-		      FIELD_PREP(WMI_TLV_LEN, peer_ht_rates_align);
+	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_BYTE, peer_ht_rates_align);
 	ptr += TLV_HDR_SIZE;
 	cmd->num_peer_ht_rates = param->peer_ht_rates.num_rates;
 	memcpy(ptr, param->peer_ht_rates.rates,
@@ -1991,8 +1990,7 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 	len = param->peer_he_mcs_count * sizeof(*he_mcs);
 
 	tlv = ptr;
-	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_STRUCT) |
-		      FIELD_PREP(WMI_TLV_LEN, len);
+	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_STRUCT, len);
 	ptr += TLV_HDR_SIZE;
 
 	/* Loop through the HE rate set */
@@ -2223,8 +2221,7 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 	len = params->num_chan * sizeof(u32);
 
 	tlv = ptr;
-	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_UINT32) |
-		      FIELD_PREP(WMI_TLV_LEN, len);
+	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_UINT32, len);
 	ptr += TLV_HDR_SIZE;
 	tmp_ptr = (u32 *)ptr;
 
@@ -2235,8 +2232,7 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 
 	len = params->num_ssids * sizeof(*ssid);
 	tlv = ptr;
-	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_FIXED_STRUCT) |
-		      FIELD_PREP(WMI_TLV_LEN, len);
+	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_FIXED_STRUCT, len);
 
 	ptr += TLV_HDR_SIZE;
 
@@ -2253,8 +2249,7 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 	ptr += (params->num_ssids * sizeof(*ssid));
 	len = params->num_bssid * sizeof(*bssid);
 	tlv = ptr;
-	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_FIXED_STRUCT) |
-		      FIELD_PREP(WMI_TLV_LEN, len);
+	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_FIXED_STRUCT, len);
 
 	ptr += TLV_HDR_SIZE;
 	bssid = ptr;
@@ -2271,8 +2266,7 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 
 	len = extraie_len_with_pad;
 	tlv = ptr;
-	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_BYTE) |
-		      FIELD_PREP(WMI_TLV_LEN, len);
+	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_BYTE, len);
 	ptr += TLV_HDR_SIZE;
 
 	if (params->extraie.len)
@@ -2284,8 +2278,7 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 	if (params->num_hint_s_ssid) {
 		len = params->num_hint_s_ssid * sizeof(struct hint_short_ssid);
 		tlv = ptr;
-		tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_FIXED_STRUCT) |
-			      FIELD_PREP(WMI_TLV_LEN, len);
+		tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_FIXED_STRUCT, len);
 		ptr += TLV_HDR_SIZE;
 		s_ssid = ptr;
 		for (i = 0; i < params->num_hint_s_ssid; ++i) {
@@ -2299,8 +2292,7 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 	if (params->num_hint_bssid) {
 		len = params->num_hint_bssid * sizeof(struct hint_bssid);
 		tlv = ptr;
-		tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_FIXED_STRUCT) |
-			      FIELD_PREP(WMI_TLV_LEN, len);
+		tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_FIXED_STRUCT, len);
 		ptr += TLV_HDR_SIZE;
 		hint_bssid = ptr;
 		for (i = 0; i < params->num_hint_bssid; ++i) {
@@ -2757,8 +2749,7 @@ int ath12k_wmi_pdev_peer_pktlog_filter(struct ath12k *ar, u8 *addr, u8 enable)
 	ptr = skb->data + sizeof(*cmd);
 
 	tlv = ptr;
-	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_STRUCT) |
-		      FIELD_PREP(WMI_TLV_LEN, sizeof(*info));
+	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_STRUCT, sizeof(*info));
 
 	ptr += TLV_HDR_SIZE;
 	info = ptr;
@@ -2862,10 +2853,9 @@ ath12k_wmi_send_thermal_mitigation_param_cmd(struct ath12k *ar,
 	cmd->therm_throt_levels = THERMAL_LEVELS;
 
 	tlv = (struct wmi_tlv *)(skb->data + sizeof(*cmd));
-	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_STRUCT) |
-		      FIELD_PREP(WMI_TLV_LEN,
-				 (THERMAL_LEVELS *
-				  sizeof(struct wmi_therm_throt_level_config_info)));
+	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_STRUCT,
+					 THERMAL_LEVELS *
+					 sizeof(struct wmi_therm_throt_level_config_info));
 
 	lvl_conf = (struct wmi_therm_throt_level_config_info *)(skb->data +
 								sizeof(*cmd) +
@@ -3175,8 +3165,7 @@ int ath12k_wmi_fils_discovery_tmpl(struct ath12k *ar, u32 vdev_id,
 	ptr = skb->data + sizeof(*cmd);
 
 	tlv = ptr;
-	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_BYTE) |
-		      FIELD_PREP(WMI_TLV_LEN, aligned_len);
+	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_BYTE, aligned_len);
 	memcpy(tlv->value, tmpl->data, tmpl->len);
 
 	ret = ath12k_wmi_cmd_send(ar->wmi, skb, WMI_FILS_DISCOVERY_TMPL_CMDID);
@@ -3228,8 +3217,7 @@ int ath12k_wmi_probe_resp_tmpl(struct ath12k *ar, u32 vdev_id,
 	ptr += sizeof(*probe_info);
 
 	tlv = ptr;
-	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_BYTE) |
-		      FIELD_PREP(WMI_TLV_LEN, aligned_len);
+	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_BYTE, aligned_len);
 	memcpy(tlv->value, tmpl->data, tmpl->len);
 
 	ret = ath12k_wmi_cmd_send(ar->wmi, skb, WMI_PRB_TMPL_CMDID);
@@ -3421,9 +3409,8 @@ static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
 
 	for (idx = 0; idx < param->num_mem_chunks; ++idx) {
 		host_mem_chunks[idx].tlv_header =
-				FIELD_PREP(WMI_TLV_TAG,
-					   WMI_TAG_WLAN_HOST_MEMORY_CHUNK) |
-				FIELD_PREP(WMI_TLV_LEN, len);
+			ath12k_wmi_tlv_hdr(WMI_TAG_WLAN_HOST_MEMORY_CHUNK,
+					   len);
 
 		host_mem_chunks[idx].ptr = param->mem_chunks[idx].paddr;
 		host_mem_chunks[idx].size = param->mem_chunks[idx].len;
@@ -3440,8 +3427,7 @@ static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
 
 	/* num_mem_chunks is zero */
 	tlv = ptr;
-	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_STRUCT) |
-		      FIELD_PREP(WMI_TLV_LEN, len);
+	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_STRUCT, len);
 	ptr += TLV_HDR_SIZE + len;
 
 	if (param->hw_mode_id != WMI_HOST_HW_MODE_MAX) {
@@ -3458,8 +3444,7 @@ static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
 
 		len = param->num_band_to_mac * sizeof(*band_to_mac);
 		tlv = ptr;
-		tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_STRUCT) |
-			      FIELD_PREP(WMI_TLV_LEN, len);
+		tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_STRUCT, len);
 
 		ptr += TLV_HDR_SIZE;
 		len = sizeof(*band_to_mac);
@@ -7275,8 +7260,7 @@ ath12k_wmi_send_unit_test_cmd(struct ath12k *ar,
 	ptr = skb->data + sizeof(ut_cmd);
 
 	tlv = ptr;
-	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_UINT32) |
-		      FIELD_PREP(WMI_TLV_LEN, arg_len);
+	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_UINT32, arg_len);
 
 	ptr += TLV_HDR_SIZE;
 
