@@ -122,18 +122,18 @@ int ath12k_dbring_wmi_cfg_setup(struct ath12k *ar,
 	if (id >= WMI_DIRECT_BUF_MAX)
 		return -EINVAL;
 
-	param.pdev_id		= DP_SW2HW_MACID(ring->pdev_id);
-	param.module_id		= id;
-	param.base_paddr_lo	= lower_32_bits(ring->refill_srng.paddr);
-	param.base_paddr_hi	= upper_32_bits(ring->refill_srng.paddr);
-	param.head_idx_paddr_lo	= lower_32_bits(ring->hp_addr);
-	param.head_idx_paddr_hi = upper_32_bits(ring->hp_addr);
-	param.tail_idx_paddr_lo = lower_32_bits(ring->tp_addr);
-	param.tail_idx_paddr_hi = upper_32_bits(ring->tp_addr);
-	param.num_elems		= ring->bufs_max;
-	param.buf_size		= ring->buf_sz;
-	param.num_resp_per_event = ring->num_resp_per_event;
-	param.event_timeout_ms	= ring->event_timeout_ms;
+	param.pdev_id		= cpu_to_le32(DP_SW2HW_MACID(ring->pdev_id));
+	param.module_id		= cpu_to_le32(id);
+	param.base_paddr_lo	= cpu_to_le32(lower_32_bits(ring->refill_srng.paddr));
+	param.base_paddr_hi	= cpu_to_le32(upper_32_bits(ring->refill_srng.paddr));
+	param.head_idx_paddr_lo	= cpu_to_le32(lower_32_bits(ring->hp_addr));
+	param.head_idx_paddr_hi = cpu_to_le32(upper_32_bits(ring->hp_addr));
+	param.tail_idx_paddr_lo = cpu_to_le32(lower_32_bits(ring->tp_addr));
+	param.tail_idx_paddr_hi = cpu_to_le32(upper_32_bits(ring->tp_addr));
+	param.num_elems		= cpu_to_le32(ring->bufs_max);
+	param.buf_size		= cpu_to_le32(ring->buf_sz);
+	param.num_resp_per_event = cpu_to_le32(ring->num_resp_per_event);
+	param.event_timeout_ms	= cpu_to_le32(ring->event_timeout_ms);
 
 	ret = ath12k_wmi_pdev_dma_ring_cfg(ar, &param);
 	if (ret) {

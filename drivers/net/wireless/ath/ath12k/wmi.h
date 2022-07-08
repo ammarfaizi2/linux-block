@@ -2223,7 +2223,7 @@ struct wmi_abi_version {
 struct wmi_init_cmd {
 	__le32 tlv_header;
 	struct wmi_abi_version host_abi_vers;
-	u32 num_host_mem_chunks;
+	__le32 num_host_mem_chunks;
 } __packed;
 
 #define WMI_RSRC_CFG_HOST_SVC_FLAG_REG_CC_EXT_SUPPORT_BIT 4
@@ -2484,13 +2484,13 @@ struct vdev_create_params {
 
 struct wmi_vdev_create_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 vdev_type;
-	u32 vdev_subtype;
+	__le32 vdev_id;
+	__le32 vdev_type;
+	__le32 vdev_subtype;
 	struct wmi_mac_addr vdev_macaddr;
-	u32 num_cfg_txrx_streams;
-	u32 pdev_id;
-	u32 vdev_stats_id;
+	__le32 num_cfg_txrx_streams;
+	__le32 pdev_id;
+	__le32 vdev_stats_id;
 } __packed;
 
 struct wmi_vdev_txrx_streams {
@@ -2502,27 +2502,27 @@ struct wmi_vdev_txrx_streams {
 
 struct wmi_vdev_delete_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
+	__le32 vdev_id;
 } __packed;
 
 struct wmi_vdev_up_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 vdev_assoc_id;
+	__le32 vdev_id;
+	__le32 vdev_assoc_id;
 	struct wmi_mac_addr vdev_bssid;
 	struct wmi_mac_addr trans_bssid;
-	u32 profile_idx;
-	u32 profile_num;
+	__le32 profile_idx;
+	__le32 profile_num;
 } __packed;
 
 struct wmi_vdev_stop_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
+	__le32 vdev_id;
 } __packed;
 
 struct wmi_vdev_down_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
+	__le32 vdev_id;
 } __packed;
 
 #define WMI_VDEV_START_HIDDEN_SSID  BIT(0)
@@ -2538,21 +2538,21 @@ struct wmi_ssid {
 
 struct wmi_vdev_start_request_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 requestor_id;
-	u32 beacon_interval;
-	u32 dtim_period;
-	u32 flags;
+	__le32 vdev_id;
+	__le32 requestor_id;
+	__le32 beacon_interval;
+	__le32 dtim_period;
+	__le32 flags;
 	struct wmi_ssid ssid;
-	u32 bcn_tx_rate;
-	u32 bcn_txpower;
-	u32 num_noa_descriptors;
-	u32 disable_hw_ack;
-	u32 preferred_tx_streams;
-	u32 preferred_rx_streams;
-	u32 he_ops;
-	u32 cac_duration_ms;
-	u32 regdomain;
+	__le32 bcn_tx_rate;
+	__le32 bcn_txpower;
+	__le32 num_noa_descriptors;
+	__le32 disable_hw_ack;
+	__le32 preferred_tx_streams;
+	__le32 preferred_rx_streams;
+	__le32 he_ops;
+	__le32 cac_duration_ms;
+	__le32 regdomain;
 } __packed;
 
 #define MGMT_TX_DL_FRM_LEN		     64
@@ -2848,34 +2848,34 @@ enum wmi_peer_type {
 
 struct wmi_peer_create_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
+	__le32 vdev_id;
 	struct wmi_mac_addr peer_macaddr;
-	u32 peer_type;
+	__le32 peer_type;
 } __packed;
 
 struct wmi_peer_delete_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
+	__le32 vdev_id;
 	struct wmi_mac_addr peer_macaddr;
 } __packed;
 
 struct wmi_peer_reorder_queue_setup_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
+	__le32 vdev_id;
 	struct wmi_mac_addr peer_macaddr;
-	u32 tid;
-	u32 queue_ptr_lo;
-	u32 queue_ptr_hi;
-	u32 queue_no;
-	u32 ba_window_size_valid;
-	u32 ba_window_size;
+	__le32 tid;
+	__le32 queue_ptr_lo;
+	__le32 queue_ptr_hi;
+	__le32 queue_no;
+	__le32 ba_window_size_valid;
+	__le32 ba_window_size;
 } __packed;
 
 struct wmi_peer_reorder_queue_remove_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
+	__le32 vdev_id;
 	struct wmi_mac_addr peer_macaddr;
-	u32 tid_mask;
+	__le32 tid_mask;
 } __packed;
 
 struct gpio_config_params {
@@ -2907,84 +2907,84 @@ enum wmi_bss_chan_info_req_type {
 
 struct wmi_pdev_set_param_cmd {
 	__le32 tlv_header;
-	u32 pdev_id;
-	u32 param_id;
-	u32 param_value;
+	__le32 pdev_id;
+	__le32 param_id;
+	__le32 param_value;
 } __packed;
 
 struct wmi_pdev_set_ps_mode_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 sta_ps_mode;
+	__le32 vdev_id;
+	__le32 sta_ps_mode;
 } __packed;
 
 struct wmi_pdev_suspend_cmd {
 	__le32 tlv_header;
-	u32 pdev_id;
-	u32 suspend_opt;
+	__le32 pdev_id;
+	__le32 suspend_opt;
 } __packed;
 
 struct wmi_pdev_resume_cmd {
 	__le32 tlv_header;
-	u32 pdev_id;
+	__le32 pdev_id;
 } __packed;
 
 struct wmi_pdev_bss_chan_info_req_cmd {
 	__le32 tlv_header;
 	/* ref wmi_bss_chan_info_req_type */
-	u32 req_type;
+	__le32 req_type;
 } __packed;
 
 struct wmi_ap_ps_peer_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
+	__le32 vdev_id;
 	struct wmi_mac_addr peer_macaddr;
-	u32 param;
-	u32 value;
+	__le32 param;
+	__le32 value;
 } __packed;
 
 struct wmi_sta_powersave_param_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 param;
-	u32 value;
+	__le32 vdev_id;
+	__le32 param;
+	__le32 value;
 } __packed;
 
 struct wmi_pdev_set_regdomain_cmd {
 	__le32 tlv_header;
-	u32 pdev_id;
-	u32 reg_domain;
-	u32 reg_domain_2g;
-	u32 reg_domain_5g;
-	u32 conformance_test_limit_2g;
-	u32 conformance_test_limit_5g;
-	u32 dfs_domain;
+	__le32 pdev_id;
+	__le32 reg_domain;
+	__le32 reg_domain_2g;
+	__le32 reg_domain_5g;
+	__le32 conformance_test_limit_2g;
+	__le32 conformance_test_limit_5g;
+	__le32 dfs_domain;
 } __packed;
 
 struct wmi_peer_set_param_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
+	__le32 vdev_id;
 	struct wmi_mac_addr peer_macaddr;
-	u32 param_id;
-	u32 param_value;
+	__le32 param_id;
+	__le32 param_value;
 } __packed;
 
 struct wmi_peer_flush_tids_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
+	__le32 vdev_id;
 	struct wmi_mac_addr peer_macaddr;
-	u32 peer_tid_bitmap;
+	__le32 peer_tid_bitmap;
 } __packed;
 
 struct wmi_dfs_phyerr_offload_cmd {
 	__le32 tlv_header;
-	u32 pdev_id;
+	__le32 pdev_id;
 } __packed;
 
 struct wmi_bcn_offload_ctrl_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 bcn_ctrl_op;
+	__le32 vdev_id;
+	__le32 bcn_ctrl_op;
 } __packed;
 
 enum scan_dwelltime_adaptive_mode {
@@ -3067,36 +3067,36 @@ enum wmi_scan_completion_reason {
 
 struct  wmi_start_scan_cmd {
 	__le32 tlv_header;
-	u32 scan_id;
-	u32 scan_req_id;
-	u32 vdev_id;
-	u32 scan_priority;
-	u32 notify_scan_events;
-	u32 dwell_time_active;
-	u32 dwell_time_passive;
-	u32 min_rest_time;
-	u32 max_rest_time;
-	u32 repeat_probe_time;
-	u32 probe_spacing_time;
-	u32 idle_time;
-	u32 max_scan_time;
-	u32 probe_delay;
-	u32 scan_ctrl_flags;
-	u32 burst_duration;
-	u32 num_chan;
-	u32 num_bssid;
-	u32 num_ssids;
-	u32 ie_len;
-	u32 n_probes;
+	__le32 scan_id;
+	__le32 scan_req_id;
+	__le32 vdev_id;
+	__le32 scan_priority;
+	__le32 notify_scan_events;
+	__le32 dwell_time_active;
+	__le32 dwell_time_passive;
+	__le32 min_rest_time;
+	__le32 max_rest_time;
+	__le32 repeat_probe_time;
+	__le32 probe_spacing_time;
+	__le32 idle_time;
+	__le32 max_scan_time;
+	__le32 probe_delay;
+	__le32 scan_ctrl_flags;
+	__le32 burst_duration;
+	__le32 num_chan;
+	__le32 num_bssid;
+	__le32 num_ssids;
+	__le32 ie_len;
+	__le32 n_probes;
 	struct wmi_mac_addr mac_addr;
 	struct wmi_mac_addr mac_mask;
 	u32 ie_bitmap[WMI_IE_BITMAP_SIZE];
-	u32 num_vendor_oui;
-	u32 scan_ctrl_flags_ext;
-	u32 dwell_time_active_2g;
-	u32 dwell_time_active_6g;
-	u32 dwell_time_passive_6g;
-	u32 scan_start_offset;
+	__le32 num_vendor_oui;
+	__le32 scan_ctrl_flags_ext;
+	__le32 dwell_time_active_2g;
+	__le32 dwell_time_active_6g;
+	__le32 dwell_time_passive_6g;
+	__le32 scan_start_offset;
 } __packed;
 
 #define WMI_SCAN_FLAG_PASSIVE        0x1
@@ -3288,16 +3288,16 @@ struct scan_cancel_param {
 
 struct  wmi_bcn_send_from_host_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 data_len;
+	__le32 vdev_id;
+	__le32 data_len;
 	union {
-		u32 frag_ptr;
-		u32 frag_ptr_lo;
+		__le32 frag_ptr;
+		__le32 frag_ptr_lo;
 	};
-	u32 frame_ctrl;
-	u32 dtim_flag;
-	u32 bcn_antenna;
-	u32 frag_ptr_hi;
+	__le32 frame_ctrl;
+	__le32 dtim_flag;
+	__le32 bcn_antenna;
+	__le32 frag_ptr_hi;
 };
 
 #define WMI_CHAN_INFO_MODE		GENMASK(5, 0)
@@ -3361,15 +3361,15 @@ enum wmi_sta_ps_mode {
 
 struct wmi_force_fw_hang_cmd {
 	__le32 tlv_header;
-	u32 type;
-	u32 delay_time_ms;
+	__le32 type;
+	__le32 delay_time_ms;
 };
 
 struct wmi_vdev_set_param_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 param_id;
-	u32 param_value;
+	__le32 vdev_id;
+	__le32 param_id;
+	__le32 param_value;
 } __packed;
 
 enum wmi_stats_id {
@@ -3392,29 +3392,29 @@ enum wmi_stats_id {
 struct wmi_request_stats_cmd {
 	__le32 tlv_header;
 	enum wmi_stats_id stats_id;
-	u32 vdev_id;
+	__le32 vdev_id;
 	struct wmi_mac_addr peer_macaddr;
-	u32 pdev_id;
+	__le32 pdev_id;
 } __packed;
 
 struct wmi_get_pdev_temperature_cmd {
 	__le32 tlv_header;
-	u32 param;
-	u32 pdev_id;
+	__le32 param;
+	__le32 pdev_id;
 } __packed;
 
 #define WMI_BEACON_TX_BUFFER_SIZE	512
 
 struct wmi_bcn_tmpl_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 tim_ie_offset;
-	u32 buf_len;
-	u32 csa_switch_count_offset;
-	u32 ext_csa_switch_count_offset;
-	u32 csa_event_bitmap;
-	u32 mbssid_ie_offset;
-	u32 esp_ie_offset;
+	__le32 vdev_id;
+	__le32 tim_ie_offset;
+	__le32 buf_len;
+	__le32 csa_switch_count_offset;
+	__le32 ext_csa_switch_count_offset;
+	__le32 csa_event_bitmap;
+	__le32 mbssid_ie_offset;
+	__le32 esp_ie_offset;
 } __packed;
 
 struct wmi_key_seq_counter {
@@ -3424,21 +3424,21 @@ struct wmi_key_seq_counter {
 
 struct wmi_vdev_install_key_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
+	__le32 vdev_id;
 	struct wmi_mac_addr peer_macaddr;
-	u32 key_idx;
-	u32 key_flags;
-	u32 key_cipher;
+	__le32 key_idx;
+	__le32 key_flags;
+	__le32 key_cipher;
 	struct wmi_key_seq_counter key_rsc_counter;
 	struct wmi_key_seq_counter key_global_rsc_counter;
 	struct wmi_key_seq_counter key_tsc_counter;
 	u8 wpi_key_rsc_counter[16];
 	u8 wpi_key_tsc_counter[16];
-	u32 key_len;
-	u32 key_txmic_len;
-	u32 key_rxmic_len;
-	u32 is_group_key_id_valid;
-	u32 group_key_id;
+	__le32 key_len;
+	__le32 key_txmic_len;
+	__le32 key_rxmic_len;
+	__le32 is_group_key_id_valid;
+	__le32 group_key_id;
 
 	/* Followed by key_data containing key followed by
 	 * tx mic and then rx mic
@@ -3536,41 +3536,41 @@ struct peer_assoc_params {
 struct  wmi_peer_assoc_complete_cmd {
 	__le32 tlv_header;
 	struct wmi_mac_addr peer_macaddr;
-	u32 vdev_id;
-	u32 peer_new_assoc;
-	u32 peer_associd;
-	u32 peer_flags;
-	u32 peer_caps;
-	u32 peer_listen_intval;
-	u32 peer_ht_caps;
-	u32 peer_max_mpdu;
-	u32 peer_mpdu_density;
-	u32 peer_rate_caps;
-	u32 peer_nss;
-	u32 peer_vht_caps;
-	u32 peer_phymode;
-	u32 peer_ht_info[2];
-	u32 num_peer_legacy_rates;
-	u32 num_peer_ht_rates;
-	u32 peer_bw_rxnss_override;
+	__le32 vdev_id;
+	__le32 peer_new_assoc;
+	__le32 peer_associd;
+	__le32 peer_flags;
+	__le32 peer_caps;
+	__le32 peer_listen_intval;
+	__le32 peer_ht_caps;
+	__le32 peer_max_mpdu;
+	__le32 peer_mpdu_density;
+	__le32 peer_rate_caps;
+	__le32 peer_nss;
+	__le32 peer_vht_caps;
+	__le32 peer_phymode;
+	__le32 peer_ht_info[2];
+	__le32 num_peer_legacy_rates;
+	__le32 num_peer_ht_rates;
+	__le32 peer_bw_rxnss_override;
 	struct  wmi_ppe_threshold peer_ppet;
-	u32 peer_he_cap_info;
-	u32 peer_he_ops;
-	u32 peer_he_cap_phy[WMI_MAX_HECAP_PHY_SIZE];
-	u32 peer_he_mcs;
-	u32 peer_he_cap_info_ext;
-	u32 peer_he_cap_info_internal;
-	u32 min_data_rate;
-	u32 peer_he_caps_6ghz;
+	__le32 peer_he_cap_info;
+	__le32 peer_he_ops;
+	__le32 peer_he_cap_phy[WMI_MAX_HECAP_PHY_SIZE];
+	__le32 peer_he_mcs;
+	__le32 peer_he_cap_info_ext;
+	__le32 peer_he_cap_info_internal;
+	__le32 min_data_rate;
+	__le32 peer_he_caps_6ghz;
 } __packed;
 
 struct wmi_stop_scan_cmd {
 	__le32 tlv_header;
-	u32 requestor;
-	u32 scan_id;
-	u32 req_type;
-	u32 vdev_id;
-	u32 pdev_id;
+	__le32 requestor;
+	__le32 scan_id;
+	__le32 req_type;
+	__le32 vdev_id;
+	__le32 pdev_id;
 };
 
 struct scan_chan_list_params {
@@ -3581,9 +3581,9 @@ struct scan_chan_list_params {
 
 struct wmi_scan_chan_list_cmd {
 	__le32 tlv_header;
-	u32 num_scan_chans;
-	u32 flags;
-	u32 pdev_id;
+	__le32 num_scan_chans;
+	__le32 flags;
+	__le32 pdev_id;
 } __packed;
 
 #define WMI_MGMT_SEND_DOWNLD_LEN	64
@@ -3601,14 +3601,14 @@ struct wmi_scan_chan_list_cmd {
 
 struct wmi_mgmt_send_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 desc_id;
-	u32 chanfreq;
-	u32 paddr_lo;
-	u32 paddr_hi;
-	u32 frame_len;
-	u32 buf_len;
-	u32 tx_params_valid;
+	__le32 vdev_id;
+	__le32 desc_id;
+	__le32 chanfreq;
+	__le32 paddr_lo;
+	__le32 paddr_hi;
+	__le32 frame_len;
+	__le32 buf_len;
+	__le32 tx_params_valid;
 
 	/* This TLV is followed by struct wmi_mgmt_frame */
 
@@ -3617,21 +3617,21 @@ struct wmi_mgmt_send_cmd {
 
 struct wmi_sta_powersave_mode_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 sta_ps_mode;
+	__le32 vdev_id;
+	__le32 sta_ps_mode;
 };
 
 struct wmi_sta_smps_force_mode_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 forced_mode;
+	__le32 vdev_id;
+	__le32 forced_mode;
 };
 
 struct wmi_sta_smps_param_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 param;
-	u32 value;
+	__le32 vdev_id;
+	__le32 param;
+	__le32 value;
 };
 
 struct wmi_bcn_prb_info {
@@ -3697,12 +3697,12 @@ struct wmi_init_country_params {
 
 struct wmi_init_country_cmd {
 	__le32 tlv_header;
-	u32 pdev_id;
-	u32 init_cc_type;
+	__le32 pdev_id;
+	__le32 init_cc_type;
 	union {
-		u32 country_code;
-		u32 regdom_id;
-		u32 alpha2;
+		__le32 country_code;
+		__le32 regdom_id;
+		__le32 alpha2;
 	} cc_info;
 } __packed;
 
@@ -3724,11 +3724,11 @@ struct thermal_mitigation_params {
 
 struct wmi_therm_throt_config_request_cmd {
 	__le32 tlv_header;
-	u32 pdev_id;
-	u32 enable;
-	u32 dc;
-	u32 dc_per_event;
-	u32 therm_throt_levels;
+	__le32 pdev_id;
+	__le32 enable;
+	__le32 dc;
+	__le32 dc_per_event;
+	__le32 therm_throt_levels;
 } __packed;
 
 struct wmi_therm_throt_level_config_info {
@@ -3741,32 +3741,32 @@ struct wmi_therm_throt_level_config_info {
 
 struct wmi_delba_send_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
+	__le32 vdev_id;
 	struct wmi_mac_addr peer_macaddr;
-	u32 tid;
-	u32 initiator;
-	u32 reasoncode;
+	__le32 tid;
+	__le32 initiator;
+	__le32 reasoncode;
 } __packed;
 
 struct wmi_addba_setresponse_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
+	__le32 vdev_id;
 	struct wmi_mac_addr peer_macaddr;
-	u32 tid;
-	u32 statuscode;
+	__le32 tid;
+	__le32 statuscode;
 } __packed;
 
 struct wmi_addba_send_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
+	__le32 vdev_id;
 	struct wmi_mac_addr peer_macaddr;
-	u32 tid;
-	u32 buffersize;
+	__le32 tid;
+	__le32 buffersize;
 } __packed;
 
 struct wmi_addba_clear_resp_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
+	__le32 vdev_id;
 	struct wmi_mac_addr peer_macaddr;
 } __packed;
 
@@ -3777,10 +3777,10 @@ struct wmi_pdev_pktlog_filter_info {
 
 struct wmi_pdev_pktlog_filter_cmd {
 	__le32 tlv_header;
-	u32 pdev_id;
-	u32 enable;
-	u32 filter_type;
-	u32 num_mac;
+	__le32 pdev_id;
+	__le32 enable;
+	__le32 filter_type;
+	__le32 num_mac;
 } __packed;
 
 enum ath12k_wmi_pktlog_enable {
@@ -3790,14 +3790,14 @@ enum ath12k_wmi_pktlog_enable {
 
 struct wmi_pktlog_enable_cmd {
 	__le32 tlv_header;
-	u32 pdev_id;
-	u32 evlist; /* WMI_PKTLOG_EVENT */
-	u32 enable;
+	__le32 pdev_id;
+	__le32 evlist; /* WMI_PKTLOG_EVENT */
+	__le32 enable;
 } __packed;
 
 struct wmi_pktlog_disable_cmd {
 	__le32 tlv_header;
-	u32 pdev_id;
+	__le32 pdev_id;
 } __packed;
 
 #define DFS_PHYERR_UNIT_TEST_CMD 0
@@ -3819,10 +3819,10 @@ struct wmi_dfs_unit_test_arg {
 
 struct wmi_unit_test_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 module_id;
-	u32 num_args;
-	u32 diag_token;
+	__le32 vdev_id;
+	__le32 module_id;
+	__le32 num_args;
+	__le32 diag_token;
 	/* Followed by test args*/
 } __packed;
 
@@ -4741,9 +4741,9 @@ struct wmi_wmm_params_arg {
 
 struct wmi_vdev_set_wmm_params_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
+	__le32 vdev_id;
 	struct wmi_wmm_params wmm_params[4];
-	u32 wmm_param_type;
+	__le32 wmm_param_type;
 } __packed;
 
 struct wmi_wmm_params_all_arg {
@@ -4771,37 +4771,37 @@ struct wmi_wmm_params_all_arg {
 
 struct wmi_twt_enable_params_cmd {
 	__le32 tlv_header;
-	u32 pdev_id;
-	u32 sta_cong_timer_ms;
-	u32 mbss_support;
-	u32 default_slot_size;
-	u32 congestion_thresh_setup;
-	u32 congestion_thresh_teardown;
-	u32 congestion_thresh_critical;
-	u32 interference_thresh_teardown;
-	u32 interference_thresh_setup;
-	u32 min_no_sta_setup;
-	u32 min_no_sta_teardown;
-	u32 no_of_bcast_mcast_slots;
-	u32 min_no_twt_slots;
-	u32 max_no_sta_twt;
-	u32 mode_check_interval;
-	u32 add_sta_slot_interval;
-	u32 remove_sta_slot_interval;
+	__le32 pdev_id;
+	__le32 sta_cong_timer_ms;
+	__le32 mbss_support;
+	__le32 default_slot_size;
+	__le32 congestion_thresh_setup;
+	__le32 congestion_thresh_teardown;
+	__le32 congestion_thresh_critical;
+	__le32 interference_thresh_teardown;
+	__le32 interference_thresh_setup;
+	__le32 min_no_sta_setup;
+	__le32 min_no_sta_teardown;
+	__le32 no_of_bcast_mcast_slots;
+	__le32 min_no_twt_slots;
+	__le32 max_no_sta_twt;
+	__le32 mode_check_interval;
+	__le32 add_sta_slot_interval;
+	__le32 remove_sta_slot_interval;
 } __packed;
 
 struct wmi_twt_disable_params_cmd {
 	__le32 tlv_header;
-	u32 pdev_id;
+	__le32 pdev_id;
 } __packed;
 
 struct wmi_obss_spatial_reuse_params_cmd {
 	__le32 tlv_header;
-	u32 pdev_id;
-	u32 enable;
+	__le32 pdev_id;
+	__le32 enable;
 	s32 obss_min;
 	s32 obss_max;
-	u32 vdev_id;
+	__le32 vdev_id;
 } __packed;
 
 #define ATH12K_BSS_COLOR_COLLISION_SCAN_PERIOD_MS		200
@@ -4813,19 +4813,19 @@ struct wmi_obss_spatial_reuse_params_cmd {
 
 struct wmi_obss_color_collision_cfg_params_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 flags;
-	u32 evt_type;
-	u32 current_bss_color;
-	u32 detection_period_ms;
-	u32 scan_period_ms;
-	u32 free_slot_expiry_time_ms;
+	__le32 vdev_id;
+	__le32 flags;
+	__le32 evt_type;
+	__le32 current_bss_color;
+	__le32 detection_period_ms;
+	__le32 scan_period_ms;
+	__le32 free_slot_expiry_time_ms;
 } __packed;
 
 struct wmi_bss_color_change_enable_params_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 enable;
+	__le32 vdev_id;
+	__le32 enable;
 } __packed;
 
 #define ATH12K_IPV4_TH_SEED_SIZE 5
@@ -4833,11 +4833,11 @@ struct wmi_bss_color_change_enable_params_cmd {
 
 struct ath12k_wmi_pdev_lro_config_cmd {
 	__le32 tlv_header;
-	u32 lro_enable;
-	u32 res;
+	__le32 lro_enable;
+	__le32 res;
 	u32 th_4[ATH12K_IPV4_TH_SEED_SIZE];
 	u32 th_6[ATH12K_IPV6_TH_SEED_SIZE];
-	u32 pdev_id;
+	__le32 pdev_id;
 } __packed;
 
 #define ATH12K_WMI_SPECTRAL_COUNT_DEFAULT                 0
@@ -4860,25 +4860,25 @@ struct ath12k_wmi_pdev_lro_config_cmd {
 #define ATH12K_WMI_SPECTRAL_CHN_MASK_DEFAULT              1
 
 struct ath12k_wmi_vdev_spectral_conf_param {
-	u32 vdev_id;
-	u32 scan_count;
-	u32 scan_period;
-	u32 scan_priority;
-	u32 scan_fft_size;
-	u32 scan_gc_ena;
-	u32 scan_restart_ena;
-	u32 scan_noise_floor_ref;
-	u32 scan_init_delay;
-	u32 scan_nb_tone_thr;
-	u32 scan_str_bin_thr;
-	u32 scan_wb_rpt_mode;
-	u32 scan_rssi_rpt_mode;
-	u32 scan_rssi_thr;
-	u32 scan_pwr_format;
-	u32 scan_rpt_mode;
-	u32 scan_bin_scale;
-	u32 scan_dbm_adj;
-	u32 scan_chn_mask;
+	__le32 vdev_id;
+	__le32 scan_count;
+	__le32 scan_period;
+	__le32 scan_priority;
+	__le32 scan_fft_size;
+	__le32 scan_gc_ena;
+	__le32 scan_restart_ena;
+	__le32 scan_noise_floor_ref;
+	__le32 scan_init_delay;
+	__le32 scan_nb_tone_thr;
+	__le32 scan_str_bin_thr;
+	__le32 scan_wb_rpt_mode;
+	__le32 scan_rssi_rpt_mode;
+	__le32 scan_rssi_thr;
+	__le32 scan_pwr_format;
+	__le32 scan_rpt_mode;
+	__le32 scan_bin_scale;
+	__le32 scan_dbm_adj;
+	__le32 scan_chn_mask;
 } __packed;
 
 struct ath12k_wmi_vdev_spectral_conf_cmd {
@@ -4893,31 +4893,31 @@ struct ath12k_wmi_vdev_spectral_conf_cmd {
 
 struct ath12k_wmi_vdev_spectral_enable_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 trigger_cmd;
-	u32 enable_cmd;
+	__le32 vdev_id;
+	__le32 trigger_cmd;
+	__le32 enable_cmd;
 } __packed;
 
 struct ath12k_wmi_pdev_dma_ring_cfg_req_cmd {
 	__le32 tlv_header;
-	u32 pdev_id;
-	u32 module_id;		/* see enum wmi_direct_buffer_module */
-	u32 base_paddr_lo;
-	u32 base_paddr_hi;
-	u32 head_idx_paddr_lo;
-	u32 head_idx_paddr_hi;
-	u32 tail_idx_paddr_lo;
-	u32 tail_idx_paddr_hi;
-	u32 num_elems;		/* Number of elems in the ring */
-	u32 buf_size;		/* size of allocated buffer in bytes */
+	__le32 pdev_id;
+	__le32 module_id;		/* see enum wmi_direct_buffer_module */
+	__le32 base_paddr_lo;
+	__le32 base_paddr_hi;
+	__le32 head_idx_paddr_lo;
+	__le32 head_idx_paddr_hi;
+	__le32 tail_idx_paddr_lo;
+	__le32 tail_idx_paddr_hi;
+	__le32 num_elems;		/* Number of elems in the ring */
+	__le32 buf_size;		/* size of allocated buffer in bytes */
 
 	/* Number of wmi_dma_buf_release_entry packed together */
-	u32 num_resp_per_event;
+	__le32 num_resp_per_event;
 
 	/* Target should timeout and send whatever resp
 	 * it has if this time expires, units in milliseconds
 	 */
-	u32 event_timeout_ms;
+	__le32 event_timeout_ms;
 } __packed;
 
 struct ath12k_wmi_dma_buf_release_fixed_param {
@@ -4958,21 +4958,21 @@ enum wmi_fils_discovery_cmd_type {
 
 struct wmi_fils_discovery_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 interval;
-	u32 config; /* enum wmi_fils_discovery_cmd_type */
+	__le32 vdev_id;
+	__le32 interval;
+	__le32 config; /* enum wmi_fils_discovery_cmd_type */
 } __packed;
 
 struct wmi_fils_discovery_tmpl_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 buf_len;
+	__le32 vdev_id;
+	__le32 buf_len;
 } __packed;
 
 struct wmi_probe_tmpl_cmd {
 	__le32 tlv_header;
-	u32 vdev_id;
-	u32 buf_len;
+	__le32 vdev_id;
+	__le32 buf_len;
 } __packed;
 
 struct target_resource_config {
@@ -5213,9 +5213,9 @@ static inline const char *wow_reason(enum wmi_wow_wake_reason reason)
 
 struct wmi_wow_enable_cmd {
 	__le32 tlv_header;
-	u32 enable;
-	u32 pause_iface_config;
-	u32 flags;
+	__le32 enable;
+	__le32 pause_iface_config;
+	__le32 flags;
 }  __packed;
 
 struct wmi_wow_host_wakeup_ind {

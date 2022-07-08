@@ -701,13 +701,13 @@ int ath12k_wmi_mgmt_send(struct ath12k *ar, u32 vdev_id, u32 buf_id,
 	cmd = (struct wmi_mgmt_send_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_MGMT_TX_SEND_CMD,
 						 sizeof(*cmd));
-	cmd->vdev_id = vdev_id;
-	cmd->desc_id = buf_id;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
+	cmd->desc_id = cpu_to_le32(buf_id);
 	cmd->chanfreq = 0;
-	cmd->paddr_lo = lower_32_bits(ATH12K_SKB_CB(frame)->paddr);
-	cmd->paddr_hi = upper_32_bits(ATH12K_SKB_CB(frame)->paddr);
-	cmd->frame_len = frame->len;
-	cmd->buf_len = buf_len;
+	cmd->paddr_lo = cpu_to_le32(lower_32_bits(ATH12K_SKB_CB(frame)->paddr));
+	cmd->paddr_hi = cpu_to_le32(upper_32_bits(ATH12K_SKB_CB(frame)->paddr));
+	cmd->frame_len = cpu_to_le32(frame->len);
+	cmd->buf_len = cpu_to_le32(buf_len);
 	cmd->tx_params_valid = 0;
 
 	frame_tlv = (struct wmi_tlv *)(skb->data + sizeof(*cmd));
@@ -753,12 +753,12 @@ int ath12k_wmi_vdev_create(struct ath12k *ar, u8 *macaddr,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_CREATE_CMD,
 						 sizeof(*cmd));
 
-	cmd->vdev_id = param->if_id;
-	cmd->vdev_type = param->type;
-	cmd->vdev_subtype = param->subtype;
-	cmd->num_cfg_txrx_streams = WMI_NUM_SUPPORTED_BAND_MAX;
-	cmd->pdev_id = param->pdev_id;
-	cmd->vdev_stats_id =  param->if_stats_id;
+	cmd->vdev_id = cpu_to_le32(param->if_id);
+	cmd->vdev_type = cpu_to_le32(param->type);
+	cmd->vdev_subtype = cpu_to_le32(param->subtype);
+	cmd->num_cfg_txrx_streams = cpu_to_le32(WMI_NUM_SUPPORTED_BAND_MAX);
+	cmd->pdev_id = cpu_to_le32(param->pdev_id);
+	cmd->vdev_stats_id = cpu_to_le32(param->if_stats_id);
 	ether_addr_copy(cmd->vdev_macaddr.addr, macaddr);
 
 	ptr = skb->data + sizeof(*cmd);
@@ -816,7 +816,7 @@ int ath12k_wmi_vdev_delete(struct ath12k *ar, u8 vdev_id)
 	cmd = (struct wmi_vdev_delete_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_DELETE_CMD,
 						 sizeof(*cmd));
-	cmd->vdev_id = vdev_id;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_VDEV_DELETE_CMDID);
 	if (ret) {
@@ -844,7 +844,7 @@ int ath12k_wmi_vdev_stop(struct ath12k *ar, u8 vdev_id)
 
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_STOP_CMD,
 						 sizeof(*cmd));
-	cmd->vdev_id = vdev_id;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_VDEV_STOP_CMDID);
 	if (ret) {
@@ -872,7 +872,7 @@ int ath12k_wmi_vdev_down(struct ath12k *ar, u8 vdev_id)
 
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_DOWN_CMD,
 						 sizeof(*cmd));
-	cmd->vdev_id = vdev_id;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_VDEV_DOWN_CMDID);
 	if (ret) {
@@ -948,16 +948,16 @@ int ath12k_wmi_vdev_start(struct ath12k *ar, struct wmi_vdev_start_req_arg *arg,
 	cmd = (struct wmi_vdev_start_request_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_START_REQUEST_CMD,
 						 sizeof(*cmd));
-	cmd->vdev_id = arg->vdev_id;
-	cmd->beacon_interval = arg->bcn_intval;
-	cmd->bcn_tx_rate = arg->bcn_tx_rate;
-	cmd->dtim_period = arg->dtim_period;
-	cmd->num_noa_descriptors = arg->num_noa_descriptors;
-	cmd->preferred_rx_streams = arg->pref_rx_streams;
-	cmd->preferred_tx_streams = arg->pref_tx_streams;
-	cmd->cac_duration_ms = arg->cac_duration_ms;
-	cmd->regdomain = arg->regdomain;
-	cmd->he_ops = arg->he_ops;
+	cmd->vdev_id = cpu_to_le32(arg->vdev_id);
+	cmd->beacon_interval = cpu_to_le32(arg->bcn_intval);
+	cmd->bcn_tx_rate = cpu_to_le32(arg->bcn_tx_rate);
+	cmd->dtim_period = cpu_to_le32(arg->dtim_period);
+	cmd->num_noa_descriptors = cpu_to_le32(arg->num_noa_descriptors);
+	cmd->preferred_rx_streams = cpu_to_le32(arg->pref_rx_streams);
+	cmd->preferred_tx_streams = cpu_to_le32(arg->pref_tx_streams);
+	cmd->cac_duration_ms = cpu_to_le32(arg->cac_duration_ms);
+	cmd->regdomain = cpu_to_le32(arg->regdomain);
+	cmd->he_ops = cpu_to_le32(arg->he_ops);
 
 	if (!restart) {
 		if (arg->ssid) {
@@ -965,12 +965,12 @@ int ath12k_wmi_vdev_start(struct ath12k *ar, struct wmi_vdev_start_req_arg *arg,
 			memcpy(cmd->ssid.ssid, arg->ssid, arg->ssid_len);
 		}
 		if (arg->hidden_ssid)
-			cmd->flags |= WMI_VDEV_START_HIDDEN_SSID;
+			cmd->flags |= cpu_to_le32(WMI_VDEV_START_HIDDEN_SSID);
 		if (arg->pmf_enabled)
-			cmd->flags |= WMI_VDEV_START_PMF_ENABLED;
+			cmd->flags |= cpu_to_le32(WMI_VDEV_START_PMF_ENABLED);
 	}
 
-	cmd->flags |= WMI_VDEV_START_LDPC_RX_ENABLED;
+	cmd->flags |= cpu_to_le32(WMI_VDEV_START_LDPC_RX_ENABLED);
 
 	ptr = skb->data + sizeof(*cmd);
 	chan = ptr;
@@ -1024,8 +1024,8 @@ int ath12k_wmi_vdev_up(struct ath12k *ar, u32 vdev_id, u32 aid, const u8 *bssid)
 
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_UP_CMD,
 						 sizeof(*cmd));
-	cmd->vdev_id = vdev_id;
-	cmd->vdev_assoc_id = aid;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
+	cmd->vdev_assoc_id = cpu_to_le32(aid);
 
 	ether_addr_copy(cmd->vdev_bssid.addr, bssid);
 
@@ -1059,8 +1059,8 @@ int ath12k_wmi_send_peer_create_cmd(struct ath12k *ar,
 						 sizeof(*cmd));
 
 	ether_addr_copy(cmd->peer_macaddr.addr, param->peer_addr);
-	cmd->peer_type = param->peer_type;
-	cmd->vdev_id = param->vdev_id;
+	cmd->peer_type = cpu_to_le32(param->peer_type);
+	cmd->vdev_id = cpu_to_le32(param->vdev_id);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_PEER_CREATE_CMDID);
 	if (ret) {
@@ -1092,7 +1092,7 @@ int ath12k_wmi_send_peer_delete_cmd(struct ath12k *ar,
 						 sizeof(*cmd));
 
 	ether_addr_copy(cmd->peer_macaddr.addr, peer_addr);
-	cmd->vdev_id = vdev_id;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "WMI peer delete vdev_id %d peer_addr %pM\n",
@@ -1123,13 +1123,13 @@ int ath12k_wmi_send_pdev_set_regdomain(struct ath12k *ar,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_SET_REGDOMAIN_CMD,
 						 sizeof(*cmd));
 
-	cmd->reg_domain = param->current_rd_in_use;
-	cmd->reg_domain_2g = param->current_rd_2g;
-	cmd->reg_domain_5g = param->current_rd_5g;
-	cmd->conformance_test_limit_2g = param->ctl_2g;
-	cmd->conformance_test_limit_5g = param->ctl_5g;
-	cmd->dfs_domain = param->dfs_domain;
-	cmd->pdev_id = param->pdev_id;
+	cmd->reg_domain = cpu_to_le32(param->current_rd_in_use);
+	cmd->reg_domain_2g = cpu_to_le32(param->current_rd_2g);
+	cmd->reg_domain_5g = cpu_to_le32(param->current_rd_5g);
+	cmd->conformance_test_limit_2g = cpu_to_le32(param->ctl_2g);
+	cmd->conformance_test_limit_5g = cpu_to_le32(param->ctl_5g);
+	cmd->dfs_domain = cpu_to_le32(param->dfs_domain);
+	cmd->pdev_id = cpu_to_le32(param->pdev_id);
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "WMI pdev regd rd %d rd2g %d rd5g %d domain %d pdev id %d\n",
@@ -1162,9 +1162,9 @@ int ath12k_wmi_set_peer_param(struct ath12k *ar, const u8 *peer_addr,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PEER_SET_PARAM_CMD,
 						 sizeof(*cmd));
 	ether_addr_copy(cmd->peer_macaddr.addr, peer_addr);
-	cmd->vdev_id = vdev_id;
-	cmd->param_id = param_id;
-	cmd->param_value = param_val;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
+	cmd->param_id = cpu_to_le32(param_id);
+	cmd->param_value = cpu_to_le32(param_val);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_PEER_SET_PARAM_CMDID);
 	if (ret) {
@@ -1197,8 +1197,8 @@ int ath12k_wmi_send_peer_flush_tids_cmd(struct ath12k *ar,
 						 sizeof(*cmd));
 
 	ether_addr_copy(cmd->peer_macaddr.addr, peer_addr);
-	cmd->peer_tid_bitmap = param->peer_tid_bitmap;
-	cmd->vdev_id = param->vdev_id;
+	cmd->peer_tid_bitmap = cpu_to_le32(param->peer_tid_bitmap);
+	cmd->vdev_id = cpu_to_le32(param->vdev_id);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_PEER_FLUSH_TIDS_CMDID);
 	if (ret) {
@@ -1233,13 +1233,13 @@ int ath12k_wmi_peer_rx_reorder_queue_setup(struct ath12k *ar,
 						 sizeof(*cmd));
 
 	ether_addr_copy(cmd->peer_macaddr.addr, addr);
-	cmd->vdev_id = vdev_id;
-	cmd->tid = tid;
-	cmd->queue_ptr_lo = lower_32_bits(paddr);
-	cmd->queue_ptr_hi = upper_32_bits(paddr);
-	cmd->queue_no = tid;
-	cmd->ba_window_size_valid = ba_window_size_valid;
-	cmd->ba_window_size = ba_window_size;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
+	cmd->tid = cpu_to_le32(tid);
+	cmd->queue_ptr_lo = cpu_to_le32(lower_32_bits(paddr));
+	cmd->queue_ptr_hi = cpu_to_le32(upper_32_bits(paddr));
+	cmd->queue_no = cpu_to_le32(tid);
+	cmd->ba_window_size_valid = cpu_to_le32(ba_window_size_valid);
+	cmd->ba_window_size = cpu_to_le32(ba_window_size);
 
 	ret = ath12k_wmi_cmd_send(ar->wmi, skb,
 				  WMI_PEER_REORDER_QUEUE_SETUP_CMDID);
@@ -1274,8 +1274,8 @@ ath12k_wmi_rx_reord_queue_remove(struct ath12k *ar,
 						 sizeof(*cmd));
 
 	ether_addr_copy(cmd->peer_macaddr.addr, param->peer_macaddr);
-	cmd->vdev_id = param->vdev_id;
-	cmd->tid_mask = param->peer_tid_bitmap;
+	cmd->vdev_id = cpu_to_le32(param->vdev_id);
+	cmd->tid_mask = cpu_to_le32(param->peer_tid_bitmap);
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "%s: peer_macaddr %pM vdev_id %d, tid_map %d", __func__,
@@ -1307,9 +1307,9 @@ int ath12k_wmi_pdev_set_param(struct ath12k *ar, u32 param_id,
 	cmd = (struct wmi_pdev_set_param_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_SET_PARAM_CMD,
 						 sizeof(*cmd));
-	cmd->pdev_id = pdev_id;
-	cmd->param_id = param_id;
-	cmd->param_value = param_value;
+	cmd->pdev_id = cpu_to_le32(pdev_id);
+	cmd->param_id = cpu_to_le32(param_id);
+	cmd->param_value = cpu_to_le32(param_value);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_PDEV_SET_PARAM_CMDID);
 	if (ret) {
@@ -1338,8 +1338,8 @@ int ath12k_wmi_pdev_set_ps_mode(struct ath12k *ar, int vdev_id, u32 enable)
 	cmd = (struct wmi_pdev_set_ps_mode_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_STA_POWERSAVE_MODE_CMD,
 						 sizeof(*cmd));
-	cmd->vdev_id = vdev_id;
-	cmd->sta_ps_mode = enable;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
+	cmd->sta_ps_mode = cpu_to_le32(enable);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_STA_POWERSAVE_MODE_CMDID);
 	if (ret) {
@@ -1371,8 +1371,8 @@ int ath12k_wmi_pdev_suspend(struct ath12k *ar, u32 suspend_opt,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_SUSPEND_CMD,
 						 sizeof(*cmd));
 
-	cmd->suspend_opt = suspend_opt;
-	cmd->pdev_id = pdev_id;
+	cmd->suspend_opt = cpu_to_le32(suspend_opt);
+	cmd->pdev_id = cpu_to_le32(pdev_id);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_PDEV_SUSPEND_CMDID);
 	if (ret) {
@@ -1401,7 +1401,7 @@ int ath12k_wmi_pdev_resume(struct ath12k *ar, u32 pdev_id)
 
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_RESUME_CMD,
 						 sizeof(*cmd));
-	cmd->pdev_id = pdev_id;
+	cmd->pdev_id = cpu_to_le32(pdev_id);
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "WMI pdev resume pdev id %d\n", pdev_id);
@@ -1435,7 +1435,7 @@ int ath12k_wmi_pdev_bss_chan_info_request(struct ath12k *ar,
 
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_BSS_CHAN_INFO_REQUEST,
 						 sizeof(*cmd));
-	cmd->req_type = type;
+	cmd->req_type = cpu_to_le32(type);
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "WMI bss chan info req type %d\n", type);
@@ -1467,10 +1467,10 @@ int ath12k_wmi_send_set_ap_ps_param_cmd(struct ath12k *ar, u8 *peer_addr,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_AP_PS_PEER_CMD,
 						 sizeof(*cmd));
 
-	cmd->vdev_id = param->vdev_id;
+	cmd->vdev_id = cpu_to_le32(param->vdev_id);
 	ether_addr_copy(cmd->peer_macaddr.addr, peer_addr);
-	cmd->param = param->param;
-	cmd->value = param->value;
+	cmd->param = cpu_to_le32(param->param);
+	cmd->value = cpu_to_le32(param->value);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_AP_PS_PEER_PARAM_CMDID);
 	if (ret) {
@@ -1502,9 +1502,9 @@ int ath12k_wmi_set_sta_ps_param(struct ath12k *ar, u32 vdev_id,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_STA_POWERSAVE_PARAM_CMD,
 						 sizeof(*cmd));
 
-	cmd->vdev_id = vdev_id;
-	cmd->param = param;
-	cmd->value = param_value;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
+	cmd->param = cpu_to_le32(param);
+	cmd->value = cpu_to_le32(param_value);
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "WMI set sta ps vdev_id %d param %d value %d\n",
@@ -1536,8 +1536,8 @@ int ath12k_wmi_force_fw_hang_cmd(struct ath12k *ar, u32 type, u32 delay_time_ms)
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_FORCE_FW_HANG_CMD,
 						 len);
 
-	cmd->type = type;
-	cmd->delay_time_ms = delay_time_ms;
+	cmd->type = cpu_to_le32(type);
+	cmd->delay_time_ms = cpu_to_le32(delay_time_ms);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_FORCE_FW_HANG_CMDID);
 
@@ -1564,9 +1564,9 @@ int ath12k_wmi_vdev_set_param_cmd(struct ath12k *ar, u32 vdev_id,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_SET_PARAM_CMD,
 						 sizeof(*cmd));
 
-	cmd->vdev_id = vdev_id;
-	cmd->param_id = param_id;
-	cmd->param_value = param_value;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
+	cmd->param_id = cpu_to_le32(param_id);
+	cmd->param_value = cpu_to_le32(param_value);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_VDEV_SET_PARAM_CMDID);
 	if (ret) {
@@ -1599,8 +1599,8 @@ int ath12k_wmi_send_stats_request_cmd(struct ath12k *ar,
 						 sizeof(*cmd));
 
 	cmd->stats_id = param->stats_id;
-	cmd->vdev_id = param->vdev_id;
-	cmd->pdev_id = param->pdev_id;
+	cmd->vdev_id = cpu_to_le32(param->vdev_id);
+	cmd->pdev_id = cpu_to_le32(param->pdev_id);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_REQUEST_STATS_CMDID);
 	if (ret) {
@@ -1629,7 +1629,7 @@ int ath12k_wmi_send_pdev_temperature_cmd(struct ath12k *ar)
 	cmd = (struct wmi_get_pdev_temperature_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_GET_TEMPERATURE_CMD,
 						 sizeof(*cmd));
-	cmd->pdev_id = ar->pdev->pdev_id;
+	cmd->pdev_id = cpu_to_le32(ar->pdev->pdev_id);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_PDEV_GET_TEMPERATURE_CMDID);
 	if (ret) {
@@ -1659,8 +1659,8 @@ int ath12k_wmi_send_bcn_offload_control_cmd(struct ath12k *ar,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_BCN_OFFLOAD_CTRL_CMD,
 						 sizeof(*cmd));
 
-	cmd->vdev_id = vdev_id;
-	cmd->bcn_ctrl_op = bcn_ctrl_op;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
+	cmd->bcn_ctrl_op = cpu_to_le32(bcn_ctrl_op);
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "WMI bcn ctrl offload vdev id %d ctrl_op %d\n",
@@ -1698,11 +1698,11 @@ int ath12k_wmi_bcn_tmpl(struct ath12k *ar, u32 vdev_id,
 	cmd = (struct wmi_bcn_tmpl_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_BCN_TMPL_CMD,
 						 sizeof(*cmd));
-	cmd->vdev_id = vdev_id;
-	cmd->tim_ie_offset = offs->tim_offset;
-	cmd->csa_switch_count_offset = offs->cntdwn_counter_offs[0];
-	cmd->ext_csa_switch_count_offset = offs->cntdwn_counter_offs[1];
-	cmd->buf_len = bcn->len;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
+	cmd->tim_ie_offset = cpu_to_le32(offs->tim_offset);
+	cmd->csa_switch_count_offset = cpu_to_le32(offs->cntdwn_counter_offs[0]);
+	cmd->ext_csa_switch_count_offset = cpu_to_le32(offs->cntdwn_counter_offs[1]);
+	cmd->buf_len = cpu_to_le32(bcn->len);
 
 	ptr = skb->data + sizeof(*cmd);
 
@@ -1747,14 +1747,14 @@ int ath12k_wmi_vdev_install_key(struct ath12k *ar,
 	cmd = (struct wmi_vdev_install_key_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_INSTALL_KEY_CMD,
 						 sizeof(*cmd));
-	cmd->vdev_id = arg->vdev_id;
+	cmd->vdev_id = cpu_to_le32(arg->vdev_id);
 	ether_addr_copy(cmd->peer_macaddr.addr, arg->macaddr);
-	cmd->key_idx = arg->key_idx;
-	cmd->key_flags = arg->key_flags;
-	cmd->key_cipher = arg->key_cipher;
-	cmd->key_len = arg->key_len;
-	cmd->key_txmic_len = arg->key_txmic_len;
-	cmd->key_rxmic_len = arg->key_rxmic_len;
+	cmd->key_idx = cpu_to_le32(arg->key_idx);
+	cmd->key_flags = cpu_to_le32(arg->key_flags);
+	cmd->key_cipher = cpu_to_le32(arg->key_cipher);
+	cmd->key_len = cpu_to_le32(arg->key_len);
+	cmd->key_txmic_len = cpu_to_le32(arg->key_txmic_len);
+	cmd->key_rxmic_len = cpu_to_le32(arg->key_rxmic_len);
 
 	if (arg->key_rsc_counter)
 		memcpy(&cmd->key_rsc_counter, &arg->key_rsc_counter,
@@ -1786,44 +1786,44 @@ static void ath12k_wmi_copy_peer_flags(struct wmi_peer_assoc_complete_cmd *cmd,
 
 	if (param->is_wme_set) {
 		if (param->qos_flag)
-			cmd->peer_flags |= WMI_PEER_QOS;
+			cmd->peer_flags |= cpu_to_le32(WMI_PEER_QOS);
 		if (param->apsd_flag)
-			cmd->peer_flags |= WMI_PEER_APSD;
+			cmd->peer_flags |= cpu_to_le32(WMI_PEER_APSD);
 		if (param->ht_flag)
-			cmd->peer_flags |= WMI_PEER_HT;
+			cmd->peer_flags |= cpu_to_le32(WMI_PEER_HT);
 		if (param->bw_40)
-			cmd->peer_flags |= WMI_PEER_40MHZ;
+			cmd->peer_flags |= cpu_to_le32(WMI_PEER_40MHZ);
 		if (param->bw_80)
-			cmd->peer_flags |= WMI_PEER_80MHZ;
+			cmd->peer_flags |= cpu_to_le32(WMI_PEER_80MHZ);
 		if (param->bw_160)
-			cmd->peer_flags |= WMI_PEER_160MHZ;
+			cmd->peer_flags |= cpu_to_le32(WMI_PEER_160MHZ);
 
 		/* Typically if STBC is enabled for VHT it should be enabled
 		 * for HT as well
 		 **/
 		if (param->stbc_flag)
-			cmd->peer_flags |= WMI_PEER_STBC;
+			cmd->peer_flags |= cpu_to_le32(WMI_PEER_STBC);
 
 		/* Typically if LDPC is enabled for VHT it should be enabled
 		 * for HT as well
 		 **/
 		if (param->ldpc_flag)
-			cmd->peer_flags |= WMI_PEER_LDPC;
+			cmd->peer_flags |= cpu_to_le32(WMI_PEER_LDPC);
 
 		if (param->static_mimops_flag)
-			cmd->peer_flags |= WMI_PEER_STATIC_MIMOPS;
+			cmd->peer_flags |= cpu_to_le32(WMI_PEER_STATIC_MIMOPS);
 		if (param->dynamic_mimops_flag)
-			cmd->peer_flags |= WMI_PEER_DYN_MIMOPS;
+			cmd->peer_flags |= cpu_to_le32(WMI_PEER_DYN_MIMOPS);
 		if (param->spatial_mux_flag)
-			cmd->peer_flags |= WMI_PEER_SPATIAL_MUX;
+			cmd->peer_flags |= cpu_to_le32(WMI_PEER_SPATIAL_MUX);
 		if (param->vht_flag)
-			cmd->peer_flags |= WMI_PEER_VHT;
+			cmd->peer_flags |= cpu_to_le32(WMI_PEER_VHT);
 		if (param->he_flag)
-			cmd->peer_flags |= WMI_PEER_HE;
+			cmd->peer_flags |= cpu_to_le32(WMI_PEER_HE);
 		if (param->twt_requester)
-			cmd->peer_flags |= WMI_PEER_TWT_REQ;
+			cmd->peer_flags |= cpu_to_le32(WMI_PEER_TWT_REQ);
 		if (param->twt_responder)
-			cmd->peer_flags |= WMI_PEER_TWT_RESP;
+			cmd->peer_flags |= cpu_to_le32(WMI_PEER_TWT_RESP);
 	}
 
 	/* Suppress authorization for all AUTH modes that need 4-way handshake
@@ -1831,21 +1831,21 @@ static void ath12k_wmi_copy_peer_flags(struct wmi_peer_assoc_complete_cmd *cmd,
 	 * Authorization will be done for these modes on key installation.
 	 */
 	if (param->auth_flag)
-		cmd->peer_flags |= WMI_PEER_AUTH;
+		cmd->peer_flags |= cpu_to_le32(WMI_PEER_AUTH);
 	if (param->need_ptk_4_way) {
-		cmd->peer_flags |= WMI_PEER_NEED_PTK_4_WAY;
+		cmd->peer_flags |= cpu_to_le32(WMI_PEER_NEED_PTK_4_WAY);
 		if (!hw_crypto_disabled)
-			cmd->peer_flags &= ~WMI_PEER_AUTH;
+			cmd->peer_flags &= cpu_to_le32(~WMI_PEER_AUTH);
 	}
 	if (param->need_gtk_2_way)
-		cmd->peer_flags |= WMI_PEER_NEED_GTK_2_WAY;
+		cmd->peer_flags |= cpu_to_le32(WMI_PEER_NEED_GTK_2_WAY);
 	/* safe mode bypass the 4-way handshake */
 	if (param->safe_mode_enabled)
-		cmd->peer_flags &= ~(WMI_PEER_NEED_PTK_4_WAY |
-				     WMI_PEER_NEED_GTK_2_WAY);
+		cmd->peer_flags &= cpu_to_le32(~(WMI_PEER_NEED_PTK_4_WAY |
+						 WMI_PEER_NEED_GTK_2_WAY));
 
 	if (param->is_pmf_enabled)
-		cmd->peer_flags |= WMI_PEER_PMF;
+		cmd->peer_flags |= cpu_to_le32(WMI_PEER_PMF);
 
 	/* Disable AMSDU for station transmit, if user configures it */
 	/* Disable AMSDU for AP transmit to 11n Stations, if user configures
@@ -1858,7 +1858,7 @@ static void ath12k_wmi_copy_peer_flags(struct wmi_peer_assoc_complete_cmd *cmd,
 	 * iwpriv
 	 **/
 	if (param->peer_ht_rates.num_rates == 0)
-		cmd->peer_flags &= ~WMI_PEER_HT;
+		cmd->peer_flags &= cpu_to_le32(~WMI_PEER_HT);
 }
 
 int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
@@ -1896,10 +1896,10 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PEER_ASSOC_COMPLETE_CMD,
 						 sizeof(*cmd));
 
-	cmd->vdev_id = param->vdev_id;
+	cmd->vdev_id = cpu_to_le32(param->vdev_id);
 
-	cmd->peer_new_assoc = param->peer_new_assoc;
-	cmd->peer_associd = param->peer_associd;
+	cmd->peer_new_assoc = cpu_to_le32(param->peer_new_assoc);
+	cmd->peer_associd = cpu_to_le32(param->peer_associd);
 
 	ath12k_wmi_copy_peer_flags(cmd, param,
 				   test_bit(ATH12K_FLAG_HW_CRYPTO_DISABLED,
@@ -1907,21 +1907,21 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 
 	ether_addr_copy(cmd->peer_macaddr.addr, param->peer_mac);
 
-	cmd->peer_rate_caps = param->peer_rate_caps;
-	cmd->peer_caps = param->peer_caps;
-	cmd->peer_listen_intval = param->peer_listen_intval;
-	cmd->peer_ht_caps = param->peer_ht_caps;
-	cmd->peer_max_mpdu = param->peer_max_mpdu;
-	cmd->peer_mpdu_density = param->peer_mpdu_density;
-	cmd->peer_vht_caps = param->peer_vht_caps;
-	cmd->peer_phymode = param->peer_phymode;
+	cmd->peer_rate_caps = cpu_to_le32(param->peer_rate_caps);
+	cmd->peer_caps = cpu_to_le32(param->peer_caps);
+	cmd->peer_listen_intval = cpu_to_le32(param->peer_listen_intval);
+	cmd->peer_ht_caps = cpu_to_le32(param->peer_ht_caps);
+	cmd->peer_max_mpdu = cpu_to_le32(param->peer_max_mpdu);
+	cmd->peer_mpdu_density = cpu_to_le32(param->peer_mpdu_density);
+	cmd->peer_vht_caps = cpu_to_le32(param->peer_vht_caps);
+	cmd->peer_phymode = cpu_to_le32(param->peer_phymode);
 
 	/* Update 11ax capabilities */
-	cmd->peer_he_cap_info = param->peer_he_cap_macinfo[0];
-	cmd->peer_he_cap_info_ext = param->peer_he_cap_macinfo[1];
-	cmd->peer_he_cap_info_internal = param->peer_he_cap_macinfo_internal;
-	cmd->peer_he_caps_6ghz = param->peer_he_caps_6ghz;
-	cmd->peer_he_ops = param->peer_he_ops;
+	cmd->peer_he_cap_info = cpu_to_le32(param->peer_he_cap_macinfo[0]);
+	cmd->peer_he_cap_info_ext = cpu_to_le32(param->peer_he_cap_macinfo[1]);
+	cmd->peer_he_cap_info_internal = cpu_to_le32(param->peer_he_cap_macinfo_internal);
+	cmd->peer_he_caps_6ghz = cpu_to_le32(param->peer_he_caps_6ghz);
+	cmd->peer_he_ops = cpu_to_le32(param->peer_he_ops);
 	memcpy(&cmd->peer_he_cap_phy, &param->peer_he_cap_phyinfo,
 	       sizeof(param->peer_he_cap_phyinfo));
 	memcpy(&cmd->peer_ppet, &param->peer_ppet,
@@ -1935,7 +1935,7 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 
 	ptr += TLV_HDR_SIZE;
 
-	cmd->num_peer_legacy_rates = param->peer_legacy_rates.num_rates;
+	cmd->num_peer_legacy_rates = cpu_to_le32(param->peer_legacy_rates.num_rates);
 	memcpy(ptr, param->peer_legacy_rates.rates,
 	       param->peer_legacy_rates.num_rates);
 
@@ -1945,7 +1945,7 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 	tlv = ptr;
 	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_BYTE, peer_ht_rates_align);
 	ptr += TLV_HDR_SIZE;
-	cmd->num_peer_ht_rates = param->peer_ht_rates.num_rates;
+	cmd->num_peer_ht_rates = cpu_to_le32(param->peer_ht_rates.num_rates);
 	memcpy(ptr, param->peer_ht_rates.rates,
 	       param->peer_ht_rates.num_rates);
 
@@ -1957,11 +1957,11 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 	mcs->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VHT_RATE_SET,
 						 sizeof(*mcs));
 
-	cmd->peer_nss = param->peer_nss;
+	cmd->peer_nss = cpu_to_le32(param->peer_nss);
 
 	/* Update bandwidth-NSS mapping */
 	cmd->peer_bw_rxnss_override = 0;
-	cmd->peer_bw_rxnss_override |= param->peer_bw_rxnss_override;
+	cmd->peer_bw_rxnss_override |= cpu_to_le32(param->peer_bw_rxnss_override);
 
 	if (param->vht_capable) {
 		mcs->rx_max_rate = param->rx_max_rate;
@@ -1971,8 +1971,8 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 	}
 
 	/* HE Rates */
-	cmd->peer_he_mcs = param->peer_he_mcs_count;
-	cmd->min_data_rate = param->min_data_rate;
+	cmd->peer_he_mcs = cpu_to_le32(param->peer_he_mcs_count);
+	cmd->min_data_rate = cpu_to_le32(param->min_data_rate);
 
 	ptr += sizeof(*mcs);
 
@@ -2053,72 +2053,72 @@ static void ath12k_wmi_copy_scan_event_cntrl_flags(struct wmi_start_scan_cmd *cm
 {
 	/* Scan events subscription */
 	if (param->scan_ev_started)
-		cmd->notify_scan_events |=  WMI_SCAN_EVENT_STARTED;
+		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_STARTED);
 	if (param->scan_ev_completed)
-		cmd->notify_scan_events |=  WMI_SCAN_EVENT_COMPLETED;
+		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_COMPLETED);
 	if (param->scan_ev_bss_chan)
-		cmd->notify_scan_events |=  WMI_SCAN_EVENT_BSS_CHANNEL;
+		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_BSS_CHANNEL);
 	if (param->scan_ev_foreign_chan)
-		cmd->notify_scan_events |=  WMI_SCAN_EVENT_FOREIGN_CHAN;
+		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_FOREIGN_CHAN);
 	if (param->scan_ev_dequeued)
-		cmd->notify_scan_events |=  WMI_SCAN_EVENT_DEQUEUED;
+		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_DEQUEUED);
 	if (param->scan_ev_preempted)
-		cmd->notify_scan_events |=  WMI_SCAN_EVENT_PREEMPTED;
+		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_PREEMPTED);
 	if (param->scan_ev_start_failed)
-		cmd->notify_scan_events |=  WMI_SCAN_EVENT_START_FAILED;
+		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_START_FAILED);
 	if (param->scan_ev_restarted)
-		cmd->notify_scan_events |=  WMI_SCAN_EVENT_RESTARTED;
+		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_RESTARTED);
 	if (param->scan_ev_foreign_chn_exit)
-		cmd->notify_scan_events |=  WMI_SCAN_EVENT_FOREIGN_CHAN_EXIT;
+		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_FOREIGN_CHAN_EXIT);
 	if (param->scan_ev_suspended)
-		cmd->notify_scan_events |=  WMI_SCAN_EVENT_SUSPENDED;
+		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_SUSPENDED);
 	if (param->scan_ev_resumed)
-		cmd->notify_scan_events |=  WMI_SCAN_EVENT_RESUMED;
+		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_RESUMED);
 
 	/** Set scan control flags */
 	cmd->scan_ctrl_flags = 0;
 	if (param->scan_f_passive)
-		cmd->scan_ctrl_flags |=  WMI_SCAN_FLAG_PASSIVE;
+		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_FLAG_PASSIVE);
 	if (param->scan_f_strict_passive_pch)
-		cmd->scan_ctrl_flags |=  WMI_SCAN_FLAG_STRICT_PASSIVE_ON_PCHN;
+		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_FLAG_STRICT_PASSIVE_ON_PCHN);
 	if (param->scan_f_promisc_mode)
-		cmd->scan_ctrl_flags |=  WMI_SCAN_FILTER_PROMISCUOS;
+		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_FILTER_PROMISCUOS);
 	if (param->scan_f_capture_phy_err)
-		cmd->scan_ctrl_flags |=  WMI_SCAN_CAPTURE_PHY_ERROR;
+		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_CAPTURE_PHY_ERROR);
 	if (param->scan_f_half_rate)
-		cmd->scan_ctrl_flags |=  WMI_SCAN_FLAG_HALF_RATE_SUPPORT;
+		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_FLAG_HALF_RATE_SUPPORT);
 	if (param->scan_f_quarter_rate)
-		cmd->scan_ctrl_flags |=  WMI_SCAN_FLAG_QUARTER_RATE_SUPPORT;
+		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_FLAG_QUARTER_RATE_SUPPORT);
 	if (param->scan_f_cck_rates)
-		cmd->scan_ctrl_flags |=  WMI_SCAN_ADD_CCK_RATES;
+		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_ADD_CCK_RATES);
 	if (param->scan_f_ofdm_rates)
-		cmd->scan_ctrl_flags |=  WMI_SCAN_ADD_OFDM_RATES;
+		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_ADD_OFDM_RATES);
 	if (param->scan_f_chan_stat_evnt)
-		cmd->scan_ctrl_flags |=  WMI_SCAN_CHAN_STAT_EVENT;
+		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_CHAN_STAT_EVENT);
 	if (param->scan_f_filter_prb_req)
-		cmd->scan_ctrl_flags |=  WMI_SCAN_FILTER_PROBE_REQ;
+		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_FILTER_PROBE_REQ);
 	if (param->scan_f_bcast_probe)
-		cmd->scan_ctrl_flags |=  WMI_SCAN_ADD_BCAST_PROBE_REQ;
+		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_ADD_BCAST_PROBE_REQ);
 	if (param->scan_f_offchan_mgmt_tx)
-		cmd->scan_ctrl_flags |=  WMI_SCAN_OFFCHAN_MGMT_TX;
+		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_OFFCHAN_MGMT_TX);
 	if (param->scan_f_offchan_data_tx)
-		cmd->scan_ctrl_flags |=  WMI_SCAN_OFFCHAN_DATA_TX;
+		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_OFFCHAN_DATA_TX);
 	if (param->scan_f_force_active_dfs_chn)
-		cmd->scan_ctrl_flags |=  WMI_SCAN_FLAG_FORCE_ACTIVE_ON_DFS;
+		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_FLAG_FORCE_ACTIVE_ON_DFS);
 	if (param->scan_f_add_tpc_ie_in_probe)
-		cmd->scan_ctrl_flags |=  WMI_SCAN_ADD_TPC_IE_IN_PROBE_REQ;
+		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_ADD_TPC_IE_IN_PROBE_REQ);
 	if (param->scan_f_add_ds_ie_in_probe)
-		cmd->scan_ctrl_flags |=  WMI_SCAN_ADD_DS_IE_IN_PROBE_REQ;
+		cmd->scan_ctrl_flags |=  cpu_to_le32(WMI_SCAN_ADD_DS_IE_IN_PROBE_REQ);
 	if (param->scan_f_add_spoofed_mac_in_probe)
-		cmd->scan_ctrl_flags |=  WMI_SCAN_ADD_SPOOF_MAC_IN_PROBE_REQ;
+		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_ADD_SPOOF_MAC_IN_PROBE_REQ);
 	if (param->scan_f_add_rand_seq_in_probe)
-		cmd->scan_ctrl_flags |=  WMI_SCAN_RANDOM_SEQ_NO_IN_PROBE_REQ;
+		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_RANDOM_SEQ_NO_IN_PROBE_REQ);
 	if (param->scan_f_en_ie_whitelist_in_probe)
 		cmd->scan_ctrl_flags |=
-			 WMI_SCAN_ENABLE_IE_WHTELIST_IN_PROBE_REQ;
+			cpu_to_le32(WMI_SCAN_ENABLE_IE_WHTELIST_IN_PROBE_REQ);
 
-	cmd->scan_ctrl_flags |= u32_encode_bits(param->adaptive_dwell_time_mode,
-						WMI_SCAN_DWELL_MODE_MASK);
+	cmd->scan_ctrl_flags |= le32_encode_bits(param->adaptive_dwell_time_mode,
+						 WMI_SCAN_DWELL_MODE_MASK);
 }
 
 int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
@@ -2175,32 +2175,32 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_START_SCAN_CMD,
 						 sizeof(*cmd));
 
-	cmd->scan_id = params->scan_id;
-	cmd->scan_req_id = params->scan_req_id;
-	cmd->vdev_id = params->vdev_id;
-	cmd->scan_priority = params->scan_priority;
-	cmd->notify_scan_events = params->notify_scan_events;
+	cmd->scan_id = cpu_to_le32(params->scan_id);
+	cmd->scan_req_id = cpu_to_le32(params->scan_req_id);
+	cmd->vdev_id = cpu_to_le32(params->vdev_id);
+	cmd->scan_priority = cpu_to_le32(params->scan_priority);
+	cmd->notify_scan_events = cpu_to_le32(params->notify_scan_events);
 
 	ath12k_wmi_copy_scan_event_cntrl_flags(cmd, params);
 
-	cmd->dwell_time_active = params->dwell_time_active;
-	cmd->dwell_time_active_2g = params->dwell_time_active_2g;
-	cmd->dwell_time_passive = params->dwell_time_passive;
-	cmd->dwell_time_active_6g = params->dwell_time_active_6g;
-	cmd->dwell_time_passive_6g = params->dwell_time_passive_6g;
-	cmd->min_rest_time = params->min_rest_time;
-	cmd->max_rest_time = params->max_rest_time;
-	cmd->repeat_probe_time = params->repeat_probe_time;
-	cmd->probe_spacing_time = params->probe_spacing_time;
-	cmd->idle_time = params->idle_time;
-	cmd->max_scan_time = params->max_scan_time;
-	cmd->probe_delay = params->probe_delay;
-	cmd->burst_duration = params->burst_duration;
-	cmd->num_chan = params->num_chan;
-	cmd->num_bssid = params->num_bssid;
-	cmd->num_ssids = params->num_ssids;
-	cmd->ie_len = params->extraie.len;
-	cmd->n_probes = params->n_probes;
+	cmd->dwell_time_active = cpu_to_le32(params->dwell_time_active);
+	cmd->dwell_time_active_2g = cpu_to_le32(params->dwell_time_active_2g);
+	cmd->dwell_time_passive = cpu_to_le32(params->dwell_time_passive);
+	cmd->dwell_time_active_6g = cpu_to_le32(params->dwell_time_active_6g);
+	cmd->dwell_time_passive_6g = cpu_to_le32(params->dwell_time_passive_6g);
+	cmd->min_rest_time = cpu_to_le32(params->min_rest_time);
+	cmd->max_rest_time = cpu_to_le32(params->max_rest_time);
+	cmd->repeat_probe_time = cpu_to_le32(params->repeat_probe_time);
+	cmd->probe_spacing_time = cpu_to_le32(params->probe_spacing_time);
+	cmd->idle_time = cpu_to_le32(params->idle_time);
+	cmd->max_scan_time = cpu_to_le32(params->max_scan_time);
+	cmd->probe_delay = cpu_to_le32(params->probe_delay);
+	cmd->burst_duration = cpu_to_le32(params->burst_duration);
+	cmd->num_chan = cpu_to_le32(params->num_chan);
+	cmd->num_bssid = cpu_to_le32(params->num_bssid);
+	cmd->num_ssids = cpu_to_le32(params->num_ssids);
+	cmd->ie_len = cpu_to_le32(params->extraie.len);
+	cmd->n_probes = cpu_to_le32(params->n_probes);
 
 	ptr += sizeof(*cmd);
 
@@ -2317,17 +2317,17 @@ int ath12k_wmi_send_scan_stop_cmd(struct ath12k *ar,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_STOP_SCAN_CMD,
 						 sizeof(*cmd));
 
-	cmd->vdev_id = param->vdev_id;
-	cmd->requestor = param->requester;
-	cmd->scan_id = param->scan_id;
-	cmd->pdev_id = param->pdev_id;
+	cmd->vdev_id = cpu_to_le32(param->vdev_id);
+	cmd->requestor = cpu_to_le32(param->requester);
+	cmd->scan_id = cpu_to_le32(param->scan_id);
+	cmd->pdev_id = cpu_to_le32(param->pdev_id);
 	/* stop the scan with the corresponding scan_id */
 	if (param->req_type == WLAN_SCAN_CANCEL_PDEV_ALL) {
 		/* Cancelling all scans */
-		cmd->req_type =  WMI_SCAN_STOP_ALL;
+		cmd->req_type = cpu_to_le32(WMI_SCAN_STOP_ALL);
 	} else if (param->req_type == WLAN_SCAN_CANCEL_VDEV_ALL) {
 		/* Cancelling VAP scans */
-		cmd->req_type =  WMI_SCN_STOP_VAP_ALL;
+		cmd->req_type = cpu_to_le32(WMI_SCN_STOP_VAP_ALL);
 	} else if (param->req_type == WLAN_SCAN_CANCEL_SINGLE) {
 		/* Cancelling specific scan */
 		cmd->req_type =  WMI_SCAN_STOP_ONE;
@@ -2383,10 +2383,10 @@ int ath12k_wmi_send_scan_chan_list_cmd(struct ath12k *ar,
 		cmd = (struct wmi_scan_chan_list_cmd *)skb->data;
 		cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_SCAN_CHAN_LIST_CMD,
 							 sizeof(*cmd));
-		cmd->pdev_id = chan_list->pdev_id;
-		cmd->num_scan_chans = num_send_chans;
+		cmd->pdev_id = cpu_to_le32(chan_list->pdev_id);
+		cmd->num_scan_chans = cpu_to_le32(num_send_chans);
 		if (num_sends)
-			cmd->flags |= WMI_APPEND_TO_EXISTING_CHAN_LIST_FLAG;
+			cmd->flags |= cpu_to_le32(WMI_APPEND_TO_EXISTING_CHAN_LIST_FLAG);
 
 		ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 			   "WMI no.of chan = %d len = %d pdev_id = %d num_sends = %d\n",
@@ -2481,7 +2481,7 @@ int ath12k_wmi_send_wmm_update_cmd_tlv(struct ath12k *ar, u32 vdev_id,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_SET_WMM_PARAMS_CMD,
 						 sizeof(*cmd));
 
-	cmd->vdev_id = vdev_id;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
 	cmd->wmm_param_type = 0;
 
 	for (ac = 0; ac < WME_NUM_AC; ac++) {
@@ -2546,7 +2546,7 @@ int ath12k_wmi_send_dfs_phyerr_offload_enable_cmd(struct ath12k *ar,
 		ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_DFS_PHYERR_OFFLOAD_ENABLE_CMD,
 				       sizeof(*cmd));
 
-	cmd->pdev_id = pdev_id;
+	cmd->pdev_id = cpu_to_le32(pdev_id);
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "WMI dfs phy err offload enable pdev id %d\n", pdev_id);
@@ -2577,11 +2577,11 @@ int ath12k_wmi_delba_send(struct ath12k *ar, u32 vdev_id, const u8 *mac,
 	cmd = (struct wmi_delba_send_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_DELBA_SEND_CMD,
 						 sizeof(*cmd));
-	cmd->vdev_id = vdev_id;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
 	ether_addr_copy(cmd->peer_macaddr.addr, mac);
-	cmd->tid = tid;
-	cmd->initiator = initiator;
-	cmd->reasoncode = reason;
+	cmd->tid = cpu_to_le32(tid);
+	cmd->initiator = cpu_to_le32(initiator);
+	cmd->reasoncode = cpu_to_le32(reason);
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "wmi delba send vdev_id 0x%X mac_addr %pM tid %u initiator %u reason %u\n",
@@ -2614,10 +2614,10 @@ int ath12k_wmi_addba_set_resp(struct ath12k *ar, u32 vdev_id, const u8 *mac,
 	cmd->tlv_header =
 		ath12k_wmi_tlv_cmd_hdr(WMI_TAG_ADDBA_SETRESPONSE_CMD,
 				       sizeof(*cmd));
-	cmd->vdev_id = vdev_id;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
 	ether_addr_copy(cmd->peer_macaddr.addr, mac);
-	cmd->tid = tid;
-	cmd->statuscode = status;
+	cmd->tid = cpu_to_le32(tid);
+	cmd->statuscode = cpu_to_le32(status);
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "wmi addba set resp vdev_id 0x%X mac_addr %pM tid %u status %u\n",
@@ -2649,10 +2649,10 @@ int ath12k_wmi_addba_send(struct ath12k *ar, u32 vdev_id, const u8 *mac,
 	cmd = (struct wmi_addba_send_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_ADDBA_SEND_CMD,
 						 sizeof(*cmd));
-	cmd->vdev_id = vdev_id;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
 	ether_addr_copy(cmd->peer_macaddr.addr, mac);
-	cmd->tid = tid;
-	cmd->buffersize = buf_size;
+	cmd->tid = cpu_to_le32(tid);
+	cmd->buffersize = cpu_to_le32(buf_size);
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "wmi addba send vdev_id 0x%X mac_addr %pM tid %u bufsize %u\n",
@@ -2684,7 +2684,7 @@ int ath12k_wmi_addba_clear_resp(struct ath12k *ar, u32 vdev_id, const u8 *mac)
 	cmd->tlv_header =
 		ath12k_wmi_tlv_cmd_hdr(WMI_TAG_ADDBA_CLEAR_RESP_CMD,
 				       sizeof(*cmd));
-	cmd->vdev_id = vdev_id;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
 	ether_addr_copy(cmd->peer_macaddr.addr, mac);
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
@@ -2722,9 +2722,9 @@ int ath12k_wmi_pdev_peer_pktlog_filter(struct ath12k *ar, u8 *addr, u8 enable)
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_PEER_PKTLOG_FILTER_CMD,
 						 sizeof(*cmd));
 
-	cmd->pdev_id = DP_HW2SW_MACID(ar->pdev->pdev_id);
-	cmd->num_mac = 1;
-	cmd->enable = enable;
+	cmd->pdev_id = cpu_to_le32(DP_HW2SW_MACID(ar->pdev->pdev_id));
+	cmd->num_mac = cpu_to_le32(1);
+	cmd->enable = cpu_to_le32(enable);
 
 	ptr = skb->data + sizeof(*cmd);
 
@@ -2766,7 +2766,7 @@ ath12k_wmi_send_init_country_cmd(struct ath12k *ar,
 		ath12k_wmi_tlv_cmd_hdr(WMI_TAG_SET_INIT_COUNTRY_CMD,
 				       sizeof(*cmd));
 
-	cmd->pdev_id = ar->pdev->pdev_id;
+	cmd->pdev_id = cpu_to_le32(ar->pdev->pdev_id);
 
 	switch (init_cc_params.flags) {
 	case ALPHA_IS_SET:
@@ -2775,12 +2775,13 @@ ath12k_wmi_send_init_country_cmd(struct ath12k *ar,
 		       init_cc_params.cc_info.alpha2, 3);
 		break;
 	case CC_IS_SET:
-		cmd->init_cc_type = WMI_COUNTRY_INFO_TYPE_COUNTRY_CODE;
-		cmd->cc_info.country_code = init_cc_params.cc_info.country_code;
+		cmd->init_cc_type = cpu_to_le32(WMI_COUNTRY_INFO_TYPE_COUNTRY_CODE);
+		cmd->cc_info.country_code =
+			cpu_to_le32(init_cc_params.cc_info.country_code);
 		break;
 	case REGDMN_IS_SET:
-		cmd->init_cc_type = WMI_COUNTRY_INFO_TYPE_REGDOMAIN;
-		cmd->cc_info.regdom_id = init_cc_params.cc_info.regdom_id;
+		cmd->init_cc_type = cpu_to_le32(WMI_COUNTRY_INFO_TYPE_REGDOMAIN);
+		cmd->cc_info.regdom_id = cpu_to_le32(init_cc_params.cc_info.regdom_id);
 		break;
 	default:
 		ret = -EINVAL;
@@ -2823,11 +2824,11 @@ ath12k_wmi_send_thermal_mitigation_param_cmd(struct ath12k *ar,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_THERM_THROT_CONFIG_REQUEST,
 						 sizeof(*cmd));
 
-	cmd->pdev_id = ar->pdev->pdev_id;
-	cmd->enable = param->enable;
-	cmd->dc = param->dc;
-	cmd->dc_per_event = param->dc_per_event;
-	cmd->therm_throt_levels = THERMAL_LEVELS;
+	cmd->pdev_id = cpu_to_le32(ar->pdev->pdev_id);
+	cmd->enable = cpu_to_le32(param->enable);
+	cmd->dc = cpu_to_le32(param->dc);
+	cmd->dc_per_event = cpu_to_le32(param->dc_per_event);
+	cmd->therm_throt_levels = cpu_to_le32(THERMAL_LEVELS);
 
 	tlv = (struct wmi_tlv *)(skb->data + sizeof(*cmd));
 	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_STRUCT,
@@ -2878,9 +2879,9 @@ int ath12k_wmi_pdev_pktlog_enable(struct ath12k *ar, u32 pktlog_filter)
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_PKTLOG_ENABLE_CMD,
 						 sizeof(*cmd));
 
-	cmd->pdev_id = DP_HW2SW_MACID(ar->pdev->pdev_id);
-	cmd->evlist = pktlog_filter;
-	cmd->enable = ATH12K_WMI_PKTLOG_ENABLE_FORCE;
+	cmd->pdev_id = cpu_to_le32(DP_HW2SW_MACID(ar->pdev->pdev_id));
+	cmd->evlist = cpu_to_le32(pktlog_filter);
+	cmd->enable = cpu_to_le32(ATH12K_WMI_PKTLOG_ENABLE_FORCE);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb,
 				  WMI_PDEV_PKTLOG_ENABLE_CMDID);
@@ -2908,7 +2909,7 @@ int ath12k_wmi_pdev_pktlog_disable(struct ath12k *ar)
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_PKTLOG_DISABLE_CMD,
 						 sizeof(*cmd));
 
-	cmd->pdev_id = DP_HW2SW_MACID(ar->pdev->pdev_id);
+	cmd->pdev_id = cpu_to_le32(DP_HW2SW_MACID(ar->pdev->pdev_id));
 
 	ret = ath12k_wmi_cmd_send(wmi, skb,
 				  WMI_PDEV_PKTLOG_DISABLE_CMDID);
@@ -2938,27 +2939,29 @@ ath12k_wmi_send_twt_enable_cmd(struct ath12k *ar, u32 pdev_id)
 	cmd = (struct wmi_twt_enable_params_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_TWT_ENABLE_CMD,
 						 len);
-	cmd->pdev_id = pdev_id;
-	cmd->sta_cong_timer_ms = ATH12K_TWT_DEF_STA_CONG_TIMER_MS;
-	cmd->default_slot_size = ATH12K_TWT_DEF_DEFAULT_SLOT_SIZE;
-	cmd->congestion_thresh_setup = ATH12K_TWT_DEF_CONGESTION_THRESH_SETUP;
+	cmd->pdev_id = cpu_to_le32(pdev_id);
+	cmd->sta_cong_timer_ms = cpu_to_le32(ATH12K_TWT_DEF_STA_CONG_TIMER_MS);
+	cmd->default_slot_size = cpu_to_le32(ATH12K_TWT_DEF_DEFAULT_SLOT_SIZE);
+	cmd->congestion_thresh_setup =
+		cpu_to_le32(ATH12K_TWT_DEF_CONGESTION_THRESH_SETUP);
 	cmd->congestion_thresh_teardown =
-		ATH12K_TWT_DEF_CONGESTION_THRESH_TEARDOWN;
+		cpu_to_le32(ATH12K_TWT_DEF_CONGESTION_THRESH_TEARDOWN);
 	cmd->congestion_thresh_critical =
-		ATH12K_TWT_DEF_CONGESTION_THRESH_CRITICAL;
+		cpu_to_le32(ATH12K_TWT_DEF_CONGESTION_THRESH_CRITICAL);
 	cmd->interference_thresh_teardown =
-		ATH12K_TWT_DEF_INTERFERENCE_THRESH_TEARDOWN;
+		cpu_to_le32(ATH12K_TWT_DEF_INTERFERENCE_THRESH_TEARDOWN);
 	cmd->interference_thresh_setup =
-		ATH12K_TWT_DEF_INTERFERENCE_THRESH_SETUP;
-	cmd->min_no_sta_setup = ATH12K_TWT_DEF_MIN_NO_STA_SETUP;
-	cmd->min_no_sta_teardown = ATH12K_TWT_DEF_MIN_NO_STA_TEARDOWN;
-	cmd->no_of_bcast_mcast_slots = ATH12K_TWT_DEF_NO_OF_BCAST_MCAST_SLOTS;
-	cmd->min_no_twt_slots = ATH12K_TWT_DEF_MIN_NO_TWT_SLOTS;
-	cmd->max_no_sta_twt = ATH12K_TWT_DEF_MAX_NO_STA_TWT;
-	cmd->mode_check_interval = ATH12K_TWT_DEF_MODE_CHECK_INTERVAL;
-	cmd->add_sta_slot_interval = ATH12K_TWT_DEF_ADD_STA_SLOT_INTERVAL;
+		cpu_to_le32(ATH12K_TWT_DEF_INTERFERENCE_THRESH_SETUP);
+	cmd->min_no_sta_setup = cpu_to_le32(ATH12K_TWT_DEF_MIN_NO_STA_SETUP);
+	cmd->min_no_sta_teardown = cpu_to_le32(ATH12K_TWT_DEF_MIN_NO_STA_TEARDOWN);
+	cmd->no_of_bcast_mcast_slots =
+		cpu_to_le32(ATH12K_TWT_DEF_NO_OF_BCAST_MCAST_SLOTS);
+	cmd->min_no_twt_slots = cpu_to_le32(ATH12K_TWT_DEF_MIN_NO_TWT_SLOTS);
+	cmd->max_no_sta_twt = cpu_to_le32(ATH12K_TWT_DEF_MAX_NO_STA_TWT);
+	cmd->mode_check_interval = cpu_to_le32(ATH12K_TWT_DEF_MODE_CHECK_INTERVAL);
+	cmd->add_sta_slot_interval = cpu_to_le32(ATH12K_TWT_DEF_ADD_STA_SLOT_INTERVAL);
 	cmd->remove_sta_slot_interval =
-		ATH12K_TWT_DEF_REMOVE_STA_SLOT_INTERVAL;
+		cpu_to_le32(ATH12K_TWT_DEF_REMOVE_STA_SLOT_INTERVAL);
 	/* TODO add MBSSID support */
 	cmd->mbss_support = 0;
 
@@ -2989,7 +2992,7 @@ ath12k_wmi_send_twt_disable_cmd(struct ath12k *ar, u32 pdev_id)
 	cmd = (struct wmi_twt_disable_params_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_TWT_DISABLE_CMD,
 						 len);
-	cmd->pdev_id = pdev_id;
+	cmd->pdev_id = cpu_to_le32(pdev_id);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb,
 				  WMI_TWT_DISABLE_CMDID);
@@ -3019,8 +3022,8 @@ ath12k_wmi_send_obss_spr_cmd(struct ath12k *ar, u32 vdev_id,
 	cmd = (struct wmi_obss_spatial_reuse_params_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_OBSS_SPATIAL_REUSE_SET_CMD,
 						 len);
-	cmd->vdev_id = vdev_id;
-	cmd->enable = he_obss_pd->enable;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
+	cmd->enable = cpu_to_le32(he_obss_pd->enable);
 	cmd->obss_min = he_obss_pd->min_offset;
 	cmd->obss_max = he_obss_pd->max_offset;
 
@@ -3053,12 +3056,12 @@ int ath12k_wmi_obss_color_cfg_cmd(struct ath12k *ar, u32 vdev_id,
 	cmd = (struct wmi_obss_color_collision_cfg_params_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_OBSS_COLOR_COLLISION_DET_CONFIG,
 						 len);
-	cmd->vdev_id = vdev_id;
-	cmd->evt_type = enable ? ATH12K_OBSS_COLOR_COLLISION_DETECTION :
-				 ATH12K_OBSS_COLOR_COLLISION_DETECTION_DISABLE;
-	cmd->current_bss_color = bss_color;
-	cmd->detection_period_ms = period;
-	cmd->scan_period_ms = ATH12K_BSS_COLOR_COLLISION_SCAN_PERIOD_MS;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
+	cmd->evt_type = enable ? cpu_to_le32(ATH12K_OBSS_COLOR_COLLISION_DETECTION) :
+		cpu_to_le32(ATH12K_OBSS_COLOR_COLLISION_DETECTION_DISABLE);
+	cmd->current_bss_color = cpu_to_le32(bss_color);
+	cmd->detection_period_ms = cpu_to_le32(period);
+	cmd->scan_period_ms = cpu_to_le32(ATH12K_BSS_COLOR_COLLISION_SCAN_PERIOD_MS);
 	cmd->free_slot_expiry_time_ms = 0;
 	cmd->flags = 0;
 
@@ -3094,8 +3097,8 @@ int ath12k_wmi_send_bss_color_change_enable_cmd(struct ath12k *ar, u32 vdev_id,
 	cmd = (struct wmi_bss_color_change_enable_params_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_BSS_COLOR_CHANGE_ENABLE,
 						 len);
-	cmd->vdev_id = vdev_id;
-	cmd->enable = enable ? 1 : 0;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
+	cmd->enable = enable ? cpu_to_le32(1) : 0;
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "wmi_send_bss_color_change_enable id %d enable %d\n",
@@ -3133,8 +3136,8 @@ int ath12k_wmi_fils_discovery_tmpl(struct ath12k *ar, u32 vdev_id,
 	cmd = (struct wmi_fils_discovery_tmpl_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_FILS_DISCOVERY_TMPL_CMD,
 						 sizeof(*cmd));
-	cmd->vdev_id = vdev_id;
-	cmd->buf_len = tmpl->len;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
+	cmd->buf_len = cpu_to_le32(tmpl->len);
 	ptr = skb->data + sizeof(*cmd);
 
 	tlv = ptr;
@@ -3174,8 +3177,8 @@ int ath12k_wmi_probe_resp_tmpl(struct ath12k *ar, u32 vdev_id,
 	cmd = (struct wmi_probe_tmpl_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PRB_TMPL_CMD,
 						 sizeof(*cmd));
-	cmd->vdev_id = vdev_id;
-	cmd->buf_len = tmpl->len;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
+	cmd->buf_len = cpu_to_le32(tmpl->len);
 
 	ptr = skb->data + sizeof(*cmd);
 
@@ -3223,9 +3226,9 @@ int ath12k_wmi_fils_discovery(struct ath12k *ar, u32 vdev_id, u32 interval,
 	cmd = (struct wmi_fils_discovery_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_ENABLE_FILS_CMD,
 						 len);
-	cmd->vdev_id = vdev_id;
-	cmd->interval = interval;
-	cmd->config = unsol_bcast_probe_resp_enabled;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
+	cmd->interval = cpu_to_le32(interval);
+	cmd->config = cpu_to_le32(unsol_bcast_probe_resp_enabled);
 
 	ret = ath12k_wmi_cmd_send(ar->wmi, skb, WMI_ENABLE_FILS_CMDID);
 	if (ret) {
@@ -3394,7 +3397,7 @@ static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
 			   (u64)param->mem_chunks[idx].paddr,
 			   param->mem_chunks[idx].len);
 	}
-	cmd->num_host_mem_chunks = param->num_mem_chunks;
+	cmd->num_host_mem_chunks = cpu_to_le32(param->num_mem_chunks);
 	len = sizeof(struct wlan_host_mem_chunk) * param->num_mem_chunks;
 
 	/* num_mem_chunks is zero */
@@ -3461,7 +3464,7 @@ int ath12k_wmi_pdev_lro_cfg(struct ath12k *ar,
 	get_random_bytes(cmd->th_4, sizeof(uint32_t) * ATH12K_IPV4_TH_SEED_SIZE);
 	get_random_bytes(cmd->th_6, sizeof(uint32_t) * ATH12K_IPV6_TH_SEED_SIZE);
 
-	cmd->pdev_id = pdev_id;
+	cmd->pdev_id = cpu_to_le32(pdev_id);
 
 	ret = ath12k_wmi_cmd_send(ar->wmi, skb, WMI_LRO_CONFIG_CMDID);
 	if (ret) {
@@ -3611,9 +3614,9 @@ int ath12k_wmi_vdev_spectral_enable(struct ath12k *ar, u32 vdev_id,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_SPECTRAL_ENABLE_CMD,
 						 sizeof(*cmd));
 
-	cmd->vdev_id = vdev_id;
-	cmd->trigger_cmd = trigger;
-	cmd->enable_cmd = enable;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
+	cmd->trigger_cmd = cpu_to_le32(trigger);
+	cmd->enable_cmd = cpu_to_le32(enable);
 
 	ret = ath12k_wmi_cmd_send(ar->wmi, skb,
 				  WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID);
@@ -7208,7 +7211,7 @@ ath12k_wmi_send_unit_test_cmd(struct ath12k *ar,
 	int ret;
 	int i;
 
-	arg_len = sizeof(u32) * ut_cmd.num_args;
+	arg_len = sizeof(u32) * le32_to_cpu(ut_cmd.num_args);
 	buf_len = sizeof(ut_cmd) + arg_len + TLV_HDR_SIZE;
 
 	skb = ath12k_wmi_alloc_skb(wmi->wmi_ab, buf_len);
@@ -7232,7 +7235,7 @@ ath12k_wmi_send_unit_test_cmd(struct ath12k *ar,
 	ptr += TLV_HDR_SIZE;
 
 	ut_cmd_args = ptr;
-	for (i = 0; i < ut_cmd.num_args; i++)
+	for (i = 0; i < le32_to_cpu(ut_cmd.num_args); i++)
 		ut_cmd_args[i] = test_args[i];
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_UNIT_TEST_CMDID);
@@ -7276,10 +7279,10 @@ int ath12k_wmi_simulate_radar(struct ath12k *ar)
 	 */
 	dfs_args[DFS_TEST_RADAR_PARAM] = 0;
 
-	wmi_ut.vdev_id = arvif->vdev_id;
-	wmi_ut.module_id = DFS_UNIT_TEST_MODULE;
-	wmi_ut.num_args = DFS_MAX_TEST_ARGS;
-	wmi_ut.diag_token = DFS_UNIT_TEST_TOKEN;
+	wmi_ut.vdev_id = cpu_to_le32(arvif->vdev_id);
+	wmi_ut.module_id = cpu_to_le32(DFS_UNIT_TEST_MODULE);
+	wmi_ut.num_args = cpu_to_le32(DFS_MAX_TEST_ARGS);
+	wmi_ut.diag_token = cpu_to_le32(DFS_UNIT_TEST_TOKEN);
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_REG, "Triggering Radar Simulation\n");
 
@@ -7396,8 +7399,8 @@ int ath12k_wmi_wow_enable(struct ath12k *ar)
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_WOW_ENABLE_CMD,
 						 sizeof(*cmd));
 
-	cmd->enable = 1;
-	cmd->pause_iface_config = WOW_IFACE_PAUSE_ENABLED;
+	cmd->enable = cpu_to_le32(1);
+	cmd->pause_iface_config = cpu_to_le32(WOW_IFACE_PAUSE_ENABLED);
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI, "wmi tlv wow enable\n");
 
 	return ath12k_wmi_cmd_send(ar->wmi, skb, WMI_WOW_ENABLE_CMDID);
