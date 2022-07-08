@@ -131,8 +131,8 @@ static const struct wmi_tlv_policy wmi_tlv_policies[] = {
 
 static u32 ath12k_wmi_tlv_hdr(u32 cmd, u32 len)
 {
-	return FIELD_PREP(WMI_TLV_TAG, cmd) |
-		FIELD_PREP(WMI_TLV_LEN, len);
+	return u32_encode_bits(cmd, WMI_TLV_TAG) |
+		u32_encode_bits(len, WMI_TLV_LEN);
 }
 
 static u32 ath12k_wmi_tlv_cmd_hdr(u32 cmd, u32 len)
@@ -355,7 +355,7 @@ static int ath12k_wmi_cmd_send_nowait(struct ath12k_pdev_wmi *wmi, struct sk_buf
 	if (!skb_push(skb, sizeof(struct wmi_cmd_hdr)))
 		return -ENOMEM;
 
-	cmd |= FIELD_PREP(WMI_CMD_HDR_CMD_ID, cmd_id);
+	cmd |= u32_encode_bits(cmd_id, WMI_CMD_HDR_CMD_ID);
 
 	cmd_hdr = (struct wmi_cmd_hdr *)skb->data;
 	cmd_hdr->cmd_id = cmd;
@@ -900,7 +900,7 @@ static void ath12k_wmi_put_wmi_channel(struct wmi_channel *chan,
 	else
 		chan->band_center_freq2 = 0;
 
-	chan->info |= FIELD_PREP(WMI_CHAN_INFO_MODE, arg->channel.mode);
+	chan->info |= u32_encode_bits(arg->channel.mode, WMI_CHAN_INFO_MODE);
 	if (arg->channel.passive)
 		chan->info |= WMI_CHAN_INFO_PASSIVE;
 	if (arg->channel.allow_ibss)
@@ -918,15 +918,14 @@ static void ath12k_wmi_put_wmi_channel(struct wmi_channel *chan,
 	if (arg->channel.freq2_radar)
 		chan->info |= WMI_CHAN_INFO_DFS_FREQ2;
 
-	chan->reg_info_1 = FIELD_PREP(WMI_CHAN_REG_INFO1_MAX_PWR,
-				      arg->channel.max_power) |
-		FIELD_PREP(WMI_CHAN_REG_INFO1_MAX_REG_PWR,
-			   arg->channel.max_reg_power);
+	chan->reg_info_1 = u32_encode_bits(arg->channel.max_power,
+					   WMI_CHAN_REG_INFO1_MAX_PWR) |
+		u32_encode_bits(arg->channel.max_reg_power,
+				WMI_CHAN_REG_INFO1_MAX_REG_PWR);
 
-	chan->reg_info_2 = FIELD_PREP(WMI_CHAN_REG_INFO2_ANT_MAX,
-				      arg->channel.max_antenna_gain) |
-		FIELD_PREP(WMI_CHAN_REG_INFO2_MAX_TX_PWR,
-			   arg->channel.max_power);
+	chan->reg_info_2 = u32_encode_bits(arg->channel.max_antenna_gain,
+					   WMI_CHAN_REG_INFO2_ANT_MAX) |
+		u32_encode_bits(arg->channel.max_power, WMI_CHAN_REG_INFO2_MAX_TX_PWR);
 }
 
 int ath12k_wmi_vdev_start(struct ath12k *ar, struct wmi_vdev_start_req_arg *arg,
@@ -2433,18 +2432,18 @@ int ath12k_wmi_send_scan_chan_list_cmd(struct ath12k *ar,
 			if (tchan_info->psc_channel)
 				chan_info->info |= WMI_CHAN_INFO_PSC;
 
-			chan_info->info |= FIELD_PREP(WMI_CHAN_INFO_MODE,
-						      tchan_info->phy_mode);
-			*reg1 |= FIELD_PREP(WMI_CHAN_REG_INFO1_MIN_PWR,
-					    tchan_info->minpower);
-			*reg1 |= FIELD_PREP(WMI_CHAN_REG_INFO1_MAX_PWR,
-					    tchan_info->maxpower);
-			*reg1 |= FIELD_PREP(WMI_CHAN_REG_INFO1_MAX_REG_PWR,
-					    tchan_info->maxregpower);
-			*reg1 |= FIELD_PREP(WMI_CHAN_REG_INFO1_REG_CLS,
-					    tchan_info->reg_class_id);
-			*reg2 |= FIELD_PREP(WMI_CHAN_REG_INFO2_ANT_MAX,
-					    tchan_info->antennamax);
+			chan_info->info |= u32_encode_bits(tchan_info->phy_mode,
+							   WMI_CHAN_INFO_MODE);
+			*reg1 |= u32_encode_bits(tchan_info->minpower,
+						 WMI_CHAN_REG_INFO1_MIN_PWR);
+			*reg1 |= u32_encode_bits(tchan_info->maxpower,
+						 WMI_CHAN_REG_INFO1_MAX_PWR);
+			*reg1 |= u32_encode_bits(tchan_info->maxregpower,
+						 WMI_CHAN_REG_INFO1_MAX_REG_PWR);
+			*reg1 |= u32_encode_bits(tchan_info->reg_class_id,
+						 WMI_CHAN_REG_INFO1_REG_CLS);
+			*reg2 |= u32_encode_bits(tchan_info->antennamax,
+						 WMI_CHAN_REG_INFO2_ANT_MAX);
 
 			ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 				   "WMI chan scan list chan[%d] = %u, chan_info->info %8x\n",
