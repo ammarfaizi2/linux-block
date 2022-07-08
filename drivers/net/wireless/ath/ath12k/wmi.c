@@ -2117,9 +2117,8 @@ static void ath12k_wmi_copy_scan_event_cntrl_flags(struct wmi_start_scan_cmd *cm
 		cmd->scan_ctrl_flags |=
 			 WMI_SCAN_ENABLE_IE_WHTELIST_IN_PROBE_REQ;
 
-	/* for adaptive scan mode using 3 bits (21 - 23 bits) */
-	WMI_SCAN_SET_DWELL_MODE(cmd->scan_ctrl_flags,
-				param->adaptive_dwell_time_mode);
+	cmd->scan_ctrl_flags |= u32_encode_bits(param->adaptive_dwell_time_mode,
+						WMI_SCAN_DWELL_MODE_MASK);
 }
 
 int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
