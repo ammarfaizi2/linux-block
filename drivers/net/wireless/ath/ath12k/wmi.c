@@ -129,13 +129,13 @@ static const struct wmi_tlv_policy wmi_tlv_policies[] = {
 		.min_len = sizeof(struct wmi_vdev_delete_resp_event) },
 };
 
-static u32 ath12k_wmi_tlv_hdr(u32 cmd, u32 len)
+static __le32 ath12k_wmi_tlv_hdr(u32 cmd, u32 len)
 {
-	return u32_encode_bits(cmd, WMI_TLV_TAG) |
-		u32_encode_bits(len, WMI_TLV_LEN);
+	return le32_encode_bits(cmd, WMI_TLV_TAG) |
+		le32_encode_bits(len, WMI_TLV_LEN);
 }
 
-static u32 ath12k_wmi_tlv_cmd_hdr(u32 cmd, u32 len)
+static __le32 ath12k_wmi_tlv_cmd_hdr(u32 cmd, u32 len)
 {
 	return ath12k_wmi_tlv_hdr(cmd, len - TLV_HDR_SIZE);
 }
@@ -274,8 +274,8 @@ ath12k_wmi_tlv_iter(struct ath12k_base *ab, const void *ptr, size_t len,
 		}
 
 		tlv = ptr;
-		tlv_tag = u32_get_bits(tlv->header, WMI_TLV_TAG);
-		tlv_len = u32_get_bits(tlv->header, WMI_TLV_LEN);
+		tlv_tag = le32_get_bits(tlv->header, WMI_TLV_TAG);
+		tlv_len = le32_get_bits(tlv->header, WMI_TLV_LEN);
 		ptr += sizeof(*tlv);
 		len -= sizeof(*tlv);
 
