@@ -68,7 +68,7 @@
 
 /*
  * Page protections for initialising protection_map. The sun3 has only two
- * protection settings, valid (implying read and execute) and writeable. These
+ * protection settings, valid (implying read and execute) and writable. These
  * are as close as we can get...
  */
 #define __P000	PAGE_NONE
