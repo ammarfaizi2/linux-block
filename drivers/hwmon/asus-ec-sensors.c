@@ -54,6 +54,8 @@ static char *mutex_path_override;
 /* ACPI mutex for locking access to the EC for the firmware */
 #define ASUS_HW_ACCESS_MUTEX_ASMX	"\\AMW0.ASMX"
 
+#define ASUS_HW_ACCESS_MUTEX_RMTW_ASMX	"\\RMTW.ASMX"
+
 #define MAX_IDENTICAL_BOARD_VARIATIONS	3
 
 /* Moniker for the ACPI global lock (':' is not allowed in ASL identifiers) */
@@ -139,6 +141,8 @@ enum board_family {
 	family_unknown,
 	family_amd_400_series,
 	family_amd_500_series,
+	family_intel_300_series,
+	family_intel_600_series
 };
 
 /* All the known sensors for ASUS EC controllers */
@@ -195,6 +199,32 @@ static const struct ec_sensor_info sensors_family_amd_500[] = {
 		EC_SENSOR("Water_In", hwmon_temp, 1, 0x01, 0x00),
 	[ec_sensor_temp_water_out] =
 		EC_SENSOR("Water_Out", hwmon_temp, 1, 0x01, 0x01),
+};
+
+static const struct ec_sensor_info sensors_family_intel_300[] = {
+	[ec_sensor_temp_chipset] =
+		EC_SENSOR("Chipset", hwmon_temp, 1, 0x00, 0x3a),
+	[ec_sensor_temp_cpu] = EC_SENSOR("CPU", hwmon_temp, 1, 0x00, 0x3b),
+	[ec_sensor_temp_mb] =
+		EC_SENSOR("Motherboard", hwmon_temp, 1, 0x00, 0x3c),
+	[ec_sensor_temp_t_sensor] =
+		EC_SENSOR("T_Sensor", hwmon_temp, 1, 0x00, 0x3d),
+	[ec_sensor_temp_vrm] = EC_SENSOR("VRM", hwmon_temp, 1, 0x00, 0x3e),
+	[ec_sensor_fan_cpu_opt] =
+		EC_SENSOR("CPU_Opt", hwmon_fan, 2, 0x00, 0xb0),
+	[ec_sensor_fan_vrm_hs] = EC_SENSOR("VRM HS", hwmon_fan, 2, 0x00, 0xb2),
+	[ec_sensor_fan_water_flow] =
+		EC_SENSOR("Water_Flow", hwmon_fan, 2, 0x00, 0xbc),
+	[ec_sensor_temp_water_in] =
+		EC_SENSOR("Water_In", hwmon_temp, 1, 0x01, 0x00),
+	[ec_sensor_temp_water_out] =
+		EC_SENSOR("Water_Out", hwmon_temp, 1, 0x01, 0x01),
+};
+
+static const struct ec_sensor_info sensors_family_intel_600[] = {
+	[ec_sensor_temp_t_sensor] =
+		EC_SENSOR("T_Sensor", hwmon_temp, 1, 0x00, 0x3d),
+	[ec_sensor_temp_vrm] = EC_SENSOR("VRM", hwmon_temp, 1, 0x00, 0x3e),
 };
 
 /* Shortcuts for common combinations */
@@ -273,6 +303,18 @@ static const struct ec_board_info board_info[] = {
 		.family = family_amd_500_series,
 	},
 	{
+		.board_names = {
+			"ROG MAXIMUS XI HERO",
+			"ROG MAXIMUS XI HERO (WI-FI)",
+		},
+		.sensors = SENSOR_SET_TEMP_CHIPSET_CPU_MB |
+			SENSOR_TEMP_T_SENSOR |
+			SENSOR_TEMP_VRM | SENSOR_SET_TEMP_WATER |
+			SENSOR_FAN_CPU_OPT | SENSOR_FAN_WATER_FLOW,
+		.mutex_path = ASUS_HW_ACCESS_MUTEX_ASMX,
+		.family = family_intel_300_series,
+	},
+	{
 		.board_names = {"ROG CROSSHAIR VIII IMPACT"},
 		.sensors = SENSOR_SET_TEMP_CHIPSET_CPU_MB |
 			SENSOR_TEMP_T_SENSOR | SENSOR_TEMP_VRM |
@@ -329,6 +371,12 @@ static const struct ec_board_info board_info[] = {
 			SENSOR_IN_CPU_CORE,
 		.mutex_path = ASUS_HW_ACCESS_MUTEX_ASMX,
 		.family = family_amd_500_series,
+	},
+	{
+		.board_names = {"ROG STRIX Z690-A GAMING WIFI D4"},
+		.sensors = SENSOR_TEMP_T_SENSOR | SENSOR_TEMP_VRM,
+		.mutex_path = ASUS_HW_ACCESS_MUTEX_RMTW_ASMX,
+		.family = family_intel_600_series,
 	},
 	{}
 };
@@ -798,6 +846,12 @@ static int __init asus_ec_probe(struct platform_device *pdev)
 		break;
 	case family_amd_500_series:
 		ec_data->sensors_info = sensors_family_amd_500;
+		break;
+	case family_intel_300_series:
+		ec_data->sensors_info = sensors_family_intel_300;
+		break;
+	case family_intel_600_series:
+		ec_data->sensors_info = sensors_family_intel_600;
 		break;
 	default:
 		dev_err(dev, "Unknown board family: %d",
