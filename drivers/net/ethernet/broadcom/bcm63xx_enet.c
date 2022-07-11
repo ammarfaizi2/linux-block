@@ -388,7 +388,7 @@ static int bcm_enet_receive_queue(struct net_device *dev, int budget)
 					 priv->rx_buf_size, DMA_FROM_DEVICE);
 			priv->rx_buf[desc_idx] = NULL;
 
-			skb = build_skb(buf, priv->rx_frag_size);
+			skb = napi_build_skb(buf, priv->rx_frag_size);
 			if (unlikely(!skb)) {
 				skb_free_frag(buf);
 				dev->stats.rx_dropped++;
@@ -468,7 +468,7 @@ static int bcm_enet_tx_reclaim(struct net_device *dev, int force)
 			dev->stats.tx_errors++;
 
 		bytes += skb->len;
-		dev_kfree_skb(skb);
+		napi_consume_skb(skb, !force);
 		released++;
 	}
 
@@ -1935,7 +1935,7 @@ static int bcm_enet_remove(struct platform_device *pdev)
 	return 0;
 }
 
-struct platform_driver bcm63xx_enet_driver = {
+static struct platform_driver bcm63xx_enet_driver = {
 	.probe	= bcm_enet_probe,
 	.remove	= bcm_enet_remove,
 	.driver	= {
@@ -2756,7 +2756,7 @@ static int bcm_enetsw_remove(struct platform_device *pdev)
 	return 0;
 }
 
-struct platform_driver bcm63xx_enetsw_driver = {
+static struct platform_driver bcm63xx_enetsw_driver = {
 	.probe	= bcm_enetsw_probe,
 	.remove	= bcm_enetsw_remove,
 	.driver	= {
