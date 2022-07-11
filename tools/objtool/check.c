@@ -1374,6 +1374,16 @@ static void add_return_call(struct objtool_file *file, struct instruction *insn,
 
 static bool same_function(struct instruction *insn1, struct instruction *insn2)
 {
+	if (!insn1->func && !insn2->func)
+		return true;
+
+	/* Allow STT_NOTYPE -> STT_FUNC+0 tail-calls */
+	if (!insn1->func && insn1->func != insn2->func)
+		return false;
+
+	if (!insn2->func)
+		return true;
+
 	return insn1->func->pfunc == insn2->func->pfunc;
 }
 
@@ -1491,16 +1501,17 @@ static int add_jump_destinations(struct objtool_file *file)
 			    strstr(jump_dest->func->name, ".cold")) {
 				insn->func->cfunc = jump_dest->func;
 				jump_dest->func->pfunc = insn->func;
-
-			} else if (!same_function(insn, jump_dest) &&
-				   is_first_func_insn(file, jump_dest)) {
-				/*
-				 * Internal sibling call without reloc or with
-				 * STT_SECTION reloc.
-				 */
-				add_call_dest(file, insn, jump_dest->func, true);
-				continue;
 			}
+		}
+
+		if (!same_function(insn, jump_dest) &&
+		    is_first_func_insn(file, jump_dest)) {
+			/*
+			 * Internal sibling call without reloc or with
+			 * STT_SECTION reloc.
+			 */
+			add_call_dest(file, insn, jump_dest->func, true);
+			continue;
 		}
 
 		insn->jump_dest = jump_dest;
