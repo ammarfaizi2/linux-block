@@ -279,8 +279,13 @@ void Restore_DM_Func_Flag(struct adapter *padapter)
 void Set_MSR(struct adapter *padapter, u8 type)
 {
 	u8 val8;
+	int res;
 
-	val8 = rtw_read8(padapter, MSR) & 0x0c;
+	res = rtw_read8(padapter, MSR, &val8);
+	if (res)
+		return;
+
+	val8 &= 0x0c;
 	val8 |= type;
 	rtw_write8(padapter, MSR, val8);
 }
@@ -505,7 +510,11 @@ int WMM_param_handler(struct adapter *padapter, struct ndis_802_11_var_ie *pIE)
 
 static void set_acm_ctrl(struct adapter *adapter, u8 acm_mask)
 {
-	u8 acmctrl = rtw_read8(adapter, REG_ACMHWCTRL);
+	u8 acmctrl;
+	int res = rtw_read8(adapter, REG_ACMHWCTRL, &acmctrl);
+
+	if (res)
+		return;
 
 	if (acm_mask > 1)
 		acmctrl = acmctrl | 0x1;
@@ -765,6 +774,7 @@ void HT_info_handler(struct adapter *padapter, struct ndis_802_11_var_ie *pIE)
 static void set_min_ampdu_spacing(struct adapter *adapter, u8 spacing)
 {
 	u8 sec_spacing;
+	int res;
 
 	if (spacing <= 7) {
 		switch (adapter->securitypriv.dot11PrivacyAlgrthm) {
@@ -786,8 +796,38 @@ static void set_min_ampdu_spacing(struct adapter *adapter, u8 spacing)
 		if (spacing < sec_spacing)
 			spacing = sec_spacing;
 
+		res = rtw_read8(adapter, REG_AMPDU_MIN_SPACE, &sec_spacing);
+		if (res)
+			return;
+
 		rtw_write8(adapter, REG_AMPDU_MIN_SPACE,
-			   (rtw_read8(adapter, REG_AMPDU_MIN_SPACE) & 0xf8) | spacing);
+			   (sec_spacing & 0xf8) | spacing);
+	}
+}
+
+static void set_ampdu_factor(struct adapter *adapter, u8 factor)
+{
+	u8 RegToSet_Normal[4] = {0x41, 0xa8, 0x72, 0xb9};
+	u8 FactorToSet;
+	u8 *pRegToSet;
+	u8 index = 0;
+
+	pRegToSet = RegToSet_Normal; /*  0xb972a841; */
+	FactorToSet = factor;
+	if (FactorToSet <= 3) {
+		FactorToSet = (1 << (FactorToSet + 2));
+		if (FactorToSet > 0xf)
+			FactorToSet = 0xf;
+
+		for (index = 0; index < 4; index++) {
+			if ((pRegToSet[index] & 0xf0) > (FactorToSet << 4))
+				pRegToSet[index] = (pRegToSet[index] & 0x0f) | (FactorToSet << 4);
+
+			if ((pRegToSet[index] & 0x0f) > FactorToSet)
+				pRegToSet[index] = (pRegToSet[index] & 0xf0) | (FactorToSet);
+
+			rtw_write8(adapter, (REG_AGGLEN_LMT + index), pRegToSet[index]);
+		}
 	}
 }
 
@@ -817,7 +857,7 @@ void HTOnAssocRsp(struct adapter *padapter)
 
 	set_min_ampdu_spacing(padapter, min_MPDU_spacing);
 
-	SetHwReg8188EU(padapter, HW_VAR_AMPDU_FACTOR, (u8 *)(&max_AMPDU_len));
+	set_ampdu_factor(padapter, max_AMPDU_len);
 }
 
 void ERP_IE_handler(struct adapter *padapter, struct ndis_802_11_var_ie *pIE)
@@ -1348,6 +1388,30 @@ static void set_ack_preamble(struct adapter *adapter, bool short_preamble)
 	rtw_write8(adapter, REG_RRSR + 2, val8);
 };
 
+static void set_slot_time(struct adapter *adapter, u8 slot_time)
+{
+	u8 u1bAIFS, aSifsTime;
+	struct mlme_ext_priv *pmlmeext = &adapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &pmlmeext->mlmext_info;
+
+	rtw_write8(adapter, REG_SLOT, slot_time);
+
+	if (pmlmeinfo->WMM_enable == 0) {
+		if (pmlmeext->cur_wireless_mode == WIRELESS_11B)
+			aSifsTime = 10;
+		else
+			aSifsTime = 16;
+
+		u1bAIFS = aSifsTime + (2 * pmlmeinfo->slotTime);
+
+		/*  <Roger_EXP> Temporary removed, 2008.06.20. */
+		rtw_write8(adapter, REG_EDCA_VO_PARAM, u1bAIFS);
+		rtw_write8(adapter, REG_EDCA_VI_PARAM, u1bAIFS);
+		rtw_write8(adapter, REG_EDCA_BE_PARAM, u1bAIFS);
+		rtw_write8(adapter, REG_EDCA_BK_PARAM, u1bAIFS);
+	}
+}
+
 void update_capinfo(struct adapter *Adapter, u16 updateCap)
 {
 	struct mlme_ext_priv	*pmlmeext = &Adapter->mlmeextpriv;
@@ -1386,7 +1450,7 @@ void update_capinfo(struct adapter *Adapter, u16 updateCap)
 		}
 	}
 
-	SetHwReg8188EU(Adapter, HW_VAR_SLOT_TIME, &pmlmeinfo->slotTime);
+	set_slot_time(Adapter, pmlmeinfo->slotTime);
 }
 
 void update_wireless_mode(struct adapter *padapter)
