@@ -42,7 +42,7 @@
 #define FN(reg_name, field_name) \
 	optc1->tg_shift->field_name, optc1->tg_mask->field_name
 
-/**
+/*
  * Enable CRTC
  * Enable CRTC - call ASIC Control Object to enable Timing generator.
  */
