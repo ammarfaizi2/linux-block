@@ -134,6 +134,9 @@ typedef int (kexec_cleanup_t)(void *loader_data);
 #ifdef CONFIG_KEXEC_SIG
 typedef int (kexec_verify_sig_t)(const char *kernel_buf,
 				 unsigned long kernel_len);
+void set_kexec_sig_enforced(void);
+#else
+static inline void set_kexec_sig_enforced(void) {}
 #endif
 
 struct kexec_file_ops {
@@ -259,6 +262,8 @@ arch_kexec_apply_relocations(struct purgatory_info *pi, Elf_Shdr *section,
 	return -ENOEXEC;
 }
 #endif
+#else
+static inline void set_kexec_sig_enforced(void) {}
 #endif /* CONFIG_KEXEC_FILE */
 
 #ifdef CONFIG_KEXEC_ELF
