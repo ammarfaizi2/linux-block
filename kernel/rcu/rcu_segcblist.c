@@ -20,16 +20,21 @@ void rcu_cblist_init(struct rcu_cblist *rclp)
 	rclp->head = NULL;
 	rclp->tail = &rclp->head;
 	rclp->len = 0;
+	rclp->lazy_len = 0;
 }
 
 /*
  * Enqueue an rcu_head structure onto the specified callback list.
  */
-void rcu_cblist_enqueue(struct rcu_cblist *rclp, struct rcu_head *rhp)
+void rcu_cblist_enqueue(struct rcu_cblist *rclp, struct rcu_head *rhp,
+			bool lazy)
 {
 	*rclp->tail = rhp;
 	rclp->tail = &rhp->next;
 	WRITE_ONCE(rclp->len, rclp->len + 1);
+
+	if (IS_ENABLED(CONFIG_RCU_LAZY) && lazy)
+		WRITE_ONCE(rclp->lazy_len, rclp->lazy_len + 1);
 }
 
 /*
@@ -38,11 +43,12 @@ void rcu_cblist_enqueue(struct rcu_cblist *rclp, struct rcu_head *rhp)
  * element of the second rcu_cblist structure, but ensuring that the second
  * rcu_cblist structure, if initially non-empty, always appears non-empty
  * throughout the process.  If rdp is NULL, the second rcu_cblist structure
- * is instead initialized to empty.
+ * is instead initialized to empty. Also account for lazy_len for lazy CBs.
  */
 void rcu_cblist_flush_enqueue(struct rcu_cblist *drclp,
 			      struct rcu_cblist *srclp,
-			      struct rcu_head *rhp)
+			      struct rcu_head *rhp,
+			      bool lazy)
 {
 	drclp->head = srclp->head;
 	if (drclp->head)
@@ -58,6 +64,9 @@ void rcu_cblist_flush_enqueue(struct rcu_cblist *drclp,
 		srclp->tail = &rhp->next;
 		WRITE_ONCE(srclp->len, 1);
 	}
+
+	if (IS_ENABLED(CONFIG_RCU_LAZY) && rhp && lazy)
+		WRITE_ONCE(srclp->lazy_len, 1);
 }
 
 /*
