@@ -2476,6 +2476,7 @@ out_maybelock:
 out_nolock:
 	mmap_assert_locked(mm);
 	mmdrop(mm);
+	kfree(cc);
 
 	return thps == ((hend - hstart) >> HPAGE_PMD_SHIFT) ? 0
 			: madvise_collapse_errno(last_fail);
