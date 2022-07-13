@@ -1712,7 +1712,7 @@ static int devlink_port_new_notifiy(struct devlink *devlink,
 	if (!msg)
 		return -ENOMEM;
 
-	mutex_lock(&devlink->lock);
+	lockdep_assert_held(&devlink->lock);
 	devlink_port = devlink_port_get_by_index(devlink, port_index);
 	if (!devlink_port) {
 		err = -ENODEV;
@@ -1725,11 +1725,9 @@ static int devlink_port_new_notifiy(struct devlink *devlink,
 		goto out;
 
 	err = genlmsg_reply(msg, info);
-	mutex_unlock(&devlink->lock);
 	return err;
 
 out:
-	mutex_unlock(&devlink->lock);
 	nlmsg_free(msg);
 	return err;
 }
@@ -7946,8 +7944,8 @@ static int devlink_nl_cmd_health_reporter_test_doit(struct sk_buff *skb,
 }
 
 struct devlink_stats {
-	u64 rx_bytes;
-	u64 rx_packets;
+	u64_stats_t rx_bytes;
+	u64_stats_t rx_packets;
 	struct u64_stats_sync syncp;
 };
 
@@ -8104,12 +8102,12 @@ static void devlink_trap_stats_read(struct devlink_stats __percpu *trap_stats,
 		cpu_stats = per_cpu_ptr(trap_stats, i);
 		do {
 			start = u64_stats_fetch_begin_irq(&cpu_stats->syncp);
-			rx_packets = cpu_stats->rx_packets;
-			rx_bytes = cpu_stats->rx_bytes;
+			rx_packets = u64_stats_read(&cpu_stats->rx_packets);
+			rx_bytes = u64_stats_read(&cpu_stats->rx_bytes);
 		} while (u64_stats_fetch_retry_irq(&cpu_stats->syncp, start));
 
-		stats->rx_packets += rx_packets;
-		stats->rx_bytes += rx_bytes;
+		u64_stats_add(&stats->rx_packets, rx_packets);
+		u64_stats_add(&stats->rx_bytes, rx_bytes);
 	}
 }
 
@@ -8127,11 +8125,13 @@ devlink_trap_group_stats_put(struct sk_buff *msg,
 		return -EMSGSIZE;
 
 	if (nla_put_u64_64bit(msg, DEVLINK_ATTR_STATS_RX_PACKETS,
-			      stats.rx_packets, DEVLINK_ATTR_PAD))
+			      u64_stats_read(&stats.rx_packets),
+			      DEVLINK_ATTR_PAD))
 		goto nla_put_failure;
 
 	if (nla_put_u64_64bit(msg, DEVLINK_ATTR_STATS_RX_BYTES,
-			      stats.rx_bytes, DEVLINK_ATTR_PAD))
+			      u64_stats_read(&stats.rx_bytes),
+			      DEVLINK_ATTR_PAD))
 		goto nla_put_failure;
 
 	nla_nest_end(msg, attr);
@@ -8171,11 +8171,13 @@ static int devlink_trap_stats_put(struct sk_buff *msg, struct devlink *devlink,
 		goto nla_put_failure;
 
 	if (nla_put_u64_64bit(msg, DEVLINK_ATTR_STATS_RX_PACKETS,
-			      stats.rx_packets, DEVLINK_ATTR_PAD))
+			      u64_stats_read(&stats.rx_packets),
+			      DEVLINK_ATTR_PAD))
 		goto nla_put_failure;
 
 	if (nla_put_u64_64bit(msg, DEVLINK_ATTR_STATS_RX_BYTES,
-			      stats.rx_bytes, DEVLINK_ATTR_PAD))
+			      u64_stats_read(&stats.rx_bytes),
+			      DEVLINK_ATTR_PAD))
 		goto nla_put_failure;
 
 	nla_nest_end(msg, attr);
@@ -9063,13 +9065,11 @@ static const struct genl_small_ops devlink_nl_ops[] = {
 		.cmd = DEVLINK_CMD_PORT_NEW,
 		.doit = devlink_nl_cmd_port_new_doit,
 		.flags = GENL_ADMIN_PERM,
-		.internal_flags = DEVLINK_NL_FLAG_NO_LOCK,
 	},
 	{
 		.cmd = DEVLINK_CMD_PORT_DEL,
 		.doit = devlink_nl_cmd_port_del_doit,
 		.flags = GENL_ADMIN_PERM,
-		.internal_flags = DEVLINK_NL_FLAG_NO_LOCK,
 	},
 	{
 		.cmd = DEVLINK_CMD_LINECARD_GET,
@@ -10002,20 +10002,13 @@ int devl_rate_leaf_create(struct devlink_port *devlink_port, void *priv)
 }
 EXPORT_SYMBOL_GPL(devl_rate_leaf_create);
 
-int
-devlink_rate_leaf_create(struct devlink_port *devlink_port, void *priv)
-{
-	struct devlink *devlink = devlink_port->devlink;
-	int ret;
-
-	mutex_lock(&devlink->lock);
-	ret = devl_rate_leaf_create(devlink_port, priv);
-	mutex_unlock(&devlink->lock);
-
-	return ret;
-}
-EXPORT_SYMBOL_GPL(devlink_rate_leaf_create);
-
+/**
+ * devl_rate_leaf_destroy - destroy devlink rate leaf
+ *
+ * @devlink_port: devlink port linked to the rate object
+ *
+ * Destroy the devlink rate object of type leaf on provided @devlink_port.
+ */
 void devl_rate_leaf_destroy(struct devlink_port *devlink_port)
 {
 	struct devlink_rate *devlink_rate = devlink_port->devlink_rate;
@@ -10032,27 +10025,6 @@ void devl_rate_leaf_destroy(struct devlink_port *devlink_port)
 	kfree(devlink_rate);
 }
 EXPORT_SYMBOL_GPL(devl_rate_leaf_destroy);
-
-/**
- * devlink_rate_leaf_destroy - destroy devlink rate leaf
- *
- * @devlink_port: devlink port linked to the rate object
- *
- * Context: Takes and release devlink->lock <mutex>.
- */
-void devlink_rate_leaf_destroy(struct devlink_port *devlink_port)
-{
-	struct devlink_rate *devlink_rate = devlink_port->devlink_rate;
-	struct devlink *devlink = devlink_port->devlink;
-
-	if (!devlink_rate)
-		return;
-
-	mutex_lock(&devlink->lock);
-	devl_rate_leaf_destroy(devlink_port);
-	mutex_unlock(&devlink->lock);
-}
-EXPORT_SYMBOL_GPL(devlink_rate_leaf_destroy);
 
 /**
  * devl_rate_nodes_destroy - destroy all devlink rate nodes on device
@@ -10090,24 +10062,6 @@ void devl_rate_nodes_destroy(struct devlink *devlink)
 	}
 }
 EXPORT_SYMBOL_GPL(devl_rate_nodes_destroy);
-
-/**
- * devlink_rate_nodes_destroy - destroy all devlink rate nodes on device
- *
- * @devlink: devlink instance
- *
- * Unset parent for all rate objects and destroy all rate nodes
- * on specified device.
- *
- * Context: Takes and release devlink->lock <mutex>.
- */
-void devlink_rate_nodes_destroy(struct devlink *devlink)
-{
-	mutex_lock(&devlink->lock);
-	devl_rate_nodes_destroy(devlink);
-	mutex_unlock(&devlink->lock);
-}
-EXPORT_SYMBOL_GPL(devlink_rate_nodes_destroy);
 
 /**
  *	devlink_port_linecard_set - Link port with a linecard
@@ -11641,8 +11595,8 @@ devlink_trap_stats_update(struct devlink_stats __percpu *trap_stats,
 
 	stats = this_cpu_ptr(trap_stats);
 	u64_stats_update_begin(&stats->syncp);
-	stats->rx_bytes += skb_len;
-	stats->rx_packets++;
+	u64_stats_add(&stats->rx_bytes, skb_len);
+	u64_stats_inc(&stats->rx_packets);
 	u64_stats_update_end(&stats->syncp);
 }
 
