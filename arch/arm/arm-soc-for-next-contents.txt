@@ -94,6 +94,12 @@ renesas/dt-fixes
 		git://git.kernel.org/pub/scm/linux/kernel/git/at91/linux tags/at91-dt-5.20-2
 	qcom/dt
 		git://git.kernel.org/pub/scm/linux/kernel/git/qcom/linux tags/qcom-dts-for-5.20
+	qcom/dt64
+		git://git.kernel.org/pub/scm/linux/kernel/git/qcom/linux tags/qcom-arm64-for-5.20
+	broadcom/dt
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.20/devicetree
+	broadcom/dt64
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.20/devicetree-arm64
 
 arm/drivers
 	renesas/drivers
