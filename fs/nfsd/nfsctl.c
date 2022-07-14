@@ -1472,6 +1472,8 @@ static __net_init int nfsd_init_net(struct net *net)
 {
 	int retval;
 	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
+	struct sysinfo si;
+	u64 max_clients;
 
 	retval = nfsd_export_init(net);
 	if (retval)
@@ -1497,6 +1499,10 @@ static __net_init int nfsd_init_net(struct net *net)
 	seqlock_init(&nn->writeverf_lock);
 
 	atomic_set(&nn->nfs4_client_count, 0);
+	si_meminfo(&si);
+	max_clients = (u64)si.totalram * si.mem_unit / (1024 * 1024 * 1024);
+	max_clients *= NFS4_CLIENTS_PER_GB;
+	nn->nfs4_max_clients = max_t(int, max_clients, NFS4_CLIENTS_PER_GB);
 
 	return 0;
 
