@@ -1496,6 +1496,8 @@ static __net_init int nfsd_init_net(struct net *net)
 	get_random_bytes(&nn->siphash_key, sizeof(nn->siphash_key));
 	seqlock_init(&nn->writeverf_lock);
 
+	atomic_set(&nn->nfs4_client_count, 0);
+
 	return 0;
 
 out_drc_error:
