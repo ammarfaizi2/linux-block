@@ -256,7 +256,7 @@ static void copy_from_brd(void *dst, struct brd_device *brd,
  * Process a single bvec of a bio.
  */
 static int brd_do_bvec(struct brd_device *brd, struct page *page,
-			unsigned int len, unsigned int off, unsigned int op,
+			unsigned int len, unsigned int off, enum req_op op,
 			sector_t sector)
 {
 	void *mem;
@@ -310,7 +310,7 @@ static void brd_submit_bio(struct bio *bio)
 }
 
 static int brd_rw_page(struct block_device *bdev, sector_t sector,
-		       struct page *page, unsigned int op)
+		       struct page *page, enum req_op op)
 {
 	struct brd_device *brd = bdev->bd_disk->private_data;
 	int err;
