@@ -2878,6 +2878,8 @@ extern char *file_path(struct file *, char *, int);
 
 #include <linux/err.h>
 
+#define no_llseek NULL	// to be removed at -rc1
+
 /* needed for stackable file system support */
 extern loff_t default_llseek(struct file *file, loff_t offset, int whence);
 
