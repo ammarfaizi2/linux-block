@@ -329,10 +329,10 @@ static bool io_recvmsg_multishot_overflow(struct io_async_msghdr *iomsg)
 {
 	unsigned long hdr;
 
-	if (check_add_overflow(sizeof(struct io_uring_recvmsg_out),
+	if (check_add_overflow((unsigned long)sizeof(struct io_uring_recvmsg_out),
 			       (unsigned long)iomsg->namelen, &hdr))
 		return true;
-	if (check_add_overflow(hdr, iomsg->controllen, &hdr))
+	if (check_add_overflow(hdr, (unsigned long)iomsg->controllen, &hdr))
 		return true;
 	if (hdr > INT_MAX)
 		return true;
