@@ -40,36 +40,35 @@ void ath12k_hal_tx_cmd_desc_setup(struct ath12k_base *ab, void *cmd,
 	struct hal_tcl_data_cmd *tcl_cmd = (struct hal_tcl_data_cmd *)cmd;
 
 	tcl_cmd->buf_addr_info.info0 =
-		FIELD_PREP(BUFFER_ADDR_INFO0_ADDR, ti->paddr);
+		u32_encode_bits(ti->paddr, BUFFER_ADDR_INFO0_ADDR);
 	tcl_cmd->buf_addr_info.info1 =
-		FIELD_PREP(BUFFER_ADDR_INFO1_ADDR,
-			   ((uint64_t)ti->paddr >> HAL_ADDR_MSB_REG_SHIFT));
+		u32_encode_bits(((uint64_t)ti->paddr >> HAL_ADDR_MSB_REG_SHIFT),
+				BUFFER_ADDR_INFO1_ADDR);
 	tcl_cmd->buf_addr_info.info1 |=
-		FIELD_PREP(BUFFER_ADDR_INFO1_RET_BUF_MGR,
-			   (ti->rbm_id)) |
-		FIELD_PREP(BUFFER_ADDR_INFO1_SW_COOKIE, ti->desc_id);
+		u32_encode_bits((ti->rbm_id), BUFFER_ADDR_INFO1_RET_BUF_MGR) |
+		u32_encode_bits(ti->desc_id, BUFFER_ADDR_INFO1_SW_COOKIE);
 
 	tcl_cmd->info0 =
-		FIELD_PREP(HAL_TCL_DATA_CMD_INFO0_DESC_TYPE, ti->type) |
-		FIELD_PREP(HAL_TCL_DATA_CMD_INFO0_BANK_ID, ti->bank_id);
+		u32_encode_bits(ti->type, HAL_TCL_DATA_CMD_INFO0_DESC_TYPE) |
+		u32_encode_bits(ti->bank_id, HAL_TCL_DATA_CMD_INFO0_BANK_ID);
 
 	tcl_cmd->info1 =
-		FIELD_PREP(HAL_TCL_DATA_CMD_INFO1_CMD_NUM,
-			   ti->meta_data_flags);
+		u32_encode_bits(ti->meta_data_flags,
+				HAL_TCL_DATA_CMD_INFO1_CMD_NUM);
 
 	tcl_cmd->info2 = ti->flags0 |
-		FIELD_PREP(HAL_TCL_DATA_CMD_INFO2_DATA_LEN, ti->data_len) |
-		FIELD_PREP(HAL_TCL_DATA_CMD_INFO2_PKT_OFFSET, ti->pkt_offset);
+		u32_encode_bits(ti->data_len, HAL_TCL_DATA_CMD_INFO2_DATA_LEN) |
+		u32_encode_bits(ti->pkt_offset, HAL_TCL_DATA_CMD_INFO2_PKT_OFFSET);
 
 	tcl_cmd->info3 = (ti->flags1 |
-		FIELD_PREP(HAL_TCL_DATA_CMD_INFO3_TID, ti->tid)) |
-		FIELD_PREP(HAL_TCL_DATA_CMD_INFO3_PMAC_ID, ti->lmac_id) |
-		FIELD_PREP(HAL_TCL_DATA_CMD_INFO3_VDEV_ID, ti->vdev_id);
+		u32_encode_bits(ti->tid, HAL_TCL_DATA_CMD_INFO3_TID)) |
+		u32_encode_bits(ti->lmac_id, HAL_TCL_DATA_CMD_INFO3_PMAC_ID) |
+		u32_encode_bits(ti->vdev_id, HAL_TCL_DATA_CMD_INFO3_VDEV_ID);
 
-	tcl_cmd->info4 = FIELD_PREP(HAL_TCL_DATA_CMD_INFO4_SEARCH_INDEX,
-				    ti->bss_ast_idx) |
-			 FIELD_PREP(HAL_TCL_DATA_CMD_INFO4_CACHE_SET_NUM,
-				    ti->bss_ast_hash);
+	tcl_cmd->info4 = u32_encode_bits(ti->bss_ast_idx,
+					 HAL_TCL_DATA_CMD_INFO4_SEARCH_INDEX) |
+			 u32_encode_bits(ti->bss_ast_hash,
+					 HAL_TCL_DATA_CMD_INFO4_CACHE_SET_NUM);
 	tcl_cmd->info5 = 0;
 }
 
@@ -96,22 +95,23 @@ void ath12k_hal_tx_set_dscp_tid_map(struct ath12k_base *ab, int id)
 	 * three bytes in an iteration.
 	 */
 	for (i = 0; i < DSCP_TID_MAP_TBL_ENTRY_SIZE; i += 8) {
-		value = FIELD_PREP(HAL_TCL1_RING_FIELD_DSCP_TID_MAP0,
-				   dscp_tid_map[i]) |
-			FIELD_PREP(HAL_TCL1_RING_FIELD_DSCP_TID_MAP1,
-				   dscp_tid_map[i + 1]) |
-			FIELD_PREP(HAL_TCL1_RING_FIELD_DSCP_TID_MAP2,
-				   dscp_tid_map[i + 2]) |
-			FIELD_PREP(HAL_TCL1_RING_FIELD_DSCP_TID_MAP3,
-				   dscp_tid_map[i + 3]) |
-			FIELD_PREP(HAL_TCL1_RING_FIELD_DSCP_TID_MAP4,
-				   dscp_tid_map[i + 4]) |
-			FIELD_PREP(HAL_TCL1_RING_FIELD_DSCP_TID_MAP5,
-				   dscp_tid_map[i + 5]) |
-			FIELD_PREP(HAL_TCL1_RING_FIELD_DSCP_TID_MAP6,
-				   dscp_tid_map[i + 6]) |
-			FIELD_PREP(HAL_TCL1_RING_FIELD_DSCP_TID_MAP7,
-				   dscp_tid_map[i + 7]);
+		value = u32_encode_bits(dscp_tid_map[i],
+					HAL_TCL1_RING_FIELD_DSCP_TID_MAP0) |
+			u32_encode_bits(dscp_tid_map[i + 1],
+					HAL_TCL1_RING_FIELD_DSCP_TID_MAP1) |
+			u32_encode_bits(dscp_tid_map[i + 2],
+					HAL_TCL1_RING_FIELD_DSCP_TID_MAP2) |
+			u32_encode_bits(dscp_tid_map[i + 3],
+					HAL_TCL1_RING_FIELD_DSCP_TID_MAP3) |
+			u32_encode_bits(dscp_tid_map[i + 4],
+					HAL_TCL1_RING_FIELD_DSCP_TID_MAP4) |
+			u32_encode_bits(dscp_tid_map[i + 5],
+					HAL_TCL1_RING_FIELD_DSCP_TID_MAP5) |
+			u32_encode_bits(dscp_tid_map[i + 6],
+					HAL_TCL1_RING_FIELD_DSCP_TID_MAP6) |
+			u32_encode_bits(dscp_tid_map[i + 7],
+					HAL_TCL1_RING_FIELD_DSCP_TID_MAP7);
+
 		memcpy(&hw_map_val[cnt], (u8 *)&value, 3);
 		cnt += 3;
 	}
