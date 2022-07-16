@@ -323,26 +323,29 @@ void ath12k_dp_tx_get_vdev_bank_config(struct ath12k_base *ab, struct ath12k_vif
 	    test_bit(ATH12K_FLAG_HW_CRYPTO_DISABLED, &ab->dev_flags))
 		encrypt_type = ath12k_dp_tx_get_encrypt_type(arvif->key_cipher);
 
-	*bank_config |= FIELD_PREP(HAL_TX_BANK_CONFIG_ENCAP_TYPE, arvif->tx_encap_type) |
-			FIELD_PREP(HAL_TX_BANK_CONFIG_ENCRYPT_TYPE, encrypt_type);
-	*bank_config |= FIELD_PREP(HAL_TX_BANK_CONFIG_SRC_BUFFER_SWAP, 0) |
-			FIELD_PREP(HAL_TX_BANK_CONFIG_LINK_META_SWAP, 0) |
-			FIELD_PREP(HAL_TX_BANK_CONFIG_EPD, 0);
+	*bank_config |= u32_encode_bits(arvif->tx_encap_type,
+					HAL_TX_BANK_CONFIG_ENCAP_TYPE) |
+			u32_encode_bits(encrypt_type,
+					HAL_TX_BANK_CONFIG_ENCRYPT_TYPE);
+	*bank_config |= u32_encode_bits(0, HAL_TX_BANK_CONFIG_SRC_BUFFER_SWAP) |
+			u32_encode_bits(0, HAL_TX_BANK_CONFIG_LINK_META_SWAP) |
+			u32_encode_bits(0, HAL_TX_BANK_CONFIG_EPD);
 
 	/* only valid if idx_lookup_override is not set in tcl_data_cmd */
-	*bank_config |= FIELD_PREP(HAL_TX_BANK_CONFIG_INDEX_LOOKUP_EN, 0);
+	*bank_config |= u32_encode_bits(0, HAL_TX_BANK_CONFIG_INDEX_LOOKUP_EN);
 
-	*bank_config |= FIELD_PREP(HAL_TX_BANK_CONFIG_ADDRX_EN,
-				   arvif->hal_addr_search_flags & HAL_TX_ADDRX_EN) |
-			FIELD_PREP(HAL_TX_BANK_CONFIG_ADDRY_EN,
-				   !!(arvif->hal_addr_search_flags & HAL_TX_ADDRY_EN));
+	*bank_config |= u32_encode_bits(arvif->hal_addr_search_flags & HAL_TX_ADDRX_EN,
+					HAL_TX_BANK_CONFIG_ADDRX_EN) |
+			u32_encode_bits(!!(arvif->hal_addr_search_flags &
+					HAL_TX_ADDRY_EN),
+					HAL_TX_BANK_CONFIG_ADDRY_EN);
 
-	*bank_config |= FIELD_PREP(HAL_TX_BANK_CONFIG_MESH_EN,
-				  ieee80211_vif_is_mesh(arvif->vif) ? 3 : 0) |
-			FIELD_PREP(HAL_TX_BANK_CONFIG_VDEV_ID_CHECK_EN,
-				   arvif->vdev_id_check_en);
+	*bank_config |= u32_encode_bits(ieee80211_vif_is_mesh(arvif->vif) ? 3 : 0,
+					HAL_TX_BANK_CONFIG_MESH_EN) |
+			u32_encode_bits(arvif->vdev_id_check_en,
+					HAL_TX_BANK_CONFIG_VDEV_ID_CHECK_EN);
 
-	*bank_config |= FIELD_PREP(HAL_TX_BANK_CONFIG_DSCP_TIP_MAP_ID, 0);
+	*bank_config |= u32_encode_bits(0, HAL_TX_BANK_CONFIG_DSCP_TIP_MAP_ID);
 }
 
 static int ath12k_dp_tx_get_bank_profile(struct ath12k_base *ab, struct ath12k_vif *arvif,
@@ -1080,11 +1083,11 @@ void ath12k_dp_vdev_tx_attach(struct ath12k *ar, struct ath12k_vif *arvif)
 {
 	struct ath12k_base *ab = ar->ab;
 
-	arvif->tcl_metadata |= FIELD_PREP(HTT_TCL_META_DATA_TYPE, 1) |
-			       FIELD_PREP(HTT_TCL_META_DATA_VDEV_ID,
-					  arvif->vdev_id) |
-			       FIELD_PREP(HTT_TCL_META_DATA_PDEV_ID,
-					  ar->pdev->pdev_id);
+	arvif->tcl_metadata |= u32_encode_bits(1, HTT_TCL_META_DATA_TYPE) |
+			       u32_encode_bits(arvif->vdev_id,
+					       HTT_TCL_META_DATA_VDEV_ID) |
+			       u32_encode_bits(ar->pdev->pdev_id,
+					       HTT_TCL_META_DATA_PDEV_ID);
 
 	/* set HTT extension valid bit to 0 by default */
 	arvif->tcl_metadata &= ~HTT_TCL_META_DATA_VALID_HTT;
@@ -1210,38 +1213,42 @@ void ath12k_dp_cc_config(struct ath12k_base *ab)
 
 	ath12k_hif_write32(ab, reo_base + HAL_REO1_SW_COOKIE_CFG0, cmem_base);
 
-	val |= FIELD_PREP(HAL_REO1_SW_COOKIE_CFG_CMEM_BASE_ADDR_MSB,
-			  ATH12K_CMEM_ADDR_MSB) |
-		FIELD_PREP(HAL_REO1_SW_COOKIE_CFG_COOKIE_PPT_MSB, ATH12K_CC_PPT_MSB) |
-		FIELD_PREP(HAL_REO1_SW_COOKIE_CFG_COOKIE_SPT_MSB, ATH12K_CC_SPT_MSB) |
-		FIELD_PREP(HAL_REO1_SW_COOKIE_CFG_ALIGN, 1) |
-		FIELD_PREP(HAL_REO1_SW_COOKIE_CFG_ENABLE, 1) |
-		FIELD_PREP(HAL_REO1_SW_COOKIE_CFG_GLOBAL_ENABLE, 1);
+	val |= u32_encode_bits(ATH12K_CMEM_ADDR_MSB,
+			       HAL_REO1_SW_COOKIE_CFG_CMEM_BASE_ADDR_MSB) |
+		u32_encode_bits(ATH12K_CC_PPT_MSB,
+				HAL_REO1_SW_COOKIE_CFG_COOKIE_PPT_MSB) |
+		u32_encode_bits(ATH12K_CC_SPT_MSB,
+				HAL_REO1_SW_COOKIE_CFG_COOKIE_SPT_MSB) |
+		u32_encode_bits(1, HAL_REO1_SW_COOKIE_CFG_ALIGN) |
+		u32_encode_bits(1, HAL_REO1_SW_COOKIE_CFG_ENABLE) |
+		u32_encode_bits(1, HAL_REO1_SW_COOKIE_CFG_GLOBAL_ENABLE);
 
 	ath12k_hif_write32(ab, reo_base + HAL_REO1_SW_COOKIE_CFG1, val);
 
 	/* Enable HW CC for WBM */
 	ath12k_hif_write32(ab, wbm_base + HAL_WBM_SW_COOKIE_CFG0, cmem_base);
 
-	val = FIELD_PREP(HAL_WBM_SW_COOKIE_CFG_CMEM_BASE_ADDR_MSB,
-			 ATH12K_CMEM_ADDR_MSB) |
-		FIELD_PREP(HAL_WBM_SW_COOKIE_CFG_COOKIE_PPT_MSB, ATH12K_CC_PPT_MSB) |
-		FIELD_PREP(HAL_WBM_SW_COOKIE_CFG_COOKIE_SPT_MSB, ATH12K_CC_SPT_MSB) |
-		FIELD_PREP(HAL_WBM_SW_COOKIE_CFG_ALIGN, 1);
+	val = u32_encode_bits(ATH12K_CMEM_ADDR_MSB,
+			      HAL_WBM_SW_COOKIE_CFG_CMEM_BASE_ADDR_MSB) |
+		u32_encode_bits(ATH12K_CC_PPT_MSB,
+				HAL_WBM_SW_COOKIE_CFG_COOKIE_PPT_MSB) |
+		u32_encode_bits(ATH12K_CC_SPT_MSB,
+				HAL_WBM_SW_COOKIE_CFG_COOKIE_SPT_MSB) |
+		u32_encode_bits(1, HAL_WBM_SW_COOKIE_CFG_ALIGN);
 
 	ath12k_hif_write32(ab, wbm_base + HAL_WBM_SW_COOKIE_CFG1, val);
 
 	/* Enable conversion complete indication */
 	val = ath12k_hif_read32(ab, wbm_base + HAL_WBM_SW_COOKIE_CFG2);
-	val |= FIELD_PREP(HAL_WBM_SW_COOKIE_CFG_RELEASE_PATH_EN, 1) |
-		FIELD_PREP(HAL_WBM_SW_COOKIE_CFG_ERR_PATH_EN, 1) |
-		FIELD_PREP(HAL_WBM_SW_COOKIE_CFG_CONV_IND_EN, 1);
+	val |= u32_encode_bits(1, HAL_WBM_SW_COOKIE_CFG_RELEASE_PATH_EN) |
+		u32_encode_bits(1, HAL_WBM_SW_COOKIE_CFG_ERR_PATH_EN) |
+		u32_encode_bits(1, HAL_WBM_SW_COOKIE_CFG_CONV_IND_EN);
 
 	ath12k_hif_write32(ab, wbm_base + HAL_WBM_SW_COOKIE_CFG2, val);
 
 	/* Enable Cookie conversion for WBM2SW Rings */
 	val = ath12k_hif_read32(ab, wbm_base + HAL_WBM_SW_COOKIE_CONVERT_CFG);
-	val |= FIELD_PREP(HAL_WBM_SW_COOKIE_CONV_CFG_GLOBAL_EN, 1) |
+	val |= u32_encode_bits(1, HAL_WBM_SW_COOKIE_CONV_CFG_GLOBAL_EN) |
 	       ab->hw_params->hal_params->wbm2sw_cc_enable;
 
 	ath12k_hif_write32(ab, wbm_base + HAL_WBM_SW_COOKIE_CONVERT_CFG, val);
