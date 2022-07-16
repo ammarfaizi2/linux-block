@@ -371,7 +371,7 @@ static void ath12k_hw_qcn9274_rx_desc_set_msdu_len(struct hal_rx_desc *desc, u16
 	u32 info = __le32_to_cpu(desc->u.qcn9274.msdu_end.info10);
 
 	info &= ~RX_MSDU_END_INFO10_MSDU_LENGTH;
-	info |= FIELD_PREP(RX_MSDU_END_INFO10_MSDU_LENGTH, len);
+	info |= u32_encode_bits(len, RX_MSDU_END_INFO10_MSDU_LENGTH);
 
 	desc->u.qcn9274.msdu_end.info10 = __cpu_to_le32(info);
 }
@@ -810,7 +810,7 @@ static void ath12k_hw_wcn7850_rx_desc_set_msdu_len(struct hal_rx_desc *desc, u16
 	u32 info = __le32_to_cpu(desc->u.wcn7850.msdu_end.info10);
 
 	info &= ~RX_MSDU_END_INFO10_MSDU_LENGTH;
-	info |= FIELD_PREP(RX_MSDU_END_INFO10_MSDU_LENGTH, len);
+	info |= u32_encode_bits(len, RX_MSDU_END_INFO10_MSDU_LENGTH);
 
 	desc->u.wcn7850.msdu_end.info10 = __cpu_to_le32(info);
 }
@@ -1199,8 +1199,8 @@ static void ath12k_hal_ce_dst_setup(struct ath12k_base *ab,
 
 	val = ath12k_hif_read32(ab, addr);
 	val &= ~HAL_CE_DST_R0_DEST_CTRL_MAX_LEN;
-	val |= FIELD_PREP(HAL_CE_DST_R0_DEST_CTRL_MAX_LEN,
-			  srng->u.dst_ring.max_buffer_length);
+	val |= u32_encode_bits(srng->u.dst_ring.max_buffer_length,
+			       HAL_CE_DST_R0_DEST_CTRL_MAX_LEN);
 	ath12k_hif_write32(ab, addr, val);
 }
 
@@ -1219,10 +1219,9 @@ static void ath12k_hal_srng_dst_hw_init(struct ath12k_base *ab,
 				   HAL_REO1_RING_MSI1_BASE_LSB_OFFSET,
 				   srng->msi_addr);
 
-		val = FIELD_PREP(HAL_REO1_RING_MSI1_BASE_MSB_ADDR,
-				 ((u64)srng->msi_addr >>
-				  HAL_ADDR_MSB_REG_SHIFT)) |
-		      HAL_REO1_RING_MSI1_BASE_MSB_MSI1_ENABLE;
+		val = u32_encode_bits(((u64)srng->msi_addr >> HAL_ADDR_MSB_REG_SHIFT),
+				      HAL_REO1_RING_MSI1_BASE_MSB_ADDR) |
+				      HAL_REO1_RING_MSI1_BASE_MSB_MSI1_ENABLE;
 		ath12k_hif_write32(ab, reg_base +
 				       HAL_REO1_RING_MSI1_BASE_MSB_OFFSET, val);
 
@@ -1233,24 +1232,22 @@ static void ath12k_hal_srng_dst_hw_init(struct ath12k_base *ab,
 
 	ath12k_hif_write32(ab, reg_base, srng->ring_base_paddr);
 
-	val = FIELD_PREP(HAL_REO1_RING_BASE_MSB_RING_BASE_ADDR_MSB,
-			 ((u64)srng->ring_base_paddr >>
-			  HAL_ADDR_MSB_REG_SHIFT)) |
-	      FIELD_PREP(HAL_REO1_RING_BASE_MSB_RING_SIZE,
-			 (srng->entry_size * srng->num_entries));
+	val = u32_encode_bits(((u64)srng->ring_base_paddr >> HAL_ADDR_MSB_REG_SHIFT),
+			      HAL_REO1_RING_BASE_MSB_RING_BASE_ADDR_MSB) |
+	      u32_encode_bits((srng->entry_size * srng->num_entries),
+			      HAL_REO1_RING_BASE_MSB_RING_SIZE);
 	ath12k_hif_write32(ab, reg_base + HAL_REO1_RING_BASE_MSB_OFFSET, val);
 
-	val = FIELD_PREP(HAL_REO1_RING_ID_RING_ID, srng->ring_id) |
-	      FIELD_PREP(HAL_REO1_RING_ID_ENTRY_SIZE, srng->entry_size);
+	val = u32_encode_bits(srng->ring_id, HAL_REO1_RING_ID_RING_ID) |
+	      u32_encode_bits(srng->entry_size, HAL_REO1_RING_ID_ENTRY_SIZE);
 	ath12k_hif_write32(ab, reg_base + HAL_REO1_RING_ID_OFFSET(ab), val);
 
 	/* interrupt setup */
-	val = FIELD_PREP(HAL_REO1_RING_PRDR_INT_SETUP_INTR_TMR_THOLD,
-			 (srng->intr_timer_thres_us >> 3));
+	val = u32_encode_bits((srng->intr_timer_thres_us >> 3),
+			      HAL_REO1_RING_PRDR_INT_SETUP_INTR_TMR_THOLD);
 
-	val |= FIELD_PREP(HAL_REO1_RING_PRDR_INT_SETUP_BATCH_COUNTER_THOLD,
-			  (srng->intr_batch_cntr_thres_entries *
-			   srng->entry_size));
+	val |= u32_encode_bits((srng->intr_batch_cntr_thres_entries * srng->entry_size),
+				HAL_REO1_RING_PRDR_INT_SETUP_BATCH_COUNTER_THOLD);
 
 	ath12k_hif_write32(ab,
 			   reg_base + HAL_REO1_RING_PRODUCER_INT_SETUP_OFFSET,
@@ -1298,10 +1295,9 @@ static void ath12k_hal_srng_src_hw_init(struct ath12k_base *ab,
 				   HAL_TCL1_RING_MSI1_BASE_LSB_OFFSET(ab),
 				   srng->msi_addr);
 
-		val = FIELD_PREP(HAL_TCL1_RING_MSI1_BASE_MSB_ADDR,
-				 ((u64)srng->msi_addr >>
-				  HAL_ADDR_MSB_REG_SHIFT)) |
-		      HAL_TCL1_RING_MSI1_BASE_MSB_MSI1_ENABLE;
+		val = u32_encode_bits(((u64)srng->msi_addr >> HAL_ADDR_MSB_REG_SHIFT),
+				      HAL_TCL1_RING_MSI1_BASE_MSB_ADDR) |
+				      HAL_TCL1_RING_MSI1_BASE_MSB_MSI1_ENABLE;
 		ath12k_hif_write32(ab, reg_base +
 				       HAL_TCL1_RING_MSI1_BASE_MSB_OFFSET(ab),
 				   val);
@@ -1313,26 +1309,24 @@ static void ath12k_hal_srng_src_hw_init(struct ath12k_base *ab,
 
 	ath12k_hif_write32(ab, reg_base, srng->ring_base_paddr);
 
-	val = FIELD_PREP(HAL_TCL1_RING_BASE_MSB_RING_BASE_ADDR_MSB,
-			 ((u64)srng->ring_base_paddr >>
-			  HAL_ADDR_MSB_REG_SHIFT)) |
-	      FIELD_PREP(HAL_TCL1_RING_BASE_MSB_RING_SIZE,
-			 (srng->entry_size * srng->num_entries));
+	val = u32_encode_bits(((u64)srng->ring_base_paddr >> HAL_ADDR_MSB_REG_SHIFT),
+			      HAL_TCL1_RING_BASE_MSB_RING_BASE_ADDR_MSB) |
+	      u32_encode_bits((srng->entry_size * srng->num_entries),
+			      HAL_TCL1_RING_BASE_MSB_RING_SIZE);
 	ath12k_hif_write32(ab, reg_base + HAL_TCL1_RING_BASE_MSB_OFFSET, val);
 
-	val = FIELD_PREP(HAL_REO1_RING_ID_ENTRY_SIZE, srng->entry_size);
+	val = u32_encode_bits(srng->entry_size, HAL_REO1_RING_ID_ENTRY_SIZE);
 	ath12k_hif_write32(ab, reg_base + HAL_TCL1_RING_ID_OFFSET(ab), val);
 
 	/* interrupt setup */
 	/* NOTE: IPQ8074 v2 requires the interrupt timer threshold in the
 	 * unit of 8 usecs instead of 1 usec (as required by v1).
 	 */
-	val = FIELD_PREP(HAL_TCL1_RING_CONSR_INT_SETUP_IX0_INTR_TMR_THOLD,
-			 srng->intr_timer_thres_us);
+	val = u32_encode_bits(srng->intr_timer_thres_us,
+			      HAL_TCL1_RING_CONSR_INT_SETUP_IX0_INTR_TMR_THOLD);
 
-	val |= FIELD_PREP(HAL_TCL1_RING_CONSR_INT_SETUP_IX0_BATCH_COUNTER_THOLD,
-			  (srng->intr_batch_cntr_thres_entries *
-			   srng->entry_size));
+	val |= u32_encode_bits((srng->intr_batch_cntr_thres_entries * srng->entry_size),
+			       HAL_TCL1_RING_CONSR_INT_SETUP_IX0_BATCH_COUNTER_THOLD);
 
 	ath12k_hif_write32(ab,
 			   reg_base + HAL_TCL1_RING_CONSR_INT_SETUP_IX0_OFFSET(ab),
@@ -1340,8 +1334,8 @@ static void ath12k_hal_srng_src_hw_init(struct ath12k_base *ab,
 
 	val = 0;
 	if (srng->flags & HAL_SRNG_FLAGS_LOW_THRESH_INTR_EN) {
-		val |= FIELD_PREP(HAL_TCL1_RING_CONSR_INT_SETUP_IX1_LOW_THOLD,
-				  srng->u.src_ring.low_threshold);
+		val |= u32_encode_bits(srng->u.src_ring.low_threshold,
+				       HAL_TCL1_RING_CONSR_INT_SETUP_IX1_LOW_THOLD);
 	}
 	ath12k_hif_write32(ab,
 			   reg_base + HAL_TCL1_RING_CONSR_INT_SETUP_IX1_OFFSET(ab),
@@ -1510,13 +1504,13 @@ void ath12k_hal_ce_src_set_desc(void *buf, dma_addr_t paddr, u32 len, u32 id,
 
 	desc->buffer_addr_low = paddr & HAL_ADDR_LSB_REG_MASK;
 	desc->buffer_addr_info =
-		FIELD_PREP(HAL_CE_SRC_DESC_ADDR_INFO_ADDR_HI,
-			   ((u64)paddr >> HAL_ADDR_MSB_REG_SHIFT)) |
-		FIELD_PREP(HAL_CE_SRC_DESC_ADDR_INFO_BYTE_SWAP,
-			   byte_swap_data) |
-		FIELD_PREP(HAL_CE_SRC_DESC_ADDR_INFO_GATHER, 0) |
-		FIELD_PREP(HAL_CE_SRC_DESC_ADDR_INFO_LEN, len);
-	desc->meta_info = FIELD_PREP(HAL_CE_SRC_DESC_META_INFO_DATA, id);
+		u32_encode_bits(((u64)paddr >> HAL_ADDR_MSB_REG_SHIFT),
+				HAL_CE_SRC_DESC_ADDR_INFO_ADDR_HI) |
+		u32_encode_bits(byte_swap_data,
+				HAL_CE_SRC_DESC_ADDR_INFO_BYTE_SWAP) |
+		u32_encode_bits(0, HAL_CE_SRC_DESC_ADDR_INFO_GATHER) |
+		u32_encode_bits(len, HAL_CE_SRC_DESC_ADDR_INFO_LEN);
+	desc->meta_info = u32_encode_bits(id, HAL_CE_SRC_DESC_META_INFO_DATA);
 }
 
 void ath12k_hal_ce_dst_set_desc(void *buf, dma_addr_t paddr)
@@ -1526,8 +1520,8 @@ void ath12k_hal_ce_dst_set_desc(void *buf, dma_addr_t paddr)
 
 	desc->buffer_addr_low = paddr & HAL_ADDR_LSB_REG_MASK;
 	desc->buffer_addr_info =
-		FIELD_PREP(HAL_CE_DEST_DESC_ADDR_INFO_ADDR_HI,
-			   ((u64)paddr >> HAL_ADDR_MSB_REG_SHIFT));
+		u32_encode_bits(((u64)paddr >> HAL_ADDR_MSB_REG_SHIFT),
+				HAL_CE_DEST_DESC_ADDR_INFO_ADDR_HI);
 }
 
 u32 ath12k_hal_ce_dst_status_get_length(void *buf)
@@ -1545,12 +1539,13 @@ u32 ath12k_hal_ce_dst_status_get_length(void *buf)
 void ath12k_hal_set_link_desc_addr(struct hal_wbm_link_desc *desc, u32 cookie,
 				   dma_addr_t paddr)
 {
-	desc->buf_addr_info.info0 = FIELD_PREP(BUFFER_ADDR_INFO0_ADDR,
-					       (paddr & HAL_ADDR_LSB_REG_MASK));
-	desc->buf_addr_info.info1 = FIELD_PREP(BUFFER_ADDR_INFO1_ADDR,
-					       ((u64)paddr >> HAL_ADDR_MSB_REG_SHIFT)) |
-				    FIELD_PREP(BUFFER_ADDR_INFO1_RET_BUF_MGR, 1) |
-				    FIELD_PREP(BUFFER_ADDR_INFO1_SW_COOKIE, cookie);
+	desc->buf_addr_info.info0 = u32_encode_bits((paddr & HAL_ADDR_LSB_REG_MASK),
+						    BUFFER_ADDR_INFO0_ADDR);
+	desc->buf_addr_info.info1 =
+			u32_encode_bits(((u64)paddr >> HAL_ADDR_MSB_REG_SHIFT),
+					BUFFER_ADDR_INFO1_ADDR) |
+			u32_encode_bits(1, BUFFER_ADDR_INFO1_RET_BUF_MGR) |
+			u32_encode_bits(cookie, BUFFER_ADDR_INFO1_SW_COOKIE);
 }
 
 u32 *ath12k_hal_srng_dst_peek(struct ath12k_base *ab, struct hal_srng *srng)
@@ -1766,6 +1761,7 @@ void ath12k_hal_setup_link_idle_list(struct ath12k_base *ab,
 	struct ath12k_buffer_addr *link_addr;
 	int i;
 	u32 reg_scatter_buf_sz = HAL_WBM_IDLE_SCATTER_BUF_SIZE / 64;
+	u32 val;
 
 	link_addr = (void *)sbuf[0].vaddr + HAL_WBM_IDLE_SCATTER_BUF_SIZE;
 
@@ -1773,82 +1769,94 @@ void ath12k_hal_setup_link_idle_list(struct ath12k_base *ab,
 		link_addr->info0 = sbuf[i].paddr & HAL_ADDR_LSB_REG_MASK;
 
 		link_addr->info1 =
-			FIELD_PREP(HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32,
-				   (u64)sbuf[i].paddr >> HAL_ADDR_MSB_REG_SHIFT) |
-			FIELD_PREP(HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_MATCH_TAG,
-				   BASE_ADDR_MATCH_TAG_VAL);
+			u32_encode_bits((u64)sbuf[i].paddr >> HAL_ADDR_MSB_REG_SHIFT,
+					HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32) |
+			u32_encode_bits(BASE_ADDR_MATCH_TAG_VAL,
+					HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_MATCH_TAG);
 
 		link_addr = (void *)sbuf[i].vaddr +
 			     HAL_WBM_IDLE_SCATTER_BUF_SIZE;
 	}
 
+	val = u32_encode_bits(reg_scatter_buf_sz, HAL_WBM_SCATTER_BUFFER_SIZE) |
+	      u32_encode_bits(0x1, HAL_WBM_LINK_DESC_IDLE_LIST_MODE);
+
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
 			   HAL_WBM_R0_IDLE_LIST_CONTROL_ADDR(ab),
-			   FIELD_PREP(HAL_WBM_SCATTER_BUFFER_SIZE, reg_scatter_buf_sz) |
-			   FIELD_PREP(HAL_WBM_LINK_DESC_IDLE_LIST_MODE, 0x1));
+			   val);
+
+	val = u32_encode_bits(reg_scatter_buf_sz * nsbufs,
+			      HAL_WBM_SCATTER_RING_SIZE_OF_IDLE_LINK_DESC_LIST);
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG + HAL_WBM_R0_IDLE_LIST_SIZE_ADDR(ab),
-			   FIELD_PREP(HAL_WBM_SCATTER_RING_SIZE_OF_IDLE_LINK_DESC_LIST,
-				      reg_scatter_buf_sz * nsbufs));
+			   val);
+
+	val = u32_encode_bits(sbuf[0].paddr & HAL_ADDR_LSB_REG_MASK,
+			      BUFFER_ADDR_INFO0_ADDR);
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
 			   HAL_WBM_SCATTERED_RING_BASE_LSB(ab),
-			   FIELD_PREP(BUFFER_ADDR_INFO0_ADDR,
-				      sbuf[0].paddr & HAL_ADDR_LSB_REG_MASK));
+			   val);
+
+	val = u32_encode_bits(BASE_ADDR_MATCH_TAG_VAL,
+			      HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_MATCH_TAG) |
+	      u32_encode_bits((u64)sbuf[0].paddr >> HAL_ADDR_MSB_REG_SHIFT,
+			      HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32);
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
 			   HAL_WBM_SCATTERED_RING_BASE_MSB(ab),
-			   FIELD_PREP(HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32,
-				      (u64)sbuf[0].paddr >> HAL_ADDR_MSB_REG_SHIFT) |
-			   FIELD_PREP(HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_MATCH_TAG,
-				      BASE_ADDR_MATCH_TAG_VAL));
+			   val);
 
 	/* Setup head and tail pointers for the idle list */
+	val = u32_encode_bits(sbuf[nsbufs - 1].paddr, BUFFER_ADDR_INFO0_ADDR);
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
 			   HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX0(ab),
-			   FIELD_PREP(BUFFER_ADDR_INFO0_ADDR,
-				      sbuf[nsbufs - 1].paddr));
+			   val);
+
+	val =  u32_encode_bits(((u64)sbuf[nsbufs - 1].paddr >> HAL_ADDR_MSB_REG_SHIFT),
+			       HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32) |
+	       u32_encode_bits((end_offset >> 2),
+			       HAL_WBM_SCATTERED_DESC_HEAD_P_OFFSET_IX1);
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
 			   HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX1(ab),
-			   FIELD_PREP(HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32,
-				      ((u64)sbuf[nsbufs - 1].paddr >>
-				       HAL_ADDR_MSB_REG_SHIFT)) |
-			   FIELD_PREP(HAL_WBM_SCATTERED_DESC_HEAD_P_OFFSET_IX1,
-				      (end_offset >> 2)));
+			   val);
+
+	val = u32_encode_bits(sbuf[0].paddr, BUFFER_ADDR_INFO0_ADDR);
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
 			   HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX0(ab),
-			   FIELD_PREP(BUFFER_ADDR_INFO0_ADDR,
-				      sbuf[0].paddr));
+			   val);
 
+	val = u32_encode_bits(sbuf[0].paddr, BUFFER_ADDR_INFO0_ADDR);
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
 			   HAL_WBM_SCATTERED_DESC_PTR_TAIL_INFO_IX0(ab),
-			   FIELD_PREP(BUFFER_ADDR_INFO0_ADDR,
-				      sbuf[0].paddr));
+			   val);
+
+	val = u32_encode_bits(((u64)sbuf[0].paddr >> HAL_ADDR_MSB_REG_SHIFT),
+			      HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32) |
+	      u32_encode_bits(0, HAL_WBM_SCATTERED_DESC_TAIL_P_OFFSET_IX1);
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
 			   HAL_WBM_SCATTERED_DESC_PTR_TAIL_INFO_IX1(ab),
-			   FIELD_PREP(HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32,
-				      ((u64)sbuf[0].paddr >> HAL_ADDR_MSB_REG_SHIFT)) |
-			   FIELD_PREP(HAL_WBM_SCATTERED_DESC_TAIL_P_OFFSET_IX1,
-				      0));
+			   val);
+
+	val = 2 * tot_link_desc;
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
 			   HAL_WBM_SCATTERED_DESC_PTR_HP_ADDR(ab),
-			   2 * tot_link_desc);
+			   val);
 
 	/* Enable the SRNG */
+	val = u32_encode_bits(1, HAL_WBM_IDLE_LINK_RING_MISC_SRNG_ENABLE) |
+	      u32_encode_bits(1, HAL_WBM_IDLE_LINK_RING_MISC_RIND_ID_DISABLE);
 	ath12k_hif_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
 			   HAL_WBM_IDLE_LINK_RING_MISC_ADDR(ab),
-			   FIELD_PREP(HAL_WBM_IDLE_LINK_RING_MISC_SRNG_ENABLE,
-				      1) |
-			   FIELD_PREP(HAL_WBM_IDLE_LINK_RING_MISC_RIND_ID_DISABLE,
-				      1));
+			   val);
 }
 
 int ath12k_hal_srng_setup(struct ath12k_base *ab, enum hal_ring_type type,
