@@ -59,16 +59,16 @@ static void ath12k_htc_prepare_tx_skb(struct ath12k_htc_ep *ep,
 	hdr = (struct ath12k_htc_hdr *)skb->data;
 
 	memset(hdr, 0, sizeof(*hdr));
-	hdr->htc_info = FIELD_PREP(HTC_HDR_ENDPOINTID, ep->eid) |
-			FIELD_PREP(HTC_HDR_PAYLOADLEN,
-				   (skb->len - sizeof(*hdr)));
+	hdr->htc_info = u32_encode_bits(ep->eid, HTC_HDR_ENDPOINTID) |
+			u32_encode_bits((skb->len - sizeof(*hdr)),
+					HTC_HDR_PAYLOADLEN);
 
 	if (ep->tx_credit_flow_enabled)
-		hdr->htc_info |= FIELD_PREP(HTC_HDR_FLAGS,
-					    ATH12K_HTC_FLAG_NEED_CREDIT_UPDATE);
+		hdr->htc_info |= u32_encode_bits(ATH12K_HTC_FLAG_NEED_CREDIT_UPDATE,
+						 HTC_HDR_FLAGS);
 
 	spin_lock_bh(&ep->htc->tx_lock);
-	hdr->ctrl_info = FIELD_PREP(HTC_HDR_CONTROLBYTES1, ep->seq_no++);
+	hdr->ctrl_info = u32_encode_bits(ep->seq_no++, HTC_HDR_CONTROLBYTES1);
 	spin_unlock_bh(&ep->htc->tx_lock);
 }
 
@@ -591,10 +591,10 @@ int ath12k_htc_connect_service(struct ath12k_htc *htc,
 	memset(skb->data, 0, length);
 
 	req_msg = (struct ath12k_htc_conn_svc *)skb->data;
-	req_msg->msg_svc_id = FIELD_PREP(HTC_MSG_MESSAGEID,
-					 ATH12K_HTC_MSG_CONNECT_SERVICE_ID);
+	req_msg->msg_svc_id = u32_encode_bits(ATH12K_HTC_MSG_CONNECT_SERVICE_ID,
+					      HTC_MSG_MESSAGEID);
 
-	flags |= FIELD_PREP(ATH12K_HTC_CONN_FLAGS_RECV_ALLOC, tx_alloc);
+	flags |= u32_encode_bits(tx_alloc, ATH12K_HTC_CONN_FLAGS_RECV_ALLOC);
 
 	/* Only enable credit flow control for WMI ctrl service */
 	if (!(conn_req->service_id == ATH12K_HTC_SVC_ID_WMI_CONTROL ||
@@ -604,9 +604,9 @@ int ath12k_htc_connect_service(struct ath12k_htc *htc,
 		disable_credit_flow_ctrl = true;
 	}
 
-	req_msg->flags_len = FIELD_PREP(HTC_SVC_MSG_CONNECTIONFLAGS, flags);
-	req_msg->msg_svc_id |= FIELD_PREP(HTC_SVC_MSG_SERVICE_ID,
-					  conn_req->service_id);
+	req_msg->flags_len = u32_encode_bits(flags, HTC_SVC_MSG_CONNECTIONFLAGS);
+	req_msg->msg_svc_id |= u32_encode_bits(conn_req->service_id,
+					       HTC_SVC_MSG_SERVICE_ID);
 
 	reinit_completion(&htc->ctl_resp);
 
@@ -725,8 +725,8 @@ int ath12k_htc_start(struct ath12k_htc *htc)
 	memset(skb->data, 0, skb->len);
 
 	msg = (struct ath12k_htc_setup_complete_extended *)skb->data;
-	msg->msg_id = FIELD_PREP(HTC_MSG_MESSAGEID,
-				 ATH12K_HTC_MSG_SETUP_COMPLETE_EX_ID);
+	msg->msg_id = u32_encode_bits(ATH12K_HTC_MSG_SETUP_COMPLETE_EX_ID,
+				      HTC_MSG_MESSAGEID);
 
 	ath12k_dbg(ab, ATH12K_DBG_HTC, "HTC is using TX credit flow control\n");
 
