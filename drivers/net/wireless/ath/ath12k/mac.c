@@ -4084,20 +4084,20 @@ static __le16 ath12k_mac_setup_he_6ghz_cap(struct ath12k_pdev_cap *pcap,
 	bcap->he_6ghz_capa = IEEE80211_HT_MPDU_DENSITY_NONE;
 	if (bcap->ht_cap_info & WMI_HT_CAP_DYNAMIC_SMPS)
 		bcap->he_6ghz_capa |=
-			FIELD_PREP(IEEE80211_HE_6GHZ_CAP_SM_PS,
-				   WLAN_HT_CAP_SM_PS_DYNAMIC);
+			u32_encode_bits(WLAN_HT_CAP_SM_PS_DYNAMIC,
+					IEEE80211_HE_6GHZ_CAP_SM_PS);
 	else
 		bcap->he_6ghz_capa |=
-			FIELD_PREP(IEEE80211_HE_6GHZ_CAP_SM_PS,
-				   WLAN_HT_CAP_SM_PS_DISABLED);
+			u32_encode_bits(WLAN_HT_CAP_SM_PS_DISABLED,
+					IEEE80211_HE_6GHZ_CAP_SM_PS);
 	val = u32_get_bits(pcap->vht_cap,
 			   IEEE80211_VHT_CAP_MAX_A_MPDU_LENGTH_EXPONENT_MASK);
 	bcap->he_6ghz_capa |=
-		FIELD_PREP(IEEE80211_HE_6GHZ_CAP_MAX_AMPDU_LEN_EXP, val);
+		u32_encode_bits(val, IEEE80211_HE_6GHZ_CAP_MAX_AMPDU_LEN_EXP);
 	val = u32_get_bits(pcap->vht_cap,
 			   IEEE80211_VHT_CAP_MAX_MPDU_MASK);
 	bcap->he_6ghz_capa |=
-		FIELD_PREP(IEEE80211_HE_6GHZ_CAP_MAX_MPDU_LEN, val);
+		u32_encode_bits(val, IEEE80211_HE_6GHZ_CAP_MAX_MPDU_LEN);
 	if (pcap->vht_cap & IEEE80211_VHT_CAP_RX_ANTENNA_PATTERN)
 		bcap->he_6ghz_capa |= IEEE80211_HE_6GHZ_CAP_RX_ANTPAT_CONS;
 	if (pcap->vht_cap & IEEE80211_VHT_CAP_TX_ANTENNA_PATTERN)
@@ -4751,18 +4751,20 @@ ath12k_mac_prepare_he_mode(struct ath12k_pdev *pdev, u32 viftype)
 
 	hecap_phy_ptr = &cap_band->he_cap_phy_info[0];
 
-	hemode = FIELD_PREP(HE_MODE_SU_TX_BFEE, HE_SU_BFEE_ENABLE) |
-		 FIELD_PREP(HE_MODE_SU_TX_BFER, HECAP_PHY_SUBFMR_GET(hecap_phy_ptr)) |
-		 FIELD_PREP(HE_MODE_UL_MUMIMO, HECAP_PHY_ULMUMIMO_GET(hecap_phy_ptr));
+	hemode = u32_encode_bits(HE_SU_BFEE_ENABLE, HE_MODE_SU_TX_BFEE) |
+		 u32_encode_bits(HECAP_PHY_SUBFMR_GET(hecap_phy_ptr),
+				 HE_MODE_SU_TX_BFER) |
+		 u32_encode_bits(HECAP_PHY_ULMUMIMO_GET(hecap_phy_ptr),
+				 HE_MODE_UL_MUMIMO);
 
 	/* TODO WDS and other modes */
 	if (viftype == NL80211_IFTYPE_AP) {
-		hemode |= FIELD_PREP(HE_MODE_MU_TX_BFER,
-			  HECAP_PHY_MUBFMR_GET(hecap_phy_ptr)) |
-			  FIELD_PREP(HE_MODE_DL_OFDMA, HE_DL_MUOFDMA_ENABLE) |
-			  FIELD_PREP(HE_MODE_UL_OFDMA, HE_UL_MUOFDMA_ENABLE);
+		hemode |= u32_encode_bits(HECAP_PHY_MUBFMR_GET(hecap_phy_ptr),
+					  HE_MODE_MU_TX_BFER) |
+			  u32_encode_bits(HE_DL_MUOFDMA_ENABLE, HE_MODE_DL_OFDMA) |
+			  u32_encode_bits(HE_UL_MUOFDMA_ENABLE, HE_MODE_UL_OFDMA);
 	} else {
-		hemode |= FIELD_PREP(HE_MODE_MU_TX_BFEE, HE_MU_BFEE_ENABLE);
+		hemode |= u32_encode_bits(HE_MU_BFEE_ENABLE, HE_MODE_MU_TX_BFEE);
 	}
 
 	return hemode;
@@ -4786,9 +4788,9 @@ static int ath12k_set_he_mu_sounding_mode(struct ath12k *ar,
 	}
 	param_id = WMI_VDEV_PARAM_SET_HE_SOUNDING_MODE;
 	param_value =
-		FIELD_PREP(HE_VHT_SOUNDING_MODE, HE_VHT_SOUNDING_MODE_ENABLE) |
-		FIELD_PREP(HE_TRIG_NONTRIG_SOUNDING_MODE,
-			   HE_TRIG_NONTRIG_SOUNDING_MODE_ENABLE);
+		u32_encode_bits(HE_VHT_SOUNDING_MODE_ENABLE, HE_VHT_SOUNDING_MODE) |
+		u32_encode_bits(HE_TRIG_NONTRIG_SOUNDING_MODE_ENABLE,
+				HE_TRIG_NONTRIG_SOUNDING_MODE);
 	ret = ath12k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 					    param_id, param_value);
 	if (ret) {
