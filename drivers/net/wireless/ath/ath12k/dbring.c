@@ -51,8 +51,8 @@ static int ath12k_dbring_bufs_replenish(struct ath12k *ar,
 
 	buff->paddr = paddr;
 
-	cookie = FIELD_PREP(DP_RXDMA_BUF_COOKIE_PDEV_ID, ar->pdev_idx) |
-		 FIELD_PREP(DP_RXDMA_BUF_COOKIE_BUF_ID, buf_id);
+	cookie = u32_encode_bits(ar->pdev_idx, DP_RXDMA_BUF_COOKIE_PDEV_ID) |
+		 u32_encode_bits(buf_id, DP_RXDMA_BUF_COOKIE_BUF_ID);
 
 	ath12k_hal_rx_buf_addr_info_set(desc, paddr, cookie, 0);
 

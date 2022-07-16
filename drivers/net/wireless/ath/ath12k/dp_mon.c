@@ -1308,7 +1308,7 @@ int ath12k_dp_mon_buf_replenish(struct ath12k_base *ab,
 
 		ATH12K_SKB_RXCB(skb)->paddr = paddr;
 
-		cookie = FIELD_PREP(DP_RXDMA_BUF_COOKIE_BUF_ID, buf_id);
+		cookie = u32_encode_bits(buf_id, DP_RXDMA_BUF_COOKIE_BUF_ID);
 
 		mon_buf->paddr_lo = lower_32_bits(paddr);
 		mon_buf->paddr_hi = upper_32_bits(paddr);
