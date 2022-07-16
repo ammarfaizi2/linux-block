@@ -15,6 +15,10 @@ arm/soc
 		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.20/maintainers
 	imx/soc
 		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-soc-5.20
+	<no branch> (b4aed01de48652928c8299f793625936f14d1739)
+		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-gpio tags/davinci-boards-delete-v5.20
+	broadcom/soc-2
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.20/soc-part2
 
 arm/dt
 	samsung/dt
@@ -100,6 +104,10 @@ renesas/dt-fixes
 		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.20/devicetree
 	broadcom/dt64
 		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.20/devicetree-arm64
+	broadcom/dt-bindings
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.20/devicetree-part2
+	broadcom/dt64-2
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.20/devicetree-arm64-part2
 
 arm/drivers
 	renesas/drivers
