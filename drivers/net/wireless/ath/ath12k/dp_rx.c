@@ -353,8 +353,10 @@ int ath12k_dp_rx_bufs_replenish(struct ath12k_base *ab, int mac_id,
 			spin_unlock_bh(&rx_ring->idr_lock);
 			if (buf_id < 0)
 				goto fail_idr_remove;
-			cookie = FIELD_PREP(DP_RXDMA_BUF_COOKIE_PDEV_ID, mac_id) |
-				 FIELD_PREP(DP_RXDMA_BUF_COOKIE_BUF_ID, buf_id);
+			cookie = u32_encode_bits(mac_id,
+						 DP_RXDMA_BUF_COOKIE_PDEV_ID) |
+				 u32_encode_bits(buf_id,
+						 DP_RXDMA_BUF_COOKIE_BUF_ID);
 		}
 
 		desc = ath12k_hal_srng_src_get_next_entry(ab, srng);
@@ -772,9 +774,11 @@ static void ath12k_peer_rx_tid_qref_setup(struct ath12k_base *ab, u16 peer_id, u
 	qref = (struct ath12k_reo_queue_ref *)dp->reoq_lut.vaddr +
 			(peer_id * (IEEE80211_NUM_TIDS + 1) + tid);
 
-	qref->info0 = FIELD_PREP(BUFFER_ADDR_INFO0_ADDR, lower_32_bits(paddr));
-	qref->info1 = FIELD_PREP(BUFFER_ADDR_INFO1_ADDR, upper_32_bits(paddr)) |
-		      FIELD_PREP(DP_REO_QREF_NUM, tid);
+	qref->info0 = u32_encode_bits(lower_32_bits(paddr),
+				      BUFFER_ADDR_INFO0_ADDR);
+	qref->info1 = u32_encode_bits(upper_32_bits(paddr),
+				      BUFFER_ADDR_INFO1_ADDR) |
+		      u32_encode_bits(tid, DP_REO_QREF_NUM);
 }
 
 static void ath12k_peer_rx_tid_qref_reset(struct ath12k_base *ab, u16 peer_id, u16 tid)
@@ -791,9 +795,9 @@ static void ath12k_peer_rx_tid_qref_reset(struct ath12k_base *ab, u16 peer_id, u
 	qref = (struct ath12k_reo_queue_ref *)dp->reoq_lut.vaddr +
 			(peer_id * (IEEE80211_NUM_TIDS + 1) + tid);
 
-	qref->info0 = FIELD_PREP(BUFFER_ADDR_INFO0_ADDR, 0);
-	qref->info1 = FIELD_PREP(BUFFER_ADDR_INFO1_ADDR, 0) |
-		      FIELD_PREP(DP_REO_QREF_NUM, tid);
+	qref->info0 = u32_encode_bits(0, BUFFER_ADDR_INFO0_ADDR);
+	qref->info1 = u32_encode_bits(0, BUFFER_ADDR_INFO1_ADDR) |
+		      u32_encode_bits(tid, DP_REO_QREF_NUM);
 }
 
 void ath12k_dp_rx_peer_tid_delete(struct ath12k *ar,
@@ -915,7 +919,7 @@ static int ath12k_peer_rx_tid_reo_update(struct ath12k *ar,
 
 	if (update_ssn) {
 		cmd.upd0 |= HAL_REO_CMD_UPD0_SSN;
-		cmd.upd2 = FIELD_PREP(HAL_REO_CMD_UPD2_SSN, ssn);
+		cmd.upd2 = u32_encode_bits(ssn, HAL_REO_CMD_UPD2_SSN);
 	}
 
 	ret = ath12k_dp_reo_cmd_send(ar->ab, rx_tid,
@@ -3109,13 +3113,13 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar,
 
 	memset(msdu0, 0, sizeof(*msdu0));
 
-	msdu_info = FIELD_PREP(RX_MSDU_DESC_INFO0_FIRST_MSDU_IN_MPDU, 1) |
-		    FIELD_PREP(RX_MSDU_DESC_INFO0_LAST_MSDU_IN_MPDU, 1) |
-		    FIELD_PREP(RX_MSDU_DESC_INFO0_MSDU_CONTINUATION, 0) |
-		    FIELD_PREP(RX_MSDU_DESC_INFO0_MSDU_LENGTH,
-			       defrag_skb->len - hal_rx_desc_sz) |
-		    FIELD_PREP(RX_MSDU_DESC_INFO0_VALID_SA, 1) |
-		    FIELD_PREP(RX_MSDU_DESC_INFO0_VALID_DA, 1);
+	msdu_info = u32_encode_bits(1, RX_MSDU_DESC_INFO0_FIRST_MSDU_IN_MPDU) |
+		    u32_encode_bits(1, RX_MSDU_DESC_INFO0_LAST_MSDU_IN_MPDU) |
+		    u32_encode_bits(0, RX_MSDU_DESC_INFO0_MSDU_CONTINUATION) |
+		    u32_encode_bits(defrag_skb->len - hal_rx_desc_sz,
+				    RX_MSDU_DESC_INFO0_MSDU_LENGTH) |
+		    u32_encode_bits(1, RX_MSDU_DESC_INFO0_VALID_SA) |
+		    u32_encode_bits(1, RX_MSDU_DESC_INFO0_VALID_DA);
 	msdu0->rx_msdu_info.info0 = msdu_info;
 	msdu0->rx_msdu_ext_info.info0 = msdu_ext_info;
 
@@ -3169,27 +3173,27 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar,
 	ath12k_hal_rx_buf_addr_info_set(reo_ent_ring, link_paddr, cookie,
 					HAL_RX_BUF_RBM_WBM_CHIP0_IDLE_DESC_LIST);
 
-	mpdu_info = FIELD_PREP(RX_MPDU_DESC_INFO0_MSDU_COUNT, 1) |
-		    FIELD_PREP(RX_MPDU_DESC_INFO0_FRAG_FLAG, 0) |
-		    FIELD_PREP(RX_MPDU_DESC_INFO0_RAW_MPDU, 1) |
-		    FIELD_PREP(RX_MPDU_DESC_INFO0_VALID_PN, 1);
-		    FIELD_PREP(RX_MPDU_DESC_INFO0_TID, rx_tid->tid);
+	mpdu_info = u32_encode_bits(1, RX_MPDU_DESC_INFO0_MSDU_COUNT) |
+		    u32_encode_bits(0, RX_MPDU_DESC_INFO0_FRAG_FLAG) |
+		    u32_encode_bits(1, RX_MPDU_DESC_INFO0_RAW_MPDU) |
+		    u32_encode_bits(1, RX_MPDU_DESC_INFO0_VALID_PN);
+		    u32_encode_bits(rx_tid->tid, RX_MPDU_DESC_INFO0_TID);
 
 	reo_ent_ring->rx_mpdu_info.info0 = mpdu_info;
 	reo_ent_ring->rx_mpdu_info.peer_meta_data =
 		reo_dest_ring->rx_mpdu_info.peer_meta_data;
 
 	reo_ent_ring->queue_addr_lo = lower_32_bits(rx_tid->paddr);
-	reo_ent_ring->info0 = FIELD_PREP(HAL_REO_ENTR_RING_INFO0_QUEUE_ADDR_HI,
-					 upper_32_bits(rx_tid->paddr)) |
-			      FIELD_PREP(HAL_REO_ENTR_RING_INFO0_DEST_IND, dst_ind);
+	reo_ent_ring->info0 = u32_encode_bits(upper_32_bits(rx_tid->paddr),
+					      HAL_REO_ENTR_RING_INFO0_QUEUE_ADDR_HI) |
+			      u32_encode_bits(dst_ind, HAL_REO_ENTR_RING_INFO0_DEST_IND);
 
-	reo_ent_ring->info1 = FIELD_PREP(HAL_REO_ENTR_RING_INFO1_MPDU_SEQ_NUM,
-					 rx_tid->cur_sn);
+	reo_ent_ring->info1 = u32_encode_bits(rx_tid->cur_sn,
+					      HAL_REO_ENTR_RING_INFO1_MPDU_SEQ_NUM);
 	dest_ring_info0 = u32_get_bits(reo_dest_ring->info0,
 				       HAL_REO_DEST_RING_INFO0_SRC_LINK_ID);
-	reo_ent_ring->info2 = FIELD_PREP(HAL_REO_ENTR_RING_INFO2_SRC_LINK_ID,
-					 dest_ring_info0);
+	reo_ent_ring->info2 = u32_get_bits(dest_ring_info0,
+					   HAL_REO_ENTR_RING_INFO2_SRC_LINK_ID);
 	ath12k_hal_srng_access_end(ab, srng);
 	spin_unlock_bh(&srng->lock);
 
