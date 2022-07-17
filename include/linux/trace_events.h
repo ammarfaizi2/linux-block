@@ -814,7 +814,19 @@ extern int trace_add_event_call(struct trace_event_call *call);
 extern int trace_remove_event_call(struct trace_event_call *call);
 extern int trace_event_get_offsets(struct trace_event_call *call);
 
+/*
+ * There is no known way to check signedness of __bitwise types without
+ * triggering a sparse warning. Hence the #ifdef __CHECKER__.
+ *
+ * Since there is another definition of is_signed_type() in <linux/overflow.h>,
+ * undefine is_signed_type() before redefining it.
+ */
+#undef is_signed_type
+#ifdef __CHECKER__
+#define is_signed_type(type)	0
+#else
 #define is_signed_type(type)	(((type)(-1)) < (type)1)
+#endif
 
 int ftrace_set_clr_event(struct trace_array *tr, char *buf, int set);
 int trace_set_clr_event(const char *system, const char *event, int set);
