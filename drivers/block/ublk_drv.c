@@ -389,9 +389,6 @@ static inline unsigned int ublk_req_build_flags(struct request *req)
 	if (req->cmd_flags & REQ_META)
 		flags |= UBLK_IO_F_META;
 
-	if (req->cmd_flags & REQ_INTEGRITY)
-		flags |= UBLK_IO_F_INTEGRITY;
-
 	if (req->cmd_flags & REQ_FUA)
 		flags |= UBLK_IO_F_FUA;
 
@@ -1169,14 +1166,16 @@ static int ublk_add_dev(struct ublk_device *ub)
 		goto out_deinit_queues;
 
 	ub->ub_queue = blk_mq_init_queue(&ub->tag_set);
-	if (IS_ERR(ub->ub_queue))
+	if (IS_ERR(ub->ub_queue)) {
+		err = PTR_ERR(ub->ub_queue);
 		goto out_cleanup_tags;
+	}
 	ub->ub_queue->queuedata = ub;
 
 	disk = ub->ub_disk = blk_mq_alloc_disk_for_queue(ub->ub_queue,
 						 &ublk_bio_compl_lkclass);
-	if (IS_ERR(disk)) {
-		err = PTR_ERR(disk);
+	if (!disk) {
+		err = -ENOMEM;
 		goto out_free_request_queue;
 	}
 
@@ -1463,7 +1462,7 @@ static int ublk_ctrl_cmd_validate(struct io_uring_cmd *cmd,
 			return -EINVAL;
 		if (!header->addr)
 			return -EINVAL;
-	};
+	}
 
 	return 0;
 }
@@ -1524,7 +1523,7 @@ static int ublk_ctrl_uring_cmd(struct io_uring_cmd *cmd,
 		break;
 	default:
 		break;
-	};
+	}
  out:
 	io_uring_cmd_done(cmd, ret, 0);
 	pr_devel("%s: cmd done ret %d cmd_op %x, dev id %d qid %d\n",
