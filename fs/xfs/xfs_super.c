@@ -40,6 +40,7 @@
 #include "xfs_defer.h"
 #include "xfs_attr_item.h"
 #include "xfs_xattr.h"
+#include "xfs_iunlink_item.h"
 
 #include <linux/magic.h>
 #include <linux/fs_context.h>
@@ -2096,8 +2097,16 @@ xfs_init_caches(void)
 	if (!xfs_attri_cache)
 		goto out_destroy_attrd_cache;
 
+	xfs_iunlink_cache = kmem_cache_create("xfs_iul_item",
+					     sizeof(struct xfs_iunlink_item),
+					     0, 0, NULL);
+	if (!xfs_iunlink_cache)
+		goto out_destroy_attri_cache;
+
 	return 0;
 
+ out_destroy_attri_cache:
+	kmem_cache_destroy(xfs_attri_cache);
  out_destroy_attrd_cache:
 	kmem_cache_destroy(xfs_attrd_cache);
  out_destroy_bui_cache:
@@ -2148,6 +2157,7 @@ xfs_destroy_caches(void)
 	 * destroy caches.
 	 */
 	rcu_barrier();
+	kmem_cache_destroy(xfs_iunlink_cache);
 	kmem_cache_destroy(xfs_attri_cache);
 	kmem_cache_destroy(xfs_attrd_cache);
 	kmem_cache_destroy(xfs_bui_cache);
@@ -2213,6 +2223,7 @@ xfs_cpu_dead(
 	list_for_each_entry_safe(mp, n, &xfs_mount_list, m_mount_list) {
 		spin_unlock(&xfs_mount_list_lock);
 		xfs_inodegc_cpu_dead(mp, cpu);
+		xlog_cil_pcp_dead(mp->m_log, cpu);
 		spin_lock(&xfs_mount_list_lock);
 	}
 	spin_unlock(&xfs_mount_list_lock);
