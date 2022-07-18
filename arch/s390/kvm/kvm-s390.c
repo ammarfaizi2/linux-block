@@ -31,6 +31,7 @@
 #include <linux/sched/signal.h>
 #include <linux/string.h>
 #include <linux/pgtable.h>
+#include <linux/mmu_notifier.h>
 
 #include <asm/asm-offsets.h>
 #include <asm/lowcore.h>
@@ -47,6 +48,7 @@
 #include <asm/fpu/api.h>
 #include "kvm-s390.h"
 #include "gaccess.h"
+#include "pci.h"
 
 #define CREATE_TRACE_POINTS
 #include "trace.h"
@@ -63,7 +65,8 @@ const struct _kvm_stats_desc kvm_vm_stats_desc[] = {
 	STATS_DESC_COUNTER(VM, inject_float_mchk),
 	STATS_DESC_COUNTER(VM, inject_pfault_done),
 	STATS_DESC_COUNTER(VM, inject_service_signal),
-	STATS_DESC_COUNTER(VM, inject_virtio)
+	STATS_DESC_COUNTER(VM, inject_virtio),
+	STATS_DESC_COUNTER(VM, aen_forward)
 };
 
 const struct kvm_stats_header kvm_vm_stats_header = {
@@ -502,6 +505,14 @@ int kvm_arch_init(void *opaque)
 		goto out;
 	}
 
+	if (kvm_s390_pci_interp_allowed()) {
+		rc = kvm_s390_pci_init();
+		if (rc) {
+			pr_err("Unable to allocate AIFT for PCI\n");
+			goto out;
+		}
+	}
+
 	rc = kvm_s390_gib_init(GAL_ISC);
 	if (rc)
 		goto out;
@@ -516,6 +527,8 @@ out:
 void kvm_arch_exit(void)
 {
 	kvm_s390_gib_destroy();
+	if (kvm_s390_pci_interp_allowed())
+		kvm_s390_pci_exit();
 	debug_unregister(kvm_s390_dbf);
 	debug_unregister(kvm_s390_dbf_uv);
 }
@@ -626,6 +639,9 @@ int kvm_vm_ioctl_check_extension(struct kvm *kvm, long ext)
 		}
 		break;
 	}
+	case KVM_CAP_S390_ZPCI_OP:
+		r = kvm_s390_pci_interp_allowed();
+		break;
 	default:
 		r = 0;
 	}
@@ -1037,6 +1053,42 @@ static int kvm_s390_vm_set_crypto(struct kvm *kvm, struct kvm_device_attr *attr)
 	kvm_s390_vcpu_crypto_reset_all(kvm);
 	mutex_unlock(&kvm->lock);
 	return 0;
+}
+
+static void kvm_s390_vcpu_pci_setup(struct kvm_vcpu *vcpu)
+{
+	/* Only set the ECB bits after guest requests zPCI interpretation */
+	if (!vcpu->kvm->arch.use_zpci_interp)
+		return;
+
+	vcpu->arch.sie_block->ecb2 |= ECB2_ZPCI_LSI;
+	vcpu->arch.sie_block->ecb3 |= ECB3_AISII + ECB3_AISI;
+}
+
+void kvm_s390_vcpu_pci_enable_interp(struct kvm *kvm)
+{
+	struct kvm_vcpu *vcpu;
+	unsigned long i;
+
+	lockdep_assert_held(&kvm->lock);
+
+	if (!kvm_s390_pci_interp_allowed())
+		return;
+
+	/*
+	 * If host is configured for PCI and the necessary facilities are
+	 * available, turn on interpretation for the life of this guest
+	 */
+	kvm->arch.use_zpci_interp = 1;
+
+	kvm_s390_vcpu_block_all(kvm);
+
+	kvm_for_each_vcpu(i, vcpu, kvm) {
+		kvm_s390_vcpu_pci_setup(vcpu);
+		kvm_s390_sync_request(KVM_REQ_VSIE_RESTART, vcpu);
+	}
+
+	kvm_s390_vcpu_unblock_all(kvm);
 }
 
 static void kvm_s390_sync_request_broadcast(struct kvm *kvm, int req)
@@ -2186,12 +2238,25 @@ out:
 	return r;
 }
 
-static int kvm_s390_cpus_from_pv(struct kvm *kvm, u16 *rcp, u16 *rrcp)
+/**
+ * kvm_s390_cpus_from_pv - Convert all protected vCPUs in a protected VM to
+ * non protected.
+ * @kvm: the VM whose protected vCPUs are to be converted
+ * @rc: return value for the RC field of the UVC (in case of error)
+ * @rrc: return value for the RRC field of the UVC (in case of error)
+ *
+ * Does not stop in case of error, tries to convert as many
+ * CPUs as possible. In case of error, the RC and RRC of the last error are
+ * returned.
+ *
+ * Return: 0 in case of success, otherwise -EIO
+ */
+int kvm_s390_cpus_from_pv(struct kvm *kvm, u16 *rc, u16 *rrc)
 {
 	struct kvm_vcpu *vcpu;
-	u16 rc, rrc;
-	int ret = 0;
 	unsigned long i;
+	u16 _rc, _rrc;
+	int ret = 0;
 
 	/*
 	 * We ignore failures and try to destroy as many CPUs as possible.
@@ -2203,9 +2268,9 @@ static int kvm_s390_cpus_from_pv(struct kvm *kvm, u16 *rcp, u16 *rrcp)
 	 */
 	kvm_for_each_vcpu(i, vcpu, kvm) {
 		mutex_lock(&vcpu->mutex);
-		if (kvm_s390_pv_destroy_cpu(vcpu, &rc, &rrc) && !ret) {
-			*rcp = rc;
-			*rrcp = rrc;
+		if (kvm_s390_pv_destroy_cpu(vcpu, &_rc, &_rrc) && !ret) {
+			*rc = _rc;
+			*rrc = _rrc;
 			ret = -EIO;
 		}
 		mutex_unlock(&vcpu->mutex);
@@ -2216,6 +2281,17 @@ static int kvm_s390_cpus_from_pv(struct kvm *kvm, u16 *rcp, u16 *rrcp)
 	return ret;
 }
 
+/**
+ * kvm_s390_cpus_to_pv - Convert all non-protected vCPUs in a protected VM
+ * to protected.
+ * @kvm: the VM whose protected vCPUs are to be converted
+ * @rc: return value for the RC field of the UVC (in case of error)
+ * @rrc: return value for the RRC field of the UVC (in case of error)
+ *
+ * Tries to undo the conversion in case of error.
+ *
+ * Return: 0 in case of success, otherwise -EIO
+ */
 static int kvm_s390_cpus_to_pv(struct kvm *kvm, u16 *rc, u16 *rrc)
 {
 	unsigned long i;
@@ -2772,6 +2848,19 @@ long kvm_arch_vm_ioctl(struct file *filp,
 			r = -EFAULT;
 		break;
 	}
+	case KVM_S390_ZPCI_OP: {
+		struct kvm_s390_zpci_op args;
+
+		r = -EINVAL;
+		if (!IS_ENABLED(CONFIG_VFIO_PCI_ZDEV_KVM))
+			break;
+		if (copy_from_user(&args, argp, sizeof(args))) {
+			r = -EFAULT;
+			break;
+		}
+		r = kvm_s390_pci_zpci_op(kvm, &args);
+		break;
+	}
 	default:
 		r = -ENOTTY;
 	}
@@ -2933,6 +3022,14 @@ static void sca_dispose(struct kvm *kvm)
 	kvm->arch.sca = NULL;
 }
 
+void kvm_arch_free_vm(struct kvm *kvm)
+{
+	if (IS_ENABLED(CONFIG_VFIO_PCI_ZDEV_KVM))
+		kvm_s390_pci_clear_list(kvm);
+
+	__kvm_arch_free_vm(kvm);
+}
+
 int kvm_arch_init_vm(struct kvm *kvm, unsigned long type)
 {
 	gfp_t alloc_flags = GFP_KERNEL_ACCOUNT;
@@ -3015,6 +3112,13 @@ int kvm_arch_init_vm(struct kvm *kvm, unsigned long type)
 
 	kvm_s390_crypto_init(kvm);
 
+	if (IS_ENABLED(CONFIG_VFIO_PCI_ZDEV_KVM)) {
+		mutex_lock(&kvm->lock);
+		kvm_s390_pci_init_list(kvm);
+		kvm_s390_vcpu_pci_enable_interp(kvm);
+		mutex_unlock(&kvm->lock);
+	}
+
 	mutex_init(&kvm->arch.float_int.ais_lock);
 	spin_lock_init(&kvm->arch.float_int.lock);
 	for (i = 0; i < FIRQ_LIST_COUNT; i++)
@@ -3095,6 +3199,15 @@ void kvm_arch_destroy_vm(struct kvm *kvm)
 	 */
 	if (kvm_s390_pv_get_handle(kvm))
 		kvm_s390_pv_deinit_vm(kvm, &rc, &rrc);
+	/*
+	 * Remove the mmu notifier only when the whole KVM VM is torn down,
+	 * and only if one was registered to begin with. If the VM is
+	 * currently not protected, but has been previously been protected,
+	 * then it's possible that the notifier is still registered.
+	 */
+	if (kvm->arch.pv.mmu_notifier.ops)
+		mmu_notifier_unregister(&kvm->arch.pv.mmu_notifier, kvm->mm);
+
 	debug_unregister(kvm->arch.dbf);
 	free_page((unsigned long)kvm->arch.sie_page2);
 	if (!kvm_is_ucontrol(kvm))
@@ -3512,6 +3625,8 @@ static int kvm_s390_vcpu_setup(struct kvm_vcpu *vcpu)
 	vcpu->arch.sie_block->hpid = HPID_KVM;
 
 	kvm_s390_vcpu_crypto_setup(vcpu);
+
+	kvm_s390_vcpu_pci_setup(vcpu);
 
 	mutex_lock(&vcpu->kvm->lock);
 	if (kvm_s390_pv_is_protected(vcpu->kvm)) {
