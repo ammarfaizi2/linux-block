@@ -752,6 +752,9 @@ void __init switch_gdt_and_percpu_base(int cpu)
 	 * wrmsrl() happens the early mapping is still valid. That means
 	 * the GSBASE update will lose any prior per CPU data which was
 	 * not copied over in setup_per_cpu_areas().
+	 *
+	 * This works even with stackprotector enabled because the
+	 * per CPU stack canary is 0 in both per CPU areas.
 	 */
 #ifdef CONFIG_X86_64
 	wrmsrl(MSR_GS_BASE, cpu_kernelmode_gs_base(cpu));
