@@ -319,10 +319,6 @@ int ath12k_dp_rx_bufs_replenish(struct ath12k_base *ab, int mac_id,
 		if (dma_mapping_error(ab->dev, paddr))
 			goto fail_free_skb;
 
-		/* TODO for testing set hw_cc to false and disable hw cc init
-		 * and check idr is working, later confirm hw cc is working by
-		 * checking magic. remove all TODO's after testing
-		 */
 		if (hw_cc) {
 			spin_lock_bh(&dp->rx_desc_lock);
 
@@ -3424,9 +3420,6 @@ ath12k_dp_process_rx_err_buf(struct ath12k *ar, u32 *ring_desc,
 	struct ath12k_rx_desc_info *desc_info;
 	u64 desc_va;
 
-	/* TODO check if hw cc will not happen for exception, in that case
-	 * always perform manual conversion
-	 */
 	desc_va = ((u64)desc.buf_va_hi << 32 | desc.buf_va_lo);
 	desc_info = (struct ath12k_rx_desc_info *)((unsigned long)desc_va);
 
