@@ -1194,7 +1194,7 @@ static inline void memcpy_toio(volatile void __iomem *addr, const void *buffer,
 }
 #endif
 
-#ifndef CONFIG_GENERIC_DEVMEM_IS_ALLOWED
+#ifndef CONFIG_GENERIC_LIB_DEVMEM_IS_ALLOWED
 extern int devmem_is_allowed(unsigned long pfn);
 #endif
 
