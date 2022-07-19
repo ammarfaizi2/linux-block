@@ -11,8 +11,6 @@
 #ifndef _ASM_S390_ARCHRANDOM_H
 #define _ASM_S390_ARCHRANDOM_H
 
-#ifdef CONFIG_ARCH_RANDOM
-
 #include <linux/static_key.h>
 #include <linux/atomic.h>
 #include <asm/cpacf.h>
@@ -20,35 +18,19 @@
 DECLARE_STATIC_KEY_FALSE(s390_arch_random_available);
 extern atomic64_t s390_arch_random_counter;
 
-static inline bool __must_check arch_get_random_long(unsigned long *v)
+static inline size_t __must_check arch_get_random_words(unsigned long *v, size_t words)
 {
-	return false;
+	return 0;
 }
 
-static inline bool __must_check arch_get_random_int(unsigned int *v)
-{
-	return false;
-}
-
-static inline bool __must_check arch_get_random_seed_long(unsigned long *v)
+static inline size_t __must_check arch_get_random_seed_words(unsigned long *v, size_t words)
 {
 	if (static_branch_likely(&s390_arch_random_available)) {
-		cpacf_trng(NULL, 0, (u8 *)v, sizeof(*v));
-		atomic64_add(sizeof(*v), &s390_arch_random_counter);
-		return true;
+		cpacf_trng(NULL, 0, (u8 *)v, words * sizeof(*v));
+		atomic64_add(words * sizeof(*v), &s390_arch_random_counter);
+		return words;
 	}
-	return false;
+	return 0;
 }
 
-static inline bool __must_check arch_get_random_seed_int(unsigned int *v)
-{
-	if (static_branch_likely(&s390_arch_random_available)) {
-		cpacf_trng(NULL, 0, (u8 *)v, sizeof(*v));
-		atomic64_add(sizeof(*v), &s390_arch_random_counter);
-		return true;
-	}
-	return false;
-}
-
-#endif /* CONFIG_ARCH_RANDOM */
 #endif /* _ASM_S390_ARCHRANDOM_H */
