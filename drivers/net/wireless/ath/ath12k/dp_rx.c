@@ -3156,8 +3156,7 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar,
 	spin_lock_bh(&srng->lock);
 	ath12k_hal_srng_access_begin(ab, srng);
 
-	reo_ent_ring = (struct hal_reo_entrance_ring *)
-			ath12k_hal_srng_src_get_next_entry(ab, srng);
+	reo_ent_ring = ath12k_hal_srng_src_get_next_entry(ab, srng);
 	if (!reo_ent_ring) {
 		ath12k_hal_srng_access_end(ab, srng);
 		spin_unlock_bh(&srng->lock);

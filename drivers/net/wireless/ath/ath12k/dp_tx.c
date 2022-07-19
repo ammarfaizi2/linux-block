@@ -287,7 +287,7 @@ tcl_ring_sel:
 
 	ath12k_hal_srng_access_begin(ab, tcl_ring);
 
-	hal_tcl_desc = (void *)ath12k_hal_srng_src_get_next_entry(ab, tcl_ring);
+	hal_tcl_desc = ath12k_hal_srng_src_get_next_entry(ab, tcl_ring);
 	if (!hal_tcl_desc) {
 		/* NOTE: It is highly unlikely we'll be running out of tcl_ring
 		 * desc because the desc is directly enqueued onto hw queue.

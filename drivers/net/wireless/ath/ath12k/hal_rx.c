@@ -230,7 +230,7 @@ int ath12k_hal_reo_cmd_send(struct ath12k_base *ab, struct hal_srng *srng,
 	spin_lock_bh(&srng->lock);
 
 	ath12k_hal_srng_access_begin(ab, srng);
-	reo_desc = (struct hal_tlv_64_hdr *)ath12k_hal_srng_src_get_next_entry(ab, srng);
+	reo_desc = ath12k_hal_srng_src_get_next_entry(ab, srng);
 	if (!reo_desc) {
 		ret = -ENOBUFS;
 		goto out;

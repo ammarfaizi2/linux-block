@@ -1621,10 +1621,10 @@ int ath12k_hal_srng_src_num_free(struct ath12k_base *ab, struct hal_srng *srng,
 		return ((srng->ring_size - hp + tp) / srng->entry_size) - 1;
 }
 
-u32 *ath12k_hal_srng_src_get_next_entry(struct ath12k_base *ab,
-					struct hal_srng *srng)
+void *ath12k_hal_srng_src_get_next_entry(struct ath12k_base *ab,
+					 struct hal_srng *srng)
 {
-	u32 *desc;
+	void *desc;
 	u32 next_hp;
 
 	lockdep_assert_held(&srng->lock);

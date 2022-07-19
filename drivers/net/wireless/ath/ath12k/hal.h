@@ -1126,8 +1126,8 @@ u32 *ath12k_hal_srng_src_get_next_reaped(struct ath12k_base *ab,
 					 struct hal_srng *srng);
 u32 *ath12k_hal_srng_src_reap_next(struct ath12k_base *ab,
 				   struct hal_srng *srng);
-u32 *ath12k_hal_srng_src_get_next_entry(struct ath12k_base *ab,
-					struct hal_srng *srng);
+void *ath12k_hal_srng_src_get_next_entry(struct ath12k_base *ab,
+					 struct hal_srng *srng);
 int ath12k_hal_srng_src_num_free(struct ath12k_base *ab, struct hal_srng *srng,
 				 bool sync_hw_ptr);
 void ath12k_hal_srng_access_begin(struct ath12k_base *ab,

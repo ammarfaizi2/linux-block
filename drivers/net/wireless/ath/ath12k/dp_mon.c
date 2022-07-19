@@ -1301,8 +1301,7 @@ int ath12k_dp_mon_buf_replenish(struct ath12k_base *ab,
 		if (unlikely(buf_id < 0))
 			goto fail_dma_unmap;
 
-		mon_buf = (struct hal_mon_buf_ring *)
-			   ath12k_hal_srng_src_get_next_entry(ab, srng);
+		mon_buf = ath12k_hal_srng_src_get_next_entry(ab, srng);
 		if (unlikely(!mon_buf))
 			goto fail_idr_remove;
 
