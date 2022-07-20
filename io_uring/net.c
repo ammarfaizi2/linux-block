@@ -977,7 +977,7 @@ int io_sendzc(struct io_kiocb *req, unsigned int issue_flags)
 
 	if (zc->flags & IORING_RECVSEND_FIXED_BUF) {
 		ret = io_import_fixed(WRITE, &msg.msg_iter, req->imu,
-					(u64)zc->buf, zc->len);
+					(u64)(uintptr_t)zc->buf, zc->len);
 		if (unlikely(ret))
 				return ret;
 	} else {
