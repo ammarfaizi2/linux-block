@@ -544,6 +544,7 @@ config GPIO_SAMA5D2_PIOBU
 	tristate "SAMA5D2 PIOBU GPIO support"
 	depends on MFD_SYSCON
 	depends on OF_GPIO
+	depends on ARCH_AT91 || COMPILE_TEST
 	select GPIO_SYSCON
 	help
 	  Say yes here to use the PIOBU pins as GPIOs.
@@ -689,12 +690,6 @@ config GPIO_VISCONTI
 	select IRQ_DOMAIN_HIERARCHY
 	help
 	  Say yes here to support GPIO on Tohisba Visconti.
-
-config GPIO_VR41XX
-	tristate "NEC VR4100 series General-purpose I/O Unit support"
-	depends on CPU_VR41XX
-	help
-	  Say yes here to support the NEC VR4100 series General-purpose I/O Unit.
 
 config GPIO_VX855
 	tristate "VIA VX855/VX875 GPIO"
