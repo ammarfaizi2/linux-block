@@ -82,7 +82,12 @@
 #endif
 
 /* Align . to a 8 byte boundary equals to maximum function alignment. */
-#define ALIGN_FUNCTION()  . = ALIGN(8)
+#ifndef CONFIG_FUNCTION_ALIGNMENT
+#define __FUNCTION_ALIGNMENT	8
+#else
+#define __FUNCTION_ALIGNMENT	CONFIG_FUNCTION_ALIGNMENT
+#endif
+#define ALIGN_FUNCTION()  . = ALIGN(__FUNCTION_ALIGNMENT)
 
 /*
  * LD_DEAD_CODE_DATA_ELIMINATION option enables -fdata-sections, which

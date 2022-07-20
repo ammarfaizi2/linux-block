@@ -517,3 +517,9 @@ config CPU_SUP_VORTEX_32
 	  makes the kernel a tiny bit smaller.
 
 	  If unsure, say N.
+
+# Defined here so it is defined for UM too
+config FUNCTION_ALIGNMENT
+	int
+	default 16 if X86_64 || X86_ALIGNMENT_16
+	default 8
