@@ -14,9 +14,10 @@
 
 #ifdef __ASSEMBLY__
 
-#if defined(CONFIG_X86_64) || defined(CONFIG_X86_ALIGNMENT_16)
-#define __ALIGN		.p2align 4, 0x90
-#define __ALIGN_STR	__stringify(__ALIGN)
+#if CONFIG_FUNCTION_ALIGNMENT == 16
+#define __ALIGN			.p2align 4, 0x90
+#define __ALIGN_STR		__stringify(__ALIGN)
+#define FUNCTION_ALIGNMENT	16
 #endif
 
 #if defined(CONFIG_RETHUNK) && !defined(__DISABLE_EXPORTS) && !defined(BUILD_VDSO)

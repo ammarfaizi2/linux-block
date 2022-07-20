@@ -399,6 +399,11 @@ config CC_HAS_SANE_STACKPROTECTOR
 	  the compiler produces broken code or if it does not let us control
 	  the segment on 32-bit kernels.
 
+config FUNCTION_ALIGNMENT
+	int
+	default 16 if X86_64 || X86_ALIGNMENT_16
+	default 8
+
 menu "Processor type and features"
 
 config SMP
