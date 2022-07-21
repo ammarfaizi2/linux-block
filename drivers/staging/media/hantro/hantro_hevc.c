@@ -33,7 +33,7 @@ void hantro_hevc_ref_init(struct hantro_ctx *ctx)
 }
 
 dma_addr_t hantro_hevc_get_ref_buf(struct hantro_ctx *ctx,
-				   int poc)
+				   s32 poc)
 {
 	struct hantro_hevc_dec_hw_ctx *hevc_dec = &ctx->hevc_dec;
 	int i;
@@ -189,17 +189,17 @@ int hantro_hevc_dec_prepare_run(struct hantro_ctx *ctx)
 	hantro_start_prepare_run(ctx);
 
 	ctrls->decode_params =
-		hantro_get_ctrl(ctx, V4L2_CID_MPEG_VIDEO_HEVC_DECODE_PARAMS);
+		hantro_get_ctrl(ctx, V4L2_CID_STATELESS_HEVC_DECODE_PARAMS);
 	if (WARN_ON(!ctrls->decode_params))
 		return -EINVAL;
 
 	ctrls->scaling =
-		hantro_get_ctrl(ctx, V4L2_CID_MPEG_VIDEO_HEVC_SCALING_MATRIX);
+		hantro_get_ctrl(ctx, V4L2_CID_STATELESS_HEVC_SCALING_MATRIX);
 	if (WARN_ON(!ctrls->scaling))
 		return -EINVAL;
 
 	ctrls->sps =
-		hantro_get_ctrl(ctx, V4L2_CID_MPEG_VIDEO_HEVC_SPS);
+		hantro_get_ctrl(ctx, V4L2_CID_STATELESS_HEVC_SPS);
 	if (WARN_ON(!ctrls->sps))
 		return -EINVAL;
 
@@ -208,7 +208,7 @@ int hantro_hevc_dec_prepare_run(struct hantro_ctx *ctx)
 		return ret;
 
 	ctrls->pps =
-		hantro_get_ctrl(ctx, V4L2_CID_MPEG_VIDEO_HEVC_PPS);
+		hantro_get_ctrl(ctx, V4L2_CID_STATELESS_HEVC_PPS);
 	if (WARN_ON(!ctrls->pps))
 		return -EINVAL;
 
