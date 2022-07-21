@@ -92,7 +92,9 @@ struct collapse_control {
 	bool is_khugepaged;
 
 	/* Num pages scanned per node */
-#if HPAGE_PMD_ORDER < 16
+#if defined(CONFIG_PPC64)
+	u32 node_load[MAX_NUMNODES];
+#elif HPAGE_PMD_ORDER < 16
 	u16 node_load[MAX_NUMNODES];
 #else
 	u32 node_load[MAX_NUMNODES];
