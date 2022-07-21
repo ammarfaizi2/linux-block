@@ -849,26 +849,38 @@ static int hci_set_ext_scan_rsp_data_sync(struct hci_dev *hdev, u8 instance)
 		u8 data[HCI_MAX_EXT_AD_LENGTH];
 	} pdu;
 	u8 len;
+	struct adv_info *adv = NULL;
+	int err;
 
 	memset(&pdu, 0, sizeof(pdu));
 
+	if (instance) {
+		adv = hci_find_adv_instance(hdev, instance);
+		if (!adv || !adv->scan_rsp_changed)
+			return 0;
+	}
+
 	len = eir_create_scan_rsp(hdev, instance, pdu.data);
-
-	if (hdev->scan_rsp_data_len == len &&
-	    !memcmp(pdu.data, hdev->scan_rsp_data, len))
-		return 0;
-
-	memcpy(hdev->scan_rsp_data, pdu.data, len);
-	hdev->scan_rsp_data_len = len;
 
 	pdu.cp.handle = instance;
 	pdu.cp.length = len;
 	pdu.cp.operation = LE_SET_ADV_DATA_OP_COMPLETE;
 	pdu.cp.frag_pref = LE_SET_ADV_DATA_NO_FRAG;
 
-	return __hci_cmd_sync_status(hdev, HCI_OP_LE_SET_EXT_SCAN_RSP_DATA,
-				     sizeof(pdu.cp) + len, &pdu.cp,
-				     HCI_CMD_TIMEOUT);
+	err = __hci_cmd_sync_status(hdev, HCI_OP_LE_SET_EXT_SCAN_RSP_DATA,
+				    sizeof(pdu.cp) + len, &pdu.cp,
+				    HCI_CMD_TIMEOUT);
+	if (err)
+		return err;
+
+	if (adv) {
+		adv->scan_rsp_changed = false;
+	} else {
+		memcpy(hdev->scan_rsp_data, pdu.data, len);
+		hdev->scan_rsp_data_len = len;
+	}
+
+	return 0;
 }
 
 static int __hci_set_scan_rsp_data_sync(struct hci_dev *hdev, u8 instance)
@@ -1119,27 +1131,39 @@ static int hci_set_ext_adv_data_sync(struct hci_dev *hdev, u8 instance)
 		u8 data[HCI_MAX_EXT_AD_LENGTH];
 	} pdu;
 	u8 len;
+	struct adv_info *adv = NULL;
+	int err;
 
 	memset(&pdu, 0, sizeof(pdu));
 
+	if (instance) {
+		adv = hci_find_adv_instance(hdev, instance);
+		if (!adv || !adv->adv_data_changed)
+			return 0;
+	}
+
 	len = eir_create_adv_data(hdev, instance, pdu.data);
-
-	/* There's nothing to do if the data hasn't changed */
-	if (hdev->adv_data_len == len &&
-	    memcmp(pdu.data, hdev->adv_data, len) == 0)
-		return 0;
-
-	memcpy(hdev->adv_data, pdu.data, len);
-	hdev->adv_data_len = len;
 
 	pdu.cp.length = len;
 	pdu.cp.handle = instance;
 	pdu.cp.operation = LE_SET_ADV_DATA_OP_COMPLETE;
 	pdu.cp.frag_pref = LE_SET_ADV_DATA_NO_FRAG;
 
-	return __hci_cmd_sync_status(hdev, HCI_OP_LE_SET_EXT_ADV_DATA,
-				     sizeof(pdu.cp) + len, &pdu.cp,
-				     HCI_CMD_TIMEOUT);
+	err = __hci_cmd_sync_status(hdev, HCI_OP_LE_SET_EXT_ADV_DATA,
+				    sizeof(pdu.cp) + len, &pdu.cp,
+				    HCI_CMD_TIMEOUT);
+	if (err)
+		return err;
+
+	/* Update data if the command succeed */
+	if (adv) {
+		adv->adv_data_changed = false;
+	} else {
+		memcpy(hdev->adv_data, pdu.data, len);
+		hdev->adv_data_len = len;
+	}
+
+	return 0;
 }
 
 static int hci_set_adv_data_sync(struct hci_dev *hdev, u8 instance)
@@ -1612,6 +1636,9 @@ static int hci_le_add_resolve_list_sync(struct hci_dev *hdev,
 	bacpy(&cp.bdaddr, &params->addr);
 	memcpy(cp.peer_irk, irk->val, 16);
 
+	/* Default privacy mode is always Network */
+	params->privacy_mode = HCI_NETWORK_PRIVACY;
+
 done:
 	if (hci_dev_test_flag(hdev, HCI_PRIVACY))
 		memcpy(cp.local_irk, hdev->irk, 16);
@@ -1865,12 +1892,15 @@ static u8 hci_update_accept_list_sync(struct hci_dev *hdev)
 	}
 
 	/* Go through the current accept list programmed into the
-	 * controller one by one and check if that address is still
-	 * in the list of pending connections or list of devices to
+	 * controller one by one and check if that address is connected or is
+	 * still in the list of pending connections or list of devices to
 	 * report. If not present in either list, then remove it from
 	 * the controller.
 	 */
 	list_for_each_entry_safe(b, t, &hdev->le_accept_list, list) {
+		if (hci_conn_hash_lookup_le(hdev, &b->bdaddr, b->bdaddr_type))
+			continue;
+
 		pend_conn = hci_pend_le_action_lookup(&hdev->pend_le_conns,
 						      &b->bdaddr,
 						      b->bdaddr_type);
@@ -3578,7 +3608,7 @@ static int hci_set_event_mask_page_2_sync(struct hci_dev *hdev)
 	if (lmp_cpb_central_capable(hdev)) {
 		events[1] |= 0x40;	/* Triggered Clock Capture */
 		events[1] |= 0x80;	/* Synchronization Train Complete */
-		events[2] |= 0x10;	/* Peripheral Page Response Timeout */
+		events[2] |= 0x08;	/* Truncated Page Complete */
 		events[2] |= 0x20;	/* CPB Channel Map Change */
 		changed = true;
 	}
@@ -3590,7 +3620,7 @@ static int hci_set_event_mask_page_2_sync(struct hci_dev *hdev)
 		events[2] |= 0x01;	/* Synchronization Train Received */
 		events[2] |= 0x02;	/* CPB Receive */
 		events[2] |= 0x04;	/* CPB Timeout */
-		events[2] |= 0x08;	/* Truncated Page Complete */
+		events[2] |= 0x10;	/* Peripheral Page Response Timeout */
 		changed = true;
 	}
 
@@ -5039,12 +5069,12 @@ static int hci_resume_scan_sync(struct hci_dev *hdev)
 	if (!hdev->scanning_paused)
 		return 0;
 
+	hdev->scanning_paused = false;
+
 	hci_update_scan_sync(hdev);
 
 	/* Reset passive scanning to normal */
 	hci_update_passive_scan_sync(hdev);
-
-	hdev->scanning_paused = false;
 
 	return 0;
 }
@@ -5064,7 +5094,6 @@ int hci_resume_sync(struct hci_dev *hdev)
 		return 0;
 
 	hdev->suspended = false;
-	hdev->scanning_paused = false;
 
 	/* Restore event mask */
 	hci_set_event_mask_sync(hdev);
