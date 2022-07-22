@@ -1511,6 +1511,8 @@ static void joycon_clamp_rumble_freqs(struct joycon_ctlr *ctlr)
 	spin_unlock_irqrestore(&ctlr->lock, flags);
 }
 
+static const unsigned short JC_RUMBLE_ZERO_AMP_PKT_CNT = 5;
+
 static int joycon_set_rumble(struct joycon_ctlr *ctlr, u16 amp_r, u16 amp_l,
 			     bool schedule_now)
 {
