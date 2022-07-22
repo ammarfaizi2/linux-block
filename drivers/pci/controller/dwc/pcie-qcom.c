@@ -118,6 +118,15 @@
 
 #define QCOM_PCIE_CRC8_POLYNOMIAL (BIT(2) | BIT(1) | BIT(0))
 
+struct qcom_pcie_resources_1_0_0 {
+	struct clk *iface;
+	struct clk *aux;
+	struct clk *master_bus;
+	struct clk *slave_bus;
+	struct reset_control *core;
+	struct regulator *vdda;
+};
+
 struct qcom_pcie_resources_2_1_0 {
 	struct clk_bulk_data clks[QCOM_PCIE_2_1_0_MAX_CLOCKS];
 	struct reset_control *pci_reset;
@@ -129,15 +138,6 @@ struct qcom_pcie_resources_2_1_0 {
 	struct regulator_bulk_data supplies[QCOM_PCIE_2_1_0_MAX_SUPPLY];
 };
 
-struct qcom_pcie_resources_1_0_0 {
-	struct clk *iface;
-	struct clk *aux;
-	struct clk *master_bus;
-	struct clk *slave_bus;
-	struct reset_control *core;
-	struct regulator *vdda;
-};
-
 #define QCOM_PCIE_2_3_2_MAX_SUPPLY	2
 struct qcom_pcie_resources_2_3_2 {
 	struct clk *aux_clk;
@@ -145,6 +145,15 @@ struct qcom_pcie_resources_2_3_2 {
 	struct clk *slave_clk;
 	struct clk *cfg_clk;
 	struct regulator_bulk_data supplies[QCOM_PCIE_2_3_2_MAX_SUPPLY];
+};
+
+struct qcom_pcie_resources_2_3_3 {
+	struct clk *iface;
+	struct clk *axi_m_clk;
+	struct clk *axi_s_clk;
+	struct clk *ahb_clk;
+	struct clk *aux_clk;
+	struct reset_control *rst[7];
 };
 
 #define QCOM_PCIE_2_4_0_MAX_CLOCKS	4
@@ -163,15 +172,6 @@ struct qcom_pcie_resources_2_4_0 {
 	struct reset_control *pwr_reset;
 	struct reset_control *ahb_reset;
 	struct reset_control *phy_ahb_reset;
-};
-
-struct qcom_pcie_resources_2_3_3 {
-	struct clk *iface;
-	struct clk *axi_m_clk;
-	struct clk *axi_s_clk;
-	struct clk *ahb_clk;
-	struct clk *aux_clk;
-	struct reset_control *rst[7];
 };
 
 /* 6 clocks typically, 7 for sm8250 */
@@ -250,6 +250,121 @@ static int qcom_pcie_start_link(struct dw_pcie *pci)
 	/* Enable Link Training state machine */
 	if (pcie->cfg->ops->ltssm_enable)
 		pcie->cfg->ops->ltssm_enable(pcie);
+
+	return 0;
+}
+
+static int qcom_pcie_get_resources_1_0_0(struct qcom_pcie *pcie)
+{
+	struct qcom_pcie_resources_1_0_0 *res = &pcie->res.v1_0_0;
+	struct dw_pcie *pci = pcie->pci;
+	struct device *dev = pci->dev;
+
+	res->vdda = devm_regulator_get(dev, "vdda");
+	if (IS_ERR(res->vdda))
+		return PTR_ERR(res->vdda);
+
+	res->iface = devm_clk_get(dev, "iface");
+	if (IS_ERR(res->iface))
+		return PTR_ERR(res->iface);
+
+	res->aux = devm_clk_get(dev, "aux");
+	if (IS_ERR(res->aux))
+		return PTR_ERR(res->aux);
+
+	res->master_bus = devm_clk_get(dev, "master_bus");
+	if (IS_ERR(res->master_bus))
+		return PTR_ERR(res->master_bus);
+
+	res->slave_bus = devm_clk_get(dev, "slave_bus");
+	if (IS_ERR(res->slave_bus))
+		return PTR_ERR(res->slave_bus);
+
+	res->core = devm_reset_control_get_exclusive(dev, "core");
+	return PTR_ERR_OR_ZERO(res->core);
+}
+
+static void qcom_pcie_deinit_1_0_0(struct qcom_pcie *pcie)
+{
+	struct qcom_pcie_resources_1_0_0 *res = &pcie->res.v1_0_0;
+
+	reset_control_assert(res->core);
+	clk_disable_unprepare(res->slave_bus);
+	clk_disable_unprepare(res->master_bus);
+	clk_disable_unprepare(res->iface);
+	clk_disable_unprepare(res->aux);
+	regulator_disable(res->vdda);
+}
+
+static int qcom_pcie_init_1_0_0(struct qcom_pcie *pcie)
+{
+	struct qcom_pcie_resources_1_0_0 *res = &pcie->res.v1_0_0;
+	struct dw_pcie *pci = pcie->pci;
+	struct device *dev = pci->dev;
+	int ret;
+
+	ret = reset_control_deassert(res->core);
+	if (ret) {
+		dev_err(dev, "cannot deassert core reset\n");
+		return ret;
+	}
+
+	ret = clk_prepare_enable(res->aux);
+	if (ret) {
+		dev_err(dev, "cannot prepare/enable aux clock\n");
+		goto err_res;
+	}
+
+	ret = clk_prepare_enable(res->iface);
+	if (ret) {
+		dev_err(dev, "cannot prepare/enable iface clock\n");
+		goto err_aux;
+	}
+
+	ret = clk_prepare_enable(res->master_bus);
+	if (ret) {
+		dev_err(dev, "cannot prepare/enable master_bus clock\n");
+		goto err_iface;
+	}
+
+	ret = clk_prepare_enable(res->slave_bus);
+	if (ret) {
+		dev_err(dev, "cannot prepare/enable slave_bus clock\n");
+		goto err_master;
+	}
+
+	ret = regulator_enable(res->vdda);
+	if (ret) {
+		dev_err(dev, "cannot enable vdda regulator\n");
+		goto err_slave;
+	}
+
+	return 0;
+err_slave:
+	clk_disable_unprepare(res->slave_bus);
+err_master:
+	clk_disable_unprepare(res->master_bus);
+err_iface:
+	clk_disable_unprepare(res->iface);
+err_aux:
+	clk_disable_unprepare(res->aux);
+err_res:
+	reset_control_assert(res->core);
+
+	return ret;
+}
+
+static int qcom_pcie_post_init_1_0_0(struct qcom_pcie *pcie)
+{
+	/* change DBI base address */
+	writel(0, pcie->parf + PCIE20_PARF_DBI_BASE_ADDR);
+
+	if (IS_ENABLED(CONFIG_PCI_MSI)) {
+		u32 val = readl(pcie->parf + PCIE20_PARF_AXI_MSTR_WR_ADDR_HALT);
+
+		val |= BIT(31);
+		writel(val, pcie->parf + PCIE20_PARF_AXI_MSTR_WR_ADDR_HALT);
+	}
 
 	return 0;
 }
@@ -469,121 +584,6 @@ static int qcom_pcie_post_init_2_1_0(struct qcom_pcie *pcie)
 	return 0;
 }
 
-static int qcom_pcie_get_resources_1_0_0(struct qcom_pcie *pcie)
-{
-	struct qcom_pcie_resources_1_0_0 *res = &pcie->res.v1_0_0;
-	struct dw_pcie *pci = pcie->pci;
-	struct device *dev = pci->dev;
-
-	res->vdda = devm_regulator_get(dev, "vdda");
-	if (IS_ERR(res->vdda))
-		return PTR_ERR(res->vdda);
-
-	res->iface = devm_clk_get(dev, "iface");
-	if (IS_ERR(res->iface))
-		return PTR_ERR(res->iface);
-
-	res->aux = devm_clk_get(dev, "aux");
-	if (IS_ERR(res->aux))
-		return PTR_ERR(res->aux);
-
-	res->master_bus = devm_clk_get(dev, "master_bus");
-	if (IS_ERR(res->master_bus))
-		return PTR_ERR(res->master_bus);
-
-	res->slave_bus = devm_clk_get(dev, "slave_bus");
-	if (IS_ERR(res->slave_bus))
-		return PTR_ERR(res->slave_bus);
-
-	res->core = devm_reset_control_get_exclusive(dev, "core");
-	return PTR_ERR_OR_ZERO(res->core);
-}
-
-static void qcom_pcie_deinit_1_0_0(struct qcom_pcie *pcie)
-{
-	struct qcom_pcie_resources_1_0_0 *res = &pcie->res.v1_0_0;
-
-	reset_control_assert(res->core);
-	clk_disable_unprepare(res->slave_bus);
-	clk_disable_unprepare(res->master_bus);
-	clk_disable_unprepare(res->iface);
-	clk_disable_unprepare(res->aux);
-	regulator_disable(res->vdda);
-}
-
-static int qcom_pcie_init_1_0_0(struct qcom_pcie *pcie)
-{
-	struct qcom_pcie_resources_1_0_0 *res = &pcie->res.v1_0_0;
-	struct dw_pcie *pci = pcie->pci;
-	struct device *dev = pci->dev;
-	int ret;
-
-	ret = reset_control_deassert(res->core);
-	if (ret) {
-		dev_err(dev, "cannot deassert core reset\n");
-		return ret;
-	}
-
-	ret = clk_prepare_enable(res->aux);
-	if (ret) {
-		dev_err(dev, "cannot prepare/enable aux clock\n");
-		goto err_res;
-	}
-
-	ret = clk_prepare_enable(res->iface);
-	if (ret) {
-		dev_err(dev, "cannot prepare/enable iface clock\n");
-		goto err_aux;
-	}
-
-	ret = clk_prepare_enable(res->master_bus);
-	if (ret) {
-		dev_err(dev, "cannot prepare/enable master_bus clock\n");
-		goto err_iface;
-	}
-
-	ret = clk_prepare_enable(res->slave_bus);
-	if (ret) {
-		dev_err(dev, "cannot prepare/enable slave_bus clock\n");
-		goto err_master;
-	}
-
-	ret = regulator_enable(res->vdda);
-	if (ret) {
-		dev_err(dev, "cannot enable vdda regulator\n");
-		goto err_slave;
-	}
-
-	return 0;
-err_slave:
-	clk_disable_unprepare(res->slave_bus);
-err_master:
-	clk_disable_unprepare(res->master_bus);
-err_iface:
-	clk_disable_unprepare(res->iface);
-err_aux:
-	clk_disable_unprepare(res->aux);
-err_res:
-	reset_control_assert(res->core);
-
-	return ret;
-}
-
-static int qcom_pcie_post_init_1_0_0(struct qcom_pcie *pcie)
-{
-	/* change DBI base address */
-	writel(0, pcie->parf + PCIE20_PARF_DBI_BASE_ADDR);
-
-	if (IS_ENABLED(CONFIG_PCI_MSI)) {
-		u32 val = readl(pcie->parf + PCIE20_PARF_AXI_MSTR_WR_ADDR_HALT);
-
-		val |= BIT(31);
-		writel(val, pcie->parf + PCIE20_PARF_AXI_MSTR_WR_ADDR_HALT);
-	}
-
-	return 0;
-}
-
 static void qcom_pcie_2_3_2_ltssm_enable(struct qcom_pcie *pcie)
 {
 	u32 val;
@@ -715,6 +715,174 @@ static int qcom_pcie_post_init_2_3_2(struct qcom_pcie *pcie)
 	val = readl(pcie->parf + PCIE20_PARF_AXI_MSTR_WR_ADDR_HALT_V2);
 	val |= BIT(31);
 	writel(val, pcie->parf + PCIE20_PARF_AXI_MSTR_WR_ADDR_HALT_V2);
+
+	return 0;
+}
+
+static int qcom_pcie_get_resources_2_3_3(struct qcom_pcie *pcie)
+{
+	struct qcom_pcie_resources_2_3_3 *res = &pcie->res.v2_3_3;
+	struct dw_pcie *pci = pcie->pci;
+	struct device *dev = pci->dev;
+	int i;
+	const char *rst_names[] = { "axi_m", "axi_s", "pipe",
+				    "axi_m_sticky", "sticky",
+				    "ahb", "sleep", };
+
+	res->iface = devm_clk_get(dev, "iface");
+	if (IS_ERR(res->iface))
+		return PTR_ERR(res->iface);
+
+	res->axi_m_clk = devm_clk_get(dev, "axi_m");
+	if (IS_ERR(res->axi_m_clk))
+		return PTR_ERR(res->axi_m_clk);
+
+	res->axi_s_clk = devm_clk_get(dev, "axi_s");
+	if (IS_ERR(res->axi_s_clk))
+		return PTR_ERR(res->axi_s_clk);
+
+	res->ahb_clk = devm_clk_get(dev, "ahb");
+	if (IS_ERR(res->ahb_clk))
+		return PTR_ERR(res->ahb_clk);
+
+	res->aux_clk = devm_clk_get(dev, "aux");
+	if (IS_ERR(res->aux_clk))
+		return PTR_ERR(res->aux_clk);
+
+	for (i = 0; i < ARRAY_SIZE(rst_names); i++) {
+		res->rst[i] = devm_reset_control_get(dev, rst_names[i]);
+		if (IS_ERR(res->rst[i]))
+			return PTR_ERR(res->rst[i]);
+	}
+
+	return 0;
+}
+
+static void qcom_pcie_deinit_2_3_3(struct qcom_pcie *pcie)
+{
+	struct qcom_pcie_resources_2_3_3 *res = &pcie->res.v2_3_3;
+
+	clk_disable_unprepare(res->iface);
+	clk_disable_unprepare(res->axi_m_clk);
+	clk_disable_unprepare(res->axi_s_clk);
+	clk_disable_unprepare(res->ahb_clk);
+	clk_disable_unprepare(res->aux_clk);
+}
+
+static int qcom_pcie_init_2_3_3(struct qcom_pcie *pcie)
+{
+	struct qcom_pcie_resources_2_3_3 *res = &pcie->res.v2_3_3;
+	struct dw_pcie *pci = pcie->pci;
+	struct device *dev = pci->dev;
+	int i, ret;
+
+	for (i = 0; i < ARRAY_SIZE(res->rst); i++) {
+		ret = reset_control_assert(res->rst[i]);
+		if (ret) {
+			dev_err(dev, "reset #%d assert failed (%d)\n", i, ret);
+			return ret;
+		}
+	}
+
+	usleep_range(2000, 2500);
+
+	for (i = 0; i < ARRAY_SIZE(res->rst); i++) {
+		ret = reset_control_deassert(res->rst[i]);
+		if (ret) {
+			dev_err(dev, "reset #%d deassert failed (%d)\n", i,
+				ret);
+			return ret;
+		}
+	}
+
+	/*
+	 * Don't have a way to see if the reset has completed.
+	 * Wait for some time.
+	 */
+	usleep_range(2000, 2500);
+
+	ret = clk_prepare_enable(res->iface);
+	if (ret) {
+		dev_err(dev, "cannot prepare/enable core clock\n");
+		goto err_clk_iface;
+	}
+
+	ret = clk_prepare_enable(res->axi_m_clk);
+	if (ret) {
+		dev_err(dev, "cannot prepare/enable core clock\n");
+		goto err_clk_axi_m;
+	}
+
+	ret = clk_prepare_enable(res->axi_s_clk);
+	if (ret) {
+		dev_err(dev, "cannot prepare/enable axi slave clock\n");
+		goto err_clk_axi_s;
+	}
+
+	ret = clk_prepare_enable(res->ahb_clk);
+	if (ret) {
+		dev_err(dev, "cannot prepare/enable ahb clock\n");
+		goto err_clk_ahb;
+	}
+
+	ret = clk_prepare_enable(res->aux_clk);
+	if (ret) {
+		dev_err(dev, "cannot prepare/enable aux clock\n");
+		goto err_clk_aux;
+	}
+
+	return 0;
+
+err_clk_aux:
+	clk_disable_unprepare(res->ahb_clk);
+err_clk_ahb:
+	clk_disable_unprepare(res->axi_s_clk);
+err_clk_axi_s:
+	clk_disable_unprepare(res->axi_m_clk);
+err_clk_axi_m:
+	clk_disable_unprepare(res->iface);
+err_clk_iface:
+	/*
+	 * Not checking for failure, will anyway return
+	 * the original failure in 'ret'.
+	 */
+	for (i = 0; i < ARRAY_SIZE(res->rst); i++)
+		reset_control_assert(res->rst[i]);
+
+	return ret;
+}
+
+static int qcom_pcie_post_init_2_3_3(struct qcom_pcie *pcie)
+{
+	struct dw_pcie *pci = pcie->pci;
+	u16 offset = dw_pcie_find_capability(pci, PCI_CAP_ID_EXP);
+	u32 val;
+
+	writel(SLV_ADDR_SPACE_SZ,
+		pcie->parf + PCIE20_v3_PARF_SLV_ADDR_SPACE_SIZE);
+
+	val = readl(pcie->parf + PCIE20_PARF_PHY_CTRL);
+	val &= ~BIT(0);
+	writel(val, pcie->parf + PCIE20_PARF_PHY_CTRL);
+
+	writel(0, pcie->parf + PCIE20_PARF_DBI_BASE_ADDR);
+
+	writel(MST_WAKEUP_EN | SLV_WAKEUP_EN | MSTR_ACLK_CGC_DIS
+		| SLV_ACLK_CGC_DIS | CORE_CLK_CGC_DIS |
+		AUX_PWR_DET | L23_CLK_RMV_DIS | L1_CLK_RMV_DIS,
+		pcie->parf + PCIE20_PARF_SYS_CTRL);
+	writel(0, pcie->parf + PCIE20_PARF_Q2A_FLUSH);
+
+	writel(PCI_COMMAND_MASTER, pci->dbi_base + PCI_COMMAND);
+	writel(DBI_RO_WR_EN, pci->dbi_base + PCIE20_MISC_CONTROL_1_REG);
+	writel(PCIE_CAP_SLOT_VAL, pci->dbi_base + offset + PCI_EXP_SLTCAP);
+
+	val = readl(pci->dbi_base + offset + PCI_EXP_LNKCAP);
+	val &= ~PCI_EXP_LNKCAP_ASPMS;
+	writel(val, pci->dbi_base + offset + PCI_EXP_LNKCAP);
+
+	writel(PCI_EXP_DEVCTL2_COMP_TMOUT_DIS, pci->dbi_base + offset +
+		PCI_EXP_DEVCTL2);
 
 	return 0;
 }
@@ -994,174 +1162,6 @@ static int qcom_pcie_post_init_2_4_0(struct qcom_pcie *pcie)
 	val = readl(pcie->parf + PCIE20_PARF_AXI_MSTR_WR_ADDR_HALT_V2);
 	val |= BIT(31);
 	writel(val, pcie->parf + PCIE20_PARF_AXI_MSTR_WR_ADDR_HALT_V2);
-
-	return 0;
-}
-
-static int qcom_pcie_get_resources_2_3_3(struct qcom_pcie *pcie)
-{
-	struct qcom_pcie_resources_2_3_3 *res = &pcie->res.v2_3_3;
-	struct dw_pcie *pci = pcie->pci;
-	struct device *dev = pci->dev;
-	int i;
-	const char *rst_names[] = { "axi_m", "axi_s", "pipe",
-				    "axi_m_sticky", "sticky",
-				    "ahb", "sleep", };
-
-	res->iface = devm_clk_get(dev, "iface");
-	if (IS_ERR(res->iface))
-		return PTR_ERR(res->iface);
-
-	res->axi_m_clk = devm_clk_get(dev, "axi_m");
-	if (IS_ERR(res->axi_m_clk))
-		return PTR_ERR(res->axi_m_clk);
-
-	res->axi_s_clk = devm_clk_get(dev, "axi_s");
-	if (IS_ERR(res->axi_s_clk))
-		return PTR_ERR(res->axi_s_clk);
-
-	res->ahb_clk = devm_clk_get(dev, "ahb");
-	if (IS_ERR(res->ahb_clk))
-		return PTR_ERR(res->ahb_clk);
-
-	res->aux_clk = devm_clk_get(dev, "aux");
-	if (IS_ERR(res->aux_clk))
-		return PTR_ERR(res->aux_clk);
-
-	for (i = 0; i < ARRAY_SIZE(rst_names); i++) {
-		res->rst[i] = devm_reset_control_get(dev, rst_names[i]);
-		if (IS_ERR(res->rst[i]))
-			return PTR_ERR(res->rst[i]);
-	}
-
-	return 0;
-}
-
-static void qcom_pcie_deinit_2_3_3(struct qcom_pcie *pcie)
-{
-	struct qcom_pcie_resources_2_3_3 *res = &pcie->res.v2_3_3;
-
-	clk_disable_unprepare(res->iface);
-	clk_disable_unprepare(res->axi_m_clk);
-	clk_disable_unprepare(res->axi_s_clk);
-	clk_disable_unprepare(res->ahb_clk);
-	clk_disable_unprepare(res->aux_clk);
-}
-
-static int qcom_pcie_init_2_3_3(struct qcom_pcie *pcie)
-{
-	struct qcom_pcie_resources_2_3_3 *res = &pcie->res.v2_3_3;
-	struct dw_pcie *pci = pcie->pci;
-	struct device *dev = pci->dev;
-	int i, ret;
-
-	for (i = 0; i < ARRAY_SIZE(res->rst); i++) {
-		ret = reset_control_assert(res->rst[i]);
-		if (ret) {
-			dev_err(dev, "reset #%d assert failed (%d)\n", i, ret);
-			return ret;
-		}
-	}
-
-	usleep_range(2000, 2500);
-
-	for (i = 0; i < ARRAY_SIZE(res->rst); i++) {
-		ret = reset_control_deassert(res->rst[i]);
-		if (ret) {
-			dev_err(dev, "reset #%d deassert failed (%d)\n", i,
-				ret);
-			return ret;
-		}
-	}
-
-	/*
-	 * Don't have a way to see if the reset has completed.
-	 * Wait for some time.
-	 */
-	usleep_range(2000, 2500);
-
-	ret = clk_prepare_enable(res->iface);
-	if (ret) {
-		dev_err(dev, "cannot prepare/enable core clock\n");
-		goto err_clk_iface;
-	}
-
-	ret = clk_prepare_enable(res->axi_m_clk);
-	if (ret) {
-		dev_err(dev, "cannot prepare/enable core clock\n");
-		goto err_clk_axi_m;
-	}
-
-	ret = clk_prepare_enable(res->axi_s_clk);
-	if (ret) {
-		dev_err(dev, "cannot prepare/enable axi slave clock\n");
-		goto err_clk_axi_s;
-	}
-
-	ret = clk_prepare_enable(res->ahb_clk);
-	if (ret) {
-		dev_err(dev, "cannot prepare/enable ahb clock\n");
-		goto err_clk_ahb;
-	}
-
-	ret = clk_prepare_enable(res->aux_clk);
-	if (ret) {
-		dev_err(dev, "cannot prepare/enable aux clock\n");
-		goto err_clk_aux;
-	}
-
-	return 0;
-
-err_clk_aux:
-	clk_disable_unprepare(res->ahb_clk);
-err_clk_ahb:
-	clk_disable_unprepare(res->axi_s_clk);
-err_clk_axi_s:
-	clk_disable_unprepare(res->axi_m_clk);
-err_clk_axi_m:
-	clk_disable_unprepare(res->iface);
-err_clk_iface:
-	/*
-	 * Not checking for failure, will anyway return
-	 * the original failure in 'ret'.
-	 */
-	for (i = 0; i < ARRAY_SIZE(res->rst); i++)
-		reset_control_assert(res->rst[i]);
-
-	return ret;
-}
-
-static int qcom_pcie_post_init_2_3_3(struct qcom_pcie *pcie)
-{
-	struct dw_pcie *pci = pcie->pci;
-	u16 offset = dw_pcie_find_capability(pci, PCI_CAP_ID_EXP);
-	u32 val;
-
-	writel(SLV_ADDR_SPACE_SZ,
-		pcie->parf + PCIE20_v3_PARF_SLV_ADDR_SPACE_SIZE);
-
-	val = readl(pcie->parf + PCIE20_PARF_PHY_CTRL);
-	val &= ~BIT(0);
-	writel(val, pcie->parf + PCIE20_PARF_PHY_CTRL);
-
-	writel(0, pcie->parf + PCIE20_PARF_DBI_BASE_ADDR);
-
-	writel(MST_WAKEUP_EN | SLV_WAKEUP_EN | MSTR_ACLK_CGC_DIS
-		| SLV_ACLK_CGC_DIS | CORE_CLK_CGC_DIS |
-		AUX_PWR_DET | L23_CLK_RMV_DIS | L1_CLK_RMV_DIS,
-		pcie->parf + PCIE20_PARF_SYS_CTRL);
-	writel(0, pcie->parf + PCIE20_PARF_Q2A_FLUSH);
-
-	writel(PCI_COMMAND_MASTER, pci->dbi_base + PCI_COMMAND);
-	writel(DBI_RO_WR_EN, pci->dbi_base + PCIE20_MISC_CONTROL_1_REG);
-	writel(PCIE_CAP_SLOT_VAL, pci->dbi_base + offset + PCI_EXP_SLTCAP);
-
-	val = readl(pci->dbi_base + offset + PCI_EXP_LNKCAP);
-	val &= ~PCI_EXP_LNKCAP_ASPMS;
-	writel(val, pci->dbi_base + offset + PCI_EXP_LNKCAP);
-
-	writel(PCI_EXP_DEVCTL2_COMP_TMOUT_DIS, pci->dbi_base + offset +
-		PCI_EXP_DEVCTL2);
 
 	return 0;
 }
@@ -1530,21 +1530,30 @@ static const struct dw_pcie_host_ops qcom_pcie_dw_ops = {
 	.host_init = qcom_pcie_host_init,
 };
 
-/* Qcom IP rev.: 2.1.0	Synopsys IP rev.: 4.01a */
-static const struct qcom_pcie_ops ops_2_1_0 = {
-	.get_resources = qcom_pcie_get_resources_2_1_0,
-	.init = qcom_pcie_init_2_1_0,
-	.post_init = qcom_pcie_post_init_2_1_0,
-	.deinit = qcom_pcie_deinit_2_1_0,
-	.ltssm_enable = qcom_pcie_2_1_0_ltssm_enable,
-};
-
 /* Qcom IP rev.: 1.0.0	Synopsys IP rev.: 4.11a */
 static const struct qcom_pcie_ops ops_1_0_0 = {
 	.get_resources = qcom_pcie_get_resources_1_0_0,
 	.init = qcom_pcie_init_1_0_0,
 	.post_init = qcom_pcie_post_init_1_0_0,
 	.deinit = qcom_pcie_deinit_1_0_0,
+	.ltssm_enable = qcom_pcie_2_1_0_ltssm_enable,
+};
+
+/* Qcom IP rev.: 1.9.0 */
+static const struct qcom_pcie_ops ops_1_9_0 = {
+	.get_resources = qcom_pcie_get_resources_2_7_0,
+	.init = qcom_pcie_init_2_7_0,
+	.deinit = qcom_pcie_deinit_2_7_0,
+	.ltssm_enable = qcom_pcie_2_3_2_ltssm_enable,
+	.config_sid = qcom_pcie_config_sid_sm8250,
+};
+
+/* Qcom IP rev.: 2.1.0	Synopsys IP rev.: 4.01a */
+static const struct qcom_pcie_ops ops_2_1_0 = {
+	.get_resources = qcom_pcie_get_resources_2_1_0,
+	.init = qcom_pcie_init_2_1_0,
+	.post_init = qcom_pcie_post_init_2_1_0,
+	.deinit = qcom_pcie_deinit_2_1_0,
 	.ltssm_enable = qcom_pcie_2_1_0_ltssm_enable,
 };
 
@@ -1557,15 +1566,6 @@ static const struct qcom_pcie_ops ops_2_3_2 = {
 	.ltssm_enable = qcom_pcie_2_3_2_ltssm_enable,
 };
 
-/* Qcom IP rev.: 2.4.0	Synopsys IP rev.: 4.20a */
-static const struct qcom_pcie_ops ops_2_4_0 = {
-	.get_resources = qcom_pcie_get_resources_2_4_0,
-	.init = qcom_pcie_init_2_4_0,
-	.post_init = qcom_pcie_post_init_2_4_0,
-	.deinit = qcom_pcie_deinit_2_4_0,
-	.ltssm_enable = qcom_pcie_2_3_2_ltssm_enable,
-};
-
 /* Qcom IP rev.: 2.3.3	Synopsys IP rev.: 4.30a */
 static const struct qcom_pcie_ops ops_2_3_3 = {
 	.get_resources = qcom_pcie_get_resources_2_3_3,
@@ -1575,21 +1575,21 @@ static const struct qcom_pcie_ops ops_2_3_3 = {
 	.ltssm_enable = qcom_pcie_2_3_2_ltssm_enable,
 };
 
+/* Qcom IP rev.: 2.4.0	Synopsys IP rev.: 4.20a */
+static const struct qcom_pcie_ops ops_2_4_0 = {
+	.get_resources = qcom_pcie_get_resources_2_4_0,
+	.init = qcom_pcie_init_2_4_0,
+	.post_init = qcom_pcie_post_init_2_4_0,
+	.deinit = qcom_pcie_deinit_2_4_0,
+	.ltssm_enable = qcom_pcie_2_3_2_ltssm_enable,
+};
+
 /* Qcom IP rev.: 2.7.0	Synopsys IP rev.: 4.30a */
 static const struct qcom_pcie_ops ops_2_7_0 = {
 	.get_resources = qcom_pcie_get_resources_2_7_0,
 	.init = qcom_pcie_init_2_7_0,
 	.deinit = qcom_pcie_deinit_2_7_0,
 	.ltssm_enable = qcom_pcie_2_3_2_ltssm_enable,
-};
-
-/* Qcom IP rev.: 1.9.0 */
-static const struct qcom_pcie_ops ops_1_9_0 = {
-	.get_resources = qcom_pcie_get_resources_2_7_0,
-	.init = qcom_pcie_init_2_7_0,
-	.deinit = qcom_pcie_deinit_2_7_0,
-	.ltssm_enable = qcom_pcie_2_3_2_ltssm_enable,
-	.config_sid = qcom_pcie_config_sid_sm8250,
 };
 
 /* Qcom IP rev.: 2.9.0  Synopsys IP rev.: 5.00a */
@@ -1603,27 +1603,6 @@ static const struct qcom_pcie_ops ops_2_9_0 = {
 
 static const struct qcom_pcie_cfg apq8084_cfg = {
 	.ops = &ops_1_0_0,
-};
-
-static const struct qcom_pcie_cfg ipq8064_cfg = {
-	.ops = &ops_2_1_0,
-};
-
-static const struct qcom_pcie_cfg msm8996_cfg = {
-	.ops = &ops_2_3_2,
-};
-
-static const struct qcom_pcie_cfg ipq8074_cfg = {
-	.ops = &ops_2_3_3,
-};
-
-static const struct qcom_pcie_cfg ipq4019_cfg = {
-	.ops = &ops_2_4_0,
-};
-
-static const struct qcom_pcie_cfg sdm845_cfg = {
-	.ops = &ops_2_7_0,
-	.has_tbu_clk = true,
 };
 
 static const struct qcom_pcie_cfg sm8150_cfg = {
@@ -1659,6 +1638,27 @@ static const struct qcom_pcie_cfg sc7280_cfg = {
 
 static const struct qcom_pcie_cfg sc8180x_cfg = {
 	.ops = &ops_1_9_0,
+	.has_tbu_clk = true,
+};
+
+static const struct qcom_pcie_cfg ipq8064_cfg = {
+	.ops = &ops_2_1_0,
+};
+
+static const struct qcom_pcie_cfg msm8996_cfg = {
+	.ops = &ops_2_3_2,
+};
+
+static const struct qcom_pcie_cfg ipq8074_cfg = {
+	.ops = &ops_2_3_3,
+};
+
+static const struct qcom_pcie_cfg ipq4019_cfg = {
+	.ops = &ops_2_4_0,
+};
+
+static const struct qcom_pcie_cfg sdm845_cfg = {
+	.ops = &ops_2_7_0,
 	.has_tbu_clk = true,
 };
 
