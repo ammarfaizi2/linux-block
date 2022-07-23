@@ -44,9 +44,18 @@
 
 #endif /* __ASSEMBLY__ */
 
+#if CONFIG_FUNCTION_ALIGNMENT == 16
+# define __FUNC_ALIGN		.p2align 4, 0x90;
+# define ASM_FUNC_ALIGN		".p2align 4, 0x90;"
+# define SYM_F_ALIGN		__FUNC_ALIGN
+#else
+# define ASM_FUNC_ALIGN		""
+# define SYM_F_ALIGN		SYM_A_ALIGN
+#endif
+
 /* SYM_FUNC_START -- use for global functions */
 #define SYM_FUNC_START(name)				\
-	SYM_START(name, SYM_L_GLOBAL, SYM_A_ALIGN)	\
+	SYM_START(name, SYM_L_GLOBAL, SYM_F_ALIGN)	\
 	ENDBR
 
 /* SYM_FUNC_START_NOALIGN -- use for global functions, w/o alignment */
@@ -56,7 +65,7 @@
 
 /* SYM_FUNC_START_LOCAL -- use for local functions */
 #define SYM_FUNC_START_LOCAL(name)			\
-	SYM_START(name, SYM_L_LOCAL, SYM_A_ALIGN)	\
+	SYM_START(name, SYM_L_LOCAL, SYM_F_ALIGN)	\
 	ENDBR
 
 /* SYM_FUNC_START_LOCAL_NOALIGN -- use for local functions, w/o alignment */
@@ -66,7 +75,7 @@
 
 /* SYM_FUNC_START_WEAK -- use for weak functions */
 #define SYM_FUNC_START_WEAK(name)			\
-	SYM_START(name, SYM_L_WEAK, SYM_A_ALIGN)	\
+	SYM_START(name, SYM_L_WEAK, SYM_F_ALIGN)	\
 	ENDBR
 
 /* SYM_FUNC_START_WEAK_NOALIGN -- use for weak functions, w/o alignment */
