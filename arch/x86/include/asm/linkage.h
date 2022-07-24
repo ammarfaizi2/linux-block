@@ -12,13 +12,39 @@
 #define asmlinkage CPP_ASMLINKAGE __attribute__((regparm(0)))
 #endif /* CONFIG_X86_32 */
 
-#ifdef __ASSEMBLY__
-
 #if CONFIG_FUNCTION_ALIGNMENT == 16
-#define __ALIGN			.p2align 4, 0x90
-#define __ALIGN_STR		__stringify(__ALIGN)
-#define FUNCTION_ALIGNMENT	16
+# define __ALIGN		.p2align 4, 0x90
+# define __ALIGN_STR		__stringify(__ALIGN)
+# define FUNCTION_ALIGNMENT	16
+#elif CONFIG_FUNCTION_ALIGNMENT == 32
+# define __ALIGN		.p2align 5, 0x90
+# define __ALIGN_STR		__stringify(__ALIGN)
+# define FUNCTION_ALIGNMENT	32
 #endif
+
+#ifdef CONFIG_CFI_CLANG
+#define	__FUNCTION_PADDING	(FUNCTION_ALIGNMENT-5)
+#else
+#define __FUNCTION_PADDING	FUNCTION_ALIGNMENT
+#endif
+
+#if defined(CONFIG_CALL_THUNKS) && !defined(__DISABLE_EXPORTS) && !defined(BUILD_VDSO)
+#define FUNCTION_PADDING	.skip __FUNCTION_PADDING, 0x90;
+#else
+#define FUNCTION_PADDING
+#endif
+
+#if (CONFIG_FUNCTION_ALIGNMENT > 8) && !defined(__DISABLE_EXPORTS) && !defined(BULID_VDSO)
+# define __FUNC_ALIGN		__ALIGN; FUNCTION_PADDING
+# define SYM_F_ALIGN		__FUNC_ALIGN
+#else
+# define __FUNC_ALIGN
+# define SYM_F_ALIGN		SYM_A_ALIGN
+#endif
+
+#define ASM_FUNC_ALIGN		__stringify(__FUNC_ALIGN)
+
+#ifdef __ASSEMBLY__
 
 #if defined(CONFIG_RETHUNK) && !defined(__DISABLE_EXPORTS) && !defined(BUILD_VDSO)
 #define RET	jmp __x86_return_thunk
@@ -44,14 +70,6 @@
 
 #endif /* __ASSEMBLY__ */
 
-#if CONFIG_FUNCTION_ALIGNMENT == 16
-# define __FUNC_ALIGN		.p2align 4, 0x90;
-# define ASM_FUNC_ALIGN		".p2align 4, 0x90;"
-# define SYM_F_ALIGN		__FUNC_ALIGN
-#else
-# define ASM_FUNC_ALIGN		""
-# define SYM_F_ALIGN		SYM_A_ALIGN
-#endif
 
 /* SYM_FUNC_START -- use for global functions */
 #define SYM_FUNC_START(name)				\
