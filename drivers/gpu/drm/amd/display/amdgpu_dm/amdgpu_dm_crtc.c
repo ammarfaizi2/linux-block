@@ -293,7 +293,7 @@ static const struct drm_crtc_funcs amdgpu_dm_crtc_funcs = {
 	.enable_vblank = dm_enable_vblank,
 	.disable_vblank = dm_disable_vblank,
 	.get_vblank_timestamp = drm_crtc_vblank_helper_get_vblank_timestamp,
-#if defined(CONFIG_DEBUG_FS)
+#ifdef CONFIG_DRM_AMD_SECURE_DISPLAY
 	.late_register = amdgpu_dm_crtc_late_register,
 #endif
 };
