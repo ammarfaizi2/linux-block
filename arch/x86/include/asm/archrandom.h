@@ -41,15 +41,18 @@ static inline bool __must_check rdseed_long(unsigned long *v)
 }
 
 /*
- * These are the generic interfaces; they must not be declared if the
- * stubs in <linux/random.h> are to be invoked.
+ * This should only be used by drivers/char/random.c. Other drivers *must*
+ * use get_random_bytes() instead.
  */
-
 static inline size_t __must_check arch_get_random_longs(unsigned long *v, size_t max_longs)
 {
 	return max_longs && static_cpu_has(X86_FEATURE_RDRAND) && rdrand_long(v) ? 1 : 0;
 }
 
+/*
+ * This should only be used by drivers/char/random.c. Other drivers *must*
+ * use get_random_bytes() instead.
+ */
 static inline size_t __must_check arch_get_random_seed_longs(unsigned long *v, size_t max_longs)
 {
 	return max_longs && static_cpu_has(X86_FEATURE_RDSEED) && rdseed_long(v) ? 1 : 0;

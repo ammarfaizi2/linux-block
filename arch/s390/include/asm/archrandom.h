@@ -18,11 +18,19 @@
 DECLARE_STATIC_KEY_FALSE(s390_arch_random_available);
 extern atomic64_t s390_arch_random_counter;
 
+/*
+ * This should only be used by drivers/char/random.c. Other drivers *must*
+ * use get_random_bytes() instead.
+ */
 static inline size_t __must_check arch_get_random_longs(unsigned long *v, size_t max_longs)
 {
 	return 0;
 }
 
+/*
+ * This should only be used by drivers/char/random.c. Other drivers *must*
+ * use get_random_bytes() instead.
+ */
 static inline size_t __must_check arch_get_random_seed_longs(unsigned long *v, size_t max_longs)
 {
 	if (static_branch_likely(&s390_arch_random_available)) {

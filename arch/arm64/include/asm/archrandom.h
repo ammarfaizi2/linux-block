@@ -58,6 +58,10 @@ static inline bool __arm64_rndrrs(unsigned long *v)
 	return ok;
 }
 
+/*
+ * This should only be used by drivers/char/random.c. Other drivers *must*
+ * use get_random_bytes() instead.
+ */
 static inline size_t __must_check arch_get_random_longs(unsigned long *v, size_t max_longs)
 {
 	/*
@@ -71,6 +75,10 @@ static inline size_t __must_check arch_get_random_longs(unsigned long *v, size_t
 	return 0;
 }
 
+/*
+ * This should only be used by drivers/char/random.c. Other drivers *must*
+ * use get_random_bytes() instead.
+ */
 static inline size_t __must_check arch_get_random_seed_longs(unsigned long *v, size_t max_longs)
 {
 	if (!max_longs)
@@ -121,6 +129,11 @@ static inline bool __init __early_cpu_has_rndr(void)
 	return (ftr >> ID_AA64ISAR0_EL1_RNDR_SHIFT) & 0xf;
 }
 
+
+/*
+ * This should only be used by drivers/char/random.c. Other drivers *must*
+ * use get_random_bytes() instead.
+ */
 static inline size_t __init __must_check
 arch_get_random_seed_longs_early(unsigned long *v, size_t max_longs)
 {
