@@ -1305,7 +1305,6 @@ static int ieee80211_send_assoc(struct ieee80211_sub_if_data *sdata)
 	struct ieee80211_prep_tx_info info = {};
 	unsigned int link_id, n_links = 0;
 	u16 present_elems[PRESENT_ELEMS_MAX] = {};
-	const u8 *bssid;
 	void *capab_pos;
 	size_t size;
 	int ret;
@@ -1398,8 +1397,6 @@ static int ieee80211_send_assoc(struct ieee80211_sub_if_data *sdata)
 	if (WARN_ON(!assoc_data->link[assoc_data->assoc_link_id].bss))
 		return -EINVAL;
 
-	bssid = assoc_data->link[assoc_data->assoc_link_id].bss->bssid;
-
 	skb = alloc_skb(size, GFP_KERNEL);
 	if (!skb)
 		return -ENOMEM;
@@ -1416,9 +1413,9 @@ static int ieee80211_send_assoc(struct ieee80211_sub_if_data *sdata)
 		ext_capa->data[2] |= WLAN_EXT_CAPA3_MULTI_BSSID_SUPPORT;
 
 	mgmt = skb_put_zero(skb, 24);
-	memcpy(mgmt->da, bssid, ETH_ALEN);
-	memcpy(mgmt->sa, link->conf->addr, ETH_ALEN);
-	memcpy(mgmt->bssid, bssid, ETH_ALEN);
+	memcpy(mgmt->da, sdata->vif.cfg.ap_addr, ETH_ALEN);
+	memcpy(mgmt->sa, sdata->vif.addr, ETH_ALEN);
+	memcpy(mgmt->bssid, sdata->vif.cfg.ap_addr, ETH_ALEN);
 
 	listen_int = cpu_to_le16(assoc_data->s1g ?
 			ieee80211_encode_usf(local->hw.conf.listen_interval) :
@@ -2743,8 +2740,6 @@ static void ieee80211_set_associated(struct ieee80211_sub_if_data *sdata,
 		changed[link_id] |= ieee80211_link_set_associated(link, cbss);
 	}
 
-	memcpy(sdata->vif.cfg.ap_addr, assoc_data->ap_addr, ETH_ALEN);
-
 	/* just to be sure */
 	ieee80211_stop_poll(sdata);
 
@@ -2883,7 +2878,8 @@ static void ieee80211_set_disassoc(struct ieee80211_sub_if_data *sdata,
 	sta_info_flush(sdata);
 
 	/* finally reset all BSS / config parameters */
-	changed |= ieee80211_reset_erp_info(sdata);
+	if (!sdata->vif.valid_links)
+		changed |= ieee80211_reset_erp_info(sdata);
 
 	ieee80211_led_assoc(local, 0);
 	changed |= BSS_CHANGED_ASSOC;
@@ -2925,9 +2921,10 @@ static void ieee80211_set_disassoc(struct ieee80211_sub_if_data *sdata,
 		changed |= BSS_CHANGED_QOS;
 		/* The BSSID (not really interesting) and HT changed */
 		changed |= BSS_CHANGED_BSSID | BSS_CHANGED_HT;
+		ieee80211_bss_info_change_notify(sdata, changed);
+	} else {
+		ieee80211_vif_cfg_change_notify(sdata, changed);
 	}
-
-	ieee80211_bss_info_change_notify(sdata, changed);
 
 	/* disassociated - set to defaults now */
 	ieee80211_set_wmm_default(&sdata->deflink, false, false);
@@ -4215,7 +4212,7 @@ out:
 
 static int ieee80211_mgd_setup_link_sta(struct ieee80211_link_data *link,
 					struct sta_info *sta,
-					struct ieee80211_link_sta *link_sta,
+					struct link_sta_info *link_sta,
 					struct cfg80211_bss *cbss)
 {
 	struct ieee80211_sub_if_data *sdata = link->sdata;
@@ -4229,6 +4226,7 @@ static int ieee80211_mgd_setup_link_sta(struct ieee80211_link_data *link,
 	struct ieee80211_supported_band *sband;
 
 	memcpy(link_sta->addr, cbss->bssid, ETH_ALEN);
+	memcpy(link_sta->pub->addr, cbss->bssid, ETH_ALEN);
 
 	/* TODO: S1G Basic Rate Set is expressed elsewhere */
 	if (cbss->channel->band == NL80211_BAND_S1GHZ) {
@@ -4261,7 +4259,7 @@ static int ieee80211_mgd_setup_link_sta(struct ieee80211_link_data *link,
 	}
 
 	if (rates)
-		link_sta->supp_rates[cbss->channel->band] = rates;
+		link_sta->pub->supp_rates[cbss->channel->band] = rates;
 	else
 		link_info(link, "No rates found, keeping mandatory only\n");
 
@@ -4860,7 +4858,7 @@ static bool ieee80211_assoc_success(struct ieee80211_sub_if_data *sdata,
 				goto out_err;
 		}
 
-		err = ieee80211_mgd_setup_link_sta(link, sta, link_sta->pub,
+		err = ieee80211_mgd_setup_link_sta(link, sta, link_sta,
 						   assoc_data->link[link_id].bss);
 		if (err)
 			goto out_err;
@@ -4927,6 +4925,7 @@ static bool ieee80211_assoc_success(struct ieee80211_sub_if_data *sdata,
 
 	return true;
 out_err:
+	eth_zero_addr(sdata->vif.cfg.ap_addr);
 	mutex_unlock(&sdata->local->sta_mtx);
 	return false;
 }
@@ -6391,7 +6390,7 @@ static int ieee80211_prep_connection(struct ieee80211_sub_if_data *sdata,
 	}
 
 	if (!have_sta) {
-		if (link_id >= 0)
+		if (mlo)
 			new_sta = sta_info_alloc_with_link(sdata, ap_mld_addr,
 							   link_id, cbss->bssid,
 							   GFP_KERNEL);
@@ -6402,6 +6401,8 @@ static int ieee80211_prep_connection(struct ieee80211_sub_if_data *sdata,
 			err = -ENOMEM;
 			goto out_err;
 		}
+
+		new_sta->sta.mlo = mlo;
 	}
 
 	/*
@@ -6419,10 +6420,10 @@ static int ieee80211_prep_connection(struct ieee80211_sub_if_data *sdata,
 	 */
 	if (new_sta) {
 		const struct cfg80211_bss_ies *ies;
-		struct ieee80211_link_sta *link_sta;
+		struct link_sta_info *link_sta;
 
 		rcu_read_lock();
-		link_sta = rcu_dereference(new_sta->sta.link[link_id]);
+		link_sta = rcu_dereference(new_sta->link[link_id]);
 		if (WARN_ON(!link_sta)) {
 			rcu_read_unlock();
 			sta_info_free(local, new_sta);
@@ -6641,6 +6642,9 @@ int ieee80211_mgd_auth(struct ieee80211_sub_if_data *sdata,
 	}
 
 	sdata_info(sdata, "authenticate with %pM\n", auth_data->ap_addr);
+
+	/* needed for transmitting the auth frame(s) properly */
+	memcpy(sdata->vif.cfg.ap_addr, auth_data->ap_addr, ETH_ALEN);
 
 	err = ieee80211_prep_connection(sdata, req->bss, req->link_id,
 					req->ap_mld_addr, cont_auth, false);
@@ -7044,6 +7048,8 @@ int ieee80211_mgd_assoc(struct ieee80211_sub_if_data *sdata,
 		goto err_clear;
 	}
 
+	/* keep old conn_flags from ieee80211_prep_channel() from auth */
+	conn_flags |= link->u.mgd.conn_flags;
 	conn_flags |= ieee80211_setup_assoc_link(sdata, assoc_data, req,
 						 conn_flags, assoc_link_id);
 	override = link->u.mgd.conn_flags != conn_flags;
@@ -7104,6 +7110,9 @@ int ieee80211_mgd_assoc(struct ieee80211_sub_if_data *sdata,
 		if (err)
 			goto err_clear;
 	}
+
+	/* needed for transmitting the assoc frames properly */
+	memcpy(sdata->vif.cfg.ap_addr, assoc_data->ap_addr, ETH_ALEN);
 
 	err = ieee80211_prep_connection(sdata, cbss, req->link_id,
 					req->ap_mld_addr, true, override);

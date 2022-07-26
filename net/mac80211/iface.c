@@ -444,6 +444,32 @@ static void ieee80211_free_links(struct ieee80211_sub_if_data *sdata,
 	}
 }
 
+static int ieee80211_check_dup_link_addrs(struct ieee80211_sub_if_data *sdata)
+{
+	unsigned int i, j;
+
+	for (i = 0; i < IEEE80211_MLD_MAX_NUM_LINKS; i++) {
+		struct ieee80211_link_data *link1;
+
+		link1 = sdata_dereference(sdata->link[i], sdata);
+		if (!link1)
+			continue;
+		for (j = i + 1; j < IEEE80211_MLD_MAX_NUM_LINKS; j++) {
+			struct ieee80211_link_data *link2;
+
+			link2 = sdata_dereference(sdata->link[j], sdata);
+			if (!link2)
+				continue;
+
+			if (ether_addr_equal(link1->conf->addr,
+					     link2->conf->addr))
+				return -EALREADY;
+		}
+	}
+
+	return 0;
+}
+
 static int ieee80211_vif_update_links(struct ieee80211_sub_if_data *sdata,
 				      struct link_container **to_free,
 				      u16 new_links)
@@ -488,18 +514,18 @@ static int ieee80211_vif_update_links(struct ieee80211_sub_if_data *sdata,
 
 	/* grab old links to free later */
 	for_each_set_bit(link_id, &rem, IEEE80211_MLD_MAX_NUM_LINKS) {
+		if (rcu_access_pointer(sdata->link[link_id]) != &sdata->deflink) {
+			/*
+			 * we must have allocated the data through this path so
+			 * we know we can free both at the same time
+			 */
+			to_free[link_id] = container_of(rcu_access_pointer(sdata->link[link_id]),
+							typeof(*links[link_id]),
+							data);
+		}
+
 		RCU_INIT_POINTER(sdata->link[link_id], NULL);
 		RCU_INIT_POINTER(sdata->vif.link_conf[link_id], NULL);
-
-		if (rcu_access_pointer(sdata->link[link_id]) == &sdata->deflink)
-			continue;
-		/*
-		 * we must have allocated the data through this path so
-		 * we know we can free both at the same time
-		 */
-		to_free[link_id] = container_of(rcu_access_pointer(sdata->link[link_id]),
-						typeof(*links[link_id]),
-						data);
 	}
 
 	/* link them into data structures */
@@ -518,10 +544,14 @@ static int ieee80211_vif_update_links(struct ieee80211_sub_if_data *sdata,
 
 	sdata->vif.valid_links = new_links;
 
-	/* tell the driver */
-	ret = drv_change_vif_links(sdata->local, sdata,
-				   old_links, new_links,
-				   old);
+	ret = ieee80211_check_dup_link_addrs(sdata);
+	if (!ret) {
+		/* tell the driver */
+		ret = drv_change_vif_links(sdata->local, sdata,
+					   old_links, new_links,
+					   old);
+	}
+
 	if (ret) {
 		/* restore config */
 		memcpy(sdata->link, old_data, sizeof(old_data));
@@ -590,9 +620,8 @@ static void ieee80211_do_stop(struct ieee80211_sub_if_data *sdata, bool going_do
 	bool cancel_scan;
 	struct cfg80211_nan_func *func;
 
-	spin_lock_bh(&local->fq.lock);
 	clear_bit(SDATA_STATE_RUNNING, &sdata->state);
-	spin_unlock_bh(&local->fq.lock);
+	synchronize_rcu(); /* flush _ieee80211_wake_txqs() */
 
 	cancel_scan = rcu_access_pointer(local->scan_sdata) == sdata;
 	if (cancel_scan)

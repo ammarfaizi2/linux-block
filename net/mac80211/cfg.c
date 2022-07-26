@@ -1597,7 +1597,7 @@ static void sta_apply_mesh_params(struct ieee80211_local *local,
 }
 
 static int sta_link_apply_parameters(struct ieee80211_local *local,
-				     struct sta_info *sta,
+				     struct sta_info *sta, bool new_link,
 				     struct link_station_parameters *params)
 {
 	int ret = 0;
@@ -1618,8 +1618,13 @@ static int sta_link_apply_parameters(struct ieee80211_local *local,
 		return -EINVAL;
 
 	if (params->link_mac) {
-		memcpy(link_sta->addr, params->link_mac, ETH_ALEN);
-		memcpy(link_sta->pub->addr, params->link_mac, ETH_ALEN);
+		if (new_link) {
+			memcpy(link_sta->addr, params->link_mac, ETH_ALEN);
+			memcpy(link_sta->pub->addr, params->link_mac, ETH_ALEN);
+		} else if (!ether_addr_equal(link_sta->addr,
+					     params->link_mac)) {
+			return -EINVAL;
+		}
 	}
 
 	if (params->txpwr_set) {
@@ -1679,21 +1684,9 @@ static int sta_apply_parameters(struct ieee80211_local *local,
 				struct sta_info *sta,
 				struct station_parameters *params)
 {
-	int ret = 0;
-	struct ieee80211_supported_band *sband;
 	struct ieee80211_sub_if_data *sdata = sta->sdata;
-	u32 link_id = params->link_sta_params.link_id < 0 ?
-		      0 : params->link_sta_params.link_id;
-	struct ieee80211_link_data *link;
 	u32 mask, set;
-
-	link = sdata_dereference(sdata->link[link_id], sdata);
-	if (!link)
-		return -ENOLINK;
-
-	sband = ieee80211_get_link_sband(link);
-	if (!sband)
-		return -EINVAL;
+	int ret = 0;
 
 	mask = params->sta_flags_mask;
 	set = params->sta_flags_set;
@@ -1797,7 +1790,8 @@ static int sta_apply_parameters(struct ieee80211_local *local,
 	if (params->listen_interval >= 0)
 		sta->listen_interval = params->listen_interval;
 
-	ret = sta_link_apply_parameters(local, sta, &params->link_sta_params);
+	ret = sta_link_apply_parameters(local, sta, false,
+					&params->link_sta_params);
 	if (ret)
 		return ret;
 
@@ -1854,10 +1848,15 @@ static int ieee80211_add_station(struct wiphy *wiphy, struct net_device *dev,
 	    !sdata->u.mgd.associated)
 		return -EINVAL;
 
+	/*
+	 * If we have a link ID, it can be a non-MLO station on an AP MLD,
+	 * but we need to have a link_mac in that case as well, so use the
+	 * STA's MAC address in that case.
+	 */
 	if (params->link_sta_params.link_id >= 0)
 		sta = sta_info_alloc_with_link(sdata, mac,
 					       params->link_sta_params.link_id,
-					       params->link_sta_params.link_mac,
+					       params->link_sta_params.link_mac ?: mac,
 					       GFP_KERNEL);
 	else
 		sta = sta_info_alloc(sdata, mac, GFP_KERNEL);
@@ -4638,6 +4637,9 @@ static int sta_add_link_station(struct ieee80211_local *local,
 	if (!sta)
 		return -ENOENT;
 
+	if (!sta->sta.valid_links)
+		return -EINVAL;
+
 	if (sta->sta.valid_links & BIT(params->link_id))
 		return -EALREADY;
 
@@ -4645,7 +4647,7 @@ static int sta_add_link_station(struct ieee80211_local *local,
 	if (ret)
 		return ret;
 
-	ret = sta_link_apply_parameters(local, sta, params);
+	ret = sta_link_apply_parameters(local, sta, true, params);
 	if (ret) {
 		ieee80211_sta_free_link(sta, params->link_id);
 		return ret;
@@ -4683,7 +4685,7 @@ static int sta_mod_link_station(struct ieee80211_local *local,
 	if (!(sta->sta.valid_links & BIT(params->link_id)))
 		return -EINVAL;
 
-	return sta_link_apply_parameters(local, sta, params);
+	return sta_link_apply_parameters(local, sta, false, params);
 }
 
 static int
@@ -4711,6 +4713,10 @@ static int sta_del_link_station(struct ieee80211_sub_if_data *sdata,
 		return -ENOENT;
 
 	if (!(sta->sta.valid_links & BIT(params->link_id)))
+		return -EINVAL;
+
+	/* must not create a STA without links */
+	if (sta->sta.valid_links == BIT(params->link_id))
 		return -EINVAL;
 
 	ieee80211_sta_remove_link(sta, params->link_id);

@@ -3644,7 +3644,13 @@ static ieee80211_rx_result debug_noinline
 ieee80211_rx_h_userspace_mgmt(struct ieee80211_rx_data *rx)
 {
 	struct ieee80211_rx_status *status = IEEE80211_SKB_RXCB(rx->skb);
-	int sig = 0;
+	struct cfg80211_rx_info info = {
+		.freq = ieee80211_rx_status_to_khz(status),
+		.buf = rx->skb->data,
+		.len = rx->skb->len,
+		.link_id = rx->link_id,
+		.have_link_id = rx->link_id >= 0,
+	};
 
 	/* skip known-bad action frames and return them in the next handler */
 	if (status->rx_flags & IEEE80211_RX_MALFORMED_ACTION_FRM)
@@ -3659,11 +3665,15 @@ ieee80211_rx_h_userspace_mgmt(struct ieee80211_rx_data *rx)
 
 	if (ieee80211_hw_check(&rx->local->hw, SIGNAL_DBM) &&
 	    !(status->flag & RX_FLAG_NO_SIGNAL_VAL))
-		sig = status->signal;
+		info.sig_dbm = status->signal;
 
-	if (cfg80211_rx_mgmt_khz(&rx->sdata->wdev,
-				 ieee80211_rx_status_to_khz(status), sig,
-				 rx->skb->data, rx->skb->len, 0)) {
+	if (ieee80211_is_timing_measurement(rx->skb) ||
+	    ieee80211_is_ftm(rx->skb)) {
+		info.rx_tstamp = ktime_to_ns(skb_hwtstamps(rx->skb)->hwtstamp);
+		info.ack_tstamp = ktime_to_ns(status->ack_tx_hwtstamp);
+	}
+
+	if (cfg80211_rx_mgmt_ext(&rx->sdata->wdev, &info)) {
 		if (rx->sta)
 			rx->sta->deflink.rx_stats.packets++;
 		dev_kfree_skb(rx->skb);
@@ -3764,7 +3774,7 @@ ieee80211_rx_h_action_return(struct ieee80211_rx_data *rx)
 					local->hw.offchannel_tx_hw_queue;
 		}
 
-		__ieee80211_tx_skb_tid_band(rx->sdata, nskb, 7,
+		__ieee80211_tx_skb_tid_band(rx->sdata, nskb, 7, -1,
 					    status->band);
 	}
 	dev_kfree_skb(rx->skb);
@@ -3980,6 +3990,9 @@ static void ieee80211_rx_handlers(struct ieee80211_rx_data *rx,
 		 */
 		rx->skb = skb;
 
+		if (WARN_ON_ONCE(!rx->link))
+			goto rxh_next;
+
 		CALL_RXH(ieee80211_rx_h_check_more_data);
 		CALL_RXH(ieee80211_rx_h_uapsd_and_pspoll);
 		CALL_RXH(ieee80211_rx_h_sta_process);
@@ -4108,6 +4121,7 @@ void ieee80211_mark_rx_ba_filtered_frames(struct ieee80211_sta *pubsta, u8 tid,
 
 	rx.sta = sta;
 	rx.sdata = sta->sdata;
+	rx.link = &rx.sdata->deflink;
 	rx.local = sta->local;
 
 	rcu_read_lock();
@@ -4748,18 +4762,30 @@ static bool ieee80211_prepare_and_rx_handle(struct ieee80211_rx_data *rx,
 	if (!ieee80211_accept_frame(rx))
 		return false;
 
+	if (rx->link_id >= 0) {
+		link = rcu_dereference(rx->sdata->link[rx->link_id]);
+
+		/* we might race link removal */
+		if (!link)
+			return true;
+		rx->link = link;
+	} else {
+		rx->link = &sdata->deflink;
+	}
+
 	if (unlikely(!is_multicast_ether_addr(hdr->addr1) &&
 		     rx->link_id >= 0 && rx->sta && rx->sta->sta.mlo)) {
 		link_sta = rcu_dereference(rx->sta->link[rx->link_id]);
-		link = rcu_dereference(rx->sdata->link[rx->link_id]);
 
-		if (WARN_ON_ONCE(!link_sta || !link))
+		if (WARN_ON_ONCE(!link_sta))
 			return true;
 	}
 
 	if (!consume) {
-		skb = skb_copy(skb, GFP_ATOMIC);
-		if (!skb) {
+		struct skb_shared_hwtstamps *shwt;
+
+		rx->skb = skb_copy(skb, GFP_ATOMIC);
+		if (!rx->skb) {
 			if (net_ratelimit())
 				wiphy_debug(local->hw.wiphy,
 					"failed to copy skb for %s\n",
@@ -4767,7 +4793,11 @@ static bool ieee80211_prepare_and_rx_handle(struct ieee80211_rx_data *rx,
 			return true;
 		}
 
-		rx->skb = skb;
+		/* skb_copy() does not copy the hw timestamps, so copy it
+		 * explicitly
+		 */
+		shwt = skb_hwtstamps(rx->skb);
+		shwt->hwtstamp = skb_hwtstamps(skb)->hwtstamp;
 	}
 
 	if (unlikely(link_sta)) {
@@ -4776,10 +4806,14 @@ static bool ieee80211_prepare_and_rx_handle(struct ieee80211_rx_data *rx,
 			ether_addr_copy(hdr->addr1, rx->sdata->vif.addr);
 		if (ether_addr_equal(link_sta->addr, hdr->addr2))
 			ether_addr_copy(hdr->addr2, rx->sta->addr);
-		if (ether_addr_equal(link_sta->addr, hdr->addr3))
-			ether_addr_copy(hdr->addr3, rx->sta->addr);
-		else if (ether_addr_equal(link->conf->addr, hdr->addr3))
-			ether_addr_copy(hdr->addr3, rx->sdata->vif.addr);
+		/* translate A3 only if it's the BSSID */
+		if (!ieee80211_has_tods(hdr->frame_control) &&
+		    !ieee80211_has_fromds(hdr->frame_control)) {
+			if (ether_addr_equal(link_sta->addr, hdr->addr3))
+				ether_addr_copy(hdr->addr3, rx->sta->addr);
+			else if (ether_addr_equal(link->conf->addr, hdr->addr3))
+				ether_addr_copy(hdr->addr3, rx->sdata->vif.addr);
+		}
 		/* not needed for A4 since it can only carry the SA */
 	}
 
@@ -4813,6 +4847,7 @@ static void __ieee80211_rx_handle_8023(struct ieee80211_hw *hw,
 
 	rx.sta = container_of(pubsta, struct sta_info, sta);
 	rx.sdata = rx.sta->sdata;
+	rx.link = &rx.sdata->deflink;
 
 	fast_rx = rcu_dereference(rx.sta->fast_rx);
 	if (!fast_rx)

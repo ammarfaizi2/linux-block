@@ -125,6 +125,22 @@
  * via the usual ieee80211_tx_dequeue).
  */
 
+/**
+ * DOC: HW timestamping
+ *
+ * Timing Measurement and Fine Timing Measurement require accurate timestamps
+ * of the action frames TX/RX and their respective acks.
+ *
+ * To report hardware timestamps for Timing Measurement or Fine Timing
+ * Measurement frame RX, the low level driver should set the SKB's hwtstamp
+ * field to the frame RX timestamp and report the ack TX timestamp in the
+ * ieee80211_rx_status struct.
+ *
+ * Similarly, To report hardware timestamps for Timing Measurement or Fine
+ * Timing Measurement frame TX, the driver should set the SKB's hwtstamp field
+ * to the frame TX timestamp and report the ack RX timestamp in the
+ * ieee80211_tx_status struct.
+ */
 struct device;
 
 /**
@@ -866,10 +882,14 @@ enum mac80211_tx_info_flags {
  * @IEEE80211_TX_CTRL_DONT_REORDER: This frame should not be reordered
  *	relative to other frames that have this flag set, independent
  *	of their QoS TID or other priority field values.
+ * @IEEE80211_TX_CTRL_MCAST_MLO_FIRST_TX: first MLO TX, used mostly internally
+ *	for sequence number assignment
  * @IEEE80211_TX_CTRL_MLO_LINK: If not @IEEE80211_LINK_UNSPECIFIED, this
  *	frame should be transmitted on the specific link. This really is
  *	only relevant for frames that do not have data present, and is
- *	also not used for 802.3 format frames.
+ *	also not used for 802.3 format frames. Note that even if the frame
+ *	is on a specific link, address translation might still apply if
+ *	it's intended for an MLD.
  *
  * These flags are used in tx_info->control.flags.
  */
@@ -883,10 +903,14 @@ enum mac80211_tx_control_flags {
 	IEEE80211_TX_INTCFL_NEED_TXPROCESSING	= BIT(6),
 	IEEE80211_TX_CTRL_NO_SEQNO		= BIT(7),
 	IEEE80211_TX_CTRL_DONT_REORDER		= BIT(8),
+	IEEE80211_TX_CTRL_MCAST_MLO_FIRST_TX	= BIT(9),
 	IEEE80211_TX_CTRL_MLO_LINK		= 0xf0000000,
 };
 
 #define IEEE80211_LINK_UNSPECIFIED	0xf
+#define IEEE80211_TX_CTRL_MLO_LINK_UNSPEC	\
+	u32_encode_bits(IEEE80211_LINK_UNSPECIFIED, \
+			IEEE80211_TX_CTRL_MLO_LINK)
 
 /**
  * enum mac80211_tx_status_flags - flags to describe transmit status
@@ -1176,12 +1200,16 @@ struct ieee80211_rate_status {
  * @rates: Mrr stages that were used when sending the packet
  * @n_rates: Number of mrr stages (count of instances for @rates)
  * @free_list: list where processed skbs are stored to be free'd by the driver
+ * @ack_hwtstamp: Hardware timestamp of the received ack in nanoseconds
+ *	Only needed for Timing measurement and Fine timing measurement action
+ *	frames. Only reported by devices that have timestamping enabled.
  */
 struct ieee80211_tx_status {
 	struct ieee80211_sta *sta;
 	struct ieee80211_tx_info *info;
 	struct sk_buff *skb;
 	struct ieee80211_rate_status *rates;
+	ktime_t ack_hwtstamp;
 	u8 n_rates;
 
 	struct list_head *free_list;
@@ -1419,6 +1447,9 @@ enum mac80211_rx_encoding {
  * 	(TSF) timer when the first data symbol (MPDU) arrived at the hardware.
  * @boottime_ns: CLOCK_BOOTTIME timestamp the frame was received at, this is
  *	needed only for beacons and probe responses that update the scan cache.
+ * @ack_tx_hwtstamp: Hardware timestamp for the ack TX in nanoseconds. Only
+ *	needed for Timing measurement and Fine timing measurement action frames.
+ *	Only reported by devices that have timestamping enabled.
  * @device_timestamp: arbitrary timestamp for the device, mac80211 doesn't use
  *	it but can store it and pass it back to the driver for synchronisation
  * @band: the active band when this frame was received
@@ -1452,7 +1483,10 @@ enum mac80211_rx_encoding {
  */
 struct ieee80211_rx_status {
 	u64 mactime;
-	u64 boottime_ns;
+	union {
+		u64 boottime_ns;
+		ktime_t ack_tx_hwtstamp;
+	};
 	u32 device_timestamp;
 	u32 ampdu_reference;
 	u32 flag;
@@ -1821,6 +1855,13 @@ struct ieee80211_vif {
 	/* must be last */
 	u8 drv_priv[] __aligned(sizeof(void *));
 };
+
+/* FIXME: for now loop over all the available links; later will be changed
+ * to loop only over the active links.
+ */
+#define for_each_vif_active_link(vif, link, link_id)			     \
+	for (link_id = 0; link_id < ARRAY_SIZE((vif)->link_conf); link_id++) \
+		if ((link = rcu_dereference((vif)->link_conf[link_id])))
 
 static inline bool ieee80211_vif_is_mesh(struct ieee80211_vif *vif)
 {
@@ -2214,6 +2255,14 @@ struct ieee80211_sta {
 	u8 drv_priv[] __aligned(sizeof(void *));
 };
 
+/* FIXME: need to loop only over links which are active and check the actual
+ * lock
+ */
+#define for_each_sta_active_link(sta, link_sta, link_id)		         \
+	for (link_id = 0; link_id < ARRAY_SIZE((sta)->link); link_id++)	         \
+		if (((link_sta) = rcu_dereference_protected((sta)->link[link_id],\
+							    1)))	         \
+
 /**
  * enum sta_notify_cmd - sta notify command
  *
@@ -2496,6 +2545,9 @@ struct ieee80211_txq {
  * @IEEE80211_HW_DETECTS_COLOR_COLLISION: HW/driver has support for BSS color
  *	collision detection and doesn't need it in software.
  *
+ * @IEEE80211_HW_MLO_MCAST_MULTI_LINK_TX: Hardware/driver handles transmitting
+ *	multicast frames on all links, mac80211 should not do that.
+ *
  * @NUM_IEEE80211_HW_FLAGS: number of hardware flags, used for sizing arrays
  */
 enum ieee80211_hw_flags {
@@ -2552,6 +2604,7 @@ enum ieee80211_hw_flags {
 	IEEE80211_HW_SUPPORTS_RX_DECAP_OFFLOAD,
 	IEEE80211_HW_SUPPORTS_CONC_MON_RX_DECAP,
 	IEEE80211_HW_DETECTS_COLOR_COLLISION,
+	IEEE80211_HW_MLO_MCAST_MULTI_LINK_TX,
 
 	/* keep last, obviously */
 	NUM_IEEE80211_HW_FLAGS
