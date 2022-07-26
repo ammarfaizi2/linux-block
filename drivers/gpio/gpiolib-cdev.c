@@ -421,6 +421,10 @@ out_free_lh:
  * @work: the worker that implements software debouncing
  * @sw_debounced: flag indicating if the software debouncer is active
  * @level: the current debounced physical level of the line
+ * @hdesc: the Hardware Timestamp Engine (HTE) descriptor
+ * @raw_level: the line level at the time of event
+ * @total_discard_seq: the running counter of the discarded events
+ * @last_seqno: the last sequence number before debounce period expires
  */
 struct line {
 	struct gpio_desc *desc;
@@ -1460,11 +1464,12 @@ static ssize_t linereq_read(struct file *file,
 static void linereq_free(struct linereq *lr)
 {
 	unsigned int i;
-	bool hte;
+	bool hte = false;
 
 	for (i = 0; i < lr->num_lines; i++) {
-		hte = !!test_bit(FLAG_EVENT_CLOCK_HTE,
-				 &lr->lines[i].desc->flags);
+		if (lr->lines[i].desc)
+			hte = !!test_bit(FLAG_EVENT_CLOCK_HTE,
+					 &lr->lines[i].desc->flags);
 		edge_detector_stop(&lr->lines[i], hte);
 		if (lr->lines[i].desc)
 			gpiod_free(lr->lines[i].desc);

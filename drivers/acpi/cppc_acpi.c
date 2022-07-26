@@ -578,6 +578,19 @@ bool __weak cpc_ffh_supported(void)
 }
 
 /**
+ * cpc_supported_by_cpu() - check if CPPC is supported by CPU
+ *
+ * Check if the architectural support for CPPC is present even
+ * if the _OSC hasn't prescribed it
+ *
+ * Return: true for supported, false for not supported
+ */
+bool __weak cpc_supported_by_cpu(void)
+{
+	return false;
+}
+
+/**
  * pcc_data_alloc() - Allocate the pcc_data memory for pcc subspace
  *
  * Check and allocate the cppc_pcc_data memory.
@@ -684,8 +697,11 @@ int acpi_cppc_processor_probe(struct acpi_processor *pr)
 	acpi_status status;
 	int ret = -ENODATA;
 
-	if (osc_sb_cppc_not_supported)
-		return -ENODEV;
+	if (!osc_sb_cppc2_support_acked) {
+		pr_debug("CPPC v2 _OSC not acked\n");
+		if (!cpc_supported_by_cpu())
+			return -ENODEV;
+	}
 
 	/* Parse the ACPI _CPC table for this CPU. */
 	status = acpi_evaluate_object_typed(handle, "_CPC", NULL, &output,
@@ -766,7 +782,8 @@ int acpi_cppc_processor_probe(struct acpi_processor *pr)
 
 					if (!osc_cpc_flexible_adr_space_confirmed) {
 						pr_debug("Flexible address space capability not supported\n");
-						goto out_free;
+						if (!cpc_supported_by_cpu())
+							goto out_free;
 					}
 
 					addr = ioremap(gas_t->address, gas_t->bit_width/8);
@@ -793,7 +810,8 @@ int acpi_cppc_processor_probe(struct acpi_processor *pr)
 				}
 				if (!osc_cpc_flexible_adr_space_confirmed) {
 					pr_debug("Flexible address space capability not supported\n");
-					goto out_free;
+					if (!cpc_supported_by_cpu())
+						goto out_free;
 				}
 			} else {
 				if (gas_t->space_id != ACPI_ADR_SPACE_FIXED_HARDWARE || !cpc_ffh_supported()) {
