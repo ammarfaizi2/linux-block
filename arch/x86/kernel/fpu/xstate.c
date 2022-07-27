@@ -1215,20 +1215,19 @@ static int copy_uabi_to_xstate(struct fpstate *fpstate, const void *kbuf,
 	/* Validate MXCSR when any of the related features is in use */
 	mask = XFEATURE_MASK_FP | XFEATURE_MASK_SSE | XFEATURE_MASK_YMM;
 	if (hdr.xfeatures & mask) {
-		u32 mxcsr[2];
+		u32 mxcsr;
 
 		offset = offsetof(struct fxregs_state, mxcsr);
-		if (copy_from_buffer(mxcsr, offset, sizeof(mxcsr), kbuf, ubuf))
+		if (copy_from_buffer(&mxcsr, offset, sizeof(mxcsr), kbuf, ubuf))
 			return -EFAULT;
 
 		/* Reserved bits in MXCSR must be zero. */
-		if (mxcsr[0] & ~mxcsr_feature_mask)
+		if (mxcsr & ~mxcsr_feature_mask)
 			return -EINVAL;
 
 		/* SSE and YMM require MXCSR even when FP is not in use. */
 		if (!(hdr.xfeatures & XFEATURE_MASK_FP)) {
-			xsave->i387.mxcsr = mxcsr[0];
-			xsave->i387.mxcsr_mask = mxcsr[1];
+			xsave->i387.mxcsr = mxcsr;
 		}
 	}
 
