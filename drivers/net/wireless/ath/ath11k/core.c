@@ -70,6 +70,7 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 			.summary_pad_sz = 0,
 			.fft_hdr_len = 16,
 			.max_fft_bins = 512,
+			.fragment_160mhz = true,
 		},
 
 		.interface_modes = BIT(NL80211_IFTYPE_STATION) |
@@ -141,6 +142,7 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 			.summary_pad_sz = 0,
 			.fft_hdr_len = 16,
 			.max_fft_bins = 512,
+			.fragment_160mhz = true,
 		},
 
 		.interface_modes = BIT(NL80211_IFTYPE_STATION) |
@@ -212,6 +214,7 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 			.summary_pad_sz = 0,
 			.fft_hdr_len = 0,
 			.max_fft_bins = 0,
+			.fragment_160mhz = false,
 		},
 
 		.interface_modes = BIT(NL80211_IFTYPE_STATION) |
@@ -281,6 +284,7 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 			.summary_pad_sz = 16,
 			.fft_hdr_len = 24,
 			.max_fft_bins = 1024,
+			.fragment_160mhz = false,
 		},
 
 		.interface_modes = BIT(NL80211_IFTYPE_STATION) |
@@ -352,6 +356,7 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 			.summary_pad_sz = 0,
 			.fft_hdr_len = 0,
 			.max_fft_bins = 0,
+			.fragment_160mhz = false,
 		},
 
 		.interface_modes = BIT(NL80211_IFTYPE_STATION) |
@@ -422,6 +427,7 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 			.summary_pad_sz = 0,
 			.fft_hdr_len = 0,
 			.max_fft_bins = 0,
+			.fragment_160mhz = false,
 		},
 
 		.interface_modes = BIT(NL80211_IFTYPE_STATION) |
@@ -491,6 +497,7 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 			.summary_pad_sz = 0,
 			.fft_hdr_len = 0,
 			.max_fft_bins = 0,
+			.fragment_160mhz = false,
 		},
 
 		.interface_modes = BIT(NL80211_IFTYPE_STATION) |
