@@ -1207,7 +1207,6 @@ static int copy_uabi_to_xstate(struct fpstate *fpstate, const void *kbuf,
 	struct xregs_state *xsave = &fpstate->regs.xsave;
 	unsigned int offset, size;
 	struct xstate_header hdr;
-	u64 mask;
 	int i;
 
 	offset = offsetof(struct xregs_state, header);
@@ -1221,8 +1220,7 @@ static int copy_uabi_to_xstate(struct fpstate *fpstate, const void *kbuf,
 	 * Validate and copy MXCSR as XRSTOR would do.  Note that, if support
 	 * for compacted input is added, this logic needs to change.
 	 */
-	mask = XFEATURE_MASK_SSE | XFEATURE_MASK_YMM;
-	if (hdr.xfeatures & mask) {
+	if (hdr.xfeatures & (XFEATURE_MASK_SSE | XFEATURE_MASK_YMM)) {
 		u32 mxcsr;
 
 		offset = offsetof(struct fxregs_state, mxcsr);
@@ -1251,9 +1249,7 @@ static int copy_uabi_to_xstate(struct fpstate *fpstate, const void *kbuf,
 	}
 
 	for (i = 1; i < XFEATURE_MAX; i++) {
-		mask = BIT_ULL(i);
-
-		if (hdr.xfeatures & mask) {
+		if (hdr.xfeatures & BIT_ULL(i)) {
 			void *dst = __raw_xsave_addr(xsave, i);
 
 			offset = xstate_offsets[i];
