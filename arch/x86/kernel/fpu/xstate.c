@@ -1195,6 +1195,11 @@ static int copy_from_buffer(void *dst, unsigned int offset, unsigned int size,
 	return 0;
 }
 
+#define FP_BASE_OFFS	0
+#define FP_BASE_SIZE	offsetof(struct fxregs_state, mxcsr)
+
+#define FP_REGS_OFFS	offsetof(struct fxregs_state, st_space)
+#define FP_REGS_SIZE	sizeof(init_fpstate.regs.fxsave.st_space)
 
 static int copy_uabi_to_xstate(struct fpstate *fpstate, const void *kbuf,
 			       const void __user *ubuf)
@@ -1212,8 +1217,11 @@ static int copy_uabi_to_xstate(struct fpstate *fpstate, const void *kbuf,
 	if (validate_user_xstate_header(&hdr, fpstate))
 		return -EINVAL;
 
-	/* Validate MXCSR when any of the related features is in use */
-	mask = XFEATURE_MASK_FP | XFEATURE_MASK_SSE | XFEATURE_MASK_YMM;
+	/*
+	 * Validate and copy MXCSR as XRSTOR would do.  Note that, if support
+	 * for compacted input is added, this logic needs to change.
+	 */
+	mask = XFEATURE_MASK_SSE | XFEATURE_MASK_YMM;
 	if (hdr.xfeatures & mask) {
 		u32 mxcsr;
 
@@ -1225,13 +1233,24 @@ static int copy_uabi_to_xstate(struct fpstate *fpstate, const void *kbuf,
 		if (mxcsr & ~mxcsr_feature_mask)
 			return -EINVAL;
 
-		/* SSE and YMM require MXCSR even when FP is not in use. */
-		if (!(hdr.xfeatures & XFEATURE_MASK_FP)) {
-			xsave->i387.mxcsr = mxcsr;
-		}
+		xsave->i387.mxcsr = mxcsr;
+	} else {
+		xsave->i387.mxcsr = MXCSR_DEFAULT;
 	}
 
-	for (i = 0; i < XFEATURE_MAX; i++) {
+	if (hdr.xfeatures & XFEATURE_MASK_FP) {
+		/* Copy FP state here and skip mxcsr and mxcsr_mask */
+		void *dst = __raw_xsave_addr(xsave, 0);
+
+		if (copy_from_buffer(dst, FP_BASE_OFFS, FP_BASE_SIZE, kbuf, ubuf))
+			return -EFAULT;
+
+		dst += FP_REGS_OFFS;
+		if (copy_from_buffer(dst, FP_REGS_OFFS, FP_REGS_SIZE, kbuf, ubuf))
+			return -EFAULT;
+	}
+
+	for (i = 1; i < XFEATURE_MAX; i++) {
 		mask = BIT_ULL(i);
 
 		if (hdr.xfeatures & mask) {
