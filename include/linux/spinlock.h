@@ -99,11 +99,17 @@
   extern void __raw_spin_lock_init(raw_spinlock_t *lock, const char *name,
 				   struct lock_class_key *key, short inner);
 
+static inline void _raw_spin_lock_init(raw_spinlock_t *lock, const char *name,
+				       struct lock_class_key *key)
+{
+	__raw_spin_lock_init(lock, name, key, LD_WAIT_SPIN);
+}
+
 # define raw_spin_lock_init(lock)					\
 do {									\
 	static struct lock_class_key __key;				\
 									\
-	__raw_spin_lock_init((lock), #lock, &__key, LD_WAIT_SPIN);	\
+	_raw_spin_lock_init((lock), #lock, &__key);			\
 } while (0)
 
 #else
