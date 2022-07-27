@@ -262,6 +262,7 @@ static void handle_ksmbd_work(struct work_struct *wk)
 	ksmbd_conn_try_dequeue_request(work);
 	ksmbd_free_work_struct(work);
 	atomic_dec(&conn->r_count);
+	wake_up_all(&conn->r_count_q);
 }
 
 /**
