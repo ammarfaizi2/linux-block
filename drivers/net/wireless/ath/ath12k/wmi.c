@@ -1780,50 +1780,50 @@ int ath12k_wmi_vdev_install_key(struct ath12k *ar,
 }
 
 static void ath12k_wmi_copy_peer_flags(struct wmi_peer_assoc_complete_cmd *cmd,
-				       struct peer_assoc_params *param,
+				       struct ath12k_wmi_peer_assoc_arg *arg,
 				       bool hw_crypto_disabled)
 {
 	cmd->peer_flags = 0;
 
-	if (param->is_wme_set) {
-		if (param->qos_flag)
+	if (arg->is_wme_set) {
+		if (arg->qos_flag)
 			cmd->peer_flags |= cpu_to_le32(WMI_PEER_QOS);
-		if (param->apsd_flag)
+		if (arg->apsd_flag)
 			cmd->peer_flags |= cpu_to_le32(WMI_PEER_APSD);
-		if (param->ht_flag)
+		if (arg->ht_flag)
 			cmd->peer_flags |= cpu_to_le32(WMI_PEER_HT);
-		if (param->bw_40)
+		if (arg->bw_40)
 			cmd->peer_flags |= cpu_to_le32(WMI_PEER_40MHZ);
-		if (param->bw_80)
+		if (arg->bw_80)
 			cmd->peer_flags |= cpu_to_le32(WMI_PEER_80MHZ);
-		if (param->bw_160)
+		if (arg->bw_160)
 			cmd->peer_flags |= cpu_to_le32(WMI_PEER_160MHZ);
 
 		/* Typically if STBC is enabled for VHT it should be enabled
 		 * for HT as well
 		 **/
-		if (param->stbc_flag)
+		if (arg->stbc_flag)
 			cmd->peer_flags |= cpu_to_le32(WMI_PEER_STBC);
 
 		/* Typically if LDPC is enabled for VHT it should be enabled
 		 * for HT as well
 		 **/
-		if (param->ldpc_flag)
+		if (arg->ldpc_flag)
 			cmd->peer_flags |= cpu_to_le32(WMI_PEER_LDPC);
 
-		if (param->static_mimops_flag)
+		if (arg->static_mimops_flag)
 			cmd->peer_flags |= cpu_to_le32(WMI_PEER_STATIC_MIMOPS);
-		if (param->dynamic_mimops_flag)
+		if (arg->dynamic_mimops_flag)
 			cmd->peer_flags |= cpu_to_le32(WMI_PEER_DYN_MIMOPS);
-		if (param->spatial_mux_flag)
+		if (arg->spatial_mux_flag)
 			cmd->peer_flags |= cpu_to_le32(WMI_PEER_SPATIAL_MUX);
-		if (param->vht_flag)
+		if (arg->vht_flag)
 			cmd->peer_flags |= cpu_to_le32(WMI_PEER_VHT);
-		if (param->he_flag)
+		if (arg->he_flag)
 			cmd->peer_flags |= cpu_to_le32(WMI_PEER_HE);
-		if (param->twt_requester)
+		if (arg->twt_requester)
 			cmd->peer_flags |= cpu_to_le32(WMI_PEER_TWT_REQ);
-		if (param->twt_responder)
+		if (arg->twt_responder)
 			cmd->peer_flags |= cpu_to_le32(WMI_PEER_TWT_RESP);
 	}
 
@@ -1831,39 +1831,39 @@ static void ath12k_wmi_copy_peer_flags(struct wmi_peer_assoc_complete_cmd *cmd,
 	 * (during re-association).
 	 * Authorization will be done for these modes on key installation.
 	 */
-	if (param->auth_flag)
+	if (arg->auth_flag)
 		cmd->peer_flags |= cpu_to_le32(WMI_PEER_AUTH);
-	if (param->need_ptk_4_way) {
+	if (arg->need_ptk_4_way) {
 		cmd->peer_flags |= cpu_to_le32(WMI_PEER_NEED_PTK_4_WAY);
 		if (!hw_crypto_disabled)
 			cmd->peer_flags &= cpu_to_le32(~WMI_PEER_AUTH);
 	}
-	if (param->need_gtk_2_way)
+	if (arg->need_gtk_2_way)
 		cmd->peer_flags |= cpu_to_le32(WMI_PEER_NEED_GTK_2_WAY);
 	/* safe mode bypass the 4-way handshake */
-	if (param->safe_mode_enabled)
+	if (arg->safe_mode_enabled)
 		cmd->peer_flags &= cpu_to_le32(~(WMI_PEER_NEED_PTK_4_WAY |
 						 WMI_PEER_NEED_GTK_2_WAY));
 
-	if (param->is_pmf_enabled)
+	if (arg->is_pmf_enabled)
 		cmd->peer_flags |= cpu_to_le32(WMI_PEER_PMF);
 
 	/* Disable AMSDU for station transmit, if user configures it */
 	/* Disable AMSDU for AP transmit to 11n Stations, if user configures
 	 * it
-	 * if (param->amsdu_disable) Add after FW support
+	 * if (arg->amsdu_disable) Add after FW support
 	 **/
 
 	/* Target asserts if node is marked HT and all MCS is set to 0.
 	 * Mark the node as non-HT if all the mcs rates are disabled through
 	 * iwpriv
 	 **/
-	if (param->peer_ht_rates.num_rates == 0)
+	if (arg->peer_ht_rates.num_rates == 0)
 		cmd->peer_flags &= cpu_to_le32(~WMI_PEER_HT);
 }
 
 int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
-				   struct peer_assoc_params *param)
+				   struct ath12k_wmi_peer_assoc_arg *arg)
 {
 	struct ath12k_pdev_wmi *wmi = ar->wmi;
 	struct wmi_peer_assoc_complete_cmd *cmd;
@@ -1876,16 +1876,16 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 	u32 peer_ht_rates_align;
 	int i, ret, len;
 
-	peer_legacy_rates_align = roundup(param->peer_legacy_rates.num_rates,
+	peer_legacy_rates_align = roundup(arg->peer_legacy_rates.num_rates,
 					  sizeof(u32));
-	peer_ht_rates_align = roundup(param->peer_ht_rates.num_rates,
+	peer_ht_rates_align = roundup(arg->peer_ht_rates.num_rates,
 				      sizeof(u32));
 
 	len = sizeof(*cmd) +
 	      TLV_HDR_SIZE + (peer_legacy_rates_align * sizeof(u8)) +
 	      TLV_HDR_SIZE + (peer_ht_rates_align * sizeof(u8)) +
 	      sizeof(*mcs) + TLV_HDR_SIZE +
-	      (sizeof(*he_mcs) * param->peer_he_mcs_count);
+	      (sizeof(*he_mcs) * arg->peer_he_mcs_count);
 
 	skb = ath12k_wmi_alloc_skb(wmi->wmi_ab, len);
 	if (!skb)
@@ -1897,36 +1897,36 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PEER_ASSOC_COMPLETE_CMD,
 						 sizeof(*cmd));
 
-	cmd->vdev_id = cpu_to_le32(param->vdev_id);
+	cmd->vdev_id = cpu_to_le32(arg->vdev_id);
 
-	cmd->peer_new_assoc = cpu_to_le32(param->peer_new_assoc);
-	cmd->peer_associd = cpu_to_le32(param->peer_associd);
+	cmd->peer_new_assoc = cpu_to_le32(arg->peer_new_assoc);
+	cmd->peer_associd = cpu_to_le32(arg->peer_associd);
 
-	ath12k_wmi_copy_peer_flags(cmd, param,
+	ath12k_wmi_copy_peer_flags(cmd, arg,
 				   test_bit(ATH12K_FLAG_HW_CRYPTO_DISABLED,
 					    &ar->ab->dev_flags));
 
-	ether_addr_copy(cmd->peer_macaddr.addr, param->peer_mac);
+	ether_addr_copy(cmd->peer_macaddr.addr, arg->peer_mac);
 
-	cmd->peer_rate_caps = cpu_to_le32(param->peer_rate_caps);
-	cmd->peer_caps = cpu_to_le32(param->peer_caps);
-	cmd->peer_listen_intval = cpu_to_le32(param->peer_listen_intval);
-	cmd->peer_ht_caps = cpu_to_le32(param->peer_ht_caps);
-	cmd->peer_max_mpdu = cpu_to_le32(param->peer_max_mpdu);
-	cmd->peer_mpdu_density = cpu_to_le32(param->peer_mpdu_density);
-	cmd->peer_vht_caps = cpu_to_le32(param->peer_vht_caps);
-	cmd->peer_phymode = cpu_to_le32(param->peer_phymode);
+	cmd->peer_rate_caps = cpu_to_le32(arg->peer_rate_caps);
+	cmd->peer_caps = cpu_to_le32(arg->peer_caps);
+	cmd->peer_listen_intval = cpu_to_le32(arg->peer_listen_intval);
+	cmd->peer_ht_caps = cpu_to_le32(arg->peer_ht_caps);
+	cmd->peer_max_mpdu = cpu_to_le32(arg->peer_max_mpdu);
+	cmd->peer_mpdu_density = cpu_to_le32(arg->peer_mpdu_density);
+	cmd->peer_vht_caps = cpu_to_le32(arg->peer_vht_caps);
+	cmd->peer_phymode = cpu_to_le32(arg->peer_phymode);
 
 	/* Update 11ax capabilities */
-	cmd->peer_he_cap_info = cpu_to_le32(param->peer_he_cap_macinfo[0]);
-	cmd->peer_he_cap_info_ext = cpu_to_le32(param->peer_he_cap_macinfo[1]);
-	cmd->peer_he_cap_info_internal = cpu_to_le32(param->peer_he_cap_macinfo_internal);
-	cmd->peer_he_caps_6ghz = cpu_to_le32(param->peer_he_caps_6ghz);
-	cmd->peer_he_ops = cpu_to_le32(param->peer_he_ops);
-	memcpy(&cmd->peer_he_cap_phy, &param->peer_he_cap_phyinfo,
-	       sizeof(param->peer_he_cap_phyinfo));
-	memcpy(&cmd->peer_ppet, &param->peer_ppet,
-	       sizeof(param->peer_ppet));
+	cmd->peer_he_cap_info = cpu_to_le32(arg->peer_he_cap_macinfo[0]);
+	cmd->peer_he_cap_info_ext = cpu_to_le32(arg->peer_he_cap_macinfo[1]);
+	cmd->peer_he_cap_info_internal = cpu_to_le32(arg->peer_he_cap_macinfo_internal);
+	cmd->peer_he_caps_6ghz = cpu_to_le32(arg->peer_he_caps_6ghz);
+	cmd->peer_he_ops = cpu_to_le32(arg->peer_he_ops);
+	memcpy(&cmd->peer_he_cap_phy, &arg->peer_he_cap_phyinfo,
+	       sizeof(arg->peer_he_cap_phyinfo));
+	memcpy(&cmd->peer_ppet, &arg->peer_ppet,
+	       sizeof(arg->peer_ppet));
 
 	/* Update peer legacy rate information */
 	ptr += sizeof(*cmd);
@@ -1936,9 +1936,9 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 
 	ptr += TLV_HDR_SIZE;
 
-	cmd->num_peer_legacy_rates = cpu_to_le32(param->peer_legacy_rates.num_rates);
-	memcpy(ptr, param->peer_legacy_rates.rates,
-	       param->peer_legacy_rates.num_rates);
+	cmd->num_peer_legacy_rates = cpu_to_le32(arg->peer_legacy_rates.num_rates);
+	memcpy(ptr, arg->peer_legacy_rates.rates,
+	       arg->peer_legacy_rates.num_rates);
 
 	/* Update peer HT rate information */
 	ptr += peer_legacy_rates_align;
@@ -1946,9 +1946,9 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 	tlv = ptr;
 	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_BYTE, peer_ht_rates_align);
 	ptr += TLV_HDR_SIZE;
-	cmd->num_peer_ht_rates = cpu_to_le32(param->peer_ht_rates.num_rates);
-	memcpy(ptr, param->peer_ht_rates.rates,
-	       param->peer_ht_rates.num_rates);
+	cmd->num_peer_ht_rates = cpu_to_le32(arg->peer_ht_rates.num_rates);
+	memcpy(ptr, arg->peer_ht_rates.rates,
+	       arg->peer_ht_rates.num_rates);
 
 	/* VHT Rates */
 	ptr += peer_ht_rates_align;
@@ -1958,39 +1958,39 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 	mcs->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VHT_RATE_SET,
 						 sizeof(*mcs));
 
-	cmd->peer_nss = cpu_to_le32(param->peer_nss);
+	cmd->peer_nss = cpu_to_le32(arg->peer_nss);
 
 	/* Update bandwidth-NSS mapping */
 	cmd->peer_bw_rxnss_override = 0;
-	cmd->peer_bw_rxnss_override |= cpu_to_le32(param->peer_bw_rxnss_override);
+	cmd->peer_bw_rxnss_override |= cpu_to_le32(arg->peer_bw_rxnss_override);
 
-	if (param->vht_capable) {
-		mcs->rx_max_rate = param->rx_max_rate;
-		mcs->rx_mcs_set = param->rx_mcs_set;
-		mcs->tx_max_rate = param->tx_max_rate;
-		mcs->tx_mcs_set = param->tx_mcs_set;
+	if (arg->vht_capable) {
+		mcs->rx_max_rate = arg->rx_max_rate;
+		mcs->rx_mcs_set = arg->rx_mcs_set;
+		mcs->tx_max_rate = arg->tx_max_rate;
+		mcs->tx_mcs_set = arg->tx_mcs_set;
 	}
 
 	/* HE Rates */
-	cmd->peer_he_mcs = cpu_to_le32(param->peer_he_mcs_count);
-	cmd->min_data_rate = cpu_to_le32(param->min_data_rate);
+	cmd->peer_he_mcs = cpu_to_le32(arg->peer_he_mcs_count);
+	cmd->min_data_rate = cpu_to_le32(arg->min_data_rate);
 
 	ptr += sizeof(*mcs);
 
-	len = param->peer_he_mcs_count * sizeof(*he_mcs);
+	len = arg->peer_he_mcs_count * sizeof(*he_mcs);
 
 	tlv = ptr;
 	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_STRUCT, len);
 	ptr += TLV_HDR_SIZE;
 
 	/* Loop through the HE rate set */
-	for (i = 0; i < param->peer_he_mcs_count; i++) {
+	for (i = 0; i < arg->peer_he_mcs_count; i++) {
 		he_mcs = ptr;
 		he_mcs->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_HE_RATE_SET,
 							    sizeof(*he_mcs));
 
-		he_mcs->rx_mcs_set = param->peer_he_rx_mcs_set[i];
-		he_mcs->tx_mcs_set = param->peer_he_tx_mcs_set[i];
+		he_mcs->rx_mcs_set = arg->peer_he_rx_mcs_set[i];
+		he_mcs->tx_mcs_set = arg->peer_he_tx_mcs_set[i];
 		ptr += sizeof(*he_mcs);
 	}
 
@@ -2003,7 +2003,7 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "wmi peer assoc vdev id %d assoc id %d peer mac %pM peer_flags %x rate_caps %x peer_caps %x listen_intval %d ht_caps %x max_mpdu %d nss %d phymode %d peer_mpdu_density %d vht_caps %x he cap_info %x he ops %x he cap_info_ext %x he phy %x %x %x peer_bw_rxnss_override %x\n",
-		   cmd->vdev_id, cmd->peer_associd, param->peer_mac,
+		   cmd->vdev_id, cmd->peer_associd, arg->peer_mac,
 		   cmd->peer_flags, cmd->peer_rate_caps, cmd->peer_caps,
 		   cmd->peer_listen_intval, cmd->peer_ht_caps,
 		   cmd->peer_max_mpdu, cmd->peer_nss, cmd->peer_phymode,

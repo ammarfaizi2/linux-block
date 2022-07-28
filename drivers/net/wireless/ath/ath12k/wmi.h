@@ -3475,7 +3475,7 @@ struct wmi_rate_set_arg {
 	u8 rates[WMI_MAX_SUPPORTED_RATES];
 };
 
-struct peer_assoc_params {
+struct ath12k_wmi_peer_assoc_arg {
 	struct wmi_mac_addr peer_macaddr;
 	u32 vdev_id;
 	u32 peer_new_assoc;
@@ -5321,7 +5321,7 @@ int ath12k_wmi_pdev_suspend(struct ath12k *ar, u32 suspend_opt,
 int ath12k_wmi_pdev_resume(struct ath12k *ar, u32 pdev_id);
 
 int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
-				   struct peer_assoc_params *param);
+				   struct ath12k_wmi_peer_assoc_arg *arg);
 int ath12k_wmi_vdev_install_key(struct ath12k *ar,
 				struct wmi_vdev_install_key_arg *arg);
 int ath12k_wmi_pdev_bss_chan_info_request(struct ath12k *ar,

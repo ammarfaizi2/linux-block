@@ -1136,7 +1136,7 @@ static void ath12k_control_beaconing(struct ath12k_vif *arvif,
 static void ath12k_peer_assoc_h_basic(struct ath12k *ar,
 				      struct ieee80211_vif *vif,
 				      struct ieee80211_sta *sta,
-				      struct peer_assoc_params *arg)
+				      struct ath12k_wmi_peer_assoc_arg *arg)
 {
 	struct ath12k_vif *arvif = (void *)vif->drv_priv;
 	u32 aid;
@@ -1161,7 +1161,7 @@ static void ath12k_peer_assoc_h_basic(struct ath12k *ar,
 static void ath12k_peer_assoc_h_crypto(struct ath12k *ar,
 				       struct ieee80211_vif *vif,
 				       struct ieee80211_sta *sta,
-				       struct peer_assoc_params *arg)
+				       struct ath12k_wmi_peer_assoc_arg *arg)
 {
 	struct ieee80211_bss_conf *info = &vif->bss_conf;
 	struct cfg80211_chan_def def;
@@ -1222,7 +1222,7 @@ static void ath12k_peer_assoc_h_crypto(struct ath12k *ar,
 static void ath12k_peer_assoc_h_rates(struct ath12k *ar,
 				      struct ieee80211_vif *vif,
 				      struct ieee80211_sta *sta,
-				      struct peer_assoc_params *arg)
+				      struct ath12k_wmi_peer_assoc_arg *arg)
 {
 	struct ath12k_vif *arvif = (void *)vif->drv_priv;
 	struct wmi_rate_set_arg *rateset = &arg->peer_legacy_rates;
@@ -1284,7 +1284,7 @@ ath12k_peer_assoc_h_vht_masked(const u16 vht_mcs_mask[NL80211_VHT_NSS_MAX])
 static void ath12k_peer_assoc_h_ht(struct ath12k *ar,
 				   struct ieee80211_vif *vif,
 				   struct ieee80211_sta *sta,
-				   struct peer_assoc_params *arg)
+				   struct ath12k_wmi_peer_assoc_arg *arg)
 {
 	const struct ieee80211_sta_ht_cap *ht_cap = &sta->deflink.ht_cap;
 	struct ath12k_vif *arvif = (void *)vif->drv_priv;
@@ -1445,7 +1445,7 @@ ath12k_peer_assoc_h_vht_limit(u16 tx_mcs_set,
 static void ath12k_peer_assoc_h_vht(struct ath12k *ar,
 				    struct ieee80211_vif *vif,
 				    struct ieee80211_sta *sta,
-				    struct peer_assoc_params *arg)
+				    struct ath12k_wmi_peer_assoc_arg *arg)
 {
 	const struct ieee80211_sta_vht_cap *vht_cap = &sta->deflink.vht_cap;
 	struct ath12k_vif *arvif = (void *)vif->drv_priv;
@@ -1540,7 +1540,7 @@ static void ath12k_peer_assoc_h_vht(struct ath12k *ar,
 static void ath12k_peer_assoc_h_he(struct ath12k *ar,
 				   struct ieee80211_vif *vif,
 				   struct ieee80211_sta *sta,
-				   struct peer_assoc_params *arg)
+				   struct ath12k_wmi_peer_assoc_arg *arg)
 {
 	const struct ieee80211_sta_he_cap *he_cap = &sta->deflink.he_cap;
 	int i;
@@ -1691,7 +1691,7 @@ static void ath12k_peer_assoc_h_he(struct ath12k *ar,
 }
 
 static void ath12k_peer_assoc_h_smps(struct ieee80211_sta *sta,
-				     struct peer_assoc_params *arg)
+				     struct ath12k_wmi_peer_assoc_arg *arg)
 {
 	const struct ieee80211_sta_ht_cap *ht_cap = &sta->deflink.ht_cap;
 	int smps;
@@ -1720,7 +1720,7 @@ static void ath12k_peer_assoc_h_smps(struct ieee80211_sta *sta,
 static void ath12k_peer_assoc_h_qos(struct ath12k *ar,
 				    struct ieee80211_vif *vif,
 				    struct ieee80211_sta *sta,
-				    struct peer_assoc_params *arg)
+				    struct ath12k_wmi_peer_assoc_arg *arg)
 {
 	struct ath12k_vif *arvif = (void *)vif->drv_priv;
 
@@ -1883,7 +1883,7 @@ static enum wmi_phy_mode ath12k_mac_get_phymode_he(struct ath12k *ar,
 static void ath12k_peer_assoc_h_phymode(struct ath12k *ar,
 					struct ieee80211_vif *vif,
 					struct ieee80211_sta *sta,
-					struct peer_assoc_params *arg)
+					struct ath12k_wmi_peer_assoc_arg *arg)
 {
 	struct ath12k_vif *arvif = (void *)vif->drv_priv;
 	struct cfg80211_chan_def def;
@@ -1958,7 +1958,7 @@ static void ath12k_peer_assoc_h_phymode(struct ath12k *ar,
 static void ath12k_peer_assoc_prepare(struct ath12k *ar,
 				      struct ieee80211_vif *vif,
 				      struct ieee80211_sta *sta,
-				      struct peer_assoc_params *arg,
+				      struct ath12k_wmi_peer_assoc_arg *arg,
 				      bool reassoc)
 {
 	lockdep_assert_held(&ar->conf_mutex);
@@ -2007,7 +2007,7 @@ static void ath12k_bss_assoc(struct ieee80211_hw *hw,
 {
 	struct ath12k *ar = hw->priv;
 	struct ath12k_vif *arvif = (void *)vif->drv_priv;
-	struct peer_assoc_params peer_arg;
+	struct ath12k_wmi_peer_assoc_arg peer_arg;
 	struct ieee80211_sta *ap_sta;
 	struct ath12k_peer *peer;
 	bool is_auth = false;
@@ -3066,7 +3066,7 @@ static int ath12k_station_assoc(struct ath12k *ar,
 				bool reassoc)
 {
 	struct ath12k_vif *arvif = ath12k_vif_to_arvif(vif);
-	struct peer_assoc_params peer_arg;
+	struct ath12k_wmi_peer_assoc_arg peer_arg;
 	int ret = 0;
 	struct cfg80211_chan_def def;
 	enum nl80211_band band;
@@ -3181,7 +3181,7 @@ static void ath12k_sta_rc_update_wk(struct work_struct *wk)
 	u32 changed, bw, nss, smps;
 	int err, num_vht_rates;
 	const struct cfg80211_bitrate_mask *mask;
-	struct peer_assoc_params peer_arg;
+	struct ath12k_wmi_peer_assoc_arg peer_arg;
 
 	arsta = container_of(wk, struct ath12k_sta, update_wk);
 	sta = container_of((void *)arsta, struct ieee80211_sta, drv_priv);
