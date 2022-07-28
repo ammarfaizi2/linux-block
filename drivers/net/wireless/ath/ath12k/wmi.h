@@ -3348,7 +3348,8 @@ enum wmi_stats_id {
 
 struct wmi_request_stats_cmd {
 	__le32 tlv_header;
-	enum wmi_stats_id stats_id;
+	/* enum wmi_stats_id */
+	__le32 stats_id;
 	__le32 vdev_id;
 	struct wmi_mac_addr peer_macaddr;
 	__le32 pdev_id;

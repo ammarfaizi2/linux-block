@@ -1610,7 +1610,7 @@ int ath12k_wmi_send_stats_request_cmd(struct ath12k *ar, u32 stats_id,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_REQUEST_STATS_CMD,
 						 sizeof(*cmd));
 
-	cmd->stats_id = stats_id;
+	cmd->stats_id = cpu_to_le32(stats_id);
 	cmd->vdev_id = cpu_to_le32(vdev_id);
 	cmd->pdev_id = cpu_to_le32(pdev_id);
 
