@@ -10,6 +10,16 @@
 #include <net/mac80211.h>
 #include "htc.h"
 
+/* Naming conventions:
+ *
+ * Structures ending with _arg, for example struct
+ * wmi_vdev_install_key_arg, are structures used inside ath12k. In other
+ * words the firmware does not use them.
+ *
+ * Structures ending with _params, for example struct wmi_wmm_params, are
+ * used within firmware command and events to/from firmware.
+ */
+
 struct ath12k_base;
 struct ath12k;
 struct ath12k_fw_stats;
