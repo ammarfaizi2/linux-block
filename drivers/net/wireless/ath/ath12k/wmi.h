@@ -3696,7 +3696,7 @@ enum set_init_cc_flags {
 	ALPHA_IS_SET,
 };
 
-struct wmi_init_country_params {
+struct ath12k_wmi_init_country_arg {
 	union {
 		u16 country_code;
 		u16 regdom_id;
@@ -5358,9 +5358,8 @@ int ath12k_wmi_delba_send(struct ath12k *ar, u32 vdev_id, const u8 *mac,
 			  u32 tid, u32 initiator, u32 reason);
 int ath12k_wmi_send_bcn_offload_control_cmd(struct ath12k *ar,
 					    u32 vdev_id, u32 bcn_ctrl_op);
-int
-ath12k_wmi_send_init_country_cmd(struct ath12k *ar,
-				 struct wmi_init_country_params init_cc_param);
+int ath12k_wmi_send_init_country_cmd(struct ath12k *ar,
+				     struct ath12k_wmi_init_country_arg *arg);
 int
 ath12k_wmi_send_thermal_mitigation_cmd(struct ath12k *ar,
 				       struct ath12k_wmi_thermal_mitigation_arg *arg);

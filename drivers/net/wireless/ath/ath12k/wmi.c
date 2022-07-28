@@ -2748,9 +2748,8 @@ int ath12k_wmi_pdev_peer_pktlog_filter(struct ath12k *ar, u8 *addr, u8 enable)
 	return ret;
 }
 
-int
-ath12k_wmi_send_init_country_cmd(struct ath12k *ar,
-				 struct wmi_init_country_params init_cc_params)
+int ath12k_wmi_send_init_country_cmd(struct ath12k *ar,
+				     struct ath12k_wmi_init_country_arg *arg)
 {
 	struct ath12k_pdev_wmi *wmi = ar->wmi;
 	struct wmi_init_country_cmd *cmd;
@@ -2768,20 +2767,20 @@ ath12k_wmi_send_init_country_cmd(struct ath12k *ar,
 
 	cmd->pdev_id = cpu_to_le32(ar->pdev->pdev_id);
 
-	switch (init_cc_params.flags) {
+	switch (arg->flags) {
 	case ALPHA_IS_SET:
 		cmd->init_cc_type = WMI_COUNTRY_INFO_TYPE_ALPHA;
 		memcpy((u8 *)&cmd->cc_info.alpha2,
-		       init_cc_params.cc_info.alpha2, 3);
+		       arg->cc_info.alpha2, 3);
 		break;
 	case CC_IS_SET:
 		cmd->init_cc_type = cpu_to_le32(WMI_COUNTRY_INFO_TYPE_COUNTRY_CODE);
 		cmd->cc_info.country_code =
-			cpu_to_le32(init_cc_params.cc_info.country_code);
+			cpu_to_le32(arg->cc_info.country_code);
 		break;
 	case REGDMN_IS_SET:
 		cmd->init_cc_type = cpu_to_le32(WMI_COUNTRY_INFO_TYPE_REGDOMAIN);
-		cmd->cc_info.regdom_id = cpu_to_le32(init_cc_params.cc_info.regdom_id);
+		cmd->cc_info.regdom_id = cpu_to_le32(arg->cc_info.regdom_id);
 		break;
 	default:
 		ret = -EINVAL;

@@ -47,7 +47,7 @@ static void
 ath12k_reg_notifier(struct wiphy *wiphy, struct regulatory_request *request)
 {
 	struct ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
-	struct wmi_init_country_params init_country_param;
+	struct ath12k_wmi_init_country_arg arg;
 	struct ath12k *ar = hw->priv;
 	int ret;
 
@@ -80,11 +80,11 @@ ath12k_reg_notifier(struct wiphy *wiphy, struct regulatory_request *request)
 	 * the WMI_REG_CHAN_LIST_CC EVENT for updating the
 	 * reg info
 	 */
-	init_country_param.flags = ALPHA_IS_SET;
-	memcpy(&init_country_param.cc_info.alpha2, request->alpha2, 2);
-	init_country_param.cc_info.alpha2[2] = 0;
+	arg.flags = ALPHA_IS_SET;
+	memcpy(&arg.cc_info.alpha2, request->alpha2, 2);
+	arg.cc_info.alpha2[2] = 0;
 
-	ret = ath12k_wmi_send_init_country_cmd(ar, init_country_param);
+	ret = ath12k_wmi_send_init_country_cmd(ar, &arg);
 	if (ret)
 		ath12k_warn(ar->ab,
 			    "INIT Country code set to fw failed : %d\n", ret);
