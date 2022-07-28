@@ -56,6 +56,7 @@
 #include "en_accel/ipsec.h"
 #include "en/tc/int_port.h"
 #include "en/ptp.h"
+#include "en/fs_ethtool.h"
 
 #define MLX5E_REP_PARAMS_DEF_LOG_SQ_SIZE \
 	max(0x7, MLX5E_PARAMS_MINIMUM_LOG_SQ_SIZE)
@@ -718,6 +719,7 @@ static int mlx5e_init_ul_rep(struct mlx5_core_dev *mdev,
 
 static void mlx5e_cleanup_rep(struct mlx5e_priv *priv)
 {
+	mlx5e_fs_cleanup(priv->fs);
 	mlx5e_ipsec_cleanup(priv);
 }
 
@@ -728,19 +730,20 @@ static int mlx5e_create_rep_ttc_table(struct mlx5e_priv *priv)
 	struct ttc_params ttc_params = {};
 	int err;
 
-	priv->fs.ns = mlx5_get_flow_namespace(priv->mdev,
-					      MLX5_FLOW_NAMESPACE_KERNEL);
+	mlx5e_fs_set_ns(priv->fs,
+			mlx5_get_flow_namespace(priv->mdev,
+						MLX5_FLOW_NAMESPACE_KERNEL), false);
 
 	/* The inner_ttc in the ttc params is intentionally not set */
-	mlx5e_set_ttc_params(priv, &ttc_params, false);
+	mlx5e_set_ttc_params(priv->fs, priv->rx_res, &ttc_params, false);
 
 	if (rep->vport != MLX5_VPORT_UPLINK)
 		/* To give uplik rep TTC a lower level for chaining from root ft */
 		ttc_params.ft_attr.level = MLX5E_TTC_FT_LEVEL + 1;
 
-	priv->fs.ttc = mlx5_create_ttc_table(priv->mdev, &ttc_params);
-	if (IS_ERR(priv->fs.ttc)) {
-		err = PTR_ERR(priv->fs.ttc);
+	mlx5e_fs_set_ttc(priv->fs, mlx5_create_ttc_table(priv->mdev, &ttc_params), false);
+	if (IS_ERR(mlx5e_fs_get_ttc(priv->fs, false))) {
+		err = PTR_ERR(mlx5e_fs_get_ttc(priv->fs, false));
 		netdev_err(priv->netdev, "Failed to create rep ttc table, err=%d\n",
 			   err);
 		return err;
@@ -760,7 +763,7 @@ static int mlx5e_create_rep_root_ft(struct mlx5e_priv *priv)
 		/* non uplik reps will skip any bypass tables and go directly to
 		 * their own ttc
 		 */
-		rpriv->root_ft = mlx5_get_ttc_flow_table(priv->fs.ttc);
+		rpriv->root_ft = mlx5_get_ttc_flow_table(mlx5e_fs_get_ttc(priv->fs, false));
 		return 0;
 	}
 
@@ -835,11 +838,20 @@ static int mlx5e_init_rep_rx(struct mlx5e_priv *priv)
 	struct mlx5_core_dev *mdev = priv->mdev;
 	int err;
 
-	priv->rx_res = mlx5e_rx_res_alloc();
-	if (!priv->rx_res)
+	priv->fs = mlx5e_fs_init(priv->profile, mdev,
+				 !test_bit(MLX5E_STATE_DESTROYING, &priv->state));
+	if (!priv->fs) {
+		netdev_err(priv->netdev, "FS allocation failed\n");
 		return -ENOMEM;
+	}
 
-	mlx5e_init_l2_addr(priv);
+	priv->rx_res = mlx5e_rx_res_alloc();
+	if (!priv->rx_res) {
+		err = -ENOMEM;
+		goto err_free_fs;
+	}
+
+	mlx5e_fs_init_l2_addr(priv->fs, priv->netdev);
 
 	err = mlx5e_open_drop_rq(priv, &priv->drop_rq);
 	if (err) {
@@ -866,29 +878,31 @@ static int mlx5e_init_rep_rx(struct mlx5e_priv *priv)
 	if (err)
 		goto err_destroy_root_ft;
 
-	mlx5e_ethtool_init_steering(priv);
+	mlx5e_ethtool_init_steering(priv->fs);
 
 	return 0;
 
 err_destroy_root_ft:
 	mlx5e_destroy_rep_root_ft(priv);
 err_destroy_ttc_table:
-	mlx5_destroy_ttc_table(priv->fs.ttc);
+	mlx5_destroy_ttc_table(mlx5e_fs_get_ttc(priv->fs, false));
 err_destroy_rx_res:
 	mlx5e_rx_res_destroy(priv->rx_res);
 err_close_drop_rq:
 	mlx5e_close_drop_rq(&priv->drop_rq);
 	mlx5e_rx_res_free(priv->rx_res);
 	priv->rx_res = NULL;
+err_free_fs:
+	mlx5e_fs_cleanup(priv->fs);
 	return err;
 }
 
 static void mlx5e_cleanup_rep_rx(struct mlx5e_priv *priv)
 {
-	mlx5e_ethtool_cleanup_steering(priv);
+	mlx5e_ethtool_cleanup_steering(priv->fs);
 	rep_vport_rx_rule_destroy(priv);
 	mlx5e_destroy_rep_root_ft(priv);
-	mlx5_destroy_ttc_table(priv->fs.ttc);
+	mlx5_destroy_ttc_table(mlx5e_fs_get_ttc(priv->fs, false));
 	mlx5e_rx_res_destroy(priv->rx_res);
 	mlx5e_close_drop_rq(&priv->drop_rq);
 	mlx5e_rx_res_free(priv->rx_res);

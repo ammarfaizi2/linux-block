@@ -71,6 +71,30 @@
 #define MLX5E_TC_TABLE_NUM_GROUPS 4
 #define MLX5E_TC_TABLE_MAX_GROUP_SIZE BIT(18)
 
+struct mlx5e_tc_table {
+	/* Protects the dynamic assignment of the t parameter
+	 * which is the nic tc root table.
+	 */
+	struct mutex			t_lock;
+	struct mlx5e_priv		*priv;
+	struct mlx5_flow_table		*t;
+	struct mlx5_flow_table		*miss_t;
+	struct mlx5_fs_chains           *chains;
+	struct mlx5e_post_act		*post_act;
+
+	struct rhashtable               ht;
+
+	struct mod_hdr_tbl mod_hdr;
+	struct mutex hairpin_tbl_lock; /* protects hairpin_tbl */
+	DECLARE_HASHTABLE(hairpin_tbl, 8);
+
+	struct notifier_block     netdevice_nb;
+	struct netdev_net_notifier	netdevice_nn;
+
+	struct mlx5_tc_ct_priv         *ct;
+	struct mapping_ctx             *mapping;
+};
+
 struct mlx5e_tc_attr_to_reg_mapping mlx5e_tc_attr_to_reg_mappings[] = {
 	[CHAIN_TO_REG] = {
 		.mfield = MLX5_ACTION_IN_FIELD_METADATA_REG_C_0,
@@ -107,6 +131,24 @@ struct mlx5e_tc_attr_to_reg_mapping mlx5e_tc_attr_to_reg_mappings[] = {
 	[NIC_ZONE_RESTORE_TO_REG] = nic_zone_restore_to_reg_ct,
 	[PACKET_COLOR_TO_REG] = packet_color_to_reg,
 };
+
+struct mlx5e_tc_table *mlx5e_tc_table_alloc(void)
+{
+	struct mlx5e_tc_table *tc;
+
+	tc = kvzalloc(sizeof(*tc), GFP_KERNEL);
+	return tc ? tc : ERR_PTR(-ENOMEM);
+}
+
+void mlx5e_tc_table_free(struct mlx5e_tc_table *tc)
+{
+	kvfree(tc);
+}
+
+struct mlx5_fs_chains *mlx5e_nic_chains(struct mlx5e_tc_table *tc)
+{
+	return tc->chains;
+}
 
 /* To avoid false lock dependency warning set the tc_ht lock
  * class different than the lock class of the ht being used when deleting
@@ -269,6 +311,7 @@ mlx5e_get_flow_meters(struct mlx5_core_dev *dev)
 static struct mlx5_tc_ct_priv *
 get_ct_priv(struct mlx5e_priv *priv)
 {
+	struct mlx5e_tc_table *tc = mlx5e_fs_get_tc(priv->fs);
 	struct mlx5_eswitch *esw = priv->mdev->priv.eswitch;
 	struct mlx5_rep_uplink_priv *uplink_priv;
 	struct mlx5e_rep_priv *uplink_rpriv;
@@ -280,7 +323,7 @@ get_ct_priv(struct mlx5e_priv *priv)
 		return uplink_priv->ct_priv;
 	}
 
-	return priv->fs.tc.ct;
+	return tc->ct;
 }
 
 static struct mlx5e_tc_psample *
@@ -303,6 +346,7 @@ get_sample_priv(struct mlx5e_priv *priv)
 static struct mlx5e_post_act *
 get_post_action(struct mlx5e_priv *priv)
 {
+	struct mlx5e_tc_table *tc = mlx5e_fs_get_tc(priv->fs);
 	struct mlx5_eswitch *esw = priv->mdev->priv.eswitch;
 	struct mlx5_rep_uplink_priv *uplink_priv;
 	struct mlx5e_rep_priv *uplink_rpriv;
@@ -314,7 +358,7 @@ get_post_action(struct mlx5e_priv *priv)
 		return uplink_priv->post_act;
 	}
 
-	return priv->fs.tc.post_act;
+	return tc->post_act;
 }
 
 struct mlx5_flow_handle *
@@ -542,11 +586,12 @@ int mlx5e_get_flow_namespace(struct mlx5e_tc_flow *flow)
 static struct mod_hdr_tbl *
 get_mod_hdr_table(struct mlx5e_priv *priv, struct mlx5e_tc_flow *flow)
 {
+	struct mlx5e_tc_table *tc = mlx5e_fs_get_tc(priv->fs);
 	struct mlx5_eswitch *esw = priv->mdev->priv.eswitch;
 
 	return mlx5e_get_flow_namespace(flow) == MLX5_FLOW_NAMESPACE_FDB ?
 		&esw->offloads.mod_hdr :
-		&priv->fs.tc.mod_hdr;
+		&tc->mod_hdr;
 }
 
 static int mlx5e_attach_mod_hdr(struct mlx5e_priv *priv,
@@ -745,6 +790,7 @@ static int mlx5e_hairpin_rss_init(struct mlx5e_hairpin *hp)
 {
 	struct mlx5e_priv *priv = hp->func_priv;
 	struct ttc_params ttc_params;
+	struct mlx5_ttc_table *ttc;
 	int err;
 
 	err = mlx5e_hairpin_create_indirect_rqt(hp);
@@ -762,9 +808,10 @@ static int mlx5e_hairpin_rss_init(struct mlx5e_hairpin *hp)
 		goto err_create_ttc_table;
 	}
 
+	ttc = mlx5e_fs_get_ttc(priv->fs, false);
 	netdev_dbg(priv->netdev, "add hairpin: using %d channels rss ttc table id %x\n",
 		   hp->num_channels,
-		   mlx5_get_ttc_flow_table(priv->fs.ttc)->id);
+		   mlx5_get_ttc_flow_table(ttc)->id);
 
 	return 0;
 
@@ -851,10 +898,11 @@ static inline u32 hash_hairpin_info(u16 peer_vhca_id, u8 prio)
 static struct mlx5e_hairpin_entry *mlx5e_hairpin_get(struct mlx5e_priv *priv,
 						     u16 peer_vhca_id, u8 prio)
 {
+	struct mlx5e_tc_table *tc = mlx5e_fs_get_tc(priv->fs);
 	struct mlx5e_hairpin_entry *hpe;
 	u32 hash_key = hash_hairpin_info(peer_vhca_id, prio);
 
-	hash_for_each_possible(priv->fs.tc.hairpin_tbl, hpe,
+	hash_for_each_possible(tc->hairpin_tbl, hpe,
 			       hairpin_hlist, hash_key) {
 		if (hpe->peer_vhca_id == peer_vhca_id && hpe->prio == prio) {
 			refcount_inc(&hpe->refcnt);
@@ -868,11 +916,12 @@ static struct mlx5e_hairpin_entry *mlx5e_hairpin_get(struct mlx5e_priv *priv,
 static void mlx5e_hairpin_put(struct mlx5e_priv *priv,
 			      struct mlx5e_hairpin_entry *hpe)
 {
+	struct mlx5e_tc_table *tc = mlx5e_fs_get_tc(priv->fs);
 	/* no more hairpin flows for us, release the hairpin pair */
-	if (!refcount_dec_and_mutex_lock(&hpe->refcnt, &priv->fs.tc.hairpin_tbl_lock))
+	if (!refcount_dec_and_mutex_lock(&hpe->refcnt, &tc->hairpin_tbl_lock))
 		return;
 	hash_del(&hpe->hairpin_hlist);
-	mutex_unlock(&priv->fs.tc.hairpin_tbl_lock);
+	mutex_unlock(&tc->hairpin_tbl_lock);
 
 	if (!IS_ERR_OR_NULL(hpe->hp)) {
 		netdev_dbg(priv->netdev, "del hairpin: peer %s\n",
@@ -928,6 +977,7 @@ static int mlx5e_hairpin_flow_add(struct mlx5e_priv *priv,
 				  struct mlx5e_tc_flow_parse_attr *parse_attr,
 				  struct netlink_ext_ack *extack)
 {
+	struct mlx5e_tc_table *tc = mlx5e_fs_get_tc(priv->fs);
 	int peer_ifindex = parse_attr->mirred_ifindex[0];
 	struct mlx5_hairpin_params params;
 	struct mlx5_core_dev *peer_mdev;
@@ -956,10 +1006,10 @@ static int mlx5e_hairpin_flow_add(struct mlx5e_priv *priv,
 	if (err)
 		return err;
 
-	mutex_lock(&priv->fs.tc.hairpin_tbl_lock);
+	mutex_lock(&tc->hairpin_tbl_lock);
 	hpe = mlx5e_hairpin_get(priv, peer_id, match_prio);
 	if (hpe) {
-		mutex_unlock(&priv->fs.tc.hairpin_tbl_lock);
+		mutex_unlock(&tc->hairpin_tbl_lock);
 		wait_for_completion(&hpe->res_ready);
 
 		if (IS_ERR(hpe->hp)) {
@@ -971,7 +1021,7 @@ static int mlx5e_hairpin_flow_add(struct mlx5e_priv *priv,
 
 	hpe = kzalloc(sizeof(*hpe), GFP_KERNEL);
 	if (!hpe) {
-		mutex_unlock(&priv->fs.tc.hairpin_tbl_lock);
+		mutex_unlock(&tc->hairpin_tbl_lock);
 		return -ENOMEM;
 	}
 
@@ -983,9 +1033,9 @@ static int mlx5e_hairpin_flow_add(struct mlx5e_priv *priv,
 	refcount_set(&hpe->refcnt, 1);
 	init_completion(&hpe->res_ready);
 
-	hash_add(priv->fs.tc.hairpin_tbl, &hpe->hairpin_hlist,
+	hash_add(tc->hairpin_tbl, &hpe->hairpin_hlist,
 		 hash_hairpin_info(peer_id, match_prio));
-	mutex_unlock(&priv->fs.tc.hairpin_tbl_lock);
+	mutex_unlock(&tc->hairpin_tbl_lock);
 
 	params.log_data_size = 16;
 	params.log_data_size = min_t(u8, params.log_data_size,
@@ -1061,10 +1111,11 @@ mlx5e_add_offloaded_nic_rule(struct mlx5e_priv *priv,
 			     struct mlx5_flow_attr *attr)
 {
 	struct mlx5_flow_context *flow_context = &spec->flow_context;
-	struct mlx5_fs_chains *nic_chains = mlx5e_nic_chains(priv);
+	struct mlx5e_vlan_table *vlan = mlx5e_fs_get_vlan(priv->fs);
+	struct mlx5e_tc_table *tc = mlx5e_fs_get_tc(priv->fs);
 	struct mlx5_nic_flow_attr *nic_attr = attr->nic_attr;
-	struct mlx5e_tc_table *tc = &priv->fs.tc;
 	struct mlx5_flow_destination dest[2] = {};
+	struct mlx5_fs_chains *nic_chains;
 	struct mlx5_flow_act flow_act = {
 		.action = attr->action,
 		.flags    = FLOW_ACT_NO_APPEND,
@@ -1073,6 +1124,7 @@ mlx5e_add_offloaded_nic_rule(struct mlx5e_priv *priv,
 	struct mlx5_flow_table *ft;
 	int dest_ix = 0;
 
+	nic_chains = mlx5e_nic_chains(tc);
 	flow_context->flags |= FLOW_CONTEXT_HAS_TAG;
 	flow_context->flow_tag = nic_attr->flow_tag;
 
@@ -1097,7 +1149,7 @@ mlx5e_add_offloaded_nic_rule(struct mlx5e_priv *priv,
 			if (IS_ERR(dest[dest_ix].ft))
 				return ERR_CAST(dest[dest_ix].ft);
 		} else {
-			dest[dest_ix].ft = mlx5e_vlan_get_flowtable(priv->fs.vlan);
+			dest[dest_ix].ft = mlx5e_vlan_get_flowtable(vlan);
 		}
 		dest_ix++;
 	}
@@ -1125,7 +1177,7 @@ mlx5e_add_offloaded_nic_rule(struct mlx5e_priv *priv,
 			mutex_unlock(&tc->t_lock);
 			netdev_err(priv->netdev,
 				   "Failed to create tc offload table\n");
-			rule = ERR_CAST(priv->fs.tc.t);
+			rule = ERR_CAST(tc->t);
 			goto err_ft_get;
 		}
 	}
@@ -1227,8 +1279,10 @@ void mlx5e_del_offloaded_nic_rule(struct mlx5e_priv *priv,
 				  struct mlx5_flow_handle *rule,
 				  struct mlx5_flow_attr *attr)
 {
-	struct mlx5_fs_chains *nic_chains = mlx5e_nic_chains(priv);
+	struct mlx5e_tc_table *tc = mlx5e_fs_get_tc(priv->fs);
+	struct mlx5_fs_chains *nic_chains;
 
+	nic_chains = mlx5e_nic_chains(tc);
 	mlx5_del_flow_rules(rule);
 
 	if (attr->chain || attr->prio)
@@ -1243,8 +1297,8 @@ void mlx5e_del_offloaded_nic_rule(struct mlx5e_priv *priv,
 static void mlx5e_tc_del_nic_flow(struct mlx5e_priv *priv,
 				  struct mlx5e_tc_flow *flow)
 {
+	struct mlx5e_tc_table *tc = mlx5e_fs_get_tc(priv->fs);
 	struct mlx5_flow_attr *attr = flow->attr;
-	struct mlx5e_tc_table *tc = &priv->fs.tc;
 
 	flow_flag_clear(flow, OFFLOADED);
 
@@ -1256,13 +1310,13 @@ static void mlx5e_tc_del_nic_flow(struct mlx5e_priv *priv,
 	/* Remove root table if no rules are left to avoid
 	 * extra steering hops.
 	 */
-	mutex_lock(&priv->fs.tc.t_lock);
+	mutex_lock(&tc->t_lock);
 	if (!mlx5e_tc_num_filters(priv, MLX5_TC_FLAG(NIC_OFFLOAD)) &&
 	    !IS_ERR_OR_NULL(tc->t)) {
-		mlx5_chains_put_table(mlx5e_nic_chains(priv), 0, 1, MLX5E_TC_FT_LEVEL);
-		priv->fs.tc.t = NULL;
+		mlx5_chains_put_table(mlx5e_nic_chains(tc), 0, 1, MLX5E_TC_FT_LEVEL);
+		tc->t = NULL;
 	}
-	mutex_unlock(&priv->fs.tc.t_lock);
+	mutex_unlock(&tc->t_lock);
 
 	if (attr->action & MLX5_FLOW_CONTEXT_ACTION_MOD_HDR)
 		mlx5e_detach_mod_hdr(priv, flow);
@@ -3992,13 +4046,14 @@ static const struct rhashtable_params tc_ht_params = {
 static struct rhashtable *get_tc_ht(struct mlx5e_priv *priv,
 				    unsigned long flags)
 {
+	struct mlx5e_tc_table *tc = mlx5e_fs_get_tc(priv->fs);
 	struct mlx5e_rep_priv *rpriv;
 
 	if (flags & MLX5_TC_FLAG(ESW_OFFLOAD)) {
 		rpriv = priv->ppriv;
 		return &rpriv->tc_ht;
 	} else /* NIC offload */
-		return &priv->fs.tc.ht;
+		return &tc->ht;
 }
 
 static bool is_peer_flow_needed(struct mlx5e_tc_flow *flow)
@@ -4706,6 +4761,7 @@ void mlx5e_tc_stats_matchall(struct mlx5e_priv *priv,
 static void mlx5e_tc_hairpin_update_dead_peer(struct mlx5e_priv *priv,
 					      struct mlx5e_priv *peer_priv)
 {
+	struct mlx5e_tc_table *tc = mlx5e_fs_get_tc(priv->fs);
 	struct mlx5_core_dev *peer_mdev = peer_priv->mdev;
 	struct mlx5e_hairpin_entry *hpe, *tmp;
 	LIST_HEAD(init_wait_list);
@@ -4717,11 +4773,11 @@ static void mlx5e_tc_hairpin_update_dead_peer(struct mlx5e_priv *priv,
 
 	peer_vhca_id = MLX5_CAP_GEN(peer_mdev, vhca_id);
 
-	mutex_lock(&priv->fs.tc.hairpin_tbl_lock);
-	hash_for_each(priv->fs.tc.hairpin_tbl, bkt, hpe, hairpin_hlist)
+	mutex_lock(&tc->hairpin_tbl_lock);
+	hash_for_each(tc->hairpin_tbl, bkt, hpe, hairpin_hlist)
 		if (refcount_inc_not_zero(&hpe->refcnt))
 			list_add(&hpe->dead_peer_wait_list, &init_wait_list);
-	mutex_unlock(&priv->fs.tc.hairpin_tbl_lock);
+	mutex_unlock(&tc->hairpin_tbl_lock);
 
 	list_for_each_entry_safe(hpe, tmp, &init_wait_list, dead_peer_wait_list) {
 		wait_for_completion(&hpe->res_ready);
@@ -4736,7 +4792,6 @@ static int mlx5e_tc_netdev_event(struct notifier_block *this,
 				 unsigned long event, void *ptr)
 {
 	struct net_device *ndev = netdev_notifier_info_to_dev(ptr);
-	struct mlx5e_flow_steering *fs;
 	struct mlx5e_priv *peer_priv;
 	struct mlx5e_tc_table *tc;
 	struct mlx5e_priv *priv;
@@ -4747,8 +4802,7 @@ static int mlx5e_tc_netdev_event(struct notifier_block *this,
 		return NOTIFY_DONE;
 
 	tc = container_of(this, struct mlx5e_tc_table, netdevice_nb);
-	fs = container_of(tc, struct mlx5e_flow_steering, tc);
-	priv = container_of(fs, struct mlx5e_priv, fs);
+	priv = tc->priv;
 	peer_priv = netdev_priv(ndev);
 	if (priv == peer_priv ||
 	    !(priv->netdev->features & NETIF_F_HW_TC))
@@ -4777,7 +4831,8 @@ static int mlx5e_tc_nic_get_ft_size(struct mlx5_core_dev *dev)
 
 static int mlx5e_tc_nic_create_miss_table(struct mlx5e_priv *priv)
 {
-	struct mlx5_flow_table **ft = &priv->fs.tc.miss_t;
+	struct mlx5e_tc_table *tc = mlx5e_fs_get_tc(priv->fs);
+	struct mlx5_flow_table **ft = &tc->miss_t;
 	struct mlx5_flow_table_attr ft_attr = {};
 	struct mlx5_flow_namespace *ns;
 	int err = 0;
@@ -4799,12 +4854,14 @@ static int mlx5e_tc_nic_create_miss_table(struct mlx5e_priv *priv)
 
 static void mlx5e_tc_nic_destroy_miss_table(struct mlx5e_priv *priv)
 {
-	mlx5_destroy_flow_table(priv->fs.tc.miss_t);
+	struct mlx5e_tc_table *tc = mlx5e_fs_get_tc(priv->fs);
+
+	mlx5_destroy_flow_table(tc->miss_t);
 }
 
 int mlx5e_tc_nic_init(struct mlx5e_priv *priv)
 {
-	struct mlx5e_tc_table *tc = &priv->fs.tc;
+	struct mlx5e_tc_table *tc = mlx5e_fs_get_tc(priv->fs);
 	struct mlx5_core_dev *dev = priv->mdev;
 	struct mapping_ctx *chains_mapping;
 	struct mlx5_chains_attr attr = {};
@@ -4815,6 +4872,7 @@ int mlx5e_tc_nic_init(struct mlx5e_priv *priv)
 	mutex_init(&tc->t_lock);
 	mutex_init(&tc->hairpin_tbl_lock);
 	hash_init(tc->hairpin_tbl);
+	tc->priv = priv;
 
 	err = rhashtable_init(&tc->ht, &tc_ht_params);
 	if (err)
@@ -4844,7 +4902,7 @@ int mlx5e_tc_nic_init(struct mlx5e_priv *priv)
 	attr.ns = MLX5_FLOW_NAMESPACE_KERNEL;
 	attr.max_ft_sz = mlx5e_tc_nic_get_ft_size(dev);
 	attr.max_grp_num = MLX5E_TC_TABLE_NUM_GROUPS;
-	attr.default_ft = priv->fs.tc.miss_t;
+	attr.default_ft = tc->miss_t;
 	attr.mapping = chains_mapping;
 
 	tc->chains = mlx5_chains_create(dev, &attr);
@@ -4854,7 +4912,7 @@ int mlx5e_tc_nic_init(struct mlx5e_priv *priv)
 	}
 
 	tc->post_act = mlx5e_tc_post_act_init(priv, tc->chains, MLX5_FLOW_NAMESPACE_KERNEL);
-	tc->ct = mlx5_tc_ct_init(priv, tc->chains, &priv->fs.tc.mod_hdr,
+	tc->ct = mlx5_tc_ct_init(priv, tc->chains, &tc->mod_hdr,
 				 MLX5_FLOW_NAMESPACE_KERNEL, tc->post_act);
 
 	tc->netdevice_nb.notifier_call = mlx5e_tc_netdev_event;
@@ -4893,7 +4951,7 @@ static void _mlx5e_tc_del_flow(void *ptr, void *arg)
 
 void mlx5e_tc_nic_cleanup(struct mlx5e_priv *priv)
 {
-	struct mlx5e_tc_table *tc = &priv->fs.tc;
+	struct mlx5e_tc_table *tc = mlx5e_fs_get_tc(priv->fs);
 
 	if (tc->netdevice_nb.notifier_call)
 		unregister_netdevice_notifier_dev_net(priv->netdev,
@@ -5098,13 +5156,13 @@ bool mlx5e_tc_update_skb(struct mlx5_cqe64 *cqe,
 #if IS_ENABLED(CONFIG_NET_TC_SKB_EXT)
 	u32 chain = 0, chain_tag, reg_b, zone_restore_id;
 	struct mlx5e_priv *priv = netdev_priv(skb->dev);
-	struct mlx5e_tc_table *tc = &priv->fs.tc;
 	struct mlx5_mapped_obj mapped_obj;
 	struct tc_skb_ext *tc_skb_ext;
+	struct mlx5e_tc_table *tc;
 	int err;
 
 	reg_b = be32_to_cpu(cqe->ft_metadata);
-
+	tc = mlx5e_fs_get_tc(priv->fs);
 	chain_tag = reg_b & MLX5E_TC_TABLE_CHAIN_TAG_MASK;
 
 	err = mapping_find(tc->mapping, chain_tag, &mapped_obj);

@@ -357,6 +357,7 @@ enum {
 	MLX5E_RQ_STATE_CSUM_FULL, /* cqe_csum_full hw bit is set */
 	MLX5E_RQ_STATE_MINI_CQE_HW_STRIDX, /* set when mini_cqe_resp_stride_index cap is used */
 	MLX5E_RQ_STATE_SHAMPO, /* set when SHAMPO cap is used */
+	MLX5E_RQ_STATE_MINI_CQE_ENHANCED,  /* set when enhanced mini_cqe_cap is used */
 };
 
 struct mlx5e_cq {
@@ -383,6 +384,7 @@ struct mlx5e_cq_decomp {
 	u8                         mini_arr_idx;
 	u16                        left;
 	u16                        wqe_counter;
+	bool                       last_cqe_title;
 } ____cacheline_aligned_in_smp;
 
 enum mlx5e_dma_map_type {
@@ -855,11 +857,6 @@ enum {
 	MLX5E_STATE_XDP_ACTIVE,
 };
 
-enum {
-	MLX5E_TC_PRIO = 0,
-	MLX5E_NIC_PRIO
-};
-
 struct mlx5e_modify_sq_param {
 	int curr_state;
 	int next_state;
@@ -921,7 +918,7 @@ struct mlx5e_priv {
 	struct mlx5e_rx_res       *rx_res;
 	u32                       *tx_rates;
 
-	struct mlx5e_flow_steering fs;
+	struct mlx5e_flow_steering *fs;
 
 	struct workqueue_struct    *wq;
 	struct work_struct         update_carrier_work;
@@ -987,6 +984,8 @@ enum mlx5e_profile_feature {
 	MLX5E_PROFILE_FEATURE_PTP_RX,
 	MLX5E_PROFILE_FEATURE_PTP_TX,
 	MLX5E_PROFILE_FEATURE_QOS_HTB,
+	MLX5E_PROFILE_FEATURE_FS_VLAN,
+	MLX5E_PROFILE_FEATURE_FS_TC,
 };
 
 struct mlx5e_profile {
@@ -1022,7 +1021,6 @@ void mlx5e_shampo_dealloc_hd(struct mlx5e_rq *rq, u16 len, u16 start, bool close
 void mlx5e_get_stats(struct net_device *dev, struct rtnl_link_stats64 *stats);
 void mlx5e_fold_sw_stats64(struct mlx5e_priv *priv, struct rtnl_link_stats64 *s);
 
-void mlx5e_init_l2_addr(struct mlx5e_priv *priv);
 int mlx5e_self_test_num(struct mlx5e_priv *priv);
 int mlx5e_self_test_fill_strings(struct mlx5e_priv *priv, u8 *data);
 void mlx5e_self_test(struct net_device *ndev, struct ethtool_test *etest,
