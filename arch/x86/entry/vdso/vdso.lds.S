@@ -28,6 +28,10 @@ VERSION {
 		clock_getres;
 		__vdso_clock_getres;
 		__vdso_sgx_enter_enclave;
+		getrandom;
+		__vdso_getrandom;
+		getrandom_alloc;
+		__vdso_getrandom_alloc;
 	local: *;
 	};
 }
