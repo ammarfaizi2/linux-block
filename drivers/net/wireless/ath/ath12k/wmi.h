@@ -2883,28 +2883,6 @@ struct wmi_peer_reorder_queue_remove_cmd {
 	__le32 tid_mask;
 } __packed;
 
-struct gpio_config_params {
-	u32 gpio_num;
-	u32 input;
-	u32 pull_type;
-	u32 intr_mode;
-};
-
-enum wmi_gpio_type {
-	WMI_GPIO_PULL_NONE,
-	WMI_GPIO_PULL_UP,
-	WMI_GPIO_PULL_DOWN
-};
-
-enum wmi_gpio_intr_type {
-	WMI_GPIO_INTTYPE_DISABLE,
-	WMI_GPIO_INTTYPE_RISING_EDGE,
-	WMI_GPIO_INTTYPE_FALLING_EDGE,
-	WMI_GPIO_INTTYPE_BOTH_EDGE,
-	WMI_GPIO_INTTYPE_LEVEL_LOW,
-	WMI_GPIO_INTTYPE_LEVEL_HIGH
-};
-
 enum wmi_bss_chan_info_req_type {
 	WMI_BSS_SURVEY_REQ_TYPE_READ = 1,
 	WMI_BSS_SURVEY_REQ_TYPE_READ_CLEAR,
@@ -3338,16 +3316,6 @@ struct wmi_channel {
 	u32 reg_info_2;
 } __packed;
 
-struct wmi_mgmt_params {
-	void *tx_frame;
-	u16 frm_len;
-	u8 vdev_id;
-	u16 chanfreq;
-	void *pdata;
-	u16 desc_id;
-	u8 *macaddr;
-};
-
 enum wmi_sta_ps_mode {
 	WMI_STA_PS_MODE_DISABLED = 0,
 	WMI_STA_PS_MODE_ENABLED = 1,
@@ -3650,10 +3618,6 @@ enum {
 	WMI_PDEV_SUSPEND_AND_DISABLE_INTR,
 };
 
-struct green_ap_ps_params {
-	u32 value;
-};
-
 struct wmi_pdev_green_ap_ps_enable_cmd_param {
 	__le32 tlv_header;
 	u32 pdev_id;
@@ -3664,12 +3628,6 @@ struct ath12k_wmi_ap_ps_arg {
 	u32 vdev_id;
 	u32 param;
 	u32 value;
-};
-
-struct vdev_set_params {
-	u32 if_id;
-	u32 param_id;
-	u32 param_value;
 };
 
 enum set_init_cc_type {
@@ -3852,16 +3810,6 @@ struct wmi_unit_test_cmd {
 #define WMI_PEER_160MHZ		0x40000000
 #define WMI_PEER_SAFEMODE_EN	0x80000000
 
-struct beacon_tmpl_params {
-	u8 vdev_id;
-	u32 tim_ie_offset;
-	u32 tmpl_len;
-	u32 tmpl_len_aligned;
-	u32 csa_switch_count_offset;
-	u32 ext_csa_switch_count_offset;
-	u8 *frm;
-};
-
 struct wmi_rate_set {
 	u32 num_rates;
 	u32 rates[(MAX_SUPPORTED_RATES / 4) + 1];
@@ -4010,13 +3958,6 @@ struct cur_regulatory_info {
 	struct cur_reg_rule *reg_rules_6g_ap_ptr[WMI_REG_CURRENT_MAX_AP_TYPE];
 	struct cur_reg_rule *reg_rules_6g_client_ptr
 		[WMI_REG_CURRENT_MAX_AP_TYPE][WMI_REG_MAX_CLIENT_TYPE];
-};
-
-struct wmi_regulatory_rule_struct {
-	u32  tlv_header;
-	u32  freq_info;
-	u32  bw_pwr_info;
-	u32  flag_info;
 };
 
 #define WMI_REG_CLIENT_MAX 4
@@ -4694,13 +4635,6 @@ struct ath12k_hal_reg_cap {
 	u32 high_2ghz_chan;
 	u32 low_5ghz_chan;
 	u32 high_5ghz_chan;
-};
-
-struct ath12k_mem_chunk {
-	void *vaddr;
-	dma_addr_t paddr;
-	u32 len;
-	u32 req_id;
 };
 
 #define WMI_SKB_HEADROOM sizeof(struct wmi_cmd_hdr)
