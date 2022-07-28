@@ -386,16 +386,20 @@ void mlx5_eq_disable(struct mlx5_core_dev *dev, struct mlx5_eq *eq,
 }
 EXPORT_SYMBOL(mlx5_eq_disable);
 
-static int destroy_unmap_eq(struct mlx5_core_dev *dev, struct mlx5_eq *eq)
+static int destroy_unmap_eq(struct mlx5_core_dev *dev, struct mlx5_eq *eq,
+			    bool reentry)
 {
 	int err;
 
 	mlx5_debug_eq_remove(dev, eq);
 
 	err = mlx5_cmd_destroy_eq(dev, eq->eqn);
-	if (err)
+	if (err) {
 		mlx5_core_warn(dev, "failed to destroy a previously created eq: eqn %d\n",
 			       eq->eqn);
+		if (reentry)
+			return err;
+	}
 
 	mlx5_frag_buf_free(dev, &eq->frag_buf);
 	return err;
@@ -481,7 +485,7 @@ static int destroy_async_eq(struct mlx5_core_dev *dev, struct mlx5_eq *eq)
 	int err;
 
 	mutex_lock(&eq_table->lock);
-	err = destroy_unmap_eq(dev, eq);
+	err = destroy_unmap_eq(dev, eq, false);
 	mutex_unlock(&eq_table->lock);
 	return err;
 }
@@ -748,12 +752,15 @@ EXPORT_SYMBOL(mlx5_eq_create_generic);
 
 int mlx5_eq_destroy_generic(struct mlx5_core_dev *dev, struct mlx5_eq *eq)
 {
+	struct mlx5_eq_table *eq_table = dev->priv.eq_table;
 	int err;
 
 	if (IS_ERR(eq))
 		return -EINVAL;
 
-	err = destroy_async_eq(dev, eq);
+	mutex_lock(&eq_table->lock);
+	err = destroy_unmap_eq(dev, eq, true);
+	mutex_unlock(&eq_table->lock);
 	if (err)
 		goto out;
 
@@ -851,7 +858,7 @@ static void destroy_comp_eqs(struct mlx5_core_dev *dev)
 	list_for_each_entry_safe(eq, n, &table->comp_eqs_list, list) {
 		list_del(&eq->list);
 		mlx5_eq_disable(dev, &eq->core, &eq->irq_nb);
-		if (destroy_unmap_eq(dev, &eq->core))
+		if (destroy_unmap_eq(dev, &eq->core, false))
 			mlx5_core_warn(dev, "failed to destroy comp EQ 0x%x\n",
 				       eq->core.eqn);
 		tasklet_disable(&eq->tasklet_ctx.task);
@@ -915,7 +922,7 @@ static int create_comp_eqs(struct mlx5_core_dev *dev)
 			goto clean_eq;
 		err = mlx5_eq_enable(dev, &eq->core, &eq->irq_nb);
 		if (err) {
-			destroy_unmap_eq(dev, &eq->core);
+			destroy_unmap_eq(dev, &eq->core, false);
 			goto clean_eq;
 		}
 
