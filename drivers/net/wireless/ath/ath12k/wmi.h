@@ -2528,9 +2528,11 @@ struct wmi_vdev_down_cmd {
 #define WMI_VDEV_START_PMF_ENABLED  BIT(1)
 #define WMI_VDEV_START_LDPC_RX_ENABLED BIT(3)
 
-struct wmi_ssid {
+#define ATH12K_WMI_SSID_LEN 32
+
+struct ath12k_wmi_ssid_params {
 	u32 ssid_len;
-	u32 ssid[8];
+	u8 ssid[ATH12K_WMI_SSID_LEN];
 } __packed;
 
 #define ATH12K_VDEV_SETUP_TIMEOUT_HZ (1 * HZ)
@@ -2542,7 +2544,7 @@ struct wmi_vdev_start_request_cmd {
 	__le32 beacon_interval;
 	__le32 dtim_period;
 	__le32 flags;
-	struct wmi_ssid ssid;
+	struct ath12k_wmi_ssid_params ssid;
 	__le32 bcn_tx_rate;
 	__le32 bcn_txpower;
 	__le32 num_noa_descriptors;
@@ -2555,11 +2557,6 @@ struct wmi_vdev_start_request_cmd {
 } __packed;
 
 #define MGMT_TX_DL_FRM_LEN		     64
-#define WMI_MAC_MAX_SSID_LENGTH              32
-struct mac_ssid {
-	u8 length;
-	u8 mac_ssid[WMI_MAC_MAX_SSID_LENGTH];
-} __packed;
 
 struct wmi_p2p_noa_descriptor {
 	u32 type_count;
@@ -2971,16 +2968,14 @@ enum scan_dwelltime_adaptive_mode {
 #define WLAN_SCAN_MAX_NUM_BSSID         10
 #define WLAN_SCAN_MAX_NUM_CHANNELS      40
 
-#define WLAN_SSID_MAX_LEN 32
-
 struct element_info {
 	u32 len;
 	u8 *ptr;
 };
 
-struct wlan_ssid {
+struct ath12k_wmi_ssid_arg {
 	u8 length;
-	u8 ssid[WLAN_SSID_MAX_LEN];
+	u8 ssid[ATH12K_WMI_SSID_LEN];
 };
 
 #define WMI_IE_BITMAP_SIZE             8
@@ -3187,7 +3182,7 @@ struct ath12k_wmi_scan_req_arg {
 	u32 n_probes;
 	u32 chan_list[WLAN_SCAN_MAX_NUM_CHANNELS];
 	u32 notify_scan_events;
-	struct wlan_ssid ssid[WLAN_SCAN_MAX_NUM_SSID];
+	struct ath12k_wmi_ssid_arg ssid[WLAN_SCAN_MAX_NUM_SSID];
 	struct wmi_mac_addr bssid_list[WLAN_SCAN_MAX_NUM_BSSID];
 	struct element_info extraie;
 	struct element_info htcap;

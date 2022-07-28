@@ -2138,7 +2138,7 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 {
 	struct ath12k_pdev_wmi *wmi = ar->wmi;
 	struct wmi_start_scan_cmd *cmd;
-	struct wmi_ssid *ssid = NULL;
+	struct ath12k_wmi_ssid_params *ssid = NULL;
 	struct wmi_mac_addr *bssid;
 	struct sk_buff *skb;
 	struct wmi_tlv *tlv;
