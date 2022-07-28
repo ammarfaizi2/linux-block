@@ -1108,7 +1108,7 @@ int ath12k_wmi_send_peer_delete_cmd(struct ath12k *ar,
 }
 
 int ath12k_wmi_send_pdev_set_regdomain(struct ath12k *ar,
-				       struct pdev_set_regdomain_params *param)
+				       struct ath12k_wmi_pdev_set_regdomain_arg *arg)
 {
 	struct ath12k_pdev_wmi *wmi = ar->wmi;
 	struct wmi_pdev_set_regdomain_cmd *cmd;
@@ -1123,18 +1123,18 @@ int ath12k_wmi_send_pdev_set_regdomain(struct ath12k *ar,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_SET_REGDOMAIN_CMD,
 						 sizeof(*cmd));
 
-	cmd->reg_domain = cpu_to_le32(param->current_rd_in_use);
-	cmd->reg_domain_2g = cpu_to_le32(param->current_rd_2g);
-	cmd->reg_domain_5g = cpu_to_le32(param->current_rd_5g);
-	cmd->conformance_test_limit_2g = cpu_to_le32(param->ctl_2g);
-	cmd->conformance_test_limit_5g = cpu_to_le32(param->ctl_5g);
-	cmd->dfs_domain = cpu_to_le32(param->dfs_domain);
-	cmd->pdev_id = cpu_to_le32(param->pdev_id);
+	cmd->reg_domain = cpu_to_le32(arg->current_rd_in_use);
+	cmd->reg_domain_2g = cpu_to_le32(arg->current_rd_2g);
+	cmd->reg_domain_5g = cpu_to_le32(arg->current_rd_5g);
+	cmd->conformance_test_limit_2g = cpu_to_le32(arg->ctl_2g);
+	cmd->conformance_test_limit_5g = cpu_to_le32(arg->ctl_5g);
+	cmd->dfs_domain = cpu_to_le32(arg->dfs_domain);
+	cmd->pdev_id = cpu_to_le32(arg->pdev_id);
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "WMI pdev regd rd %d rd2g %d rd5g %d domain %d pdev id %d\n",
-		   param->current_rd_in_use, param->current_rd_2g,
-		   param->current_rd_5g, param->dfs_domain, param->pdev_id);
+		   arg->current_rd_in_use, arg->current_rd_2g,
+		   arg->current_rd_5g, arg->dfs_domain, arg->pdev_id);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_PDEV_SET_REGDOMAIN_CMDID);
 	if (ret) {

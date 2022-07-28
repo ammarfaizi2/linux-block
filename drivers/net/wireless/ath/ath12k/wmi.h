@@ -2749,7 +2749,7 @@ struct peer_flush_params {
 	u8 vdev_id;
 };
 
-struct pdev_set_regdomain_params {
+struct ath12k_wmi_pdev_set_regdomain_arg {
 	u16 current_rd_in_use;
 	u16 current_rd_2g;
 	u16 current_rd_5g;
@@ -5376,7 +5376,7 @@ int
 ath12k_wmi_rx_reord_queue_remove(struct ath12k *ar,
 				 struct rx_reorder_queue_remove_params *param);
 int ath12k_wmi_send_pdev_set_regdomain(struct ath12k *ar,
-				       struct pdev_set_regdomain_params *param);
+				       struct ath12k_wmi_pdev_set_regdomain_arg *arg);
 int ath12k_wmi_pull_fw_stats(struct ath12k_base *ab, struct sk_buff *skb,
 			     struct ath12k_fw_stats *stats);
 size_t ath12k_wmi_fw_stats_num_peers(struct list_head *head);
