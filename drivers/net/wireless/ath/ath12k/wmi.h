@@ -2579,7 +2579,7 @@ struct wmi_p2p_noa_descriptor {
 	u32 start_time;
 };
 
-struct channel_param {
+struct ath12k_wmi_channel_arg {
 	u8 chan_id;
 	u8 pwr;
 	u32 mhz;
@@ -3583,10 +3583,10 @@ struct wmi_stop_scan_cmd {
 	__le32 pdev_id;
 };
 
-struct scan_chan_list_params {
+struct ath12k_wmi_scan_chan_list_arg {
 	u32 pdev_id;
 	u16 nallchans;
-	struct channel_param ch_param[1];
+	struct ath12k_wmi_channel_arg channel[1];
 };
 
 struct wmi_scan_chan_list_cmd {
@@ -5346,7 +5346,7 @@ int ath12k_wmi_send_peer_flush_tids_cmd(struct ath12k *ar,
 int ath12k_wmi_send_set_ap_ps_param_cmd(struct ath12k *ar, u8 *peer_addr,
 					struct ap_ps_params *param);
 int ath12k_wmi_send_scan_chan_list_cmd(struct ath12k *ar,
-				       struct scan_chan_list_params *chan_list);
+				       struct ath12k_wmi_scan_chan_list_arg *arg);
 int ath12k_wmi_send_dfs_phyerr_offload_enable_cmd(struct ath12k *ar,
 						  u32 pdev_id);
 int ath12k_wmi_addba_clear_resp(struct ath12k *ar, u32 vdev_id, const u8 *mac);

@@ -93,13 +93,13 @@ ath12k_reg_notifier(struct wiphy *wiphy, struct regulatory_request *request)
 int ath12k_reg_update_chan_list(struct ath12k *ar)
 {
 	struct ieee80211_supported_band **bands;
-	struct scan_chan_list_params *params;
+	struct ath12k_wmi_scan_chan_list_arg *arg;
 	struct ieee80211_channel *channel;
 	struct ieee80211_hw *hw = ar->hw;
-	struct channel_param *ch;
+	struct ath12k_wmi_channel_arg *ch;
 	enum nl80211_band band;
 	int num_channels = 0;
-	int params_len;
+	int arg_len;
 	int i, ret;
 
 	bands = hw->wiphy->bands;
@@ -119,17 +119,17 @@ int ath12k_reg_update_chan_list(struct ath12k *ar)
 	if (WARN_ON(!num_channels))
 		return -EINVAL;
 
-	params_len = sizeof(struct scan_chan_list_params) +
-			num_channels * sizeof(struct channel_param);
-	params = kzalloc(params_len, GFP_KERNEL);
+	arg_len = sizeof(struct ath12k_wmi_scan_chan_list_arg) +
+			num_channels * sizeof(struct ath12k_wmi_channel_arg);
+	arg = kzalloc(arg_len, GFP_KERNEL);
 
-	if (!params)
+	if (!arg)
 		return -ENOMEM;
 
-	params->pdev_id = ar->pdev->pdev_id;
-	params->nallchans = num_channels;
+	arg->pdev_id = ar->pdev->pdev_id;
+	arg->nallchans = num_channels;
 
-	ch = params->ch_param;
+	ch = arg->channel;
 
 	for (band = 0; band < NUM_NL80211_BANDS; band++) {
 		if (!bands[band])
@@ -170,7 +170,7 @@ int ath12k_reg_update_chan_list(struct ath12k *ar)
 
 			ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 				   "mac channel [%d/%d] freq %d maxpower %d regpower %d antenna %d mode %d\n",
-				   i, params->nallchans,
+				   i, arg->nallchans,
 				   ch->mhz, ch->maxpower, ch->maxregpower,
 				   ch->antennamax, ch->phy_mode);
 
@@ -181,8 +181,8 @@ int ath12k_reg_update_chan_list(struct ath12k *ar)
 		}
 	}
 
-	ret = ath12k_wmi_send_scan_chan_list_cmd(ar, params);
-	kfree(params);
+	ret = ath12k_wmi_send_scan_chan_list_cmd(ar, arg);
+	kfree(arg);
 
 	return ret;
 }

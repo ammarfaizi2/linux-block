@@ -2349,31 +2349,31 @@ int ath12k_wmi_send_scan_stop_cmd(struct ath12k *ar,
 }
 
 int ath12k_wmi_send_scan_chan_list_cmd(struct ath12k *ar,
-				       struct scan_chan_list_params *chan_list)
+				       struct ath12k_wmi_scan_chan_list_arg *arg)
 {
 	struct ath12k_pdev_wmi *wmi = ar->wmi;
 	struct wmi_scan_chan_list_cmd *cmd;
 	struct sk_buff *skb;
 	struct wmi_channel *chan_info;
-	struct channel_param *tchan_info;
+	struct ath12k_wmi_channel_arg *channel_arg;
 	struct wmi_tlv *tlv;
 	void *ptr;
 	int i, ret, len;
 	u16 num_send_chans, num_sends = 0, max_chan_limit = 0;
 	u32 *reg1, *reg2;
 
-	tchan_info = &chan_list->ch_param[0];
-	while (chan_list->nallchans) {
+	channel_arg = &arg->channel[0];
+	while (arg->nallchans) {
 		len = sizeof(*cmd) + TLV_HDR_SIZE;
 		max_chan_limit = (wmi->wmi_ab->max_msg_len[ar->pdev_idx] - len) /
 			sizeof(*chan_info);
 
-		if (chan_list->nallchans > max_chan_limit)
+		if (arg->nallchans > max_chan_limit)
 			num_send_chans = max_chan_limit;
 		else
-			num_send_chans = chan_list->nallchans;
+			num_send_chans = arg->nallchans;
 
-		chan_list->nallchans -= num_send_chans;
+		arg->nallchans -= num_send_chans;
 		len += sizeof(*chan_info) * num_send_chans;
 
 		skb = ath12k_wmi_alloc_skb(wmi->wmi_ab, len);
@@ -2383,7 +2383,7 @@ int ath12k_wmi_send_scan_chan_list_cmd(struct ath12k *ar,
 		cmd = (struct wmi_scan_chan_list_cmd *)skb->data;
 		cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_SCAN_CHAN_LIST_CMD,
 							 sizeof(*cmd));
-		cmd->pdev_id = cpu_to_le32(chan_list->pdev_id);
+		cmd->pdev_id = cpu_to_le32(arg->pdev_id);
 		cmd->num_scan_chans = cpu_to_le32(num_send_chans);
 		if (num_sends)
 			cmd->flags |= cpu_to_le32(WMI_APPEND_TO_EXISTING_CHAN_LIST_FLAG);
@@ -2409,36 +2409,36 @@ int ath12k_wmi_send_scan_chan_list_cmd(struct ath12k *ar,
 
 			reg1 = &chan_info->reg_info_1;
 			reg2 = &chan_info->reg_info_2;
-			chan_info->mhz = tchan_info->mhz;
-			chan_info->band_center_freq1 = tchan_info->cfreq1;
-			chan_info->band_center_freq2 = tchan_info->cfreq2;
+			chan_info->mhz = channel_arg->mhz;
+			chan_info->band_center_freq1 = channel_arg->cfreq1;
+			chan_info->band_center_freq2 = channel_arg->cfreq2;
 
-			if (tchan_info->is_chan_passive)
+			if (channel_arg->is_chan_passive)
 				chan_info->info |= WMI_CHAN_INFO_PASSIVE;
-			if (tchan_info->allow_he)
+			if (channel_arg->allow_he)
 				chan_info->info |= WMI_CHAN_INFO_ALLOW_HE;
-			else if (tchan_info->allow_vht)
+			else if (channel_arg->allow_vht)
 				chan_info->info |= WMI_CHAN_INFO_ALLOW_VHT;
-			else if (tchan_info->allow_ht)
+			else if (channel_arg->allow_ht)
 				chan_info->info |= WMI_CHAN_INFO_ALLOW_HT;
-			if (tchan_info->half_rate)
+			if (channel_arg->half_rate)
 				chan_info->info |= WMI_CHAN_INFO_HALF_RATE;
-			if (tchan_info->quarter_rate)
+			if (channel_arg->quarter_rate)
 				chan_info->info |= WMI_CHAN_INFO_QUARTER_RATE;
-			if (tchan_info->psc_channel)
+			if (channel_arg->psc_channel)
 				chan_info->info |= WMI_CHAN_INFO_PSC;
 
-			chan_info->info |= u32_encode_bits(tchan_info->phy_mode,
+			chan_info->info |= u32_encode_bits(channel_arg->phy_mode,
 							   WMI_CHAN_INFO_MODE);
-			*reg1 |= u32_encode_bits(tchan_info->minpower,
+			*reg1 |= u32_encode_bits(channel_arg->minpower,
 						 WMI_CHAN_REG_INFO1_MIN_PWR);
-			*reg1 |= u32_encode_bits(tchan_info->maxpower,
+			*reg1 |= u32_encode_bits(channel_arg->maxpower,
 						 WMI_CHAN_REG_INFO1_MAX_PWR);
-			*reg1 |= u32_encode_bits(tchan_info->maxregpower,
+			*reg1 |= u32_encode_bits(channel_arg->maxregpower,
 						 WMI_CHAN_REG_INFO1_MAX_REG_PWR);
-			*reg1 |= u32_encode_bits(tchan_info->reg_class_id,
+			*reg1 |= u32_encode_bits(channel_arg->reg_class_id,
 						 WMI_CHAN_REG_INFO1_REG_CLS);
-			*reg2 |= u32_encode_bits(tchan_info->antennamax,
+			*reg2 |= u32_encode_bits(channel_arg->antennamax,
 						 WMI_CHAN_REG_INFO2_ANT_MAX);
 
 			ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
@@ -2447,7 +2447,7 @@ int ath12k_wmi_send_scan_chan_list_cmd(struct ath12k *ar,
 
 			ptr += sizeof(*chan_info);
 
-			tchan_info++;
+			channel_arg++;
 		}
 
 		ret = ath12k_wmi_cmd_send(wmi, skb, WMI_SCAN_CHAN_LIST_CMDID);
