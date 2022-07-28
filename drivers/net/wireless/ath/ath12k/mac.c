@@ -2547,7 +2547,7 @@ void ath12k_mac_scan_finish(struct ath12k *ar)
 
 static int ath12k_scan_stop(struct ath12k *ar)
 {
-	struct scan_cancel_param arg = {
+	struct ath12k_wmi_scan_cancel_arg arg = {
 		.req_type = WLAN_SCAN_CANCEL_SINGLE,
 		.scan_id = ATH12K_SCAN_ID,
 	};

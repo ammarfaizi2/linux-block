@@ -2302,7 +2302,7 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 }
 
 int ath12k_wmi_send_scan_stop_cmd(struct ath12k *ar,
-				  struct scan_cancel_param *param)
+				  struct ath12k_wmi_scan_cancel_arg *arg)
 {
 	struct ath12k_pdev_wmi *wmi = ar->wmi;
 	struct wmi_stop_scan_cmd *cmd;
@@ -2318,23 +2318,23 @@ int ath12k_wmi_send_scan_stop_cmd(struct ath12k *ar,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_STOP_SCAN_CMD,
 						 sizeof(*cmd));
 
-	cmd->vdev_id = cpu_to_le32(param->vdev_id);
-	cmd->requestor = cpu_to_le32(param->requester);
-	cmd->scan_id = cpu_to_le32(param->scan_id);
-	cmd->pdev_id = cpu_to_le32(param->pdev_id);
+	cmd->vdev_id = cpu_to_le32(arg->vdev_id);
+	cmd->requestor = cpu_to_le32(arg->requester);
+	cmd->scan_id = cpu_to_le32(arg->scan_id);
+	cmd->pdev_id = cpu_to_le32(arg->pdev_id);
 	/* stop the scan with the corresponding scan_id */
-	if (param->req_type == WLAN_SCAN_CANCEL_PDEV_ALL) {
+	if (arg->req_type == WLAN_SCAN_CANCEL_PDEV_ALL) {
 		/* Cancelling all scans */
 		cmd->req_type = cpu_to_le32(WMI_SCAN_STOP_ALL);
-	} else if (param->req_type == WLAN_SCAN_CANCEL_VDEV_ALL) {
+	} else if (arg->req_type == WLAN_SCAN_CANCEL_VDEV_ALL) {
 		/* Cancelling VAP scans */
 		cmd->req_type = cpu_to_le32(WMI_SCN_STOP_VAP_ALL);
-	} else if (param->req_type == WLAN_SCAN_CANCEL_SINGLE) {
+	} else if (arg->req_type == WLAN_SCAN_CANCEL_SINGLE) {
 		/* Cancelling specific scan */
 		cmd->req_type =  WMI_SCAN_STOP_ONE;
 	} else {
-		ath12k_warn(ar->ab, "invalid scan cancel param %d",
-			    param->req_type);
+		ath12k_warn(ar->ab, "invalid scan cancel req_type %d",
+			    arg->req_type);
 		dev_kfree_skb(skb);
 		return -EINVAL;
 	}
