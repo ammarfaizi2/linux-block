@@ -425,6 +425,7 @@ void xfrm_policy_destroy(struct xfrm_policy *policy)
 	if (del_timer(&policy->timer) || del_timer(&policy->polq.hold_timer))
 		BUG();
 
+	xfrm_dev_policy_free(policy);
 	call_rcu(&policy->rcu, xfrm_policy_destroy_rcu);
 }
 EXPORT_SYMBOL(xfrm_policy_destroy);
@@ -1569,13 +1570,70 @@ static struct xfrm_policy *xfrm_policy_insert_list(struct hlist_head *chain,
 	return delpol;
 }
 
+static int __xfrm_policy_check_hw_priority(struct net *net,
+					   struct xfrm_policy *policy, int dir)
+{
+	int left, right;
+
+	lockdep_assert_held(&net->xfrm.xfrm_policy_lock);
+
+	if (!net->xfrm.policy_count[dir])
+		/* Adding first policy */
+		return 0;
+
+	if (policy->xdo.type != XFRM_DEV_OFFLOAD_FULL) {
+		/* SW priority */
+		if (!net->xfrm.policy_count[2 * XFRM_POLICY_MAX + dir])
+			/* Special case to allow reuse maximum priority
+			 * (U32_MAX) for SW policies, when no HW policy exist.
+			 */
+			return 0;
+
+		left = policy->priority;
+		right = net->xfrm.policy_prio[dir].min_hw_prio;
+	} else {
+		/* HW priority */
+		left = net->xfrm.policy_prio[dir].max_sw_prio;
+		right = policy->priority;
+	}
+	if (left >= right)
+		return -EINVAL;
+
+	return 0;
+}
+
+static void __xfrm_policy_update_hw_priority(struct net *net,
+					     struct xfrm_policy *policy,
+					     int dir)
+{
+	u32 *hw_prio, *sw_prio;
+
+	lockdep_assert_held(&net->xfrm.xfrm_policy_lock);
+
+	if (policy->xdo.type != XFRM_DEV_OFFLOAD_FULL) {
+		sw_prio = &net->xfrm.policy_prio[dir].max_sw_prio;
+		*sw_prio = max(*sw_prio, policy->priority);
+		return;
+	}
+
+	hw_prio = &net->xfrm.policy_prio[dir].min_hw_prio;
+	*hw_prio = min(*hw_prio, policy->priority);
+}
+
 int xfrm_policy_insert(int dir, struct xfrm_policy *policy, int excl)
 {
 	struct net *net = xp_net(policy);
 	struct xfrm_policy *delpol;
 	struct hlist_head *chain;
+	int ret;
 
 	spin_lock_bh(&net->xfrm.xfrm_policy_lock);
+	ret = __xfrm_policy_check_hw_priority(net, policy, dir);
+	if (ret) {
+		spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
+		return ret;
+	}
+
 	chain = policy_hash_bysel(net, &policy->selector, policy->family, dir);
 	if (chain)
 		delpol = xfrm_policy_insert_list(chain, policy, excl);
@@ -1605,6 +1663,7 @@ int xfrm_policy_insert(int dir, struct xfrm_policy *policy, int excl)
 	policy->curlft.use_time = 0;
 	if (!mod_timer(&policy->timer, jiffies + HZ))
 		xfrm_pol_hold(policy);
+	__xfrm_policy_update_hw_priority(net, policy, dir);
 	spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
 
 	if (delpol)
@@ -2204,6 +2263,8 @@ static void __xfrm_policy_link(struct xfrm_policy *pol, int dir)
 
 	list_add(&pol->walk.all, &net->xfrm.policy_all);
 	net->xfrm.policy_count[dir]++;
+	if (pol->xdo.type == XFRM_DEV_OFFLOAD_FULL)
+		net->xfrm.policy_count[2 * XFRM_POLICY_MAX + dir]++;
 	xfrm_pol_hold(pol);
 }
 
@@ -2223,6 +2284,8 @@ static struct xfrm_policy *__xfrm_policy_unlink(struct xfrm_policy *pol,
 	}
 
 	list_del_init(&pol->walk.all);
+	if (pol->xdo.type == XFRM_DEV_OFFLOAD_FULL)
+		net->xfrm.policy_count[2 * XFRM_POLICY_MAX + dir]--;
 	net->xfrm.policy_count[dir]--;
 
 	return pol;
@@ -2238,14 +2301,61 @@ static void xfrm_sk_policy_unlink(struct xfrm_policy *pol, int dir)
 	__xfrm_policy_unlink(pol, XFRM_POLICY_MAX + dir);
 }
 
+static void __xfrm_policy_delete_prio(struct net *net,
+				      struct xfrm_policy *policy, int dir)
+{
+	struct xfrm_policy *pol;
+	u32 sw_prio = 0;
+
+	lockdep_assert_held(&net->xfrm.xfrm_policy_lock);
+
+	if (!net->xfrm.policy_count[dir]) {
+		net->xfrm.policy_prio[dir].max_sw_prio = sw_prio;
+		net->xfrm.policy_prio[dir].min_hw_prio = U32_MAX;
+		return;
+	}
+
+	if (policy->xdo.type == XFRM_DEV_OFFLOAD_FULL &&
+	    !net->xfrm.policy_count[2 * XFRM_POLICY_MAX + dir]) {
+		net->xfrm.policy_prio[dir].min_hw_prio = U32_MAX;
+		return;
+	}
+
+	list_for_each_entry(pol, &net->xfrm.policy_all, walk.all) {
+		if (pol->walk.dead)
+			continue;
+
+		if (policy->xdo.type != XFRM_DEV_OFFLOAD_FULL) {
+			/* SW priority */
+			if (pol->xdo.type == XFRM_DEV_OFFLOAD_FULL) {
+				net->xfrm.policy_prio[dir].max_sw_prio = sw_prio;
+				return;
+			}
+			sw_prio = pol->priority;
+			continue;
+		}
+		/* HW priority */
+		if (pol->xdo.type != XFRM_DEV_OFFLOAD_FULL)
+			continue;
+
+		net->xfrm.policy_prio[dir].min_hw_prio = pol->priority;
+		return;
+	}
+
+	net->xfrm.policy_prio[dir].max_sw_prio = sw_prio;
+}
+
 int xfrm_policy_delete(struct xfrm_policy *pol, int dir)
 {
 	struct net *net = xp_net(pol);
 
 	spin_lock_bh(&net->xfrm.xfrm_policy_lock);
 	pol = __xfrm_policy_unlink(pol, dir);
+	if (pol)
+		__xfrm_policy_delete_prio(net, pol, dir);
 	spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
 	if (pol) {
+		xfrm_dev_policy_delete(pol);
 		xfrm_policy_kill(pol);
 		return 0;
 	}
@@ -4043,6 +4153,7 @@ static int __net_init xfrm_policy_init(struct net *net)
 
 		net->xfrm.policy_count[dir] = 0;
 		net->xfrm.policy_count[XFRM_POLICY_MAX + dir] = 0;
+		net->xfrm.policy_count[2 * XFRM_POLICY_MAX + dir] = 0;
 		INIT_HLIST_HEAD(&net->xfrm.policy_inexact[dir]);
 
 		htab = &net->xfrm.policy_bydst[dir];
@@ -4127,6 +4238,10 @@ static int __net_init xfrm_net_init(struct net *net)
 	net->xfrm.policy_default[XFRM_POLICY_IN] = XFRM_USERPOLICY_ACCEPT;
 	net->xfrm.policy_default[XFRM_POLICY_FWD] = XFRM_USERPOLICY_ACCEPT;
 	net->xfrm.policy_default[XFRM_POLICY_OUT] = XFRM_USERPOLICY_ACCEPT;
+
+	net->xfrm.policy_prio[XFRM_POLICY_IN].min_hw_prio = U32_MAX;
+	net->xfrm.policy_prio[XFRM_POLICY_FWD].min_hw_prio = U32_MAX;
+	net->xfrm.policy_prio[XFRM_POLICY_OUT].min_hw_prio = U32_MAX;
 
 	rv = xfrm_statistics_init(net);
 	if (rv < 0)

@@ -695,6 +695,10 @@ struct devlink_region {
 		const struct devlink_region_ops *ops;
 		const struct devlink_port_region_ops *port_ops;
 	};
+	struct mutex snapshot_lock; /* protects snapshot_list,
+				     * max_snapshots and cur_snapshots
+				     * consistency.
+				     */
 	struct list_head snapshot_list;
 	u32 max_snapshots;
 	u32 cur_snapshots;
@@ -5690,21 +5694,28 @@ static int __devlink_snapshot_id_increment(struct devlink *devlink, u32 id)
 {
 	unsigned long count;
 	void *p;
+	int err;
 
-	devl_assert_locked(devlink);
-
+	xa_lock(&devlink->snapshot_ids);
 	p = xa_load(&devlink->snapshot_ids, id);
-	if (WARN_ON(!p))
-		return -EINVAL;
+	if (WARN_ON(!p)) {
+		err = -EINVAL;
+		goto unlock;
+	}
 
-	if (WARN_ON(!xa_is_value(p)))
-		return -EINVAL;
+	if (WARN_ON(!xa_is_value(p))) {
+		err = -EINVAL;
+		goto unlock;
+	}
 
 	count = xa_to_value(p);
 	count++;
 
-	return xa_err(xa_store(&devlink->snapshot_ids, id, xa_mk_value(count),
-			       GFP_KERNEL));
+	err = xa_err(__xa_store(&devlink->snapshot_ids, id, xa_mk_value(count),
+				GFP_KERNEL));
+unlock:
+	xa_unlock(&devlink->snapshot_ids);
+	return err;
 }
 
 /**
@@ -5727,25 +5738,26 @@ static void __devlink_snapshot_id_decrement(struct devlink *devlink, u32 id)
 	unsigned long count;
 	void *p;
 
-	devl_assert_locked(devlink);
-
+	xa_lock(&devlink->snapshot_ids);
 	p = xa_load(&devlink->snapshot_ids, id);
 	if (WARN_ON(!p))
-		return;
+		goto unlock;
 
 	if (WARN_ON(!xa_is_value(p)))
-		return;
+		goto unlock;
 
 	count = xa_to_value(p);
 
 	if (count > 1) {
 		count--;
-		xa_store(&devlink->snapshot_ids, id, xa_mk_value(count),
-			 GFP_KERNEL);
+		__xa_store(&devlink->snapshot_ids, id, xa_mk_value(count),
+			   GFP_KERNEL);
 	} else {
 		/* If this was the last user, we can erase this id */
-		xa_erase(&devlink->snapshot_ids, id);
+		__xa_erase(&devlink->snapshot_ids, id);
 	}
+unlock:
+	xa_unlock(&devlink->snapshot_ids);
 }
 
 /**
@@ -5766,13 +5778,17 @@ static void __devlink_snapshot_id_decrement(struct devlink *devlink, u32 id)
  */
 static int __devlink_snapshot_id_insert(struct devlink *devlink, u32 id)
 {
-	devl_assert_locked(devlink);
+	int err;
 
-	if (xa_load(&devlink->snapshot_ids, id))
+	xa_lock(&devlink->snapshot_ids);
+	if (xa_load(&devlink->snapshot_ids, id)) {
+		xa_unlock(&devlink->snapshot_ids);
 		return -EEXIST;
-
-	return xa_err(xa_store(&devlink->snapshot_ids, id, xa_mk_value(0),
-			       GFP_KERNEL));
+	}
+	err = xa_err(__xa_store(&devlink->snapshot_ids, id, xa_mk_value(0),
+				GFP_KERNEL));
+	xa_unlock(&devlink->snapshot_ids);
+	return err;
 }
 
 /**
@@ -5793,8 +5809,6 @@ static int __devlink_snapshot_id_insert(struct devlink *devlink, u32 id)
  */
 static int __devlink_region_snapshot_id_get(struct devlink *devlink, u32 *id)
 {
-	devl_assert_locked(devlink);
-
 	return xa_alloc(&devlink->snapshot_ids, id, xa_mk_value(1),
 			xa_limit_32b, GFP_KERNEL);
 }
@@ -5807,7 +5821,7 @@ static int __devlink_region_snapshot_id_get(struct devlink *devlink, u32 *id)
  *	Multiple snapshots can be created on a region.
  *	The @snapshot_id should be obtained using the getter function.
  *
- *	Must be called only while holding the devlink instance lock.
+ *	Must be called only while holding the region snapshot lock.
  *
  *	@region: devlink region of the snapshot
  *	@data: snapshot data
@@ -5821,7 +5835,7 @@ __devlink_region_snapshot_create(struct devlink_region *region,
 	struct devlink_snapshot *snapshot;
 	int err;
 
-	devl_assert_locked(devlink);
+	lockdep_assert_held(&region->snapshot_lock);
 
 	/* check if region can hold one more snapshot */
 	if (region->cur_snapshots == region->max_snapshots)
@@ -5859,7 +5873,7 @@ static void devlink_region_snapshot_del(struct devlink_region *region,
 {
 	struct devlink *devlink = region->devlink;
 
-	devl_assert_locked(devlink);
+	lockdep_assert_held(&region->snapshot_lock);
 
 	devlink_nl_region_notify(region, snapshot, DEVLINK_CMD_REGION_DEL);
 	region->cur_snapshots--;
@@ -6038,11 +6052,15 @@ static int devlink_nl_cmd_region_del(struct sk_buff *skb,
 	if (!region)
 		return -EINVAL;
 
+	mutex_lock(&region->snapshot_lock);
 	snapshot = devlink_region_snapshot_get_by_id(region, snapshot_id);
-	if (!snapshot)
+	if (!snapshot) {
+		mutex_unlock(&region->snapshot_lock);
 		return -EINVAL;
+	}
 
 	devlink_region_snapshot_del(region, snapshot);
+	mutex_unlock(&region->snapshot_lock);
 	return 0;
 }
 
@@ -6090,9 +6108,12 @@ devlink_nl_cmd_region_new(struct sk_buff *skb, struct genl_info *info)
 		return -EOPNOTSUPP;
 	}
 
+	mutex_lock(&region->snapshot_lock);
+
 	if (region->cur_snapshots == region->max_snapshots) {
 		NL_SET_ERR_MSG_MOD(info->extack, "The region has reached the maximum number of stored snapshots");
-		return -ENOSPC;
+		err = -ENOSPC;
+		goto unlock;
 	}
 
 	snapshot_id_attr = info->attrs[DEVLINK_ATTR_REGION_SNAPSHOT_ID];
@@ -6101,17 +6122,18 @@ devlink_nl_cmd_region_new(struct sk_buff *skb, struct genl_info *info)
 
 		if (devlink_region_snapshot_get_by_id(region, snapshot_id)) {
 			NL_SET_ERR_MSG_MOD(info->extack, "The requested snapshot id is already in use");
-			return -EEXIST;
+			err = -EEXIST;
+			goto unlock;
 		}
 
 		err = __devlink_snapshot_id_insert(devlink, snapshot_id);
 		if (err)
-			return err;
+			goto unlock;
 	} else {
 		err = __devlink_region_snapshot_id_get(devlink, &snapshot_id);
 		if (err) {
 			NL_SET_ERR_MSG_MOD(info->extack, "Failed to allocate a new snapshot id");
-			return err;
+			goto unlock;
 		}
 	}
 
@@ -6149,16 +6171,20 @@ devlink_nl_cmd_region_new(struct sk_buff *skb, struct genl_info *info)
 			goto err_notify;
 	}
 
+	mutex_unlock(&region->snapshot_lock);
 	return 0;
 
 err_snapshot_create:
 	region->ops->destructor(data);
 err_snapshot_capture:
 	__devlink_snapshot_id_decrement(devlink, snapshot_id);
+	mutex_unlock(&region->snapshot_lock);
 	return err;
 
 err_notify:
 	devlink_region_snapshot_del(region, snapshot);
+unlock:
+	mutex_unlock(&region->snapshot_lock);
 	return err;
 }
 
@@ -9238,8 +9264,7 @@ static const struct genl_small_ops devlink_nl_ops[] = {
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.doit = devlink_nl_cmd_health_reporter_get_doit,
 		.dumpit = devlink_nl_cmd_health_reporter_get_dumpit,
-		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
-				  DEVLINK_NL_FLAG_NO_LOCK,
+		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT,
 		/* can be retrieved by unprivileged users */
 	},
 	{
@@ -9247,24 +9272,21 @@ static const struct genl_small_ops devlink_nl_ops[] = {
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.doit = devlink_nl_cmd_health_reporter_set_doit,
 		.flags = GENL_ADMIN_PERM,
-		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
-				  DEVLINK_NL_FLAG_NO_LOCK,
+		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT,
 	},
 	{
 		.cmd = DEVLINK_CMD_HEALTH_REPORTER_RECOVER,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.doit = devlink_nl_cmd_health_reporter_recover_doit,
 		.flags = GENL_ADMIN_PERM,
-		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
-				  DEVLINK_NL_FLAG_NO_LOCK,
+		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT,
 	},
 	{
 		.cmd = DEVLINK_CMD_HEALTH_REPORTER_DIAGNOSE,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.doit = devlink_nl_cmd_health_reporter_diagnose_doit,
 		.flags = GENL_ADMIN_PERM,
-		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
-				  DEVLINK_NL_FLAG_NO_LOCK,
+		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT,
 	},
 	{
 		.cmd = DEVLINK_CMD_HEALTH_REPORTER_DUMP_GET,
@@ -9278,16 +9300,14 @@ static const struct genl_small_ops devlink_nl_ops[] = {
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.doit = devlink_nl_cmd_health_reporter_dump_clear_doit,
 		.flags = GENL_ADMIN_PERM,
-		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
-				  DEVLINK_NL_FLAG_NO_LOCK,
+		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT,
 	},
 	{
 		.cmd = DEVLINK_CMD_HEALTH_REPORTER_TEST,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.doit = devlink_nl_cmd_health_reporter_test_doit,
 		.flags = GENL_ADMIN_PERM,
-		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT |
-				  DEVLINK_NL_FLAG_NO_LOCK,
+		.internal_flags = DEVLINK_NL_FLAG_NEED_DEVLINK_OR_PORT,
 	},
 	{
 		.cmd = DEVLINK_CMD_FLASH_UPDATE,
@@ -11084,6 +11104,7 @@ struct devlink_region *devl_region_create(struct devlink *devlink,
 	region->ops = ops;
 	region->size = region_size;
 	INIT_LIST_HEAD(&region->snapshot_list);
+	mutex_init(&region->snapshot_lock);
 	list_add_tail(&region->list, &devlink->region_list);
 	devlink_nl_region_notify(region, NULL, DEVLINK_CMD_REGION_NEW);
 
@@ -11186,6 +11207,7 @@ void devl_region_destroy(struct devlink_region *region)
 		devlink_region_snapshot_del(region, snapshot);
 
 	list_del(&region->list);
+	mutex_destroy(&region->snapshot_lock);
 
 	devlink_nl_region_notify(region, NULL, DEVLINK_CMD_REGION_DEL);
 	kfree(region);
@@ -11226,13 +11248,7 @@ EXPORT_SYMBOL_GPL(devlink_region_destroy);
  */
 int devlink_region_snapshot_id_get(struct devlink *devlink, u32 *id)
 {
-	int err;
-
-	devl_lock(devlink);
-	err = __devlink_region_snapshot_id_get(devlink, id);
-	devl_unlock(devlink);
-
-	return err;
+	return __devlink_region_snapshot_id_get(devlink, id);
 }
 EXPORT_SYMBOL_GPL(devlink_region_snapshot_id_get);
 
@@ -11248,9 +11264,7 @@ EXPORT_SYMBOL_GPL(devlink_region_snapshot_id_get);
  */
 void devlink_region_snapshot_id_put(struct devlink *devlink, u32 id)
 {
-	devl_lock(devlink);
 	__devlink_snapshot_id_decrement(devlink, id);
-	devl_unlock(devlink);
 }
 EXPORT_SYMBOL_GPL(devlink_region_snapshot_id_put);
 
@@ -11269,13 +11283,11 @@ EXPORT_SYMBOL_GPL(devlink_region_snapshot_id_put);
 int devlink_region_snapshot_create(struct devlink_region *region,
 				   u8 *data, u32 snapshot_id)
 {
-	struct devlink *devlink = region->devlink;
 	int err;
 
-	devl_lock(devlink);
+	mutex_lock(&region->snapshot_lock);
 	err = __devlink_region_snapshot_create(region, data, snapshot_id);
-	devl_unlock(devlink);
-
+	mutex_unlock(&region->snapshot_lock);
 	return err;
 }
 EXPORT_SYMBOL_GPL(devlink_region_snapshot_create);

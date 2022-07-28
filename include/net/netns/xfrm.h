@@ -29,6 +29,11 @@ struct xfrm_policy_hthresh {
 	u8			rbits6;
 };
 
+struct xfrm_policy_prio {
+	u32 max_sw_prio;
+	u32 min_hw_prio;
+};
+
 struct netns_xfrm {
 	struct list_head	state_all;
 	/*
@@ -52,7 +57,7 @@ struct netns_xfrm {
 	unsigned int		policy_idx_hmask;
 	struct hlist_head	policy_inexact[XFRM_POLICY_MAX];
 	struct xfrm_policy_hash	policy_bydst[XFRM_POLICY_MAX];
-	unsigned int		policy_count[XFRM_POLICY_MAX * 2];
+	unsigned int		policy_count[XFRM_POLICY_MAX * 3];
 	struct work_struct	policy_hash_work;
 	struct xfrm_policy_hthresh policy_hthresh;
 	struct list_head	inexact_bins;
@@ -67,6 +72,7 @@ struct netns_xfrm {
 	u32			sysctl_acq_expires;
 
 	u8			policy_default[XFRM_POLICY_MAX];
+	struct xfrm_policy_prio	policy_prio[XFRM_POLICY_MAX];
 
 #ifdef CONFIG_SYSCTL
 	struct ctl_table_header	*sysctl_hdr;

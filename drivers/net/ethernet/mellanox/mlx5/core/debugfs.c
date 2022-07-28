@@ -512,11 +512,11 @@ EXPORT_SYMBOL(mlx5_debug_qp_add);
 
 void mlx5_debug_qp_remove(struct mlx5_core_dev *dev, struct mlx5_core_qp *qp)
 {
-	if (!mlx5_debugfs_root)
+	if (!mlx5_debugfs_root || !qp->dbg)
 		return;
 
-	if (qp->dbg)
-		rem_res_tree(qp->dbg);
+	rem_res_tree(qp->dbg);
+	qp->dbg = NULL;
 }
 EXPORT_SYMBOL(mlx5_debug_qp_remove);
 
@@ -538,11 +538,11 @@ int mlx5_debug_eq_add(struct mlx5_core_dev *dev, struct mlx5_eq *eq)
 
 void mlx5_debug_eq_remove(struct mlx5_core_dev *dev, struct mlx5_eq *eq)
 {
-	if (!mlx5_debugfs_root)
+	if (!mlx5_debugfs_root || !eq->dbg)
 		return;
 
-	if (eq->dbg)
-		rem_res_tree(eq->dbg);
+	rem_res_tree(eq->dbg);
+	eq->dbg = NULL;
 }
 
 int mlx5_debug_cq_add(struct mlx5_core_dev *dev, struct mlx5_core_cq *cq)
