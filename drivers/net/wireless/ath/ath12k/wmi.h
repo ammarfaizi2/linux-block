@@ -2121,7 +2121,7 @@ enum wmi_direct_buffer_module {
 	WMI_DIRECT_BUF_MAX
 };
 
-struct wmi_host_pdev_band_to_mac {
+struct ath12k_wmi_pdev_band_arg {
 	u32 pdev_id;
 	u32 start_freq;
 	u32 end_freq;
@@ -2193,7 +2193,7 @@ struct wmi_init_cmd_param {
 	struct wmi_host_mem_chunk *mem_chunks;
 	u32 hw_mode_id;
 	u32 num_band_to_mac;
-	struct wmi_host_pdev_band_to_mac band_to_mac[WMI_HOST_MAX_PDEV];
+	struct ath12k_wmi_pdev_band_arg band_to_mac[WMI_HOST_MAX_PDEV];
 };
 
 struct wmi_pdev_band_to_mac {

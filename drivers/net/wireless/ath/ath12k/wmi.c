@@ -3242,7 +3242,7 @@ int ath12k_wmi_fils_discovery(struct ath12k *ar, u32 vdev_id, u32 interval,
 
 static void
 ath12k_fill_band_to_mac_param(struct ath12k_base  *soc,
-			      struct wmi_host_pdev_band_to_mac *band_to_mac)
+			      struct ath12k_wmi_pdev_band_arg *arg)
 {
 	u8 i;
 	struct ath12k_hal_reg_capabilities_ext *hal_reg_cap;
@@ -3251,20 +3251,20 @@ ath12k_fill_band_to_mac_param(struct ath12k_base  *soc,
 	for (i = 0; i < soc->num_radios; i++) {
 		pdev = &soc->pdevs[i];
 		hal_reg_cap = &soc->hal_reg_cap[i];
-		band_to_mac[i].pdev_id = pdev->pdev_id;
+		arg[i].pdev_id = pdev->pdev_id;
 
 		switch (pdev->cap.supported_bands) {
 		case WMI_HOST_WLAN_2G_5G_CAP:
-			band_to_mac[i].start_freq = hal_reg_cap->low_2ghz_chan;
-			band_to_mac[i].end_freq = hal_reg_cap->high_5ghz_chan;
+			arg[i].start_freq = hal_reg_cap->low_2ghz_chan;
+			arg[i].end_freq = hal_reg_cap->high_5ghz_chan;
 			break;
 		case WMI_HOST_WLAN_2G_CAP:
-			band_to_mac[i].start_freq = hal_reg_cap->low_2ghz_chan;
-			band_to_mac[i].end_freq = hal_reg_cap->high_2ghz_chan;
+			arg[i].start_freq = hal_reg_cap->low_2ghz_chan;
+			arg[i].end_freq = hal_reg_cap->high_2ghz_chan;
 			break;
 		case WMI_HOST_WLAN_5G_CAP:
-			band_to_mac[i].start_freq = hal_reg_cap->low_5ghz_chan;
-			band_to_mac[i].end_freq = hal_reg_cap->high_5ghz_chan;
+			arg[i].start_freq = hal_reg_cap->low_5ghz_chan;
+			arg[i].end_freq = hal_reg_cap->high_5ghz_chan;
 			break;
 		default:
 			break;
