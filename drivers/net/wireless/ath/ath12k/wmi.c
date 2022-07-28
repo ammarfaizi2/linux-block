@@ -33,8 +33,19 @@ struct wmi_tlv_dma_ring_caps_parse {
 	u32 n_dma_ring_caps;
 };
 
+struct ath12k_wmi_service_ext_arg {
+	u32 default_conc_scan_config_bits;
+	u32 default_fw_config_bits;
+	struct ath12k_ppe_threshold ppet;
+	u32 he_cap_info;
+	u32 mpdu_density;
+	u32 max_bssid_rx_filters;
+	u32 num_hw_modes;
+	u32 num_phy;
+};
+
 struct wmi_tlv_svc_rdy_ext_parse {
-	struct ath12k_service_ext_param param;
+	struct ath12k_wmi_service_ext_arg arg;
 	struct wmi_soc_mac_phy_hw_mode_caps *hw_caps;
 	struct wmi_hw_mode_capabilities *hw_mode_caps;
 	u32 n_hw_mode_caps;
@@ -395,7 +406,7 @@ int ath12k_wmi_cmd_send(struct ath12k_pdev_wmi *wmi, struct sk_buff *skb,
 
 static int ath12k_pull_svc_ready_ext(struct ath12k_pdev_wmi *wmi_handle,
 				     const void *ptr,
-				     struct ath12k_service_ext_param *param)
+				     struct ath12k_wmi_service_ext_arg *arg)
 {
 	const struct wmi_service_ready_ext_event *ev = ptr;
 
@@ -403,12 +414,12 @@ static int ath12k_pull_svc_ready_ext(struct ath12k_pdev_wmi *wmi_handle,
 		return -EINVAL;
 
 	/* Move this to host based bitmap */
-	param->default_conc_scan_config_bits = ev->default_conc_scan_config_bits;
-	param->default_fw_config_bits =	ev->default_fw_config_bits;
-	param->he_cap_info = ev->he_cap_info;
-	param->mpdu_density = ev->mpdu_density;
-	param->max_bssid_rx_filters = ev->max_bssid_rx_filters;
-	memcpy(&param->ppet, &ev->ppet, sizeof(param->ppet));
+	arg->default_conc_scan_config_bits = ev->default_conc_scan_config_bits;
+	arg->default_fw_config_bits = ev->default_fw_config_bits;
+	arg->he_cap_info = ev->he_cap_info;
+	arg->mpdu_density = ev->mpdu_density;
+	arg->max_bssid_rx_filters = ev->max_bssid_rx_filters;
+	memcpy(&arg->ppet, &ev->ppet, sizeof(arg->ppet));
 
 	return 0;
 }
@@ -3820,7 +3831,7 @@ static int ath12k_wmi_tlv_hw_mode_caps_parse(struct ath12k_base *soc,
 	if (tag != WMI_TAG_HW_MODE_CAPABILITIES)
 		return -EPROTO;
 
-	if (svc_rdy_ext->n_hw_mode_caps >= svc_rdy_ext->param.num_hw_modes)
+	if (svc_rdy_ext->n_hw_mode_caps >= svc_rdy_ext->arg.num_hw_modes)
 		return -ENOBUFS;
 
 	hw_mode_cap = container_of(ptr, struct wmi_hw_mode_capabilities,
@@ -3911,7 +3922,7 @@ static int ath12k_wmi_tlv_ext_hal_reg_caps_parse(struct ath12k_base *soc,
 	if (tag != WMI_TAG_HAL_REG_CAPABILITIES_EXT)
 		return -EPROTO;
 
-	if (svc_rdy_ext->n_ext_hal_reg_caps >= svc_rdy_ext->param.num_phy)
+	if (svc_rdy_ext->n_ext_hal_reg_caps >= svc_rdy_ext->arg.num_phy)
 		return -ENOBUFS;
 
 	svc_rdy_ext->n_ext_hal_reg_caps++;
@@ -3937,7 +3948,7 @@ static int ath12k_wmi_tlv_ext_hal_reg_caps(struct ath12k_base *soc,
 		return ret;
 	}
 
-	for (i = 0; i < svc_rdy_ext->param.num_phy; i++) {
+	for (i = 0; i < svc_rdy_ext->arg.num_phy; i++) {
 		ret = ath12k_pull_reg_cap_svc_rdy_ext(wmi_handle,
 						      svc_rdy_ext->soc_hal_reg_caps,
 						      svc_rdy_ext->ext_hal_reg_caps, i,
@@ -3965,7 +3976,7 @@ static int ath12k_wmi_tlv_ext_soc_hal_reg_caps_parse(struct ath12k_base *soc,
 	int ret;
 
 	svc_rdy_ext->soc_hal_reg_caps = (struct wmi_soc_hal_reg_capabilities *)ptr;
-	svc_rdy_ext->param.num_phy = svc_rdy_ext->soc_hal_reg_caps->num_phy;
+	svc_rdy_ext->arg.num_phy = svc_rdy_ext->soc_hal_reg_caps->num_phy;
 
 	soc->num_radios = 0;
 	phy_id_map = svc_rdy_ext->pref_hw_mode_caps.phy_id_map;
@@ -4106,7 +4117,7 @@ static int ath12k_wmi_tlv_svc_rdy_ext_parse(struct ath12k_base *ab,
 	switch (tag) {
 	case WMI_TAG_SERVICE_READY_EXT_EVENT:
 		ret = ath12k_pull_svc_ready_ext(wmi_handle, ptr,
-						&svc_rdy_ext->param);
+						&svc_rdy_ext->arg);
 		if (ret) {
 			ath12k_warn(ab, "unable to extract ext params\n");
 			return ret;
@@ -4115,7 +4126,7 @@ static int ath12k_wmi_tlv_svc_rdy_ext_parse(struct ath12k_base *ab,
 
 	case WMI_TAG_SOC_MAC_PHY_HW_MODE_CAPS:
 		svc_rdy_ext->hw_caps = (struct wmi_soc_mac_phy_hw_mode_caps *)ptr;
-		svc_rdy_ext->param.num_hw_modes = svc_rdy_ext->hw_caps->num_hw_modes;
+		svc_rdy_ext->arg.num_hw_modes = svc_rdy_ext->hw_caps->num_hw_modes;
 		break;
 
 	case WMI_TAG_SOC_HAL_REG_CAPABILITIES:

@@ -2133,17 +2133,6 @@ struct ath12k_ppe_threshold {
 	u32 ppet16_ppet8_ru3_ru0[PSOC_HOST_MAX_NUM_SS];
 };
 
-struct ath12k_service_ext_param {
-	u32 default_conc_scan_config_bits;
-	u32 default_fw_config_bits;
-	struct ath12k_ppe_threshold ppet;
-	u32 he_cap_info;
-	u32 mpdu_density;
-	u32 max_bssid_rx_filters;
-	u32 num_hw_modes;
-	u32 num_phy;
-};
-
 struct ath12k_hw_mode_caps {
 	u32 hw_mode_id;
 	u32 phy_id_map;
