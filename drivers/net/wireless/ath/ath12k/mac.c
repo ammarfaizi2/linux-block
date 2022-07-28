@@ -839,7 +839,7 @@ static int ath12k_mac_monitor_vdev_stop(struct ath12k *ar)
 static int ath12k_mac_monitor_vdev_create(struct ath12k *ar)
 {
 	struct ath12k_pdev *pdev = ar->pdev;
-	struct vdev_create_params param;
+	struct ath12k_wmi_vdev_create_arg arg;
 	int bit, ret = 0;
 	u8 tmp_addr[6] = {0};
 	u16 nss = 0;
@@ -849,7 +849,7 @@ static int ath12k_mac_monitor_vdev_create(struct ath12k *ar)
 	if (ar->monitor_vdev_created)
 		return 0;
 
-	memset(&param, 0, sizeof(param));
+	memset(&arg, 0, sizeof(arg));
 
 	if (ar->ab->free_vdev_map == 0) {
 		ath12k_warn(ar->ab, "failed to find free vdev id for monitor vdev\n");
@@ -860,23 +860,23 @@ static int ath12k_mac_monitor_vdev_create(struct ath12k *ar)
 
 	ar->monitor_vdev_id = bit;
 
-	param.if_id = ar->monitor_vdev_id;
-	param.type = WMI_VDEV_TYPE_MONITOR;
-	param.subtype = WMI_VDEV_SUBTYPE_NONE;
-	param.pdev_id = pdev->pdev_id;
-	param.if_stats_id = ATH12K_INVAL_VDEV_STATS_ID;
+	arg.if_id = ar->monitor_vdev_id;
+	arg.type = WMI_VDEV_TYPE_MONITOR;
+	arg.subtype = WMI_VDEV_SUBTYPE_NONE;
+	arg.pdev_id = pdev->pdev_id;
+	arg.if_stats_id = ATH12K_INVAL_VDEV_STATS_ID;
 
 	if (pdev->cap.supported_bands & WMI_HOST_WLAN_2G_CAP) {
-		param.chains[NL80211_BAND_2GHZ].tx = ar->num_tx_chains;
-		param.chains[NL80211_BAND_2GHZ].rx = ar->num_rx_chains;
+		arg.chains[NL80211_BAND_2GHZ].tx = ar->num_tx_chains;
+		arg.chains[NL80211_BAND_2GHZ].rx = ar->num_rx_chains;
 	}
 
 	if (pdev->cap.supported_bands & WMI_HOST_WLAN_5G_CAP) {
-		param.chains[NL80211_BAND_5GHZ].tx = ar->num_tx_chains;
-		param.chains[NL80211_BAND_5GHZ].rx = ar->num_rx_chains;
+		arg.chains[NL80211_BAND_5GHZ].tx = ar->num_tx_chains;
+		arg.chains[NL80211_BAND_5GHZ].rx = ar->num_rx_chains;
 	}
 
-	ret = ath12k_wmi_vdev_create(ar, tmp_addr, &param);
+	ret = ath12k_wmi_vdev_create(ar, tmp_addr, &arg);
 	if (ret) {
 		ath12k_warn(ar->ab, "failed to request monitor vdev %i creation: %d\n",
 			    ar->monitor_vdev_id, ret);
@@ -4710,31 +4710,31 @@ ath12k_mac_get_vdev_stats_id(struct ath12k_vif *arvif)
 
 static void
 ath12k_mac_setup_vdev_create_params(struct ath12k_vif *arvif,
-				    struct vdev_create_params *params)
+				    struct ath12k_wmi_vdev_create_arg *arg)
 {
 	struct ath12k *ar = arvif->ar;
 	struct ath12k_pdev *pdev = ar->pdev;
 
-	params->if_id = arvif->vdev_id;
-	params->type = arvif->vdev_type;
-	params->subtype = arvif->vdev_subtype;
-	params->pdev_id = pdev->pdev_id;
+	arg->if_id = arvif->vdev_id;
+	arg->type = arvif->vdev_type;
+	arg->subtype = arvif->vdev_subtype;
+	arg->pdev_id = pdev->pdev_id;
 
 	if (pdev->cap.supported_bands & WMI_HOST_WLAN_2G_CAP) {
-		params->chains[NL80211_BAND_2GHZ].tx = ar->num_tx_chains;
-		params->chains[NL80211_BAND_2GHZ].rx = ar->num_rx_chains;
+		arg->chains[NL80211_BAND_2GHZ].tx = ar->num_tx_chains;
+		arg->chains[NL80211_BAND_2GHZ].rx = ar->num_rx_chains;
 	}
 	if (pdev->cap.supported_bands & WMI_HOST_WLAN_5G_CAP) {
-		params->chains[NL80211_BAND_5GHZ].tx = ar->num_tx_chains;
-		params->chains[NL80211_BAND_5GHZ].rx = ar->num_rx_chains;
+		arg->chains[NL80211_BAND_5GHZ].tx = ar->num_tx_chains;
+		arg->chains[NL80211_BAND_5GHZ].rx = ar->num_rx_chains;
 	}
 	if (pdev->cap.supported_bands & WMI_HOST_WLAN_5G_CAP &&
 	    ar->supports_6ghz) {
-		params->chains[NL80211_BAND_6GHZ].tx = ar->num_tx_chains;
-		params->chains[NL80211_BAND_6GHZ].rx = ar->num_rx_chains;
+		arg->chains[NL80211_BAND_6GHZ].tx = ar->num_tx_chains;
+		arg->chains[NL80211_BAND_6GHZ].rx = ar->num_rx_chains;
 	}
 
-	params->if_stats_id = ath12k_mac_get_vdev_stats_id(arvif);
+	arg->if_stats_id = ath12k_mac_get_vdev_stats_id(arvif);
 }
 
 static u32
@@ -4856,7 +4856,7 @@ static int ath12k_mac_op_add_interface(struct ieee80211_hw *hw,
 	struct ath12k *ar = hw->priv;
 	struct ath12k_base *ab = ar->ab;
 	struct ath12k_vif *arvif = ath12k_vif_to_arvif(vif);
-	struct vdev_create_params vdev_param = {0};
+	struct ath12k_wmi_vdev_create_arg vdev_arg = {0};
 	struct peer_create_params peer_param;
 	u32 param_id, param_value;
 	u16 nss;
@@ -4934,9 +4934,9 @@ static int ath12k_mac_op_add_interface(struct ieee80211_hw *hw,
 	for (i = 0; i < ARRAY_SIZE(vif->hw_queue); i++)
 		vif->hw_queue[i] = i % (ATH12K_HW_MAX_QUEUES - 1);
 
-	ath12k_mac_setup_vdev_create_params(arvif, &vdev_param);
+	ath12k_mac_setup_vdev_create_params(arvif, &vdev_arg);
 
-	ret = ath12k_wmi_vdev_create(ar, vif->addr, &vdev_param);
+	ret = ath12k_wmi_vdev_create(ar, vif->addr, &vdev_arg);
 	if (ret) {
 		ath12k_warn(ab, "failed to create WMI vdev %d: %d\n",
 			    arvif->vdev_id, ret);

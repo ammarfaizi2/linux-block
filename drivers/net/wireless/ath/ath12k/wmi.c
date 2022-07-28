@@ -728,7 +728,7 @@ int ath12k_wmi_mgmt_send(struct ath12k *ar, u32 vdev_id, u32 buf_id,
 }
 
 int ath12k_wmi_vdev_create(struct ath12k *ar, u8 *macaddr,
-			   struct vdev_create_params *param)
+			   struct ath12k_wmi_vdev_create_arg *args)
 {
 	struct ath12k_pdev_wmi *wmi = ar->wmi;
 	struct wmi_vdev_create_cmd *cmd;
@@ -753,12 +753,12 @@ int ath12k_wmi_vdev_create(struct ath12k *ar, u8 *macaddr,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_CREATE_CMD,
 						 sizeof(*cmd));
 
-	cmd->vdev_id = cpu_to_le32(param->if_id);
-	cmd->vdev_type = cpu_to_le32(param->type);
-	cmd->vdev_subtype = cpu_to_le32(param->subtype);
+	cmd->vdev_id = cpu_to_le32(args->if_id);
+	cmd->vdev_type = cpu_to_le32(args->type);
+	cmd->vdev_subtype = cpu_to_le32(args->subtype);
 	cmd->num_cfg_txrx_streams = cpu_to_le32(WMI_NUM_SUPPORTED_BAND_MAX);
-	cmd->pdev_id = cpu_to_le32(param->pdev_id);
-	cmd->vdev_stats_id = cpu_to_le32(param->if_stats_id);
+	cmd->pdev_id = cpu_to_le32(args->pdev_id);
+	cmd->vdev_stats_id = cpu_to_le32(args->if_stats_id);
 	ether_addr_copy(cmd->vdev_macaddr.addr, macaddr);
 
 	ptr = skb->data + sizeof(*cmd);
@@ -774,18 +774,18 @@ int ath12k_wmi_vdev_create(struct ath12k *ar, u8 *macaddr,
 							  len);
 	txrx_streams->band = WMI_TPC_CHAINMASK_CONFIG_BAND_2G;
 	txrx_streams->supported_tx_streams =
-				 param->chains[NL80211_BAND_2GHZ].tx;
+				 args->chains[NL80211_BAND_2GHZ].tx;
 	txrx_streams->supported_rx_streams =
-				 param->chains[NL80211_BAND_2GHZ].rx;
+				 args->chains[NL80211_BAND_2GHZ].rx;
 
 	txrx_streams++;
 	txrx_streams->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_TXRX_STREAMS,
 							  len);
 	txrx_streams->band = WMI_TPC_CHAINMASK_CONFIG_BAND_5G;
 	txrx_streams->supported_tx_streams =
-				 param->chains[NL80211_BAND_5GHZ].tx;
+				 args->chains[NL80211_BAND_5GHZ].tx;
 	txrx_streams->supported_rx_streams =
-				 param->chains[NL80211_BAND_5GHZ].rx;
+				 args->chains[NL80211_BAND_5GHZ].rx;
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_VDEV_CREATE_CMDID);
 	if (ret) {
@@ -796,8 +796,8 @@ int ath12k_wmi_vdev_create(struct ath12k *ar, u8 *macaddr,
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "WMI vdev create: id %d type %d subtype %d macaddr %pM pdevid %d\n",
-		   param->if_id, param->type, param->subtype,
-		   macaddr, param->pdev_id);
+		   args->if_id, args->type, args->subtype,
+		   macaddr, args->pdev_id);
 
 	return ret;
 }

@@ -2477,7 +2477,7 @@ struct ath12k_pdev_wmi {
 	u32 rx_decap_mode;
 };
 
-struct vdev_create_params {
+struct ath12k_wmi_vdev_create_arg {
 	u8 if_id;
 	u32 type;
 	u32 subtype;
@@ -5274,7 +5274,7 @@ int ath12k_wmi_pdev_attach(struct ath12k_base *ab,
 int ath12k_wmi_attach(struct ath12k_base *ab);
 void ath12k_wmi_detach(struct ath12k_base *ab);
 int ath12k_wmi_vdev_create(struct ath12k *ar, u8 *macaddr,
-			   struct vdev_create_params *param);
+			   struct ath12k_wmi_vdev_create_arg *arg);
 int ath12k_wmi_send_peer_create_cmd(struct ath12k *ar,
 				    struct peer_create_params *param);
 int ath12k_wmi_vdev_set_param_cmd(struct ath12k *ar, u32 vdev_id,
