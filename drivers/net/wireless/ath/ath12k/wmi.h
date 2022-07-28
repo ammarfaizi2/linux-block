@@ -2199,7 +2199,7 @@ struct wmi_pdev_set_hw_mode_cmd_param {
 	u32 num_band_to_mac;
 } __packed;
 
-struct wmi_ppe_threshold {
+struct ath12k_wmi_ppe_threshold_params {
 	u32 numss_m1; /** NSS - 1*/
 	union {
 		u32 ru_count;
@@ -2342,7 +2342,7 @@ struct wmi_service_ready_event {
 struct wmi_service_ready_ext_event {
 	u32 default_conc_scan_config_bits;
 	u32 default_fw_config_bits;
-	struct wmi_ppe_threshold ppet;
+	struct ath12k_wmi_ppe_threshold_params ppet;
 	u32 he_cap_info;
 	u32 mpdu_density;
 	u32 max_bssid_rx_filters;
@@ -2391,8 +2391,8 @@ struct wmi_mac_phy_capabilities {
 	u32 rx_chain_mask_5g;
 	u32 he_cap_phy_info_2g[WMI_MAX_HECAP_PHY_SIZE];
 	u32 he_cap_phy_info_5g[WMI_MAX_HECAP_PHY_SIZE];
-	struct wmi_ppe_threshold he_ppet2g;
-	struct wmi_ppe_threshold he_ppet5g;
+	struct ath12k_wmi_ppe_threshold_params he_ppet2g;
+	struct ath12k_wmi_ppe_threshold_params he_ppet5g;
 	u32 chainmask_table_id;
 	u32 lmac_id;
 	u32 he_cap_info_2g_ext;
@@ -3506,7 +3506,7 @@ struct  wmi_peer_assoc_complete_cmd {
 	__le32 num_peer_legacy_rates;
 	__le32 num_peer_ht_rates;
 	__le32 peer_bw_rxnss_override;
-	struct  wmi_ppe_threshold peer_ppet;
+	struct ath12k_wmi_ppe_threshold_params peer_ppet;
 	__le32 peer_he_cap_info;
 	__le32 peer_he_ops;
 	__le32 peer_he_cap_phy[WMI_MAX_HECAP_PHY_SIZE];
