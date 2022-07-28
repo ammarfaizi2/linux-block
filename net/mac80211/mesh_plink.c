@@ -477,8 +477,7 @@ static int mesh_allocate_aid(struct ieee80211_sub_if_data *sdata)
 	unsigned long *aid_map;
 	int aid;
 
-	aid_map = kcalloc(BITS_TO_LONGS(IEEE80211_MAX_AID + 1),
-			  sizeof(*aid_map), GFP_KERNEL);
+	aid_map = bitmap_zalloc(IEEE80211_MAX_AID + 1, GFP_KERNEL);
 	if (!aid_map)
 		return -ENOMEM;
 
@@ -491,7 +490,7 @@ static int mesh_allocate_aid(struct ieee80211_sub_if_data *sdata)
 	rcu_read_unlock();
 
 	aid = find_first_zero_bit(aid_map, IEEE80211_MAX_AID + 1);
-	kfree(aid_map);
+	bitmap_free(aid_map);
 
 	if (aid > IEEE80211_MAX_AID)
 		return -ENOBUFS;
@@ -512,7 +511,7 @@ __mesh_sta_info_alloc(struct ieee80211_sub_if_data *sdata, u8 *hw_addr)
 	if (aid < 0)
 		return NULL;
 
-	sta = sta_info_alloc(sdata, hw_addr, -1, GFP_KERNEL);
+	sta = sta_info_alloc(sdata, hw_addr, GFP_KERNEL);
 	if (!sta)
 		return NULL;
 
@@ -1230,8 +1229,7 @@ void mesh_rx_plink_frame(struct ieee80211_sub_if_data *sdata,
 		if (baselen > len)
 			return;
 	}
-	elems = ieee802_11_parse_elems(baseaddr, len - baselen, true,
-				       mgmt->bssid, NULL);
+	elems = ieee802_11_parse_elems(baseaddr, len - baselen, true, NULL);
 	mesh_process_plink_frame(sdata, mgmt, elems, rx_status);
 	kfree(elems);
 }

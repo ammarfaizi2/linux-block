@@ -633,6 +633,12 @@ MLXSW_ITEM32(cmd_mbox, config_profile,
  */
 MLXSW_ITEM32(cmd_mbox, config_profile, set_ar_sec, 0x0C, 15, 1);
 
+/* cmd_mbox_config_set_ubridge
+ * Capability bit. Setting a bit to 1 configures the profile
+ * according to the mailbox contents.
+ */
+MLXSW_ITEM32(cmd_mbox, config_profile, set_ubridge, 0x0C, 22, 1);
+
 /* cmd_mbox_config_set_kvd_linear_size
  * Capability bit. Setting a bit to 1 configures the profile
  * according to the mailbox contents.
@@ -713,16 +719,25 @@ MLXSW_ITEM32(cmd_mbox, config_profile, max_flood_tables, 0x30, 16, 4);
  */
 MLXSW_ITEM32(cmd_mbox, config_profile, max_vid_flood_tables, 0x30, 8, 4);
 
+enum mlxsw_cmd_mbox_config_profile_flood_mode {
+	/* Mixed mode, where:
+	 * max_flood_tables indicates the number of single-entry tables.
+	 * max_vid_flood_tables indicates the number of per-VID tables.
+	 * max_fid_offset_flood_tables indicates the number of FID-offset
+	 * tables. max_fid_flood_tables indicates the number of per-FID tables.
+	 * Reserved when unified bridge model is used.
+	 */
+	MLXSW_CMD_MBOX_CONFIG_PROFILE_FLOOD_MODE_MIXED = 3,
+	/* Controlled flood tables. Reserved when legacy bridge model is
+	 * used.
+	 */
+	MLXSW_CMD_MBOX_CONFIG_PROFILE_FLOOD_MODE_CONTROLLED = 4,
+};
+
 /* cmd_mbox_config_profile_flood_mode
  * Flooding mode to use.
- * 0-2 - Backward compatible modes for SwitchX devices.
- * 3 - Mixed mode, where:
- * max_flood_tables indicates the number of single-entry tables.
- * max_vid_flood_tables indicates the number of per-VID tables.
- * max_fid_offset_flood_tables indicates the number of FID-offset tables.
- * max_fid_flood_tables indicates the number of per-FID tables.
  */
-MLXSW_ITEM32(cmd_mbox, config_profile, flood_mode, 0x30, 0, 2);
+MLXSW_ITEM32(cmd_mbox, config_profile, flood_mode, 0x30, 0, 3);
 
 /* cmd_mbox_config_profile_max_fid_offset_flood_tables
  * Maximum number of FID-offset flooding tables.
@@ -782,6 +797,13 @@ MLXSW_ITEM32(cmd_mbox, config_profile, adaptive_routing_group_cap, 0x4C, 0, 16);
  * Not supported in SwitchX, SwitchX-2
  */
 MLXSW_ITEM32(cmd_mbox, config_profile, arn, 0x50, 31, 1);
+
+/* cmd_mbox_config_profile_ubridge
+ * Unified Bridge
+ * 0 - non unified bridge
+ * 1 - unified bridge
+ */
+MLXSW_ITEM32(cmd_mbox, config_profile, ubridge, 0x50, 4, 1);
 
 /* cmd_mbox_config_kvd_linear_size
  * KVD Linear Size

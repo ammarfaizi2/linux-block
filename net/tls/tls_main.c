@@ -45,6 +45,8 @@
 #include <net/tls.h>
 #include <net/tls_toe.h>
 
+#include "tls.h"
+
 MODULE_AUTHOR("Mellanox Technologies");
 MODULE_DESCRIPTION("Transport Layer Security Support");
 MODULE_LICENSE("Dual BSD/GPL");
@@ -164,8 +166,8 @@ static int tls_handle_open_record(struct sock *sk, int flags)
 	return 0;
 }
 
-int tls_proccess_cmsg(struct sock *sk, struct msghdr *msg,
-		      unsigned char *record_type)
+int tls_process_cmsg(struct sock *sk, struct msghdr *msg,
+		     unsigned char *record_type)
 {
 	struct cmsghdr *cmsg;
 	int rc = -EINVAL;
@@ -533,6 +535,36 @@ static int do_tls_getsockopt_tx_zc(struct sock *sk, char __user *optval,
 	return 0;
 }
 
+static int do_tls_getsockopt_no_pad(struct sock *sk, char __user *optval,
+				    int __user *optlen)
+{
+	struct tls_context *ctx = tls_get_ctx(sk);
+	int value, len;
+
+	if (ctx->prot_info.version != TLS_1_3_VERSION)
+		return -EINVAL;
+
+	if (get_user(len, optlen))
+		return -EFAULT;
+	if (len < sizeof(value))
+		return -EINVAL;
+
+	lock_sock(sk);
+	value = -EINVAL;
+	if (ctx->rx_conf == TLS_SW || ctx->rx_conf == TLS_HW)
+		value = ctx->rx_no_pad;
+	release_sock(sk);
+	if (value < 0)
+		return value;
+
+	if (put_user(sizeof(value), optlen))
+		return -EFAULT;
+	if (copy_to_user(optval, &value, sizeof(value)))
+		return -EFAULT;
+
+	return 0;
+}
+
 static int do_tls_getsockopt(struct sock *sk, int optname,
 			     char __user *optval, int __user *optlen)
 {
@@ -546,6 +578,9 @@ static int do_tls_getsockopt(struct sock *sk, int optname,
 		break;
 	case TLS_TX_ZEROCOPY_RO:
 		rc = do_tls_getsockopt_tx_zc(sk, optval, optlen);
+		break;
+	case TLS_RX_EXPECT_NO_PAD:
+		rc = do_tls_getsockopt_no_pad(sk, optval, optlen);
 		break;
 	default:
 		rc = -ENOPROTOOPT;
@@ -718,6 +753,38 @@ static int do_tls_setsockopt_tx_zc(struct sock *sk, sockptr_t optval,
 	return 0;
 }
 
+static int do_tls_setsockopt_no_pad(struct sock *sk, sockptr_t optval,
+				    unsigned int optlen)
+{
+	struct tls_context *ctx = tls_get_ctx(sk);
+	u32 val;
+	int rc;
+
+	if (ctx->prot_info.version != TLS_1_3_VERSION ||
+	    sockptr_is_null(optval) || optlen < sizeof(val))
+		return -EINVAL;
+
+	rc = copy_from_sockptr(&val, optval, sizeof(val));
+	if (rc)
+		return -EFAULT;
+	if (val > 1)
+		return -EINVAL;
+	rc = check_zeroed_sockptr(optval, sizeof(val), optlen - sizeof(val));
+	if (rc < 1)
+		return rc == 0 ? -EINVAL : rc;
+
+	lock_sock(sk);
+	rc = -EINVAL;
+	if (ctx->rx_conf == TLS_SW || ctx->rx_conf == TLS_HW) {
+		ctx->rx_no_pad = val;
+		tls_update_rx_zc_capable(ctx);
+		rc = 0;
+	}
+	release_sock(sk);
+
+	return rc;
+}
+
 static int do_tls_setsockopt(struct sock *sk, int optname, sockptr_t optval,
 			     unsigned int optlen)
 {
@@ -735,6 +802,9 @@ static int do_tls_setsockopt(struct sock *sk, int optname, sockptr_t optval,
 		lock_sock(sk);
 		rc = do_tls_setsockopt_tx_zc(sk, optval, optlen);
 		release_sock(sk);
+		break;
+	case TLS_RX_EXPECT_NO_PAD:
+		rc = do_tls_setsockopt_no_pad(sk, optval, optlen);
 		break;
 	default:
 		rc = -ENOPROTOOPT;
@@ -921,6 +991,8 @@ static void tls_update(struct sock *sk, struct proto *p,
 {
 	struct tls_context *ctx;
 
+	WARN_ON_ONCE(sk->sk_prot == p);
+
 	ctx = tls_get_ctx(sk);
 	if (likely(ctx)) {
 		ctx->sk_write_space = write_space;
@@ -930,6 +1002,23 @@ static void tls_update(struct sock *sk, struct proto *p,
 		WRITE_ONCE(sk->sk_prot, p);
 		sk->sk_write_space = write_space;
 	}
+}
+
+static u16 tls_user_config(struct tls_context *ctx, bool tx)
+{
+	u16 config = tx ? ctx->tx_conf : ctx->rx_conf;
+
+	switch (config) {
+	case TLS_BASE:
+		return TLS_CONF_BASE;
+	case TLS_SW:
+		return TLS_CONF_SW;
+	case TLS_HW:
+		return TLS_CONF_HW;
+	case TLS_HW_RECORD:
+		return TLS_CONF_HW_RECORD;
+	}
+	return 0;
 }
 
 static int tls_get_info(const struct sock *sk, struct sk_buff *skb)
@@ -974,6 +1063,11 @@ static int tls_get_info(const struct sock *sk, struct sk_buff *skb)
 		if (err)
 			goto nla_failure;
 	}
+	if (ctx->rx_no_pad) {
+		err = nla_put_flag(skb, TLS_INFO_RX_NO_PAD);
+		if (err)
+			goto nla_failure;
+	}
 
 	rcu_read_unlock();
 	nla_nest_end(skb, start);
@@ -995,6 +1089,7 @@ static size_t tls_get_info_size(const struct sock *sk)
 		nla_total_size(sizeof(u16)) +	/* TLS_INFO_RXCONF */
 		nla_total_size(sizeof(u16)) +	/* TLS_INFO_TXCONF */
 		nla_total_size(0) +		/* TLS_INFO_ZC_RO_TX */
+		nla_total_size(0) +		/* TLS_INFO_RX_NO_PAD */
 		0;
 
 	return size;
@@ -1046,7 +1141,12 @@ static int __init tls_register(void)
 	if (err)
 		return err;
 
-	tls_device_init();
+	err = tls_device_init();
+	if (err) {
+		unregister_pernet_subsys(&tls_proc_ops);
+		return err;
+	}
+
 	tcp_register_ulp(&tcp_tls_ulp_ops);
 
 	return 0;

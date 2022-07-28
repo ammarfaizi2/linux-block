@@ -348,7 +348,6 @@ struct sk_filter;
   *	@sk_txtime_report_errors: set report errors mode for SO_TXTIME
   *	@sk_txtime_unused: unused txtime flags
   *	@ns_tracker: tracker for netns reference
-  *	@sk_bind2_node: bind node in the bhash2 table
   */
 struct sock {
 	/*
@@ -538,7 +537,6 @@ struct sock {
 #endif
 	struct rcu_head		sk_rcu;
 	netns_tracker		ns_tracker;
-	struct hlist_node	sk_bind2_node;
 };
 
 enum sk_pacing {
@@ -819,16 +817,6 @@ static inline void sk_add_bind_node(struct sock *sk,
 	hlist_add_head(&sk->sk_bind_node, list);
 }
 
-static inline void __sk_del_bind2_node(struct sock *sk)
-{
-	__hlist_del(&sk->sk_bind2_node);
-}
-
-static inline void sk_add_bind2_node(struct sock *sk, struct hlist_head *list)
-{
-	hlist_add_head(&sk->sk_bind2_node, list);
-}
-
 #define sk_for_each(__sk, list) \
 	hlist_for_each_entry(__sk, list, sk_node)
 #define sk_for_each_rcu(__sk, list) \
@@ -846,8 +834,6 @@ static inline void sk_add_bind2_node(struct sock *sk, struct hlist_head *list)
 	hlist_for_each_entry_safe(__sk, tmp, list, sk_node)
 #define sk_for_each_bound(__sk, list) \
 	hlist_for_each_entry(__sk, list, sk_bind_node)
-#define sk_for_each_bound_bhash2(__sk, list) \
-	hlist_for_each_entry(__sk, list, sk_bind2_node)
 
 /**
  * sk_for_each_entry_offset_rcu - iterate over a list at a given struct offset
@@ -1558,7 +1544,7 @@ void __sk_mem_reclaim(struct sock *sk, int amount);
 /* sysctl_mem values are in pages */
 static inline long sk_prot_mem_limits(const struct sock *sk, int index)
 {
-	return sk->sk_prot->sysctl_mem[index];
+	return READ_ONCE(sk->sk_prot->sysctl_mem[index]);
 }
 
 static inline int sk_mem_pages(int amt)
@@ -1632,11 +1618,6 @@ static inline void sk_mem_charge(struct sock *sk, int size)
 		return;
 	sk->sk_forward_alloc -= size;
 }
-
-/* the following macros control memory reclaiming in mptcp_rmem_uncharge()
- */
-#define SK_RECLAIM_THRESHOLD	(1 << 21)
-#define SK_RECLAIM_CHUNK	(1 << 20)
 
 static inline void sk_mem_uncharge(struct sock *sk, int size)
 {
@@ -2233,9 +2214,7 @@ static inline int skb_copy_to_page_nocache(struct sock *sk, struct iov_iter *fro
 	if (err)
 		return err;
 
-	skb->len	     += copy;
-	skb->data_len	     += copy;
-	skb->truesize	     += copy;
+	skb_len_add(skb, copy);
 	sk_wmem_queued_add(sk, copy);
 	sk_mem_charge(sk, copy);
 	return 0;

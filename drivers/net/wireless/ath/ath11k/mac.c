@@ -1401,7 +1401,8 @@ void ath11k_mac_bcn_tx_event(struct ath11k_vif *arvif)
 	if (!vif->bss_conf.color_change_active && !arvif->bcca_zero_sent)
 		return;
 
-	if (vif->bss_conf.color_change_active && ieee80211_beacon_cntdwn_is_complete(vif)) {
+	if (vif->bss_conf.color_change_active &&
+	    ieee80211_beacon_cntdwn_is_complete(vif)) {
 		arvif->bcca_zero_sent = true;
 		ieee80211_color_change_finish(vif);
 		return;
@@ -3292,7 +3293,7 @@ static void ath11k_mac_op_bss_info_changed(struct ieee80211_hw *hw,
 
 	if (changed & BSS_CHANGED_PS &&
 	    ar->ab->hw_params.supports_sta_ps) {
-		arvif->ps = vif->bss_conf.ps;
+		arvif->ps = vif->cfg.ps;
 
 		ret = ath11k_mac_config_ps(ar);
 		if (ret)
@@ -4822,7 +4823,8 @@ exit:
 }
 
 static int ath11k_mac_op_conf_tx(struct ieee80211_hw *hw,
-				 struct ieee80211_vif *vif, u16 ac,
+				 struct ieee80211_vif *vif,
+				 unsigned int link_id, u16 ac,
 				 const struct ieee80211_tx_queue_params *params)
 {
 	struct ath11k *ar = hw->priv;
@@ -5609,63 +5611,6 @@ static int ath11k_mac_mgmt_tx(struct ath11k *ar, struct sk_buff *skb,
 	return 0;
 }
 
-int ath11k_mac_rfkill_config(struct ath11k *ar)
-{
-	struct ath11k_base *ab = ar->ab;
-	u32 param;
-	int ret;
-
-	if (ab->hw_params.rfkill_pin == 0)
-		return -EOPNOTSUPP;
-
-	ath11k_dbg(ab, ATH11K_DBG_MAC,
-		   "mac rfkill_pin %d rfkill_cfg %d rfkill_on_level %d",
-		   ab->hw_params.rfkill_pin, ab->hw_params.rfkill_cfg,
-		   ab->hw_params.rfkill_on_level);
-
-	param = FIELD_PREP(WMI_RFKILL_CFG_RADIO_LEVEL,
-			   ab->hw_params.rfkill_on_level) |
-		FIELD_PREP(WMI_RFKILL_CFG_GPIO_PIN_NUM,
-			   ab->hw_params.rfkill_pin) |
-		FIELD_PREP(WMI_RFKILL_CFG_PIN_AS_GPIO,
-			   ab->hw_params.rfkill_cfg);
-
-	ret = ath11k_wmi_pdev_set_param(ar, WMI_PDEV_PARAM_HW_RFKILL_CONFIG,
-					param, ar->pdev->pdev_id);
-	if (ret) {
-		ath11k_warn(ab,
-			    "failed to set rfkill config 0x%x: %d\n",
-			    param, ret);
-		return ret;
-	}
-
-	return 0;
-}
-
-int ath11k_mac_rfkill_enable_radio(struct ath11k *ar, bool enable)
-{
-	enum wmi_rfkill_enable_radio param;
-	int ret;
-
-	if (enable)
-		param = WMI_RFKILL_ENABLE_RADIO_ON;
-	else
-		param = WMI_RFKILL_ENABLE_RADIO_OFF;
-
-	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac %d rfkill enable %d",
-		   ar->pdev_idx, param);
-
-	ret = ath11k_wmi_pdev_set_param(ar, WMI_PDEV_PARAM_RFKILL_ENABLE,
-					param, ar->pdev->pdev_id);
-	if (ret) {
-		ath11k_warn(ar->ab, "failed to set rfkill enable param %d: %d\n",
-			    param, ret);
-		return ret;
-	}
-
-	return 0;
-}
-
 static void ath11k_mac_op_tx(struct ieee80211_hw *hw,
 			     struct ieee80211_tx_control *control,
 			     struct sk_buff *skb)
@@ -5920,7 +5865,6 @@ static void ath11k_mac_op_stop(struct ieee80211_hw *hw)
 	cancel_delayed_work_sync(&ar->scan.timeout);
 	cancel_work_sync(&ar->regd_update_work);
 	cancel_work_sync(&ar->ab->update_11d_work);
-	cancel_work_sync(&ar->ab->rfkill_work);
 
 	if (ar->state_11d == ATH11K_11D_PREPARING) {
 		ar->state_11d = ATH11K_11D_IDLE;
@@ -7072,7 +7016,7 @@ static int ath11k_start_vdev_delay(struct ieee80211_hw *hw,
 static int
 ath11k_mac_op_assign_vif_chanctx(struct ieee80211_hw *hw,
 				 struct ieee80211_vif *vif,
-				 unsigned int link_id,
+				 struct ieee80211_bss_conf *link_conf,
 				 struct ieee80211_chanctx_conf *ctx)
 {
 	struct ath11k *ar = hw->priv;
@@ -7162,7 +7106,7 @@ out:
 static void
 ath11k_mac_op_unassign_vif_chanctx(struct ieee80211_hw *hw,
 				   struct ieee80211_vif *vif,
-				   unsigned int link_id,
+				   struct ieee80211_bss_conf *link_conf,
 				   struct ieee80211_chanctx_conf *ctx)
 {
 	struct ath11k *ar = hw->priv;
