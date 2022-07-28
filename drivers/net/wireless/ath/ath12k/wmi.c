@@ -1181,7 +1181,8 @@ int ath12k_wmi_set_peer_param(struct ath12k *ar, const u8 *peer_addr,
 
 int ath12k_wmi_send_peer_flush_tids_cmd(struct ath12k *ar,
 					u8 peer_addr[ETH_ALEN],
-					struct peer_flush_params *param)
+					u32 peer_tid_bitmap,
+					u8 vdev_id)
 {
 	struct ath12k_pdev_wmi *wmi = ar->wmi;
 	struct wmi_peer_flush_tids_cmd *cmd;
@@ -1197,8 +1198,8 @@ int ath12k_wmi_send_peer_flush_tids_cmd(struct ath12k *ar,
 						 sizeof(*cmd));
 
 	ether_addr_copy(cmd->peer_macaddr.addr, peer_addr);
-	cmd->peer_tid_bitmap = cpu_to_le32(param->peer_tid_bitmap);
-	cmd->vdev_id = cpu_to_le32(param->vdev_id);
+	cmd->peer_tid_bitmap = cpu_to_le32(peer_tid_bitmap);
+	cmd->vdev_id = cpu_to_le32(vdev_id);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_PEER_FLUSH_TIDS_CMDID);
 	if (ret) {
@@ -1209,7 +1210,7 @@ int ath12k_wmi_send_peer_flush_tids_cmd(struct ath12k *ar,
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "WMI peer flush vdev_id %d peer_addr %pM tids %08x\n",
-		   param->vdev_id, peer_addr, param->peer_tid_bitmap);
+		   vdev_id, peer_addr, peer_tid_bitmap);
 
 	return ret;
 }

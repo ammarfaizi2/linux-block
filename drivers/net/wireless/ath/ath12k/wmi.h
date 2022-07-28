@@ -2744,11 +2744,6 @@ struct peer_delete_params {
 	u8 vdev_id;
 };
 
-struct peer_flush_params {
-	u32 peer_tid_bitmap;
-	u8 vdev_id;
-};
-
 struct ath12k_wmi_pdev_set_regdomain_arg {
 	u16 current_rd_in_use;
 	u16 current_rd_2g;
@@ -5342,7 +5337,8 @@ int ath12k_wmi_send_stats_request_cmd(struct ath12k *ar,
 int ath12k_wmi_send_pdev_temperature_cmd(struct ath12k *ar);
 int ath12k_wmi_send_peer_flush_tids_cmd(struct ath12k *ar,
 					u8 peer_addr[ETH_ALEN],
-					struct peer_flush_params *param);
+					u32 peer_tid_bitmap,
+					u8 vdev_id);
 int ath12k_wmi_send_set_ap_ps_param_cmd(struct ath12k *ar, u8 *peer_addr,
 					struct ath12k_wmi_ap_ps_arg *arg);
 int ath12k_wmi_send_scan_chan_list_cmd(struct ath12k *ar,
