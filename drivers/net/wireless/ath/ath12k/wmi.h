@@ -2187,7 +2187,7 @@ struct wmi_host_mem_chunk {
 	u32 req_id;
 };
 
-struct wmi_init_cmd_param {
+struct ath12k_wmi_init_cmd_arg {
 	struct target_resource_config *res_cfg;
 	u8 num_mem_chunks;
 	struct wmi_host_mem_chunk *mem_chunks;

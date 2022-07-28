@@ -3339,7 +3339,7 @@ ath12k_wmi_copy_resource_config(struct wmi_resource_config *wmi_cfg,
 }
 
 static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
-				struct wmi_init_cmd_param *param)
+				struct ath12k_wmi_init_cmd_arg *arg)
 {
 	struct ath12k_base *ab = wmi->wmi_ab->ab;
 	struct sk_buff *skb;
@@ -3354,12 +3354,12 @@ static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
 	u32 hw_mode_len = 0;
 	u16 idx;
 
-	if (param->hw_mode_id != WMI_HOST_HW_MODE_MAX)
+	if (arg->hw_mode_id != WMI_HOST_HW_MODE_MAX)
 		hw_mode_len = sizeof(*hw_mode) + TLV_HDR_SIZE +
-			      (param->num_band_to_mac * sizeof(*band_to_mac));
+			      (arg->num_band_to_mac * sizeof(*band_to_mac));
 
 	len = sizeof(*cmd) + TLV_HDR_SIZE + sizeof(*cfg) + hw_mode_len +
-	      (param->num_mem_chunks ? (sizeof(*host_mem_chunks) * WMI_MAX_MEM_REQS) : 0);
+	      (arg->num_mem_chunks ? (sizeof(*host_mem_chunks) * WMI_MAX_MEM_REQS) : 0);
 
 	skb = ath12k_wmi_alloc_skb(wmi->wmi_ab, len);
 	if (!skb)
@@ -3373,7 +3373,7 @@ static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
 	ptr = skb->data + sizeof(*cmd);
 	cfg = ptr;
 
-	ath12k_wmi_copy_resource_config(cfg, param->res_cfg);
+	ath12k_wmi_copy_resource_config(cfg, arg->res_cfg);
 
 	cfg->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_RESOURCE_CONFIG,
 						 sizeof(*cfg));
@@ -3382,57 +3382,57 @@ static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
 	host_mem_chunks = ptr + TLV_HDR_SIZE;
 	len = sizeof(struct wlan_host_mem_chunk);
 
-	for (idx = 0; idx < param->num_mem_chunks; ++idx) {
+	for (idx = 0; idx < arg->num_mem_chunks; ++idx) {
 		host_mem_chunks[idx].tlv_header =
 			ath12k_wmi_tlv_hdr(WMI_TAG_WLAN_HOST_MEMORY_CHUNK,
 					   len);
 
-		host_mem_chunks[idx].ptr = param->mem_chunks[idx].paddr;
-		host_mem_chunks[idx].size = param->mem_chunks[idx].len;
-		host_mem_chunks[idx].req_id = param->mem_chunks[idx].req_id;
+		host_mem_chunks[idx].ptr = arg->mem_chunks[idx].paddr;
+		host_mem_chunks[idx].size = arg->mem_chunks[idx].len;
+		host_mem_chunks[idx].req_id = arg->mem_chunks[idx].req_id;
 
 		ath12k_dbg(ab, ATH12K_DBG_WMI,
 			   "WMI host mem chunk req_id %d paddr 0x%llx len %d\n",
-			   param->mem_chunks[idx].req_id,
-			   (u64)param->mem_chunks[idx].paddr,
-			   param->mem_chunks[idx].len);
+			   arg->mem_chunks[idx].req_id,
+			   (u64)arg->mem_chunks[idx].paddr,
+			   arg->mem_chunks[idx].len);
 	}
-	cmd->num_host_mem_chunks = cpu_to_le32(param->num_mem_chunks);
-	len = sizeof(struct wlan_host_mem_chunk) * param->num_mem_chunks;
+	cmd->num_host_mem_chunks = cpu_to_le32(arg->num_mem_chunks);
+	len = sizeof(struct wlan_host_mem_chunk) * arg->num_mem_chunks;
 
 	/* num_mem_chunks is zero */
 	tlv = ptr;
 	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_STRUCT, len);
 	ptr += TLV_HDR_SIZE + len;
 
-	if (param->hw_mode_id != WMI_HOST_HW_MODE_MAX) {
+	if (arg->hw_mode_id != WMI_HOST_HW_MODE_MAX) {
 		hw_mode = (struct wmi_pdev_set_hw_mode_cmd_param *)ptr;
 		hw_mode->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_SET_HW_MODE_CMD,
 							     sizeof(*hw_mode));
 
-		hw_mode->hw_mode_index = param->hw_mode_id;
-		hw_mode->num_band_to_mac = param->num_band_to_mac;
+		hw_mode->hw_mode_index = arg->hw_mode_id;
+		hw_mode->num_band_to_mac = arg->num_band_to_mac;
 
 		ptr += sizeof(*hw_mode);
 
-		len = param->num_band_to_mac * sizeof(*band_to_mac);
+		len = arg->num_band_to_mac * sizeof(*band_to_mac);
 		tlv = ptr;
 		tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_STRUCT, len);
 
 		ptr += TLV_HDR_SIZE;
 		len = sizeof(*band_to_mac);
 
-		for (idx = 0; idx < param->num_band_to_mac; idx++) {
+		for (idx = 0; idx < arg->num_band_to_mac; idx++) {
 			band_to_mac = (void *)ptr;
 
 			band_to_mac->tlv_header =
 				ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_BAND_TO_MAC,
 						       len);
-			band_to_mac->pdev_id = param->band_to_mac[idx].pdev_id;
+			band_to_mac->pdev_id = arg->band_to_mac[idx].pdev_id;
 			band_to_mac->start_freq =
-				param->band_to_mac[idx].start_freq;
+				arg->band_to_mac[idx].start_freq;
 			band_to_mac->end_freq =
-				param->band_to_mac[idx].end_freq;
+				arg->band_to_mac[idx].end_freq;
 			ptr += sizeof(*band_to_mac);
 		}
 	}
@@ -3540,28 +3540,28 @@ int ath12k_wmi_set_hw_mode(struct ath12k_base *ab,
 int ath12k_wmi_cmd_init(struct ath12k_base *ab)
 {
 	struct ath12k_wmi_base *wmi_sc = &ab->wmi_ab;
-	struct wmi_init_cmd_param init_param;
+	struct ath12k_wmi_init_cmd_arg arg;
 	struct target_resource_config config;
 
-	memset(&init_param, 0, sizeof(init_param));
+	memset(&arg, 0, sizeof(arg));
 	memset(&config, 0, sizeof(config));
 
 	ab->hw_params->wmi_init(ab, &config);
 
 	memcpy(&wmi_sc->wlan_resource_config, &config, sizeof(config));
 
-	init_param.res_cfg = &wmi_sc->wlan_resource_config;
-	init_param.num_mem_chunks = wmi_sc->num_mem_chunks;
-	init_param.hw_mode_id = wmi_sc->preferred_hw_mode;
-	init_param.mem_chunks = wmi_sc->mem_chunks;
+	arg.res_cfg = &wmi_sc->wlan_resource_config;
+	arg.num_mem_chunks = wmi_sc->num_mem_chunks;
+	arg.hw_mode_id = wmi_sc->preferred_hw_mode;
+	arg.mem_chunks = wmi_sc->mem_chunks;
 
 	if (ab->hw_params->single_pdev_only)
-		init_param.hw_mode_id = WMI_HOST_HW_MODE_MAX;
+		arg.hw_mode_id = WMI_HOST_HW_MODE_MAX;
 
-	init_param.num_band_to_mac = ab->num_radios;
-	ath12k_fill_band_to_mac_param(ab, init_param.band_to_mac);
+	arg.num_band_to_mac = ab->num_radios;
+	ath12k_fill_band_to_mac_param(ab, arg.band_to_mac);
 
-	return ath12k_init_cmd_send(&wmi_sc->wmi[0], &init_param);
+	return ath12k_init_cmd_send(&wmi_sc->wmi[0], &arg);
 }
 
 int ath12k_wmi_vdev_spectral_conf(struct ath12k *ar,
