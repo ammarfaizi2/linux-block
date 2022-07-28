@@ -3665,7 +3665,7 @@ struct wmi_pdev_green_ap_ps_enable_cmd_param {
 	u32 enable;
 };
 
-struct ap_ps_params {
+struct ath12k_wmi_ap_ps_arg {
 	u32 vdev_id;
 	u32 param;
 	u32 value;
@@ -5344,7 +5344,7 @@ int ath12k_wmi_send_peer_flush_tids_cmd(struct ath12k *ar,
 					u8 peer_addr[ETH_ALEN],
 					struct peer_flush_params *param);
 int ath12k_wmi_send_set_ap_ps_param_cmd(struct ath12k *ar, u8 *peer_addr,
-					struct ap_ps_params *param);
+					struct ath12k_wmi_ap_ps_arg *arg);
 int ath12k_wmi_send_scan_chan_list_cmd(struct ath12k *ar,
 				       struct ath12k_wmi_scan_chan_list_arg *arg);
 int ath12k_wmi_send_dfs_phyerr_offload_enable_cmd(struct ath12k *ar,

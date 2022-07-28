@@ -1757,14 +1757,14 @@ static int ath12k_peer_assoc_qos_ap(struct ath12k *ar,
 				    struct ath12k_vif *arvif,
 				    struct ieee80211_sta *sta)
 {
-	struct ap_ps_params params;
+	struct ath12k_wmi_ap_ps_arg arg;
 	u32 max_sp;
 	u32 uapsd;
 	int ret;
 
 	lockdep_assert_held(&ar->conf_mutex);
 
-	params.vdev_id = arvif->vdev_id;
+	arg.vdev_id = arvif->vdev_id;
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_MAC, "mac uapsd_queues 0x%x max_sp %d\n",
 		   sta->uapsd_queues, sta->max_sp);
@@ -1787,28 +1787,28 @@ static int ath12k_peer_assoc_qos_ap(struct ath12k *ar,
 	if (sta->max_sp < MAX_WMI_AP_PS_PEER_PARAM_MAX_SP)
 		max_sp = sta->max_sp;
 
-	params.param = WMI_AP_PS_PEER_PARAM_UAPSD;
-	params.value = uapsd;
-	ret = ath12k_wmi_send_set_ap_ps_param_cmd(ar, sta->addr, &params);
+	arg.param = WMI_AP_PS_PEER_PARAM_UAPSD;
+	arg.value = uapsd;
+	ret = ath12k_wmi_send_set_ap_ps_param_cmd(ar, sta->addr, &arg);
 	if (ret)
 		goto err;
 
-	params.param = WMI_AP_PS_PEER_PARAM_MAX_SP;
-	params.value = max_sp;
-	ret = ath12k_wmi_send_set_ap_ps_param_cmd(ar, sta->addr, &params);
+	arg.param = WMI_AP_PS_PEER_PARAM_MAX_SP;
+	arg.value = max_sp;
+	ret = ath12k_wmi_send_set_ap_ps_param_cmd(ar, sta->addr, &arg);
 	if (ret)
 		goto err;
 
 	/* TODO revisit during testing */
-	params.param = WMI_AP_PS_PEER_PARAM_SIFS_RESP_FRMTYPE;
-	params.value = DISABLE_SIFS_RESPONSE_TRIGGER;
-	ret = ath12k_wmi_send_set_ap_ps_param_cmd(ar, sta->addr, &params);
+	arg.param = WMI_AP_PS_PEER_PARAM_SIFS_RESP_FRMTYPE;
+	arg.value = DISABLE_SIFS_RESPONSE_TRIGGER;
+	ret = ath12k_wmi_send_set_ap_ps_param_cmd(ar, sta->addr, &arg);
 	if (ret)
 		goto err;
 
-	params.param = WMI_AP_PS_PEER_PARAM_SIFS_RESP_UAPSD;
-	params.value = DISABLE_SIFS_RESPONSE_TRIGGER;
-	ret = ath12k_wmi_send_set_ap_ps_param_cmd(ar, sta->addr, &params);
+	arg.param = WMI_AP_PS_PEER_PARAM_SIFS_RESP_UAPSD;
+	arg.value = DISABLE_SIFS_RESPONSE_TRIGGER;
+	ret = ath12k_wmi_send_set_ap_ps_param_cmd(ar, sta->addr, &arg);
 	if (ret)
 		goto err;
 
@@ -1816,7 +1816,7 @@ static int ath12k_peer_assoc_qos_ap(struct ath12k *ar,
 
 err:
 	ath12k_warn(ar->ab, "failed to set ap ps peer param %d for vdev %i: %d\n",
-		    params.param, arvif->vdev_id, ret);
+		    arg.param, arvif->vdev_id, ret);
 	return ret;
 }
 

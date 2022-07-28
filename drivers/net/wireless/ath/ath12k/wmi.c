@@ -1452,7 +1452,7 @@ int ath12k_wmi_pdev_bss_chan_info_request(struct ath12k *ar,
 }
 
 int ath12k_wmi_send_set_ap_ps_param_cmd(struct ath12k *ar, u8 *peer_addr,
-					struct ap_ps_params *param)
+					struct ath12k_wmi_ap_ps_arg *arg)
 {
 	struct ath12k_pdev_wmi *wmi = ar->wmi;
 	struct wmi_ap_ps_peer_cmd *cmd;
@@ -1467,10 +1467,10 @@ int ath12k_wmi_send_set_ap_ps_param_cmd(struct ath12k *ar, u8 *peer_addr,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_AP_PS_PEER_CMD,
 						 sizeof(*cmd));
 
-	cmd->vdev_id = cpu_to_le32(param->vdev_id);
+	cmd->vdev_id = cpu_to_le32(arg->vdev_id);
 	ether_addr_copy(cmd->peer_macaddr.addr, peer_addr);
-	cmd->param = cpu_to_le32(param->param);
-	cmd->value = cpu_to_le32(param->value);
+	cmd->param = cpu_to_le32(arg->param);
+	cmd->value = cpu_to_le32(arg->value);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_AP_PS_PEER_PARAM_CMDID);
 	if (ret) {
@@ -1481,7 +1481,7 @@ int ath12k_wmi_send_set_ap_ps_param_cmd(struct ath12k *ar, u8 *peer_addr,
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "WMI set ap ps vdev id %d peer %pM param %d value %d\n",
-		   param->vdev_id, peer_addr, param->param, param->value);
+		   arg->vdev_id, peer_addr, arg->param, arg->value);
 
 	return ret;
 }
