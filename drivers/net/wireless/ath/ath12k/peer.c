@@ -263,7 +263,8 @@ static int ath12k_wait_for_peer_created(struct ath12k *ar, int vdev_id, const u8
 }
 
 int ath12k_peer_create(struct ath12k *ar, struct ath12k_vif *arvif,
-		       struct ieee80211_sta *sta, struct peer_create_params *param)
+		       struct ieee80211_sta *sta,
+		       struct ath12k_wmi_peer_create_arg *arg)
 {
 	struct ath12k_peer *peer;
 	int ret;
@@ -277,46 +278,46 @@ int ath12k_peer_create(struct ath12k *ar, struct ath12k_vif *arvif,
 	}
 
 	spin_lock_bh(&ar->ab->base_lock);
-	peer = ath12k_peer_find_by_pdev_idx(ar->ab, ar->pdev_idx, param->peer_addr);
+	peer = ath12k_peer_find_by_pdev_idx(ar->ab, ar->pdev_idx, arg->peer_addr);
 	if (peer) {
 		spin_unlock_bh(&ar->ab->base_lock);
 		return -EINVAL;
 	}
 	spin_unlock_bh(&ar->ab->base_lock);
 
-	ret = ath12k_wmi_send_peer_create_cmd(ar, param);
+	ret = ath12k_wmi_send_peer_create_cmd(ar, arg);
 	if (ret) {
 		ath12k_warn(ar->ab,
 			    "failed to send peer create vdev_id %d ret %d\n",
-			    param->vdev_id, ret);
+			    arg->vdev_id, ret);
 		return ret;
 	}
 
-	ret = ath12k_wait_for_peer_created(ar, param->vdev_id,
-					   param->peer_addr);
+	ret = ath12k_wait_for_peer_created(ar, arg->vdev_id,
+					   arg->peer_addr);
 	if (ret)
 		return ret;
 
 	spin_lock_bh(&ar->ab->base_lock);
 
-	peer = ath12k_peer_find(ar->ab, param->vdev_id, param->peer_addr);
+	peer = ath12k_peer_find(ar->ab, arg->vdev_id, arg->peer_addr);
 	if (!peer) {
 		spin_unlock_bh(&ar->ab->base_lock);
 		ath12k_warn(ar->ab, "failed to find peer %pM on vdev %i after creation\n",
-			    param->peer_addr, param->vdev_id);
+			    arg->peer_addr, arg->vdev_id);
 
 		reinit_completion(&ar->peer_delete_done);
 
-		ret = ath12k_wmi_send_peer_delete_cmd(ar, param->peer_addr,
-						      param->vdev_id);
+		ret = ath12k_wmi_send_peer_delete_cmd(ar, arg->peer_addr,
+						      arg->vdev_id);
 		if (ret) {
 			ath12k_warn(ar->ab, "failed to delete peer vdev_id %d addr %pM\n",
-				    param->vdev_id, param->peer_addr);
+				    arg->vdev_id, arg->peer_addr);
 			return ret;
 		}
 
-		ret = ath12k_wait_for_peer_delete_done(ar, param->vdev_id,
-						       param->peer_addr);
+		ret = ath12k_wait_for_peer_delete_done(ar, arg->vdev_id,
+						       arg->peer_addr);
 		if (ret)
 			return ret;
 

@@ -3321,7 +3321,7 @@ static int ath12k_mac_station_add(struct ath12k *ar,
 	struct ath12k_base *ab = ar->ab;
 	struct ath12k_vif *arvif = ath12k_vif_to_arvif(vif);
 	struct ath12k_sta *arsta = (struct ath12k_sta *)sta->drv_priv;
-	struct peer_create_params peer_param;
+	struct ath12k_wmi_peer_create_arg peer_param;
 	int ret;
 
 	lockdep_assert_held(&ar->conf_mutex);
@@ -4857,7 +4857,7 @@ static int ath12k_mac_op_add_interface(struct ieee80211_hw *hw,
 	struct ath12k_base *ab = ar->ab;
 	struct ath12k_vif *arvif = ath12k_vif_to_arvif(vif);
 	struct ath12k_wmi_vdev_create_arg vdev_arg = {0};
-	struct peer_create_params peer_param;
+	struct ath12k_wmi_peer_create_arg peer_param;
 	u32 param_id, param_value;
 	u16 nss;
 	int i;
@@ -5716,7 +5716,7 @@ ath12k_mac_op_assign_vif_chanctx(struct ieee80211_hw *hw,
 	struct ath12k_base *ab = ar->ab;
 	struct ath12k_vif *arvif = (void *)vif->drv_priv;
 	int ret;
-	struct peer_create_params param;
+	struct ath12k_wmi_peer_create_arg param;
 
 	mutex_lock(&ar->conf_mutex);
 

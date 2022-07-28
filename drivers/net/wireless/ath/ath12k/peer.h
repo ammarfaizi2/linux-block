@@ -58,7 +58,8 @@ struct ath12k_peer *ath12k_peer_find_by_id(struct ath12k_base *ab, int peer_id);
 void ath12k_peer_cleanup(struct ath12k *ar, u32 vdev_id);
 int ath12k_peer_delete(struct ath12k *ar, u32 vdev_id, u8 *addr);
 int ath12k_peer_create(struct ath12k *ar, struct ath12k_vif *arvif,
-		       struct ieee80211_sta *sta, struct peer_create_params *param);
+		       struct ieee80211_sta *sta,
+		       struct ath12k_wmi_peer_create_arg *arg);
 int ath12k_wait_for_peer_delete_done(struct ath12k *ar, u32 vdev_id,
 				     const u8 *addr);
 struct ath12k_peer *ath12k_peer_find_by_vdev_id(struct ath12k_base *ab,

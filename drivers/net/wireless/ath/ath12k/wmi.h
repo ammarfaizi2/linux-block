@@ -2734,7 +2734,7 @@ struct wmi_vdev_start_req_arg {
 	u32 num_noa_descriptors;
 };
 
-struct peer_create_params {
+struct ath12k_wmi_peer_create_arg {
 	const u8 *peer_addr;
 	u32 peer_type;
 	u32 vdev_id;
@@ -5299,7 +5299,7 @@ void ath12k_wmi_detach(struct ath12k_base *ab);
 int ath12k_wmi_vdev_create(struct ath12k *ar, u8 *macaddr,
 			   struct ath12k_wmi_vdev_create_arg *arg);
 int ath12k_wmi_send_peer_create_cmd(struct ath12k *ar,
-				    struct peer_create_params *param);
+				    struct ath12k_wmi_peer_create_arg *arg);
 int ath12k_wmi_vdev_set_param_cmd(struct ath12k *ar, u32 vdev_id,
 				  u32 param_id, u32 param_value);
 

@@ -1043,7 +1043,7 @@ int ath12k_wmi_vdev_up(struct ath12k *ar, u32 vdev_id, u32 aid, const u8 *bssid)
 }
 
 int ath12k_wmi_send_peer_create_cmd(struct ath12k *ar,
-				    struct peer_create_params *param)
+				    struct ath12k_wmi_peer_create_arg *arg)
 {
 	struct ath12k_pdev_wmi *wmi = ar->wmi;
 	struct wmi_peer_create_cmd *cmd;
@@ -1058,9 +1058,9 @@ int ath12k_wmi_send_peer_create_cmd(struct ath12k *ar,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PEER_CREATE_CMD,
 						 sizeof(*cmd));
 
-	ether_addr_copy(cmd->peer_macaddr.addr, param->peer_addr);
-	cmd->peer_type = cpu_to_le32(param->peer_type);
-	cmd->vdev_id = cpu_to_le32(param->vdev_id);
+	ether_addr_copy(cmd->peer_macaddr.addr, arg->peer_addr);
+	cmd->peer_type = cpu_to_le32(arg->peer_type);
+	cmd->vdev_id = cpu_to_le32(arg->vdev_id);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_PEER_CREATE_CMDID);
 	if (ret) {
@@ -1070,7 +1070,7 @@ int ath12k_wmi_send_peer_create_cmd(struct ath12k *ar,
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "WMI peer create vdev_id %d peer_addr %pM\n",
-		   param->vdev_id, param->peer_addr);
+		   arg->vdev_id, arg->peer_addr);
 
 	return ret;
 }
