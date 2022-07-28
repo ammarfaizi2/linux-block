@@ -2759,7 +2759,7 @@ struct ath12k_wmi_pdev_set_regdomain_arg {
 	u32 pdev_id;
 };
 
-struct rx_reorder_queue_remove_params {
+struct ath12k_wmi_rx_reorder_queue_remove_arg {
 	u8 *peer_macaddr;
 	u16 vdev_id;
 	u32 peer_tid_bitmap;
@@ -5374,7 +5374,7 @@ int ath12k_wmi_peer_rx_reorder_queue_setup(struct ath12k *ar,
 					   u32 ba_window_size);
 int
 ath12k_wmi_rx_reord_queue_remove(struct ath12k *ar,
-				 struct rx_reorder_queue_remove_params *param);
+				 struct ath12k_wmi_rx_reorder_queue_remove_arg *arg);
 int ath12k_wmi_send_pdev_set_regdomain(struct ath12k *ar,
 				       struct ath12k_wmi_pdev_set_regdomain_arg *arg);
 int ath12k_wmi_pull_fw_stats(struct ath12k_base *ab, struct sk_buff *skb,

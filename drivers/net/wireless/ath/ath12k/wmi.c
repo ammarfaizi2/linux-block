@@ -1258,7 +1258,7 @@ int ath12k_wmi_peer_rx_reorder_queue_setup(struct ath12k *ar,
 
 int
 ath12k_wmi_rx_reord_queue_remove(struct ath12k *ar,
-				 struct rx_reorder_queue_remove_params *param)
+				 struct ath12k_wmi_rx_reorder_queue_remove_arg *arg)
 {
 	struct ath12k_pdev_wmi *wmi = ar->wmi;
 	struct wmi_peer_reorder_queue_remove_cmd *cmd;
@@ -1273,13 +1273,13 @@ ath12k_wmi_rx_reord_queue_remove(struct ath12k *ar,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_REORDER_QUEUE_REMOVE_CMD,
 						 sizeof(*cmd));
 
-	ether_addr_copy(cmd->peer_macaddr.addr, param->peer_macaddr);
-	cmd->vdev_id = cpu_to_le32(param->vdev_id);
-	cmd->tid_mask = cpu_to_le32(param->peer_tid_bitmap);
+	ether_addr_copy(cmd->peer_macaddr.addr, arg->peer_macaddr);
+	cmd->vdev_id = cpu_to_le32(arg->vdev_id);
+	cmd->tid_mask = cpu_to_le32(arg->peer_tid_bitmap);
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "%s: peer_macaddr %pM vdev_id %d, tid_map %d", __func__,
-		   param->peer_macaddr, param->vdev_id, param->peer_tid_bitmap);
+		   arg->peer_macaddr, arg->vdev_id, arg->peer_tid_bitmap);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb,
 				  WMI_PEER_REORDER_QUEUE_REMOVE_CMDID);
