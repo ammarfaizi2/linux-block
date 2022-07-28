@@ -1769,8 +1769,7 @@ int ath12k_wmi_vdev_install_key(struct ath12k *ar,
 	cmd->key_rxmic_len = cpu_to_le32(arg->key_rxmic_len);
 
 	if (arg->key_rsc_counter)
-		memcpy(&cmd->key_rsc_counter, &arg->key_rsc_counter,
-		       sizeof(struct wmi_key_seq_counter));
+		cmd->key_rsc_counter = cpu_to_le64(arg->key_rsc_counter);
 
 	tlv = (struct wmi_tlv *)(skb->data + sizeof(*cmd));
 	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_BYTE, key_len_aligned);

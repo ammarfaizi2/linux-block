@@ -3375,11 +3375,6 @@ struct wmi_bcn_tmpl_cmd {
 	__le32 esp_ie_offset;
 } __packed;
 
-struct wmi_key_seq_counter {
-	u32 key_seq_counter_l;
-	u32 key_seq_counter_h;
-} __packed;
-
 struct wmi_vdev_install_key_cmd {
 	__le32 tlv_header;
 	__le32 vdev_id;
@@ -3387,9 +3382,9 @@ struct wmi_vdev_install_key_cmd {
 	__le32 key_idx;
 	__le32 key_flags;
 	__le32 key_cipher;
-	struct wmi_key_seq_counter key_rsc_counter;
-	struct wmi_key_seq_counter key_global_rsc_counter;
-	struct wmi_key_seq_counter key_tsc_counter;
+	__le64 key_rsc_counter;
+	__le64 key_global_rsc_counter;
+	__le64 key_tsc_counter;
 	u8 wpi_key_rsc_counter[16];
 	u8 wpi_key_tsc_counter[16];
 	__le32 key_len;
