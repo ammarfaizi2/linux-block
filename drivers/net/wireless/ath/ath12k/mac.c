@@ -2634,7 +2634,7 @@ static void ath12k_scan_timeout_work(struct work_struct *work)
 }
 
 static int ath12k_start_scan(struct ath12k *ar,
-			     struct scan_req_params *arg)
+			     struct ath12k_wmi_scan_req_arg *arg)
 {
 	int ret;
 
@@ -2674,7 +2674,7 @@ static int ath12k_mac_op_hw_scan(struct ieee80211_hw *hw,
 	struct ath12k *ar = hw->priv;
 	struct ath12k_vif *arvif = ath12k_vif_to_arvif(vif);
 	struct cfg80211_scan_request *req = &hw_req->req;
-	struct scan_req_params arg;
+	struct ath12k_wmi_scan_req_arg arg;
 	int ret = 0;
 	int i;
 

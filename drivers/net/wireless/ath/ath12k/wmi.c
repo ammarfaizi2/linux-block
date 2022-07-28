@@ -2018,7 +2018,7 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 }
 
 void ath12k_wmi_start_scan_init(struct ath12k *ar,
-				struct scan_req_params *arg)
+				struct ath12k_wmi_scan_req_arg *arg)
 {
 	/* setup commonly used values */
 	arg->scan_req_id = 1;
@@ -2050,80 +2050,80 @@ void ath12k_wmi_start_scan_init(struct ath12k *ar,
 }
 
 static void ath12k_wmi_copy_scan_event_cntrl_flags(struct wmi_start_scan_cmd *cmd,
-						   struct scan_req_params *param)
+						   struct ath12k_wmi_scan_req_arg *arg)
 {
 	/* Scan events subscription */
-	if (param->scan_ev_started)
+	if (arg->scan_ev_started)
 		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_STARTED);
-	if (param->scan_ev_completed)
+	if (arg->scan_ev_completed)
 		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_COMPLETED);
-	if (param->scan_ev_bss_chan)
+	if (arg->scan_ev_bss_chan)
 		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_BSS_CHANNEL);
-	if (param->scan_ev_foreign_chan)
+	if (arg->scan_ev_foreign_chan)
 		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_FOREIGN_CHAN);
-	if (param->scan_ev_dequeued)
+	if (arg->scan_ev_dequeued)
 		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_DEQUEUED);
-	if (param->scan_ev_preempted)
+	if (arg->scan_ev_preempted)
 		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_PREEMPTED);
-	if (param->scan_ev_start_failed)
+	if (arg->scan_ev_start_failed)
 		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_START_FAILED);
-	if (param->scan_ev_restarted)
+	if (arg->scan_ev_restarted)
 		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_RESTARTED);
-	if (param->scan_ev_foreign_chn_exit)
+	if (arg->scan_ev_foreign_chn_exit)
 		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_FOREIGN_CHAN_EXIT);
-	if (param->scan_ev_suspended)
+	if (arg->scan_ev_suspended)
 		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_SUSPENDED);
-	if (param->scan_ev_resumed)
+	if (arg->scan_ev_resumed)
 		cmd->notify_scan_events |= cpu_to_le32(WMI_SCAN_EVENT_RESUMED);
 
 	/** Set scan control flags */
 	cmd->scan_ctrl_flags = 0;
-	if (param->scan_f_passive)
+	if (arg->scan_f_passive)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_FLAG_PASSIVE);
-	if (param->scan_f_strict_passive_pch)
+	if (arg->scan_f_strict_passive_pch)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_FLAG_STRICT_PASSIVE_ON_PCHN);
-	if (param->scan_f_promisc_mode)
+	if (arg->scan_f_promisc_mode)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_FILTER_PROMISCUOS);
-	if (param->scan_f_capture_phy_err)
+	if (arg->scan_f_capture_phy_err)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_CAPTURE_PHY_ERROR);
-	if (param->scan_f_half_rate)
+	if (arg->scan_f_half_rate)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_FLAG_HALF_RATE_SUPPORT);
-	if (param->scan_f_quarter_rate)
+	if (arg->scan_f_quarter_rate)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_FLAG_QUARTER_RATE_SUPPORT);
-	if (param->scan_f_cck_rates)
+	if (arg->scan_f_cck_rates)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_ADD_CCK_RATES);
-	if (param->scan_f_ofdm_rates)
+	if (arg->scan_f_ofdm_rates)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_ADD_OFDM_RATES);
-	if (param->scan_f_chan_stat_evnt)
+	if (arg->scan_f_chan_stat_evnt)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_CHAN_STAT_EVENT);
-	if (param->scan_f_filter_prb_req)
+	if (arg->scan_f_filter_prb_req)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_FILTER_PROBE_REQ);
-	if (param->scan_f_bcast_probe)
+	if (arg->scan_f_bcast_probe)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_ADD_BCAST_PROBE_REQ);
-	if (param->scan_f_offchan_mgmt_tx)
+	if (arg->scan_f_offchan_mgmt_tx)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_OFFCHAN_MGMT_TX);
-	if (param->scan_f_offchan_data_tx)
+	if (arg->scan_f_offchan_data_tx)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_OFFCHAN_DATA_TX);
-	if (param->scan_f_force_active_dfs_chn)
+	if (arg->scan_f_force_active_dfs_chn)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_FLAG_FORCE_ACTIVE_ON_DFS);
-	if (param->scan_f_add_tpc_ie_in_probe)
+	if (arg->scan_f_add_tpc_ie_in_probe)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_ADD_TPC_IE_IN_PROBE_REQ);
-	if (param->scan_f_add_ds_ie_in_probe)
+	if (arg->scan_f_add_ds_ie_in_probe)
 		cmd->scan_ctrl_flags |=  cpu_to_le32(WMI_SCAN_ADD_DS_IE_IN_PROBE_REQ);
-	if (param->scan_f_add_spoofed_mac_in_probe)
+	if (arg->scan_f_add_spoofed_mac_in_probe)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_ADD_SPOOF_MAC_IN_PROBE_REQ);
-	if (param->scan_f_add_rand_seq_in_probe)
+	if (arg->scan_f_add_rand_seq_in_probe)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_RANDOM_SEQ_NO_IN_PROBE_REQ);
-	if (param->scan_f_en_ie_whitelist_in_probe)
+	if (arg->scan_f_en_ie_whitelist_in_probe)
 		cmd->scan_ctrl_flags |=
 			cpu_to_le32(WMI_SCAN_ENABLE_IE_WHTELIST_IN_PROBE_REQ);
 
-	cmd->scan_ctrl_flags |= le32_encode_bits(param->adaptive_dwell_time_mode,
+	cmd->scan_ctrl_flags |= le32_encode_bits(arg->adaptive_dwell_time_mode,
 						 WMI_SCAN_DWELL_MODE_MASK);
 }
 
 int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
-				   struct scan_req_params *params)
+				   struct ath12k_wmi_scan_req_arg *arg)
 {
 	struct ath12k_pdev_wmi *wmi = ar->wmi;
 	struct wmi_start_scan_cmd *cmd;
@@ -2141,30 +2141,30 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 	len = sizeof(*cmd);
 
 	len += TLV_HDR_SIZE;
-	if (params->num_chan)
-		len += params->num_chan * sizeof(u32);
+	if (arg->num_chan)
+		len += arg->num_chan * sizeof(u32);
 
 	len += TLV_HDR_SIZE;
-	if (params->num_ssids)
-		len += params->num_ssids * sizeof(*ssid);
+	if (arg->num_ssids)
+		len += arg->num_ssids * sizeof(*ssid);
 
 	len += TLV_HDR_SIZE;
-	if (params->num_bssid)
-		len += sizeof(*bssid) * params->num_bssid;
+	if (arg->num_bssid)
+		len += sizeof(*bssid) * arg->num_bssid;
 
 	len += TLV_HDR_SIZE;
-	if (params->extraie.len)
+	if (arg->extraie.len)
 		extraie_len_with_pad =
-			roundup(params->extraie.len, sizeof(u32));
+			roundup(arg->extraie.len, sizeof(u32));
 	len += extraie_len_with_pad;
 
-	if (params->num_hint_bssid)
+	if (arg->num_hint_bssid)
 		len += TLV_HDR_SIZE +
-		       params->num_hint_bssid * sizeof(struct hint_bssid);
+		       arg->num_hint_bssid * sizeof(struct hint_bssid);
 
-	if (params->num_hint_s_ssid)
+	if (arg->num_hint_s_ssid)
 		len += TLV_HDR_SIZE +
-		       params->num_hint_s_ssid * sizeof(struct hint_short_ssid);
+		       arg->num_hint_s_ssid * sizeof(struct hint_short_ssid);
 
 	skb = ath12k_wmi_alloc_skb(wmi->wmi_ab, len);
 	if (!skb)
@@ -2176,116 +2176,116 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_START_SCAN_CMD,
 						 sizeof(*cmd));
 
-	cmd->scan_id = cpu_to_le32(params->scan_id);
-	cmd->scan_req_id = cpu_to_le32(params->scan_req_id);
-	cmd->vdev_id = cpu_to_le32(params->vdev_id);
-	cmd->scan_priority = cpu_to_le32(params->scan_priority);
-	cmd->notify_scan_events = cpu_to_le32(params->notify_scan_events);
+	cmd->scan_id = cpu_to_le32(arg->scan_id);
+	cmd->scan_req_id = cpu_to_le32(arg->scan_req_id);
+	cmd->vdev_id = cpu_to_le32(arg->vdev_id);
+	cmd->scan_priority = cpu_to_le32(arg->scan_priority);
+	cmd->notify_scan_events = cpu_to_le32(arg->notify_scan_events);
 
-	ath12k_wmi_copy_scan_event_cntrl_flags(cmd, params);
+	ath12k_wmi_copy_scan_event_cntrl_flags(cmd, arg);
 
-	cmd->dwell_time_active = cpu_to_le32(params->dwell_time_active);
-	cmd->dwell_time_active_2g = cpu_to_le32(params->dwell_time_active_2g);
-	cmd->dwell_time_passive = cpu_to_le32(params->dwell_time_passive);
-	cmd->dwell_time_active_6g = cpu_to_le32(params->dwell_time_active_6g);
-	cmd->dwell_time_passive_6g = cpu_to_le32(params->dwell_time_passive_6g);
-	cmd->min_rest_time = cpu_to_le32(params->min_rest_time);
-	cmd->max_rest_time = cpu_to_le32(params->max_rest_time);
-	cmd->repeat_probe_time = cpu_to_le32(params->repeat_probe_time);
-	cmd->probe_spacing_time = cpu_to_le32(params->probe_spacing_time);
-	cmd->idle_time = cpu_to_le32(params->idle_time);
-	cmd->max_scan_time = cpu_to_le32(params->max_scan_time);
-	cmd->probe_delay = cpu_to_le32(params->probe_delay);
-	cmd->burst_duration = cpu_to_le32(params->burst_duration);
-	cmd->num_chan = cpu_to_le32(params->num_chan);
-	cmd->num_bssid = cpu_to_le32(params->num_bssid);
-	cmd->num_ssids = cpu_to_le32(params->num_ssids);
-	cmd->ie_len = cpu_to_le32(params->extraie.len);
-	cmd->n_probes = cpu_to_le32(params->n_probes);
+	cmd->dwell_time_active = cpu_to_le32(arg->dwell_time_active);
+	cmd->dwell_time_active_2g = cpu_to_le32(arg->dwell_time_active_2g);
+	cmd->dwell_time_passive = cpu_to_le32(arg->dwell_time_passive);
+	cmd->dwell_time_active_6g = cpu_to_le32(arg->dwell_time_active_6g);
+	cmd->dwell_time_passive_6g = cpu_to_le32(arg->dwell_time_passive_6g);
+	cmd->min_rest_time = cpu_to_le32(arg->min_rest_time);
+	cmd->max_rest_time = cpu_to_le32(arg->max_rest_time);
+	cmd->repeat_probe_time = cpu_to_le32(arg->repeat_probe_time);
+	cmd->probe_spacing_time = cpu_to_le32(arg->probe_spacing_time);
+	cmd->idle_time = cpu_to_le32(arg->idle_time);
+	cmd->max_scan_time = cpu_to_le32(arg->max_scan_time);
+	cmd->probe_delay = cpu_to_le32(arg->probe_delay);
+	cmd->burst_duration = cpu_to_le32(arg->burst_duration);
+	cmd->num_chan = cpu_to_le32(arg->num_chan);
+	cmd->num_bssid = cpu_to_le32(arg->num_bssid);
+	cmd->num_ssids = cpu_to_le32(arg->num_ssids);
+	cmd->ie_len = cpu_to_le32(arg->extraie.len);
+	cmd->n_probes = cpu_to_le32(arg->n_probes);
 
 	ptr += sizeof(*cmd);
 
-	len = params->num_chan * sizeof(u32);
+	len = arg->num_chan * sizeof(u32);
 
 	tlv = ptr;
 	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_UINT32, len);
 	ptr += TLV_HDR_SIZE;
 	tmp_ptr = (u32 *)ptr;
 
-	for (i = 0; i < params->num_chan; ++i)
-		tmp_ptr[i] = params->chan_list[i];
+	for (i = 0; i < arg->num_chan; ++i)
+		tmp_ptr[i] = arg->chan_list[i];
 
 	ptr += len;
 
-	len = params->num_ssids * sizeof(*ssid);
+	len = arg->num_ssids * sizeof(*ssid);
 	tlv = ptr;
 	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_FIXED_STRUCT, len);
 
 	ptr += TLV_HDR_SIZE;
 
-	if (params->num_ssids) {
+	if (arg->num_ssids) {
 		ssid = ptr;
-		for (i = 0; i < params->num_ssids; ++i) {
-			ssid->ssid_len = params->ssid[i].length;
-			memcpy(ssid->ssid, params->ssid[i].ssid,
-			       params->ssid[i].length);
+		for (i = 0; i < arg->num_ssids; ++i) {
+			ssid->ssid_len = arg->ssid[i].length;
+			memcpy(ssid->ssid, arg->ssid[i].ssid,
+			       arg->ssid[i].length);
 			ssid++;
 		}
 	}
 
-	ptr += (params->num_ssids * sizeof(*ssid));
-	len = params->num_bssid * sizeof(*bssid);
+	ptr += (arg->num_ssids * sizeof(*ssid));
+	len = arg->num_bssid * sizeof(*bssid);
 	tlv = ptr;
 	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_FIXED_STRUCT, len);
 
 	ptr += TLV_HDR_SIZE;
 	bssid = ptr;
 
-	if (params->num_bssid) {
-		for (i = 0; i < params->num_bssid; ++i) {
+	if (arg->num_bssid) {
+		for (i = 0; i < arg->num_bssid; ++i) {
 			ether_addr_copy(bssid->addr,
-					params->bssid_list[i].addr);
+					arg->bssid_list[i].addr);
 			bssid++;
 		}
 	}
 
-	ptr += params->num_bssid * sizeof(*bssid);
+	ptr += arg->num_bssid * sizeof(*bssid);
 
 	len = extraie_len_with_pad;
 	tlv = ptr;
 	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_BYTE, len);
 	ptr += TLV_HDR_SIZE;
 
-	if (params->extraie.len)
-		memcpy(ptr, params->extraie.ptr,
-		       params->extraie.len);
+	if (arg->extraie.len)
+		memcpy(ptr, arg->extraie.ptr,
+		       arg->extraie.len);
 
 	ptr += extraie_len_with_pad;
 
-	if (params->num_hint_s_ssid) {
-		len = params->num_hint_s_ssid * sizeof(struct hint_short_ssid);
+	if (arg->num_hint_s_ssid) {
+		len = arg->num_hint_s_ssid * sizeof(struct hint_short_ssid);
 		tlv = ptr;
 		tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_FIXED_STRUCT, len);
 		ptr += TLV_HDR_SIZE;
 		s_ssid = ptr;
-		for (i = 0; i < params->num_hint_s_ssid; ++i) {
-			s_ssid->freq_flags = params->hint_s_ssid[i].freq_flags;
-			s_ssid->short_ssid = params->hint_s_ssid[i].short_ssid;
+		for (i = 0; i < arg->num_hint_s_ssid; ++i) {
+			s_ssid->freq_flags = arg->hint_s_ssid[i].freq_flags;
+			s_ssid->short_ssid = arg->hint_s_ssid[i].short_ssid;
 			s_ssid++;
 		}
 		ptr += len;
 	}
 
-	if (params->num_hint_bssid) {
-		len = params->num_hint_bssid * sizeof(struct hint_bssid);
+	if (arg->num_hint_bssid) {
+		len = arg->num_hint_bssid * sizeof(struct hint_bssid);
 		tlv = ptr;
 		tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_FIXED_STRUCT, len);
 		ptr += TLV_HDR_SIZE;
 		hint_bssid = ptr;
-		for (i = 0; i < params->num_hint_bssid; ++i) {
+		for (i = 0; i < arg->num_hint_bssid; ++i) {
 			hint_bssid->freq_flags =
-				params->hint_bssid[i].freq_flags;
-			ether_addr_copy(&params->hint_bssid[i].bssid.addr[0],
+				arg->hint_bssid[i].freq_flags;
+			ether_addr_copy(&arg->hint_bssid[i].bssid.addr[0],
 					&hint_bssid->bssid.addr[0]);
 			hint_bssid++;
 		}
