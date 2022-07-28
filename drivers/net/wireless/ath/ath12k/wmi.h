@@ -4869,7 +4869,30 @@ struct ath12k_wmi_pdev_lro_config_cmd {
 #define ATH12K_WMI_SPECTRAL_DBM_ADJ_DEFAULT               1
 #define ATH12K_WMI_SPECTRAL_CHN_MASK_DEFAULT              1
 
-struct ath12k_wmi_vdev_spectral_conf_param {
+struct ath12k_wmi_vdev_spectral_conf_arg {
+	u32 vdev_id;
+	u32 scan_count;
+	u32 scan_period;
+	u32 scan_priority;
+	u32 scan_fft_size;
+	u32 scan_gc_ena;
+	u32 scan_restart_ena;
+	u32 scan_noise_floor_ref;
+	u32 scan_init_delay;
+	u32 scan_nb_tone_thr;
+	u32 scan_str_bin_thr;
+	u32 scan_wb_rpt_mode;
+	u32 scan_rssi_rpt_mode;
+	u32 scan_rssi_thr;
+	u32 scan_pwr_format;
+	u32 scan_rpt_mode;
+	u32 scan_bin_scale;
+	u32 scan_dbm_adj;
+	u32 scan_chn_mask;
+} __packed;
+
+struct ath12k_wmi_vdev_spectral_conf_cmd {
+	__le32 tlv_header;
 	__le32 vdev_id;
 	__le32 scan_count;
 	__le32 scan_period;
@@ -4889,11 +4912,6 @@ struct ath12k_wmi_vdev_spectral_conf_param {
 	__le32 scan_bin_scale;
 	__le32 scan_dbm_adj;
 	__le32 scan_chn_mask;
-} __packed;
-
-struct ath12k_wmi_vdev_spectral_conf_cmd {
-	__le32 tlv_header;
-	struct ath12k_wmi_vdev_spectral_conf_param param;
 } __packed;
 
 #define ATH12K_WMI_SPECTRAL_TRIGGER_CMD_TRIGGER  1
@@ -5367,7 +5385,7 @@ int ath12k_wmi_pdev_dma_ring_cfg(struct ath12k *ar,
 int ath12k_wmi_vdev_spectral_enable(struct ath12k *ar, u32 vdev_id,
 				    u32 trigger, u32 enable);
 int ath12k_wmi_vdev_spectral_conf(struct ath12k *ar,
-				  struct ath12k_wmi_vdev_spectral_conf_param *param);
+				  struct ath12k_wmi_vdev_spectral_conf_arg *arg);
 int ath12k_wmi_fils_discovery_tmpl(struct ath12k *ar, u32 vdev_id,
 				   struct sk_buff *tmpl);
 int ath12k_wmi_fils_discovery(struct ath12k *ar, u32 vdev_id, u32 interval,

@@ -3565,7 +3565,7 @@ int ath12k_wmi_cmd_init(struct ath12k_base *ab)
 }
 
 int ath12k_wmi_vdev_spectral_conf(struct ath12k *ar,
-				  struct ath12k_wmi_vdev_spectral_conf_param *param)
+				  struct ath12k_wmi_vdev_spectral_conf_arg *arg)
 {
 	struct ath12k_wmi_vdev_spectral_conf_cmd *cmd;
 	struct sk_buff *skb;
@@ -3578,8 +3578,25 @@ int ath12k_wmi_vdev_spectral_conf(struct ath12k *ar,
 	cmd = (struct ath12k_wmi_vdev_spectral_conf_cmd *)skb->data;
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_SPECTRAL_CONFIGURE_CMD,
 						 sizeof(*cmd));
-
-	memcpy(&cmd->param, param, sizeof(*param));
+	cmd->vdev_id = cpu_to_le32(arg->vdev_id);
+	cmd->scan_count = cpu_to_le32(arg->scan_count);
+	cmd->scan_period = cpu_to_le32(arg->scan_period);
+	cmd->scan_priority = cpu_to_le32(arg->scan_priority);
+	cmd->scan_fft_size = cpu_to_le32(arg->scan_fft_size);
+	cmd->scan_gc_ena = cpu_to_le32(arg->scan_gc_ena);
+	cmd->scan_restart_ena = cpu_to_le32(arg->scan_restart_ena);
+	cmd->scan_noise_floor_ref = cpu_to_le32(arg->scan_noise_floor_ref);
+	cmd->scan_init_delay = cpu_to_le32(arg->scan_init_delay);
+	cmd->scan_nb_tone_thr = cpu_to_le32(arg->scan_nb_tone_thr);
+	cmd->scan_str_bin_thr = cpu_to_le32(arg->scan_str_bin_thr);
+	cmd->scan_wb_rpt_mode = cpu_to_le32(arg->scan_wb_rpt_mode);
+	cmd->scan_rssi_rpt_mode = cpu_to_le32(arg->scan_rssi_rpt_mode);
+	cmd->scan_rssi_thr = cpu_to_le32(arg->scan_rssi_thr);
+	cmd->scan_pwr_format = cpu_to_le32(arg->scan_pwr_format);
+	cmd->scan_rpt_mode = cpu_to_le32(arg->scan_rpt_mode);
+	cmd->scan_bin_scale = cpu_to_le32(arg->scan_bin_scale);
+	cmd->scan_dbm_adj = cpu_to_le32(arg->scan_dbm_adj);
+	cmd->scan_chn_mask = cpu_to_le32(arg->scan_chn_mask);
 
 	ret = ath12k_wmi_cmd_send(ar->wmi, skb,
 				  WMI_VDEV_SPECTRAL_SCAN_CONFIGURE_CMDID);
@@ -3591,7 +3608,7 @@ int ath12k_wmi_vdev_spectral_conf(struct ath12k *ar,
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "WMI spectral scan config cmd vdev_id 0x%x\n",
-		   param->vdev_id);
+		   arg->vdev_id);
 
 	return 0;
 err:
