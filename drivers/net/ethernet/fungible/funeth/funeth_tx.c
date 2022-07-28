@@ -83,7 +83,7 @@ static struct sk_buff *fun_tls_tx(struct sk_buff *skb, struct funeth_txq *q,
 	const struct fun_ktls_tx_ctx *tls_ctx;
 	u32 datalen, seq;
 
-	datalen = skb->len - (skb_transport_offset(skb) + tcp_hdrlen(skb));
+	datalen = skb->len - skb_tcp_all_headers(skb);
 	if (!datalen)
 		return skb;
 
@@ -130,6 +130,7 @@ static unsigned int write_pkt_desc(struct sk_buff *skb, struct funeth_txq *q,
 	struct fun_dataop_gl *gle;
 	const struct tcphdr *th;
 	unsigned int ngle, i;
+	unsigned int l4_hlen;
 	u16 flags;
 
 	if (unlikely(map_skb(skb, q->dma_dev, addrs, lens))) {
@@ -178,6 +179,7 @@ static unsigned int write_pkt_desc(struct sk_buff *skb, struct funeth_txq *q,
 						 FUN_ETH_UPDATE_INNER_L3_LEN;
 			}
 			th = inner_tcp_hdr(skb);
+			l4_hlen = __tcp_hdrlen(th);
 			fun_eth_offload_init(&req->offload, flags,
 					     shinfo->gso_size,
 					     tcp_hdr_doff_flags(th), 0,
@@ -185,6 +187,24 @@ static unsigned int write_pkt_desc(struct sk_buff *skb, struct funeth_txq *q,
 					     skb_inner_transport_offset(skb),
 					     skb_network_offset(skb), ol4_ofst);
 			FUN_QSTAT_INC(q, tx_encap_tso);
+		} else if (shinfo->gso_type & SKB_GSO_UDP_L4) {
+			flags = FUN_ETH_INNER_LSO | FUN_ETH_INNER_UDP |
+				FUN_ETH_UPDATE_INNER_L4_CKSUM |
+				FUN_ETH_UPDATE_INNER_L4_LEN |
+				FUN_ETH_UPDATE_INNER_L3_LEN;
+
+			if (ip_hdr(skb)->version == 4)
+				flags |= FUN_ETH_UPDATE_INNER_L3_CKSUM;
+			else
+				flags |= FUN_ETH_INNER_IPV6;
+
+			l4_hlen = sizeof(struct udphdr);
+			fun_eth_offload_init(&req->offload, flags,
+					     shinfo->gso_size,
+					     cpu_to_be16(l4_hlen << 10), 0,
+					     skb_network_offset(skb),
+					     skb_transport_offset(skb), 0, 0);
+			FUN_QSTAT_INC(q, tx_uso);
 		} else {
 			/* HW considers one set of headers as inner */
 			flags = FUN_ETH_INNER_LSO |
@@ -195,6 +215,7 @@ static unsigned int write_pkt_desc(struct sk_buff *skb, struct funeth_txq *q,
 			else
 				flags |= FUN_ETH_UPDATE_INNER_L3_CKSUM;
 			th = tcp_hdr(skb);
+			l4_hlen = __tcp_hdrlen(th);
 			fun_eth_offload_init(&req->offload, flags,
 					     shinfo->gso_size,
 					     tcp_hdr_doff_flags(th), 0,
@@ -209,7 +230,7 @@ static unsigned int write_pkt_desc(struct sk_buff *skb, struct funeth_txq *q,
 
 		extra_pkts = shinfo->gso_segs - 1;
 		extra_bytes = (be16_to_cpu(req->offload.inner_l4_off) +
-			       __tcp_hdrlen(th)) * extra_pkts;
+			       l4_hlen) * extra_pkts;
 	} else if (likely(skb->ip_summed == CHECKSUM_PARTIAL)) {
 		flags = FUN_ETH_UPDATE_INNER_L4_CKSUM;
 		if (skb->csum_offset == offsetof(struct udphdr, check))
@@ -466,7 +487,7 @@ static unsigned int fun_xdpq_clean(struct funeth_txq *q, unsigned int budget)
 
 		do {
 			fun_xdp_unmap(q, reclaim_idx);
-			page_frag_free(q->info[reclaim_idx].vaddr);
+			xdp_return_frame(q->info[reclaim_idx].xdpf);
 
 			trace_funeth_tx_free(q, reclaim_idx, 1, head);
 
@@ -479,11 +500,11 @@ static unsigned int fun_xdpq_clean(struct funeth_txq *q, unsigned int budget)
 	return npkts;
 }
 
-bool fun_xdp_tx(struct funeth_txq *q, void *data, unsigned int len)
+bool fun_xdp_tx(struct funeth_txq *q, struct xdp_frame *xdpf)
 {
 	struct fun_eth_tx_req *req;
 	struct fun_dataop_gl *gle;
-	unsigned int idx;
+	unsigned int idx, len;
 	dma_addr_t dma;
 
 	if (fun_txq_avail(q) < FUN_XDP_CLEAN_THRES)
@@ -494,7 +515,8 @@ bool fun_xdp_tx(struct funeth_txq *q, void *data, unsigned int len)
 		return false;
 	}
 
-	dma = dma_map_single(q->dma_dev, data, len, DMA_TO_DEVICE);
+	len = xdpf->len;
+	dma = dma_map_single(q->dma_dev, xdpf->data, len, DMA_TO_DEVICE);
 	if (unlikely(dma_mapping_error(q->dma_dev, dma))) {
 		FUN_QSTAT_INC(q, tx_map_err);
 		return false;
@@ -514,7 +536,7 @@ bool fun_xdp_tx(struct funeth_txq *q, void *data, unsigned int len)
 	gle = (struct fun_dataop_gl *)req->dataop.imm;
 	fun_dataop_gl_init(gle, 0, 0, len, dma);
 
-	q->info[idx].vaddr = data;
+	q->info[idx].xdpf = xdpf;
 
 	u64_stats_update_begin(&q->syncp);
 	q->stats.tx_bytes += len;
@@ -545,12 +567,9 @@ int fun_xdp_xmit_frames(struct net_device *dev, int n,
 	if (unlikely(q_idx >= fp->num_xdpqs))
 		return -ENXIO;
 
-	for (q = xdpqs[q_idx], i = 0; i < n; i++) {
-		const struct xdp_frame *xdpf = frames[i];
-
-		if (!fun_xdp_tx(q, xdpf->data, xdpf->len))
+	for (q = xdpqs[q_idx], i = 0; i < n; i++)
+		if (!fun_xdp_tx(q, frames[i]))
 			break;
-	}
 
 	if (unlikely(flags & XDP_XMIT_FLUSH))
 		fun_txq_wr_db(q);
@@ -577,7 +596,7 @@ static void fun_xdpq_purge(struct funeth_txq *q)
 		unsigned int idx = q->cons_cnt & q->mask;
 
 		fun_xdp_unmap(q, idx);
-		page_frag_free(q->info[idx].vaddr);
+		xdp_return_frame(q->info[idx].xdpf);
 		q->cons_cnt++;
 	}
 }
