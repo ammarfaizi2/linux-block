@@ -3253,7 +3253,7 @@ struct ath12k_wmi_scan_cancel_arg {
 	u32 pdev_id;
 };
 
-struct  wmi_bcn_send_from_host_cmd {
+struct wmi_bcn_send_from_host_cmd {
 	__le32 tlv_header;
 	__le32 vdev_id;
 	__le32 data_len;
@@ -3486,7 +3486,7 @@ struct ath12k_wmi_peer_assoc_arg {
 	struct ath12k_ppe_threshold peer_ppet;
 };
 
-struct  wmi_peer_assoc_complete_cmd {
+struct wmi_peer_assoc_complete_cmd {
 	__le32 tlv_header;
 	struct wmi_mac_addr peer_macaddr;
 	__le32 vdev_id;
