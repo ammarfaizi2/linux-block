@@ -972,7 +972,7 @@ int ath12k_wmi_vdev_start(struct ath12k *ar, struct wmi_vdev_start_req_arg *arg,
 
 	if (!restart) {
 		if (arg->ssid) {
-			cmd->ssid.ssid_len = arg->ssid_len;
+			cmd->ssid.ssid_len = cpu_to_le32(arg->ssid_len);
 			memcpy(cmd->ssid.ssid, arg->ssid, arg->ssid_len);
 		}
 		if (arg->hidden_ssid)
@@ -2236,7 +2236,7 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 	if (arg->num_ssids) {
 		ssid = ptr;
 		for (i = 0; i < arg->num_ssids; ++i) {
-			ssid->ssid_len = arg->ssid[i].length;
+			ssid->ssid_len = cpu_to_le32(arg->ssid[i].length);
 			memcpy(ssid->ssid, arg->ssid[i].ssid,
 			       arg->ssid[i].length);
 			ssid++;
@@ -2516,12 +2516,12 @@ int ath12k_wmi_send_wmm_update_cmd_tlv(struct ath12k *ar, u32 vdev_id,
 			ath12k_wmi_tlv_cmd_hdr(WMI_TAG_VDEV_SET_WMM_PARAMS_CMD,
 					       sizeof(*wmm_param));
 
-		wmm_param->aifs = wmi_wmm_arg->aifs;
-		wmm_param->cwmin = wmi_wmm_arg->cwmin;
-		wmm_param->cwmax = wmi_wmm_arg->cwmax;
-		wmm_param->txoplimit = wmi_wmm_arg->txop;
-		wmm_param->acm = wmi_wmm_arg->acm;
-		wmm_param->no_ack = wmi_wmm_arg->no_ack;
+		wmm_param->aifs = cpu_to_le32(wmi_wmm_arg->aifs);
+		wmm_param->cwmin = cpu_to_le32(wmi_wmm_arg->cwmin);
+		wmm_param->cwmax = cpu_to_le32(wmi_wmm_arg->cwmax);
+		wmm_param->txoplimit = cpu_to_le32(wmi_wmm_arg->txop);
+		wmm_param->acm = cpu_to_le32(wmi_wmm_arg->acm);
+		wmm_param->no_ack = cpu_to_le32(wmi_wmm_arg->no_ack);
 
 		ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 			   "wmi wmm set ac %d aifs %d cwmin %d cwmax %d txop %d acm %d no_ack %d\n",

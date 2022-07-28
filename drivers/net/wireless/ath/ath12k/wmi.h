@@ -2200,23 +2200,23 @@ struct wmi_pdev_set_hw_mode_cmd_param {
 } __packed;
 
 struct ath12k_wmi_ppe_threshold_params {
-	u32 numss_m1; /** NSS - 1*/
+	__le32 numss_m1; /** NSS - 1*/
 	union {
-		u32 ru_count;
-		u32 ru_mask;
+		__le32 ru_count;
+		__le32 ru_mask;
 	} __packed;
-	u32 ppet16_ppet8_ru3_ru0[WMI_MAX_NUM_SS];
+	__le32 ppet16_ppet8_ru3_ru0[WMI_MAX_NUM_SS];
 } __packed;
 
 #define HW_BD_INFO_SIZE       5
 
 struct ath12k_wmi_abi_version_params {
-	u32 abi_version_0;
-	u32 abi_version_1;
-	u32 abi_version_ns_0;
-	u32 abi_version_ns_1;
-	u32 abi_version_ns_2;
-	u32 abi_version_ns_3;
+	__le32 abi_version_0;
+	__le32 abi_version_1;
+	__le32 abi_version_ns_0;
+	__le32 abi_version_ns_1;
+	__le32 abi_version_ns_2;
+	__le32 abi_version_ns_3;
 } __packed;
 
 struct wmi_init_cmd {
@@ -2423,8 +2423,8 @@ struct wmi_mac_addr {
 	union {
 		u8 addr[6];
 		struct {
-			u32 word0;
-			u32 word1;
+			__le32 word0;
+			__le32 word1;
 		} __packed;
 	} __packed;
 } __packed;
@@ -2531,7 +2531,7 @@ struct wmi_vdev_down_cmd {
 #define ATH12K_WMI_SSID_LEN 32
 
 struct ath12k_wmi_ssid_params {
-	u32 ssid_len;
+	__le32 ssid_len;
 	u8 ssid[ATH12K_WMI_SSID_LEN];
 } __packed;
 
@@ -3600,8 +3600,8 @@ enum {
 
 struct wmi_pdev_green_ap_ps_enable_cmd_param {
 	__le32 tlv_header;
-	u32 pdev_id;
-	u32 enable;
+	__le32 pdev_id;
+	__le32 enable;
 };
 
 struct ath12k_wmi_ap_ps_arg {
@@ -4635,12 +4635,12 @@ enum ath12k_hw_txrx_mode {
 
 struct wmi_wmm_params {
 	__le32 tlv_header;
-	u32 cwmin;
-	u32 cwmax;
-	u32 aifs;
-	u32 txoplimit;
-	u32 acm;
-	u32 no_ack;
+	__le32 cwmin;
+	__le32 cwmax;
+	__le32 aifs;
+	__le32 txoplimit;
+	__le32 acm;
+	__le32 no_ack;
 } __packed;
 
 struct wmi_wmm_params_arg {
