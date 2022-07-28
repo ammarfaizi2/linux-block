@@ -3654,7 +3654,7 @@ err:
 }
 
 int ath12k_wmi_pdev_dma_ring_cfg(struct ath12k *ar,
-				 struct ath12k_wmi_pdev_dma_ring_cfg_req_cmd *param)
+				 struct ath12k_wmi_pdev_dma_ring_cfg_arg *arg)
 {
 	struct ath12k_wmi_pdev_dma_ring_cfg_req_cmd *cmd;
 	struct sk_buff *skb;
@@ -3668,18 +3668,18 @@ int ath12k_wmi_pdev_dma_ring_cfg(struct ath12k *ar,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_DMA_RING_CFG_REQ,
 						 sizeof(*cmd));
 
-	cmd->pdev_id		= param->pdev_id;
-	cmd->module_id		= param->module_id;
-	cmd->base_paddr_lo	= param->base_paddr_lo;
-	cmd->base_paddr_hi	= param->base_paddr_hi;
-	cmd->head_idx_paddr_lo	= param->head_idx_paddr_lo;
-	cmd->head_idx_paddr_hi	= param->head_idx_paddr_hi;
-	cmd->tail_idx_paddr_lo	= param->tail_idx_paddr_lo;
-	cmd->tail_idx_paddr_hi	= param->tail_idx_paddr_hi;
-	cmd->num_elems		= param->num_elems;
-	cmd->buf_size		= param->buf_size;
-	cmd->num_resp_per_event	= param->num_resp_per_event;
-	cmd->event_timeout_ms	= param->event_timeout_ms;
+	cmd->pdev_id = cpu_to_le32(DP_SW2HW_MACID(arg->pdev_id));
+	cmd->module_id = cpu_to_le32(arg->module_id);
+	cmd->base_paddr_lo = cpu_to_le32(arg->base_paddr_lo);
+	cmd->base_paddr_hi = cpu_to_le32(arg->base_paddr_hi);
+	cmd->head_idx_paddr_lo = cpu_to_le32(arg->head_idx_paddr_lo);
+	cmd->head_idx_paddr_hi = cpu_to_le32(arg->head_idx_paddr_hi);
+	cmd->tail_idx_paddr_lo = cpu_to_le32(arg->tail_idx_paddr_lo);
+	cmd->tail_idx_paddr_hi = cpu_to_le32(arg->tail_idx_paddr_hi);
+	cmd->num_elems = cpu_to_le32(arg->num_elems);
+	cmd->buf_size = cpu_to_le32(arg->buf_size);
+	cmd->num_resp_per_event = cpu_to_le32(arg->num_resp_per_event);
+	cmd->event_timeout_ms = cpu_to_le32(arg->event_timeout_ms);
 
 	ret = ath12k_wmi_cmd_send(ar->wmi, skb,
 				  WMI_PDEV_DMA_RING_CFG_REQ_CMDID);
@@ -3691,7 +3691,7 @@ int ath12k_wmi_pdev_dma_ring_cfg(struct ath12k *ar,
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "WMI DMA ring cfg req cmd pdev_id 0x%x\n",
-		   param->pdev_id);
+		   arg->pdev_id);
 
 	return 0;
 err:

@@ -4926,6 +4926,22 @@ struct ath12k_wmi_vdev_spectral_enable_cmd {
 	__le32 enable_cmd;
 } __packed;
 
+struct ath12k_wmi_pdev_dma_ring_cfg_arg {
+	u32 tlv_header;
+	u32 pdev_id;
+	u32 module_id;
+	u32 base_paddr_lo;
+	u32 base_paddr_hi;
+	u32 head_idx_paddr_lo;
+	u32 head_idx_paddr_hi;
+	u32 tail_idx_paddr_lo;
+	u32 tail_idx_paddr_hi;
+	u32 num_elems;
+	u32 buf_size;
+	u32 num_resp_per_event;
+	u32 event_timeout_ms;
+} __packed;
+
 struct ath12k_wmi_pdev_dma_ring_cfg_req_cmd {
 	__le32 tlv_header;
 	__le32 pdev_id;
@@ -5381,7 +5397,7 @@ int ath12k_wmi_send_bss_color_change_enable_cmd(struct ath12k *ar, u32 vdev_id,
 						bool enable);
 int ath12k_wmi_pdev_lro_cfg(struct ath12k *ar, int pdev_id);
 int ath12k_wmi_pdev_dma_ring_cfg(struct ath12k *ar,
-				 struct ath12k_wmi_pdev_dma_ring_cfg_req_cmd *param);
+				 struct ath12k_wmi_pdev_dma_ring_cfg_arg *arg);
 int ath12k_wmi_vdev_spectral_enable(struct ath12k *ar, u32 vdev_id,
 				    u32 trigger, u32 enable);
 int ath12k_wmi_vdev_spectral_conf(struct ath12k *ar,

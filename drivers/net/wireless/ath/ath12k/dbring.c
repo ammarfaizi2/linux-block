@@ -116,26 +116,26 @@ int ath12k_dbring_wmi_cfg_setup(struct ath12k *ar,
 				struct ath12k_dbring *ring,
 				enum wmi_direct_buffer_module id)
 {
-	struct ath12k_wmi_pdev_dma_ring_cfg_req_cmd param = {0};
+	struct ath12k_wmi_pdev_dma_ring_cfg_arg arg = {0};
 	int ret;
 
 	if (id >= WMI_DIRECT_BUF_MAX)
 		return -EINVAL;
 
-	param.pdev_id		= cpu_to_le32(DP_SW2HW_MACID(ring->pdev_id));
-	param.module_id		= cpu_to_le32(id);
-	param.base_paddr_lo	= cpu_to_le32(lower_32_bits(ring->refill_srng.paddr));
-	param.base_paddr_hi	= cpu_to_le32(upper_32_bits(ring->refill_srng.paddr));
-	param.head_idx_paddr_lo	= cpu_to_le32(lower_32_bits(ring->hp_addr));
-	param.head_idx_paddr_hi = cpu_to_le32(upper_32_bits(ring->hp_addr));
-	param.tail_idx_paddr_lo = cpu_to_le32(lower_32_bits(ring->tp_addr));
-	param.tail_idx_paddr_hi = cpu_to_le32(upper_32_bits(ring->tp_addr));
-	param.num_elems		= cpu_to_le32(ring->bufs_max);
-	param.buf_size		= cpu_to_le32(ring->buf_sz);
-	param.num_resp_per_event = cpu_to_le32(ring->num_resp_per_event);
-	param.event_timeout_ms	= cpu_to_le32(ring->event_timeout_ms);
+	arg.pdev_id = DP_SW2HW_MACID(ring->pdev_id);
+	arg.module_id = id;
+	arg.base_paddr_lo = lower_32_bits(ring->refill_srng.paddr);
+	arg.base_paddr_hi = upper_32_bits(ring->refill_srng.paddr);
+	arg.head_idx_paddr_lo = lower_32_bits(ring->hp_addr);
+	arg.head_idx_paddr_hi = upper_32_bits(ring->hp_addr);
+	arg.tail_idx_paddr_lo = lower_32_bits(ring->tp_addr);
+	arg.tail_idx_paddr_hi = upper_32_bits(ring->tp_addr);
+	arg.num_elems = ring->bufs_max;
+	arg.buf_size = ring->buf_sz;
+	arg.num_resp_per_event = ring->num_resp_per_event;
+	arg.event_timeout_ms = ring->event_timeout_ms;
 
-	ret = ath12k_wmi_pdev_dma_ring_cfg(ar, &param);
+	ret = ath12k_wmi_pdev_dma_ring_cfg(ar, &arg);
 	if (ret) {
 		ath12k_warn(ar->ab, "failed to setup db ring cfg\n");
 		return ret;
