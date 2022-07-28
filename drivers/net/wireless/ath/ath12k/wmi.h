@@ -3672,12 +3672,6 @@ struct vdev_set_params {
 	u32 param_value;
 };
 
-struct stats_request_params {
-	u32 stats_id;
-	u32 vdev_id;
-	u32 pdev_id;
-};
-
 enum set_init_cc_type {
 	WMI_COUNTRY_INFO_TYPE_ALPHA,
 	WMI_COUNTRY_INFO_TYPE_COUNTRY_CODE,
@@ -5332,8 +5326,8 @@ int ath12k_wmi_vdev_install_key(struct ath12k *ar,
 				struct wmi_vdev_install_key_arg *arg);
 int ath12k_wmi_pdev_bss_chan_info_request(struct ath12k *ar,
 					  enum wmi_bss_chan_info_req_type type);
-int ath12k_wmi_send_stats_request_cmd(struct ath12k *ar,
-				      struct stats_request_params *param);
+int ath12k_wmi_send_stats_request_cmd(struct ath12k *ar, u32 stats_id,
+				      u32 vdev_id, u32 pdev_id);
 int ath12k_wmi_send_pdev_temperature_cmd(struct ath12k *ar);
 int ath12k_wmi_send_peer_flush_tids_cmd(struct ath12k *ar,
 					u8 peer_addr[ETH_ALEN],

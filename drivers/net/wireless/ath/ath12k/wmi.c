@@ -1583,8 +1583,8 @@ int ath12k_wmi_vdev_set_param_cmd(struct ath12k *ar, u32 vdev_id,
 	return ret;
 }
 
-int ath12k_wmi_send_stats_request_cmd(struct ath12k *ar,
-				      struct stats_request_params *param)
+int ath12k_wmi_send_stats_request_cmd(struct ath12k *ar, u32 stats_id,
+				      u32 vdev_id, u32 pdev_id)
 {
 	struct ath12k_pdev_wmi *wmi = ar->wmi;
 	struct wmi_request_stats_cmd *cmd;
@@ -1599,9 +1599,9 @@ int ath12k_wmi_send_stats_request_cmd(struct ath12k *ar,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_REQUEST_STATS_CMD,
 						 sizeof(*cmd));
 
-	cmd->stats_id = param->stats_id;
-	cmd->vdev_id = cpu_to_le32(param->vdev_id);
-	cmd->pdev_id = cpu_to_le32(param->pdev_id);
+	cmd->stats_id = stats_id;
+	cmd->vdev_id = cpu_to_le32(vdev_id);
+	cmd->pdev_id = cpu_to_le32(pdev_id);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_REQUEST_STATS_CMDID);
 	if (ret) {
@@ -1611,7 +1611,7 @@ int ath12k_wmi_send_stats_request_cmd(struct ath12k *ar,
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "WMI request stats 0x%x vdev id %d pdev id %d\n",
-		   param->stats_id, param->vdev_id, param->pdev_id);
+		   stats_id, vdev_id, pdev_id);
 
 	return ret;
 }
