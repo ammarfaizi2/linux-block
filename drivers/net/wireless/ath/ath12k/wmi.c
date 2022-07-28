@@ -2803,8 +2803,8 @@ out:
 }
 
 int
-ath12k_wmi_send_thermal_mitigation_param_cmd(struct ath12k *ar,
-					     struct thermal_mitigation_params *param)
+ath12k_wmi_send_thermal_mitigation_cmd(struct ath12k *ar,
+				       struct ath12k_wmi_thermal_mitigation_arg *arg)
 {
 	struct ath12k_pdev_wmi *wmi = ar->wmi;
 	struct wmi_therm_throt_config_request_cmd *cmd;
@@ -2825,9 +2825,9 @@ ath12k_wmi_send_thermal_mitigation_param_cmd(struct ath12k *ar,
 						 sizeof(*cmd));
 
 	cmd->pdev_id = cpu_to_le32(ar->pdev->pdev_id);
-	cmd->enable = cpu_to_le32(param->enable);
-	cmd->dc = cpu_to_le32(param->dc);
-	cmd->dc_per_event = cpu_to_le32(param->dc_per_event);
+	cmd->enable = cpu_to_le32(arg->enable);
+	cmd->dc = cpu_to_le32(arg->dc);
+	cmd->dc_per_event = cpu_to_le32(arg->dc_per_event);
 	cmd->therm_throt_levels = cpu_to_le32(THERMAL_LEVELS);
 
 	tlv = (struct wmi_tlv *)(skb->data + sizeof(*cmd));
@@ -2842,10 +2842,10 @@ ath12k_wmi_send_thermal_mitigation_param_cmd(struct ath12k *ar,
 			ath12k_wmi_tlv_cmd_hdr(WMI_TAG_THERM_THROT_LEVEL_CONFIG_INFO,
 					       sizeof(*lvl_conf));
 
-		lvl_conf->temp_lwm = param->levelconf[i].tmplwm;
-		lvl_conf->temp_hwm = param->levelconf[i].tmphwm;
-		lvl_conf->dc_off_percent = param->levelconf[i].dcoffpercent;
-		lvl_conf->prio = param->levelconf[i].priority;
+		lvl_conf->temp_lwm = arg->levelconf[i].tmplwm;
+		lvl_conf->temp_hwm = arg->levelconf[i].tmphwm;
+		lvl_conf->dc_off_percent = arg->levelconf[i].dcoffpercent;
+		lvl_conf->prio = arg->levelconf[i].priority;
 		lvl_conf++;
 	}
 
@@ -2857,8 +2857,8 @@ ath12k_wmi_send_thermal_mitigation_param_cmd(struct ath12k *ar,
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "WMI vdev set thermal throt pdev_id %d enable %d dc %d dc_per_event %x levels %d\n",
-		   ar->pdev->pdev_id, param->enable, param->dc,
-		   param->dc_per_event, THERMAL_LEVELS);
+		   ar->pdev->pdev_id, arg->enable, arg->dc,
+		   arg->dc_per_event, THERMAL_LEVELS);
 
 	return ret;
 }

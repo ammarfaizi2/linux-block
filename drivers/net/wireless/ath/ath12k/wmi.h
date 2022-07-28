@@ -3724,7 +3724,7 @@ struct tt_level_config {
 	u32 priority;
 };
 
-struct thermal_mitigation_params {
+struct ath12k_wmi_thermal_mitigation_arg {
 	u32 pdev_id;
 	u32 enable;
 	u32 dc;
@@ -5362,8 +5362,8 @@ int
 ath12k_wmi_send_init_country_cmd(struct ath12k *ar,
 				 struct wmi_init_country_params init_cc_param);
 int
-ath12k_wmi_send_thermal_mitigation_param_cmd(struct ath12k *ar,
-					     struct thermal_mitigation_params *param);
+ath12k_wmi_send_thermal_mitigation_cmd(struct ath12k *ar,
+				       struct ath12k_wmi_thermal_mitigation_arg *arg);
 int ath12k_wmi_pdev_pktlog_enable(struct ath12k *ar, u32 pktlog_filter);
 int ath12k_wmi_pdev_pktlog_disable(struct ath12k *ar);
 int ath12k_wmi_pdev_peer_pktlog_filter(struct ath12k *ar, u8 *addr, u8 enable);
