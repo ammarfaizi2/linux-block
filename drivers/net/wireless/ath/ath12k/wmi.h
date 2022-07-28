@@ -2210,7 +2210,7 @@ struct wmi_ppe_threshold {
 
 #define HW_BD_INFO_SIZE       5
 
-struct wmi_abi_version {
+struct ath12k_wmi_abi_version_params {
 	u32 abi_version_0;
 	u32 abi_version_1;
 	u32 abi_version_ns_0;
@@ -2221,7 +2221,7 @@ struct wmi_abi_version {
 
 struct wmi_init_cmd {
 	__le32 tlv_header;
-	struct wmi_abi_version host_abi_vers;
+	struct ath12k_wmi_abi_version_params host_abi_vers;
 	__le32 num_host_mem_chunks;
 } __packed;
 
@@ -2302,7 +2302,7 @@ struct wmi_resource_config {
 
 struct wmi_service_ready_event {
 	u32 fw_build_vers;
-	struct wmi_abi_version fw_abi_vers;
+	struct ath12k_wmi_abi_version_params fw_abi_vers;
 	u32 phy_capability;
 	u32 max_frag_entry;
 	u32 num_rf_chains;
@@ -2439,7 +2439,7 @@ struct wmi_dma_ring_capabilities {
 } __packed;
 
 struct wmi_ready_event_min {
-	struct wmi_abi_version fw_abi_vers;
+	struct ath12k_wmi_abi_version_params fw_abi_vers;
 	struct wmi_mac_addr mac_addr;
 	u32 status;
 	u32 num_dscp_table;
