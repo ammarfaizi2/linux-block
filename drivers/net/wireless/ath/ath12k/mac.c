@@ -287,7 +287,7 @@ int ath12k_mac_hw_ratecode_to_legacy_rate(u8 hw_rc, u8 preamble, u8 *rateidx,
 	int max_rates_idx = ath12k_g_rates_size;
 
 	if (preamble == WMI_RATE_PREAMBLE_CCK) {
-		hw_rc &= ~ATH11k_HW_RATECODE_CCK_SHORT_PREAM_MASK;
+		hw_rc &= ~ATH12K_HW_RATECODE_CCK_SHORT_PREAM_MASK;
 		i = 0;
 		max_rates_idx = ATH12K_MAC_FIRST_OFDM_RATE_IDX;
 	}
