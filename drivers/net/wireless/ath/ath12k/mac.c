@@ -459,10 +459,9 @@ static void ath12k_get_arvif_iter(void *data, u8 *mac,
 
 struct ath12k_vif *ath12k_mac_get_arvif(struct ath12k *ar, u32 vdev_id)
 {
-	struct ath12k_vif_iter arvif_iter;
+	struct ath12k_vif_iter arvif_iter = {};
 	u32 flags;
 
-	memset(&arvif_iter, 0, sizeof(struct ath12k_vif_iter));
 	arvif_iter.vdev_id = vdev_id;
 
 	flags = IEEE80211_IFACE_ITER_RESUME_ALL;
@@ -839,7 +838,7 @@ static int ath12k_mac_monitor_vdev_stop(struct ath12k *ar)
 static int ath12k_mac_monitor_vdev_create(struct ath12k *ar)
 {
 	struct ath12k_pdev *pdev = ar->pdev;
-	struct ath12k_wmi_vdev_create_arg arg;
+	struct ath12k_wmi_vdev_create_arg arg = {};
 	int bit, ret = 0;
 	u8 tmp_addr[6] = {0};
 	u16 nss = 0;
@@ -848,8 +847,6 @@ static int ath12k_mac_monitor_vdev_create(struct ath12k *ar)
 
 	if (ar->monitor_vdev_created)
 		return 0;
-
-	memset(&arg, 0, sizeof(arg));
 
 	if (ar->ab->free_vdev_map == 0) {
 		ath12k_warn(ar->ab, "failed to find free vdev id for monitor vdev\n");
@@ -2674,7 +2671,7 @@ static int ath12k_mac_op_hw_scan(struct ieee80211_hw *hw,
 	struct ath12k *ar = hw->priv;
 	struct ath12k_vif *arvif = ath12k_vif_to_arvif(vif);
 	struct cfg80211_scan_request *req = &hw_req->req;
-	struct ath12k_wmi_scan_req_arg arg;
+	struct ath12k_wmi_scan_req_arg arg = {};
 	int ret = 0;
 	int i;
 
@@ -2701,7 +2698,6 @@ static int ath12k_mac_op_hw_scan(struct ieee80211_hw *hw,
 	if (ret)
 		goto exit;
 
-	memset(&arg, 0, sizeof(arg));
 	ath12k_wmi_start_scan_init(ar, &arg);
 	arg.vdev_id = arvif->vdev_id;
 	arg.scan_id = ATH12K_SCAN_ID;
