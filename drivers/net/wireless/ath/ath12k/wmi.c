@@ -2236,9 +2236,9 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 	if (arg->num_ssids) {
 		ssid = ptr;
 		for (i = 0; i < arg->num_ssids; ++i) {
-			ssid->ssid_len = cpu_to_le32(arg->ssid[i].length);
+			ssid->ssid_len = cpu_to_le32(arg->ssid[i].ssid_len);
 			memcpy(ssid->ssid, arg->ssid[i].ssid,
-			       arg->ssid[i].length);
+			       arg->ssid[i].ssid_len);
 			ssid++;
 		}
 	}

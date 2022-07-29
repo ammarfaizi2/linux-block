@@ -2710,11 +2710,8 @@ static int ath12k_mac_op_hw_scan(struct ieee80211_hw *hw,
 
 	if (req->n_ssids) {
 		arg.num_ssids = req->n_ssids;
-		for (i = 0; i < arg.num_ssids; i++) {
-			arg.ssid[i].length  = req->ssids[i].ssid_len;
-			memcpy(&arg.ssid[i].ssid, req->ssids[i].ssid,
-			       req->ssids[i].ssid_len);
-		}
+		for (i = 0; i < arg.num_ssids; i++)
+			arg.ssid[i] = req->ssids[i];
 	} else {
 		arg.scan_flags |= WMI_SCAN_FLAG_PASSIVE;
 	}

@@ -2975,11 +2975,6 @@ struct element_info {
 	u8 *ptr;
 };
 
-struct ath12k_wmi_ssid_arg {
-	u8 length;
-	u8 ssid[ATH12K_WMI_SSID_LEN];
-};
-
 #define WMI_IE_BITMAP_SIZE             8
 
 #define WMI_SCAN_MAX_NUM_SSID                0x0A
@@ -3184,7 +3179,7 @@ struct ath12k_wmi_scan_req_arg {
 	u32 n_probes;
 	u32 chan_list[WLAN_SCAN_MAX_NUM_CHANNELS];
 	u32 notify_scan_events;
-	struct ath12k_wmi_ssid_arg ssid[WLAN_SCAN_MAX_NUM_SSID];
+	struct cfg80211_ssid ssid[WLAN_SCAN_MAX_NUM_SSID];
 	struct wmi_mac_addr bssid_list[WLAN_SCAN_MAX_NUM_BSSID];
 	struct element_info extraie;
 	struct element_info htcap;
