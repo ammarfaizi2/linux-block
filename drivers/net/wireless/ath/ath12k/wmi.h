@@ -2135,12 +2135,6 @@ struct ath12k_ppe_threshold {
 	u32 ppet16_ppet8_ru3_ru0[PSOC_HOST_MAX_NUM_SS];
 };
 
-struct ath12k_hw_mode_caps {
-	u32 hw_mode_id;
-	u32 phy_id_map;
-	u32 hw_mode_config_type;
-};
-
 #define PSOC_HOST_MAX_PHY_SIZE (3)
 #define ATH12K_11B_SUPPORT                 BIT(0)
 #define ATH12K_11G_SUPPORT                 BIT(1)
