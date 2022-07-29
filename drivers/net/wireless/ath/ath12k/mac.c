@@ -4704,9 +4704,8 @@ ath12k_mac_get_vdev_stats_id(struct ath12k_vif *arvif)
 	return vdev_stats_id;
 }
 
-static void
-ath12k_mac_setup_vdev_create_params(struct ath12k_vif *arvif,
-				    struct ath12k_wmi_vdev_create_arg *arg)
+static void ath12k_mac_setup_vdev_create_arg(struct ath12k_vif *arvif,
+					     struct ath12k_wmi_vdev_create_arg *arg)
 {
 	struct ath12k *ar = arvif->ar;
 	struct ath12k_pdev *pdev = ar->pdev;
@@ -4930,7 +4929,7 @@ static int ath12k_mac_op_add_interface(struct ieee80211_hw *hw,
 	for (i = 0; i < ARRAY_SIZE(vif->hw_queue); i++)
 		vif->hw_queue[i] = i % (ATH12K_HW_MAX_QUEUES - 1);
 
-	ath12k_mac_setup_vdev_create_params(arvif, &vdev_arg);
+	ath12k_mac_setup_vdev_create_arg(arvif, &vdev_arg);
 
 	ret = ath12k_wmi_vdev_create(ar, vif->addr, &vdev_arg);
 	if (ret) {
