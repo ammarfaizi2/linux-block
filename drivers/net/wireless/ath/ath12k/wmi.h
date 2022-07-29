@@ -2415,14 +2415,9 @@ struct wmi_soc_hal_reg_capabilities {
 } __packed;
 
 /* 2 word representation of MAC addr */
-struct wmi_mac_addr {
-	union {
-		u8 addr[ETH_ALEN];
-		struct {
-			__le32 word0;
-			__le32 word1;
-		} __packed;
-	} __packed;
+struct ath12k_wmi_mac_addr_params {
+	u8 addr[ETH_ALEN];
+	u8 padding[2];
 } __packed;
 
 struct wmi_dma_ring_capabilities {
@@ -2436,7 +2431,7 @@ struct wmi_dma_ring_capabilities {
 
 struct wmi_ready_event_min {
 	struct ath12k_wmi_abi_version_params fw_abi_vers;
-	struct wmi_mac_addr mac_addr;
+	struct ath12k_wmi_mac_addr_params mac_addr;
 	u32 status;
 	u32 num_dscp_table;
 	u32 num_extra_mac_addr;
@@ -2482,7 +2477,7 @@ struct wmi_vdev_create_cmd {
 	__le32 vdev_id;
 	__le32 vdev_type;
 	__le32 vdev_subtype;
-	struct wmi_mac_addr vdev_macaddr;
+	struct ath12k_wmi_mac_addr_params vdev_macaddr;
 	__le32 num_cfg_txrx_streams;
 	__le32 pdev_id;
 	__le32 vdev_stats_id;
@@ -2504,8 +2499,8 @@ struct wmi_vdev_up_cmd {
 	__le32 tlv_header;
 	__le32 vdev_id;
 	__le32 vdev_assoc_id;
-	struct wmi_mac_addr vdev_bssid;
-	struct wmi_mac_addr trans_bssid;
+	struct ath12k_wmi_mac_addr_params vdev_bssid;
+	struct ath12k_wmi_mac_addr_params trans_bssid;
 	__le32 profile_idx;
 	__le32 profile_num;
 } __packed;
@@ -2836,20 +2831,20 @@ enum wmi_peer_type {
 struct wmi_peer_create_cmd {
 	__le32 tlv_header;
 	__le32 vdev_id;
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 	__le32 peer_type;
 } __packed;
 
 struct wmi_peer_delete_cmd {
 	__le32 tlv_header;
 	__le32 vdev_id;
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 } __packed;
 
 struct wmi_peer_reorder_queue_setup_cmd {
 	__le32 tlv_header;
 	__le32 vdev_id;
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 	__le32 tid;
 	__le32 queue_ptr_lo;
 	__le32 queue_ptr_hi;
@@ -2861,7 +2856,7 @@ struct wmi_peer_reorder_queue_setup_cmd {
 struct wmi_peer_reorder_queue_remove_cmd {
 	__le32 tlv_header;
 	__le32 vdev_id;
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 	__le32 tid_mask;
 } __packed;
 
@@ -2903,7 +2898,7 @@ struct wmi_pdev_bss_chan_info_req_cmd {
 struct wmi_ap_ps_peer_cmd {
 	__le32 tlv_header;
 	__le32 vdev_id;
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 	__le32 param;
 	__le32 value;
 } __packed;
@@ -2929,7 +2924,7 @@ struct wmi_pdev_set_regdomain_cmd {
 struct wmi_peer_set_param_cmd {
 	__le32 tlv_header;
 	__le32 vdev_id;
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 	__le32 param_id;
 	__le32 param_value;
 } __packed;
@@ -2937,7 +2932,7 @@ struct wmi_peer_set_param_cmd {
 struct wmi_peer_flush_tids_cmd {
 	__le32 tlv_header;
 	__le32 vdev_id;
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 	__le32 peer_tid_bitmap;
 } __packed;
 
@@ -3046,8 +3041,8 @@ struct  wmi_start_scan_cmd {
 	__le32 num_ssids;
 	__le32 ie_len;
 	__le32 n_probes;
-	struct wmi_mac_addr mac_addr;
-	struct wmi_mac_addr mac_mask;
+	struct ath12k_wmi_mac_addr_params mac_addr;
+	struct ath12k_wmi_mac_addr_params mac_mask;
 	u32 ie_bitmap[WMI_IE_BITMAP_SIZE];
 	__le32 num_vendor_oui;
 	__le32 scan_ctrl_flags_ext;
@@ -3096,7 +3091,7 @@ struct hint_short_ssid {
 
 struct hint_bssid {
 	u32 freq_flags;
-	struct wmi_mac_addr bssid;
+	struct ath12k_wmi_mac_addr_params bssid;
 };
 
 struct ath12k_wmi_scan_req_arg {
@@ -3174,7 +3169,7 @@ struct ath12k_wmi_scan_req_arg {
 	u32 chan_list[WLAN_SCAN_MAX_NUM_CHANNELS];
 	u32 notify_scan_events;
 	struct cfg80211_ssid ssid[WLAN_SCAN_MAX_NUM_SSID];
-	struct wmi_mac_addr bssid_list[WLAN_SCAN_MAX_NUM_BSSID];
+	struct ath12k_wmi_mac_addr_params bssid_list[WLAN_SCAN_MAX_NUM_BSSID];
 	struct element_info extraie;
 	struct element_info htcap;
 	struct element_info vhtcap;
@@ -3342,7 +3337,7 @@ struct wmi_request_stats_cmd {
 	/* enum wmi_stats_id */
 	__le32 stats_id;
 	__le32 vdev_id;
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 	__le32 pdev_id;
 } __packed;
 
@@ -3369,7 +3364,7 @@ struct wmi_bcn_tmpl_cmd {
 struct wmi_vdev_install_key_cmd {
 	__le32 tlv_header;
 	__le32 vdev_id;
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 	__le32 key_idx;
 	__le32 key_flags;
 	__le32 key_cipher;
@@ -3478,7 +3473,7 @@ struct ath12k_wmi_peer_assoc_arg {
 
 struct wmi_peer_assoc_complete_cmd {
 	__le32 tlv_header;
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 	__le32 vdev_id;
 	__le32 peer_new_assoc;
 	__le32 peer_associd;
@@ -3669,7 +3664,7 @@ struct wmi_therm_throt_level_config_info {
 struct wmi_delba_send_cmd {
 	__le32 tlv_header;
 	__le32 vdev_id;
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 	__le32 tid;
 	__le32 initiator;
 	__le32 reasoncode;
@@ -3678,7 +3673,7 @@ struct wmi_delba_send_cmd {
 struct wmi_addba_setresponse_cmd {
 	__le32 tlv_header;
 	__le32 vdev_id;
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 	__le32 tid;
 	__le32 statuscode;
 } __packed;
@@ -3686,7 +3681,7 @@ struct wmi_addba_setresponse_cmd {
 struct wmi_addba_send_cmd {
 	__le32 tlv_header;
 	__le32 vdev_id;
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 	__le32 tid;
 	__le32 buffersize;
 } __packed;
@@ -3694,12 +3689,12 @@ struct wmi_addba_send_cmd {
 struct wmi_addba_clear_resp_cmd {
 	__le32 tlv_header;
 	__le32 vdev_id;
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 } __packed;
 
 struct wmi_pdev_pktlog_filter_info {
 	__le32 tlv_header;
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 } __packed;
 
 struct wmi_pdev_pktlog_filter_cmd {
@@ -3991,7 +3986,7 @@ struct wmi_vdev_delete_resp_event {
 
 struct wmi_peer_delete_resp_event {
 	u32 vdev_id;
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 } __packed;
 
 struct wmi_bcn_tx_status_event {
@@ -4028,7 +4023,7 @@ struct wmi_pdev_bss_chan_info_event {
 
 struct wmi_vdev_install_key_compl_event {
 	u32 vdev_id;
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 	u32 key_idx;
 	u32 key_flags;
 	u32 status;
@@ -4044,7 +4039,7 @@ struct wmi_vdev_install_key_complete_arg {
 
 struct wmi_peer_assoc_conf_event {
 	u32 vdev_id;
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 } __packed;
 
 struct wmi_peer_assoc_conf_arg {
@@ -4339,7 +4334,7 @@ struct wmi_peer_sta_kickout_arg {
 };
 
 struct wmi_peer_sta_kickout_event {
-	struct wmi_mac_addr peer_macaddr;
+	struct ath12k_wmi_mac_addr_params peer_macaddr;
 } __packed;
 
 enum wmi_roam_reason {

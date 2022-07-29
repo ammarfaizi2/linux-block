@@ -2138,7 +2138,7 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 	struct ath12k_pdev_wmi *wmi = ar->wmi;
 	struct wmi_start_scan_cmd *cmd;
 	struct ath12k_wmi_ssid_params *ssid = NULL;
-	struct wmi_mac_addr *bssid;
+	struct ath12k_wmi_mac_addr_params *bssid;
 	struct sk_buff *skb;
 	struct wmi_tlv *tlv;
 	void *ptr;
@@ -5991,7 +5991,7 @@ static int ath12k_wmi_tlv_rdy_parse(struct ath12k_base *ab, u16 tag, u16 len,
 {
 	struct wmi_tlv_rdy_parse *rdy_parse = data;
 	struct wmi_ready_event fixed_param;
-	struct wmi_mac_addr *addr_list;
+	struct ath12k_wmi_mac_addr_params *addr_list;
 	struct ath12k_pdev *pdev;
 	u32 num_mac_addr;
 	int i;
@@ -6011,7 +6011,7 @@ static int ath12k_wmi_tlv_rdy_parse(struct ath12k_base *ab, u16 tag, u16 len,
 		ab->wmi_ready = true;
 		break;
 	case WMI_TAG_ARRAY_FIXED_STRUCT:
-		addr_list = (struct wmi_mac_addr *)ptr;
+		addr_list = (struct ath12k_wmi_mac_addr_params *)ptr;
 		num_mac_addr = rdy_parse->num_extra_mac_addr;
 
 		if (!(ab->num_radios > 1 && num_mac_addr >= ab->num_radios))
