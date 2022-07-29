@@ -2161,7 +2161,7 @@ struct ath12k_wmi_host_mem_chunk_params {
 	u32 size;
 } __packed;
 
-struct wmi_host_mem_chunk {
+struct ath12k_wmi_host_mem_chunk_arg {
 	void *vaddr;
 	dma_addr_t paddr;
 	u32 len;
@@ -2171,7 +2171,7 @@ struct wmi_host_mem_chunk {
 struct ath12k_wmi_init_cmd_arg {
 	struct target_resource_config *res_cfg;
 	u8 num_mem_chunks;
-	struct wmi_host_mem_chunk *mem_chunks;
+	struct ath12k_wmi_host_mem_chunk_arg *mem_chunks;
 	u32 hw_mode_id;
 	u32 num_band_to_mac;
 	struct ath12k_wmi_pdev_band_arg band_to_mac[WMI_HOST_MAX_PDEV];
@@ -4987,7 +4987,7 @@ struct ath12k_wmi_base {
 	const struct wmi_peer_flags_map *peer_flags;
 	u32 num_mem_chunks;
 	u32 rx_decap_mode;
-	struct wmi_host_mem_chunk mem_chunks[WMI_MAX_MEM_REQS];
+	struct ath12k_wmi_host_mem_chunk_arg mem_chunks[WMI_MAX_MEM_REQS];
 
 	enum wmi_host_hw_mode_config_type preferred_hw_mode;
 	struct target_resource_config wlan_resource_config;
