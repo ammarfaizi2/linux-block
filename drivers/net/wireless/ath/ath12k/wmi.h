@@ -3426,7 +3426,6 @@ struct wmi_rate_set_arg {
 };
 
 struct ath12k_wmi_peer_assoc_arg {
-	struct wmi_mac_addr peer_macaddr;
 	u32 vdev_id;
 	u32 peer_new_assoc;
 	u32 peer_associd;
