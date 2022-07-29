@@ -1755,6 +1755,8 @@ static noinline void rcu_gp_cleanup(void)
 			dump_blkd_tasks(rnp, 10);
 		WARN_ON_ONCE(rnp->qsmask);
 		WRITE_ONCE(rnp->gp_seq, new_gp_seq);
+		if (!rnp->parent)
+			smp_mb(); // Order against failing poll_state_synchronize_rcu_full().
 		rdp = this_cpu_ptr(&rcu_data);
 		if (rnp == rdp->mynode)
 			needgp = __note_gp_changes(rnp, rdp) || needgp;
@@ -3573,6 +3575,35 @@ unsigned long get_state_synchronize_rcu(void)
 EXPORT_SYMBOL_GPL(get_state_synchronize_rcu);
 
 /**
+ * get_state_synchronize_rcu_full - Snapshot RCU state, both normal and expedited
+ * @oldstate: location to place combined normal/expedited grace-period state
+ *
+ * Places the normal and expedited grace-period states in oldstate.  This
+ * state value can be passed to a later call to cond_synchronize_rcu_full()
+ * or poll_state_synchronize_rcu_full() to determine whether or not a
+ * grace period (whether normal or expedited) has elapsed in the meantime.
+ * The rcu_gp_oldstate structure takes up twice the memory of an unsigned
+ * long, but is guaranteed to see all grace periods.  In contrast, the
+ * combined state occupies less memory, but can sometimes fail to take
+ * grace periods into account.
+ *
+ * This does not guarantee that the needed grace period will actually
+ * start.
+ */
+void get_state_synchronize_rcu_full(struct rcu_gp_oldstate *rgosp)
+{
+	/*
+	 * Any prior manipulation of RCU-protected data must happen
+	 * before the loads from ->gp_seq and ->expedited_sequence.
+	 */
+	smp_mb();  /* ^^^ */
+	rgosp->rgos_norm = rcu_seq_snap(&rcu_state.gp_seq);
+	rgosp->rgos_exp = rcu_seq_snap(&rcu_state.expedited_sequence);
+	rgosp->rgos_polled = rcu_seq_snap(&rcu_state.gp_seq_polled);
+}
+EXPORT_SYMBOL_GPL(get_state_synchronize_rcu_full);
+
+/**
  * start_poll_synchronize_rcu - Snapshot and start RCU grace period
  *
  * Returns a cookie that is used by a later call to cond_synchronize_rcu()
@@ -3669,15 +3700,25 @@ EXPORT_SYMBOL_GPL(poll_state_synchronize_rcu);
  * Alternatively, they can use get_completed_synchronize_rcu_full() to
  * get a guaranteed-completed grace-period state.
  *
- * This function provides the same memory-ordering guarantees that
- * would be provided by a synchronize_rcu() that was invoked at the call
- * to the function that provided @oldstate, and that returned at the end
- * of this function.
+ * This function provides the same memory-ordering guarantees that would
+ * be provided by a synchronize_rcu() that was invoked at the call to the
+ * function that provided @oldstate, and that returned at the end of this
+ * function.  And this guarantee requires that the root rcu_node structure's
+ * ->gp_seq field be checked instead of that of the rcu_state structure.
+ * The problem is that the just-ending grace-period's callbacks can be
+ * invoked between the time that the root rcu_node structure's ->gp_seq
+ * field is updated and the time that the rcu_state structure's ->gp_seq
+ * field is updated.  Therefore, if a single synchronize_rcu() is to
+ * cause a subsequent poll_state_synchronize_rcu_full() to return @true,
+ * then the root rcu_node structure is the one that needs to be polled.
  */
 bool poll_state_synchronize_rcu_full(struct rcu_gp_oldstate *rgosp)
 {
+	struct rcu_node *rnp = rcu_get_root();
+
+	smp_mb(); // Order against root rcu_node structure grace-period cleanup.
 	if (rgosp->rgos_norm == RCU_GET_STATE_COMPLETED ||
-	    rcu_seq_done_exact(&rcu_state.gp_seq, rgosp->rgos_norm) ||
+	    rcu_seq_done_exact(&rnp->gp_seq, rgosp->rgos_norm) ||
 	    rgosp->rgos_exp == RCU_GET_STATE_COMPLETED ||
 	    rcu_seq_done_exact(&rcu_state.expedited_sequence, rgosp->rgos_exp) ||
 	    rgosp->rgos_polled == RCU_GET_STATE_COMPLETED ||
