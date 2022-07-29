@@ -6815,7 +6815,7 @@ static void ath12k_pdev_ctl_failsafe_check_event(struct ath12k_base *ab,
 
 static void
 ath12k_wmi_process_csa_switch_count_event(struct ath12k_base *ab,
-					  const struct wmi_pdev_csa_switch_ev *ev,
+					  const struct ath12k_wmi_pdev_csa_event *ev,
 					  const u32 *vdev_ids)
 {
 	int i;
@@ -6846,7 +6846,7 @@ ath12k_wmi_pdev_csa_switch_count_status_event(struct ath12k_base *ab,
 					      struct sk_buff *skb)
 {
 	const void **tb;
-	const struct wmi_pdev_csa_switch_ev *ev;
+	const struct ath12k_wmi_pdev_csa_event *ev;
 	const u32 *vdev_ids;
 	int ret;
 

@@ -4230,7 +4230,7 @@ struct wmi_pdev_ctl_failsafe_chk_event {
 	__le32 ctl_failsafe_status;
 } __packed;
 
-struct wmi_pdev_csa_switch_ev {
+struct ath12k_wmi_pdev_csa_event {
 	__le32 pdev_id;
 	__le32 current_switch_count;
 	__le32 num_vdevs;
