@@ -2088,13 +2088,9 @@ enum {
 #define WMI_PEER_SET_MIN_TX_RATE                        0x12
 #define WMI_PEER_SET_DEFAULT_ROUTING                    0x13
 
-/* slot time long */
 #define WMI_VDEV_SLOT_TIME_LONG         0x1
-/* slot time short */
 #define WMI_VDEV_SLOT_TIME_SHORT        0x2
-/* preablbe long */
 #define WMI_VDEV_PREAMBLE_LONG          0x1
-/* preablbe short */
 #define WMI_VDEV_PREAMBLE_SHORT         0x2
 
 enum wmi_peer_smps_state {
