@@ -414,11 +414,12 @@ static int ath12k_pull_svc_ready_ext(struct ath12k_pdev_wmi *wmi_handle,
 		return -EINVAL;
 
 	/* Move this to host based bitmap */
-	arg->default_conc_scan_config_bits = ev->default_conc_scan_config_bits;
-	arg->default_fw_config_bits = ev->default_fw_config_bits;
-	arg->he_cap_info = ev->he_cap_info;
-	arg->mpdu_density = ev->mpdu_density;
-	arg->max_bssid_rx_filters = ev->max_bssid_rx_filters;
+	arg->default_conc_scan_config_bits =
+		le32_to_cpu(ev->default_conc_scan_config_bits);
+	arg->default_fw_config_bits = le32_to_cpu(ev->default_fw_config_bits);
+	arg->he_cap_info = le32_to_cpu(ev->he_cap_info);
+	arg->mpdu_density = le32_to_cpu(ev->mpdu_density);
+	arg->max_bssid_rx_filters = le32_to_cpu(ev->max_bssid_rx_filters);
 	memcpy(&arg->ppet, &ev->ppet, sizeof(arg->ppet));
 
 	return 0;
@@ -582,23 +583,23 @@ static int ath12k_pull_service_ready_tlv(struct ath12k_base *ab,
 		return -EINVAL;
 	}
 
-	cap->phy_capability = ev->phy_capability;
-	cap->max_frag_entry = ev->max_frag_entry;
-	cap->num_rf_chains = ev->num_rf_chains;
-	cap->ht_cap_info = ev->ht_cap_info;
-	cap->vht_cap_info = ev->vht_cap_info;
-	cap->vht_supp_mcs = ev->vht_supp_mcs;
-	cap->hw_min_tx_power = ev->hw_min_tx_power;
-	cap->hw_max_tx_power = ev->hw_max_tx_power;
-	cap->sys_cap_info = ev->sys_cap_info;
-	cap->min_pkt_size_enable = ev->min_pkt_size_enable;
-	cap->max_bcn_ie_size = ev->max_bcn_ie_size;
-	cap->max_num_scan_channels = ev->max_num_scan_channels;
-	cap->max_supported_macs = ev->max_supported_macs;
-	cap->wmi_fw_sub_feat_caps = ev->wmi_fw_sub_feat_caps;
-	cap->txrx_chainmask = ev->txrx_chainmask;
-	cap->default_dbs_hw_mode_index = ev->default_dbs_hw_mode_index;
-	cap->num_msdu_desc = ev->num_msdu_desc;
+	cap->phy_capability = le32_to_cpu(ev->phy_capability);
+	cap->max_frag_entry = le32_to_cpu(ev->max_frag_entry);
+	cap->num_rf_chains = le32_to_cpu(ev->num_rf_chains);
+	cap->ht_cap_info = le32_to_cpu(ev->ht_cap_info);
+	cap->vht_cap_info = le32_to_cpu(ev->vht_cap_info);
+	cap->vht_supp_mcs = le32_to_cpu(ev->vht_supp_mcs);
+	cap->hw_min_tx_power = le32_to_cpu(ev->hw_min_tx_power);
+	cap->hw_max_tx_power = le32_to_cpu(ev->hw_max_tx_power);
+	cap->sys_cap_info = le32_to_cpu(ev->sys_cap_info);
+	cap->min_pkt_size_enable = le32_to_cpu(ev->min_pkt_size_enable);
+	cap->max_bcn_ie_size = le32_to_cpu(ev->max_bcn_ie_size);
+	cap->max_num_scan_channels = le32_to_cpu(ev->max_num_scan_channels);
+	cap->max_supported_macs = le32_to_cpu(ev->max_supported_macs);
+	cap->wmi_fw_sub_feat_caps = le32_to_cpu(ev->wmi_fw_sub_feat_caps);
+	cap->txrx_chainmask = le32_to_cpu(ev->txrx_chainmask);
+	cap->default_dbs_hw_mode_index = le32_to_cpu(ev->default_dbs_hw_mode_index);
+	cap->num_msdu_desc = le32_to_cpu(ev->num_msdu_desc);
 
 	return 0;
 }
@@ -4362,22 +4363,24 @@ static int ath12k_pull_reg_chan_list_ext_update_ev(struct ath12k_base *ab,
 		return -EPROTO;
 	}
 
-	reg_info->num_2g_reg_rules = ext_chan_list_event_hdr->num_2g_reg_rules;
-	reg_info->num_5g_reg_rules = ext_chan_list_event_hdr->num_5g_reg_rules;
+	reg_info->num_2g_reg_rules =
+		le32_to_cpu(ext_chan_list_event_hdr->num_2g_reg_rules);
+	reg_info->num_5g_reg_rules =
+		le32_to_cpu(ext_chan_list_event_hdr->num_5g_reg_rules);
 	reg_info->num_6g_reg_rules_ap[WMI_REG_INDOOR_AP] =
-			ext_chan_list_event_hdr->num_6g_reg_rules_ap_lpi;
+		le32_to_cpu(ext_chan_list_event_hdr->num_6g_reg_rules_ap_lpi);
 	reg_info->num_6g_reg_rules_ap[WMI_REG_STD_POWER_AP] =
-			ext_chan_list_event_hdr->num_6g_reg_rules_ap_sp;
+		le32_to_cpu(ext_chan_list_event_hdr->num_6g_reg_rules_ap_sp);
 	reg_info->num_6g_reg_rules_ap[WMI_REG_VLP_AP] =
-			ext_chan_list_event_hdr->num_6g_reg_rules_ap_vlp;
+		le32_to_cpu(ext_chan_list_event_hdr->num_6g_reg_rules_ap_vlp);
 
 	for (i = 0; i < WMI_REG_MAX_CLIENT_TYPE; i++) {
 		reg_info->num_6g_reg_rules_cl[WMI_REG_INDOOR_AP][i] =
-			ext_chan_list_event_hdr->num_6g_reg_rules_cl_lpi[i];
+			le32_to_cpu(ext_chan_list_event_hdr->num_6g_reg_rules_cl_lpi[i]);
 		reg_info->num_6g_reg_rules_cl[WMI_REG_STD_POWER_AP][i] =
-			ext_chan_list_event_hdr->num_6g_reg_rules_cl_sp[i];
+			le32_to_cpu(ext_chan_list_event_hdr->num_6g_reg_rules_cl_sp[i]);
 		reg_info->num_6g_reg_rules_cl[WMI_REG_VLP_AP][i] =
-			ext_chan_list_event_hdr->num_6g_reg_rules_cl_vlp[i];
+			le32_to_cpu(ext_chan_list_event_hdr->num_6g_reg_rules_cl_vlp[i]);
 	}
 
 	num_2g_reg_rules = reg_info->num_2g_reg_rules;
@@ -4451,14 +4454,14 @@ static int ath12k_pull_reg_chan_list_ext_update_ev(struct ath12k_base *ab,
 		num_5g_reg_rules = reg_info->num_5g_reg_rules;
 	}
 
-	reg_info->dfs_region = ext_chan_list_event_hdr->dfs_region;
-	reg_info->phybitmap = ext_chan_list_event_hdr->phybitmap;
-	reg_info->num_phy = ext_chan_list_event_hdr->num_phy;
-	reg_info->phy_id = ext_chan_list_event_hdr->phy_id;
-	reg_info->ctry_code = ext_chan_list_event_hdr->country_id;
-	reg_info->reg_dmn_pair = ext_chan_list_event_hdr->domain_code;
+	reg_info->dfs_region = le32_to_cpu(ext_chan_list_event_hdr->dfs_region);
+	reg_info->phybitmap = le32_to_cpu(ext_chan_list_event_hdr->phybitmap);
+	reg_info->num_phy = le32_to_cpu(ext_chan_list_event_hdr->num_phy);
+	reg_info->phy_id = le32_to_cpu(ext_chan_list_event_hdr->phy_id);
+	reg_info->ctry_code = le32_to_cpu(ext_chan_list_event_hdr->country_id);
+	reg_info->reg_dmn_pair = le32_to_cpu(ext_chan_list_event_hdr->domain_code);
 
-	switch (ext_chan_list_event_hdr->status_code) {
+	switch (le32_to_cpu(ext_chan_list_event_hdr->status_code)) {
 	case WMI_REG_SET_CC_STATUS_PASS:
 		reg_info->status_code = REG_SET_CC_STATUS_PASS;
 		break;
@@ -4481,36 +4484,36 @@ static int ath12k_pull_reg_chan_list_ext_update_ev(struct ath12k_base *ab,
 
 	reg_info->is_ext_reg_event = true;
 
-	reg_info->min_bw_2g = ext_chan_list_event_hdr->min_bw_2g;
-	reg_info->max_bw_2g = ext_chan_list_event_hdr->max_bw_2g;
-	reg_info->min_bw_5g = ext_chan_list_event_hdr->min_bw_5g;
-	reg_info->max_bw_5g = ext_chan_list_event_hdr->max_bw_5g;
+	reg_info->min_bw_2g = le32_to_cpu(ext_chan_list_event_hdr->min_bw_2g);
+	reg_info->max_bw_2g = le32_to_cpu(ext_chan_list_event_hdr->max_bw_2g);
+	reg_info->min_bw_5g = le32_to_cpu(ext_chan_list_event_hdr->min_bw_5g);
+	reg_info->max_bw_5g = le32_to_cpu(ext_chan_list_event_hdr->max_bw_5g);
 	reg_info->min_bw_6g_ap[WMI_REG_INDOOR_AP] =
-			ext_chan_list_event_hdr->min_bw_6g_ap_lpi;
+		le32_to_cpu(ext_chan_list_event_hdr->min_bw_6g_ap_lpi);
 	reg_info->max_bw_6g_ap[WMI_REG_INDOOR_AP] =
-			 ext_chan_list_event_hdr->max_bw_6g_ap_lpi;
+		le32_to_cpu(ext_chan_list_event_hdr->max_bw_6g_ap_lpi);
 	reg_info->min_bw_6g_ap[WMI_REG_STD_POWER_AP] =
-			ext_chan_list_event_hdr->min_bw_6g_ap_sp;
+		le32_to_cpu(ext_chan_list_event_hdr->min_bw_6g_ap_sp);
 	reg_info->max_bw_6g_ap[WMI_REG_STD_POWER_AP] =
-			ext_chan_list_event_hdr->max_bw_6g_ap_sp;
+		le32_to_cpu(ext_chan_list_event_hdr->max_bw_6g_ap_sp);
 	reg_info->min_bw_6g_ap[WMI_REG_VLP_AP] =
-			ext_chan_list_event_hdr->min_bw_6g_ap_vlp;
+		le32_to_cpu(ext_chan_list_event_hdr->min_bw_6g_ap_vlp);
 	reg_info->max_bw_6g_ap[WMI_REG_VLP_AP] =
-			ext_chan_list_event_hdr->max_bw_6g_ap_vlp;
+		le32_to_cpu(ext_chan_list_event_hdr->max_bw_6g_ap_vlp);
 
 	for (i = 0; i < WMI_REG_MAX_CLIENT_TYPE; i++) {
 		reg_info->min_bw_6g_client[WMI_REG_INDOOR_AP][i] =
-				ext_chan_list_event_hdr->min_bw_6g_client_lpi[i];
+			le32_to_cpu(ext_chan_list_event_hdr->min_bw_6g_client_lpi[i]);
 		reg_info->max_bw_6g_client[WMI_REG_INDOOR_AP][i] =
-				ext_chan_list_event_hdr->max_bw_6g_client_lpi[i];
+			le32_to_cpu(ext_chan_list_event_hdr->max_bw_6g_client_lpi[i]);
 		reg_info->min_bw_6g_client[WMI_REG_STD_POWER_AP][i] =
-				ext_chan_list_event_hdr->min_bw_6g_client_sp[i];
+			le32_to_cpu(ext_chan_list_event_hdr->min_bw_6g_client_sp[i]);
 		reg_info->max_bw_6g_client[WMI_REG_STD_POWER_AP][i] =
-				ext_chan_list_event_hdr->max_bw_6g_client_sp[i];
+			le32_to_cpu(ext_chan_list_event_hdr->max_bw_6g_client_sp[i]);
 		reg_info->min_bw_6g_client[WMI_REG_VLP_AP][i] =
-				ext_chan_list_event_hdr->min_bw_6g_client_vlp[i];
+			le32_to_cpu(ext_chan_list_event_hdr->min_bw_6g_client_vlp[i]);
 		reg_info->max_bw_6g_client[WMI_REG_VLP_AP][i] =
-				ext_chan_list_event_hdr->max_bw_6g_client_vlp[i];
+			le32_to_cpu(ext_chan_list_event_hdr->max_bw_6g_client_vlp[i]);
 	}
 
 	ath12k_dbg(ab, ATH12K_DBG_WMI,
@@ -4603,28 +4606,28 @@ static int ath12k_pull_reg_chan_list_ext_update_ev(struct ath12k_base *ab,
 		}
 	}
 
-	reg_info->client_type = ext_chan_list_event_hdr->client_type;
+	reg_info->client_type = le32_to_cpu(ext_chan_list_event_hdr->client_type);
 	reg_info->rnr_tpe_usable = ext_chan_list_event_hdr->rnr_tpe_usable;
 	reg_info->unspecified_ap_usable =
 			ext_chan_list_event_hdr->unspecified_ap_usable;
 	reg_info->domain_code_6g_ap[WMI_REG_INDOOR_AP] =
-			ext_chan_list_event_hdr->domain_code_6g_ap_lpi;
+		le32_to_cpu(ext_chan_list_event_hdr->domain_code_6g_ap_lpi);
 	reg_info->domain_code_6g_ap[WMI_REG_STD_POWER_AP] =
-			ext_chan_list_event_hdr->domain_code_6g_ap_sp;
+		le32_to_cpu(ext_chan_list_event_hdr->domain_code_6g_ap_sp);
 	reg_info->domain_code_6g_ap[WMI_REG_VLP_AP] =
-			ext_chan_list_event_hdr->domain_code_6g_ap_vlp;
+		le32_to_cpu(ext_chan_list_event_hdr->domain_code_6g_ap_vlp);
 
 	for (i = 0; i < WMI_REG_MAX_CLIENT_TYPE; i++) {
 		reg_info->domain_code_6g_client[WMI_REG_INDOOR_AP][i] =
-				ext_chan_list_event_hdr->domain_code_6g_client_lpi[i];
+			le32_to_cpu(ext_chan_list_event_hdr->domain_code_6g_client_lpi[i]);
 		reg_info->domain_code_6g_client[WMI_REG_STD_POWER_AP][i] =
-				ext_chan_list_event_hdr->domain_code_6g_client_sp[i];
+			le32_to_cpu(ext_chan_list_event_hdr->domain_code_6g_client_sp[i]);
 		reg_info->domain_code_6g_client[WMI_REG_VLP_AP][i] =
-				ext_chan_list_event_hdr->domain_code_6g_client_vlp[i];
+			le32_to_cpu(ext_chan_list_event_hdr->domain_code_6g_client_vlp[i]);
 	}
 
 	reg_info->domain_code_6g_super_id =
-			ext_chan_list_event_hdr->domain_code_6g_super_id;
+		le32_to_cpu(ext_chan_list_event_hdr->domain_code_6g_super_id);
 
 	ath12k_dbg(ab, ATH12K_DBG_WMI, "6g client_type: %d domain_code_6g_super_id: %d",
 		   reg_info->client_type, reg_info->domain_code_6g_super_id);
@@ -4688,7 +4691,7 @@ static int ath12k_pull_vdev_del_resp_ev(struct ath12k_base *ab,
 		return -EPROTO;
 	}
 
-	*vdev_id = ev->vdev_id;
+	*vdev_id = le32_to_cpu(ev->vdev_id);
 
 	kfree(tb);
 	return 0;
@@ -4716,8 +4719,8 @@ static int ath12k_pull_bcn_tx_status_ev(struct ath12k_base *ab, void *evt_buf,
 		return -EPROTO;
 	}
 
-	*vdev_id   = ev->vdev_id;
-	*tx_status = ev->tx_status;
+	*vdev_id = le32_to_cpu(ev->vdev_id);
+	*tx_status = le32_to_cpu(ev->tx_status);
 
 	kfree(tb);
 	return 0;
@@ -4744,7 +4747,7 @@ static int ath12k_pull_vdev_stopped_param_tlv(struct ath12k_base *ab, struct sk_
 		return -EPROTO;
 	}
 
-	*vdev_id = ev->vdev_id;
+	*vdev_id = le32_to_cpu(ev->vdev_id);
 
 	kfree(tb);
 	return 0;
@@ -5222,11 +5225,11 @@ ath12k_pull_vdev_install_key_compl_ev(struct ath12k_base *ab, struct sk_buff *sk
 		return -EPROTO;
 	}
 
-	arg->vdev_id = ev->vdev_id;
+	arg->vdev_id = le32_to_cpu(ev->vdev_id);
 	arg->macaddr = ev->peer_macaddr.addr;
-	arg->key_idx = ev->key_idx;
-	arg->key_flags = ev->key_flags;
-	arg->status = ev->status;
+	arg->key_idx = le32_to_cpu(ev->key_idx);
+	arg->key_flags = le32_to_cpu(ev->key_flags);
+	arg->status = le32_to_cpu(ev->status);
 
 	kfree(tb);
 	return 0;
@@ -5253,7 +5256,7 @@ static int ath12k_pull_peer_assoc_conf_ev(struct ath12k_base *ab, struct sk_buff
 		return -EPROTO;
 	}
 
-	peer_assoc_conf->vdev_id = ev->vdev_id;
+	peer_assoc_conf->vdev_id = le32_to_cpu(ev->vdev_id);
 	peer_assoc_conf->macaddr = ev->peer_macaddr.addr;
 
 	kfree(tb);
@@ -5391,10 +5394,10 @@ int ath12k_wmi_pull_fw_stats(struct ath12k_base *ab, struct sk_buff *skb,
 		   ev->num_pdev_stats, ev->num_vdev_stats,
 		   ev->num_bcn_stats);
 
-	stats->pdev_id = ev->pdev_id;
+	stats->pdev_id = le32_to_cpu(ev->pdev_id);
 	stats->stats_id = 0;
 
-	for (i = 0; i < ev->num_pdev_stats; i++) {
+	for (i = 0; i < le32_to_cpu(ev->num_pdev_stats); i++) {
 		const struct wmi_pdev_stats *src;
 		struct ath12k_fw_stats_pdev *dst;
 
@@ -5419,7 +5422,7 @@ int ath12k_wmi_pull_fw_stats(struct ath12k_base *ab, struct sk_buff *skb,
 		list_add_tail(&dst->list, &stats->pdevs);
 	}
 
-	for (i = 0; i < ev->num_vdev_stats; i++) {
+	for (i = 0; i < le32_to_cpu(ev->num_vdev_stats); i++) {
 		const struct wmi_vdev_stats *src;
 		struct ath12k_fw_stats_vdev *dst;
 
@@ -5442,7 +5445,7 @@ int ath12k_wmi_pull_fw_stats(struct ath12k_base *ab, struct sk_buff *skb,
 		list_add_tail(&dst->list, &stats->vdevs);
 	}
 
-	for (i = 0; i < ev->num_bcn_stats; i++) {
+	for (i = 0; i < le32_to_cpu(ev->num_bcn_stats); i++) {
 		const struct wmi_bcn_stats *src;
 		struct ath12k_fw_stats_bcn *dst;
 
@@ -6001,13 +6004,13 @@ static int ath12k_wmi_tlv_rdy_parse(struct ath12k_base *ab, u16 tag, u16 len,
 		memset(&fixed_param, 0, sizeof(fixed_param));
 		memcpy(&fixed_param, (struct wmi_ready_event *)ptr,
 		       min_t(u16, sizeof(fixed_param), len));
-		ab->wlan_init_status = fixed_param.ready_event_min.status;
+		ab->wlan_init_status = le32_to_cpu(fixed_param.ready_event_min.status);
 		rdy_parse->num_extra_mac_addr =
-			fixed_param.ready_event_min.num_extra_mac_addr;
+			le32_to_cpu(fixed_param.ready_event_min.num_extra_mac_addr);
 
 		ether_addr_copy(ab->mac_addr,
 				fixed_param.ready_event_min.mac_addr.addr);
-		ab->pktlog_defs_checksum = fixed_param.pktlog_defs_checksum;
+		ab->pktlog_defs_checksum = le32_to_cpu(fixed_param.pktlog_defs_checksum);
 		ab->wmi_ready = true;
 		break;
 	case WMI_TAG_ARRAY_FIXED_STRUCT:
@@ -6057,7 +6060,7 @@ static void ath12k_peer_delete_resp_event(struct ath12k_base *ab, struct sk_buff
 	}
 
 	rcu_read_lock();
-	ar = ath12k_mac_get_ar_by_vdev_id(ab, peer_del_resp.vdev_id);
+	ar = ath12k_mac_get_ar_by_vdev_id(ab, le32_to_cpu(peer_del_resp.vdev_id));
 	if (!ar) {
 		ath12k_warn(ab, "invalid vdev id in peer delete resp ev %d",
 			    peer_del_resp.vdev_id);
@@ -6127,7 +6130,7 @@ static void ath12k_vdev_start_resp_event(struct ath12k_base *ab, struct sk_buff 
 	}
 
 	rcu_read_lock();
-	ar = ath12k_mac_get_ar_by_vdev_id(ab, vdev_start_resp.vdev_id);
+	ar = ath12k_mac_get_ar_by_vdev_id(ab, le32_to_cpu(vdev_start_resp.vdev_id));
 	if (!ar) {
 		ath12k_warn(ab, "invalid vdev id in vdev start resp ev %d",
 			    vdev_start_resp.vdev_id);
@@ -6137,7 +6140,7 @@ static void ath12k_vdev_start_resp_event(struct ath12k_base *ab, struct sk_buff 
 
 	ar->last_wmi_vdev_start_status = 0;
 
-	status = vdev_start_resp.status;
+	status = le32_to_cpu(vdev_start_resp.status);
 
 	if (WARN_ON_ONCE(status)) {
 		ath12k_warn(ab, "vdev start resp error status %d (%s)\n",
@@ -6312,15 +6315,15 @@ static void ath12k_mgmt_tx_compl_event(struct ath12k_base *ab, struct sk_buff *s
 	}
 
 	rcu_read_lock();
-	ar = ath12k_mac_get_ar_by_pdev_id(ab, tx_compl_param.pdev_id);
+	ar = ath12k_mac_get_ar_by_pdev_id(ab, le32_to_cpu(tx_compl_param.pdev_id));
 	if (!ar) {
 		ath12k_warn(ab, "invalid pdev id %d in mgmt_tx_compl_event\n",
 			    tx_compl_param.pdev_id);
 		goto exit;
 	}
 
-	wmi_process_mgmt_tx_comp(ar, tx_compl_param.desc_id,
-				 tx_compl_param.status);
+	wmi_process_mgmt_tx_comp(ar, le32_to_cpu(tx_compl_param.desc_id),
+				 le32_to_cpu(tx_compl_param.status));
 
 	ath12k_dbg(ab, ATH12K_DBG_MGMT,
 		   "mgmt tx compl ev pdev_id %d, desc_id %d, status %d",
@@ -6373,11 +6376,11 @@ static void ath12k_scan_event(struct ath12k_base *ab, struct sk_buff *skb)
 	 * search 'ar' if the corresponding 'ar' scan is ABORTING and the
 	 * aborting scan's vdev id matches this event info.
 	 */
-	if (scan_ev.event_type == WMI_SCAN_EVENT_COMPLETED &&
-	    scan_ev.reason == WMI_SCAN_REASON_CANCELLED)
-		ar = ath12k_get_ar_on_scan_abort(ab, scan_ev.vdev_id);
+	if (le32_to_cpu(scan_ev.event_type) == WMI_SCAN_EVENT_COMPLETED &&
+	    le32_to_cpu(scan_ev.reason) == WMI_SCAN_REASON_CANCELLED)
+		ar = ath12k_get_ar_on_scan_abort(ab, le32_to_cpu(scan_ev.vdev_id));
 	else
-		ar = ath12k_mac_get_ar_by_vdev_id(ab, scan_ev.vdev_id);
+		ar = ath12k_mac_get_ar_by_vdev_id(ab, le32_to_cpu(scan_ev.vdev_id));
 
 	if (!ar) {
 		ath12k_warn(ab, "Received scan event for unknown vdev");
@@ -6389,12 +6392,17 @@ static void ath12k_scan_event(struct ath12k_base *ab, struct sk_buff *skb)
 
 	ath12k_dbg(ab, ATH12K_DBG_WMI,
 		   "scan event %s type %d reason %d freq %d req_id %d scan_id %d vdev_id %d state %s (%d)\n",
-		   ath12k_wmi_event_scan_type_str(scan_ev.event_type, scan_ev.reason),
-		   scan_ev.event_type, scan_ev.reason, scan_ev.channel_freq,
-		   scan_ev.scan_req_id, scan_ev.scan_id, scan_ev.vdev_id,
+		   ath12k_wmi_event_scan_type_str(le32_to_cpu(scan_ev.event_type),
+						  le32_to_cpu(scan_ev.reason)),
+		   le32_to_cpu(scan_ev.event_type),
+		   le32_to_cpu(scan_ev.reason),
+		   le32_to_cpu(scan_ev.channel_freq),
+		   le32_to_cpu(scan_ev.scan_req_id),
+		   le32_to_cpu(scan_ev.scan_id),
+		   le32_to_cpu(scan_ev.vdev_id),
 		   ath12k_scan_state_str(ar->scan.state), ar->scan.state);
 
-	switch (scan_ev.event_type) {
+	switch (le32_to_cpu(scan_ev.event_type)) {
 	case WMI_SCAN_EVENT_STARTED:
 		ath12k_wmi_event_scan_started(ar);
 		break;
@@ -6405,7 +6413,7 @@ static void ath12k_scan_event(struct ath12k_base *ab, struct sk_buff *skb)
 		ath12k_wmi_event_scan_bss_chan(ar);
 		break;
 	case WMI_SCAN_EVENT_FOREIGN_CHAN:
-		ath12k_wmi_event_scan_foreign_chan(ar, scan_ev.channel_freq);
+		ath12k_wmi_event_scan_foreign_chan(ar, le32_to_cpu(scan_ev.channel_freq));
 		break;
 	case WMI_SCAN_EVENT_START_FAILED:
 		ath12k_warn(ab, "received scan start failure event\n");
@@ -6488,7 +6496,7 @@ static void ath12k_roam_event(struct ath12k_base *ab, struct sk_buff *skb)
 		   roam_ev.vdev_id, roam_ev.reason, roam_ev.rssi);
 
 	rcu_read_lock();
-	ar = ath12k_mac_get_ar_by_vdev_id(ab, roam_ev.vdev_id);
+	ar = ath12k_mac_get_ar_by_vdev_id(ab, le32_to_cpu(roam_ev.vdev_id));
 	if (!ar) {
 		ath12k_warn(ab, "invalid vdev id in roam ev %d",
 			    roam_ev.vdev_id);
@@ -6496,11 +6504,11 @@ static void ath12k_roam_event(struct ath12k_base *ab, struct sk_buff *skb)
 		return;
 	}
 
-	if (roam_ev.reason >= WMI_ROAM_REASON_MAX)
+	if (le32_to_cpu(roam_ev.reason) >= WMI_ROAM_REASON_MAX)
 		ath12k_warn(ab, "ignoring unknown roam event reason %d on vdev %i\n",
 			    roam_ev.reason, roam_ev.vdev_id);
 
-	switch (roam_ev.reason) {
+	switch (le32_to_cpu(roam_ev.reason)) {
 	case WMI_ROAM_REASON_BEACON_MISS:
 		/* TODO: Pending beacon miss and connection_loss_work
 		 * implementation
@@ -6540,13 +6548,13 @@ static void ath12k_chan_info_event(struct ath12k_base *ab, struct sk_buff *skb)
 		   ch_info_ev.rx_clear_count, ch_info_ev.cycle_count,
 		   ch_info_ev.mac_clk_mhz);
 
-	if (ch_info_ev.cmd_flags == WMI_CHAN_INFO_END_RESP) {
+	if (le32_to_cpu(ch_info_ev.cmd_flags) == WMI_CHAN_INFO_END_RESP) {
 		ath12k_dbg(ab, ATH12K_DBG_WMI, "chan info report completed\n");
 		return;
 	}
 
 	rcu_read_lock();
-	ar = ath12k_mac_get_ar_by_vdev_id(ab, ch_info_ev.vdev_id);
+	ar = ath12k_mac_get_ar_by_vdev_id(ab, le32_to_cpu(ch_info_ev.vdev_id));
 	if (!ar) {
 		ath12k_warn(ab, "invalid vdev id in chan info ev %d",
 			    ch_info_ev.vdev_id);
@@ -6565,7 +6573,7 @@ static void ath12k_chan_info_event(struct ath12k_base *ab, struct sk_buff *skb)
 		break;
 	}
 
-	idx = freq_to_idx(ar, ch_info_ev.freq);
+	idx = freq_to_idx(ar, le32_to_cpu(ch_info_ev.freq));
 	if (idx >= ARRAY_SIZE(ar->survey)) {
 		ath12k_warn(ab, "chan info: invalid frequency %d (idx %d out of bounds)\n",
 			    ch_info_ev.freq, idx);
@@ -6576,16 +6584,17 @@ static void ath12k_chan_info_event(struct ath12k_base *ab, struct sk_buff *skb)
 	 * HW channel counters frequency value
 	 */
 	if (ch_info_ev.mac_clk_mhz)
-		cc_freq_hz = (ch_info_ev.mac_clk_mhz * 1000);
+		cc_freq_hz = (le32_to_cpu(ch_info_ev.mac_clk_mhz) * 1000);
 
 	if (ch_info_ev.cmd_flags == WMI_CHAN_INFO_START_RESP) {
 		survey = &ar->survey[idx];
 		memset(survey, 0, sizeof(*survey));
-		survey->noise = ch_info_ev.noise_floor;
+		survey->noise = le32_to_cpu(ch_info_ev.noise_floor);
 		survey->filled = SURVEY_INFO_NOISE_DBM | SURVEY_INFO_TIME |
 				 SURVEY_INFO_TIME_BUSY;
-		survey->time = div_u64(ch_info_ev.cycle_count, cc_freq_hz);
-		survey->time_busy = div_u64(ch_info_ev.rx_clear_count, cc_freq_hz);
+		survey->time = div_u64(le32_to_cpu(ch_info_ev.cycle_count), cc_freq_hz);
+		survey->time_busy = div_u64(le32_to_cpu(ch_info_ev.rx_clear_count),
+					    cc_freq_hz);
 	}
 exit:
 	spin_unlock_bh(&ar->data_lock);
@@ -6607,20 +6616,20 @@ ath12k_pdev_bss_chan_info_event(struct ath12k_base *ab, struct sk_buff *skb)
 		return;
 	}
 
-	busy = (u64)(bss_ch_info_ev.rx_clear_count_high) << 32 |
-			bss_ch_info_ev.rx_clear_count_low;
+	busy = (u64)(le32_to_cpu(bss_ch_info_ev.rx_clear_count_high)) << 32 |
+		le32_to_cpu(bss_ch_info_ev.rx_clear_count_low);
 
-	total = (u64)(bss_ch_info_ev.cycle_count_high) << 32 |
-			bss_ch_info_ev.cycle_count_low;
+	total = (u64)(le32_to_cpu(bss_ch_info_ev.cycle_count_high)) << 32 |
+		le32_to_cpu(bss_ch_info_ev.cycle_count_low);
 
-	tx = (u64)(bss_ch_info_ev.tx_cycle_count_high) << 32 |
-			bss_ch_info_ev.tx_cycle_count_low;
+	tx = (u64)(le32_to_cpu(bss_ch_info_ev.tx_cycle_count_high)) << 32 |
+		le32_to_cpu(bss_ch_info_ev.tx_cycle_count_low);
 
-	rx = (u64)(bss_ch_info_ev.rx_cycle_count_high) << 32 |
-			bss_ch_info_ev.rx_cycle_count_low;
+	rx = (u64)(le32_to_cpu(bss_ch_info_ev.rx_cycle_count_high)) << 32 |
+		le32_to_cpu(bss_ch_info_ev.rx_cycle_count_low);
 
-	rx_bss = (u64)(bss_ch_info_ev.rx_bss_cycle_count_high) << 32 |
-			bss_ch_info_ev.rx_bss_cycle_count_low;
+	rx_bss = (u64)(le32_to_cpu(bss_ch_info_ev.rx_bss_cycle_count_high)) << 32 |
+		le32_to_cpu(bss_ch_info_ev.rx_bss_cycle_count_low);
 
 	ath12k_dbg(ab, ATH12K_DBG_WMI,
 		   "pdev bss chan info:\n pdev_id: %d freq: %d noise: %d cycle: busy %llu total %llu tx %llu rx %llu rx_bss %llu\n",
@@ -6629,7 +6638,7 @@ ath12k_pdev_bss_chan_info_event(struct ath12k_base *ab, struct sk_buff *skb)
 		   tx, rx, rx_bss);
 
 	rcu_read_lock();
-	ar = ath12k_mac_get_ar_by_pdev_id(ab, bss_ch_info_ev.pdev_id);
+	ar = ath12k_mac_get_ar_by_pdev_id(ab, le32_to_cpu(bss_ch_info_ev.pdev_id));
 
 	if (!ar) {
 		ath12k_warn(ab, "invalid pdev id %d in bss_chan_info event\n",
@@ -6639,7 +6648,7 @@ ath12k_pdev_bss_chan_info_event(struct ath12k_base *ab, struct sk_buff *skb)
 	}
 
 	spin_lock_bh(&ar->data_lock);
-	idx = freq_to_idx(ar, bss_ch_info_ev.freq);
+	idx = freq_to_idx(ar, le32_to_cpu(bss_ch_info_ev.freq));
 	if (idx >= ARRAY_SIZE(ar->survey)) {
 		ath12k_warn(ab, "bss chan info: invalid frequency %d (idx %d out of bounds)\n",
 			    bss_ch_info_ev.freq, idx);
@@ -6648,7 +6657,7 @@ ath12k_pdev_bss_chan_info_event(struct ath12k_base *ab, struct sk_buff *skb)
 
 	survey = &ar->survey[idx];
 
-	survey->noise     = bss_ch_info_ev.noise_floor;
+	survey->noise     = le32_to_cpu(bss_ch_info_ev.noise_floor);
 	survey->time      = div_u64(total, cc_freq_hz);
 	survey->time_busy = div_u64(busy, cc_freq_hz);
 	survey->time_rx   = div_u64(rx_bss, cc_freq_hz);
@@ -6731,7 +6740,7 @@ static void ath12k_service_available_event(struct ath12k_base *ab, struct sk_buf
 	     i < WMI_SERVICE_SEGMENT_BM_SIZE32 && j < WMI_MAX_EXT_SERVICE;
 	     i++) {
 		do {
-			if (ev->wmi_service_segment_bitmap[i] &
+			if (le32_to_cpu(ev->wmi_service_segment_bitmap[i]) &
 			    BIT(j % WMI_AVAIL_SERVICE_BITS_IN_SIZE32))
 				set_bit(j, ab->wmi_ab.svc_map);
 		} while (++j % WMI_AVAIL_SERVICE_BITS_IN_SIZE32);
@@ -6828,7 +6837,7 @@ ath12k_wmi_process_csa_switch_count_event(struct ath12k_base *ab,
 		return;
 
 	rcu_read_lock();
-	for (i = 0; i < ev->num_vdevs; i++) {
+	for (i = 0; i < le32_to_cpu(ev->num_vdevs); i++) {
 		arvif = ath12k_mac_get_arvif_by_vdev_id(ab, vdev_ids[i]);
 
 		if (!arvif) {
@@ -6907,7 +6916,7 @@ ath12k_wmi_pdev_dfs_radar_detected_event(struct ath12k_base *ab, struct sk_buff 
 		   ev->detector_id, ev->segment_id, ev->timestamp, ev->is_chirp,
 		   ev->freq_offset, ev->sidx);
 
-	ar = ath12k_mac_get_ar_by_pdev_id(ab, ev->pdev_id);
+	ar = ath12k_mac_get_ar_by_pdev_id(ab, le32_to_cpu(ev->pdev_id));
 
 	if (!ar) {
 		ath12k_warn(ab, "radar detected in invalid pdev %d\n",
@@ -6942,7 +6951,7 @@ ath12k_wmi_pdev_temperature_event(struct ath12k_base *ab,
 	ath12k_dbg(ab, ATH12K_DBG_WMI,
 		   "pdev temperature ev temp %d pdev_id %d\n", ev.temp, ev.pdev_id);
 
-	ar = ath12k_mac_get_ar_by_pdev_id(ab, ev.pdev_id);
+	ar = ath12k_mac_get_ar_by_pdev_id(ab, le32_to_cpu(ev.pdev_id));
 	if (!ar) {
 		ath12k_warn(ab, "invalid pdev id in pdev temperature ev %d", ev.pdev_id);
 		return;

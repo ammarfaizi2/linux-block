@@ -2297,35 +2297,35 @@ struct wmi_resource_config {
 } __packed;
 
 struct wmi_service_ready_event {
-	u32 fw_build_vers;
+	__le32 fw_build_vers;
 	struct ath12k_wmi_abi_version_params fw_abi_vers;
-	u32 phy_capability;
-	u32 max_frag_entry;
-	u32 num_rf_chains;
-	u32 ht_cap_info;
-	u32 vht_cap_info;
-	u32 vht_supp_mcs;
-	u32 hw_min_tx_power;
-	u32 hw_max_tx_power;
-	u32 sys_cap_info;
-	u32 min_pkt_size_enable;
-	u32 max_bcn_ie_size;
-	u32 num_mem_reqs;
-	u32 max_num_scan_channels;
-	u32 hw_bd_id;
-	u32 hw_bd_info[HW_BD_INFO_SIZE];
-	u32 max_supported_macs;
-	u32 wmi_fw_sub_feat_caps;
-	u32 num_dbs_hw_modes;
+	__le32 phy_capability;
+	__le32 max_frag_entry;
+	__le32 num_rf_chains;
+	__le32 ht_cap_info;
+	__le32 vht_cap_info;
+	__le32 vht_supp_mcs;
+	__le32 hw_min_tx_power;
+	__le32 hw_max_tx_power;
+	__le32 sys_cap_info;
+	__le32 min_pkt_size_enable;
+	__le32 max_bcn_ie_size;
+	__le32 num_mem_reqs;
+	__le32 max_num_scan_channels;
+	__le32 hw_bd_id;
+	__le32 hw_bd_info[HW_BD_INFO_SIZE];
+	__le32 max_supported_macs;
+	__le32 wmi_fw_sub_feat_caps;
+	__le32 num_dbs_hw_modes;
 	/* txrx_chainmask
 	 *    [7:0]   - 2G band tx chain mask
 	 *    [15:8]  - 2G band rx chain mask
 	 *    [23:16] - 5G band tx chain mask
 	 *    [31:24] - 5G band rx chain mask
 	 */
-	u32 txrx_chainmask;
-	u32 default_dbs_hw_mode_index;
-	u32 num_msdu_desc;
+	__le32 txrx_chainmask;
+	__le32 default_dbs_hw_mode_index;
+	__le32 num_msdu_desc;
 } __packed;
 
 #define WMI_SERVICE_BM_SIZE	((WMI_MAX_SERVICE + sizeof(u32) - 1) / sizeof(u32))
@@ -2336,16 +2336,16 @@ struct wmi_service_ready_event {
 #define WMI_SERVICE_BITS_IN_SIZE32 4
 
 struct wmi_service_ready_ext_event {
-	u32 default_conc_scan_config_bits;
-	u32 default_fw_config_bits;
+	__le32 default_conc_scan_config_bits;
+	__le32 default_fw_config_bits;
 	struct ath12k_wmi_ppe_threshold_params ppet;
-	u32 he_cap_info;
-	u32 mpdu_density;
-	u32 max_bssid_rx_filters;
-	u32 fw_build_vers_ext;
-	u32 max_nlo_ssids;
-	u32 max_bssid_indicator;
-	u32 he_cap_info_ext;
+	__le32 he_cap_info;
+	__le32 mpdu_density;
+	__le32 max_bssid_rx_filters;
+	__le32 fw_build_vers_ext;
+	__le32 max_nlo_ssids;
+	__le32 max_bssid_indicator;
+	__le32 he_cap_info_ext;
 } __packed;
 
 struct wmi_soc_mac_phy_hw_mode_caps {
@@ -2432,22 +2432,22 @@ struct wmi_dma_ring_capabilities {
 struct wmi_ready_event_min {
 	struct ath12k_wmi_abi_version_params fw_abi_vers;
 	struct ath12k_wmi_mac_addr_params mac_addr;
-	u32 status;
-	u32 num_dscp_table;
-	u32 num_extra_mac_addr;
-	u32 num_total_peers;
-	u32 num_extra_peers;
+	__le32 status;
+	__le32 num_dscp_table;
+	__le32 num_extra_mac_addr;
+	__le32 num_total_peers;
+	__le32 num_extra_peers;
 } __packed;
 
 struct wmi_ready_event {
 	struct wmi_ready_event_min ready_event_min;
-	u32 max_ast_index;
-	u32 pktlog_defs_checksum;
+	__le32 max_ast_index;
+	__le32 pktlog_defs_checksum;
 } __packed;
 
 struct wmi_service_available_event {
-	u32 wmi_service_segment_offset;
-	u32 wmi_service_segment_bitmap[WMI_SERVICE_SEGMENT_BM_SIZE32];
+	__le32 wmi_service_segment_offset;
+	__le32 wmi_service_segment_bitmap[WMI_SERVICE_SEGMENT_BM_SIZE32];
 } __packed;
 
 struct ath12k_pdev_wmi {
@@ -3806,18 +3806,18 @@ enum wmi_start_event_param {
 };
 
 struct wmi_vdev_start_resp_event {
-	u32 vdev_id;
-	u32 requestor_id;
+	__le32 vdev_id;
+	__le32 requestor_id;
 	enum wmi_start_event_param resp_type;
-	u32 status;
-	u32 chain_mask;
-	u32 smps_mode;
+	__le32 status;
+	__le32 chain_mask;
+	__le32 smps_mode;
 	union {
-		u32 mac_id;
-		u32 pdev_id;
+		__le32 mac_id;
+		__le32 pdev_id;
 	};
-	u32 cfgd_tx_streams;
-	u32 cfgd_rx_streams;
+	__le32 cfgd_tx_streams;
+	__le32 cfgd_rx_streams;
 } __packed;
 
 /* VDEV start response status codes */
@@ -3928,48 +3928,48 @@ struct cur_regulatory_info {
 #define WMI_REG_CLIENT_MAX 4
 
 struct wmi_reg_chan_list_cc_ext_event {
-	u32 status_code;
-	u32 phy_id;
-	u32 alpha2;
-	u32 num_phy;
-	u32 country_id;
-	u32 domain_code;
-	u32 dfs_region;
-	u32 phybitmap;
-	u32 min_bw_2g;
-	u32 max_bw_2g;
-	u32 min_bw_5g;
-	u32 max_bw_5g;
-	u32 num_2g_reg_rules;
-	u32 num_5g_reg_rules;
-	u32 client_type;
-	u32 rnr_tpe_usable;
-	u32 unspecified_ap_usable;
-	u32 domain_code_6g_ap_lpi;
-	u32 domain_code_6g_ap_sp;
-	u32 domain_code_6g_ap_vlp;
-	u32 domain_code_6g_client_lpi[WMI_REG_CLIENT_MAX];
-	u32 domain_code_6g_client_sp[WMI_REG_CLIENT_MAX];
-	u32 domain_code_6g_client_vlp[WMI_REG_CLIENT_MAX];
-	u32 domain_code_6g_super_id;
-	u32 min_bw_6g_ap_sp;
-	u32 max_bw_6g_ap_sp;
-	u32 min_bw_6g_ap_lpi;
-	u32 max_bw_6g_ap_lpi;
-	u32 min_bw_6g_ap_vlp;
-	u32 max_bw_6g_ap_vlp;
-	u32 min_bw_6g_client_sp[WMI_REG_CLIENT_MAX];
-	u32 max_bw_6g_client_sp[WMI_REG_CLIENT_MAX];
-	u32 min_bw_6g_client_lpi[WMI_REG_CLIENT_MAX];
-	u32 max_bw_6g_client_lpi[WMI_REG_CLIENT_MAX];
-	u32 min_bw_6g_client_vlp[WMI_REG_CLIENT_MAX];
-	u32 max_bw_6g_client_vlp[WMI_REG_CLIENT_MAX];
-	u32 num_6g_reg_rules_ap_sp;
-	u32 num_6g_reg_rules_ap_lpi;
-	u32 num_6g_reg_rules_ap_vlp;
-	u32 num_6g_reg_rules_cl_sp[WMI_REG_CLIENT_MAX];
-	u32 num_6g_reg_rules_cl_lpi[WMI_REG_CLIENT_MAX];
-	u32 num_6g_reg_rules_cl_vlp[WMI_REG_CLIENT_MAX];
+	__le32 status_code;
+	__le32 phy_id;
+	__le32 alpha2;
+	__le32 num_phy;
+	__le32 country_id;
+	__le32 domain_code;
+	__le32 dfs_region;
+	__le32 phybitmap;
+	__le32 min_bw_2g;
+	__le32 max_bw_2g;
+	__le32 min_bw_5g;
+	__le32 max_bw_5g;
+	__le32 num_2g_reg_rules;
+	__le32 num_5g_reg_rules;
+	__le32 client_type;
+	__le32 rnr_tpe_usable;
+	__le32 unspecified_ap_usable;
+	__le32 domain_code_6g_ap_lpi;
+	__le32 domain_code_6g_ap_sp;
+	__le32 domain_code_6g_ap_vlp;
+	__le32 domain_code_6g_client_lpi[WMI_REG_CLIENT_MAX];
+	__le32 domain_code_6g_client_sp[WMI_REG_CLIENT_MAX];
+	__le32 domain_code_6g_client_vlp[WMI_REG_CLIENT_MAX];
+	__le32 domain_code_6g_super_id;
+	__le32 min_bw_6g_ap_sp;
+	__le32 max_bw_6g_ap_sp;
+	__le32 min_bw_6g_ap_lpi;
+	__le32 max_bw_6g_ap_lpi;
+	__le32 min_bw_6g_ap_vlp;
+	__le32 max_bw_6g_ap_vlp;
+	__le32 min_bw_6g_client_sp[WMI_REG_CLIENT_MAX];
+	__le32 max_bw_6g_client_sp[WMI_REG_CLIENT_MAX];
+	__le32 min_bw_6g_client_lpi[WMI_REG_CLIENT_MAX];
+	__le32 max_bw_6g_client_lpi[WMI_REG_CLIENT_MAX];
+	__le32 min_bw_6g_client_vlp[WMI_REG_CLIENT_MAX];
+	__le32 max_bw_6g_client_vlp[WMI_REG_CLIENT_MAX];
+	__le32 num_6g_reg_rules_ap_sp;
+	__le32 num_6g_reg_rules_ap_lpi;
+	__le32 num_6g_reg_rules_ap_vlp;
+	__le32 num_6g_reg_rules_cl_sp[WMI_REG_CLIENT_MAX];
+	__le32 num_6g_reg_rules_cl_lpi[WMI_REG_CLIENT_MAX];
+	__le32 num_6g_reg_rules_cl_vlp[WMI_REG_CLIENT_MAX];
 } __packed;
 
 struct wmi_regulatory_ext_rule_struct {
@@ -3981,52 +3981,52 @@ struct wmi_regulatory_ext_rule_struct {
 };
 
 struct wmi_vdev_delete_resp_event {
-	u32 vdev_id;
+	__le32 vdev_id;
 } __packed;
 
 struct wmi_peer_delete_resp_event {
-	u32 vdev_id;
+	__le32 vdev_id;
 	struct ath12k_wmi_mac_addr_params peer_macaddr;
 } __packed;
 
 struct wmi_bcn_tx_status_event {
-	u32 vdev_id;
-	u32 tx_status;
+	__le32 vdev_id;
+	__le32 tx_status;
 } __packed;
 
 struct wmi_vdev_stopped_event {
-	u32 vdev_id;
+	__le32 vdev_id;
 } __packed;
 
 struct wmi_pdev_bss_chan_info_event {
-	u32 pdev_id;
-	u32 freq;	/* Units in MHz */
-	u32 noise_floor;	/* units are dBm */
+	__le32 pdev_id;
+	__le32 freq;	/* Units in MHz */
+	__le32 noise_floor;	/* units are dBm */
 	/* rx clear - how often the channel was unused */
-	u32 rx_clear_count_low;
-	u32 rx_clear_count_high;
+	__le32 rx_clear_count_low;
+	__le32 rx_clear_count_high;
 	/* cycle count - elapsed time during measured period, in clock ticks */
-	u32 cycle_count_low;
-	u32 cycle_count_high;
+	__le32 cycle_count_low;
+	__le32 cycle_count_high;
 	/* tx cycle count - elapsed time spent in tx, in clock ticks */
-	u32 tx_cycle_count_low;
-	u32 tx_cycle_count_high;
+	__le32 tx_cycle_count_low;
+	__le32 tx_cycle_count_high;
 	/* rx cycle count - elapsed time spent in rx, in clock ticks */
-	u32 rx_cycle_count_low;
-	u32 rx_cycle_count_high;
+	__le32 rx_cycle_count_low;
+	__le32 rx_cycle_count_high;
 	/*rx_cycle cnt for my bss in 64bits format */
-	u32 rx_bss_cycle_count_low;
-	u32 rx_bss_cycle_count_high;
+	__le32 rx_bss_cycle_count_low;
+	__le32 rx_bss_cycle_count_high;
 } __packed;
 
 #define WMI_VDEV_INSTALL_KEY_COMPL_STATUS_SUCCESS 0
 
 struct wmi_vdev_install_key_compl_event {
-	u32 vdev_id;
+	__le32 vdev_id;
 	struct ath12k_wmi_mac_addr_params peer_macaddr;
-	u32 key_idx;
-	u32 key_flags;
-	u32 status;
+	__le32 key_idx;
+	__le32 key_flags;
+	__le32 status;
 } __packed;
 
 struct wmi_vdev_install_key_complete_arg {
@@ -4038,7 +4038,7 @@ struct wmi_vdev_install_key_complete_arg {
 };
 
 struct wmi_peer_assoc_conf_event {
-	u32 vdev_id;
+	__le32 vdev_id;
 	struct ath12k_wmi_mac_addr_params peer_macaddr;
 } __packed;
 
@@ -4048,14 +4048,14 @@ struct wmi_peer_assoc_conf_arg {
 };
 
 struct wmi_fils_discovery_event {
-	u32 vdev_id;
-	u32 fils_tt;
-	u32 tbtt;
+	__le32 vdev_id;
+	__le32 fils_tt;
+	__le32 tbtt;
 } __packed;
 
 struct wmi_probe_resp_tx_status_event {
-	u32 vdev_id;
-	u32 tx_status;
+	__le32 vdev_id;
+	__le32 tx_status;
 } __packed;
 
 struct wmi_pdev_stats_base {
@@ -4216,39 +4216,39 @@ struct wmi_bcn_stats {
 } __packed;
 
 struct wmi_stats_event {
-	u32 stats_id;
-	u32 num_pdev_stats;
-	u32 num_vdev_stats;
-	u32 num_peer_stats;
-	u32 num_bcnflt_stats;
-	u32 num_chan_stats;
-	u32 num_mib_stats;
-	u32 pdev_id;
-	u32 num_bcn_stats;
-	u32 num_peer_extd_stats;
-	u32 num_peer_extd2_stats;
+	__le32 stats_id;
+	__le32 num_pdev_stats;
+	__le32 num_vdev_stats;
+	__le32 num_peer_stats;
+	__le32 num_bcnflt_stats;
+	__le32 num_chan_stats;
+	__le32 num_mib_stats;
+	__le32 pdev_id;
+	__le32 num_bcn_stats;
+	__le32 num_peer_extd_stats;
+	__le32 num_peer_extd2_stats;
 } __packed;
 
 struct wmi_pdev_ctl_failsafe_chk_event {
-	u32 pdev_id;
-	u32 ctl_failsafe_status;
+	__le32 pdev_id;
+	__le32 ctl_failsafe_status;
 } __packed;
 
 struct wmi_pdev_csa_switch_ev {
-	u32 pdev_id;
-	u32 current_switch_count;
-	u32 num_vdevs;
+	__le32 pdev_id;
+	__le32 current_switch_count;
+	__le32 num_vdevs;
 } __packed;
 
 struct wmi_pdev_radar_ev {
-	u32 pdev_id;
-	u32 detection_mode;
-	u32 chan_freq;
-	u32 chan_width;
-	u32 detector_id;
-	u32 segment_id;
-	u32 timestamp;
-	u32 is_chirp;
+	__le32 pdev_id;
+	__le32 detection_mode;
+	__le32 chan_freq;
+	__le32 chan_width;
+	__le32 detector_id;
+	__le32 segment_id;
+	__le32 timestamp;
+	__le32 is_chirp;
 	s32 freq_offset;
 	s32 sidx;
 } __packed;
@@ -4256,7 +4256,7 @@ struct wmi_pdev_radar_ev {
 struct wmi_pdev_temperature_event {
 	/* temperature value in Celcius degree */
 	s32 temp;
-	u32 pdev_id;
+	__le32 pdev_id;
 } __packed;
 
 #define WMI_RX_STATUS_OK			0x00
@@ -4309,24 +4309,24 @@ struct wmi_rssi_ctl_ext {
 };
 
 struct wmi_mgmt_tx_compl_event {
-	u32 desc_id;
-	u32 status;
-	u32 pdev_id;
+	__le32 desc_id;
+	__le32 status;
+	__le32 pdev_id;
 } __packed;
 
 struct wmi_scan_event {
-	u32 event_type; /* %WMI_SCAN_EVENT_ */
-	u32 reason; /* %WMI_SCAN_REASON_ */
-	u32 channel_freq; /* only valid for WMI_SCAN_EVENT_FOREIGN_CHANNEL */
-	u32 scan_req_id;
-	u32 scan_id;
-	u32 vdev_id;
+	__le32 event_type; /* %WMI_SCAN_EVENT_ */
+	__le32 reason; /* %WMI_SCAN_REASON_ */
+	__le32 channel_freq; /* only valid for WMI_SCAN_EVENT_FOREIGN_CHANNEL */
+	__le32 scan_req_id;
+	__le32 scan_id;
+	__le32 vdev_id;
 	/* TSF Timestamp when the scan event (%WMI_SCAN_EVENT_) is completed
 	 * In case of AP it is TSF of the AP vdev
 	 * In case of STA connected state, this is the TSF of the AP
 	 * In case of STA not connected, it will be the free running HW timer
 	 */
-	u32 tsf_timestamp;
+	__le32 tsf_timestamp;
 } __packed;
 
 struct wmi_peer_sta_kickout_arg {
@@ -4349,29 +4349,29 @@ enum wmi_roam_reason {
 };
 
 struct wmi_roam_event {
-	u32 vdev_id;
-	u32 reason;
-	u32 rssi;
+	__le32 vdev_id;
+	__le32 reason;
+	__le32 rssi;
 } __packed;
 
 #define WMI_CHAN_INFO_START_RESP 0
 #define WMI_CHAN_INFO_END_RESP 1
 
 struct wmi_chan_info_event {
-	u32 err_code;
-	u32 freq;
-	u32 cmd_flags;
-	u32 noise_floor;
-	u32 rx_clear_count;
-	u32 cycle_count;
-	u32 chan_tx_pwr_range;
-	u32 chan_tx_pwr_tp;
-	u32 rx_frame_count;
-	u32 my_bss_rx_cycle_count;
-	u32 rx_11b_mode_data_duration;
-	u32 tx_frame_cnt;
-	u32 mac_clk_mhz;
-	u32 vdev_id;
+	__le32 err_code;
+	__le32 freq;
+	__le32 cmd_flags;
+	__le32 noise_floor;
+	__le32 rx_clear_count;
+	__le32 cycle_count;
+	__le32 chan_tx_pwr_range;
+	__le32 chan_tx_pwr_tp;
+	__le32 rx_frame_count;
+	__le32 my_bss_rx_cycle_count;
+	__le32 rx_11b_mode_data_duration;
+	__le32 tx_frame_cnt;
+	__le32 mac_clk_mhz;
+	__le32 vdev_id;
 } __packed;
 
 struct ath12k_targ_cap {
