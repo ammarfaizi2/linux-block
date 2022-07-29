@@ -3035,7 +3035,7 @@ static int ath12k_dp_rx_h_defrag(struct ath12k *ar,
 
 		if (is_decrypted) {
 			if (skb != first_frag)
-				flags |=  RX_FLAG_IV_STRIPPED;
+				flags |= RX_FLAG_IV_STRIPPED;
 			if (skb != last_frag)
 				flags |= RX_FLAG_ICV_STRIPPED |
 					 RX_FLAG_MIC_STRIPPED;

@@ -463,7 +463,7 @@ static int ath12k_htc_setup_target_buffer_assignments(struct ath12k_htc *htc)
 	};
 	int i, credits;
 
-	credits =  htc->total_transmit_credits;
+	credits = htc->total_transmit_credits;
 	serv_entry = htc->service_alloc_table;
 
 	if ((htc->wmi_ep_count == 0) ||

@@ -1815,8 +1815,8 @@ void ath12k_hal_setup_link_idle_list(struct ath12k_base *ab,
 			   HAL_WBM_SCATTERED_DESC_PTR_HEAD_INFO_IX0(ab),
 			   val);
 
-	val =  u32_encode_bits(((u64)sbuf[nsbufs - 1].paddr >> HAL_ADDR_MSB_REG_SHIFT),
-			       HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32) |
+	val = u32_encode_bits(((u64)sbuf[nsbufs - 1].paddr >> HAL_ADDR_MSB_REG_SHIFT),
+			      HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32) |
 	       u32_encode_bits((end_offset >> 2),
 			       HAL_WBM_SCATTERED_DESC_HEAD_P_OFFSET_IX1);
 	ath12k_hif_write32(ab,

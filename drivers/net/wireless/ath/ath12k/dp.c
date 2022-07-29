@@ -899,7 +899,7 @@ int ath12k_dp_service_srng(struct ath12k_base *ab,
 	}
 
 	if (ab->hw_params->ring_mask->rx[grp_id]) {
-		i =  fls(ab->hw_params->ring_mask->rx[grp_id]) - 1;
+		i = fls(ab->hw_params->ring_mask->rx[grp_id]) - 1;
 		work_done = ath12k_dp_rx_process(ab, i, napi,
 						 budget);
 		budget -= work_done;

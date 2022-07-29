@@ -2119,7 +2119,7 @@ static void ath12k_wmi_copy_scan_event_cntrl_flags(struct wmi_start_scan_cmd *cm
 	if (arg->scan_f_add_tpc_ie_in_probe)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_ADD_TPC_IE_IN_PROBE_REQ);
 	if (arg->scan_f_add_ds_ie_in_probe)
-		cmd->scan_ctrl_flags |=  cpu_to_le32(WMI_SCAN_ADD_DS_IE_IN_PROBE_REQ);
+		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_ADD_DS_IE_IN_PROBE_REQ);
 	if (arg->scan_f_add_spoofed_mac_in_probe)
 		cmd->scan_ctrl_flags |= cpu_to_le32(WMI_SCAN_ADD_SPOOF_MAC_IN_PROBE_REQ);
 	if (arg->scan_f_add_rand_seq_in_probe)
@@ -2341,7 +2341,7 @@ int ath12k_wmi_send_scan_stop_cmd(struct ath12k *ar,
 		cmd->req_type = cpu_to_le32(WMI_SCAN_STOP_VAP_ALL);
 	} else if (arg->req_type == WLAN_SCAN_CANCEL_SINGLE) {
 		/* Cancelling specific scan */
-		cmd->req_type =  WMI_SCAN_STOP_ONE;
+		cmd->req_type = WMI_SCAN_STOP_ONE;
 	} else {
 		ath12k_warn(ar->ab, "invalid scan cancel req_type %d",
 			    arg->req_type);
@@ -4297,8 +4297,8 @@ static struct cur_reg_rule
 	struct cur_reg_rule *reg_rule_ptr;
 	u32 count;
 
-	reg_rule_ptr =  kzalloc((num_reg_rules * sizeof(*reg_rule_ptr)),
-				GFP_ATOMIC);
+	reg_rule_ptr = kzalloc((num_reg_rules * sizeof(*reg_rule_ptr)),
+			       GFP_ATOMIC);
 
 	if (!reg_rule_ptr)
 		return NULL;
@@ -4744,7 +4744,7 @@ static int ath12k_pull_vdev_stopped_param_tlv(struct ath12k_base *ab, struct sk_
 		return -EPROTO;
 	}
 
-	*vdev_id =  ev->vdev_id;
+	*vdev_id = ev->vdev_id;
 
 	kfree(tb);
 	return 0;
@@ -4775,17 +4775,17 @@ static int ath12k_pull_mgmt_rx_params_tlv(struct ath12k_base *ab,
 		return -EPROTO;
 	}
 
-	hdr->pdev_id =  ev->pdev_id;
+	hdr->pdev_id = ev->pdev_id;
 	hdr->chan_freq = ev->chan_freq;
-	hdr->channel =  ev->channel;
-	hdr->snr =  ev->snr;
-	hdr->rate =  ev->rate;
-	hdr->phy_mode =  ev->phy_mode;
-	hdr->buf_len =  ev->buf_len;
-	hdr->status =  ev->status;
-	hdr->flags =  ev->flags;
-	hdr->rssi =  ev->rssi;
-	hdr->tsf_delta =  ev->tsf_delta;
+	hdr->channel = ev->channel;
+	hdr->snr = ev->snr;
+	hdr->rate = ev->rate;
+	hdr->phy_mode = ev->phy_mode;
+	hdr->buf_len = ev->buf_len;
+	hdr->status = ev->status;
+	hdr->flags = ev->flags;
+	hdr->rssi = ev->rssi;
+	hdr->tsf_delta = ev->tsf_delta;
 	memcpy(hdr->rssi_ctl, ev->rssi_ctl, sizeof(hdr->rssi_ctl));
 
 	if (skb->len < (frame - skb->data) + hdr->buf_len) {

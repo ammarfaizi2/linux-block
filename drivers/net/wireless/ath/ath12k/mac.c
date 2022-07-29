@@ -640,8 +640,8 @@ static int ath12k_recalc_rtscts_prot(struct ath12k_vif *arvif)
 	ath12k_dbg(ar->ab, ATH12K_DBG_MAC, "mac vdev %d recalc rts/cts prot %d\n",
 		   arvif->vdev_id, rts_cts);
 
-	ret =  ath12k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
-					     vdev_param, rts_cts);
+	ret = ath12k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
+					    vdev_param, rts_cts);
 	if (ret)
 		ath12k_warn(ar->ab, "failed to recalculate rts/cts prot for vdev %d: %d\n",
 			    arvif->vdev_id, ret);
@@ -3876,7 +3876,7 @@ static void ath12k_set_vht_txbf_cap(struct ath12k *ar, u32 *vht_cap)
 			sound_dim = ar->num_tx_chains - 1;
 
 		sound_dim <<= IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_SHIFT;
-		sound_dim &=  IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_MASK;
+		sound_dim &= IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_MASK;
 		*vht_cap |= sound_dim;
 	}
 

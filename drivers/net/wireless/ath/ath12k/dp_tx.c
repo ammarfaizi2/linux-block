@@ -109,12 +109,12 @@ static void ath12k_hal_tx_cmd_ext_desc_setup(struct ath12k_base *ab, void *cmd,
 
 	tcl_ext_cmd->info0 = u32_encode_bits(ti->paddr,
 					     HAL_TX_MSDU_EXT_INFO0_BUF_PTR_LO);
-	tcl_ext_cmd->info1 =  u32_encode_bits(0x0,
-					      HAL_TX_MSDU_EXT_INFO1_BUF_PTR_HI) |
+	tcl_ext_cmd->info1 = u32_encode_bits(0x0,
+					     HAL_TX_MSDU_EXT_INFO1_BUF_PTR_HI) |
 			       u32_encode_bits(ti->data_len,
 					       HAL_TX_MSDU_EXT_INFO1_BUF_LEN);
 
-	tcl_ext_cmd->info1 =  u32_encode_bits(1, HAL_TX_MSDU_EXT_INFO1_EXTN_OVERRIDE) |
+	tcl_ext_cmd->info1 = u32_encode_bits(1, HAL_TX_MSDU_EXT_INFO1_EXTN_OVERRIDE) |
 				u32_encode_bits(ti->encap_type,
 						HAL_TX_MSDU_EXT_INFO1_ENCAP_TYPE) |
 				u32_encode_bits(ti->encrypt_type,

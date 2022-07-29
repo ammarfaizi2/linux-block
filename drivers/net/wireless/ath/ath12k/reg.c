@@ -20,7 +20,7 @@
 
 static const struct ieee80211_regdomain ath12k_world_regd = {
 	.n_reg_rules = 3,
-	.alpha2 =  "00",
+	.alpha2 = "00",
 	.reg_rules = {
 		ATH12K_2GHZ_CH01_11,
 		ATH12K_5GHZ_5150_5350,
@@ -588,9 +588,9 @@ ath12k_reg_build_regd(struct ath12k_base *ab,
 	if (reg_info->dfs_region == ATH12K_DFS_REG_ETSI)
 		num_rules += 2;
 
-	tmp_regd =  kzalloc(sizeof(*tmp_regd) +
-			(num_rules * sizeof(struct ieee80211_reg_rule)),
-			GFP_ATOMIC);
+	tmp_regd = kzalloc(sizeof(*tmp_regd) +
+			   (num_rules * sizeof(struct ieee80211_reg_rule)),
+			   GFP_ATOMIC);
 	if (!tmp_regd)
 		goto ret;
 
