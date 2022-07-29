@@ -6478,7 +6478,7 @@ static int ath12k_mac_setup_channels_rates(struct ath12k *ar,
 					   u32 supported_bands)
 {
 	struct ieee80211_supported_band *band;
-	struct ath12k_hal_reg_capabilities_ext *reg_cap;
+	struct ath12k_wmi_hal_reg_capabilities_ext_arg *reg_cap;
 	void *channels;
 	u32 phy_id;
 

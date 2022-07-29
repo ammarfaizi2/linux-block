@@ -723,7 +723,7 @@ struct ath12k_base {
 	spinlock_t base_lock;
 	struct ath12k_pdev pdevs[MAX_RADIOS];
 	struct ath12k_pdev __rcu *pdevs_active[MAX_RADIOS];
-	struct ath12k_hal_reg_capabilities_ext hal_reg_cap[MAX_RADIOS];
+	struct ath12k_wmi_hal_reg_capabilities_ext_arg hal_reg_cap[MAX_RADIOS];
 	unsigned long long free_vdev_map;
 	unsigned long long free_vdev_stats_id_map;
 	struct list_head peers;

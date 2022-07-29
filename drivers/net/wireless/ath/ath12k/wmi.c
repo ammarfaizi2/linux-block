@@ -544,7 +544,7 @@ ath12k_pull_reg_cap_svc_rdy_ext(struct ath12k_pdev_wmi *wmi_handle,
 				struct wmi_soc_hal_reg_capabilities *reg_caps,
 				struct wmi_hal_reg_capabilities_ext *wmi_ext_reg_cap,
 				u8 phy_idx,
-				struct ath12k_hal_reg_capabilities_ext *param)
+				struct ath12k_wmi_hal_reg_capabilities_ext_arg *param)
 {
 	struct wmi_hal_reg_capabilities_ext *ext_reg_cap;
 
@@ -3256,7 +3256,7 @@ ath12k_fill_band_to_mac_param(struct ath12k_base  *soc,
 			      struct ath12k_wmi_pdev_band_arg *arg)
 {
 	u8 i;
-	struct ath12k_hal_reg_capabilities_ext *hal_reg_cap;
+	struct ath12k_wmi_hal_reg_capabilities_ext_arg *hal_reg_cap;
 	struct ath12k_pdev *pdev;
 
 	for (i = 0; i < soc->num_radios; i++) {
@@ -3931,7 +3931,7 @@ static int ath12k_wmi_tlv_ext_hal_reg_caps(struct ath12k_base *soc,
 {
 	struct ath12k_pdev_wmi *wmi_handle = &soc->wmi_ab.wmi[0];
 	struct wmi_tlv_svc_rdy_ext_parse *svc_rdy_ext = data;
-	struct ath12k_hal_reg_capabilities_ext reg_cap;
+	struct ath12k_wmi_hal_reg_capabilities_ext_arg reg_cap;
 	int ret;
 	u32 i;
 

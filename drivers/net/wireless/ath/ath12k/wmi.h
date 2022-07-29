@@ -2139,7 +2139,7 @@ struct ath12k_wmi_ppe_threshold_arg {
 #define ATH12K_11AC_SUPPORT                BIT(4)
 #define ATH12K_11AX_SUPPORT                BIT(5)
 
-struct ath12k_hal_reg_capabilities_ext {
+struct ath12k_wmi_hal_reg_capabilities_ext_arg {
 	u32 phy_id;
 	u32 eeprom_reg_domain;
 	u32 eeprom_reg_domain_ext;
