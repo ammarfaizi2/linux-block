@@ -1301,6 +1301,7 @@ rcu_torture_writer(void *arg)
 				if (cur_ops->get_gp_state_full && cur_ops->poll_gp_state_full)
 					cur_ops->get_gp_state_full(&cookie_full);
 				cur_ops->exp_sync();
+				cur_ops->exp_sync();
 				if (cur_ops->get_gp_state_full && cur_ops->poll_gp_state_full)
 					WARN_ON_ONCE(!cur_ops->poll_gp_state_full(&cookie_full));
 				rcu_torture_pipe_update(old_rp);

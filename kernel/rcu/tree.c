@@ -3597,6 +3597,7 @@ void get_state_synchronize_rcu_full(struct rcu_gp_oldstate *rgosp)
 	smp_mb();  /* ^^^ */
 	rgosp->rgos_norm = rcu_seq_snap(&rcu_state.gp_seq);
 	rgosp->rgos_exp = rcu_seq_snap(&rcu_state.expedited_sequence);
+	rgosp->rgos_polled = rcu_seq_snap(&rcu_state.gp_seq_polled);
 }
 EXPORT_SYMBOL_GPL(get_state_synchronize_rcu_full);
 
