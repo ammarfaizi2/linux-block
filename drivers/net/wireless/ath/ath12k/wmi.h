@@ -2423,7 +2423,7 @@ struct wmi_soc_hal_reg_capabilities {
 /* 2 word representation of MAC addr */
 struct wmi_mac_addr {
 	union {
-		u8 addr[6];
+		u8 addr[ETH_ALEN];
 		struct {
 			__le32 word0;
 			__le32 word1;
