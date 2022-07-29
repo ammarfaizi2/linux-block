@@ -3233,7 +3233,7 @@ struct wmi_start_scan_arg {
 };
 
 #define WMI_SCAN_STOP_ONE       0x00000000
-#define WMI_SCN_STOP_VAP_ALL    0x01000000
+#define WMI_SCAN_STOP_VAP_ALL   0x01000000
 #define WMI_SCAN_STOP_ALL       0x04000000
 
 /* Prefix 0xA000 indicates that the scan request

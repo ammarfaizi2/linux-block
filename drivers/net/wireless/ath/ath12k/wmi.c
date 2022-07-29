@@ -2338,7 +2338,7 @@ int ath12k_wmi_send_scan_stop_cmd(struct ath12k *ar,
 		cmd->req_type = cpu_to_le32(WMI_SCAN_STOP_ALL);
 	} else if (arg->req_type == WLAN_SCAN_CANCEL_VDEV_ALL) {
 		/* Cancelling VAP scans */
-		cmd->req_type = cpu_to_le32(WMI_SCN_STOP_VAP_ALL);
+		cmd->req_type = cpu_to_le32(WMI_SCAN_STOP_VAP_ALL);
 	} else if (arg->req_type == WLAN_SCAN_CANCEL_SINGLE) {
 		/* Cancelling specific scan */
 		cmd->req_type =  WMI_SCAN_STOP_ONE;
