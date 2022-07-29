@@ -3550,11 +3550,8 @@ int ath12k_wmi_set_hw_mode(struct ath12k_base *ab,
 int ath12k_wmi_cmd_init(struct ath12k_base *ab)
 {
 	struct ath12k_wmi_base *wmi_sc = &ab->wmi_ab;
-	struct ath12k_wmi_init_cmd_arg arg;
-	struct target_resource_config config;
-
-	memset(&arg, 0, sizeof(arg));
-	memset(&config, 0, sizeof(config));
+	struct ath12k_wmi_init_cmd_arg arg = {};
+	struct target_resource_config config = {};
 
 	ab->hw_params->wmi_init(ab, &config);
 
@@ -7195,11 +7192,8 @@ static int ath12k_connect_pdev_htc_service(struct ath12k_base *ab,
 			 ATH12K_HTC_SVC_ID_WMI_CONTROL_MAC1,
 			 ATH12K_HTC_SVC_ID_WMI_CONTROL_MAC2 };
 
-	struct ath12k_htc_svc_conn_req conn_req;
-	struct ath12k_htc_svc_conn_resp conn_resp;
-
-	memset(&conn_req, 0, sizeof(conn_req));
-	memset(&conn_resp, 0, sizeof(conn_resp));
+	struct ath12k_htc_svc_conn_req conn_req = {};
+	struct ath12k_htc_svc_conn_resp conn_resp = {};
 
 	/* these fields are the same for all service endpoints */
 	conn_req.ep_ops.ep_tx_complete = ath12k_wmi_htc_tx_complete;
