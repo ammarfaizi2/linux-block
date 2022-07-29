@@ -36,7 +36,7 @@ struct wmi_tlv_dma_ring_caps_parse {
 struct ath12k_wmi_service_ext_arg {
 	u32 default_conc_scan_config_bits;
 	u32 default_fw_config_bits;
-	struct ath12k_ppe_threshold ppet;
+	struct ath12k_wmi_ppe_threshold_arg ppet;
 	u32 he_cap_info;
 	u32 mpdu_density;
 	u32 max_bssid_rx_filters;
@@ -508,7 +508,7 @@ ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_pdev_wmi *wmi_handle,
 		memcpy(cap_band->he_cap_phy_info, &mac_phy_caps->he_cap_phy_info_2g,
 		       sizeof(u32) * PSOC_HOST_MAX_PHY_SIZE);
 		memcpy(&cap_band->he_ppet, &mac_phy_caps->he_ppet2g,
-		       sizeof(struct ath12k_ppe_threshold));
+		       sizeof(struct ath12k_wmi_ppe_threshold_arg));
 	}
 
 	if (mac_phy_caps->supported_bands & WMI_HOST_WLAN_5G_CAP) {
@@ -522,7 +522,7 @@ ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_pdev_wmi *wmi_handle,
 		memcpy(cap_band->he_cap_phy_info, &mac_phy_caps->he_cap_phy_info_5g,
 		       sizeof(u32) * PSOC_HOST_MAX_PHY_SIZE);
 		memcpy(&cap_band->he_ppet, &mac_phy_caps->he_ppet5g,
-		       sizeof(struct ath12k_ppe_threshold));
+		       sizeof(struct ath12k_wmi_ppe_threshold_arg));
 
 		cap_band = &pdev_cap->band[NL80211_BAND_6GHZ];
 		cap_band->max_bw_supported = mac_phy_caps->max_bw_supported_5g;
@@ -533,7 +533,7 @@ ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_pdev_wmi *wmi_handle,
 		memcpy(cap_band->he_cap_phy_info, &mac_phy_caps->he_cap_phy_info_5g,
 		       sizeof(u32) * PSOC_HOST_MAX_PHY_SIZE);
 		memcpy(&cap_band->he_ppet, &mac_phy_caps->he_ppet5g,
-		       sizeof(struct ath12k_ppe_threshold));
+		       sizeof(struct ath12k_wmi_ppe_threshold_arg));
 	}
 
 	return 0;

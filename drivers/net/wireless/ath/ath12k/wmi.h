@@ -2125,7 +2125,7 @@ struct ath12k_wmi_pdev_band_arg {
 	u32 end_freq;
 };
 
-struct ath12k_ppe_threshold {
+struct ath12k_wmi_ppe_threshold_arg {
 	u32 numss_m1;
 	u32 ru_bit_mask;
 	u32 ppet16_ppet8_ru3_ru0[PSOC_HOST_MAX_NUM_SS];
@@ -3464,7 +3464,7 @@ struct ath12k_wmi_peer_assoc_arg {
 	u32 peer_he_tx_mcs_set[WMI_HOST_MAX_HE_RATE_SET];
 	bool twt_responder;
 	bool twt_requester;
-	struct ath12k_ppe_threshold peer_ppet;
+	struct ath12k_wmi_ppe_threshold_arg peer_ppet;
 };
 
 struct wmi_peer_assoc_complete_cmd {

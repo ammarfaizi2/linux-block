@@ -3970,7 +3970,7 @@ static int ath12k_check_chain_mask(struct ath12k *ar, u32 ant, bool is_tx_ant)
 	return 0;
 }
 
-static void ath12k_gen_ppe_thresh(struct ath12k_ppe_threshold *fw_ppet,
+static void ath12k_gen_ppe_thresh(struct ath12k_wmi_ppe_threshold_arg *fw_ppet,
 				  u8 *he_ppet)
 {
 	int nss, ru;

@@ -606,7 +606,7 @@ struct ath12k_band_cap {
 	u32 he_cap_info[2];
 	u32 he_mcs;
 	u32 he_cap_phy_info[PSOC_HOST_MAX_PHY_SIZE];
-	struct ath12k_ppe_threshold he_ppet;
+	struct ath12k_wmi_ppe_threshold_arg he_ppet;
 	u16 he_6ghz_capa;
 };
 
