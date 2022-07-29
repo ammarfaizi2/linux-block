@@ -1298,10 +1298,10 @@ rcu_torture_writer(void *arg)
 				break;
 			case RTWS_EXP_SYNC:
 				rcu_torture_writer_state = RTWS_EXP_SYNC;
-				if (cur_ops->get_gp_state && cur_ops->poll_gp_state)
+				if (cur_ops->get_gp_state_full && cur_ops->poll_gp_state_full)
 					cur_ops->get_gp_state_full(&cookie_full);
 				cur_ops->exp_sync();
-				if (cur_ops->get_gp_state && cur_ops->poll_gp_state)
+				if (cur_ops->get_gp_state_full && cur_ops->poll_gp_state_full)
 					WARN_ON_ONCE(!cur_ops->poll_gp_state_full(&cookie_full));
 				rcu_torture_pipe_update(old_rp);
 				break;
