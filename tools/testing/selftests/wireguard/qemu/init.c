@@ -263,6 +263,38 @@ static void check_leaks(void)
 	close(fd);
 }
 
+#ifndef timespecsub
+#define	timespecsub(tsp, usp, vsp)					\
+	do {								\
+		(vsp)->tv_sec = (tsp)->tv_sec - (usp)->tv_sec;		\
+		(vsp)->tv_nsec = (tsp)->tv_nsec - (usp)->tv_nsec;	\
+		if ((vsp)->tv_nsec < 0) {				\
+			(vsp)->tv_sec--;				\
+			(vsp)->tv_nsec += 1000000000L;			\
+		}							\
+	} while (0)
+#endif
+
+static void vdso_stuff(void)
+{
+	unsigned int val;
+	unsigned long times;
+	struct timespec start, end, diff;
+	enum { TRIALS = 25000000 };
+
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	for (times = 0; times < TRIALS; ++times) {
+		ssize_t ret = getrandom(&val, sizeof(val), 0);
+		if (ret != sizeof(val)) {
+			printf("%ld\n", ret);
+			panic("syscall getrandom failed");
+		}
+	}
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	timespecsub(&end, &start, &diff);
+	printf("syscall: %lu times in %lu.%lu seconds\n", times, diff.tv_sec, diff.tv_nsec);
+}
+
 int main(int argc, char *argv[])
 {
 	ensure_console();
@@ -270,6 +302,12 @@ int main(int argc, char *argv[])
 	mount_filesystems();
 	seed_rng();
 	set_time();
+
+	vdso_stuff();
+
+
+	poweroff();
+
 	kmod_selftests();
 	enable_logging();
 	clear_leaks();
