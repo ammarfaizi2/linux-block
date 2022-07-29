@@ -3358,7 +3358,7 @@ static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
 	struct wmi_resource_config *cfg;
 	struct wmi_pdev_set_hw_mode_cmd_param *hw_mode;
 	struct wmi_pdev_band_to_mac *band_to_mac;
-	struct wlan_host_mem_chunk *host_mem_chunks;
+	struct ath12k_wmi_host_mem_chunk_params *host_mem_chunks;
 	struct wmi_tlv *tlv;
 	size_t ret, len;
 	void *ptr;
@@ -3391,7 +3391,7 @@ static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
 
 	ptr += sizeof(*cfg);
 	host_mem_chunks = ptr + TLV_HDR_SIZE;
-	len = sizeof(struct wlan_host_mem_chunk);
+	len = sizeof(struct ath12k_wmi_host_mem_chunk_params);
 
 	for (idx = 0; idx < arg->num_mem_chunks; ++idx) {
 		host_mem_chunks[idx].tlv_header =
@@ -3409,7 +3409,7 @@ static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
 			   arg->mem_chunks[idx].len);
 	}
 	cmd->num_host_mem_chunks = cpu_to_le32(arg->num_mem_chunks);
-	len = sizeof(struct wlan_host_mem_chunk) * arg->num_mem_chunks;
+	len = sizeof(struct ath12k_wmi_host_mem_chunk_params) * arg->num_mem_chunks;
 
 	/* num_mem_chunks is zero */
 	tlv = ptr;

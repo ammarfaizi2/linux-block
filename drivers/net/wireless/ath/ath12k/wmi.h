@@ -2154,7 +2154,7 @@ struct ath12k_wmi_hal_reg_capabilities_ext_arg {
 
 #define WMI_HOST_MAX_PDEV 3
 
-struct wlan_host_mem_chunk {
+struct ath12k_wmi_host_mem_chunk_params {
 	__le32 tlv_header;
 	u32 req_id;
 	u32 ptr;
