@@ -4370,7 +4370,7 @@ struct wmi_chan_info_event {
 	__le32 vdev_id;
 } __packed;
 
-struct ath12k_targ_cap {
+struct ath12k_wmi_target_cap_arg {
 	u32 phy_capability;
 	u32 max_frag_entry;
 	u32 num_rf_chains;
@@ -4992,7 +4992,7 @@ struct ath12k_wmi_base {
 	enum wmi_host_hw_mode_config_type preferred_hw_mode;
 	struct target_resource_config wlan_resource_config;
 
-	struct ath12k_targ_cap *targ_cap;
+	struct ath12k_wmi_target_cap_arg *targ_cap;
 };
 
 /* WOW structures */

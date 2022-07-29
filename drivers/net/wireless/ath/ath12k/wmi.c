@@ -573,7 +573,7 @@ ath12k_pull_reg_cap_svc_rdy_ext(struct ath12k_pdev_wmi *wmi_handle,
 
 static int ath12k_pull_service_ready_tlv(struct ath12k_base *ab,
 					 const void *evt_buf,
-					 struct ath12k_targ_cap *cap)
+					 struct ath12k_wmi_target_cap_arg *cap)
 {
 	const struct wmi_service_ready_event *ev = evt_buf;
 

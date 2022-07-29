@@ -734,7 +734,7 @@ struct ath12k_base {
 	int irq_num[ATH12K_IRQ_NUM_MAX];
 	struct ath12k_ext_irq_grp ext_irq_grp[ATH12K_EXT_IRQ_GRP_NUM_MAX];
 	struct napi_struct *napi;
-	struct ath12k_targ_cap target_caps;
+	struct ath12k_wmi_target_cap_arg target_caps;
 	u32 ext_service_bitmap[WMI_SERVICE_EXT_BM_SIZE];
 	bool pdevs_macaddr_valid;
 	int bd_api;
