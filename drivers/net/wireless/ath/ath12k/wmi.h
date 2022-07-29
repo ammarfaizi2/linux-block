@@ -2587,7 +2587,7 @@ struct ath12k_wmi_channel_arg {
 	char   maxregpower;
 	u8  antennamax;
 	u8  reg_class_id;
-} __packed;
+};
 
 enum wmi_phy_mode {
 	MODE_11A        = 0,
@@ -4792,7 +4792,7 @@ struct ath12k_wmi_vdev_spectral_conf_arg {
 	u32 scan_bin_scale;
 	u32 scan_dbm_adj;
 	u32 scan_chn_mask;
-} __packed;
+};
 
 struct ath12k_wmi_vdev_spectral_conf_cmd {
 	__le32 tlv_header;
@@ -4843,7 +4843,7 @@ struct ath12k_wmi_pdev_dma_ring_cfg_arg {
 	u32 buf_size;
 	u32 num_resp_per_event;
 	u32 event_timeout_ms;
-} __packed;
+};
 
 struct ath12k_wmi_pdev_dma_ring_cfg_req_cmd {
 	__le32 tlv_header;
