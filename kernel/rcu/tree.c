@@ -3572,6 +3572,34 @@ unsigned long get_state_synchronize_rcu(void)
 EXPORT_SYMBOL_GPL(get_state_synchronize_rcu);
 
 /**
+ * get_state_synchronize_rcu_full - Snapshot RCU state, both normal and expedited
+ * @oldstate: location to place combined normal/expedited grace-period state
+ *
+ * Places the normal and expedited grace-period states in oldstate.  This
+ * state value can be passed to a later call to cond_synchronize_rcu_full()
+ * or poll_state_synchronize_rcu_full() to determine whether or not a
+ * grace period (whether normal or expedited) has elapsed in the meantime.
+ * The rcu_gp_oldstate structure takes up twice the memory of an unsigned
+ * long, but is guaranteed to see all grace periods.  In contrast, the
+ * combined state occupies less memory, but can sometimes fail to take
+ * grace periods into account.
+ *
+ * This does not guarantee that the needed grace period will actually
+ * start.
+ */
+void get_state_synchronize_rcu_full(struct rcu_gp_oldstate *rgosp)
+{
+	/*
+	 * Any prior manipulation of RCU-protected data must happen
+	 * before the loads from ->gp_seq and ->expedited_sequence.
+	 */
+	smp_mb();  /* ^^^ */
+	rgosp->rgos_norm = rcu_seq_snap(&rcu_state.gp_seq);
+	rgosp->rgos_exp = rcu_seq_snap(&rcu_state.expedited_sequence);
+}
+EXPORT_SYMBOL_GPL(get_state_synchronize_rcu_full);
+
+/**
  * start_poll_synchronize_rcu - Snapshot and start RCU grace period
  *
  * Returns a cookie that is used by a later call to cond_synchronize_rcu()
