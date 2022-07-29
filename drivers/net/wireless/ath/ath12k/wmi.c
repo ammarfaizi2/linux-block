@@ -4339,7 +4339,7 @@ static int ath12k_pull_reg_chan_list_ext_update_ev(struct ath12k_base *ab,
 						   struct cur_regulatory_info *reg_info)
 {
 	const void **tb;
-	const struct wmi_reg_chan_list_cc_ext_event *ext_chan_list_event_hdr;
+	const struct wmi_reg_chan_list_cc_ext_event *ev;
 	struct wmi_regulatory_ext_rule_struct *ext_wmi_reg_rule;
 	u32 num_2g_reg_rules, num_5g_reg_rules;
 	u32 num_6g_reg_rules_ap[WMI_REG_CURRENT_MAX_AP_TYPE];
@@ -4356,31 +4356,29 @@ static int ath12k_pull_reg_chan_list_ext_update_ev(struct ath12k_base *ab,
 		return ret;
 	}
 
-	ext_chan_list_event_hdr = tb[WMI_TAG_REG_CHAN_LIST_CC_EXT_EVENT];
-	if (!ext_chan_list_event_hdr) {
+	ev = tb[WMI_TAG_REG_CHAN_LIST_CC_EXT_EVENT];
+	if (!ev) {
 		ath12k_warn(ab, "failed to fetch reg chan list ext update ev\n");
 		kfree(tb);
 		return -EPROTO;
 	}
 
-	reg_info->num_2g_reg_rules =
-		le32_to_cpu(ext_chan_list_event_hdr->num_2g_reg_rules);
-	reg_info->num_5g_reg_rules =
-		le32_to_cpu(ext_chan_list_event_hdr->num_5g_reg_rules);
+	reg_info->num_2g_reg_rules = le32_to_cpu(ev->num_2g_reg_rules);
+	reg_info->num_5g_reg_rules = le32_to_cpu(ev->num_5g_reg_rules);
 	reg_info->num_6g_reg_rules_ap[WMI_REG_INDOOR_AP] =
-		le32_to_cpu(ext_chan_list_event_hdr->num_6g_reg_rules_ap_lpi);
+		le32_to_cpu(ev->num_6g_reg_rules_ap_lpi);
 	reg_info->num_6g_reg_rules_ap[WMI_REG_STD_POWER_AP] =
-		le32_to_cpu(ext_chan_list_event_hdr->num_6g_reg_rules_ap_sp);
+		le32_to_cpu(ev->num_6g_reg_rules_ap_sp);
 	reg_info->num_6g_reg_rules_ap[WMI_REG_VLP_AP] =
-		le32_to_cpu(ext_chan_list_event_hdr->num_6g_reg_rules_ap_vlp);
+		le32_to_cpu(ev->num_6g_reg_rules_ap_vlp);
 
 	for (i = 0; i < WMI_REG_MAX_CLIENT_TYPE; i++) {
 		reg_info->num_6g_reg_rules_cl[WMI_REG_INDOOR_AP][i] =
-			le32_to_cpu(ext_chan_list_event_hdr->num_6g_reg_rules_cl_lpi[i]);
+			le32_to_cpu(ev->num_6g_reg_rules_cl_lpi[i]);
 		reg_info->num_6g_reg_rules_cl[WMI_REG_STD_POWER_AP][i] =
-			le32_to_cpu(ext_chan_list_event_hdr->num_6g_reg_rules_cl_sp[i]);
+			le32_to_cpu(ev->num_6g_reg_rules_cl_sp[i]);
 		reg_info->num_6g_reg_rules_cl[WMI_REG_VLP_AP][i] =
-			le32_to_cpu(ext_chan_list_event_hdr->num_6g_reg_rules_cl_vlp[i]);
+			le32_to_cpu(ev->num_6g_reg_rules_cl_vlp[i]);
 	}
 
 	num_2g_reg_rules = reg_info->num_2g_reg_rules;
@@ -4437,8 +4435,7 @@ static int ath12k_pull_reg_chan_list_ext_update_ev(struct ath12k_base *ab,
 		return -EINVAL;
 	}
 
-	memcpy(reg_info->alpha2, &ext_chan_list_event_hdr->alpha2,
-	       REG_ALPHA2_LEN);
+	memcpy(reg_info->alpha2, &ev->alpha2, REG_ALPHA2_LEN);
 
 	/* FIXME: Currently FW includes 6G reg rule also in 5G rule
 	 * list for country US.
@@ -4454,14 +4451,14 @@ static int ath12k_pull_reg_chan_list_ext_update_ev(struct ath12k_base *ab,
 		num_5g_reg_rules = reg_info->num_5g_reg_rules;
 	}
 
-	reg_info->dfs_region = le32_to_cpu(ext_chan_list_event_hdr->dfs_region);
-	reg_info->phybitmap = le32_to_cpu(ext_chan_list_event_hdr->phybitmap);
-	reg_info->num_phy = le32_to_cpu(ext_chan_list_event_hdr->num_phy);
-	reg_info->phy_id = le32_to_cpu(ext_chan_list_event_hdr->phy_id);
-	reg_info->ctry_code = le32_to_cpu(ext_chan_list_event_hdr->country_id);
-	reg_info->reg_dmn_pair = le32_to_cpu(ext_chan_list_event_hdr->domain_code);
+	reg_info->dfs_region = le32_to_cpu(ev->dfs_region);
+	reg_info->phybitmap = le32_to_cpu(ev->phybitmap);
+	reg_info->num_phy = le32_to_cpu(ev->num_phy);
+	reg_info->phy_id = le32_to_cpu(ev->phy_id);
+	reg_info->ctry_code = le32_to_cpu(ev->country_id);
+	reg_info->reg_dmn_pair = le32_to_cpu(ev->domain_code);
 
-	switch (le32_to_cpu(ext_chan_list_event_hdr->status_code)) {
+	switch (le32_to_cpu(ev->status_code)) {
 	case WMI_REG_SET_CC_STATUS_PASS:
 		reg_info->status_code = REG_SET_CC_STATUS_PASS;
 		break;
@@ -4484,36 +4481,30 @@ static int ath12k_pull_reg_chan_list_ext_update_ev(struct ath12k_base *ab,
 
 	reg_info->is_ext_reg_event = true;
 
-	reg_info->min_bw_2g = le32_to_cpu(ext_chan_list_event_hdr->min_bw_2g);
-	reg_info->max_bw_2g = le32_to_cpu(ext_chan_list_event_hdr->max_bw_2g);
-	reg_info->min_bw_5g = le32_to_cpu(ext_chan_list_event_hdr->min_bw_5g);
-	reg_info->max_bw_5g = le32_to_cpu(ext_chan_list_event_hdr->max_bw_5g);
-	reg_info->min_bw_6g_ap[WMI_REG_INDOOR_AP] =
-		le32_to_cpu(ext_chan_list_event_hdr->min_bw_6g_ap_lpi);
-	reg_info->max_bw_6g_ap[WMI_REG_INDOOR_AP] =
-		le32_to_cpu(ext_chan_list_event_hdr->max_bw_6g_ap_lpi);
-	reg_info->min_bw_6g_ap[WMI_REG_STD_POWER_AP] =
-		le32_to_cpu(ext_chan_list_event_hdr->min_bw_6g_ap_sp);
-	reg_info->max_bw_6g_ap[WMI_REG_STD_POWER_AP] =
-		le32_to_cpu(ext_chan_list_event_hdr->max_bw_6g_ap_sp);
-	reg_info->min_bw_6g_ap[WMI_REG_VLP_AP] =
-		le32_to_cpu(ext_chan_list_event_hdr->min_bw_6g_ap_vlp);
-	reg_info->max_bw_6g_ap[WMI_REG_VLP_AP] =
-		le32_to_cpu(ext_chan_list_event_hdr->max_bw_6g_ap_vlp);
+	reg_info->min_bw_2g = le32_to_cpu(ev->min_bw_2g);
+	reg_info->max_bw_2g = le32_to_cpu(ev->max_bw_2g);
+	reg_info->min_bw_5g = le32_to_cpu(ev->min_bw_5g);
+	reg_info->max_bw_5g = le32_to_cpu(ev->max_bw_5g);
+	reg_info->min_bw_6g_ap[WMI_REG_INDOOR_AP] = le32_to_cpu(ev->min_bw_6g_ap_lpi);
+	reg_info->max_bw_6g_ap[WMI_REG_INDOOR_AP] = le32_to_cpu(ev->max_bw_6g_ap_lpi);
+	reg_info->min_bw_6g_ap[WMI_REG_STD_POWER_AP] = le32_to_cpu(ev->min_bw_6g_ap_sp);
+	reg_info->max_bw_6g_ap[WMI_REG_STD_POWER_AP] = le32_to_cpu(ev->max_bw_6g_ap_sp);
+	reg_info->min_bw_6g_ap[WMI_REG_VLP_AP] = le32_to_cpu(ev->min_bw_6g_ap_vlp);
+	reg_info->max_bw_6g_ap[WMI_REG_VLP_AP] = le32_to_cpu(ev->max_bw_6g_ap_vlp);
 
 	for (i = 0; i < WMI_REG_MAX_CLIENT_TYPE; i++) {
 		reg_info->min_bw_6g_client[WMI_REG_INDOOR_AP][i] =
-			le32_to_cpu(ext_chan_list_event_hdr->min_bw_6g_client_lpi[i]);
+			le32_to_cpu(ev->min_bw_6g_client_lpi[i]);
 		reg_info->max_bw_6g_client[WMI_REG_INDOOR_AP][i] =
-			le32_to_cpu(ext_chan_list_event_hdr->max_bw_6g_client_lpi[i]);
+			le32_to_cpu(ev->max_bw_6g_client_lpi[i]);
 		reg_info->min_bw_6g_client[WMI_REG_STD_POWER_AP][i] =
-			le32_to_cpu(ext_chan_list_event_hdr->min_bw_6g_client_sp[i]);
+			le32_to_cpu(ev->min_bw_6g_client_sp[i]);
 		reg_info->max_bw_6g_client[WMI_REG_STD_POWER_AP][i] =
-			le32_to_cpu(ext_chan_list_event_hdr->max_bw_6g_client_sp[i]);
+			le32_to_cpu(ev->max_bw_6g_client_sp[i]);
 		reg_info->min_bw_6g_client[WMI_REG_VLP_AP][i] =
-			le32_to_cpu(ext_chan_list_event_hdr->min_bw_6g_client_vlp[i]);
+			le32_to_cpu(ev->min_bw_6g_client_vlp[i]);
 		reg_info->max_bw_6g_client[WMI_REG_VLP_AP][i] =
-			le32_to_cpu(ext_chan_list_event_hdr->max_bw_6g_client_vlp[i]);
+			le32_to_cpu(ev->max_bw_6g_client_vlp[i]);
 	}
 
 	ath12k_dbg(ab, ATH12K_DBG_WMI,
@@ -4545,8 +4536,8 @@ static int ath12k_pull_reg_chan_list_ext_update_ev(struct ath12k_base *ab,
 		   num_6g_reg_rules_cl[WMI_REG_VLP_AP][WMI_REG_SUBORDINATE_CLIENT]);
 
 	ext_wmi_reg_rule =
-		(struct wmi_regulatory_ext_rule_struct *)((u8 *)ext_chan_list_event_hdr
-			+ sizeof(*ext_chan_list_event_hdr)
+		(struct wmi_regulatory_ext_rule_struct *)((u8 *)ev
+			+ sizeof(*ev)
 			+ sizeof(struct wmi_tlv));
 
 	if (num_2g_reg_rules) {
@@ -4606,28 +4597,26 @@ static int ath12k_pull_reg_chan_list_ext_update_ev(struct ath12k_base *ab,
 		}
 	}
 
-	reg_info->client_type = le32_to_cpu(ext_chan_list_event_hdr->client_type);
-	reg_info->rnr_tpe_usable = ext_chan_list_event_hdr->rnr_tpe_usable;
-	reg_info->unspecified_ap_usable =
-			ext_chan_list_event_hdr->unspecified_ap_usable;
+	reg_info->client_type = le32_to_cpu(ev->client_type);
+	reg_info->rnr_tpe_usable = ev->rnr_tpe_usable;
+	reg_info->unspecified_ap_usable = ev->unspecified_ap_usable;
 	reg_info->domain_code_6g_ap[WMI_REG_INDOOR_AP] =
-		le32_to_cpu(ext_chan_list_event_hdr->domain_code_6g_ap_lpi);
+		le32_to_cpu(ev->domain_code_6g_ap_lpi);
 	reg_info->domain_code_6g_ap[WMI_REG_STD_POWER_AP] =
-		le32_to_cpu(ext_chan_list_event_hdr->domain_code_6g_ap_sp);
+		le32_to_cpu(ev->domain_code_6g_ap_sp);
 	reg_info->domain_code_6g_ap[WMI_REG_VLP_AP] =
-		le32_to_cpu(ext_chan_list_event_hdr->domain_code_6g_ap_vlp);
+		le32_to_cpu(ev->domain_code_6g_ap_vlp);
 
 	for (i = 0; i < WMI_REG_MAX_CLIENT_TYPE; i++) {
 		reg_info->domain_code_6g_client[WMI_REG_INDOOR_AP][i] =
-			le32_to_cpu(ext_chan_list_event_hdr->domain_code_6g_client_lpi[i]);
+			le32_to_cpu(ev->domain_code_6g_client_lpi[i]);
 		reg_info->domain_code_6g_client[WMI_REG_STD_POWER_AP][i] =
-			le32_to_cpu(ext_chan_list_event_hdr->domain_code_6g_client_sp[i]);
+			le32_to_cpu(ev->domain_code_6g_client_sp[i]);
 		reg_info->domain_code_6g_client[WMI_REG_VLP_AP][i] =
-			le32_to_cpu(ext_chan_list_event_hdr->domain_code_6g_client_vlp[i]);
+			le32_to_cpu(ev->domain_code_6g_client_vlp[i]);
 	}
 
-	reg_info->domain_code_6g_super_id =
-		le32_to_cpu(ext_chan_list_event_hdr->domain_code_6g_super_id);
+	reg_info->domain_code_6g_super_id = le32_to_cpu(ev->domain_code_6g_super_id);
 
 	ath12k_dbg(ab, ATH12K_DBG_WMI, "6g client_type: %d domain_code_6g_super_id: %d",
 		   reg_info->client_type, reg_info->domain_code_6g_super_id);
