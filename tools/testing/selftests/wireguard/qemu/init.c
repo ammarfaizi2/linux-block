@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <fcntl.h>
+#include <sched.h>
 #include <time.h>
 #include <sys/wait.h>
 #include <sys/mount.h>
@@ -263,13 +264,176 @@ static void check_leaks(void)
 	close(fd);
 }
 
+#include <elf.h>
+#include <link.h>
+#include <limits.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/auxv.h>
+
+#if ULONG_MAX == 0xffffffff
+typedef Elf32_Ehdr Ehdr;
+typedef Elf32_Phdr Phdr;
+typedef Elf32_Sym Sym;
+typedef Elf32_Verdef Verdef;
+typedef Elf32_Verdaux Verdaux;
+#else
+typedef Elf64_Ehdr Ehdr;
+typedef Elf64_Phdr Phdr;
+typedef Elf64_Sym Sym;
+typedef Elf64_Verdef Verdef;
+typedef Elf64_Verdaux Verdaux;
+#endif
+
+static int checkver(Verdef *def, int vsym, const char *vername, char *strings)
+{
+	vsym &= 0x7fff;
+	for (;;) {
+		if (!(def->vd_flags & VER_FLG_BASE)
+		  && (def->vd_ndx & 0x7fff) == vsym)
+			break;
+		if (def->vd_next == 0)
+			return 0;
+		def = (Verdef *)((char *)def + def->vd_next);
+	}
+	Verdaux *aux = (Verdaux *)((char *)def + def->vd_aux);
+	return !strcmp(vername, strings + aux->vda_name);
+}
+
+#define OK_TYPES (1<<STT_NOTYPE | 1<<STT_OBJECT | 1<<STT_FUNC | 1<<STT_COMMON)
+#define OK_BINDS (1<<STB_GLOBAL | 1<<STB_WEAK | 1<<STB_GNU_UNIQUE)
+
+static void *__vdsosym(const char *vername, const char *name)
+{
+	size_t i;
+	Ehdr *eh = (void *)getauxval(AT_SYSINFO_EHDR);
+	Phdr *ph = (void *)((char *)eh + eh->e_phoff);
+	size_t *dynv=0, base=-1;
+	for (i=0; i<eh->e_phnum; i++, ph=(void *)((char *)ph+eh->e_phentsize)) {
+		if (ph->p_type == PT_LOAD)
+			base = (size_t)eh + ph->p_offset - ph->p_vaddr;
+		else if (ph->p_type == PT_DYNAMIC)
+			dynv = (void *)((char *)eh + ph->p_offset);
+	}
+	if (!dynv || base==(size_t)-1) return 0;
+
+	char *strings = 0;
+	Sym *syms = 0;
+	Elf_Symndx *hashtab = 0;
+	uint16_t *versym = 0;
+	Verdef *verdef = 0;
+
+	for (i=0; dynv[i]; i+=2) {
+		void *p = (void *)(base + dynv[i+1]);
+		switch(dynv[i]) {
+		case DT_STRTAB: strings = p; break;
+		case DT_SYMTAB: syms = p; break;
+		case DT_HASH: hashtab = p; break;
+		case DT_VERSYM: versym = p; break;
+		case DT_VERDEF: verdef = p; break;
+		}
+	}	
+
+	if (!strings || !syms || !hashtab) return 0;
+	if (!verdef) versym = 0;
+
+	for (i=0; i<hashtab[1]; i++) {
+		if (!(1<<(syms[i].st_info&0xf) & OK_TYPES)) continue;
+		if (!(1<<(syms[i].st_info>>4) & OK_BINDS)) continue;
+		if (!syms[i].st_shndx) continue;
+		if (strcmp(name, strings+syms[i].st_name)) continue;
+		if (versym && !checkver(verdef, versym[i], vername, strings))
+			continue;
+		return (void *)(base + syms[i].st_value);
+	}
+
+	return 0;
+}
+
+#ifndef timespecsub
+#define	timespecsub(tsp, usp, vsp)					\
+	do {								\
+		(vsp)->tv_sec = (tsp)->tv_sec - (usp)->tv_sec;		\
+		(vsp)->tv_nsec = (tsp)->tv_nsec - (usp)->tv_nsec;	\
+		if ((vsp)->tv_nsec < 0) {				\
+			(vsp)->tv_sec--;				\
+			(vsp)->tv_nsec += 1000000000L;			\
+		}							\
+	} while (0)
+#endif
+
+static void *vgetrandom_alloc(size_t *num, size_t *size_per_each, unsigned int flags)
+{
+	enum { __NR_vgetrandom_alloc = 451 };
+	unsigned long ret = syscall(__NR_vgetrandom_alloc, num, size_per_each, flags);
+	if (ret > -4096UL) {
+		errno = -ret;
+		return NULL;
+	}
+	return (void *)ret;
+}
+
+static void vdso_stuff(void)
+{
+	void *grnd_state;
+	ssize_t(*vgetrandom)(void *buf, size_t len, unsigned long flags, void *state) = __vdsosym("LINUX_2.6", "__vdso_getrandom");
+	unsigned int val;
+	unsigned long times;
+	struct timespec start, end, diff;
+	enum { TRIALS = 25000000 };
+	size_t num = 1, size_per_each;
+
+	grnd_state = vgetrandom_alloc(&num, &size_per_each, 0);
+	if (!grnd_state)
+		panic("vgetrandom_alloc failed");
+	printf("Allocated %zu states of %zu bytes each\n", num, size_per_each);
+
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	for (times = 0; times < TRIALS; ++times) {
+		ssize_t ret = vgetrandom(&val, sizeof(val), 0, grnd_state);
+		if (ret != sizeof(val))
+			panic("vDSO getrandom failed");
+	}
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	timespecsub(&end, &start, &diff);
+	printf("   vdso: %lu times in %lu.%lu seconds\n", times, diff.tv_sec, diff.tv_nsec);
+
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	for (times = 0; times < TRIALS; ++times) {
+		ssize_t ret = getrandom(&val, sizeof(val), 0);
+		if (ret != sizeof(val))
+			panic("syscall getrandom failed");
+	}
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	timespecsub(&end, &start, &diff);
+	printf("syscall: %lu times in %lu.%lu seconds\n", times, diff.tv_sec, diff.tv_nsec);
+}
+
 int main(int argc, char *argv[])
 {
 	ensure_console();
+
+	if (argc == 1) {
+		if (unshare(CLONE_NEWTIME))
+			panic("unshare(CLONE_NEWTIME)");
+		if (!fork()) {
+			if (execl(argv[0], argv[0], "now-in-timens"))
+				panic("execl");
+		}
+		wait(NULL);
+		poweroff();
+	}
+
 	print_banner();
 	mount_filesystems();
 	seed_rng();
 	set_time();
+
+	vdso_stuff();
+
+
+	poweroff();
+
 	kmod_selftests();
 	enable_logging();
 	clear_leaks();
