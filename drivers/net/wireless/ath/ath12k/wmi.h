@@ -4236,7 +4236,7 @@ struct ath12k_wmi_pdev_csa_event {
 	__le32 num_vdevs;
 } __packed;
 
-struct wmi_pdev_radar_ev {
+struct ath12k_wmi_pdev_radar_event {
 	__le32 pdev_id;
 	__le32 detection_mode;
 	__le32 chan_freq;

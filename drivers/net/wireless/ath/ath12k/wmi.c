@@ -6880,7 +6880,7 @@ static void
 ath12k_wmi_pdev_dfs_radar_detected_event(struct ath12k_base *ab, struct sk_buff *skb)
 {
 	const void **tb;
-	const struct wmi_pdev_radar_ev *ev;
+	const struct ath12k_wmi_pdev_radar_event *ev;
 	struct ath12k *ar;
 	int ret;
 
