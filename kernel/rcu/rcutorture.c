@@ -1235,9 +1235,9 @@ static void do_rtws_sync(struct torture_random_state *trsp, void (*sync)(void))
 		sync();
 	sync();
 	WARN_ONCE(dopoll && !cur_ops->poll_gp_state(cookie),
-		  "%s: Cookie check 3 failed %px", __func__, sync);
+		  "%s: Cookie check 3 failed %pS() %d online", __func__, sync, num_online_cpus());
 	WARN_ONCE(dopoll_full && !cur_ops->poll_gp_state_full(&cookie_full),
-		  "%s: Cookie check 4 failed %px", __func__, sync);
+		  "%s: Cookie check 4 failed %pS() %d online", __func__, sync, num_online_cpus());
 	if (dopoll || dopoll_full)
 		cpus_read_unlock();
 }
