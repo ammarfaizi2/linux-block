@@ -1234,10 +1234,10 @@ static void do_rtws_sync(struct torture_random_state *trsp, void (*sync)(void))
 	if (dopoll || (!IS_ENABLED(CONFIG_TINY_RCU) && dopoll_full && num_online_cpus() <= 1))
 		sync();
 	sync();
-	if (dopoll)
-		WARN_ON_ONCE(!cur_ops->poll_gp_state(cookie));
-	if (dopoll_full)
-		WARN_ON_ONCE(!cur_ops->poll_gp_state_full(&cookie_full));
+	WARN_ONCE(dopoll && !cur_ops->poll_gp_state(cookie),
+		  "%s: Cookie check 3 failed %px", __func__, sync);
+	WARN_ONCE(dopoll_full && !cur_ops->poll_gp_state_full(&cookie_full),
+		  "%s: Cookie check 4 failed %px", __func__, sync);
 	if (dopoll || dopoll_full)
 		cpus_read_unlock();
 }
