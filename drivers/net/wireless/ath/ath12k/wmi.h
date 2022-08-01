@@ -2540,13 +2540,6 @@ struct wmi_vdev_start_request_cmd {
 
 #define MGMT_TX_DL_FRM_LEN		     64
 
-struct wmi_p2p_noa_descriptor {
-	u32 type_count;
-	u32 duration;
-	u32 interval;
-	u32 start_time;
-};
-
 struct ath12k_wmi_channel_arg {
 	u8 chan_id;
 	u8 pwr;
@@ -2704,10 +2697,6 @@ struct ath12k_wmi_peer_create_arg {
 	u32 vdev_id;
 };
 
-struct peer_delete_params {
-	u8 vdev_id;
-};
-
 struct ath12k_wmi_pdev_set_regdomain_arg {
 	u16 current_rd_in_use;
 	u16 current_rd_2g;
@@ -2803,11 +2792,6 @@ struct ath12k_wmi_rx_reorder_queue_remove_arg {
 #define WMI_TXBF_STS_CAP_OFFSET_MASK	0x70
 #define WMI_BF_SOUND_DIM_OFFSET_LSB	8
 #define WMI_BF_SOUND_DIM_OFFSET_MASK	0x700
-
-struct pdev_params {
-	u32 param_id;
-	u32 param_value;
-};
 
 enum wmi_peer_type {
 	WMI_PEER_TYPE_DEFAULT = 0,
@@ -3736,11 +3720,6 @@ struct wmi_unit_test_cmd {
 #define WMI_PEER_160MHZ		0x40000000
 #define WMI_PEER_SAFEMODE_EN	0x80000000
 
-struct wmi_rate_set {
-	u32 num_rates;
-	u32 rates[(MAX_SUPPORTED_RATES / 4) + 1];
-};
-
 struct wmi_vht_rate_set {
 	__le32 tlv_header;
 	u32 rx_max_rate;
@@ -4034,11 +4013,6 @@ struct wmi_mgmt_rx_hdr {
 
 #define MAX_ANTENNA_EIGHT 8
 
-struct wmi_rssi_ctl_ext {
-	__le32 tlv_header;
-	u32 rssi_ctl_ext[MAX_ANTENNA_EIGHT - ATH_MAX_ANTENNA];
-};
-
 struct wmi_mgmt_tx_compl_event {
 	__le32 desc_id;
 	__le32 status;
@@ -4319,18 +4293,6 @@ enum wmi_rtscts_profile {
 	WMI_RTSCTS_ACROSS_SW_RETRIES = 2,
 	WMI_RTSCTS_ERP = 3,
 	WMI_RTSCTS_FOR_ALL_RATESERIES = 4,
-};
-
-struct ath12k_hal_reg_cap {
-	u32 eeprom_rd;
-	u32 eeprom_rd_ext;
-	u32 regcap1;
-	u32 regcap2;
-	u32 wireless_modes;
-	u32 low_2ghz_chan;
-	u32 high_2ghz_chan;
-	u32 low_5ghz_chan;
-	u32 high_5ghz_chan;
 };
 
 #define WMI_SKB_HEADROOM sizeof(struct wmi_cmd_hdr)
