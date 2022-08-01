@@ -3249,7 +3249,7 @@ ath12k_fill_band_to_mac_param(struct ath12k_base  *soc,
 }
 
 static void
-ath12k_wmi_copy_resource_config(struct wmi_resource_config *wmi_cfg,
+ath12k_wmi_copy_resource_config(struct ath12k_wmi_resource_config_params *wmi_cfg,
 				struct target_resource_config *tg_cfg)
 {
 	wmi_cfg->num_vdevs = tg_cfg->num_vdevs;
@@ -3320,7 +3320,7 @@ static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
 	struct ath12k_base *ab = wmi->wmi_ab->ab;
 	struct sk_buff *skb;
 	struct wmi_init_cmd *cmd;
-	struct wmi_resource_config *cfg;
+	struct ath12k_wmi_resource_config_params *cfg;
 	struct ath12k_wmi_pdev_set_hw_mode_cmd *hw_mode;
 	struct ath12k_wmi_pdev_band_to_mac_params *band_to_mac;
 	struct ath12k_wmi_host_mem_chunk_params *host_mem_chunks;

@@ -2221,7 +2221,7 @@ struct wmi_init_cmd {
 
 #define WMI_RSRC_CFG_HOST_SVC_FLAG_REG_CC_EXT_SUPPORT_BIT 4
 
-struct wmi_resource_config {
+struct ath12k_wmi_resource_config_params {
 	__le32 tlv_header;
 	u32 num_vdevs;
 	u32 num_peers;
