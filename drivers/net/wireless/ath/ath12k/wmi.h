@@ -3797,16 +3797,6 @@ enum wmi_vdev_start_resp_status_code {
 	WMI_VDEV_START_RESPONSE_INVALID_REGDOMAIN = 4,
 };
 
-;
-enum cc_setting_code {
-	REG_SET_CC_STATUS_PASS = 0,
-	REG_CURRENT_ALPHA2_NOT_FOUND = 1,
-	REG_INIT_ALPHA2_NOT_FOUND = 2,
-	REG_SET_CC_CHANGE_NOT_ALLOWED = 3,
-	REG_SET_CC_STATUS_NO_MEMORY = 4,
-	REG_SET_CC_STATUS_FAIL = 5,
-};
-
 enum wmi_reg_6g_ap_type {
 	WMI_REG_INDOOR_AP = 0,
 	WMI_REG_STD_POWER_AP = 1,
@@ -3842,55 +3832,6 @@ enum {
 	WMI_REG_SET_CC_CHANGE_NOT_ALLOWED = 3,
 	WMI_REG_SET_CC_STATUS_NO_MEMORY = 4,
 	WMI_REG_SET_CC_STATUS_FAIL = 5,
-};
-
-struct cur_reg_rule {
-	u16 start_freq;
-	u16 end_freq;
-	u16 max_bw;
-	u8 reg_power;
-	u8 ant_gain;
-	u16 flags;
-	bool psd_flag;
-	u16 psd_eirp;
-};
-
-struct cur_regulatory_info {
-	enum cc_setting_code status_code;
-	u8 num_phy;
-	u8 phy_id;
-	u16 reg_dmn_pair;
-	u16 ctry_code;
-	u8 alpha2[REG_ALPHA2_LEN + 1];
-	u32 dfs_region;
-	u32 phybitmap;
-	bool is_ext_reg_event;
-	u32 min_bw_2g;
-	u32 max_bw_2g;
-	u32 min_bw_5g;
-	u32 max_bw_5g;
-	u32 num_2g_reg_rules;
-	u32 num_5g_reg_rules;
-	struct cur_reg_rule *reg_rules_2g_ptr;
-	struct cur_reg_rule *reg_rules_5g_ptr;
-	enum wmi_reg_6g_client_type client_type;
-	bool rnr_tpe_usable;
-	bool unspecified_ap_usable;
-	/* TODO: All 6G related info can be stored only for required
-	 * combination instead of all types, to optimize memory usage.
-	 */
-	u8 domain_code_6g_ap[WMI_REG_CURRENT_MAX_AP_TYPE];
-	u8 domain_code_6g_client[WMI_REG_CURRENT_MAX_AP_TYPE][WMI_REG_MAX_CLIENT_TYPE];
-	u32 domain_code_6g_super_id;
-	u32 min_bw_6g_ap[WMI_REG_CURRENT_MAX_AP_TYPE];
-	u32 max_bw_6g_ap[WMI_REG_CURRENT_MAX_AP_TYPE];
-	u32 min_bw_6g_client[WMI_REG_CURRENT_MAX_AP_TYPE][WMI_REG_MAX_CLIENT_TYPE];
-	u32 max_bw_6g_client[WMI_REG_CURRENT_MAX_AP_TYPE][WMI_REG_MAX_CLIENT_TYPE];
-	u32 num_6g_reg_rules_ap[WMI_REG_CURRENT_MAX_AP_TYPE];
-	u32 num_6g_reg_rules_cl[WMI_REG_CURRENT_MAX_AP_TYPE][WMI_REG_MAX_CLIENT_TYPE];
-	struct cur_reg_rule *reg_rules_6g_ap_ptr[WMI_REG_CURRENT_MAX_AP_TYPE];
-	struct cur_reg_rule *reg_rules_6g_client_ptr
-		[WMI_REG_CURRENT_MAX_AP_TYPE][WMI_REG_MAX_CLIENT_TYPE];
 };
 
 #define WMI_REG_CLIENT_MAX 4

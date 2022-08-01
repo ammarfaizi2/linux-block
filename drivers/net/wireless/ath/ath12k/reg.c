@@ -486,7 +486,7 @@ ath12k_reg_update_rule(struct ieee80211_reg_rule *reg_rule, u32 start_freq,
 static void
 ath12k_reg_update_weather_radar_band(struct ath12k_base *ab,
 				     struct ieee80211_regdomain *regd,
-				     struct cur_reg_rule *reg_rule,
+				     struct ath12k_reg_rule *reg_rule,
 				     u8 *rule_idx, u32 flags, u16 max_bw)
 {
 	u32 end_freq;
@@ -562,10 +562,10 @@ ath12k_reg_update_weather_radar_band(struct ath12k_base *ab,
 
 struct ieee80211_regdomain *
 ath12k_reg_build_regd(struct ath12k_base *ab,
-		      struct cur_regulatory_info *reg_info, bool intersect)
+		      struct ath12k_reg_info *reg_info, bool intersect)
 {
 	struct ieee80211_regdomain *tmp_regd, *default_regd, *new_regd = NULL;
-	struct cur_reg_rule *reg_rule;
+	struct ath12k_reg_rule *reg_rule;
 	u8 i = 0, j = 0, k = 0;
 	u8 num_rules;
 	u16 max_bw;

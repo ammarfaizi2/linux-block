@@ -4253,11 +4253,11 @@ static int ath12k_pull_vdev_start_resp_tlv(struct ath12k_base *ab, struct sk_buf
 	return 0;
 }
 
-static struct cur_reg_rule
+static struct ath12k_reg_rule
 *create_ext_reg_rules_from_wmi(u32 num_reg_rules,
 			       struct wmi_regulatory_ext_rule_struct *wmi_reg_rule)
 {
-	struct cur_reg_rule *reg_rule_ptr;
+	struct ath12k_reg_rule *reg_rule_ptr;
 	u32 count;
 
 	reg_rule_ptr = kzalloc((num_reg_rules * sizeof(*reg_rule_ptr)),
@@ -4298,7 +4298,7 @@ static struct cur_reg_rule
 
 static int ath12k_pull_reg_chan_list_ext_update_ev(struct ath12k_base *ab,
 						   struct sk_buff *skb,
-						   struct cur_regulatory_info *reg_info)
+						   struct ath12k_reg_info *reg_info)
 {
 	const void **tb;
 	const struct wmi_reg_chan_list_cc_ext_event *ev;
@@ -5258,7 +5258,7 @@ static bool ath12k_reg_is_world_alpha(char *alpha)
 
 static int ath12k_reg_chan_list_event(struct ath12k_base *ab, struct sk_buff *skb)
 {
-	struct cur_regulatory_info *reg_info = NULL;
+	struct ath12k_reg_info *reg_info = NULL;
 	struct ieee80211_regdomain *regd = NULL;
 	bool intersect = false;
 	int ret = 0, pdev_idx, i, j;
