@@ -3356,7 +3356,7 @@ static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
 	struct sk_buff *skb;
 	struct wmi_init_cmd *cmd;
 	struct wmi_resource_config *cfg;
-	struct wmi_pdev_set_hw_mode_cmd_param *hw_mode;
+	struct ath12k_wmi_pdev_set_hw_mode_cmd *hw_mode;
 	struct wmi_pdev_band_to_mac *band_to_mac;
 	struct ath12k_wmi_host_mem_chunk_params *host_mem_chunks;
 	struct wmi_tlv *tlv;
@@ -3417,7 +3417,7 @@ static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
 	ptr += TLV_HDR_SIZE + len;
 
 	if (arg->hw_mode_id != WMI_HOST_HW_MODE_MAX) {
-		hw_mode = (struct wmi_pdev_set_hw_mode_cmd_param *)ptr;
+		hw_mode = (struct ath12k_wmi_pdev_set_hw_mode_cmd *)ptr;
 		hw_mode->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_SET_HW_MODE_CMD,
 							     sizeof(*hw_mode));
 
@@ -3519,7 +3519,7 @@ int ath12k_wmi_wait_for_unified_ready(struct ath12k_base *ab)
 int ath12k_wmi_set_hw_mode(struct ath12k_base *ab,
 			   enum wmi_host_hw_mode_config_type mode)
 {
-	struct wmi_pdev_set_hw_mode_cmd_param *cmd;
+	struct ath12k_wmi_pdev_set_hw_mode_cmd *cmd;
 	struct sk_buff *skb;
 	struct ath12k_wmi_base *wmi_ab = &ab->wmi_ab;
 	int len;
@@ -3531,7 +3531,7 @@ int ath12k_wmi_set_hw_mode(struct ath12k_base *ab,
 	if (!skb)
 		return -ENOMEM;
 
-	cmd = (struct wmi_pdev_set_hw_mode_cmd_param *)skb->data;
+	cmd = (struct ath12k_wmi_pdev_set_hw_mode_cmd *)skb->data;
 
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_SET_HW_MODE_CMD,
 						 sizeof(*cmd));

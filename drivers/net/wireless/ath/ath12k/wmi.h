@@ -2184,7 +2184,10 @@ struct wmi_pdev_band_to_mac {
 	u32 end_freq;
 } __packed;
 
-struct wmi_pdev_set_hw_mode_cmd_param {
+/* This is both individual command WMI_PDEV_SET_HW_MODE_CMDID and also part
+ * of WMI_TAG_INIT_CMD.
+ */
+struct ath12k_wmi_pdev_set_hw_mode_cmd {
 	__le32 tlv_header;
 	u32 pdev_id;
 	u32 hw_mode_index;
