@@ -202,19 +202,6 @@ enum ath12k_monitor_flags {
 	ATH12K_FLAG_MONITOR_ENABLED,
 };
 
-struct ath12k_fw_vdev_ol_stats {
-	u64 rx_msdu_byte_cnt;
-	u64 rx_msdu_pkt_cnt;
-	u64 tx_msdu_byte_cnt;
-	u64 tx_msdu_pkt_cnt;
-	u64 tx_retry_byte_cnt;
-	u64 tx_retry_pkt_cnt;
-	u64 tx_drop_byte_cnt;
-	u64 tx_drop_pkt_cnt;
-	u64 tx_msdu_ttl_byte_cnt;
-	u64 tx_msdu_ttl_pkt_cnt;
-};
-
 struct ath12k_vif {
 	u32 vdev_id;
 	enum wmi_vdev_type vdev_type;
@@ -267,7 +254,6 @@ struct ath12k_vif {
 	u32 key_cipher;
 	u8 tx_encap_type;
 	u8 vdev_stats_id;
-	struct ath12k_fw_vdev_ol_stats vdev_stats;
 };
 
 struct ath12k_vif_iter {
@@ -790,129 +776,6 @@ struct ath12k_base {
 
 	/* must be last */
 	u8 drv_priv[0] __aligned(sizeof(void *));
-};
-
-struct ath12k_fw_stats_pdev {
-	struct list_head list;
-
-	/* PDEV stats */
-	s32 ch_noise_floor;
-	/* Cycles spent transmitting frames */
-	u32 tx_frame_count;
-	/* Cycles spent receiving frames */
-	u32 rx_frame_count;
-	/* Total channel busy time, evidently */
-	u32 rx_clear_count;
-	/* Total on-channel time */
-	u32 cycle_count;
-	u32 phy_err_count;
-	u32 chan_tx_power;
-	u32 ack_rx_bad;
-	u32 rts_bad;
-	u32 rts_good;
-	u32 fcs_bad;
-	u32 no_beacons;
-	u32 mib_int_count;
-
-	/* PDEV TX stats */
-	/* Num HTT cookies queued to dispatch list */
-	s32 comp_queued;
-	/* Num HTT cookies dispatched */
-	s32 comp_delivered;
-	/* Num MSDU queued to WAL */
-	s32 msdu_enqued;
-	/* Num MPDU queue to WAL */
-	s32 mpdu_enqued;
-	/* Num MSDUs dropped by WMM limit */
-	s32 wmm_drop;
-	/* Num Local frames queued */
-	s32 local_enqued;
-	/* Num Local frames done */
-	s32 local_freed;
-	/* Num queued to HW */
-	s32 hw_queued;
-	/* Num PPDU reaped from HW */
-	s32 hw_reaped;
-	/* Num underruns */
-	s32 underrun;
-	/* Num PPDUs cleaned up in TX abort */
-	s32 tx_abort;
-	/* Num MPDUs requeued by SW */
-	s32 mpdus_requed;
-	/* excessive retries */
-	u32 tx_ko;
-	/* data hw rate code */
-	u32 data_rc;
-	/* Scheduler self triggers */
-	u32 self_triggers;
-	/* frames dropped due to excessive sw retries */
-	u32 sw_retry_failure;
-	/* illegal rate phy errors	*/
-	u32 illgl_rate_phy_err;
-	/* wal pdev continuous xretry */
-	u32 pdev_cont_xretry;
-	/* wal pdev tx timeouts */
-	u32 pdev_tx_timeout;
-	/* wal pdev resets */
-	u32 pdev_resets;
-	/* frames dropped due to non-availability of stateless TIDs */
-	u32 stateless_tid_alloc_failure;
-	/* PhY/BB underrun */
-	u32 phy_underrun;
-	/* MPDU is more than txop limit */
-	u32 txop_ovf;
-
-	/* PDEV RX stats */
-	/* Cnts any change in ring routing mid-ppdu */
-	s32 mid_ppdu_route_change;
-	/* Total number of statuses processed */
-	s32 status_rcvd;
-	/* Extra frags on rings 0-3 */
-	s32 r0_frags;
-	s32 r1_frags;
-	s32 r2_frags;
-	s32 r3_frags;
-	/* MSDUs / MPDUs delivered to HTT */
-	s32 htt_msdus;
-	s32 htt_mpdus;
-	/* MSDUs / MPDUs delivered to local stack */
-	s32 loc_msdus;
-	s32 loc_mpdus;
-	/* AMSDUs that have more MSDUs than the status ring size */
-	s32 oversize_amsdu;
-	/* Number of PHY errors */
-	s32 phy_errs;
-	/* Number of PHY errors drops */
-	s32 phy_err_drop;
-	/* Number of mpdu errors - FCS, MIC, ENC etc. */
-	s32 mpdu_errs;
-};
-
-struct ath12k_fw_stats_vdev {
-	struct list_head list;
-
-	u32 vdev_id;
-	u32 beacon_snr;
-	u32 data_snr;
-	u32 num_tx_frames[WLAN_MAX_AC];
-	u32 num_rx_frames;
-	u32 num_tx_frames_retries[WLAN_MAX_AC];
-	u32 num_tx_frames_failures[WLAN_MAX_AC];
-	u32 num_rts_fail;
-	u32 num_rts_success;
-	u32 num_rx_err;
-	u32 num_rx_discard;
-	u32 num_tx_not_acked;
-	u32 tx_rate_history[MAX_TX_RATE_VALUES];
-	u32 beacon_rssi_history[MAX_TX_RATE_VALUES];
-};
-
-struct ath12k_fw_stats_bcn {
-	struct list_head list;
-
-	u32 vdev_id;
-	u32 tx_bcn_succ_cnt;
-	u32 tx_bcn_outage_cnt;
 };
 
 int ath12k_core_qmi_firmware_ready(struct ath12k_base *ab);

@@ -1718,75 +1718,6 @@ static void ath12k_htt_mlo_offset_event_handler(struct ath12k_base *ab,
 	spin_unlock_bh(&ab->base_lock);
 }
 
-static void ath12k_htt_vdev_txrx_stats_handler(struct ath12k_base *ab,
-					       struct sk_buff *skb)
-{
-	struct htt_t2h_vdev_txrx_stats_ind *vdev_tlv;
-	struct htt_t2h_vdev_common_stats_tlv *soc_tlv;
-	struct ath12k_vif *arvif;
-	u32 *data = (u32 *)skb->data;
-	u32 num_vdevs, vdev_id;
-	u16 payload_bytes, tlv_tag, tlv_len;
-
-	num_vdevs = u32_get_bits(*data, HTT_T2H_VDEV_STATS_PERIODIC_NUM_VDEV);
-	data++;
-
-	payload_bytes = u32_get_bits(*data, HTT_T2H_VDEV_STATS_PERIODIC_PAYLOAD_BYTES);
-	data += 3;
-
-	if (payload_bytes > skb->len)
-		return;
-
-	while (payload_bytes > 0 && num_vdevs > 0) {
-		tlv_tag = u32_get_bits(*data, HAL_TLV_HDR_TAG);
-		tlv_len = u32_get_bits(*data, HAL_TLV_HDR_LEN);
-		data++;
-
-		if (tlv_tag == HTT_VDEV_TXRX_STATS_HW_STATS_TLV) {
-			vdev_tlv = (struct htt_t2h_vdev_txrx_stats_ind *)data;
-			vdev_id = __le32_to_cpu(vdev_tlv->vdev_id);
-			arvif = ath12k_mac_get_arvif_by_vdev_id(ab, vdev_id);
-
-			arvif->vdev_stats.rx_msdu_byte_cnt =
-				HTT_VDEV_GET_STATS_U64(vdev_tlv->rx_msdu_byte_cnt_lo,
-						       vdev_tlv->rx_msdu_byte_cnt_hi);
-			arvif->vdev_stats.rx_msdu_pkt_cnt =
-				HTT_VDEV_GET_STATS_U64(vdev_tlv->rx_msdu_cnt_lo,
-						       vdev_tlv->rx_msdu_cnt_hi);
-			arvif->vdev_stats.tx_msdu_byte_cnt =
-				HTT_VDEV_GET_STATS_U64(vdev_tlv->tx_msdu_byte_cnt_lo,
-						       vdev_tlv->tx_msdu_byte_cnt_hi);
-			arvif->vdev_stats.tx_msdu_pkt_cnt =
-				HTT_VDEV_GET_STATS_U64(vdev_tlv->tx_msdu_cnt_lo,
-						       vdev_tlv->tx_msdu_cnt_hi);
-			arvif->vdev_stats.tx_retry_byte_cnt =
-				HTT_VDEV_GET_STATS_U64(vdev_tlv->tx_retry_byte_cnt_lo,
-						       vdev_tlv->tx_retry_byte_cnt_hi);
-			arvif->vdev_stats.tx_retry_pkt_cnt =
-				HTT_VDEV_GET_STATS_U64(vdev_tlv->tx_retry_cnt_lo,
-						       vdev_tlv->tx_retry_cnt_hi);
-			arvif->vdev_stats.tx_drop_byte_cnt =
-				HTT_VDEV_GET_STATS_U64(vdev_tlv->tx_drop_byte_cnt_lo,
-						       vdev_tlv->tx_drop_byte_cnt_hi);
-			arvif->vdev_stats.tx_msdu_ttl_byte_cnt =
-				HTT_VDEV_GET_STATS_U64(vdev_tlv->msdu_ttl_byte_cnt_lo,
-						       vdev_tlv->msdu_ttl_byte_cnt_hi);
-			arvif->vdev_stats.tx_msdu_ttl_pkt_cnt =
-				HTT_VDEV_GET_STATS_U64(vdev_tlv->msdu_ttl_cnt_lo,
-						       vdev_tlv->msdu_ttl_cnt_hi);
-		}
-
-		if (tlv_tag == HTT_VDEV_TXRX_STATS_COMMON_TLV) {
-			soc_tlv = (struct htt_t2h_vdev_common_stats_tlv *)data;
-			ab->fw_soc_drop_count =
-				HTT_VDEV_GET_STATS_U64(soc_tlv->soc_drop_count_lo,
-						       soc_tlv->soc_drop_count_hi);
-		}
-		data += tlv_len >> 2;
-		payload_bytes -= tlv_len;
-	}
-}
-
 void ath12k_dp_htt_htc_t2h_msg_handler(struct ath12k_base *ab,
 				       struct sk_buff *skb)
 {
@@ -1869,9 +1800,6 @@ void ath12k_dp_htt_htc_t2h_msg_handler(struct ath12k_base *ab,
 		break;
 	case HTT_T2H_MSG_TYPE_MLO_TIMESTAMP_OFFSET_IND:
 		ath12k_htt_mlo_offset_event_handler(ab, skb);
-		break;
-	case HTT_T2H_MSG_TYPE_VDEV_TXRX_STATS_PERIODIC_IND:
-		ath12k_htt_vdev_txrx_stats_handler(ab, skb);
 		break;
 	default:
 		ath12k_dbg(ab, ATH12K_DBG_DP_HTT, "dp_htt event %d not handled\n",
