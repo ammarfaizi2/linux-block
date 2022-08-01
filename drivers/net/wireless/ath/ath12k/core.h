@@ -464,7 +464,7 @@ struct ath12k {
 	struct ath12k_pdev *pdev;
 	struct ieee80211_hw *hw;
 	struct ieee80211_ops *ops;
-	struct ath12k_pdev_wmi *wmi;
+	struct ath12k_wmi_pdev *wmi;
 	struct ath12k_pdev_dp dp;
 	u8 mac_addr[ETH_ALEN];
 	u32 ht_cap_info;

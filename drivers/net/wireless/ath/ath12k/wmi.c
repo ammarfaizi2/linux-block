@@ -352,7 +352,7 @@ ath12k_wmi_tlv_parse_alloc(struct ath12k_base *ab, const void *ptr,
 	return tb;
 }
 
-static int ath12k_wmi_cmd_send_nowait(struct ath12k_pdev_wmi *wmi, struct sk_buff *skb,
+static int ath12k_wmi_cmd_send_nowait(struct ath12k_wmi_pdev *wmi, struct sk_buff *skb,
 				      u32 cmd_id)
 {
 	struct ath12k_skb_cb *skb_cb = ATH12K_SKB_CB(skb);
@@ -379,7 +379,7 @@ err_pull:
 	return ret;
 }
 
-int ath12k_wmi_cmd_send(struct ath12k_pdev_wmi *wmi, struct sk_buff *skb,
+int ath12k_wmi_cmd_send(struct ath12k_wmi_pdev *wmi, struct sk_buff *skb,
 			u32 cmd_id)
 {
 	struct ath12k_wmi_base *wmi_sc = wmi->wmi_ab;
@@ -402,7 +402,7 @@ int ath12k_wmi_cmd_send(struct ath12k_pdev_wmi *wmi, struct sk_buff *skb,
 	return ret;
 }
 
-static int ath12k_pull_svc_ready_ext(struct ath12k_pdev_wmi *wmi_handle,
+static int ath12k_pull_svc_ready_ext(struct ath12k_wmi_pdev *wmi_handle,
 				     const void *ptr,
 				     struct ath12k_wmi_service_ext_arg *arg)
 {
@@ -424,7 +424,7 @@ static int ath12k_pull_svc_ready_ext(struct ath12k_pdev_wmi *wmi_handle,
 }
 
 static int
-ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_pdev_wmi *wmi_handle,
+ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_wmi_pdev *wmi_handle,
 				      struct wmi_tlv_svc_rdy_ext_parse *svc,
 				      u8 hw_mode_id, u8 phy_id,
 				      struct ath12k_pdev *pdev)
@@ -541,7 +541,7 @@ ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_pdev_wmi *wmi_handle,
 }
 
 static int
-ath12k_pull_reg_cap_svc_rdy_ext(struct ath12k_pdev_wmi *wmi_handle,
+ath12k_pull_reg_cap_svc_rdy_ext(struct ath12k_wmi_pdev *wmi_handle,
 				const struct ath12k_wmi_soc_hal_reg_caps_params *reg_caps,
 				const struct ath12k_wmi_hal_reg_caps_ext_params *ext_caps,
 				u8 phy_idx,
@@ -609,7 +609,7 @@ static int ath12k_pull_service_ready_tlv(struct ath12k_base *ab,
  * wmi_service ready event are advertised in b0-b3 (LSB 4-bits) of each
  * 4-byte word.
  */
-static void ath12k_wmi_service_bitmap_copy(struct ath12k_pdev_wmi *wmi,
+static void ath12k_wmi_service_bitmap_copy(struct ath12k_wmi_pdev *wmi,
 					   const u32 *wmi_svc_bm)
 {
 	int i, j;
@@ -626,7 +626,7 @@ static int ath12k_wmi_tlv_svc_rdy_parse(struct ath12k_base *ab, u16 tag, u16 len
 					const void *ptr, void *data)
 {
 	struct wmi_tlv_svc_ready_parse *svc_ready = data;
-	struct ath12k_pdev_wmi *wmi_handle = &ab->wmi_ab.wmi[0];
+	struct ath12k_wmi_pdev *wmi_handle = &ab->wmi_ab.wmi[0];
 	u16 expect_len;
 
 	switch (tag) {
@@ -695,7 +695,7 @@ struct sk_buff *ath12k_wmi_alloc_skb(struct ath12k_wmi_base *wmi_sc, u32 len)
 int ath12k_wmi_mgmt_send(struct ath12k *ar, u32 vdev_id, u32 buf_id,
 			 struct sk_buff *frame)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_mgmt_send_cmd *cmd;
 	struct wmi_tlv *frame_tlv;
 	struct sk_buff *skb;
@@ -743,7 +743,7 @@ int ath12k_wmi_mgmt_send(struct ath12k *ar, u32 vdev_id, u32 buf_id,
 int ath12k_wmi_vdev_create(struct ath12k *ar, u8 *macaddr,
 			   struct ath12k_wmi_vdev_create_arg *args)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_vdev_create_cmd *cmd;
 	struct sk_buff *skb;
 	struct wmi_vdev_txrx_streams *txrx_streams;
@@ -817,7 +817,7 @@ int ath12k_wmi_vdev_create(struct ath12k *ar, u8 *macaddr,
 
 int ath12k_wmi_vdev_delete(struct ath12k *ar, u8 vdev_id)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_vdev_delete_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -844,7 +844,7 @@ int ath12k_wmi_vdev_delete(struct ath12k *ar, u8 vdev_id)
 
 int ath12k_wmi_vdev_stop(struct ath12k *ar, u8 vdev_id)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_vdev_stop_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -872,7 +872,7 @@ int ath12k_wmi_vdev_stop(struct ath12k *ar, u8 vdev_id)
 
 int ath12k_wmi_vdev_down(struct ath12k *ar, u8 vdev_id)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_vdev_down_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -941,7 +941,7 @@ static void ath12k_wmi_put_wmi_channel(struct wmi_channel *chan,
 int ath12k_wmi_vdev_start(struct ath12k *ar, struct wmi_vdev_start_req_arg *arg,
 			  bool restart)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_vdev_start_request_cmd *cmd;
 	struct sk_buff *skb;
 	struct wmi_channel *chan;
@@ -1024,7 +1024,7 @@ int ath12k_wmi_vdev_start(struct ath12k *ar, struct wmi_vdev_start_req_arg *arg,
 
 int ath12k_wmi_vdev_up(struct ath12k *ar, u32 vdev_id, u32 aid, const u8 *bssid)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_vdev_up_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -1058,7 +1058,7 @@ int ath12k_wmi_vdev_up(struct ath12k *ar, u32 vdev_id, u32 aid, const u8 *bssid)
 int ath12k_wmi_send_peer_create_cmd(struct ath12k *ar,
 				    struct ath12k_wmi_peer_create_arg *arg)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_peer_create_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -1091,7 +1091,7 @@ int ath12k_wmi_send_peer_create_cmd(struct ath12k *ar,
 int ath12k_wmi_send_peer_delete_cmd(struct ath12k *ar,
 				    const u8 *peer_addr, u8 vdev_id)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_peer_delete_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -1123,7 +1123,7 @@ int ath12k_wmi_send_peer_delete_cmd(struct ath12k *ar,
 int ath12k_wmi_send_pdev_set_regdomain(struct ath12k *ar,
 				       struct ath12k_wmi_pdev_set_regdomain_arg *arg)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_pdev_set_regdomain_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -1162,7 +1162,7 @@ int ath12k_wmi_send_pdev_set_regdomain(struct ath12k *ar,
 int ath12k_wmi_set_peer_param(struct ath12k *ar, const u8 *peer_addr,
 			      u32 vdev_id, u32 param_id, u32 param_val)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_peer_set_param_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -1197,7 +1197,7 @@ int ath12k_wmi_send_peer_flush_tids_cmd(struct ath12k *ar,
 					u32 peer_tid_bitmap,
 					u8 vdev_id)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_peer_flush_tids_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -1274,7 +1274,7 @@ int
 ath12k_wmi_rx_reord_queue_remove(struct ath12k *ar,
 				 struct ath12k_wmi_rx_reorder_queue_remove_arg *arg)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_peer_reorder_queue_remove_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -1309,7 +1309,7 @@ ath12k_wmi_rx_reord_queue_remove(struct ath12k *ar,
 int ath12k_wmi_pdev_set_param(struct ath12k *ar, u32 param_id,
 			      u32 param_value, u8 pdev_id)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_pdev_set_param_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -1340,7 +1340,7 @@ int ath12k_wmi_pdev_set_param(struct ath12k *ar, u32 param_id,
 
 int ath12k_wmi_pdev_set_ps_mode(struct ath12k *ar, int vdev_id, u32 enable)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_pdev_set_ps_mode_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -1371,7 +1371,7 @@ int ath12k_wmi_pdev_set_ps_mode(struct ath12k *ar, int vdev_id, u32 enable)
 int ath12k_wmi_pdev_suspend(struct ath12k *ar, u32 suspend_opt,
 			    u32 pdev_id)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_pdev_suspend_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -1402,7 +1402,7 @@ int ath12k_wmi_pdev_suspend(struct ath12k *ar, u32 suspend_opt,
 
 int ath12k_wmi_pdev_resume(struct ath12k *ar, u32 pdev_id)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_pdev_resume_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -1436,7 +1436,7 @@ int ath12k_wmi_pdev_resume(struct ath12k *ar, u32 pdev_id)
 int ath12k_wmi_pdev_bss_chan_info_request(struct ath12k *ar,
 					  enum wmi_bss_chan_info_req_type type)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_pdev_bss_chan_info_req_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -1468,7 +1468,7 @@ int ath12k_wmi_pdev_bss_chan_info_request(struct ath12k *ar,
 int ath12k_wmi_send_set_ap_ps_param_cmd(struct ath12k *ar, u8 *peer_addr,
 					struct ath12k_wmi_ap_ps_arg *arg)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_ap_ps_peer_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -1503,7 +1503,7 @@ int ath12k_wmi_send_set_ap_ps_param_cmd(struct ath12k *ar, u8 *peer_addr,
 int ath12k_wmi_set_sta_ps_param(struct ath12k *ar, u32 vdev_id,
 				u32 param, u32 param_value)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_sta_powersave_param_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -1535,7 +1535,7 @@ int ath12k_wmi_set_sta_ps_param(struct ath12k *ar, u32 vdev_id,
 
 int ath12k_wmi_force_fw_hang_cmd(struct ath12k *ar, u32 type, u32 delay_time_ms)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_force_fw_hang_cmd *cmd;
 	struct sk_buff *skb;
 	int ret, len;
@@ -1565,7 +1565,7 @@ int ath12k_wmi_force_fw_hang_cmd(struct ath12k *ar, u32 type, u32 delay_time_ms)
 int ath12k_wmi_vdev_set_param_cmd(struct ath12k *ar, u32 vdev_id,
 				  u32 param_id, u32 param_value)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_vdev_set_param_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -1598,7 +1598,7 @@ int ath12k_wmi_vdev_set_param_cmd(struct ath12k *ar, u32 vdev_id,
 
 int ath12k_wmi_send_pdev_temperature_cmd(struct ath12k *ar)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_get_pdev_temperature_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -1627,7 +1627,7 @@ int ath12k_wmi_send_pdev_temperature_cmd(struct ath12k *ar)
 int ath12k_wmi_send_bcn_offload_control_cmd(struct ath12k *ar,
 					    u32 vdev_id, u32 bcn_ctrl_op)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_bcn_offload_ctrl_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -1661,7 +1661,7 @@ int ath12k_wmi_bcn_tmpl(struct ath12k *ar, u32 vdev_id,
 			struct ieee80211_mutable_offsets *offs,
 			struct sk_buff *bcn)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_bcn_tmpl_cmd *cmd;
 	struct wmi_bcn_prb_info *bcn_prb_info;
 	struct wmi_tlv *tlv;
@@ -1712,7 +1712,7 @@ int ath12k_wmi_bcn_tmpl(struct ath12k *ar, u32 vdev_id,
 int ath12k_wmi_vdev_install_key(struct ath12k *ar,
 				struct wmi_vdev_install_key_arg *arg)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_vdev_install_key_cmd *cmd;
 	struct wmi_tlv *tlv;
 	struct sk_buff *skb;
@@ -1844,7 +1844,7 @@ static void ath12k_wmi_copy_peer_flags(struct wmi_peer_assoc_complete_cmd *cmd,
 int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 				   struct ath12k_wmi_peer_assoc_arg *arg)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_peer_assoc_complete_cmd *cmd;
 	struct wmi_vht_rate_set *mcs;
 	struct wmi_he_rate_set *he_mcs;
@@ -2104,7 +2104,7 @@ static void ath12k_wmi_copy_scan_event_cntrl_flags(struct wmi_start_scan_cmd *cm
 int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 				   struct ath12k_wmi_scan_req_arg *arg)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_start_scan_cmd *cmd;
 	struct ath12k_wmi_ssid_params *ssid = NULL;
 	struct ath12k_wmi_mac_addr_params *bssid;
@@ -2283,7 +2283,7 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 int ath12k_wmi_send_scan_stop_cmd(struct ath12k *ar,
 				  struct ath12k_wmi_scan_cancel_arg *arg)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_stop_scan_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -2331,7 +2331,7 @@ int ath12k_wmi_send_scan_stop_cmd(struct ath12k *ar,
 int ath12k_wmi_send_scan_chan_list_cmd(struct ath12k *ar,
 				       struct ath12k_wmi_scan_chan_list_arg *arg)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_scan_chan_list_cmd *cmd;
 	struct sk_buff *skb;
 	struct wmi_channel *chan_info;
@@ -2446,7 +2446,7 @@ int ath12k_wmi_send_scan_chan_list_cmd(struct ath12k *ar,
 int ath12k_wmi_send_wmm_update_cmd_tlv(struct ath12k *ar, u32 vdev_id,
 				       struct wmi_wmm_params_all_arg *param)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_vdev_set_wmm_params_cmd *cmd;
 	struct wmi_wmm_params *wmm_param;
 	struct wmi_wmm_params_arg *wmi_wmm_arg;
@@ -2512,7 +2512,7 @@ int ath12k_wmi_send_wmm_update_cmd_tlv(struct ath12k *ar, u32 vdev_id,
 int ath12k_wmi_send_dfs_phyerr_offload_enable_cmd(struct ath12k *ar,
 						  u32 pdev_id)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_dfs_phyerr_offload_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -2545,7 +2545,7 @@ int ath12k_wmi_send_dfs_phyerr_offload_enable_cmd(struct ath12k *ar,
 int ath12k_wmi_delba_send(struct ath12k *ar, u32 vdev_id, const u8 *mac,
 			  u32 tid, u32 initiator, u32 reason)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_delba_send_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -2581,7 +2581,7 @@ int ath12k_wmi_delba_send(struct ath12k *ar, u32 vdev_id, const u8 *mac,
 int ath12k_wmi_addba_set_resp(struct ath12k *ar, u32 vdev_id, const u8 *mac,
 			      u32 tid, u32 status)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_addba_setresponse_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -2617,7 +2617,7 @@ int ath12k_wmi_addba_set_resp(struct ath12k *ar, u32 vdev_id, const u8 *mac,
 int ath12k_wmi_addba_send(struct ath12k *ar, u32 vdev_id, const u8 *mac,
 			  u32 tid, u32 buf_size)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_addba_send_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -2651,7 +2651,7 @@ int ath12k_wmi_addba_send(struct ath12k *ar, u32 vdev_id, const u8 *mac,
 
 int ath12k_wmi_addba_clear_resp(struct ath12k *ar, u32 vdev_id, const u8 *mac)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_addba_clear_resp_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -2684,7 +2684,7 @@ int ath12k_wmi_addba_clear_resp(struct ath12k *ar, u32 vdev_id, const u8 *mac)
 
 int ath12k_wmi_pdev_peer_pktlog_filter(struct ath12k *ar, u8 *addr, u8 enable)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_pdev_pktlog_filter_cmd *cmd;
 	struct wmi_pdev_pktlog_filter_info *info;
 	struct sk_buff *skb;
@@ -2731,7 +2731,7 @@ int ath12k_wmi_pdev_peer_pktlog_filter(struct ath12k *ar, u8 *addr, u8 enable)
 int ath12k_wmi_send_init_country_cmd(struct ath12k *ar,
 				     struct ath12k_wmi_init_country_arg *arg)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_init_country_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -2785,7 +2785,7 @@ int
 ath12k_wmi_send_thermal_mitigation_cmd(struct ath12k *ar,
 				       struct ath12k_wmi_thermal_mitigation_arg *arg)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_therm_throt_config_request_cmd *cmd;
 	struct wmi_therm_throt_level_config_info *lvl_conf;
 	struct wmi_tlv *tlv;
@@ -2844,7 +2844,7 @@ ath12k_wmi_send_thermal_mitigation_cmd(struct ath12k *ar,
 
 int ath12k_wmi_pdev_pktlog_enable(struct ath12k *ar, u32 pktlog_filter)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_pktlog_enable_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -2874,7 +2874,7 @@ int ath12k_wmi_pdev_pktlog_enable(struct ath12k *ar, u32 pktlog_filter)
 
 int ath12k_wmi_pdev_pktlog_disable(struct ath12k *ar)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_pktlog_disable_cmd *cmd;
 	struct sk_buff *skb;
 	int ret;
@@ -2903,7 +2903,7 @@ int ath12k_wmi_pdev_pktlog_disable(struct ath12k *ar)
 int
 ath12k_wmi_send_twt_enable_cmd(struct ath12k *ar, u32 pdev_id)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct ath12k_base *ab = wmi->wmi_ab->ab;
 	struct wmi_twt_enable_params_cmd *cmd;
 	struct sk_buff *skb;
@@ -2956,7 +2956,7 @@ ath12k_wmi_send_twt_enable_cmd(struct ath12k *ar, u32 pdev_id)
 int
 ath12k_wmi_send_twt_disable_cmd(struct ath12k *ar, u32 pdev_id)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct ath12k_base *ab = wmi->wmi_ab->ab;
 	struct wmi_twt_disable_params_cmd *cmd;
 	struct sk_buff *skb;
@@ -2986,7 +2986,7 @@ int
 ath12k_wmi_send_obss_spr_cmd(struct ath12k *ar, u32 vdev_id,
 			     struct ieee80211_he_obss_pd *he_obss_pd)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct ath12k_base *ab = wmi->wmi_ab->ab;
 	struct wmi_obss_spatial_reuse_params_cmd *cmd;
 	struct sk_buff *skb;
@@ -3020,7 +3020,7 @@ int ath12k_wmi_obss_color_cfg_cmd(struct ath12k *ar, u32 vdev_id,
 				  u8 bss_color, u32 period,
 				  bool enable)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct ath12k_base *ab = wmi->wmi_ab->ab;
 	struct wmi_obss_color_collision_cfg_params_cmd *cmd;
 	struct sk_buff *skb;
@@ -3061,7 +3061,7 @@ int ath12k_wmi_obss_color_cfg_cmd(struct ath12k *ar, u32 vdev_id,
 int ath12k_wmi_send_bss_color_change_enable_cmd(struct ath12k *ar, u32 vdev_id,
 						bool enable)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct ath12k_base *ab = wmi->wmi_ab->ab;
 	struct wmi_bss_color_change_enable_params_cmd *cmd;
 	struct sk_buff *skb;
@@ -3318,7 +3318,7 @@ ath12k_wmi_copy_resource_config(struct ath12k_wmi_resource_config_params *wmi_cf
 		cpu_to_le32(1 << WMI_RSRC_CFG_HOST_SVC_FLAG_REG_CC_EXT_SUPPORT_BIT);
 }
 
-static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
+static int ath12k_init_cmd_send(struct ath12k_wmi_pdev *wmi,
 				struct ath12k_wmi_init_cmd_arg *arg)
 {
 	struct ath12k_base *ab = wmi->wmi_ab->ab;
@@ -3898,7 +3898,7 @@ static int ath12k_wmi_tlv_ext_hal_reg_caps_parse(struct ath12k_base *soc,
 static int ath12k_wmi_tlv_ext_hal_reg_caps(struct ath12k_base *soc,
 					   u16 len, const void *ptr, void *data)
 {
-	struct ath12k_pdev_wmi *wmi_handle = &soc->wmi_ab.wmi[0];
+	struct ath12k_wmi_pdev *wmi_handle = &soc->wmi_ab.wmi[0];
 	struct wmi_tlv_svc_rdy_ext_parse *svc_rdy_ext = data;
 	struct ath12k_wmi_hal_reg_capabilities_ext_arg reg_cap;
 	int ret;
@@ -3934,7 +3934,7 @@ static int ath12k_wmi_tlv_ext_soc_hal_reg_caps_parse(struct ath12k_base *soc,
 						     u16 len, const void *ptr,
 						     void *data)
 {
-	struct ath12k_pdev_wmi *wmi_handle = &soc->wmi_ab.wmi[0];
+	struct ath12k_wmi_pdev *wmi_handle = &soc->wmi_ab.wmi[0];
 	struct wmi_tlv_svc_rdy_ext_parse *svc_rdy_ext = data;
 	u8 hw_mode_id = le32_to_cpu(svc_rdy_ext->pref_hw_mode_caps.hw_mode_id);
 	u32 phy_id_map;
@@ -4073,7 +4073,7 @@ static int ath12k_wmi_tlv_svc_rdy_ext_parse(struct ath12k_base *ab,
 					    u16 tag, u16 len,
 					    const void *ptr, void *data)
 {
-	struct ath12k_pdev_wmi *wmi_handle = &ab->wmi_ab.wmi[0];
+	struct ath12k_wmi_pdev *wmi_handle = &ab->wmi_ab.wmi[0];
 	struct wmi_tlv_svc_rdy_ext_parse *svc_rdy_ext = data;
 	int ret;
 
@@ -6626,7 +6626,7 @@ ath12k_wmi_send_unit_test_cmd(struct ath12k *ar,
 			      struct wmi_unit_test_cmd ut_cmd,
 			      u32 *test_args)
 {
-	struct ath12k_pdev_wmi *wmi = ar->wmi;
+	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_unit_test_cmd *cmd;
 	struct sk_buff *skb;
 	struct wmi_tlv *tlv;
@@ -6740,7 +6740,7 @@ static void ath12k_wmi_pdev_detach(struct ath12k_base *ab, u8 pdev_id)
 int ath12k_wmi_pdev_attach(struct ath12k_base *ab,
 			   u8 pdev_id)
 {
-	struct ath12k_pdev_wmi *wmi_handle;
+	struct ath12k_wmi_pdev *wmi_handle;
 
 	if (pdev_id >= ab->hw_params->max_radios)
 		return -EINVAL;

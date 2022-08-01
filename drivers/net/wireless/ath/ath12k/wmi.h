@@ -2448,13 +2448,6 @@ struct wmi_service_available_event {
 	__le32 wmi_service_segment_bitmap[WMI_SERVICE_SEGMENT_BM_SIZE32];
 } __packed;
 
-struct ath12k_pdev_wmi {
-	struct ath12k_wmi_base *wmi_ab;
-	enum ath12k_htc_ep_id eid;
-	const struct wmi_peer_flags_map *peer_flags;
-	u32 rx_decap_mode;
-};
-
 struct ath12k_wmi_vdev_create_arg {
 	u8 if_id;
 	u32 type;
@@ -4716,9 +4709,16 @@ struct target_resource_config {
 #define WMI_SERVICE_READY_TIMEOUT_HZ (5 * HZ)
 #define WMI_SEND_TIMEOUT_HZ (3 * HZ)
 
+struct ath12k_wmi_pdev {
+	struct ath12k_wmi_base *wmi_ab;
+	enum ath12k_htc_ep_id eid;
+	const struct wmi_peer_flags_map *peer_flags;
+	u32 rx_decap_mode;
+};
+
 struct ath12k_wmi_base {
 	struct ath12k_base *ab;
-	struct ath12k_pdev_wmi wmi[MAX_RADIOS];
+	struct ath12k_wmi_pdev wmi[MAX_RADIOS];
 	enum ath12k_htc_ep_id wmi_endpoint_id[MAX_RADIOS];
 	u32 max_msg_len[MAX_RADIOS];
 
@@ -4906,7 +4906,7 @@ void ath12k_wmi_init_qcn9274(struct ath12k_base *ab,
 			     struct target_resource_config *config);
 void ath12k_wmi_init_wcn7850(struct ath12k_base *ab,
 			     struct target_resource_config *config);
-int ath12k_wmi_cmd_send(struct ath12k_pdev_wmi *wmi, struct sk_buff *skb,
+int ath12k_wmi_cmd_send(struct ath12k_wmi_pdev *wmi, struct sk_buff *skb,
 			u32 cmd_id);
 struct sk_buff *ath12k_wmi_alloc_skb(struct ath12k_wmi_base *wmi_sc, u32 len);
 int ath12k_wmi_mgmt_send(struct ath12k *ar, u32 vdev_id, u32 buf_id,
