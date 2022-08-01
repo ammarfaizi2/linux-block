@@ -1755,7 +1755,7 @@ static noinline void rcu_gp_cleanup(void)
 			dump_blkd_tasks(rnp, 10);
 		WARN_ON_ONCE(rnp->qsmask);
 		WRITE_ONCE(rnp->gp_seq, new_gp_seq);
-		if (rnp->parent == NULL)
+		if (!rnp->parent)
 			smp_mb(); // Order against failing poll_state_synchronize_rcu_full().
 		rdp = this_cpu_ptr(&rcu_data);
 		if (rnp == rdp->mynode)
@@ -3716,7 +3716,7 @@ bool poll_state_synchronize_rcu_full(struct rcu_gp_oldstate *rgosp)
 {
 	struct rcu_node *rnp = rcu_get_root();
 
-	smp_mb(); // Order against root rcu_node structure grace-period completion.
+	smp_mb(); // Order against root rcu_node structure grace-period cleanup.
 	if (rgosp->rgos_norm == RCU_GET_STATE_COMPLETED ||
 	    rcu_seq_done_exact(&rnp->gp_seq, rgosp->rgos_norm) ||
 	    rgosp->rgos_exp == RCU_GET_STATE_COMPLETED ||
