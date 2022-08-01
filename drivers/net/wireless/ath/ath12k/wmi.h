@@ -2155,9 +2155,9 @@ struct ath12k_wmi_hal_reg_capabilities_ext_arg {
 
 struct ath12k_wmi_host_mem_chunk_params {
 	__le32 tlv_header;
-	u32 req_id;
-	u32 ptr;
-	u32 size;
+	__le32 req_id;
+	__le32 ptr;
+	__le32 size;
 } __packed;
 
 struct ath12k_wmi_host_mem_chunk_arg {
@@ -2178,9 +2178,9 @@ struct ath12k_wmi_init_cmd_arg {
 
 struct ath12k_wmi_pdev_band_to_mac_params {
 	__le32 tlv_header;
-	u32 pdev_id;
-	u32 start_freq;
-	u32 end_freq;
+	__le32 pdev_id;
+	__le32 start_freq;
+	__le32 end_freq;
 } __packed;
 
 /* This is both individual command WMI_PDEV_SET_HW_MODE_CMDID and also part
@@ -2188,9 +2188,9 @@ struct ath12k_wmi_pdev_band_to_mac_params {
  */
 struct ath12k_wmi_pdev_set_hw_mode_cmd {
 	__le32 tlv_header;
-	u32 pdev_id;
-	u32 hw_mode_index;
-	u32 num_band_to_mac;
+	__le32 pdev_id;
+	__le32 hw_mode_index;
+	__le32 num_band_to_mac;
 } __packed;
 
 struct ath12k_wmi_ppe_threshold_params {
@@ -2223,75 +2223,75 @@ struct wmi_init_cmd {
 
 struct ath12k_wmi_resource_config_params {
 	__le32 tlv_header;
-	u32 num_vdevs;
-	u32 num_peers;
-	u32 num_offload_peers;
-	u32 num_offload_reorder_buffs;
-	u32 num_peer_keys;
-	u32 num_tids;
-	u32 ast_skid_limit;
-	u32 tx_chain_mask;
-	u32 rx_chain_mask;
-	u32 rx_timeout_pri[4];
-	u32 rx_decap_mode;
-	u32 scan_max_pending_req;
-	u32 bmiss_offload_max_vdev;
-	u32 roam_offload_max_vdev;
-	u32 roam_offload_max_ap_profiles;
-	u32 num_mcast_groups;
-	u32 num_mcast_table_elems;
-	u32 mcast2ucast_mode;
-	u32 tx_dbg_log_size;
-	u32 num_wds_entries;
-	u32 dma_burst_size;
-	u32 mac_aggr_delim;
-	u32 rx_skip_defrag_timeout_dup_detection_check;
-	u32 vow_config;
-	u32 gtk_offload_max_vdev;
-	u32 num_msdu_desc;
-	u32 max_frag_entries;
-	u32 num_tdls_vdevs;
-	u32 num_tdls_conn_table_entries;
-	u32 beacon_tx_offload_max_vdev;
-	u32 num_multicast_filter_entries;
-	u32 num_wow_filters;
-	u32 num_keep_alive_pattern;
-	u32 keep_alive_pattern_size;
-	u32 max_tdls_concurrent_sleep_sta;
-	u32 max_tdls_concurrent_buffer_sta;
-	u32 wmi_send_separate;
-	u32 num_ocb_vdevs;
-	u32 num_ocb_channels;
-	u32 num_ocb_schedules;
-	u32 flag1;
-	u32 smart_ant_cap;
-	u32 bk_minfree;
-	u32 be_minfree;
-	u32 vi_minfree;
-	u32 vo_minfree;
-	u32 alloc_frag_desc_for_data_pkt;
-	u32 num_ns_ext_tuples_cfg;
-	u32 bpf_instruction_size;
-	u32 max_bssid_rx_filters;
-	u32 use_pdev_id;
-	u32 max_num_dbs_scan_duty_cycle;
-	u32 max_num_group_keys;
-	u32 peer_map_unmap_version;
-	u32 sched_params;
-	u32 twt_ap_pdev_count;
-	u32 twt_ap_sta_count;
-	u32 max_nlo_ssids;
-	u32 num_pkt_filters;
-	u32 num_max_sta_vdevs;
-	u32 max_bssid_indicator;
-	u32 ul_resp_config;
-	u32 msdu_flow_override_config0;
-	u32 msdu_flow_override_config1;
-	u32 flags2;
-	u32 host_service_flags;
-	u32 max_rnr_neighbours;
-	u32 ema_max_vap_cnt;
-	u32 ema_max_profile_period;
+	__le32 num_vdevs;
+	__le32 num_peers;
+	__le32 num_offload_peers;
+	__le32 num_offload_reorder_buffs;
+	__le32 num_peer_keys;
+	__le32 num_tids;
+	__le32 ast_skid_limit;
+	__le32 tx_chain_mask;
+	__le32 rx_chain_mask;
+	__le32 rx_timeout_pri[4];
+	__le32 rx_decap_mode;
+	__le32 scan_max_pending_req;
+	__le32 bmiss_offload_max_vdev;
+	__le32 roam_offload_max_vdev;
+	__le32 roam_offload_max_ap_profiles;
+	__le32 num_mcast_groups;
+	__le32 num_mcast_table_elems;
+	__le32 mcast2ucast_mode;
+	__le32 tx_dbg_log_size;
+	__le32 num_wds_entries;
+	__le32 dma_burst_size;
+	__le32 mac_aggr_delim;
+	__le32 rx_skip_defrag_timeout_dup_detection_check;
+	__le32 vow_config;
+	__le32 gtk_offload_max_vdev;
+	__le32 num_msdu_desc;
+	__le32 max_frag_entries;
+	__le32 num_tdls_vdevs;
+	__le32 num_tdls_conn_table_entries;
+	__le32 beacon_tx_offload_max_vdev;
+	__le32 num_multicast_filter_entries;
+	__le32 num_wow_filters;
+	__le32 num_keep_alive_pattern;
+	__le32 keep_alive_pattern_size;
+	__le32 max_tdls_concurrent_sleep_sta;
+	__le32 max_tdls_concurrent_buffer_sta;
+	__le32 wmi_send_separate;
+	__le32 num_ocb_vdevs;
+	__le32 num_ocb_channels;
+	__le32 num_ocb_schedules;
+	__le32 flag1;
+	__le32 smart_ant_cap;
+	__le32 bk_minfree;
+	__le32 be_minfree;
+	__le32 vi_minfree;
+	__le32 vo_minfree;
+	__le32 alloc_frag_desc_for_data_pkt;
+	__le32 num_ns_ext_tuples_cfg;
+	__le32 bpf_instruction_size;
+	__le32 max_bssid_rx_filters;
+	__le32 use_pdev_id;
+	__le32 max_num_dbs_scan_duty_cycle;
+	__le32 max_num_group_keys;
+	__le32 peer_map_unmap_version;
+	__le32 sched_params;
+	__le32 twt_ap_pdev_count;
+	__le32 twt_ap_sta_count;
+	__le32 max_nlo_ssids;
+	__le32 num_pkt_filters;
+	__le32 num_max_sta_vdevs;
+	__le32 max_bssid_indicator;
+	__le32 ul_resp_config;
+	__le32 msdu_flow_override_config0;
+	__le32 msdu_flow_override_config1;
+	__le32 flags2;
+	__le32 host_service_flags;
+	__le32 max_rnr_neighbours;
+	__le32 ema_max_vap_cnt;
+	__le32 ema_max_profile_period;
 } __packed;
 
 struct wmi_service_ready_event {
@@ -2347,69 +2347,69 @@ struct wmi_service_ready_ext_event {
 } __packed;
 
 struct ath12k_wmi_soc_mac_phy_hw_mode_caps_params {
-	u32 num_hw_modes;
-	u32 num_chainmask_tables;
+	__le32 num_hw_modes;
+	__le32 num_chainmask_tables;
 } __packed;
 
 struct ath12k_wmi_hw_mode_cap_params {
 	__le32 tlv_header;
-	u32 hw_mode_id;
-	u32 phy_id_map;
-	u32 hw_mode_config_type;
+	__le32 hw_mode_id;
+	__le32 phy_id_map;
+	__le32 hw_mode_config_type;
 } __packed;
 
 #define WMI_MAX_HECAP_PHY_SIZE                 (3)
 
 struct ath12k_wmi_mac_phy_caps_params {
-	u32 hw_mode_id;
-	u32 pdev_id;
-	u32 phy_id;
-	u32 supported_flags;
-	u32 supported_bands;
-	u32 ampdu_density;
-	u32 max_bw_supported_2g;
-	u32 ht_cap_info_2g;
-	u32 vht_cap_info_2g;
-	u32 vht_supp_mcs_2g;
-	u32 he_cap_info_2g;
-	u32 he_supp_mcs_2g;
-	u32 tx_chain_mask_2g;
-	u32 rx_chain_mask_2g;
-	u32 max_bw_supported_5g;
-	u32 ht_cap_info_5g;
-	u32 vht_cap_info_5g;
-	u32 vht_supp_mcs_5g;
-	u32 he_cap_info_5g;
-	u32 he_supp_mcs_5g;
-	u32 tx_chain_mask_5g;
-	u32 rx_chain_mask_5g;
-	u32 he_cap_phy_info_2g[WMI_MAX_HECAP_PHY_SIZE];
-	u32 he_cap_phy_info_5g[WMI_MAX_HECAP_PHY_SIZE];
+	__le32 hw_mode_id;
+	__le32 pdev_id;
+	__le32 phy_id;
+	__le32 supported_flags;
+	__le32 supported_bands;
+	__le32 ampdu_density;
+	__le32 max_bw_supported_2g;
+	__le32 ht_cap_info_2g;
+	__le32 vht_cap_info_2g;
+	__le32 vht_supp_mcs_2g;
+	__le32 he_cap_info_2g;
+	__le32 he_supp_mcs_2g;
+	__le32 tx_chain_mask_2g;
+	__le32 rx_chain_mask_2g;
+	__le32 max_bw_supported_5g;
+	__le32 ht_cap_info_5g;
+	__le32 vht_cap_info_5g;
+	__le32 vht_supp_mcs_5g;
+	__le32 he_cap_info_5g;
+	__le32 he_supp_mcs_5g;
+	__le32 tx_chain_mask_5g;
+	__le32 rx_chain_mask_5g;
+	__le32 he_cap_phy_info_2g[WMI_MAX_HECAP_PHY_SIZE];
+	__le32 he_cap_phy_info_5g[WMI_MAX_HECAP_PHY_SIZE];
 	struct ath12k_wmi_ppe_threshold_params he_ppet2g;
 	struct ath12k_wmi_ppe_threshold_params he_ppet5g;
-	u32 chainmask_table_id;
-	u32 lmac_id;
-	u32 he_cap_info_2g_ext;
-	u32 he_cap_info_5g_ext;
-	u32 he_cap_info_internal;
+	__le32 chainmask_table_id;
+	__le32 lmac_id;
+	__le32 he_cap_info_2g_ext;
+	__le32 he_cap_info_5g_ext;
+	__le32 he_cap_info_internal;
 } __packed;
 
 struct ath12k_wmi_hal_reg_caps_ext_params {
 	__le32 tlv_header;
-	u32 phy_id;
-	u32 eeprom_reg_domain;
-	u32 eeprom_reg_domain_ext;
-	u32 regcap1;
-	u32 regcap2;
-	u32 wireless_modes;
-	u32 low_2ghz_chan;
-	u32 high_2ghz_chan;
-	u32 low_5ghz_chan;
-	u32 high_5ghz_chan;
+	__le32 phy_id;
+	__le32 eeprom_reg_domain;
+	__le32 eeprom_reg_domain_ext;
+	__le32 regcap1;
+	__le32 regcap2;
+	__le32 wireless_modes;
+	__le32 low_2ghz_chan;
+	__le32 high_2ghz_chan;
+	__le32 low_5ghz_chan;
+	__le32 high_5ghz_chan;
 } __packed;
 
 struct ath12k_wmi_soc_hal_reg_caps_params {
-	u32 num_phy;
+	__le32 num_phy;
 } __packed;
 
 /* 2 word representation of MAC addr */
