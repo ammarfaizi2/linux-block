@@ -3322,7 +3322,7 @@ static int ath12k_init_cmd_send(struct ath12k_pdev_wmi *wmi,
 	struct wmi_init_cmd *cmd;
 	struct wmi_resource_config *cfg;
 	struct ath12k_wmi_pdev_set_hw_mode_cmd *hw_mode;
-	struct wmi_pdev_band_to_mac *band_to_mac;
+	struct ath12k_wmi_pdev_band_to_mac_params *band_to_mac;
 	struct ath12k_wmi_host_mem_chunk_params *host_mem_chunks;
 	struct wmi_tlv *tlv;
 	size_t ret, len;

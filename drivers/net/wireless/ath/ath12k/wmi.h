@@ -2176,7 +2176,7 @@ struct ath12k_wmi_init_cmd_arg {
 	struct ath12k_wmi_pdev_band_arg band_to_mac[WMI_HOST_MAX_PDEV];
 };
 
-struct wmi_pdev_band_to_mac {
+struct ath12k_wmi_pdev_band_to_mac_params {
 	__le32 tlv_header;
 	u32 pdev_id;
 	u32 start_freq;
