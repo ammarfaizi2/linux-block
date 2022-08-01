@@ -46,15 +46,15 @@ struct ath12k_wmi_service_ext_arg {
 
 struct wmi_tlv_svc_rdy_ext_parse {
 	struct ath12k_wmi_service_ext_arg arg;
-	struct wmi_soc_mac_phy_hw_mode_caps *hw_caps;
-	struct wmi_hw_mode_capabilities *hw_mode_caps;
+	struct ath12k_wmi_soc_mac_phy_hw_mode_caps_params *hw_caps;
+	struct ath12k_wmi_hw_mode_cap_params *hw_mode_caps;
 	u32 n_hw_mode_caps;
 	u32 tot_phy_id;
-	struct wmi_hw_mode_capabilities pref_hw_mode_caps;
-	struct wmi_mac_phy_capabilities *mac_phy_caps;
+	struct ath12k_wmi_hw_mode_cap_params pref_hw_mode_caps;
+	struct ath12k_wmi_mac_phy_caps_params *mac_phy_caps;
 	u32 n_mac_phy_caps;
-	struct wmi_soc_hal_reg_capabilities *soc_hal_reg_caps;
-	struct wmi_hal_reg_capabilities_ext *ext_hal_reg_caps;
+	struct ath12k_wmi_soc_hal_reg_caps_params *soc_hal_reg_caps;
+	struct ath12k_wmi_hal_reg_caps_ext_params *ext_hal_reg_caps;
 	u32 n_ext_hal_reg_caps;
 	struct wmi_tlv_dma_ring_caps_parse dma_caps_parse;
 	bool hw_mode_done;
@@ -93,9 +93,9 @@ static const struct wmi_tlv_policy wmi_tlv_policies[] = {
 	[WMI_TAG_SERVICE_READY_EXT_EVENT] = {
 		.min_len = sizeof(struct wmi_service_ready_ext_event) },
 	[WMI_TAG_SOC_MAC_PHY_HW_MODE_CAPS] = {
-		.min_len = sizeof(struct wmi_soc_mac_phy_hw_mode_caps) },
+		.min_len = sizeof(struct ath12k_wmi_soc_mac_phy_hw_mode_caps_params) },
 	[WMI_TAG_SOC_HAL_REG_CAPABILITIES] = {
-		.min_len = sizeof(struct wmi_soc_hal_reg_capabilities) },
+		.min_len = sizeof(struct ath12k_wmi_soc_hal_reg_caps_params) },
 	[WMI_TAG_VDEV_START_RESPONSE_EVENT] = {
 		.min_len = sizeof(struct wmi_vdev_start_resp_event) },
 	[WMI_TAG_PEER_DELETE_RESP_EVENT] = {
@@ -425,14 +425,14 @@ static int ath12k_pull_svc_ready_ext(struct ath12k_pdev_wmi *wmi_handle,
 
 static int
 ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_pdev_wmi *wmi_handle,
-				      struct wmi_soc_mac_phy_hw_mode_caps *hw_caps,
-				      struct wmi_hw_mode_capabilities *wmi_hw_mode_caps,
-				      struct wmi_soc_hal_reg_capabilities *hal_reg_caps,
-				      struct wmi_mac_phy_capabilities *wmi_mac_phy_caps,
+				      struct ath12k_wmi_soc_mac_phy_hw_mode_caps_params *hw_caps,
+				      struct ath12k_wmi_hw_mode_cap_params *wmi_hw_mode_caps,
+				      struct ath12k_wmi_soc_hal_reg_caps_params *hal_reg_caps,
+				      struct ath12k_wmi_mac_phy_caps_params *wmi_mac_phy_caps,
 				      u8 hw_mode_id, u8 phy_id,
 				      struct ath12k_pdev *pdev)
 {
-	struct wmi_mac_phy_capabilities *mac_phy_caps;
+	struct ath12k_wmi_mac_phy_caps_params *mac_phy_caps;
 	struct ath12k_band_cap *cap_band;
 	struct ath12k_pdev_cap *pdev_cap = &pdev->cap;
 	u32 phy_map;
@@ -539,12 +539,12 @@ ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_pdev_wmi *wmi_handle,
 
 static int
 ath12k_pull_reg_cap_svc_rdy_ext(struct ath12k_pdev_wmi *wmi_handle,
-				struct wmi_soc_hal_reg_capabilities *reg_caps,
-				struct wmi_hal_reg_capabilities_ext *wmi_ext_reg_cap,
+				struct ath12k_wmi_soc_hal_reg_caps_params *reg_caps,
+				struct ath12k_wmi_hal_reg_caps_ext_params *wmi_ext_reg_cap,
 				u8 phy_idx,
 				struct ath12k_wmi_hal_reg_capabilities_ext_arg *param)
 {
-	struct wmi_hal_reg_capabilities_ext *ext_reg_cap;
+	struct ath12k_wmi_hal_reg_caps_ext_params *ext_reg_cap;
 
 	if (!reg_caps || !wmi_ext_reg_cap)
 		return -EINVAL;
@@ -3787,7 +3787,7 @@ static int ath12k_wmi_tlv_hw_mode_caps_parse(struct ath12k_base *soc,
 					     const void *ptr, void *data)
 {
 	struct wmi_tlv_svc_rdy_ext_parse *svc_rdy_ext = data;
-	struct wmi_hw_mode_capabilities *hw_mode_cap;
+	struct ath12k_wmi_hw_mode_cap_params *hw_mode_cap;
 	u32 phy_map = 0;
 
 	if (tag != WMI_TAG_HW_MODE_CAPABILITIES)
@@ -3796,7 +3796,7 @@ static int ath12k_wmi_tlv_hw_mode_caps_parse(struct ath12k_base *soc,
 	if (svc_rdy_ext->n_hw_mode_caps >= svc_rdy_ext->arg.num_hw_modes)
 		return -ENOBUFS;
 
-	hw_mode_cap = container_of(ptr, struct wmi_hw_mode_capabilities,
+	hw_mode_cap = container_of(ptr, struct ath12k_wmi_hw_mode_cap_params,
 				   hw_mode_id);
 	svc_rdy_ext->n_hw_mode_caps++;
 
@@ -3813,13 +3813,13 @@ static int ath12k_wmi_tlv_hw_mode_caps(struct ath12k_base *soc,
 				       u16 len, const void *ptr, void *data)
 {
 	struct wmi_tlv_svc_rdy_ext_parse *svc_rdy_ext = data;
-	struct wmi_hw_mode_capabilities *hw_mode_caps;
+	struct ath12k_wmi_hw_mode_cap_params *hw_mode_caps;
 	enum wmi_host_hw_mode_config_type mode, pref;
 	u32 i;
 	int ret;
 
 	svc_rdy_ext->n_hw_mode_caps = 0;
-	svc_rdy_ext->hw_mode_caps = (struct wmi_hw_mode_capabilities *)ptr;
+	svc_rdy_ext->hw_mode_caps = (struct ath12k_wmi_hw_mode_cap_params *)ptr;
 
 	ret = ath12k_wmi_tlv_iter(soc, ptr, len,
 				  ath12k_wmi_tlv_hw_mode_caps_parse,
@@ -3862,7 +3862,7 @@ static int ath12k_wmi_tlv_mac_phy_caps_parse(struct ath12k_base *soc,
 	if (svc_rdy_ext->n_mac_phy_caps >= svc_rdy_ext->tot_phy_id)
 		return -ENOBUFS;
 
-	len = min_t(u16, len, sizeof(struct wmi_mac_phy_capabilities));
+	len = min_t(u16, len, sizeof(struct ath12k_wmi_mac_phy_caps_params));
 	if (!svc_rdy_ext->n_mac_phy_caps) {
 		svc_rdy_ext->mac_phy_caps = kzalloc((svc_rdy_ext->tot_phy_id) * len,
 						    GFP_ATOMIC);
@@ -3901,7 +3901,7 @@ static int ath12k_wmi_tlv_ext_hal_reg_caps(struct ath12k_base *soc,
 	u32 i;
 
 	svc_rdy_ext->n_ext_hal_reg_caps = 0;
-	svc_rdy_ext->ext_hal_reg_caps = (struct wmi_hal_reg_capabilities_ext *)ptr;
+	svc_rdy_ext->ext_hal_reg_caps = (struct ath12k_wmi_hal_reg_caps_ext_params *)ptr;
 	ret = ath12k_wmi_tlv_iter(soc, ptr, len,
 				  ath12k_wmi_tlv_ext_hal_reg_caps_parse,
 				  svc_rdy_ext);
@@ -3937,7 +3937,7 @@ static int ath12k_wmi_tlv_ext_soc_hal_reg_caps_parse(struct ath12k_base *soc,
 	int pdev_index = 0;
 	int ret;
 
-	svc_rdy_ext->soc_hal_reg_caps = (struct wmi_soc_hal_reg_capabilities *)ptr;
+	svc_rdy_ext->soc_hal_reg_caps = (struct ath12k_wmi_soc_hal_reg_caps_params *)ptr;
 	svc_rdy_ext->arg.num_phy = svc_rdy_ext->soc_hal_reg_caps->num_phy;
 
 	soc->num_radios = 0;
@@ -4087,7 +4087,7 @@ static int ath12k_wmi_tlv_svc_rdy_ext_parse(struct ath12k_base *ab,
 		break;
 
 	case WMI_TAG_SOC_MAC_PHY_HW_MODE_CAPS:
-		svc_rdy_ext->hw_caps = (struct wmi_soc_mac_phy_hw_mode_caps *)ptr;
+		svc_rdy_ext->hw_caps = (struct ath12k_wmi_soc_mac_phy_hw_mode_caps_params *)ptr;
 		svc_rdy_ext->arg.num_hw_modes = svc_rdy_ext->hw_caps->num_hw_modes;
 		break;
 

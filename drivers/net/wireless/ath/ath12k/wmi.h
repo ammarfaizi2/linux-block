@@ -2346,12 +2346,12 @@ struct wmi_service_ready_ext_event {
 	__le32 he_cap_info_ext;
 } __packed;
 
-struct wmi_soc_mac_phy_hw_mode_caps {
+struct ath12k_wmi_soc_mac_phy_hw_mode_caps_params {
 	u32 num_hw_modes;
 	u32 num_chainmask_tables;
 } __packed;
 
-struct wmi_hw_mode_capabilities {
+struct ath12k_wmi_hw_mode_cap_params {
 	__le32 tlv_header;
 	u32 hw_mode_id;
 	u32 phy_id_map;
@@ -2360,7 +2360,7 @@ struct wmi_hw_mode_capabilities {
 
 #define WMI_MAX_HECAP_PHY_SIZE                 (3)
 
-struct wmi_mac_phy_capabilities {
+struct ath12k_wmi_mac_phy_caps_params {
 	u32 hw_mode_id;
 	u32 pdev_id;
 	u32 phy_id;
@@ -2394,7 +2394,7 @@ struct wmi_mac_phy_capabilities {
 	u32 he_cap_info_internal;
 } __packed;
 
-struct wmi_hal_reg_capabilities_ext {
+struct ath12k_wmi_hal_reg_caps_ext_params {
 	__le32 tlv_header;
 	u32 phy_id;
 	u32 eeprom_reg_domain;
@@ -2408,7 +2408,7 @@ struct wmi_hal_reg_capabilities_ext {
 	u32 high_5ghz_chan;
 } __packed;
 
-struct wmi_soc_hal_reg_capabilities {
+struct ath12k_wmi_soc_hal_reg_caps_params {
 	u32 num_phy;
 } __packed;
 
