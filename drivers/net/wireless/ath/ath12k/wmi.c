@@ -902,39 +902,39 @@ static void ath12k_wmi_put_wmi_channel(struct wmi_channel *chan,
 {
 	memset(chan, 0, sizeof(*chan));
 
-	chan->mhz = arg->channel.freq;
-	chan->band_center_freq1 = arg->channel.band_center_freq1;
-	if (arg->channel.mode == MODE_11AC_VHT80_80)
-		chan->band_center_freq2 = arg->channel.band_center_freq2;
+	chan->mhz = arg->freq;
+	chan->band_center_freq1 = arg->band_center_freq1;
+	if (arg->mode == MODE_11AC_VHT80_80)
+		chan->band_center_freq2 = arg->band_center_freq2;
 	else
 		chan->band_center_freq2 = 0;
 
-	chan->info |= u32_encode_bits(arg->channel.mode, WMI_CHAN_INFO_MODE);
-	if (arg->channel.passive)
+	chan->info |= u32_encode_bits(arg->mode, WMI_CHAN_INFO_MODE);
+	if (arg->passive)
 		chan->info |= WMI_CHAN_INFO_PASSIVE;
-	if (arg->channel.allow_ibss)
+	if (arg->allow_ibss)
 		chan->info |= WMI_CHAN_INFO_ADHOC_ALLOWED;
-	if (arg->channel.allow_ht)
+	if (arg->allow_ht)
 		chan->info |= WMI_CHAN_INFO_ALLOW_HT;
-	if (arg->channel.allow_vht)
+	if (arg->allow_vht)
 		chan->info |= WMI_CHAN_INFO_ALLOW_VHT;
-	if (arg->channel.allow_he)
+	if (arg->allow_he)
 		chan->info |= WMI_CHAN_INFO_ALLOW_HE;
-	if (arg->channel.ht40plus)
+	if (arg->ht40plus)
 		chan->info |= WMI_CHAN_INFO_HT40_PLUS;
-	if (arg->channel.chan_radar)
+	if (arg->chan_radar)
 		chan->info |= WMI_CHAN_INFO_DFS;
-	if (arg->channel.freq2_radar)
+	if (arg->freq2_radar)
 		chan->info |= WMI_CHAN_INFO_DFS_FREQ2;
 
-	chan->reg_info_1 = u32_encode_bits(arg->channel.max_power,
+	chan->reg_info_1 = u32_encode_bits(arg->max_power,
 					   WMI_CHAN_REG_INFO1_MAX_PWR) |
-		u32_encode_bits(arg->channel.max_reg_power,
+		u32_encode_bits(arg->max_reg_power,
 				WMI_CHAN_REG_INFO1_MAX_REG_PWR);
 
-	chan->reg_info_2 = u32_encode_bits(arg->channel.max_antenna_gain,
+	chan->reg_info_2 = u32_encode_bits(arg->max_antenna_gain,
 					   WMI_CHAN_REG_INFO2_ANT_MAX) |
-		u32_encode_bits(arg->channel.max_power, WMI_CHAN_REG_INFO2_MAX_TX_PWR);
+		u32_encode_bits(arg->max_power, WMI_CHAN_REG_INFO2_MAX_TX_PWR);
 }
 
 int ath12k_wmi_vdev_start(struct ath12k *ar, struct wmi_vdev_start_req_arg *arg,
@@ -1016,7 +1016,7 @@ int ath12k_wmi_vdev_start(struct ath12k *ar, struct wmi_vdev_start_req_arg *arg,
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI, "vdev %s id 0x%x freq 0x%x mode 0x%x\n",
 		   restart ? "restart" : "start", arg->vdev_id,
-		   arg->channel.freq, arg->channel.mode);
+		   arg->freq, arg->mode);
 
 	return ret;
 }

@@ -754,22 +754,21 @@ static int ath12k_mac_monitor_vdev_start(struct ath12k *ar, int vdev_id,
 
 	channel = chandef->chan;
 	arg.vdev_id = vdev_id;
-	arg.channel.freq = channel->center_freq;
-	arg.channel.band_center_freq1 = chandef->center_freq1;
-	arg.channel.band_center_freq2 = chandef->center_freq2;
-	arg.channel.mode = ath12k_phymodes[chandef->chan->band][chandef->width];
-	arg.channel.chan_radar =
-			!!(channel->flags & IEEE80211_CHAN_RADAR);
+	arg.freq = channel->center_freq;
+	arg.band_center_freq1 = chandef->center_freq1;
+	arg.band_center_freq2 = chandef->center_freq2;
+	arg.mode = ath12k_phymodes[chandef->chan->band][chandef->width];
+	arg.chan_radar = !!(channel->flags & IEEE80211_CHAN_RADAR);
 
-	arg.channel.min_power = 0;
-	arg.channel.max_power = channel->max_power;
-	arg.channel.max_reg_power = channel->max_reg_power;
-	arg.channel.max_antenna_gain = channel->max_antenna_gain;
+	arg.min_power = 0;
+	arg.max_power = channel->max_power;
+	arg.max_reg_power = channel->max_reg_power;
+	arg.max_antenna_gain = channel->max_antenna_gain;
 
 	arg.pref_tx_streams = ar->num_tx_chains;
 	arg.pref_rx_streams = ar->num_rx_chains;
 
-	arg.channel.passive |= !!(chandef->chan->flags & IEEE80211_CHAN_NO_IR);
+	arg.passive |= !!(chandef->chan->flags & IEEE80211_CHAN_NO_IR);
 
 	reinit_completion(&ar->vdev_setup_done);
 	reinit_completion(&ar->vdev_delete_done);
@@ -5344,16 +5343,15 @@ ath12k_mac_vdev_start_restart(struct ath12k_vif *arvif,
 	arg.dtim_period = arvif->dtim_period;
 	arg.bcn_intval = arvif->beacon_interval;
 
-	arg.channel.freq = chandef->chan->center_freq;
-	arg.channel.band_center_freq1 = chandef->center_freq1;
-	arg.channel.band_center_freq2 = chandef->center_freq2;
-	arg.channel.mode =
-		ath12k_phymodes[chandef->chan->band][chandef->width];
+	arg.freq = chandef->chan->center_freq;
+	arg.band_center_freq1 = chandef->center_freq1;
+	arg.band_center_freq2 = chandef->center_freq2;
+	arg.mode = ath12k_phymodes[chandef->chan->band][chandef->width];
 
-	arg.channel.min_power = 0;
-	arg.channel.max_power = chandef->chan->max_power * 2;
-	arg.channel.max_reg_power = chandef->chan->max_reg_power * 2;
-	arg.channel.max_antenna_gain = chandef->chan->max_antenna_gain * 2;
+	arg.min_power = 0;
+	arg.max_power = chandef->chan->max_power * 2;
+	arg.max_reg_power = chandef->chan->max_reg_power * 2;
+	arg.max_antenna_gain = chandef->chan->max_antenna_gain * 2;
 
 	arg.pref_tx_streams = ar->num_tx_chains;
 	arg.pref_rx_streams = ar->num_rx_chains;
@@ -5364,10 +5362,9 @@ ath12k_mac_vdev_start_restart(struct ath12k_vif *arvif,
 		arg.hidden_ssid = arvif->u.ap.hidden_ssid;
 
 		/* For now allow DFS for AP mode */
-		arg.channel.chan_radar =
-			!!(chandef->chan->flags & IEEE80211_CHAN_RADAR);
+		arg.chan_radar = !!(chandef->chan->flags & IEEE80211_CHAN_RADAR);
 
-		arg.channel.passive = arg.channel.chan_radar;
+		arg.passive = arg.chan_radar;
 
 		spin_lock_bh(&ab->base_lock);
 		arg.regdomain = ar->ab->dfs_region;
@@ -5384,12 +5381,12 @@ ath12k_mac_vdev_start_restart(struct ath12k_vif *arvif,
 		}
 	}
 
-	arg.channel.passive |= !!(chandef->chan->flags & IEEE80211_CHAN_NO_IR);
+	arg.passive |= !!(chandef->chan->flags & IEEE80211_CHAN_NO_IR);
 
 	ath12k_dbg(ab, ATH12K_DBG_MAC,
 		   "mac vdev %d start center_freq %d phymode %s\n",
-		   arg.vdev_id, arg.channel.freq,
-		   ath12k_wmi_phymode_str(arg.channel.mode));
+		   arg.vdev_id, arg.freq,
+		   ath12k_wmi_phymode_str(arg.mode));
 
 	ret = ath12k_wmi_vdev_start(ar, &arg, restart);
 	if (ret) {
@@ -5422,7 +5419,7 @@ ath12k_mac_vdev_start_restart(struct ath12k_vif *arvif,
 		set_bit(ATH12K_CAC_RUNNING, &ar->dev_flags);
 		ath12k_dbg(ab, ATH12K_DBG_MAC,
 			   "CAC Started in chan_freq %d for vdev %d\n",
-			   arg.channel.freq, arg.vdev_id);
+			   arg.freq, arg.vdev_id);
 	}
 
 	ret = ath12k_mac_set_txbf_conf(arvif);

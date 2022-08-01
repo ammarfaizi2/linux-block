@@ -2668,7 +2668,8 @@ static inline const char *ath12k_wmi_phymode_str(enum wmi_phy_mode mode)
 	return "<unknown>";
 }
 
-struct wmi_channel_arg {
+struct wmi_vdev_start_req_arg {
+	u32 vdev_id;
 	u32 freq;
 	u32 band_center_freq1;
 	u32 band_center_freq2;
@@ -2685,11 +2686,6 @@ struct wmi_channel_arg {
 	u32 max_reg_power;
 	u32 max_antenna_gain;
 	enum wmi_phy_mode mode;
-};
-
-struct wmi_vdev_start_req_arg {
-	u32 vdev_id;
-	struct wmi_channel_arg channel;
 	u32 bcn_intval;
 	u32 dtim_period;
 	u8 *ssid;
