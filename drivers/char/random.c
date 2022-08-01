@@ -400,49 +400,67 @@ EXPORT_SYMBOL(get_random_bytes);
 static ssize_t get_random_bytes_user(struct iov_iter *iter)
 {
 	u32 chacha_state[CHACHA_STATE_WORDS];
-	u8 block[CHACHA_BLOCK_SIZE];
-	size_t ret = 0, copied;
+	unsigned long next_gen;
+	size_t ret, copied, batch_len;
+	bool do_more = true;
 
 	if (unlikely(!iov_iter_count(iter)))
 		return 0;
 
-	/*
-	 * Immediately overwrite the ChaCha key at index 4 with random
-	 * bytes, in case userspace causes copy_to_iter() below to sleep
-	 * forever, so that we still retain forward secrecy in that case.
-	 */
-	crng_make_state(chacha_state, (u8 *)&chacha_state[4], CHACHA_KEY_SIZE);
-	/*
-	 * However, if we're doing a read of len <= 32, we don't need to
-	 * use chacha_state after, so we can simply return those bytes to
-	 * the user directly.
-	 */
-	if (iov_iter_count(iter) <= CHACHA_KEY_SIZE) {
-		ret = copy_to_iter(&chacha_state[4], CHACHA_KEY_SIZE, iter);
-		goto out_zero_chacha;
+retry_generation:
+	ret = 0;
+	next_gen = READ_ONCE(base_crng.generation);
+	if (unlikely(next_gen != current->rng_batch.generation || crng_has_old_seed())) {
+		current->rng_batch.position = sizeof(current->rng_batch.buf);
+		current->rng_batch.generation = next_gen;
 	}
 
-	for (;;) {
-		chacha20_block(chacha_state, block);
+more_batch:
+	batch_len = min_t(size_t, iov_iter_count(iter),
+			  sizeof(current->rng_batch.buf) - current->rng_batch.position);
+	if (batch_len) {
+		copied = copy_to_iter(current->rng_batch.buf + current->rng_batch.position,
+				      batch_len, iter);
+		ret += copied;
+		memset(current->rng_batch.buf + current->rng_batch.position, 0, batch_len);
+		current->rng_batch.position += batch_len;
+		if (!iov_iter_count(iter) || copied != batch_len)
+			goto out;
+	}
+
+	crng_make_state(chacha_state, current->rng_batch.buf + CHACHA_BLOCK_SIZE, 32);
+	while (iov_iter_count(iter) >= CHACHA_BLOCK_SIZE) {
+		chacha20_block(chacha_state, current->rng_batch.buf);
 		if (unlikely(chacha_state[12] == 0))
 			++chacha_state[13];
 
-		copied = copy_to_iter(block, sizeof(block), iter);
+		copied = copy_to_iter(current->rng_batch.buf, CHACHA_BLOCK_SIZE, iter);
 		ret += copied;
-		if (!iov_iter_count(iter) || copied != sizeof(block))
+		if (!iov_iter_count(iter) || copied != CHACHA_BLOCK_SIZE) {
+			do_more = false;
 			break;
+		}
 
-		BUILD_BUG_ON(PAGE_SIZE % sizeof(block) != 0);
+		BUILD_BUG_ON(PAGE_SIZE % CHACHA_BLOCK_SIZE != 0);
 		if (ret % PAGE_SIZE == 0) {
-			if (signal_pending(current))
+			if (signal_pending(current)) {
+				do_more = false;
 				break;
+			}
 			cond_resched();
 		}
 	}
-
-	memzero_explicit(block, sizeof(block));
-out_zero_chacha:
+	chacha20_block(chacha_state, current->rng_batch.buf);
+	current->rng_batch.position = 0;
 	memzero_explicit(chacha_state, sizeof(chacha_state));
+	if (do_more)
+		goto more_batch;
+
+out:
+	if (unlikely(ret && current->rng_batch.generation != READ_ONCE(base_crng.generation))) {
+		iov_iter_revert(iter, ret);
+		goto retry_generation;
+	}
 	return ret ? ret : -EFAULT;
 }
 
