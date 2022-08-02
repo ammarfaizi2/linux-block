@@ -750,7 +750,7 @@ out:
 }
 #else
 #define exynos4412_tmu_set_emulation NULL
-static int exynos_tmu_set_emulation(struct thermal_zone *tz, int temp)
+static int exynos_tmu_set_emulation(struct thermal_zone_device *tz, int temp)
 	{ return -EINVAL; }
 #endif /* CONFIG_THERMAL_EMULATION */
 
