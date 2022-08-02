@@ -572,7 +572,6 @@ static int stm_thermal_probe(struct platform_device *pdev)
 	return 0;
 
 err_tz:
-	thermal_zone_of_sensor_unregister(&pdev->dev, sensor->th_dev);
 	return ret;
 }
 
@@ -582,7 +581,6 @@ static int stm_thermal_remove(struct platform_device *pdev)
 
 	stm_thermal_sensor_off(sensor);
 	thermal_remove_hwmon_sysfs(sensor->th_dev);
-	thermal_zone_of_sensor_unregister(&pdev->dev, sensor->th_dev);
 
 	return 0;
 }
