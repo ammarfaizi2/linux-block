@@ -451,26 +451,6 @@ static void dm_pflip_high_irq(void *interrupt_params)
 		     vrr_active, (int) !e);
 }
 
-static void dm_crtc_handle_vblank(struct amdgpu_crtc *acrtc)
-{
-	struct drm_crtc *crtc = &acrtc->base;
-	struct drm_device *dev = crtc->dev;
-	unsigned long flags;
-
-	drm_crtc_handle_vblank(crtc);
-
-	spin_lock_irqsave(&dev->event_lock, flags);
-
-	/* Send completion event for cursor-only commits */
-	if (acrtc->event && acrtc->pflip_status != AMDGPU_FLIP_SUBMITTED) {
-		drm_crtc_send_vblank_event(crtc, acrtc->event);
-		drm_crtc_vblank_put(crtc);
-		acrtc->event = NULL;
-	}
-
-	spin_unlock_irqrestore(&dev->event_lock, flags);
-}
-
 static void dm_vupdate_high_irq(void *interrupt_params)
 {
 	struct common_irq_params *irq_params = interrupt_params;
