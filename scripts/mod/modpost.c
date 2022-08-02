@@ -321,13 +321,10 @@ static void *sym_get_data_by_offset(const struct elf_info *info,
 {
 	Elf_Shdr *sechdr = &info->sechdrs[secindex];
 
-	if (info->hdr->e_type != ET_REL)
-		offset -= sechdr->sh_addr;
-
 	return (void *)info->hdr + sechdr->sh_offset + offset;
 }
 
-static void *sym_get_data(const struct elf_info *info, const Elf_Sym *sym)
+void *sym_get_data(const struct elf_info *info, const Elf_Sym *sym)
 {
 	return sym_get_data_by_offset(info, get_secindex(info, sym),
 				      sym->st_value);
@@ -465,6 +462,10 @@ static int parse_elf(struct elf_info *info, const char *filename)
 	hdr->e_shstrndx  = TO_NATIVE(hdr->e_shstrndx);
 	sechdrs = (void *)hdr + hdr->e_shoff;
 	info->sechdrs = sechdrs;
+
+	/* modpost only works for relocatable objects */
+	if (hdr->e_type != ET_REL)
+		fatal("%s: not relocatable object.", filename);
 
 	/* Check if file offset is correct */
 	if (hdr->e_shoff > info->size) {
@@ -742,7 +743,6 @@ static const char *const section_white_list[] =
 {
 	".comment*",
 	".debug*",
-	".cranges",		/* sh64 */
 	".zdebug*",		/* Compressed debug sections. */
 	".GCC.command.line",	/* record-gcc-switches */
 	".mdebug*",        /* alpha, score, mips etc. */
@@ -1623,9 +1623,6 @@ static int addend_386_rel(struct elf_info *elf, Elf_Shdr *sechdr, Elf_Rela *r)
 		break;
 	case R_386_PC32:
 		r->r_addend = TO_NATIVE(*location) + 4;
-		/* For CONFIG_RELOCATABLE=y */
-		if (elf->hdr->e_type == ET_EXEC)
-			r->r_addend += r->r_offset;
 		break;
 	}
 	return 0;
