@@ -3592,12 +3592,14 @@ EXPORT_SYMBOL_GPL(get_state_synchronize_rcu);
  */
 void get_state_synchronize_rcu_full(struct rcu_gp_oldstate *rgosp)
 {
+	struct rcu_node *rnp = rcu_get_root();
+
 	/*
 	 * Any prior manipulation of RCU-protected data must happen
 	 * before the loads from ->gp_seq and ->expedited_sequence.
 	 */
 	smp_mb();  /* ^^^ */
-	rgosp->rgos_norm = rcu_seq_snap(&rcu_state.gp_seq);
+	rgosp->rgos_norm = rcu_seq_snap(&rnp->gp_seq);
 	rgosp->rgos_exp = rcu_seq_snap(&rcu_state.expedited_sequence);
 	rgosp->rgos_polled = rcu_seq_snap(&rcu_state.gp_seq_polled);
 }
