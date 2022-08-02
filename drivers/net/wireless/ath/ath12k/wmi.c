@@ -425,20 +425,20 @@ static int ath12k_pull_svc_ready_ext(struct ath12k_pdev_wmi *wmi_handle,
 
 static int
 ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_pdev_wmi *wmi_handle,
-				      const struct ath12k_wmi_soc_mac_phy_hw_mode_caps_params *hw_caps,
-				      const struct ath12k_wmi_hw_mode_cap_params *wmi_hw_mode_caps,
-				      const struct ath12k_wmi_soc_hal_reg_caps_params *hal_reg_caps,
-				      const struct ath12k_wmi_mac_phy_caps_params *wmi_mac_phy_caps,
+				      struct wmi_tlv_svc_rdy_ext_parse *svc,
 				      u8 hw_mode_id, u8 phy_id,
 				      struct ath12k_pdev *pdev)
 {
 	const struct ath12k_wmi_mac_phy_caps_params *mac_phy_caps;
+	const struct ath12k_wmi_soc_mac_phy_hw_mode_caps_params *hw_caps = svc->hw_caps;
+	const struct ath12k_wmi_hw_mode_cap_params *wmi_hw_mode_caps = svc->hw_mode_caps;
+	const struct ath12k_wmi_mac_phy_caps_params *wmi_mac_phy_caps = svc->mac_phy_caps;
 	struct ath12k_band_cap *cap_band;
 	struct ath12k_pdev_cap *pdev_cap = &pdev->cap;
 	u32 phy_map;
 	u32 hw_idx, phy_idx = 0;
 
-	if (!hw_caps || !wmi_hw_mode_caps || !hal_reg_caps)
+	if (!hw_caps || !wmi_hw_mode_caps || !svc->soc_hal_reg_caps)
 		return -EINVAL;
 
 	for (hw_idx = 0; hw_idx < hw_caps->num_hw_modes; hw_idx++) {
@@ -456,7 +456,7 @@ ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_pdev_wmi *wmi_handle,
 		return -EINVAL;
 
 	phy_idx += phy_id;
-	if (phy_id >= hal_reg_caps->num_phy)
+	if (phy_id >= svc->soc_hal_reg_caps->num_phy)
 		return -EINVAL;
 
 	mac_phy_caps = wmi_mac_phy_caps + phy_idx;
@@ -540,19 +540,19 @@ ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_pdev_wmi *wmi_handle,
 static int
 ath12k_pull_reg_cap_svc_rdy_ext(struct ath12k_pdev_wmi *wmi_handle,
 				const struct ath12k_wmi_soc_hal_reg_caps_params *reg_caps,
-				const struct ath12k_wmi_hal_reg_caps_ext_params *wmi_ext_reg_cap,
+				const struct ath12k_wmi_hal_reg_caps_ext_params *ext_caps,
 				u8 phy_idx,
 				struct ath12k_wmi_hal_reg_capabilities_ext_arg *param)
 {
 	const struct ath12k_wmi_hal_reg_caps_ext_params *ext_reg_cap;
 
-	if (!reg_caps || !wmi_ext_reg_cap)
+	if (!reg_caps || !ext_caps)
 		return -EINVAL;
 
 	if (phy_idx >= reg_caps->num_phy)
 		return -EINVAL;
 
-	ext_reg_cap = &wmi_ext_reg_cap[phy_idx];
+	ext_reg_cap = &ext_caps[phy_idx];
 
 	param->phy_id = ext_reg_cap->phy_id;
 	param->eeprom_reg_domain = ext_reg_cap->eeprom_reg_domain;
@@ -3945,10 +3945,7 @@ static int ath12k_wmi_tlv_ext_soc_hal_reg_caps_parse(struct ath12k_base *soc,
 
 	while (phy_id_map && soc->num_radios < MAX_RADIOS) {
 		ret = ath12k_pull_mac_phy_cap_svc_ready_ext(wmi_handle,
-							    svc_rdy_ext->hw_caps,
-							    svc_rdy_ext->hw_mode_caps,
-							    svc_rdy_ext->soc_hal_reg_caps,
-							    svc_rdy_ext->mac_phy_caps,
+							    svc_rdy_ext,
 							    hw_mode_id, soc->num_radios,
 							    &soc->pdevs[pdev_index]);
 		if (ret) {
