@@ -3099,7 +3099,7 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar,
 	mpdu_info = u32_encode_bits(1, RX_MPDU_DESC_INFO0_MSDU_COUNT) |
 		    u32_encode_bits(0, RX_MPDU_DESC_INFO0_FRAG_FLAG) |
 		    u32_encode_bits(1, RX_MPDU_DESC_INFO0_RAW_MPDU) |
-		    u32_encode_bits(1, RX_MPDU_DESC_INFO0_VALID_PN);
+		    u32_encode_bits(1, RX_MPDU_DESC_INFO0_VALID_PN) |
 		    u32_encode_bits(rx_tid->tid, RX_MPDU_DESC_INFO0_TID);
 
 	reo_ent_ring->rx_mpdu_info.info0 = mpdu_info;
