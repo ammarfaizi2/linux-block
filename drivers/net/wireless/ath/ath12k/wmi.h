@@ -2930,7 +2930,7 @@ enum scan_dwelltime_adaptive_mode {
 #define WLAN_SCAN_MAX_NUM_BSSID         10
 #define WLAN_SCAN_MAX_NUM_CHANNELS      40
 
-struct element_info {
+struct ath12k_wmi_element_info_arg {
 	u32 len;
 	u8 *ptr;
 };
@@ -3141,9 +3141,7 @@ struct ath12k_wmi_scan_req_arg {
 	u32 notify_scan_events;
 	struct cfg80211_ssid ssid[WLAN_SCAN_MAX_NUM_SSID];
 	struct ath12k_wmi_mac_addr_params bssid_list[WLAN_SCAN_MAX_NUM_BSSID];
-	struct element_info extraie;
-	struct element_info htcap;
-	struct element_info vhtcap;
+	struct ath12k_wmi_element_info_arg extraie;
 	u32 num_hint_s_ssid;
 	u32 num_hint_bssid;
 	struct hint_short_ssid hint_s_ssid[WLAN_SCAN_MAX_HINT_S_SSID];
