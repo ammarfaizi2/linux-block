@@ -637,9 +637,9 @@ static int sun4i_gpadc_probe(struct platform_device *pdev)
 	pm_runtime_enable(&pdev->dev);
 
 	if (IS_ENABLED(CONFIG_THERMAL_OF)) {
-		info->tzd = thermal_of_zone_register(info->sensor_device,
-						     0, info,
-						     &sun4i_ts_tz_ops);
+		info->tzd = devm_thermal_of_zone_register(info->sensor_device,
+							  0, info,
+							  &sun4i_ts_tz_ops);
 		/*
 		 * Do not fail driver probing when failing to register in
 		 * thermal because no thermal DT node is found.
@@ -680,8 +680,6 @@ static int sun4i_gpadc_remove(struct platform_device *pdev)
 
 	if (!IS_ENABLED(CONFIG_THERMAL_OF))
 		return 0;
-
-	thermal_zone_of_sensor_unregister(info->sensor_device, info->tzd);
 
 	if (!info->no_irq)
 		iio_map_array_unregister(indio_dev);
