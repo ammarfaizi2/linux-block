@@ -403,8 +403,6 @@ struct joycon_input_report {
 #define JC_RUMBLE_DATA_SIZE	8
 #define JC_RUMBLE_QUEUE_SIZE	8
 
-static const unsigned short JC_RUMBLE_ZERO_AMP_PKT_CNT = 5;
-
 static const char * const joycon_player_led_names[] = {
 	LED_FUNCTION_PLAYER1,
 	LED_FUNCTION_PLAYER2,
