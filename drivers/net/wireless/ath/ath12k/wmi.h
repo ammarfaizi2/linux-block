@@ -3747,7 +3747,8 @@ enum wmi_start_event_param {
 struct wmi_vdev_start_resp_event {
 	__le32 vdev_id;
 	__le32 requestor_id;
-	enum wmi_start_event_param resp_type;
+	/* enum wmi_start_event_param */
+	__le32 resp_type;
 	__le32 status;
 	__le32 chain_mask;
 	__le32 smps_mode;

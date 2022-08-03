@@ -4081,17 +4081,7 @@ static int ath12k_pull_vdev_start_resp_tlv(struct ath12k_base *ab, struct sk_buf
 		return -EPROTO;
 	}
 
-	memset(vdev_rsp, 0, sizeof(*vdev_rsp));
-
-	vdev_rsp->vdev_id = ev->vdev_id;
-	vdev_rsp->requestor_id = ev->requestor_id;
-	vdev_rsp->resp_type = ev->resp_type;
-	vdev_rsp->status = ev->status;
-	vdev_rsp->chain_mask = ev->chain_mask;
-	vdev_rsp->smps_mode = ev->smps_mode;
-	vdev_rsp->mac_id = ev->mac_id;
-	vdev_rsp->cfgd_tx_streams = ev->cfgd_tx_streams;
-	vdev_rsp->cfgd_rx_streams = ev->cfgd_rx_streams;
+	*vdev_rsp = *ev;
 
 	kfree(tb);
 	return 0;
