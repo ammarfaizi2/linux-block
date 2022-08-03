@@ -3976,7 +3976,7 @@ struct wmi_pdev_temperature_event {
 
 #define WLAN_MGMT_TXRX_HOST_MAX_ANTENNA 4
 
-struct mgmt_rx_event_params {
+struct ath12k_wmi_mgmt_rx_arg {
 	u32 chan_freq;
 	u32 channel;
 	u32 snr;

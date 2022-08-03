@@ -4542,7 +4542,7 @@ static int ath12k_pull_vdev_stopped_param_tlv(struct ath12k_base *ab, struct sk_
 
 static int ath12k_pull_mgmt_rx_params_tlv(struct ath12k_base *ab,
 					  struct sk_buff *skb,
-					  struct mgmt_rx_event_params *hdr)
+					  struct ath12k_wmi_mgmt_rx_arg *hdr)
 {
 	const void **tb;
 	const struct ath12k_wmi_mgmt_rx_params *ev;
@@ -5421,7 +5421,7 @@ static void ath12k_vdev_stopped_event(struct ath12k_base *ab, struct sk_buff *sk
 
 static void ath12k_mgmt_rx_event(struct ath12k_base *ab, struct sk_buff *skb)
 {
-	struct mgmt_rx_event_params rx_ev = {0};
+	struct ath12k_wmi_mgmt_rx_arg rx_ev = {0};
 	struct ath12k *ar;
 	struct ieee80211_rx_status *status = IEEE80211_SKB_RXCB(skb);
 	struct ieee80211_hdr *hdr;
