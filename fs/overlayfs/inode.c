@@ -491,13 +491,14 @@ static void ovl_idmap_posix_acl(struct user_namespace *mnt_userns,
  *
  * This is obviously only relevant when idmapped layers are used.
  */
+#ifdef CONFIG_FS_POSIX_ACL
 struct posix_acl *ovl_get_acl(struct inode *inode, int type, bool rcu)
 {
 	struct inode *realinode = ovl_inode_real(inode);
 	struct posix_acl *acl, *clone;
 	struct path realpath;
 
-	if (!IS_ENABLED(CONFIG_FS_POSIX_ACL) || !IS_POSIXACL(realinode))
+	if (!IS_POSIXACL(realinode))
 		return NULL;
 
 	/* Careful in RCU walk mode */
@@ -543,6 +544,7 @@ struct posix_acl *ovl_get_acl(struct inode *inode, int type, bool rcu)
 	posix_acl_release(acl);
 	return clone;
 }
+#endif
 
 int ovl_update_time(struct inode *inode, struct timespec64 *ts, int flags)
 {
