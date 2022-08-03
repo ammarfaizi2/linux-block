@@ -2781,67 +2781,6 @@ out:
 	return ret;
 }
 
-int
-ath12k_wmi_send_thermal_mitigation_cmd(struct ath12k *ar,
-				       struct ath12k_wmi_thermal_mitigation_arg *arg)
-{
-	struct ath12k_wmi_pdev *wmi = ar->wmi;
-	struct wmi_therm_throt_config_request_cmd *cmd;
-	struct wmi_therm_throt_level_config_info *lvl_conf;
-	struct wmi_tlv *tlv;
-	struct sk_buff *skb;
-	int i, ret, len;
-
-	len = sizeof(*cmd) + TLV_HDR_SIZE + THERMAL_LEVELS * sizeof(*lvl_conf);
-
-	skb = ath12k_wmi_alloc_skb(wmi->wmi_ab, len);
-	if (!skb)
-		return -ENOMEM;
-
-	cmd = (struct wmi_therm_throt_config_request_cmd *)skb->data;
-
-	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_THERM_THROT_CONFIG_REQUEST,
-						 sizeof(*cmd));
-
-	cmd->pdev_id = cpu_to_le32(ar->pdev->pdev_id);
-	cmd->enable = cpu_to_le32(arg->enable);
-	cmd->dc = cpu_to_le32(arg->dc);
-	cmd->dc_per_event = cpu_to_le32(arg->dc_per_event);
-	cmd->therm_throt_levels = cpu_to_le32(THERMAL_LEVELS);
-
-	tlv = (struct wmi_tlv *)(skb->data + sizeof(*cmd));
-	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_STRUCT,
-					 THERMAL_LEVELS * sizeof(*lvl_conf));
-
-	lvl_conf = (struct wmi_therm_throt_level_config_info *)(skb->data +
-								sizeof(*cmd) +
-								TLV_HDR_SIZE);
-	for (i = 0; i < THERMAL_LEVELS; i++) {
-		lvl_conf->tlv_header =
-			ath12k_wmi_tlv_cmd_hdr(WMI_TAG_THERM_THROT_LEVEL_CONFIG_INFO,
-					       sizeof(*lvl_conf));
-
-		lvl_conf->temp_lwm = arg->levelconf[i].tmplwm;
-		lvl_conf->temp_hwm = arg->levelconf[i].tmphwm;
-		lvl_conf->dc_off_percent = arg->levelconf[i].dcoffpercent;
-		lvl_conf->prio = arg->levelconf[i].priority;
-		lvl_conf++;
-	}
-
-	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_THERM_THROT_SET_CONF_CMDID);
-	if (ret) {
-		ath12k_warn(ar->ab, "failed to send THERM_THROT_SET_CONF cmd\n");
-		dev_kfree_skb(skb);
-	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "WMI vdev set thermal throt pdev_id %d enable %d dc %d dc_per_event %x levels %d\n",
-		   ar->pdev->pdev_id, arg->enable, arg->dc,
-		   arg->dc_per_event, THERMAL_LEVELS);
-
-	return ret;
-}
-
 int ath12k_wmi_pdev_pktlog_enable(struct ath12k *ar, u32 pktlog_filter)
 {
 	struct ath12k_wmi_pdev *wmi = ar->wmi;
