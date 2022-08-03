@@ -2682,52 +2682,6 @@ int ath12k_wmi_addba_clear_resp(struct ath12k *ar, u32 vdev_id, const u8 *mac)
 	return ret;
 }
 
-int ath12k_wmi_pdev_peer_pktlog_filter(struct ath12k *ar, u8 *addr, u8 enable)
-{
-	struct ath12k_wmi_pdev *wmi = ar->wmi;
-	struct wmi_pdev_pktlog_filter_cmd *cmd;
-	struct wmi_pdev_pktlog_filter_info *info;
-	struct sk_buff *skb;
-	struct wmi_tlv *tlv;
-	void *ptr;
-	int ret, len;
-
-	len = sizeof(*cmd) + sizeof(*info) + TLV_HDR_SIZE;
-	skb = ath12k_wmi_alloc_skb(wmi->wmi_ab, len);
-	if (!skb)
-		return -ENOMEM;
-
-	cmd = (struct wmi_pdev_pktlog_filter_cmd *)skb->data;
-
-	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_PEER_PKTLOG_FILTER_CMD,
-						 sizeof(*cmd));
-
-	cmd->pdev_id = cpu_to_le32(DP_HW2SW_MACID(ar->pdev->pdev_id));
-	cmd->num_mac = cpu_to_le32(1);
-	cmd->enable = cpu_to_le32(enable);
-
-	ptr = skb->data + sizeof(*cmd);
-
-	tlv = ptr;
-	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_STRUCT, sizeof(*info));
-
-	ptr += TLV_HDR_SIZE;
-	info = ptr;
-
-	ether_addr_copy(info->peer_macaddr.addr, addr);
-	info->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_PEER_PKTLOG_FILTER_INFO,
-						  sizeof(*info));
-
-	ret = ath12k_wmi_cmd_send(wmi, skb,
-				  WMI_PDEV_PKTLOG_FILTER_CMDID);
-	if (ret) {
-		ath12k_warn(ar->ab, "failed to send WMI_PDEV_PKTLOG_ENABLE_CMDID\n");
-		dev_kfree_skb(skb);
-	}
-
-	return ret;
-}
-
 int ath12k_wmi_send_init_country_cmd(struct ath12k *ar,
 				     struct ath12k_wmi_init_country_arg *arg)
 {
@@ -2775,64 +2729,6 @@ out:
 		ath12k_warn(ar->ab,
 			    "failed to send WMI_SET_INIT_COUNTRY CMD :%d\n",
 			    ret);
-		dev_kfree_skb(skb);
-	}
-
-	return ret;
-}
-
-int ath12k_wmi_pdev_pktlog_enable(struct ath12k *ar, u32 pktlog_filter)
-{
-	struct ath12k_wmi_pdev *wmi = ar->wmi;
-	struct wmi_pktlog_enable_cmd *cmd;
-	struct sk_buff *skb;
-	int ret;
-
-	skb = ath12k_wmi_alloc_skb(wmi->wmi_ab, sizeof(*cmd));
-	if (!skb)
-		return -ENOMEM;
-
-	cmd = (struct wmi_pktlog_enable_cmd *)skb->data;
-
-	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_PKTLOG_ENABLE_CMD,
-						 sizeof(*cmd));
-
-	cmd->pdev_id = cpu_to_le32(DP_HW2SW_MACID(ar->pdev->pdev_id));
-	cmd->evlist = cpu_to_le32(pktlog_filter);
-	cmd->enable = cpu_to_le32(ATH12K_WMI_PKTLOG_ENABLE_FORCE);
-
-	ret = ath12k_wmi_cmd_send(wmi, skb,
-				  WMI_PDEV_PKTLOG_ENABLE_CMDID);
-	if (ret) {
-		ath12k_warn(ar->ab, "failed to send WMI_PDEV_PKTLOG_ENABLE_CMDID\n");
-		dev_kfree_skb(skb);
-	}
-
-	return ret;
-}
-
-int ath12k_wmi_pdev_pktlog_disable(struct ath12k *ar)
-{
-	struct ath12k_wmi_pdev *wmi = ar->wmi;
-	struct wmi_pktlog_disable_cmd *cmd;
-	struct sk_buff *skb;
-	int ret;
-
-	skb = ath12k_wmi_alloc_skb(wmi->wmi_ab, sizeof(*cmd));
-	if (!skb)
-		return -ENOMEM;
-
-	cmd = (struct wmi_pktlog_disable_cmd *)skb->data;
-
-	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_PDEV_PKTLOG_DISABLE_CMD,
-						 sizeof(*cmd));
-
-	cmd->pdev_id = cpu_to_le32(DP_HW2SW_MACID(ar->pdev->pdev_id));
-
-	ret = ath12k_wmi_cmd_send(wmi, skb,
-				  WMI_PDEV_PKTLOG_DISABLE_CMDID);
-	if (ret) {
-		ath12k_warn(ar->ab, "failed to send WMI_PDEV_PKTLOG_ENABLE_CMDID\n");
 		dev_kfree_skb(skb);
 	}
 

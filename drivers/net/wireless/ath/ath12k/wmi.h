@@ -3602,36 +3602,6 @@ struct wmi_addba_clear_resp_cmd {
 	struct ath12k_wmi_mac_addr_params peer_macaddr;
 } __packed;
 
-struct wmi_pdev_pktlog_filter_info {
-	__le32 tlv_header;
-	struct ath12k_wmi_mac_addr_params peer_macaddr;
-} __packed;
-
-struct wmi_pdev_pktlog_filter_cmd {
-	__le32 tlv_header;
-	__le32 pdev_id;
-	__le32 enable;
-	__le32 filter_type;
-	__le32 num_mac;
-} __packed;
-
-enum ath12k_wmi_pktlog_enable {
-	ATH12K_WMI_PKTLOG_ENABLE_AUTO  = 0,
-	ATH12K_WMI_PKTLOG_ENABLE_FORCE = 1,
-};
-
-struct wmi_pktlog_enable_cmd {
-	__le32 tlv_header;
-	__le32 pdev_id;
-	__le32 evlist; /* WMI_PKTLOG_EVENT */
-	__le32 enable;
-} __packed;
-
-struct wmi_pktlog_disable_cmd {
-	__le32 tlv_header;
-	__le32 pdev_id;
-} __packed;
-
 #define DFS_PHYERR_UNIT_TEST_CMD 0
 #define DFS_UNIT_TEST_MODULE	0x2b
 #define DFS_UNIT_TEST_TOKEN	0xAA
@@ -4915,9 +4885,6 @@ int ath12k_wmi_send_bcn_offload_control_cmd(struct ath12k *ar,
 					    u32 vdev_id, u32 bcn_ctrl_op);
 int ath12k_wmi_send_init_country_cmd(struct ath12k *ar,
 				     struct ath12k_wmi_init_country_arg *arg);
-int ath12k_wmi_pdev_pktlog_enable(struct ath12k *ar, u32 pktlog_filter);
-int ath12k_wmi_pdev_pktlog_disable(struct ath12k *ar);
-int ath12k_wmi_pdev_peer_pktlog_filter(struct ath12k *ar, u8 *addr, u8 enable);
 int ath12k_wmi_peer_rx_reorder_queue_setup(struct ath12k *ar,
 					   int vdev_id, const u8 *addr,
 					   dma_addr_t paddr, u8 tid,
