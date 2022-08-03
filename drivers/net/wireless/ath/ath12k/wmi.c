@@ -3518,7 +3518,7 @@ static int ath12k_wmi_tlv_dma_buf_entry_parse(struct ath12k_base *soc,
 	if (tag != WMI_TAG_DMA_BUF_RELEASE_ENTRY)
 		return -EPROTO;
 
-	if (arg->num_buf_entry >= arg->fixed.num_buf_release_entry)
+	if (arg->num_buf_entry >= le32_to_cpu(arg->fixed.num_buf_release_entry))
 		return -ENOBUFS;
 
 	arg->num_buf_entry++;
@@ -3534,7 +3534,7 @@ static int ath12k_wmi_tlv_dma_buf_meta_parse(struct ath12k_base *soc,
 	if (tag != WMI_TAG_DMA_BUF_RELEASE_SPECTRAL_META_DATA)
 		return -EPROTO;
 
-	if (arg->num_meta >= arg->fixed.num_meta_data_entry)
+	if (arg->num_meta >= le32_to_cpu(arg->fixed.num_meta_data_entry))
 		return -ENOBUFS;
 
 	arg->num_meta++;
@@ -3548,13 +3548,15 @@ static int ath12k_wmi_tlv_dma_buf_parse(struct ath12k_base *ab,
 {
 	struct ath12k_wmi_dma_buf_release_arg *arg = data;
 	const struct ath12k_wmi_dma_buf_release_fixed_params *fixed;
+	u32 pdev_id;
 	int ret;
 
 	switch (tag) {
 	case WMI_TAG_DMA_BUF_RELEASE:
 		fixed = ptr;
 		arg->fixed = *fixed;
-		arg->fixed.pdev_id = DP_HW2SW_MACID(fixed->pdev_id);
+		pdev_id = DP_HW2SW_MACID(le32_to_cpu(fixed->pdev_id));
+		arg->fixed.pdev_id = cpu_to_le32(pdev_id);
 		break;
 	case WMI_TAG_ARRAY_STRUCT:
 		if (!arg->buf_entry_done) {

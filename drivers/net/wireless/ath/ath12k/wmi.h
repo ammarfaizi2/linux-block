@@ -4545,20 +4545,20 @@ struct ath12k_wmi_pdev_dma_ring_cfg_req_cmd {
 } __packed;
 
 struct ath12k_wmi_dma_buf_release_fixed_params {
-	u32 pdev_id;
-	u32 module_id;
-	u32 num_buf_release_entry;
-	u32 num_meta_data_entry;
+	__le32 pdev_id;
+	__le32 module_id;
+	__le32 num_buf_release_entry;
+	__le32 num_meta_data_entry;
 } __packed;
 
 struct ath12k_wmi_dma_buf_release_entry_params {
 	__le32 tlv_header;
-	u32 paddr_lo;
+	__le32 paddr_lo;
 
 	/* Bits 11:0:   address of data
 	 * Bits 31:12:  host context data
 	 */
-	u32 paddr_hi;
+	__le32 paddr_hi;
 } __packed;
 
 #define WMI_SPECTRAL_META_INFO1_FREQ1		GENMASK(15, 0)
@@ -4569,10 +4569,10 @@ struct ath12k_wmi_dma_buf_release_entry_params {
 struct ath12k_wmi_dma_buf_release_meta_data_params {
 	__le32 tlv_header;
 	s32 noise_floor[WMI_MAX_CHAINS];
-	u32 reset_delay;
-	u32 freq1;
-	u32 freq2;
-	u32 ch_width;
+	__le32 reset_delay;
+	__le32 freq1;
+	__le32 freq2;
+	__le32 ch_width;
 } __packed;
 
 enum wmi_fils_discovery_cmd_type {

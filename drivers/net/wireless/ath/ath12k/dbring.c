@@ -244,7 +244,7 @@ int ath12k_dbring_buffer_release_event(struct ath12k_base *ab,
 	dma_addr_t paddr;
 	int ret = 0;
 
-	pdev_idx = ev->fixed.pdev_id;
+	pdev_idx = le32_to_cpu(ev->fixed.pdev_id);
 
 	if (pdev_idx >= ab->num_radios) {
 		ath12k_warn(ab, "Invalid pdev id %d\n", pdev_idx);
@@ -283,15 +283,15 @@ int ath12k_dbring_buffer_release_event(struct ath12k_base *ab,
 	}
 
 	srng = &ab->hal.srng_list[ring->refill_srng.ring_id];
-	num_entry = ev->fixed.num_buf_release_entry;
+	num_entry = le32_to_cpu(ev->fixed.num_buf_release_entry);
 	size = sizeof(*buff) + ring->buf_sz + ring->buf_align - 1;
 	num_buff_reaped = 0;
 
 	spin_lock_bh(&srng->lock);
 
 	while (num_buff_reaped < num_entry) {
-		desc.info0 = ev->buf_entry[num_buff_reaped].paddr_lo;
-		desc.info1 = ev->buf_entry[num_buff_reaped].paddr_hi;
+		desc.info0 = le32_to_cpu(ev->buf_entry[num_buff_reaped].paddr_lo);
+		desc.info1 = le32_to_cpu(ev->buf_entry[num_buff_reaped].paddr_hi);
 		handler_data.meta = ev->meta_data[num_buff_reaped];
 
 		num_buff_reaped++;
