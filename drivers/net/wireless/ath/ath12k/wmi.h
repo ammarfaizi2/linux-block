@@ -3055,12 +3055,12 @@ enum {
 	WMI_SCAN_DWELL_MODE_STATIC       = 4,
 };
 
-struct hint_short_ssid {
+struct ath12k_wmi_hint_short_ssid_arg {
 	u32 freq_flags;
 	u32 short_ssid;
 };
 
-struct hint_bssid {
+struct ath12k_wmi_hint_bssid_arg {
 	u32 freq_flags;
 	struct ath12k_wmi_mac_addr_params bssid;
 };
@@ -3144,8 +3144,8 @@ struct ath12k_wmi_scan_req_arg {
 	struct ath12k_wmi_element_info_arg extraie;
 	u32 num_hint_s_ssid;
 	u32 num_hint_bssid;
-	struct hint_short_ssid hint_s_ssid[WLAN_SCAN_MAX_HINT_S_SSID];
-	struct hint_bssid hint_bssid[WLAN_SCAN_MAX_HINT_BSSID];
+	struct ath12k_wmi_hint_short_ssid_arg hint_s_ssid[WLAN_SCAN_MAX_HINT_S_SSID];
+	struct ath12k_wmi_hint_bssid_arg hint_bssid[WLAN_SCAN_MAX_HINT_BSSID];
 };
 
 struct wmi_ssid_arg {

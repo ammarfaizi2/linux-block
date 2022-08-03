@@ -2114,8 +2114,8 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 	int i, ret, len;
 	u32 *tmp_ptr;
 	u8 extraie_len_with_pad = 0;
-	struct hint_short_ssid *s_ssid = NULL;
-	struct hint_bssid *hint_bssid = NULL;
+	struct ath12k_wmi_hint_short_ssid_arg *s_ssid = NULL;
+	struct ath12k_wmi_hint_bssid_arg *hint_bssid = NULL;
 
 	len = sizeof(*cmd);
 
@@ -2139,11 +2139,11 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 
 	if (arg->num_hint_bssid)
 		len += TLV_HDR_SIZE +
-		       arg->num_hint_bssid * sizeof(struct hint_bssid);
+		       arg->num_hint_bssid * sizeof(*hint_bssid);
 
 	if (arg->num_hint_s_ssid)
 		len += TLV_HDR_SIZE +
-		       arg->num_hint_s_ssid * sizeof(struct hint_short_ssid);
+		       arg->num_hint_s_ssid * sizeof(*s_ssid);
 
 	skb = ath12k_wmi_alloc_skb(wmi->wmi_ab, len);
 	if (!skb)
@@ -2242,7 +2242,7 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 	ptr += extraie_len_with_pad;
 
 	if (arg->num_hint_s_ssid) {
-		len = arg->num_hint_s_ssid * sizeof(struct hint_short_ssid);
+		len = arg->num_hint_s_ssid * sizeof(*s_ssid);
 		tlv = ptr;
 		tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_FIXED_STRUCT, len);
 		ptr += TLV_HDR_SIZE;
@@ -2256,7 +2256,7 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 	}
 
 	if (arg->num_hint_bssid) {
-		len = arg->num_hint_bssid * sizeof(struct hint_bssid);
+		len = arg->num_hint_bssid * sizeof(struct ath12k_wmi_hint_bssid_arg);
 		tlv = ptr;
 		tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_FIXED_STRUCT, len);
 		ptr += TLV_HDR_SIZE;
