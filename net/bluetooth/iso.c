@@ -44,6 +44,9 @@ static void iso_sock_kill(struct sock *sk);
 /* ----- ISO socket info ----- */
 #define iso_pi(sk) ((struct iso_pinfo *)sk)
 
+#define EIR_SERVICE_DATA_LENGTH 4
+#define BASE_MAX_LENGTH (HCI_MAX_PER_AD_LENGTH - EIR_SERVICE_DATA_LENGTH)
+
 struct iso_pinfo {
 	struct bt_sock		bt;
 	bdaddr_t		src;
@@ -57,7 +60,7 @@ struct iso_pinfo {
 	__u32			flags;
 	struct bt_iso_qos	qos;
 	__u8			base_len;
-	__u8			base[HCI_MAX_PER_AD_LENGTH];
+	__u8			base[BASE_MAX_LENGTH];
 	struct iso_conn		*conn;
 };
 
@@ -1177,8 +1180,10 @@ static int iso_sock_setsockopt(struct socket *sock, int level, int optname,
 		}
 
 		len = min_t(unsigned int, sizeof(qos), optlen);
-		if (len != sizeof(qos))
-			return -EINVAL;
+		if (len != sizeof(qos)) {
+			err = -EINVAL;
+			break;
+		}
 
 		memset(&qos, 0, sizeof(qos));
 
@@ -1233,7 +1238,7 @@ static int iso_sock_getsockopt(struct socket *sock, int level, int optname,
 {
 	struct sock *sk = sock->sk;
 	int len, err = 0;
-	struct bt_iso_qos qos;
+	struct bt_iso_qos *qos;
 	u8 base_len;
 	u8 *base;
 
@@ -1259,12 +1264,12 @@ static int iso_sock_getsockopt(struct socket *sock, int level, int optname,
 
 	case BT_ISO_QOS:
 		if (sk->sk_state == BT_CONNECTED || sk->sk_state == BT_CONNECT2)
-			qos = iso_pi(sk)->conn->hcon->iso_qos;
+			qos = &iso_pi(sk)->conn->hcon->iso_qos;
 		else
-			qos = iso_pi(sk)->qos;
+			qos = &iso_pi(sk)->qos;
 
-		len = min_t(unsigned int, len, sizeof(qos));
-		if (copy_to_user(optval, (char *)&qos, len))
+		len = min_t(unsigned int, len, sizeof(*qos));
+		if (copy_to_user(optval, qos, len))
 			err = -EFAULT;
 
 		break;
