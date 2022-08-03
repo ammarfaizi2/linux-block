@@ -3994,20 +3994,20 @@ struct ath12k_wmi_mgmt_rx_arg {
 #define ATH_MAX_ANTENNA 4
 
 struct ath12k_wmi_mgmt_rx_params {
-	u32 channel;
-	u32 snr;
-	u32 rate;
-	u32 phy_mode;
-	u32 buf_len;
-	u32 status;
-	u32 rssi_ctl[ATH_MAX_ANTENNA];
-	u32 flags;
-	int rssi;
-	u32 tsf_delta;
-	u32 rx_tsf_l32;
-	u32 rx_tsf_u32;
-	u32 pdev_id;
-	u32 chan_freq;
+	__le32 channel;
+	__le32 snr;
+	__le32 rate;
+	__le32 phy_mode;
+	__le32 buf_len;
+	__le32 status;
+	__le32 rssi_ctl[ATH_MAX_ANTENNA];
+	__le32 flags;
+	s32 rssi;
+	__le32 tsf_delta;
+	__le32 rx_tsf_l32;
+	__le32 rx_tsf_u32;
+	__le32 pdev_id;
+	__le32 chan_freq;
 } __packed;
 
 #define MAX_ANTENNA_EIGHT 8

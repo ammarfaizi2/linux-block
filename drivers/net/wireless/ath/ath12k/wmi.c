@@ -4551,7 +4551,7 @@ static int ath12k_pull_mgmt_rx_params_tlv(struct ath12k_base *ab,
 	const void **tb;
 	const struct ath12k_wmi_mgmt_rx_params *ev;
 	const u8 *frame;
-	int ret;
+	int i, ret;
 
 	tb = ath12k_wmi_tlv_parse_alloc(ab, skb->data, skb->len, GFP_ATOMIC);
 	if (IS_ERR(tb)) {
@@ -4569,18 +4569,20 @@ static int ath12k_pull_mgmt_rx_params_tlv(struct ath12k_base *ab,
 		return -EPROTO;
 	}
 
-	hdr->pdev_id = ev->pdev_id;
-	hdr->chan_freq = ev->chan_freq;
-	hdr->channel = ev->channel;
-	hdr->snr = ev->snr;
-	hdr->rate = ev->rate;
-	hdr->phy_mode = ev->phy_mode;
-	hdr->buf_len = ev->buf_len;
-	hdr->status = ev->status;
-	hdr->flags = ev->flags;
+	hdr->pdev_id = le32_to_cpu(ev->pdev_id);
+	hdr->chan_freq = le32_to_cpu(ev->chan_freq);
+	hdr->channel = le32_to_cpu(ev->channel);
+	hdr->snr = le32_to_cpu(ev->snr);
+	hdr->rate = le32_to_cpu(ev->rate);
+	hdr->phy_mode = le32_to_cpu(ev->phy_mode);
+	hdr->buf_len = le32_to_cpu(ev->buf_len);
+	hdr->status = le32_to_cpu(ev->status);
+	hdr->flags = le32_to_cpu(ev->flags);
 	hdr->rssi = ev->rssi;
-	hdr->tsf_delta = ev->tsf_delta;
-	memcpy(hdr->rssi_ctl, ev->rssi_ctl, sizeof(hdr->rssi_ctl));
+	hdr->tsf_delta = le32_to_cpu(ev->tsf_delta);
+
+	for (i = 0; i < ATH_MAX_ANTENNA; i++)
+		hdr->rssi_ctl[i] = le32_to_cpu(ev->rssi_ctl[i]);
 
 	if (skb->len < (frame - skb->data) + hdr->buf_len) {
 		ath12k_warn(ab, "invalid length in mgmt rx hdr ev");
