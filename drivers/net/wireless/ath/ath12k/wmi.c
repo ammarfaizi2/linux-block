@@ -29,7 +29,7 @@ struct wmi_tlv_svc_ready_parse {
 };
 
 struct wmi_tlv_dma_ring_caps_parse {
-	struct wmi_dma_ring_capabilities *dma_ring_caps;
+	struct ath12k_wmi_dma_ring_caps_params *dma_ring_caps;
 	u32 n_dma_ring_caps;
 };
 
@@ -107,7 +107,7 @@ static const struct wmi_tlv_policy wmi_tlv_policies[] = {
 	[WMI_TAG_REG_CHAN_LIST_CC_EXT_EVENT] = {
 		.min_len = sizeof(struct wmi_reg_chan_list_cc_ext_event) },
 	[WMI_TAG_MGMT_RX_HDR] = {
-		.min_len = sizeof(struct wmi_mgmt_rx_hdr) },
+		.min_len = sizeof(struct ath12k_wmi_mgmt_rx_params) },
 	[WMI_TAG_MGMT_TX_COMPL_EVENT] = {
 		.min_len = sizeof(struct wmi_mgmt_tx_compl_event) },
 	[WMI_TAG_SCAN_EVENT] = {
@@ -150,7 +150,7 @@ static __le32 ath12k_wmi_tlv_cmd_hdr(u32 cmd, u32 len)
 }
 
 void ath12k_wmi_init_qcn9274(struct ath12k_base *ab,
-			     struct target_resource_config *config)
+			     struct ath12k_wmi_resource_config_arg *config)
 {
 	config->num_vdevs = ab->num_radios * TARGET_NUM_VDEVS;
 
@@ -205,7 +205,7 @@ void ath12k_wmi_init_qcn9274(struct ath12k_base *ab,
 }
 
 void ath12k_wmi_init_wcn7850(struct ath12k_base *ab,
-			     struct target_resource_config *config)
+			     struct ath12k_wmi_resource_config_arg *config)
 {
 	config->num_vdevs = 4;
 	config->num_peers = 16;
@@ -746,7 +746,7 @@ int ath12k_wmi_vdev_create(struct ath12k *ar, u8 *macaddr,
 	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_vdev_create_cmd *cmd;
 	struct sk_buff *skb;
-	struct wmi_vdev_txrx_streams *txrx_streams;
+	struct ath12k_wmi_vdev_txrx_streams_params *txrx_streams;
 	struct wmi_tlv *tlv;
 	int ret, len;
 	void *ptr;
@@ -898,7 +898,7 @@ int ath12k_wmi_vdev_down(struct ath12k *ar, u8 vdev_id)
 	return ret;
 }
 
-static void ath12k_wmi_put_wmi_channel(struct wmi_channel *chan,
+static void ath12k_wmi_put_wmi_channel(struct ath12k_wmi_channel_params *chan,
 				       struct wmi_vdev_start_req_arg *arg)
 {
 	memset(chan, 0, sizeof(*chan));
@@ -944,7 +944,7 @@ int ath12k_wmi_vdev_start(struct ath12k *ar, struct wmi_vdev_start_req_arg *arg,
 	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_vdev_start_request_cmd *cmd;
 	struct sk_buff *skb;
-	struct wmi_channel *chan;
+	struct ath12k_wmi_channel_params *chan;
 	struct wmi_tlv *tlv;
 	void *ptr;
 	int ret, len;
@@ -1663,7 +1663,7 @@ int ath12k_wmi_bcn_tmpl(struct ath12k *ar, u32 vdev_id,
 {
 	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_bcn_tmpl_cmd *cmd;
-	struct wmi_bcn_prb_info *bcn_prb_info;
+	struct ath12k_wmi_bcn_prb_info_params *bcn_prb_info;
 	struct wmi_tlv *tlv;
 	struct sk_buff *skb;
 	void *ptr;
@@ -1846,8 +1846,8 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 {
 	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_peer_assoc_complete_cmd *cmd;
-	struct wmi_vht_rate_set *mcs;
-	struct wmi_he_rate_set *he_mcs;
+	struct ath12k_wmi_vht_rate_set_params *mcs;
+	struct ath12k_wmi_he_rate_set_params *he_mcs;
 	struct sk_buff *skb;
 	struct wmi_tlv *tlv;
 	void *ptr;
@@ -2334,7 +2334,7 @@ int ath12k_wmi_send_scan_chan_list_cmd(struct ath12k *ar,
 	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_scan_chan_list_cmd *cmd;
 	struct sk_buff *skb;
-	struct wmi_channel *chan_info;
+	struct ath12k_wmi_channel_params *chan_info;
 	struct ath12k_wmi_channel_arg *channel_arg;
 	struct wmi_tlv *tlv;
 	void *ptr;
@@ -2972,7 +2972,7 @@ int ath12k_wmi_probe_resp_tmpl(struct ath12k *ar, u32 vdev_id,
 			       struct sk_buff *tmpl)
 {
 	struct wmi_probe_tmpl_cmd *cmd;
-	struct wmi_bcn_prb_info *probe_info;
+	struct ath12k_wmi_bcn_prb_info_params *probe_info;
 	struct wmi_tlv *tlv;
 	struct sk_buff *skb;
 	void *ptr;
@@ -3088,7 +3088,7 @@ ath12k_fill_band_to_mac_param(struct ath12k_base  *soc,
 
 static void
 ath12k_wmi_copy_resource_config(struct ath12k_wmi_resource_config_params *wmi_cfg,
-				struct target_resource_config *tg_cfg)
+				struct ath12k_wmi_resource_config_arg *tg_cfg)
 {
 	wmi_cfg->num_vdevs = cpu_to_le32(tg_cfg->num_vdevs);
 	wmi_cfg->num_peers = cpu_to_le32(tg_cfg->num_peers);
@@ -3851,13 +3851,13 @@ static int ath12k_wmi_tlv_dma_ring_caps(struct ath12k_base *ab,
 					u16 len, const void *ptr, void *data)
 {
 	struct wmi_tlv_dma_ring_caps_parse *dma_caps_parse = data;
-	struct wmi_dma_ring_capabilities *dma_caps;
+	struct ath12k_wmi_dma_ring_caps_params *dma_caps;
 	struct ath12k_dbring_cap *dir_buff_caps;
 	int ret;
 	u32 i;
 
 	dma_caps_parse->n_dma_ring_caps = 0;
-	dma_caps = (struct wmi_dma_ring_capabilities *)ptr;
+	dma_caps = (struct ath12k_wmi_dma_ring_caps_params *)ptr;
 	ret = ath12k_wmi_tlv_iter(ab, ptr, len,
 				  ath12k_wmi_tlv_dma_ring_caps_parse,
 				  dma_caps_parse);
@@ -4091,7 +4091,7 @@ static int ath12k_pull_vdev_start_resp_tlv(struct ath12k_base *ab, struct sk_buf
 
 static struct ath12k_reg_rule
 *create_ext_reg_rules_from_wmi(u32 num_reg_rules,
-			       struct wmi_regulatory_ext_rule_struct *wmi_reg_rule)
+			       struct ath12k_wmi_reg_rule_ext_params *wmi_reg_rule)
 {
 	struct ath12k_reg_rule *reg_rule_ptr;
 	u32 count;
@@ -4138,7 +4138,7 @@ static int ath12k_pull_reg_chan_list_ext_update_ev(struct ath12k_base *ab,
 {
 	const void **tb;
 	const struct wmi_reg_chan_list_cc_ext_event *ev;
-	struct wmi_regulatory_ext_rule_struct *ext_wmi_reg_rule;
+	struct ath12k_wmi_reg_rule_ext_params *ext_wmi_reg_rule;
 	u32 num_2g_reg_rules, num_5g_reg_rules;
 	u32 num_6g_reg_rules_ap[WMI_REG_CURRENT_MAX_AP_TYPE];
 	u32 num_6g_reg_rules_cl[WMI_REG_CURRENT_MAX_AP_TYPE][WMI_REG_MAX_CLIENT_TYPE];
@@ -4334,7 +4334,7 @@ static int ath12k_pull_reg_chan_list_ext_update_ev(struct ath12k_base *ab,
 		   num_6g_reg_rules_cl[WMI_REG_VLP_AP][WMI_REG_SUBORDINATE_CLIENT]);
 
 	ext_wmi_reg_rule =
-		(struct wmi_regulatory_ext_rule_struct *)((u8 *)ev
+		(struct ath12k_wmi_reg_rule_ext_params *)((u8 *)ev
 			+ sizeof(*ev)
 			+ sizeof(struct wmi_tlv));
 
@@ -4545,7 +4545,7 @@ static int ath12k_pull_mgmt_rx_params_tlv(struct ath12k_base *ab,
 					  struct mgmt_rx_event_params *hdr)
 {
 	const void **tb;
-	const struct wmi_mgmt_rx_hdr *ev;
+	const struct ath12k_wmi_mgmt_rx_params *ev;
 	const u8 *frame;
 	int ret;
 

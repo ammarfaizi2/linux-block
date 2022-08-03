@@ -183,7 +183,7 @@ struct ath12k_hw_params {
 	struct mhi_controller_config *mhi_config;
 
 	void (*wmi_init)(struct ath12k_base *ab,
-			 struct target_resource_config *config);
+			 struct ath12k_wmi_resource_config_arg *config);
 
 	const struct hal_ops *hal_ops;
 

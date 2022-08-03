@@ -2167,7 +2167,7 @@ struct ath12k_wmi_host_mem_chunk_arg {
 	u32 req_id;
 };
 
-struct target_resource_config {
+struct ath12k_wmi_resource_config_arg {
 	u32 num_vdevs;
 	u32 num_peers;
 	u32 num_active_peers;
@@ -2232,7 +2232,7 @@ struct target_resource_config {
 };
 
 struct ath12k_wmi_init_cmd_arg {
-	struct target_resource_config res_cfg;
+	struct ath12k_wmi_resource_config_arg res_cfg;
 	u8 num_mem_chunks;
 	struct ath12k_wmi_host_mem_chunk_arg *mem_chunks;
 	u32 hw_mode_id;
@@ -2482,7 +2482,7 @@ struct ath12k_wmi_mac_addr_params {
 	u8 padding[2];
 } __packed;
 
-struct wmi_dma_ring_capabilities {
+struct ath12k_wmi_dma_ring_caps_params {
 	__le32 tlv_header;
 	u32 pdev_id;
 	u32 module_id;
@@ -2538,7 +2538,7 @@ struct wmi_vdev_create_cmd {
 	__le32 vdev_stats_id;
 } __packed;
 
-struct wmi_vdev_txrx_streams {
+struct ath12k_wmi_vdev_txrx_streams_params {
 	__le32 tlv_header;
 	u32 band;
 	u32 supported_tx_streams;
@@ -3309,7 +3309,7 @@ struct wmi_bcn_send_from_host_cmd {
 #define WMI_CHAN_REG_INFO2_ANT_MAX	GENMASK(7, 0)
 #define WMI_CHAN_REG_INFO2_MAX_TX_PWR	GENMASK(15, 8)
 
-struct wmi_channel {
+struct ath12k_wmi_channel_params {
 	__le32 tlv_header;
 	u32 mhz;
 	u32 band_center_freq1;
@@ -3579,7 +3579,7 @@ struct wmi_sta_smps_param_cmd {
 	__le32 value;
 };
 
-struct wmi_bcn_prb_info {
+struct ath12k_wmi_bcn_prb_info_params {
 	__le32 tlv_header;
 	u32 caps;
 	u32 erp;
@@ -3719,7 +3719,7 @@ struct wmi_unit_test_cmd {
 #define WMI_PEER_160MHZ		0x40000000
 #define WMI_PEER_SAFEMODE_EN	0x80000000
 
-struct wmi_vht_rate_set {
+struct ath12k_wmi_vht_rate_set_params {
 	__le32 tlv_header;
 	u32 rx_max_rate;
 	u32 rx_mcs_set;
@@ -3728,7 +3728,7 @@ struct wmi_vht_rate_set {
 	u32 tx_max_mcs_nss;
 } __packed;
 
-struct wmi_he_rate_set {
+struct ath12k_wmi_he_rate_set_params {
 	__le32 tlv_header;
 	u32 rx_mcs_set;
 	u32 tx_mcs_set;
@@ -3852,7 +3852,7 @@ struct wmi_reg_chan_list_cc_ext_event {
 	__le32 num_6g_reg_rules_cl_vlp[WMI_REG_CLIENT_MAX];
 } __packed;
 
-struct wmi_regulatory_ext_rule_struct {
+struct ath12k_wmi_reg_rule_ext_params {
 	__le32 tlv_header;
 	u32 freq_info;
 	u32 bw_pwr_info;
@@ -3993,7 +3993,7 @@ struct mgmt_rx_event_params {
 
 #define ATH_MAX_ANTENNA 4
 
-struct wmi_mgmt_rx_hdr {
+struct ath12k_wmi_mgmt_rx_params {
 	u32 channel;
 	u32 snr;
 	u32 rate;
@@ -4799,9 +4799,9 @@ struct wmi_wow_ev_arg {
 #define ATH12K_FW_STATS_BUF_SIZE (1024 * 1024)
 
 void ath12k_wmi_init_qcn9274(struct ath12k_base *ab,
-			     struct target_resource_config *config);
+			     struct ath12k_wmi_resource_config_arg *config);
 void ath12k_wmi_init_wcn7850(struct ath12k_base *ab,
-			     struct target_resource_config *config);
+			     struct ath12k_wmi_resource_config_arg *config);
 int ath12k_wmi_cmd_send(struct ath12k_wmi_pdev *wmi, struct sk_buff *skb,
 			u32 cmd_id);
 struct sk_buff *ath12k_wmi_alloc_skb(struct ath12k_wmi_base *wmi_sc, u32 len);
