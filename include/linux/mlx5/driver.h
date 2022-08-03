@@ -676,6 +676,7 @@ struct mlx5e_resources {
 enum mlx5_sw_icm_type {
 	MLX5_SW_ICM_TYPE_STEERING,
 	MLX5_SW_ICM_TYPE_HEADER_MODIFY,
+	MLX5_SW_ICM_TYPE_HEADER_MODIFY_PATTERN,
 };
 
 #define MLX5_MAX_RESERVED_GIDS 8
@@ -727,10 +728,10 @@ enum {
 };
 
 enum {
-	MR_CACHE_LAST_STD_ENTRY = 20,
+	MKEY_CACHE_LAST_STD_ENTRY = 20,
 	MLX5_IMR_MTT_CACHE_ENTRY,
 	MLX5_IMR_KSM_CACHE_ENTRY,
-	MAX_MR_CACHE_ENTRIES
+	MAX_MKEY_CACHE_ENTRIES
 };
 
 struct mlx5_profile {
@@ -739,7 +740,7 @@ struct mlx5_profile {
 	struct {
 		int	size;
 		int	limit;
-	} mr_cache[MAX_MR_CACHE_ENTRIES];
+	} mr_cache[MAX_MKEY_CACHE_ENTRIES];
 };
 
 struct mlx5_hca_cap {
