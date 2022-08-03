@@ -2484,11 +2484,11 @@ struct ath12k_wmi_mac_addr_params {
 
 struct ath12k_wmi_dma_ring_caps_params {
 	__le32 tlv_header;
-	u32 pdev_id;
-	u32 module_id;
-	u32 min_elem;
-	u32 min_buf_sz;
-	u32 min_buf_align;
+	__le32 pdev_id;
+	__le32 module_id;
+	__le32 min_elem;
+	__le32 min_buf_sz;
+	__le32 min_buf_align;
 } __packed;
 
 struct wmi_ready_event_min {
@@ -3311,12 +3311,12 @@ struct wmi_bcn_send_from_host_cmd {
 
 struct ath12k_wmi_channel_params {
 	__le32 tlv_header;
-	u32 mhz;
-	u32 band_center_freq1;
-	u32 band_center_freq2;
-	u32 info;
-	u32 reg_info_1;
-	u32 reg_info_2;
+	__le32 mhz;
+	__le32 band_center_freq1;
+	__le32 band_center_freq2;
+	__le32 info;
+	__le32 reg_info_1;
+	__le32 reg_info_2;
 } __packed;
 
 enum wmi_sta_ps_mode {
@@ -3581,8 +3581,8 @@ struct wmi_sta_smps_param_cmd {
 
 struct ath12k_wmi_bcn_prb_info_params {
 	__le32 tlv_header;
-	u32 caps;
-	u32 erp;
+	__le32 caps;
+	__le32 erp;
 } __packed;
 
 enum {
@@ -3721,17 +3721,17 @@ struct wmi_unit_test_cmd {
 
 struct ath12k_wmi_vht_rate_set_params {
 	__le32 tlv_header;
-	u32 rx_max_rate;
-	u32 rx_mcs_set;
-	u32 tx_max_rate;
-	u32 tx_mcs_set;
-	u32 tx_max_mcs_nss;
+	__le32 rx_max_rate;
+	__le32 rx_mcs_set;
+	__le32 tx_max_rate;
+	__le32 tx_mcs_set;
+	__le32 tx_max_mcs_nss;
 } __packed;
 
 struct ath12k_wmi_he_rate_set_params {
 	__le32 tlv_header;
-	u32 rx_mcs_set;
-	u32 tx_mcs_set;
+	__le32 rx_mcs_set;
+	__le32 tx_mcs_set;
 } __packed;
 
 #define MAX_REG_RULES 10
@@ -3854,10 +3854,10 @@ struct wmi_reg_chan_list_cc_ext_event {
 
 struct ath12k_wmi_reg_rule_ext_params {
 	__le32 tlv_header;
-	u32 freq_info;
-	u32 bw_pwr_info;
-	u32 flag_info;
-	u32 psd_power_info;
+	__le32 freq_info;
+	__le32 bw_pwr_info;
+	__le32 flag_info;
+	__le32 psd_power_info;
 };
 
 struct wmi_vdev_delete_resp_event {

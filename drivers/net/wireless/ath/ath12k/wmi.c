@@ -903,39 +903,39 @@ static void ath12k_wmi_put_wmi_channel(struct ath12k_wmi_channel_params *chan,
 {
 	memset(chan, 0, sizeof(*chan));
 
-	chan->mhz = arg->freq;
-	chan->band_center_freq1 = arg->band_center_freq1;
+	chan->mhz = cpu_to_le32(arg->freq);
+	chan->band_center_freq1 = cpu_to_le32(arg->band_center_freq1);
 	if (arg->mode == MODE_11AC_VHT80_80)
-		chan->band_center_freq2 = arg->band_center_freq2;
+		chan->band_center_freq2 = cpu_to_le32(arg->band_center_freq2);
 	else
 		chan->band_center_freq2 = 0;
 
-	chan->info |= u32_encode_bits(arg->mode, WMI_CHAN_INFO_MODE);
+	chan->info |= le32_encode_bits(arg->mode, WMI_CHAN_INFO_MODE);
 	if (arg->passive)
-		chan->info |= WMI_CHAN_INFO_PASSIVE;
+		chan->info |= cpu_to_le32(WMI_CHAN_INFO_PASSIVE);
 	if (arg->allow_ibss)
-		chan->info |= WMI_CHAN_INFO_ADHOC_ALLOWED;
+		chan->info |= cpu_to_le32(WMI_CHAN_INFO_ADHOC_ALLOWED);
 	if (arg->allow_ht)
-		chan->info |= WMI_CHAN_INFO_ALLOW_HT;
+		chan->info |= cpu_to_le32(WMI_CHAN_INFO_ALLOW_HT);
 	if (arg->allow_vht)
-		chan->info |= WMI_CHAN_INFO_ALLOW_VHT;
+		chan->info |= cpu_to_le32(WMI_CHAN_INFO_ALLOW_VHT);
 	if (arg->allow_he)
-		chan->info |= WMI_CHAN_INFO_ALLOW_HE;
+		chan->info |= cpu_to_le32(WMI_CHAN_INFO_ALLOW_HE);
 	if (arg->ht40plus)
-		chan->info |= WMI_CHAN_INFO_HT40_PLUS;
+		chan->info |= cpu_to_le32(WMI_CHAN_INFO_HT40_PLUS);
 	if (arg->chan_radar)
-		chan->info |= WMI_CHAN_INFO_DFS;
+		chan->info |= cpu_to_le32(WMI_CHAN_INFO_DFS);
 	if (arg->freq2_radar)
-		chan->info |= WMI_CHAN_INFO_DFS_FREQ2;
+		chan->info |= cpu_to_le32(WMI_CHAN_INFO_DFS_FREQ2);
 
-	chan->reg_info_1 = u32_encode_bits(arg->max_power,
-					   WMI_CHAN_REG_INFO1_MAX_PWR) |
-		u32_encode_bits(arg->max_reg_power,
-				WMI_CHAN_REG_INFO1_MAX_REG_PWR);
+	chan->reg_info_1 = le32_encode_bits(arg->max_power,
+					    WMI_CHAN_REG_INFO1_MAX_PWR) |
+		le32_encode_bits(arg->max_reg_power,
+				 WMI_CHAN_REG_INFO1_MAX_REG_PWR);
 
-	chan->reg_info_2 = u32_encode_bits(arg->max_antenna_gain,
-					   WMI_CHAN_REG_INFO2_ANT_MAX) |
-		u32_encode_bits(arg->max_power, WMI_CHAN_REG_INFO2_MAX_TX_PWR);
+	chan->reg_info_2 = le32_encode_bits(arg->max_antenna_gain,
+					    WMI_CHAN_REG_INFO2_ANT_MAX) |
+		le32_encode_bits(arg->max_power, WMI_CHAN_REG_INFO2_MAX_TX_PWR);
 }
 
 int ath12k_wmi_vdev_start(struct ath12k *ar, struct wmi_vdev_start_req_arg *arg,
@@ -1944,10 +1944,10 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 	cmd->peer_bw_rxnss_override |= cpu_to_le32(arg->peer_bw_rxnss_override);
 
 	if (arg->vht_capable) {
-		mcs->rx_max_rate = arg->rx_max_rate;
-		mcs->rx_mcs_set = arg->rx_mcs_set;
-		mcs->tx_max_rate = arg->tx_max_rate;
-		mcs->tx_mcs_set = arg->tx_mcs_set;
+		mcs->rx_max_rate = cpu_to_le32(arg->rx_max_rate);
+		mcs->rx_mcs_set = cpu_to_le32(arg->rx_mcs_set);
+		mcs->tx_max_rate = cpu_to_le32(arg->tx_max_rate);
+		mcs->tx_mcs_set = cpu_to_le32(arg->tx_mcs_set);
 	}
 
 	/* HE Rates */
@@ -1968,8 +1968,8 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 		he_mcs->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_HE_RATE_SET,
 							    sizeof(*he_mcs));
 
-		he_mcs->rx_mcs_set = arg->peer_he_rx_mcs_set[i];
-		he_mcs->tx_mcs_set = arg->peer_he_tx_mcs_set[i];
+		he_mcs->rx_mcs_set = cpu_to_le32(arg->peer_he_rx_mcs_set[i]);
+		he_mcs->tx_mcs_set = cpu_to_le32(arg->peer_he_tx_mcs_set[i]);
 		ptr += sizeof(*he_mcs);
 	}
 
@@ -2340,7 +2340,7 @@ int ath12k_wmi_send_scan_chan_list_cmd(struct ath12k *ar,
 	void *ptr;
 	int i, ret, len;
 	u16 num_send_chans, num_sends = 0, max_chan_limit = 0;
-	u32 *reg1, *reg2;
+	__le32 *reg1, *reg2;
 
 	channel_arg = &arg->channel[0];
 	while (arg->nallchans) {
@@ -2389,37 +2389,39 @@ int ath12k_wmi_send_scan_chan_list_cmd(struct ath12k *ar,
 
 			reg1 = &chan_info->reg_info_1;
 			reg2 = &chan_info->reg_info_2;
-			chan_info->mhz = channel_arg->mhz;
-			chan_info->band_center_freq1 = channel_arg->cfreq1;
-			chan_info->band_center_freq2 = channel_arg->cfreq2;
+			chan_info->mhz = cpu_to_le32(channel_arg->mhz);
+			chan_info->band_center_freq1 = cpu_to_le32(channel_arg->cfreq1);
+			chan_info->band_center_freq2 = cpu_to_le32(channel_arg->cfreq2);
 
 			if (channel_arg->is_chan_passive)
-				chan_info->info |= WMI_CHAN_INFO_PASSIVE;
+				chan_info->info |= cpu_to_le32(WMI_CHAN_INFO_PASSIVE);
 			if (channel_arg->allow_he)
-				chan_info->info |= WMI_CHAN_INFO_ALLOW_HE;
+				chan_info->info |= cpu_to_le32(WMI_CHAN_INFO_ALLOW_HE);
 			else if (channel_arg->allow_vht)
-				chan_info->info |= WMI_CHAN_INFO_ALLOW_VHT;
+				chan_info->info |= cpu_to_le32(WMI_CHAN_INFO_ALLOW_VHT);
 			else if (channel_arg->allow_ht)
-				chan_info->info |= WMI_CHAN_INFO_ALLOW_HT;
+				chan_info->info |= cpu_to_le32(WMI_CHAN_INFO_ALLOW_HT);
 			if (channel_arg->half_rate)
-				chan_info->info |= WMI_CHAN_INFO_HALF_RATE;
+				chan_info->info |= cpu_to_le32(WMI_CHAN_INFO_HALF_RATE);
 			if (channel_arg->quarter_rate)
-				chan_info->info |= WMI_CHAN_INFO_QUARTER_RATE;
-			if (channel_arg->psc_channel)
-				chan_info->info |= WMI_CHAN_INFO_PSC;
+				chan_info->info |=
+					cpu_to_le32(WMI_CHAN_INFO_QUARTER_RATE);
 
-			chan_info->info |= u32_encode_bits(channel_arg->phy_mode,
-							   WMI_CHAN_INFO_MODE);
-			*reg1 |= u32_encode_bits(channel_arg->minpower,
-						 WMI_CHAN_REG_INFO1_MIN_PWR);
-			*reg1 |= u32_encode_bits(channel_arg->maxpower,
-						 WMI_CHAN_REG_INFO1_MAX_PWR);
-			*reg1 |= u32_encode_bits(channel_arg->maxregpower,
-						 WMI_CHAN_REG_INFO1_MAX_REG_PWR);
-			*reg1 |= u32_encode_bits(channel_arg->reg_class_id,
-						 WMI_CHAN_REG_INFO1_REG_CLS);
-			*reg2 |= u32_encode_bits(channel_arg->antennamax,
-						 WMI_CHAN_REG_INFO2_ANT_MAX);
+			if (channel_arg->psc_channel)
+				chan_info->info |= cpu_to_le32(WMI_CHAN_INFO_PSC);
+
+			chan_info->info |= le32_encode_bits(channel_arg->phy_mode,
+							    WMI_CHAN_INFO_MODE);
+			*reg1 |= le32_encode_bits(channel_arg->minpower,
+						  WMI_CHAN_REG_INFO1_MIN_PWR);
+			*reg1 |= le32_encode_bits(channel_arg->maxpower,
+						  WMI_CHAN_REG_INFO1_MAX_PWR);
+			*reg1 |= le32_encode_bits(channel_arg->maxregpower,
+						  WMI_CHAN_REG_INFO1_MAX_REG_PWR);
+			*reg1 |= le32_encode_bits(channel_arg->reg_class_id,
+						  WMI_CHAN_REG_INFO1_REG_CLS);
+			*reg2 |= le32_encode_bits(channel_arg->antennamax,
+						  WMI_CHAN_REG_INFO2_ANT_MAX);
 
 			ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 				   "WMI chan scan list chan[%d] = %u, chan_info->info %8x\n",
@@ -3880,17 +3882,19 @@ static int ath12k_wmi_tlv_dma_ring_caps(struct ath12k_base *ab,
 
 	dir_buff_caps = ab->db_caps;
 	for (i = 0; i < dma_caps_parse->n_dma_ring_caps; i++) {
-		if (dma_caps[i].module_id >= WMI_DIRECT_BUF_MAX) {
-			ath12k_warn(ab, "Invalid module id %d\n", dma_caps[i].module_id);
+		if (le32_to_cpu(dma_caps[i].module_id) >= WMI_DIRECT_BUF_MAX) {
+			ath12k_warn(ab, "Invalid module id %d\n",
+				    le32_to_cpu(dma_caps[i].module_id));
 			ret = -EINVAL;
 			goto free_dir_buff;
 		}
 
-		dir_buff_caps[i].id = dma_caps[i].module_id;
-		dir_buff_caps[i].pdev_id = DP_HW2SW_MACID(dma_caps[i].pdev_id);
-		dir_buff_caps[i].min_elem = dma_caps[i].min_elem;
-		dir_buff_caps[i].min_buf_sz = dma_caps[i].min_buf_sz;
-		dir_buff_caps[i].min_buf_align = dma_caps[i].min_buf_align;
+		dir_buff_caps[i].id = le32_to_cpu(dma_caps[i].module_id);
+		dir_buff_caps[i].pdev_id =
+			DP_HW2SW_MACID(le32_to_cpu(dma_caps[i].pdev_id));
+		dir_buff_caps[i].min_elem = le32_to_cpu(dma_caps[i].min_elem);
+		dir_buff_caps[i].min_buf_sz = le32_to_cpu(dma_caps[i].min_buf_sz);
+		dir_buff_caps[i].min_buf_align = le32_to_cpu(dma_caps[i].min_buf_align);
 	}
 
 	return 0;
@@ -4104,29 +4108,29 @@ static struct ath12k_reg_rule
 
 	for (count = 0; count < num_reg_rules; count++) {
 		reg_rule_ptr[count].start_freq =
-			u32_get_bits(wmi_reg_rule[count].freq_info,
-				     REG_RULE_START_FREQ);
+			le32_get_bits(wmi_reg_rule[count].freq_info,
+				      REG_RULE_START_FREQ);
 		reg_rule_ptr[count].end_freq =
-			u32_get_bits(wmi_reg_rule[count].freq_info,
-				     REG_RULE_END_FREQ);
+			le32_get_bits(wmi_reg_rule[count].freq_info,
+				      REG_RULE_END_FREQ);
 		reg_rule_ptr[count].max_bw =
-			u32_get_bits(wmi_reg_rule[count].bw_pwr_info,
-				     REG_RULE_MAX_BW);
+			le32_get_bits(wmi_reg_rule[count].bw_pwr_info,
+				      REG_RULE_MAX_BW);
 		reg_rule_ptr[count].reg_power =
-			u32_get_bits(wmi_reg_rule[count].bw_pwr_info,
-				     REG_RULE_REG_PWR);
+			le32_get_bits(wmi_reg_rule[count].bw_pwr_info,
+				      REG_RULE_REG_PWR);
 		reg_rule_ptr[count].ant_gain =
-			u32_get_bits(wmi_reg_rule[count].bw_pwr_info,
-				     REG_RULE_ANT_GAIN);
+			le32_get_bits(wmi_reg_rule[count].bw_pwr_info,
+				      REG_RULE_ANT_GAIN);
 		reg_rule_ptr[count].flags =
-			u32_get_bits(wmi_reg_rule[count].flag_info,
-				     REG_RULE_FLAGS);
+			le32_get_bits(wmi_reg_rule[count].flag_info,
+				      REG_RULE_FLAGS);
 		reg_rule_ptr[count].psd_flag =
-			u32_get_bits(wmi_reg_rule[count].psd_power_info,
-				     REG_RULE_PSD_INFO);
+			le32_get_bits(wmi_reg_rule[count].psd_power_info,
+				      REG_RULE_PSD_INFO);
 		reg_rule_ptr[count].psd_eirp =
-			u32_get_bits(wmi_reg_rule[count].psd_power_info,
-				     REG_RULE_PSD_EIRP);
+			le32_get_bits(wmi_reg_rule[count].psd_power_info,
+				      REG_RULE_PSD_EIRP);
 	}
 
 	return reg_rule_ptr;
