@@ -2167,8 +2167,72 @@ struct ath12k_wmi_host_mem_chunk_arg {
 	u32 req_id;
 };
 
+struct target_resource_config {
+	u32 num_vdevs;
+	u32 num_peers;
+	u32 num_active_peers;
+	u32 num_offload_peers;
+	u32 num_offload_reorder_buffs;
+	u32 num_peer_keys;
+	u32 num_tids;
+	u32 ast_skid_limit;
+	u32 tx_chain_mask;
+	u32 rx_chain_mask;
+	u32 rx_timeout_pri[4];
+	u32 rx_decap_mode;
+	u32 scan_max_pending_req;
+	u32 bmiss_offload_max_vdev;
+	u32 roam_offload_max_vdev;
+	u32 roam_offload_max_ap_profiles;
+	u32 num_mcast_groups;
+	u32 num_mcast_table_elems;
+	u32 mcast2ucast_mode;
+	u32 tx_dbg_log_size;
+	u32 num_wds_entries;
+	u32 dma_burst_size;
+	u32 mac_aggr_delim;
+	u32 rx_skip_defrag_timeout_dup_detection_check;
+	u32 vow_config;
+	u32 gtk_offload_max_vdev;
+	u32 num_msdu_desc;
+	u32 max_frag_entries;
+	u32 max_peer_ext_stats;
+	u32 smart_ant_cap;
+	u32 bk_minfree;
+	u32 be_minfree;
+	u32 vi_minfree;
+	u32 vo_minfree;
+	u32 rx_batchmode;
+	u32 tt_support;
+	u32 atf_config;
+	u32 iphdr_pad_config;
+	u32 qwrap_config:16,
+	    alloc_frag_desc_for_data_pkt:16;
+	u32 num_tdls_vdevs;
+	u32 num_tdls_conn_table_entries;
+	u32 beacon_tx_offload_max_vdev;
+	u32 num_multicast_filter_entries;
+	u32 num_wow_filters;
+	u32 num_keep_alive_pattern;
+	u32 keep_alive_pattern_size;
+	u32 max_tdls_concurrent_sleep_sta;
+	u32 max_tdls_concurrent_buffer_sta;
+	u32 wmi_send_separate;
+	u32 num_ocb_vdevs;
+	u32 num_ocb_channels;
+	u32 num_ocb_schedules;
+	u32 num_ns_ext_tuples_cfg;
+	u32 bpf_instruction_size;
+	u32 max_bssid_rx_filters;
+	u32 use_pdev_id;
+	u32 peer_map_unmap_version;
+	u32 sched_params;
+	u32 twt_ap_pdev_count;
+	u32 twt_ap_sta_count;
+};
+
 struct ath12k_wmi_init_cmd_arg {
-	struct target_resource_config *res_cfg;
+	struct target_resource_config res_cfg;
 	u8 num_mem_chunks;
 	struct ath12k_wmi_host_mem_chunk_arg *mem_chunks;
 	u32 hw_mode_id;
@@ -4535,70 +4599,6 @@ struct wmi_probe_tmpl_cmd {
 	__le32 buf_len;
 } __packed;
 
-struct target_resource_config {
-	u32 num_vdevs;
-	u32 num_peers;
-	u32 num_active_peers;
-	u32 num_offload_peers;
-	u32 num_offload_reorder_buffs;
-	u32 num_peer_keys;
-	u32 num_tids;
-	u32 ast_skid_limit;
-	u32 tx_chain_mask;
-	u32 rx_chain_mask;
-	u32 rx_timeout_pri[4];
-	u32 rx_decap_mode;
-	u32 scan_max_pending_req;
-	u32 bmiss_offload_max_vdev;
-	u32 roam_offload_max_vdev;
-	u32 roam_offload_max_ap_profiles;
-	u32 num_mcast_groups;
-	u32 num_mcast_table_elems;
-	u32 mcast2ucast_mode;
-	u32 tx_dbg_log_size;
-	u32 num_wds_entries;
-	u32 dma_burst_size;
-	u32 mac_aggr_delim;
-	u32 rx_skip_defrag_timeout_dup_detection_check;
-	u32 vow_config;
-	u32 gtk_offload_max_vdev;
-	u32 num_msdu_desc;
-	u32 max_frag_entries;
-	u32 max_peer_ext_stats;
-	u32 smart_ant_cap;
-	u32 bk_minfree;
-	u32 be_minfree;
-	u32 vi_minfree;
-	u32 vo_minfree;
-	u32 rx_batchmode;
-	u32 tt_support;
-	u32 atf_config;
-	u32 iphdr_pad_config;
-	u32 qwrap_config:16,
-	    alloc_frag_desc_for_data_pkt:16;
-	u32 num_tdls_vdevs;
-	u32 num_tdls_conn_table_entries;
-	u32 beacon_tx_offload_max_vdev;
-	u32 num_multicast_filter_entries;
-	u32 num_wow_filters;
-	u32 num_keep_alive_pattern;
-	u32 keep_alive_pattern_size;
-	u32 max_tdls_concurrent_sleep_sta;
-	u32 max_tdls_concurrent_buffer_sta;
-	u32 wmi_send_separate;
-	u32 num_ocb_vdevs;
-	u32 num_ocb_channels;
-	u32 num_ocb_schedules;
-	u32 num_ns_ext_tuples_cfg;
-	u32 bpf_instruction_size;
-	u32 max_bssid_rx_filters;
-	u32 use_pdev_id;
-	u32 peer_map_unmap_version;
-	u32 sched_params;
-	u32 twt_ap_pdev_count;
-	u32 twt_ap_sta_count;
-};
-
 #define WMI_MAX_MEM_REQS 32
 
 #define MAX_RADIOS 3
@@ -4629,7 +4629,6 @@ struct ath12k_wmi_base {
 	struct ath12k_wmi_host_mem_chunk_arg mem_chunks[WMI_MAX_MEM_REQS];
 
 	enum wmi_host_hw_mode_config_type preferred_hw_mode;
-	struct target_resource_config wlan_resource_config;
 
 	struct ath12k_wmi_target_cap_arg *targ_cap;
 };

@@ -3188,7 +3188,7 @@ static int ath12k_init_cmd_send(struct ath12k_wmi_pdev *wmi,
 	ptr = skb->data + sizeof(*cmd);
 	cfg = ptr;
 
-	ath12k_wmi_copy_resource_config(cfg, arg->res_cfg);
+	ath12k_wmi_copy_resource_config(cfg, &arg->res_cfg);
 
 	cfg->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_RESOURCE_CONFIG,
 						 sizeof(*cfg));
@@ -3356,13 +3356,9 @@ int ath12k_wmi_cmd_init(struct ath12k_base *ab)
 {
 	struct ath12k_wmi_base *wmi_sc = &ab->wmi_ab;
 	struct ath12k_wmi_init_cmd_arg arg = {};
-	struct target_resource_config config = {};
 
-	ab->hw_params->wmi_init(ab, &config);
+	ab->hw_params->wmi_init(ab, &arg.res_cfg);
 
-	memcpy(&wmi_sc->wlan_resource_config, &config, sizeof(config));
-
-	arg.res_cfg = &wmi_sc->wlan_resource_config;
 	arg.num_mem_chunks = wmi_sc->num_mem_chunks;
 	arg.hw_mode_id = wmi_sc->preferred_hw_mode;
 	arg.mem_chunks = wmi_sc->mem_chunks;
