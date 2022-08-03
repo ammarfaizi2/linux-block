@@ -4544,14 +4544,14 @@ struct ath12k_wmi_pdev_dma_ring_cfg_req_cmd {
 	__le32 event_timeout_ms;
 } __packed;
 
-struct ath12k_wmi_dma_buf_release_fixed_param {
+struct ath12k_wmi_dma_buf_release_fixed_params {
 	u32 pdev_id;
 	u32 module_id;
 	u32 num_buf_release_entry;
 	u32 num_meta_data_entry;
 } __packed;
 
-struct wmi_dma_buf_release_entry {
+struct ath12k_wmi_dma_buf_release_entry_params {
 	__le32 tlv_header;
 	u32 paddr_lo;
 
@@ -4566,7 +4566,7 @@ struct wmi_dma_buf_release_entry {
 
 #define WMI_SPECTRAL_META_INFO2_CHN_WIDTH	GENMASK(7, 0)
 
-struct wmi_dma_buf_release_meta_data {
+struct ath12k_wmi_dma_buf_release_meta_data_params {
 	__le32 tlv_header;
 	s32 noise_floor[WMI_MAX_CHAINS];
 	u32 reset_delay;

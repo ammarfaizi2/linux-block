@@ -20,13 +20,13 @@ struct ath12k_dbring_element {
 struct ath12k_dbring_data {
 	void *data;
 	u32 data_sz;
-	struct wmi_dma_buf_release_meta_data meta;
+	struct ath12k_wmi_dma_buf_release_meta_data_params meta;
 };
 
 struct ath12k_dbring_buf_release_event {
-	struct ath12k_wmi_dma_buf_release_fixed_param fixed;
-	struct wmi_dma_buf_release_entry *buf_entry;
-	struct wmi_dma_buf_release_meta_data *meta_data;
+	struct ath12k_wmi_dma_buf_release_fixed_params fixed;
+	const struct ath12k_wmi_dma_buf_release_entry_params *buf_entry;
+	const struct ath12k_wmi_dma_buf_release_meta_data_params *meta_data;
 	u32 num_buf_entry;
 	u32 num_meta;
 };

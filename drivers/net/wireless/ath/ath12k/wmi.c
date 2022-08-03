@@ -75,10 +75,10 @@ struct wmi_tlv_rdy_parse {
 	u32 num_extra_mac_addr;
 };
 
-struct wmi_tlv_dma_buf_release_parse {
-	struct ath12k_wmi_dma_buf_release_fixed_param fixed;
-	struct wmi_dma_buf_release_entry *buf_entry;
-	struct wmi_dma_buf_release_meta_data *meta_data;
+struct ath12k_wmi_dma_buf_release_arg {
+	struct ath12k_wmi_dma_buf_release_fixed_params fixed;
+	const struct ath12k_wmi_dma_buf_release_entry_params *buf_entry;
+	const struct ath12k_wmi_dma_buf_release_meta_data_params *meta_data;
 	u32 num_buf_entry;
 	u32 num_meta;
 	bool buf_entry_done;
@@ -3513,15 +3513,15 @@ static int ath12k_wmi_tlv_dma_buf_entry_parse(struct ath12k_base *soc,
 					      u16 tag, u16 len,
 					      const void *ptr, void *data)
 {
-	struct wmi_tlv_dma_buf_release_parse *parse = data;
+	struct ath12k_wmi_dma_buf_release_arg *arg = data;
 
 	if (tag != WMI_TAG_DMA_BUF_RELEASE_ENTRY)
 		return -EPROTO;
 
-	if (parse->num_buf_entry >= parse->fixed.num_buf_release_entry)
+	if (arg->num_buf_entry >= arg->fixed.num_buf_release_entry)
 		return -ENOBUFS;
 
-	parse->num_buf_entry++;
+	arg->num_buf_entry++;
 	return 0;
 }
 
@@ -3529,15 +3529,16 @@ static int ath12k_wmi_tlv_dma_buf_meta_parse(struct ath12k_base *soc,
 					     u16 tag, u16 len,
 					     const void *ptr, void *data)
 {
-	struct wmi_tlv_dma_buf_release_parse *parse = data;
+	struct ath12k_wmi_dma_buf_release_arg *arg = data;
 
 	if (tag != WMI_TAG_DMA_BUF_RELEASE_SPECTRAL_META_DATA)
 		return -EPROTO;
 
-	if (parse->num_meta >= parse->fixed.num_meta_data_entry)
+	if (arg->num_meta >= arg->fixed.num_meta_data_entry)
 		return -ENOBUFS;
 
-	parse->num_meta++;
+	arg->num_meta++;
+
 	return 0;
 }
 
@@ -3545,44 +3546,45 @@ static int ath12k_wmi_tlv_dma_buf_parse(struct ath12k_base *ab,
 					u16 tag, u16 len,
 					const void *ptr, void *data)
 {
-	struct wmi_tlv_dma_buf_release_parse *parse = data;
+	struct ath12k_wmi_dma_buf_release_arg *arg = data;
+	const struct ath12k_wmi_dma_buf_release_fixed_params *fixed;
 	int ret;
 
 	switch (tag) {
 	case WMI_TAG_DMA_BUF_RELEASE:
-		memcpy(&parse->fixed, ptr,
-		       sizeof(struct ath12k_wmi_dma_buf_release_fixed_param));
-		parse->fixed.pdev_id = DP_HW2SW_MACID(parse->fixed.pdev_id);
+		fixed = ptr;
+		arg->fixed = *fixed;
+		arg->fixed.pdev_id = DP_HW2SW_MACID(fixed->pdev_id);
 		break;
 	case WMI_TAG_ARRAY_STRUCT:
-		if (!parse->buf_entry_done) {
-			parse->num_buf_entry = 0;
-			parse->buf_entry = (struct wmi_dma_buf_release_entry *)ptr;
+		if (!arg->buf_entry_done) {
+			arg->num_buf_entry = 0;
+			arg->buf_entry = ptr;
 
 			ret = ath12k_wmi_tlv_iter(ab, ptr, len,
 						  ath12k_wmi_tlv_dma_buf_entry_parse,
-						  parse);
+						  arg);
 			if (ret) {
 				ath12k_warn(ab, "failed to parse dma buf entry tlv %d\n",
 					    ret);
 				return ret;
 			}
 
-			parse->buf_entry_done = true;
-		} else if (!parse->meta_data_done) {
-			parse->num_meta = 0;
-			parse->meta_data = (struct wmi_dma_buf_release_meta_data *)ptr;
+			arg->buf_entry_done = true;
+		} else if (!arg->meta_data_done) {
+			arg->num_meta = 0;
+			arg->meta_data = ptr;
 
 			ret = ath12k_wmi_tlv_iter(ab, ptr, len,
 						  ath12k_wmi_tlv_dma_buf_meta_parse,
-						  parse);
+						  arg);
 			if (ret) {
 				ath12k_warn(ab, "failed to parse dma buf meta tlv %d\n",
 					    ret);
 				return ret;
 			}
 
-			parse->meta_data_done = true;
+			arg->meta_data_done = true;
 		}
 		break;
 	default:
@@ -3594,23 +3596,23 @@ static int ath12k_wmi_tlv_dma_buf_parse(struct ath12k_base *ab,
 static void ath12k_wmi_pdev_dma_ring_buf_release_event(struct ath12k_base *ab,
 						       struct sk_buff *skb)
 {
-	struct wmi_tlv_dma_buf_release_parse parse = { };
+	struct ath12k_wmi_dma_buf_release_arg arg = {};
 	struct ath12k_dbring_buf_release_event param;
 	int ret;
 
 	ret = ath12k_wmi_tlv_iter(ab, skb->data, skb->len,
 				  ath12k_wmi_tlv_dma_buf_parse,
-				  &parse);
+				  &arg);
 	if (ret) {
 		ath12k_warn(ab, "failed to parse dma buf release tlv %d\n", ret);
 		return;
 	}
 
-	param.fixed		= parse.fixed;
-	param.buf_entry		= parse.buf_entry;
-	param.num_buf_entry	= parse.num_buf_entry;
-	param.meta_data		= parse.meta_data;
-	param.num_meta		= parse.num_meta;
+	param.fixed = arg.fixed;
+	param.buf_entry = arg.buf_entry;
+	param.num_buf_entry = arg.num_buf_entry;
+	param.meta_data = arg.meta_data;
+	param.num_meta = arg.num_meta;
 
 	ret = ath12k_dbring_buffer_release_event(ab, &param);
 	if (ret) {
