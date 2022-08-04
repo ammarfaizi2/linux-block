@@ -1846,6 +1846,33 @@ static ssize_t check_direct_IO(struct btrfs_fs_info *fs_info,
 	return 0;
 }
 
+static size_t dio_fault_in_size(const struct kiocb *iocb,
+				const struct iov_iter *iov,
+				size_t prev_left)
+{
+	const size_t left = iov_iter_count(iov);
+	size_t size = PAGE_SIZE;
+
+	/*
+	 * If there's no progress since the last time we had to fault in pages,
+	 * then we fault in at most 1 page. Faulting in more than that may
+	 * result in making very slow progress or falling back to buffered IO,
+	 * because by the time we retry the DIO operation some of the first
+	 * remaining pages may have been evicted in order to fault in other pages
+	 * that follow them. That can happen when we are under memory pressure and
+	 * the iov represents a large buffer.
+	 */
+	if (left != prev_left) {
+		int dirty_tresh = current->nr_dirtied_pause - current->nr_dirtied;
+
+		size = max(dirty_tresh, 8) << PAGE_SHIFT;
+		size = min_t(size_t, SZ_1M, size);
+	}
+	size -= offset_in_page(iocb->ki_pos);
+
+	return min(left, size);
+}
+
 static ssize_t btrfs_direct_write(struct kiocb *iocb, struct iov_iter *from)
 {
 	struct file *file = iocb->ki_filp;
@@ -1946,7 +1973,9 @@ again:
 		if (left == prev_left) {
 			err = -ENOTBLK;
 		} else {
-			fault_in_iov_iter_readable(from, left);
+			const size_t size = dio_fault_in_size(iocb, from, prev_left);
+
+			fault_in_iov_iter_readable(from, size);
 			prev_left = left;
 			goto again;
 		}
@@ -3764,19 +3793,15 @@ again:
 
 		if (left == prev_left) {
 			/*
-			 * We didn't make any progress since the last attempt,
-			 * fallback to a buffered read for the remainder of the
-			 * range. This is just to avoid any possibility of looping
-			 * for too long.
+			 * fault_in_iov_iter_writeable() only works for iovecs,
+			 * return with a partial read and fallback to buffered
+			 * IO for the rest of the range.
 			 */
 			ret = read;
 		} else {
-			/*
-			 * We made some progress since the last retry or this is
-			 * the first time we are retrying. Fault in as many pages
-			 * as possible and retry.
-			 */
-			fault_in_iov_iter_writeable(to, left);
+			const size_t size = dio_fault_in_size(iocb, to, prev_left);
+
+			fault_in_iov_iter_writeable(to, size);
 			prev_left = left;
 			goto again;
 		}
