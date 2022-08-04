@@ -499,6 +499,14 @@ do {									      \
  * against NULL.  Although rcu_access_pointer() may also be used in cases
  * where update-side locks prevent the value of the pointer from changing,
  * you should instead use rcu_dereference_protected() for this use case.
+ * Within an RCU read-side critical section, there is little reason to
+ * use rcu_access_pointer().
+ *
+ * It is usually best to test the rcu_access_pointer() return value
+ * directly in order to avoid accidental dereferences being introduced
+ * by later inattentive changes.  In other words, assigning the
+ * rcu_access_pointer() return value to a local variable results in an
+ * accident waiting to happen.
  *
  * It is also permissible to use rcu_access_pointer() when read-side
  * access to the pointer was removed at least one grace period ago, as is
