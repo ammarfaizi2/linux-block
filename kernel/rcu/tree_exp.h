@@ -908,6 +908,7 @@ static int rcu_print_task_exp_stall(struct rcu_node *rnp)
 void synchronize_rcu_expedited(void)
 {
 	bool boottime = (rcu_scheduler_active == RCU_SCHEDULER_INIT);
+	unsigned long flags;
 	struct rcu_exp_work rew;
 	struct rcu_node *rnp;
 	unsigned long s;
@@ -927,9 +928,10 @@ void synchronize_rcu_expedited(void)
 		rcu_poll_gp_seq_start_unlocked(&rcu_state.gp_seq_polled_exp_snap);
 		rcu_poll_gp_seq_end_unlocked(&rcu_state.gp_seq_polled_exp_snap);
 
-		lockdep_assert_irqs_disabled();
+		local_irq_save(flags);
 		WARN_ON_ONCE(num_online_cpus() > 1);
 		rcu_state.expedited_sequence += (1 << RCU_SEQ_CTR_SHIFT);
+		local_irq_restore(flags);
 		return;  // Context allows vacuous grace periods.
 	}
 
