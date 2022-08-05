@@ -3496,6 +3496,7 @@ static int rcu_blocking_is_gp(void)
  */
 void synchronize_rcu(void)
 {
+	unsigned long flags;
 	struct rcu_node *rnp;
 
 	RCU_LOCKDEP_WARN(lock_is_held(&rcu_bh_lock_map) ||
@@ -3520,13 +3521,14 @@ void synchronize_rcu(void)
 	rcu_poll_gp_seq_end_unlocked(&rcu_state.gp_seq_polled_snap);
 
 	// Update normal grace-period counters to record grace period.
-	lockdep_assert_irqs_disabled();
+	local_irq_save(flags);
 	WARN_ON_ONCE(num_online_cpus() > 1);
 	rcu_state.gp_seq += (1 << RCU_SEQ_CTR_SHIFT);
 	rcu_for_each_node_breadth_first(rnp) {
 		rnp->gp_seq += (1 << RCU_SEQ_CTR_SHIFT);
 		rnp->gp_seq_needed = rnp->gp_seq;
 	}
+	local_irq_restore(flags);
 }
 EXPORT_SYMBOL_GPL(synchronize_rcu);
 
