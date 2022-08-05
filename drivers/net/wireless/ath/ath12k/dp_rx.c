@@ -1715,7 +1715,7 @@ static void ath12k_htt_mlo_offset_event_handler(struct ath12k_base *ab,
 	pdev->timestamp.mlo_comp_clks = __le32_to_cpu(msg->mlo_comp_clks);
 	pdev->timestamp.mlo_comp_timer = __le32_to_cpu(msg->mlo_comp_timer);
 
-	spin_unlock_bh(&ab->base_lock);
+	spin_unlock_bh(&ar->data_lock);
 }
 
 void ath12k_dp_htt_htc_t2h_msg_handler(struct ath12k_base *ab,
