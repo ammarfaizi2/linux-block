@@ -2675,8 +2675,13 @@ try_again:
 		desc_info = (struct ath12k_rx_desc_info *)((unsigned long)desc_va);
 
 		/* retry manual desc retrieval */
-		if (!desc_info)
+		if (!desc_info) {
 			desc_info = ath12k_dp_get_rx_desc(ab, cookie);
+			if (!desc_info) {
+				ath12k_warn(ab, "Invalid cookie in manual desc retrival");
+				continue;
+			}
+		}
 
 		if (desc_info->magic != ATH12K_DP_RX_DESC_MAGIC)
 			ath12k_warn(ab, "Check HW CC implementation");
@@ -3351,8 +3356,13 @@ ath12k_dp_process_rx_err_buf(struct ath12k *ar, u32 *ring_desc,
 	desc_info = (struct ath12k_rx_desc_info *)((unsigned long)desc_va);
 
 	/* retry manual desc retrieval */
-	if (!desc_info)
+	if (!desc_info) {
 		desc_info = ath12k_dp_get_rx_desc(ab, cookie);
+		if (!desc_info) {
+			ath12k_warn(ab, "Invalid cookie in manual desc retrival");
+			return -EINVAL;
+		}
+	}
 
 	if (desc_info->magic != ATH12K_DP_RX_DESC_MAGIC)
 		ath12k_warn(ab, " RX Exception, Check HW CC implementation");
@@ -3769,8 +3779,13 @@ int ath12k_dp_rx_process_wbm_err(struct ath12k_base *ab,
 		desc_info = (struct ath12k_rx_desc_info *)err_info.rx_desc;
 
 		/* retry manual desc retrieval if hw cc is not done */
-		if (!desc_info)
+		if (!desc_info) {
 			desc_info = ath12k_dp_get_rx_desc(ab, err_info.cookie);
+			if (!desc_info) {
+				ath12k_warn(ab, "Invalid cookie in manual desc retrival");
+				continue;
+			}
+		}
 
 		/* FIXME Extract mac id correctly. Since descs are not tied
 		 * to mac, we can extract from vdev id in ring desc.

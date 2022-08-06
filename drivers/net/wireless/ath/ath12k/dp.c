@@ -1161,7 +1161,6 @@ static void ath12k_dp_cc_cleanup(struct ath12k_base *ab)
 		dp->spt_info[i].vaddr = NULL;
 	}
 
-	dp->tx_spt_pages = NULL;
 	kfree(dp->spt_info);
 }
 
@@ -1259,43 +1258,56 @@ static u32 ath12k_dp_cc_cookie_gen(u16 ppt_idx, u16 spt_idx)
 	return (u32)ppt_idx << ATH12K_CC_PPT_SHIFT | spt_idx;
 }
 
-static u8 *ath12k_dp_cc_find_desc(struct ath12k_base *ab, u32 cookie)
+static inline void *ath12k_dp_cc_get_desc_addr_ptr(struct ath12k_base *ab,
+						   u16 ppt_idx, u16 spt_idx)
 {
 	struct ath12k_dp *dp = &ab->dp;
-	u16 spt_page_id, spt_idx;
-	u8 *spt_va;
 
-	spt_idx = u32_get_bits(cookie, ATH12k_DP_CC_COOKIE_SPT);
-	spt_page_id = u32_get_bits(cookie, ATH12K_DP_CC_COOKIE_PPT);
-
-	spt_va = (u8 *)dp->spt_info[spt_page_id].vaddr;
-
-	return (spt_va + spt_idx * sizeof(u64));
+	return dp->spt_info[ppt_idx].vaddr + spt_idx;
 }
 
 struct ath12k_rx_desc_info *ath12k_dp_get_rx_desc(struct ath12k_base *ab,
 						  u32 cookie)
 {
-	u8 *desc_addr_ptr;
+	struct ath12k_rx_desc_info **desc_addr_ptr;
+	u16 ppt_idx, spt_idx;
 
-	desc_addr_ptr = ath12k_dp_cc_find_desc(ab, cookie);
-	return *(struct ath12k_rx_desc_info **)desc_addr_ptr;
+	ppt_idx = u32_get_bits(cookie, ATH12K_DP_CC_COOKIE_PPT);
+	spt_idx = u32_get_bits(cookie, ATH12k_DP_CC_COOKIE_SPT);
+
+	if (ppt_idx > ATH12K_NUM_RX_SPT_PAGES ||
+	    spt_idx > ATH12K_MAX_SPT_ENTRIES)
+		return NULL;
+
+	desc_addr_ptr = ath12k_dp_cc_get_desc_addr_ptr(ab, ppt_idx, spt_idx);
+
+	return *desc_addr_ptr;
 }
 
 struct ath12k_tx_desc_info *ath12k_dp_get_tx_desc(struct ath12k_base *ab,
-						  u32 desc_id)
+						  u32 cookie)
 {
-	u8 *desc_addr_ptr;
+	struct ath12k_tx_desc_info **desc_addr_ptr;
+	u16 ppt_idx, spt_idx;
 
-	desc_addr_ptr = ath12k_dp_cc_find_desc(ab, desc_id);
-	return *(struct ath12k_tx_desc_info **)desc_addr_ptr;
+	ppt_idx = u32_get_bits(cookie, ATH12K_DP_CC_COOKIE_PPT);
+	spt_idx = u32_get_bits(cookie, ATH12k_DP_CC_COOKIE_SPT);
+
+	if (ppt_idx < ATH12K_NUM_RX_SPT_PAGES ||
+	    ppt_idx > ab->dp.num_spt_pages ||
+	    spt_idx > ATH12K_MAX_SPT_ENTRIES)
+		return NULL;
+
+	desc_addr_ptr = ath12k_dp_cc_get_desc_addr_ptr(ab, ppt_idx, spt_idx);
+
+	return *desc_addr_ptr;
 }
 
 static int ath12k_dp_cc_desc_init(struct ath12k_base *ab)
 {
 	struct ath12k_dp *dp = &ab->dp;
-	struct ath12k_rx_desc_info *rx_descs;
-	struct ath12k_tx_desc_info *tx_descs;
+	struct ath12k_rx_desc_info *rx_descs, **rx_desc_addr;
+	struct ath12k_tx_desc_info *tx_descs, **tx_desc_addr;
 	u32 i, j, pool_id, tx_spt_page;
 	u32 ppt_idx;
 
@@ -1317,14 +1329,12 @@ static int ath12k_dp_cc_desc_init(struct ath12k_base *ab)
 			list_add_tail(&rx_descs[j].list, &dp->rx_desc_free_list);
 
 			/* Update descriptor VA in SPT */
-			*(struct ath12k_rx_desc_info **)((u8 *)dp->spt_info[i].vaddr +
-				(j * sizeof(u64))) = &rx_descs[j];
+			rx_desc_addr = ath12k_dp_cc_get_desc_addr_ptr(ab, i, j);
+			*rx_desc_addr = &rx_descs[j];
 		}
 	}
 
 	spin_unlock_bh(&dp->rx_desc_lock);
-	/* pointer to start of TX pages */
-	dp->tx_spt_pages = &dp->spt_info[ATH12K_NUM_RX_SPT_PAGES];
 
 	for (pool_id = 0; pool_id < ATH12K_HW_MAX_QUEUES; pool_id++) {
 		spin_lock_bh(&dp->tx_desc_lock[pool_id]);
@@ -1347,9 +1357,9 @@ static int ath12k_dp_cc_desc_init(struct ath12k_base *ab)
 					      &dp->tx_desc_free_list[pool_id]);
 
 				/* Update descriptor VA in SPT */
-				*(struct ath12k_tx_desc_info **)
-					((u8 *)dp->tx_spt_pages[tx_spt_page].vaddr +
-					 (j * sizeof(u64))) = &tx_descs[j];
+				tx_desc_addr =
+					ath12k_dp_cc_get_desc_addr_ptr(ab, ppt_idx, j);
+				*tx_desc_addr = &tx_descs[j];
 			}
 		}
 		spin_unlock_bh(&dp->tx_desc_lock[pool_id]);

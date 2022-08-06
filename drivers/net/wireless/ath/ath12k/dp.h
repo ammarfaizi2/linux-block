@@ -288,7 +288,7 @@ struct ath12k_tx_desc_info {
 
 struct ath12k_spt_info {
 	dma_addr_t paddr;
-	u32 *vaddr;
+	u64 *vaddr;
 };
 
 struct ath12k_reo_queue_ref {
@@ -338,8 +338,6 @@ struct ath12k_dp {
 	struct ath12k_hp_update_timer tx_ring_timer[DP_TCL_NUM_RING_MAX];
 	struct ath12k_spt_info *spt_info;
 	u32 num_spt_pages;
-	/* start address of TX SPT pages */
-	struct ath12k_spt_info *tx_spt_pages;
 	struct list_head rx_desc_free_list;
 	struct list_head rx_desc_used_list;
 	/* protects the free and used desc list */
