@@ -622,8 +622,8 @@ static void ath12k_wmi_service_bitmap_copy(struct ath12k_wmi_pdev *wmi,
 	}
 }
 
-static int ath12k_wmi_tlv_svc_rdy_parse(struct ath12k_base *ab, u16 tag, u16 len,
-					const void *ptr, void *data)
+static int ath12k_wmi_svc_rdy_parse(struct ath12k_base *ab, u16 tag, u16 len,
+				    const void *ptr, void *data)
 {
 	struct ath12k_wmi_svc_ready_parse *svc_ready = data;
 	struct ath12k_wmi_pdev *wmi_handle = &ab->wmi_ab.wmi[0];
@@ -662,7 +662,7 @@ static int ath12k_service_ready_event(struct ath12k_base *ab, struct sk_buff *sk
 	int ret;
 
 	ret = ath12k_wmi_tlv_iter(ab, skb->data, skb->len,
-				  ath12k_wmi_tlv_svc_rdy_parse,
+				  ath12k_wmi_svc_rdy_parse,
 				  &svc_ready);
 	if (ret) {
 		ath12k_warn(ab, "failed to parse tlv %d\n", ret);
@@ -2445,8 +2445,8 @@ int ath12k_wmi_send_scan_chan_list_cmd(struct ath12k *ar,
 	return 0;
 }
 
-int ath12k_wmi_send_wmm_update_cmd_tlv(struct ath12k *ar, u32 vdev_id,
-				       struct wmi_wmm_params_all_arg *param)
+int ath12k_wmi_send_wmm_update_cmd(struct ath12k *ar, u32 vdev_id,
+				   struct wmi_wmm_params_all_arg *param)
 {
 	struct ath12k_wmi_pdev *wmi = ar->wmi;
 	struct wmi_vdev_set_wmm_params_cmd *cmd;
@@ -3509,9 +3509,9 @@ err:
 	return ret;
 }
 
-static int ath12k_wmi_tlv_dma_buf_entry_parse(struct ath12k_base *soc,
-					      u16 tag, u16 len,
-					      const void *ptr, void *data)
+static int ath12k_wmi_dma_buf_entry_parse(struct ath12k_base *soc,
+					  u16 tag, u16 len,
+					  const void *ptr, void *data)
 {
 	struct ath12k_wmi_dma_buf_release_arg *arg = data;
 
@@ -3525,9 +3525,9 @@ static int ath12k_wmi_tlv_dma_buf_entry_parse(struct ath12k_base *soc,
 	return 0;
 }
 
-static int ath12k_wmi_tlv_dma_buf_meta_parse(struct ath12k_base *soc,
-					     u16 tag, u16 len,
-					     const void *ptr, void *data)
+static int ath12k_wmi_dma_buf_meta_parse(struct ath12k_base *soc,
+					 u16 tag, u16 len,
+					 const void *ptr, void *data)
 {
 	struct ath12k_wmi_dma_buf_release_arg *arg = data;
 
@@ -3542,9 +3542,9 @@ static int ath12k_wmi_tlv_dma_buf_meta_parse(struct ath12k_base *soc,
 	return 0;
 }
 
-static int ath12k_wmi_tlv_dma_buf_parse(struct ath12k_base *ab,
-					u16 tag, u16 len,
-					const void *ptr, void *data)
+static int ath12k_wmi_dma_buf_parse(struct ath12k_base *ab,
+				    u16 tag, u16 len,
+				    const void *ptr, void *data)
 {
 	struct ath12k_wmi_dma_buf_release_arg *arg = data;
 	const struct ath12k_wmi_dma_buf_release_fixed_params *fixed;
@@ -3564,7 +3564,7 @@ static int ath12k_wmi_tlv_dma_buf_parse(struct ath12k_base *ab,
 			arg->buf_entry = ptr;
 
 			ret = ath12k_wmi_tlv_iter(ab, ptr, len,
-						  ath12k_wmi_tlv_dma_buf_entry_parse,
+						  ath12k_wmi_dma_buf_entry_parse,
 						  arg);
 			if (ret) {
 				ath12k_warn(ab, "failed to parse dma buf entry tlv %d\n",
@@ -3578,7 +3578,7 @@ static int ath12k_wmi_tlv_dma_buf_parse(struct ath12k_base *ab,
 			arg->meta_data = ptr;
 
 			ret = ath12k_wmi_tlv_iter(ab, ptr, len,
-						  ath12k_wmi_tlv_dma_buf_meta_parse,
+						  ath12k_wmi_dma_buf_meta_parse,
 						  arg);
 			if (ret) {
 				ath12k_warn(ab, "failed to parse dma buf meta tlv %d\n",
@@ -3603,7 +3603,7 @@ static void ath12k_wmi_pdev_dma_ring_buf_release_event(struct ath12k_base *ab,
 	int ret;
 
 	ret = ath12k_wmi_tlv_iter(ab, skb->data, skb->len,
-				  ath12k_wmi_tlv_dma_buf_parse,
+				  ath12k_wmi_dma_buf_parse,
 				  &arg);
 	if (ret) {
 		ath12k_warn(ab, "failed to parse dma buf release tlv %d\n", ret);
@@ -3623,9 +3623,9 @@ static void ath12k_wmi_pdev_dma_ring_buf_release_event(struct ath12k_base *ab,
 	}
 }
 
-static int ath12k_wmi_tlv_hw_mode_caps_parse(struct ath12k_base *soc,
-					     u16 tag, u16 len,
-					     const void *ptr, void *data)
+static int ath12k_wmi_hw_mode_caps_parse(struct ath12k_base *soc,
+					 u16 tag, u16 len,
+					 const void *ptr, void *data)
 {
 	struct ath12k_wmi_svc_rdy_ext_parse *svc_rdy_ext = data;
 	struct ath12k_wmi_hw_mode_cap_params *hw_mode_cap;
@@ -3650,8 +3650,8 @@ static int ath12k_wmi_tlv_hw_mode_caps_parse(struct ath12k_base *soc,
 	return 0;
 }
 
-static int ath12k_wmi_tlv_hw_mode_caps(struct ath12k_base *soc,
-				       u16 len, const void *ptr, void *data)
+static int ath12k_wmi_hw_mode_caps(struct ath12k_base *soc,
+				   u16 len, const void *ptr, void *data)
 {
 	struct ath12k_wmi_svc_rdy_ext_parse *svc_rdy_ext = data;
 	const struct ath12k_wmi_hw_mode_cap_params *hw_mode_caps;
@@ -3663,7 +3663,7 @@ static int ath12k_wmi_tlv_hw_mode_caps(struct ath12k_base *soc,
 	svc_rdy_ext->hw_mode_caps = ptr;
 
 	ret = ath12k_wmi_tlv_iter(soc, ptr, len,
-				  ath12k_wmi_tlv_hw_mode_caps_parse,
+				  ath12k_wmi_hw_mode_caps_parse,
 				  svc_rdy_ext);
 	if (ret) {
 		ath12k_warn(soc, "failed to parse tlv %d\n", ret);
@@ -3691,9 +3691,9 @@ static int ath12k_wmi_tlv_hw_mode_caps(struct ath12k_base *soc,
 	return 0;
 }
 
-static int ath12k_wmi_tlv_mac_phy_caps_parse(struct ath12k_base *soc,
-					     u16 tag, u16 len,
-					     const void *ptr, void *data)
+static int ath12k_wmi_mac_phy_caps_parse(struct ath12k_base *soc,
+					 u16 tag, u16 len,
+					 const void *ptr, void *data)
 {
 	struct ath12k_wmi_svc_rdy_ext_parse *svc_rdy_ext = data;
 
@@ -3716,9 +3716,9 @@ static int ath12k_wmi_tlv_mac_phy_caps_parse(struct ath12k_base *soc,
 	return 0;
 }
 
-static int ath12k_wmi_tlv_ext_hal_reg_caps_parse(struct ath12k_base *soc,
-						 u16 tag, u16 len,
-						 const void *ptr, void *data)
+static int ath12k_wmi_ext_hal_reg_caps_parse(struct ath12k_base *soc,
+					     u16 tag, u16 len,
+					     const void *ptr, void *data)
 {
 	struct ath12k_wmi_svc_rdy_ext_parse *svc_rdy_ext = data;
 
@@ -3732,8 +3732,8 @@ static int ath12k_wmi_tlv_ext_hal_reg_caps_parse(struct ath12k_base *soc,
 	return 0;
 }
 
-static int ath12k_wmi_tlv_ext_hal_reg_caps(struct ath12k_base *soc,
-					   u16 len, const void *ptr, void *data)
+static int ath12k_wmi_ext_hal_reg_caps(struct ath12k_base *soc,
+				       u16 len, const void *ptr, void *data)
 {
 	struct ath12k_wmi_pdev *wmi_handle = &soc->wmi_ab.wmi[0];
 	struct ath12k_wmi_svc_rdy_ext_parse *svc_rdy_ext = data;
@@ -3744,7 +3744,7 @@ static int ath12k_wmi_tlv_ext_hal_reg_caps(struct ath12k_base *soc,
 	svc_rdy_ext->n_ext_hal_reg_caps = 0;
 	svc_rdy_ext->ext_hal_reg_caps = ptr;
 	ret = ath12k_wmi_tlv_iter(soc, ptr, len,
-				  ath12k_wmi_tlv_ext_hal_reg_caps_parse,
+				  ath12k_wmi_ext_hal_reg_caps_parse,
 				  svc_rdy_ext);
 	if (ret) {
 		ath12k_warn(soc, "failed to parse tlv %d\n", ret);
@@ -3767,9 +3767,9 @@ static int ath12k_wmi_tlv_ext_hal_reg_caps(struct ath12k_base *soc,
 	return 0;
 }
 
-static int ath12k_wmi_tlv_ext_soc_hal_reg_caps_parse(struct ath12k_base *soc,
-						     u16 len, const void *ptr,
-						     void *data)
+static int ath12k_wmi_ext_soc_hal_reg_caps_parse(struct ath12k_base *soc,
+						 u16 len, const void *ptr,
+						 void *data)
 {
 	struct ath12k_wmi_pdev *wmi_handle = &soc->wmi_ab.wmi[0];
 	struct ath12k_wmi_svc_rdy_ext_parse *svc_rdy_ext = data;
@@ -3817,9 +3817,9 @@ static int ath12k_wmi_tlv_ext_soc_hal_reg_caps_parse(struct ath12k_base *soc,
 	return 0;
 }
 
-static int ath12k_wmi_tlv_dma_ring_caps_parse(struct ath12k_base *soc,
-					      u16 tag, u16 len,
-					      const void *ptr, void *data)
+static int ath12k_wmi_dma_ring_caps_parse(struct ath12k_base *soc,
+					  u16 tag, u16 len,
+					  const void *ptr, void *data)
 {
 	struct ath12k_wmi_dma_ring_caps_parse *parse = data;
 
@@ -3853,8 +3853,8 @@ static void ath12k_wmi_free_dbring_caps(struct ath12k_base *ab)
 	ab->db_caps = NULL;
 }
 
-static int ath12k_wmi_tlv_dma_ring_caps(struct ath12k_base *ab,
-					u16 len, const void *ptr, void *data)
+static int ath12k_wmi_dma_ring_caps(struct ath12k_base *ab,
+				    u16 len, const void *ptr, void *data)
 {
 	struct ath12k_wmi_dma_ring_caps_parse *dma_caps_parse = data;
 	struct ath12k_wmi_dma_ring_caps_params *dma_caps;
@@ -3865,7 +3865,7 @@ static int ath12k_wmi_tlv_dma_ring_caps(struct ath12k_base *ab,
 	dma_caps_parse->n_dma_ring_caps = 0;
 	dma_caps = (struct ath12k_wmi_dma_ring_caps_params *)ptr;
 	ret = ath12k_wmi_tlv_iter(ab, ptr, len,
-				  ath12k_wmi_tlv_dma_ring_caps_parse,
+				  ath12k_wmi_dma_ring_caps_parse,
 				  dma_caps_parse);
 	if (ret) {
 		ath12k_warn(ab, "failed to parse dma ring caps tlv %d\n", ret);
@@ -3908,9 +3908,9 @@ free_dir_buff:
 	return ret;
 }
 
-static int ath12k_wmi_tlv_svc_rdy_ext_parse(struct ath12k_base *ab,
-					    u16 tag, u16 len,
-					    const void *ptr, void *data)
+static int ath12k_wmi_svc_rdy_ext_parse(struct ath12k_base *ab,
+					u16 tag, u16 len,
+					const void *ptr, void *data)
 {
 	struct ath12k_wmi_pdev *wmi_handle = &ab->wmi_ab.wmi[0];
 	struct ath12k_wmi_svc_rdy_ext_parse *svc_rdy_ext = data;
@@ -3933,16 +3933,15 @@ static int ath12k_wmi_tlv_svc_rdy_ext_parse(struct ath12k_base *ab,
 		break;
 
 	case WMI_TAG_SOC_HAL_REG_CAPABILITIES:
-		ret = ath12k_wmi_tlv_ext_soc_hal_reg_caps_parse(ab, len, ptr,
-								svc_rdy_ext);
+		ret = ath12k_wmi_ext_soc_hal_reg_caps_parse(ab, len, ptr,
+							    svc_rdy_ext);
 		if (ret)
 			return ret;
 		break;
 
 	case WMI_TAG_ARRAY_STRUCT:
 		if (!svc_rdy_ext->hw_mode_done) {
-			ret = ath12k_wmi_tlv_hw_mode_caps(ab, len, ptr,
-							  svc_rdy_ext);
+			ret = ath12k_wmi_hw_mode_caps(ab, len, ptr, svc_rdy_ext);
 			if (ret)
 				return ret;
 
@@ -3950,7 +3949,7 @@ static int ath12k_wmi_tlv_svc_rdy_ext_parse(struct ath12k_base *ab,
 		} else if (!svc_rdy_ext->mac_phy_done) {
 			svc_rdy_ext->n_mac_phy_caps = 0;
 			ret = ath12k_wmi_tlv_iter(ab, ptr, len,
-						  ath12k_wmi_tlv_mac_phy_caps_parse,
+						  ath12k_wmi_mac_phy_caps_parse,
 						  svc_rdy_ext);
 			if (ret) {
 				ath12k_warn(ab, "failed to parse tlv %d\n", ret);
@@ -3959,8 +3958,7 @@ static int ath12k_wmi_tlv_svc_rdy_ext_parse(struct ath12k_base *ab,
 
 			svc_rdy_ext->mac_phy_done = true;
 		} else if (!svc_rdy_ext->ext_hal_reg_done) {
-			ret = ath12k_wmi_tlv_ext_hal_reg_caps(ab, len, ptr,
-							      svc_rdy_ext);
+			ret = ath12k_wmi_ext_hal_reg_caps(ab, len, ptr, svc_rdy_ext);
 			if (ret)
 				return ret;
 
@@ -3972,8 +3970,8 @@ static int ath12k_wmi_tlv_svc_rdy_ext_parse(struct ath12k_base *ab,
 		} else if (!svc_rdy_ext->oem_dma_ring_cap_done) {
 			svc_rdy_ext->oem_dma_ring_cap_done = true;
 		} else if (!svc_rdy_ext->dma_ring_cap_done) {
-			ret = ath12k_wmi_tlv_dma_ring_caps(ab, len, ptr,
-							   &svc_rdy_ext->dma_caps_parse);
+			ret = ath12k_wmi_dma_ring_caps(ab, len, ptr,
+						       &svc_rdy_ext->dma_caps_parse);
 			if (ret)
 				return ret;
 
@@ -3994,7 +3992,7 @@ static int ath12k_service_ready_ext_event(struct ath12k_base *ab,
 	int ret;
 
 	ret = ath12k_wmi_tlv_iter(ab, skb->data, skb->len,
-				  ath12k_wmi_tlv_svc_rdy_ext_parse,
+				  ath12k_wmi_svc_rdy_ext_parse,
 				  &svc_rdy_ext);
 	if (ret) {
 		ath12k_warn(ab, "failed to parse tlv %d\n", ret);
@@ -4012,9 +4010,9 @@ err:
 	return ret;
 }
 
-static int ath12k_wmi_tlv_svc_rdy_ext2_parse(struct ath12k_base *ab,
-					     u16 tag, u16 len,
-					     const void *ptr, void *data)
+static int ath12k_wmi_svc_rdy_ext2_parse(struct ath12k_base *ab,
+					 u16 tag, u16 len,
+					 const void *ptr, void *data)
 {
 	struct ath12k_wmi_svc_rdy_ext2_parse *parse = data;
 	int ret;
@@ -4022,8 +4020,8 @@ static int ath12k_wmi_tlv_svc_rdy_ext2_parse(struct ath12k_base *ab,
 	switch (tag) {
 	case WMI_TAG_ARRAY_STRUCT:
 		if (!parse->dma_ring_cap_done) {
-			ret = ath12k_wmi_tlv_dma_ring_caps(ab, len, ptr,
-							   &parse->dma_caps_parse);
+			ret = ath12k_wmi_dma_ring_caps(ab, len, ptr,
+						       &parse->dma_caps_parse);
 			if (ret)
 				return ret;
 
@@ -4044,7 +4042,7 @@ static int ath12k_service_ready_ext2_event(struct ath12k_base *ab,
 	int ret;
 
 	ret = ath12k_wmi_tlv_iter(ab, skb->data, skb->len,
-				  ath12k_wmi_tlv_svc_rdy_ext2_parse,
+				  ath12k_wmi_svc_rdy_ext2_parse,
 				  &svc_rdy_ext2);
 	if (ret) {
 		ath12k_warn(ab, "failed to parse ext2 event tlv %d\n", ret);
@@ -5215,8 +5213,8 @@ mem_free:
 	return ret;
 }
 
-static int ath12k_wmi_tlv_rdy_parse(struct ath12k_base *ab, u16 tag, u16 len,
-				    const void *ptr, void *data)
+static int ath12k_wmi_rdy_parse(struct ath12k_base *ab, u16 tag, u16 len,
+				const void *ptr, void *data)
 {
 	struct ath12k_wmi_rdy_parse *rdy_parse = data;
 	struct wmi_ready_event fixed_param;
@@ -5265,7 +5263,7 @@ static int ath12k_ready_event(struct ath12k_base *ab, struct sk_buff *skb)
 	int ret;
 
 	ret = ath12k_wmi_tlv_iter(ab, skb->data, skb->len,
-				  ath12k_wmi_tlv_rdy_parse, &rdy_parse);
+				  ath12k_wmi_rdy_parse, &rdy_parse);
 	if (ret) {
 		ath12k_warn(ab, "failed to parse tlv %d\n", ret);
 		return ret;
@@ -6246,9 +6244,9 @@ static void ath12k_probe_resp_tx_status_event(struct ath12k_base *ab,
 	kfree(tb);
 }
 
-static int ath12k_wmi_tlv_wow_wakeup_host_parse(struct ath12k_base *ab,
-						u16 tag, u16 len,
-						const void *ptr, void *data)
+static int ath12k_wmi_wow_wakeup_host_parse(struct ath12k_base *ab,
+					    u16 tag, u16 len,
+					    const void *ptr, void *data)
 {
 	struct wmi_wow_ev_arg *ev = data;
 	const char *wow_pg_fault;
@@ -6289,7 +6287,7 @@ static void ath12k_wmi_event_wow_wakeup_host(struct ath12k_base *ab, struct sk_b
 	int ret;
 
 	ret = ath12k_wmi_tlv_iter(ab, skb->data, skb->len,
-				  ath12k_wmi_tlv_wow_wakeup_host_parse,
+				  ath12k_wmi_wow_wakeup_host_parse,
 				  &ev);
 	if (ret) {
 		ath12k_warn(ab, "failed to parse wmi wow tlv: %d\n", ret);
@@ -6299,7 +6297,7 @@ static void ath12k_wmi_event_wow_wakeup_host(struct ath12k_base *ab, struct sk_b
 	complete(&ab->wow.wakeup_completed);
 }
 
-static void ath12k_wmi_tlv_op_rx(struct ath12k_base *ab, struct sk_buff *skb)
+static void ath12k_wmi_op_rx(struct ath12k_base *ab, struct sk_buff *skb)
 {
 	struct wmi_cmd_hdr *cmd_hdr;
 	enum wmi_tlv_event_id id;
@@ -6432,7 +6430,7 @@ static int ath12k_connect_pdev_htc_service(struct ath12k_base *ab,
 
 	/* these fields are the same for all service endpoints */
 	conn_req.ep_ops.ep_tx_complete = ath12k_wmi_htc_tx_complete;
-	conn_req.ep_ops.ep_rx_complete = ath12k_wmi_tlv_op_rx;
+	conn_req.ep_ops.ep_rx_complete = ath12k_wmi_op_rx;
 	conn_req.ep_ops.ep_tx_credits = ath12k_wmi_op_ep_tx_credits;
 
 	/* connect to control service */

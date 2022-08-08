@@ -4867,8 +4867,8 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 				   struct ath12k_wmi_scan_req_arg *arg);
 int ath12k_wmi_send_scan_stop_cmd(struct ath12k *ar,
 				  struct ath12k_wmi_scan_cancel_arg *arg);
-int ath12k_wmi_send_wmm_update_cmd_tlv(struct ath12k *ar, u32 vdev_id,
-				       struct wmi_wmm_params_all_arg *param);
+int ath12k_wmi_send_wmm_update_cmd(struct ath12k *ar, u32 vdev_id,
+				   struct wmi_wmm_params_all_arg *param);
 int ath12k_wmi_pdev_suspend(struct ath12k *ar, u32 suspend_opt,
 			    u32 pdev_id);
 int ath12k_wmi_pdev_resume(struct ath12k *ar, u32 pdev_id);

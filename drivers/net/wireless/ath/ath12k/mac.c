@@ -3710,8 +3710,8 @@ static int ath12k_mac_op_conf_tx(struct ieee80211_hw *hw,
 	p->aifs = params->aifs;
 	p->txop = params->txop;
 
-	ret = ath12k_wmi_send_wmm_update_cmd_tlv(ar, arvif->vdev_id,
-						 &arvif->wmm_params);
+	ret = ath12k_wmi_send_wmm_update_cmd(ar, arvif->vdev_id,
+					     &arvif->wmm_params);
 	if (ret) {
 		ath12k_warn(ar->ab, "failed to set wmm params: %d\n", ret);
 		goto exit;
