@@ -2840,8 +2840,8 @@ ath12k_wmi_send_obss_spr_cmd(struct ath12k *ar, u32 vdev_id,
 						 len);
 	cmd->vdev_id = cpu_to_le32(vdev_id);
 	cmd->enable = cpu_to_le32(he_obss_pd->enable);
-	cmd->obss_min = he_obss_pd->min_offset;
-	cmd->obss_max = he_obss_pd->max_offset;
+	cmd->obss_min = a_cpu_to_sle32(he_obss_pd->min_offset);
+	cmd->obss_max = a_cpu_to_sle32(he_obss_pd->max_offset);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb,
 				  WMI_PDEV_OBSS_PD_SPATIAL_REUSE_CMDID);
@@ -4572,7 +4572,7 @@ static int ath12k_pull_mgmt_rx_params_tlv(struct ath12k_base *ab,
 	hdr->buf_len = le32_to_cpu(ev->buf_len);
 	hdr->status = le32_to_cpu(ev->status);
 	hdr->flags = le32_to_cpu(ev->flags);
-	hdr->rssi = ev->rssi;
+	hdr->rssi = a_sle32_to_cpu(ev->rssi);
 	hdr->tsf_delta = le32_to_cpu(ev->tsf_delta);
 
 	for (i = 0; i < ATH_MAX_ANTENNA; i++)

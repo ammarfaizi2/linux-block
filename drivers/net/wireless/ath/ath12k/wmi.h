@@ -25,6 +25,24 @@
 struct ath12k_base;
 struct ath12k;
 
+/* There is no signed version of __le32, so for a temporary solution come
+ * up with our own version. The idea is from fs/ntfs/endian.h.
+ *
+ * Use a_ prefix so that it doesn't conflict if we get proper support to
+ * linux/types.h.
+ */
+typedef __s32 __bitwise a_sle32;
+
+static inline a_sle32 a_cpu_to_sle32(s32 val)
+{
+	return (__force a_sle32)cpu_to_le32(val);
+}
+
+static inline s32 a_sle32_to_cpu(a_sle32 val)
+{
+	return le32_to_cpu((__force __le32)val);
+}
+
 #define PSOC_HOST_MAX_NUM_SS (8)
 
 /* defines to set Packet extension values whic can be 0 us, 8 usec or 16 usec */
@@ -3896,13 +3914,13 @@ struct ath12k_wmi_pdev_radar_event {
 	__le32 segment_id;
 	__le32 timestamp;
 	__le32 is_chirp;
-	s32 freq_offset;
-	s32 sidx;
+	a_sle32 freq_offset;
+	a_sle32 sidx;
 } __packed;
 
 struct wmi_pdev_temperature_event {
 	/* temperature value in Celcius degree */
-	s32 temp;
+	a_sle32 temp;
 	__le32 pdev_id;
 } __packed;
 
@@ -3940,7 +3958,7 @@ struct ath12k_wmi_mgmt_rx_params {
 	__le32 status;
 	__le32 rssi_ctl[ATH_MAX_ANTENNA];
 	__le32 flags;
-	s32 rssi;
+	a_sle32 rssi;
 	__le32 tsf_delta;
 	__le32 rx_tsf_l32;
 	__le32 rx_tsf_u32;
@@ -4327,8 +4345,8 @@ struct wmi_obss_spatial_reuse_params_cmd {
 	__le32 tlv_header;
 	__le32 pdev_id;
 	__le32 enable;
-	s32 obss_min;
-	s32 obss_max;
+	a_sle32 obss_min;
+	a_sle32 obss_max;
 	__le32 vdev_id;
 } __packed;
 
@@ -4506,7 +4524,7 @@ struct ath12k_wmi_dma_buf_release_entry_params {
 
 struct ath12k_wmi_dma_buf_release_meta_data_params {
 	__le32 tlv_header;
-	s32 noise_floor[WMI_MAX_CHAINS];
+	a_sle32 noise_floor[WMI_MAX_CHAINS];
 	__le32 reset_delay;
 	__le32 freq1;
 	__le32 freq2;
