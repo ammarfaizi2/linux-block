@@ -20,10 +20,6 @@
 #include "hw.h"
 #include "peer.h"
 
-struct wmi_tlv_policy {
-	size_t min_len;
-};
-
 struct wmi_tlv_svc_ready_parse {
 	bool wmi_svc_bitmap_done;
 };
@@ -85,7 +81,11 @@ struct ath12k_wmi_dma_buf_release_arg {
 	bool meta_data_done;
 };
 
-static const struct wmi_tlv_policy wmi_tlv_policies[] = {
+struct ath12k_wmi_tlv_policy {
+	size_t min_len;
+};
+
+static const struct ath12k_wmi_tlv_policy ath12k_wmi_tlv_policies[] = {
 	[WMI_TAG_ARRAY_BYTE] = { .min_len = 0 },
 	[WMI_TAG_ARRAY_UINT32] = { .min_len = 0 },
 	[WMI_TAG_SERVICE_READY_EVENT] = {
@@ -294,12 +294,12 @@ ath12k_wmi_tlv_iter(struct ath12k_base *ab, const void *ptr, size_t len,
 			return -EINVAL;
 		}
 
-		if (tlv_tag < ARRAY_SIZE(wmi_tlv_policies) &&
-		    wmi_tlv_policies[tlv_tag].min_len &&
-		    wmi_tlv_policies[tlv_tag].min_len > tlv_len) {
+		if (tlv_tag < ARRAY_SIZE(ath12k_wmi_tlv_policies) &&
+		    ath12k_wmi_tlv_policies[tlv_tag].min_len &&
+		    ath12k_wmi_tlv_policies[tlv_tag].min_len > tlv_len) {
 			ath12k_err(ab, "wmi tlv parse failure of tag %u at byte %zd (%u bytes is less than min length %zu)\n",
 				   tlv_tag, ptr - begin, tlv_len,
-				   wmi_tlv_policies[tlv_tag].min_len);
+				   ath12k_wmi_tlv_policies[tlv_tag].min_len);
 			return -EINVAL;
 		}
 
