@@ -192,31 +192,33 @@ dc_words = [ "ACPI", "AER", "allocator", "AMD", "AMD64",
          # that's some stupid dictionary
          "amongst", "AMX", "APEI", "arm64", "asm",
          "binutils", "bitmask", "bitfield", "bool", "breakpoint", "brk", "btree",
-         "cacheline", "callee", "CLAC", "clocksource", "CMCI", "cmdline", "Coccinelle", "codename",
+         "C1E", "cacheline", "callee", "CLAC", "clocksource", "CMCI", "cmdline", "Coccinelle", "codename",
          "config", "CPER", "CPPC", "CPUID", "CSM", "DCT", "devicetree",
-         "DF", "distro", "DMA", "DIMM", "e820", "EAX", "EBDA", "ECC", "EDAC", "EHCI", "enablement",
+         "DF", "distro", "DIMM", "DMA", "dmesg", "e820", "EAX", "EBDA", "ECC", "EDAC", "EHCI", "enablement",
          "ENDBR", "ENQCMD", "EPT", "ERMS",
          "fixup", "gcc", "GHES", "goto", "GPR", "GUID", "hotplug", "hugepage", "Hygon",
-         "hypercall", "HyperV", "HV", "hwpoison", "i387", "i915", "I/O", "IBPB", "IBT", "IMA", "init", "inlined",
+         "hypercall", "HyperV", "HV", "hwpoison", "i387", "i915", "I/O", "IBPB", "IBS", "IMA", "init", "inlined",
          "INT3", "IRET", "IOMMU", "IRQ",
-         "kallsyms", "KASAN", "KASLR", "Kconfig", "kdump", "kexec", "kmemleak", "kobject", "kPTI", "KVM",
-         "LFENCE", "libc", "linux", "livepatch", "LSB", "lvalue", "maintainership",
+         "kallsyms", "KASAN", "KASLR", "Kbuild", "Kconfig", "kdump", "kexec", "kmemleak", "kobject", "kPTI", "KVM",
+         "LFENCE", "libc", "linux", "livepatch", "LSB", "lvalue", "maintainership", "Makefile",
          "MCE", "MDS", "MMIO", "modpost", "ModRM", "MOVDIR64B", "MSR", "MTRR",
          "NMI", "NOHZ", "noinstr", "NOP", "NX",
          "objtool", "OEM", "ok", "oneliner", "OVMF", "pahole", "passthrough", "pdf", "percpu", "perf", "PPIN",
          "preemptible",
          "prepend", # derived from append, not in the dictionaries
          "PTE",
-         "PV", "PVALIDATE", "QOS", "refcount", "repurposing", "RCU", "RET", "retpoline", "rFLAGS", "RSB", "RTM",
-         "runtime", "Ryzen",
-         "scalable", "selftest", "SETcc",
-         "SGX", "sideband", "SIGSEGV", "Skylake", "Smatch", "SNP", "SPDX", "SRAR", "SRBDS", "SLS", "STAC",
+         "PV", "PVALIDATE", "QEMU", "QOS", "refcount", "repurposing", "RCU", "RET", "retpoline", "rFLAGS",
+         "RMPUPDATE", "RNG", "RSB", "RTM",
+         "runtime", "Ryzen", "s390",
+         "scalable", "SDM", "selftest", "SETcc",
+         "SGX", "sideband", "SIGSEGV", "Skylake", "Smatch", "SMN", "SNP", "SPDX", "SRAR", "SRBDS", "SLS", "STAC",
          "STLF", "stringify", "struct", "SWAPGS", "swiotlb",
-         "symtab", "Synopsys", "SYSENTER", "sysfs", "TAA", "TCC", "TDCALL", "TDGETVEINFO", "TDVMCALL", "TLB", "TODO",
-         "TPM", "tracepoint", "TSC", "UC", "uarch", "uncacheable", "uncore", "unmapping",
+         "symtab", "Synopsys", "SYSENTER", "sysfs", "TAA", "TCC", "TDCALL", "TDGETVEINFO",
+         "TDVMCALL", "tl;dr", "TLB", "TODO",
+         "TPM", "tracepoint", "TSC", "UC", "uarch", "uncacheable", "uncore",
          # too late for that one to enforce even as the dictionary says it is wrong
          "untrusted", "unwinder", "userspace", "vCPU", "VERW", "VLA",
-         "VMCALL", "VMENTER", "VMLAUNCH", "VMSA", "VMware", "vsyscall", "vTOM",
+         "VMSA", "VMware", "vsyscall", "vTOM",
          "WBINVD", "WRMSR",
          "XCR0", "Xeon",
          "XSS", "XSTATE" ]
@@ -245,10 +247,11 @@ regexes_pats = [ r'^U?ABI$',
             r'^F[PR]U$', r'^[pf]trace$',
             r'^GHC(B|I)$',
             r'^HL[ET]$',
-            r'^Icelake(-D)?$', r'I[DS]T', r'init(ializer|rd|ramfs)?',
+            r'^Icelake(-D)?$', r'I[BDS]T', r'init(ializer|rd|ramfs)?',
             r'^(in|off)lining$',
             r'(?i)^jmp$', r'^(k[cm]|vm)alloc$',
-            r'^[ku]probes?$', r'S?MCA$', r'^[Mm]em(block|cpy|move|remap|set|type)$',
+            r'^[ku]probes?$', r'^L[0-3]$',
+            r'S?MCA$', r'^[Mm]em(block|cpy|move|remap|set|type)$',
             r'^microarchitectur(al|e)$', r'^mispredict(ed)?$',
             r'MOVSB?',
             r'^param(s)?$',
@@ -259,8 +262,10 @@ regexes_pats = [ r'^U?ABI$',
             r'sev_(features|status)', r'^SEV(-(ES|SNP))?$', r'^SM[ET]$',
             r'^SM[AE]P$', r'^[Ss]pectre(_v2)*$', r'^STI(BP)?$',
             r'^str(lcat|tab)$', r'^SV[AM]$',
-            r'T[DS]X', r'^u(16|32|64)$', r'^UM[CL]$',
-            r'^U?EFI$', r'^v?syscall$', r'^VMC[BS]$', r'^VMG?E(xit|XIT)$', r'^VM[MX]?$',
+            r'T[DS]X', r'^u(16|32|64)$',
+            r'^U?EFI$', r'^UM[CL]$', r'^unmap(ping)?$',
+            r'^v?syscall$', r'^VMC[BS]$', r'^VMG?E(xit|XIT)$', r'^VM[MX]?$',
+            r'^VM(CALL|ENTER|LAUNCH|RESUME)$',
             r'^VMPL([0-3])?$', r'^x86(-(32|64))?$', r'^(Xen(PV)?|XENPV)$', r'^XSAVE[CS]?$' ]
 
 def load_spellchecker():
@@ -300,6 +305,8 @@ rex_word_split, rex_x86_traps
     rex_errval      = re.compile(r'-E(EINVAL|EXIST|NODEV|NOMEM|OPNOTSUPP|PROBE_DEFER)')
 
     # match only absolute filenames, for regex simplicity
+    # \W is consuming the char so make sure you replace with ' '
+    # at least and not the empty string
     rex_abs_fnames      = re.compile(r"""\W/                # starts with /
                                      ([\w_-]+/)+[\w_-]+     # dirname + fname up to suffix
                                      (\.(c|h|S|config))?    # filenames with no suffix too
@@ -479,7 +486,7 @@ def spellcheck(s, where, flags):
         line = rex_url.sub('', line)
 
         # filenames, ditto
-        line = rex_abs_fnames.sub('', line)
+        line = rex_abs_fnames.sub(' ', line)
         line = rex_fnames.sub('', line)
 
         # paths... replace with a single \s because the regex is eating it
@@ -1007,12 +1014,6 @@ f"""Class patch:
                     info(f"Skipping Cc: {name_email}")
                     continue
 
-            # check Fixes: tag
-            if tag.lower() == 'fixes':
-                m = rex_commit_ref.match(name_email)
-                if m:
-                    verify_commit_ref(m.group('sha1'), m.group('commit_title'))
-
             info(f"Adding tag {tag}: {name_email}")
             self.__insert_tag(tag, name_email)
 
@@ -1148,6 +1149,10 @@ f"""Class patch:
 
         lines = self.commit_msg.splitlines()
 
+        if not lines:
+            warn("Patch doesn't have a commit message.\n")
+            return
+
         rex_pers_pronoun = re.compile(r'\W?we\W', re.I)
         rex_this_patch   = re.compile(r'(.*this\s+patch.*)', re.I)
 
@@ -1174,7 +1179,8 @@ f"""Class patch:
     def verify_tags(self):
         od = self.od
 
-        rex_remove_email_addr = re.compile(r'(.*)\W\<.*$')
+        rex_remove_email_addr = re.compile(r'(.*)\W\<.*$', re.I)
+        rex_email_addr = re.compile(r'([a-z._]+@[a-z._]+)>?', re.I)
 
         for tag in od:
             if not od[tag]:
@@ -1188,14 +1194,28 @@ f"""Class patch:
                     if sender == sob:
                         return
 
-                    # see if at least the names match, i.e., using different email addresses
+                    # see if the names match, i.e., using different email addresses
                     sender_name = re.sub(rex_remove_email_addr, r'\1', sender)
                     sob_name    = re.sub(rex_remove_email_addr, r'\1', sob)
 
                     if sender_name == sob_name:
                         return
 
+                    # otherwise, see if the email addresses match
+                    m1 = re.search(rex_email_addr, sender)
+                    m2 = re.search(rex_email_addr, sob)
+                    if not (m1 and m2):
+                        continue
+
+                    if m1.group(1) == m2.group(1):
+                        return
+
                 warn(f"Sender { sender } hasn't signed off on the patch!")
+
+            # check Fixes: tag
+            if tag == 'Fixes':
+                verify_fixes_tags(od[tag], od['Cc'])
+
 
     def format_tags(self, f):
         """
@@ -1372,7 +1392,7 @@ def verify_binutils_version(f, h):
 
     if not opcodes: return
 
-    rex_binutils = re.compile(r'^.*binutils\s.*[0-2]\.[0-9]+.*')
+    rex_binutils = re.compile(r'^.*binutils\s.*[0-2]\.[0-9]+.*', re.I)
     rex_cm_start = re.compile(r'^[\s\t\+]+/\*\s+(.*)$')
     comment_string = ""
     in_comment = False
@@ -1477,9 +1497,6 @@ def check_for_asserts(pfile, h):
         warn_on(rex_bug_ons.match(l),
                 f"Avoid BUG(_ON)s at any cost. At { pfile }:{ line.target_line_no } [{ l.strip() }]\n")
 
-###
-###
-
 
 def verify_commit_quotation(linenum, prev, cur, nxt):
     """
@@ -1491,6 +1508,23 @@ def verify_commit_quotation(linenum, prev, cur, nxt):
 
     warn_on(1, f"line {linenum}: [{cur}]")
     warn_on(1, "The proper commit quotation format is:\n<newline>\n[  ]<sha1, 12 chars> (\"commit name\")\n<newline>")
+
+
+# verify the list of Fixes: tags and whether the patch needs a CC:stable
+def verify_fixes_tags(fixes_lst, cc_lst):
+    global git_repo
+
+    assert git_repo, "Git repo not found!"
+
+    # cd into git_repo and parse Makefile's beginning for the first vars
+
+    for fval in fixes_lst:
+        m = rex_commit_ref.match(fval)
+        if m:
+            verify_commit_ref(m.group('sha1'), m.group('commit_title'))
+
+#    sys.exit(0)
+
 ###
 
 
