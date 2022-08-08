@@ -3276,7 +3276,7 @@ struct wmi_force_fw_hang_cmd {
 	__le32 tlv_header;
 	__le32 type;
 	__le32 delay_time_ms;
-};
+} __packed;
 
 struct wmi_vdev_set_param_cmd {
 	__le32 tlv_header;
@@ -3453,7 +3453,7 @@ struct wmi_stop_scan_cmd {
 	__le32 req_type;
 	__le32 vdev_id;
 	__le32 pdev_id;
-};
+} __packed;
 
 struct ath12k_wmi_scan_chan_list_arg {
 	u32 pdev_id;
@@ -3501,20 +3501,20 @@ struct wmi_sta_powersave_mode_cmd {
 	__le32 tlv_header;
 	__le32 vdev_id;
 	__le32 sta_ps_mode;
-};
+} __packed;
 
 struct wmi_sta_smps_force_mode_cmd {
 	__le32 tlv_header;
 	__le32 vdev_id;
 	__le32 forced_mode;
-};
+} __packed;
 
 struct wmi_sta_smps_param_cmd {
 	__le32 tlv_header;
 	__le32 vdev_id;
 	__le32 param;
 	__le32 value;
-};
+} __packed;
 
 struct ath12k_wmi_bcn_prb_info_params {
 	__le32 tlv_header;
@@ -3531,7 +3531,7 @@ struct wmi_pdev_green_ap_ps_enable_cmd_param {
 	__le32 tlv_header;
 	__le32 pdev_id;
 	__le32 enable;
-};
+} __packed;
 
 struct ath12k_wmi_ap_ps_arg {
 	u32 vdev_id;
@@ -3796,7 +3796,7 @@ struct ath12k_wmi_reg_rule_ext_params {
 	__le32 bw_pwr_info;
 	__le32 flag_info;
 	__le32 psd_power_info;
-};
+} __packed;
 
 struct wmi_vdev_delete_resp_event {
 	__le32 vdev_id;
