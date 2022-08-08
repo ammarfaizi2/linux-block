@@ -2491,7 +2491,7 @@ struct ath12k_wmi_dma_ring_caps_params {
 	__le32 min_buf_align;
 } __packed;
 
-struct wmi_ready_event_min {
+struct ath12k_wmi_ready_event_min_params {
 	struct ath12k_wmi_abi_version_params fw_abi_vers;
 	struct ath12k_wmi_mac_addr_params mac_addr;
 	__le32 status;
@@ -2502,7 +2502,7 @@ struct wmi_ready_event_min {
 } __packed;
 
 struct wmi_ready_event {
-	struct wmi_ready_event_min ready_event_min;
+	struct ath12k_wmi_ready_event_min_params ready_event_min;
 	__le32 max_ast_index;
 	__le32 pktlog_defs_checksum;
 } __packed;
