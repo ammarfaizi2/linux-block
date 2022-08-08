@@ -20,11 +20,11 @@
 #include "hw.h"
 #include "peer.h"
 
-struct wmi_tlv_svc_ready_parse {
+struct ath12k_wmi_svc_ready_parse {
 	bool wmi_svc_bitmap_done;
 };
 
-struct wmi_tlv_dma_ring_caps_parse {
+struct ath12k_wmi_dma_ring_caps_parse {
 	struct ath12k_wmi_dma_ring_caps_params *dma_ring_caps;
 	u32 n_dma_ring_caps;
 };
@@ -40,7 +40,7 @@ struct ath12k_wmi_service_ext_arg {
 	u32 num_phy;
 };
 
-struct wmi_tlv_svc_rdy_ext_parse {
+struct ath12k_wmi_svc_rdy_ext_parse {
 	struct ath12k_wmi_service_ext_arg arg;
 	const struct ath12k_wmi_soc_mac_phy_hw_mode_caps_params *hw_caps;
 	const struct ath12k_wmi_hw_mode_cap_params *hw_mode_caps;
@@ -52,7 +52,7 @@ struct wmi_tlv_svc_rdy_ext_parse {
 	const struct ath12k_wmi_soc_hal_reg_caps_params *soc_hal_reg_caps;
 	const struct ath12k_wmi_hal_reg_caps_ext_params *ext_hal_reg_caps;
 	u32 n_ext_hal_reg_caps;
-	struct wmi_tlv_dma_ring_caps_parse dma_caps_parse;
+	struct ath12k_wmi_dma_ring_caps_parse dma_caps_parse;
 	bool hw_mode_done;
 	bool mac_phy_done;
 	bool ext_hal_reg_done;
@@ -62,12 +62,12 @@ struct wmi_tlv_svc_rdy_ext_parse {
 	bool dma_ring_cap_done;
 };
 
-struct wmi_tlv_svc_rdy_ext2_parse {
-	struct wmi_tlv_dma_ring_caps_parse dma_caps_parse;
+struct ath12k_wmi_svc_rdy_ext2_parse {
+	struct ath12k_wmi_dma_ring_caps_parse dma_caps_parse;
 	bool dma_ring_cap_done;
 };
 
-struct wmi_tlv_rdy_parse {
+struct ath12k_wmi_rdy_parse {
 	u32 num_extra_mac_addr;
 };
 
@@ -425,7 +425,7 @@ static int ath12k_pull_svc_ready_ext(struct ath12k_wmi_pdev *wmi_handle,
 
 static int
 ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_wmi_pdev *wmi_handle,
-				      struct wmi_tlv_svc_rdy_ext_parse *svc,
+				      struct ath12k_wmi_svc_rdy_ext_parse *svc,
 				      u8 hw_mode_id, u8 phy_id,
 				      struct ath12k_pdev *pdev)
 {
@@ -625,7 +625,7 @@ static void ath12k_wmi_service_bitmap_copy(struct ath12k_wmi_pdev *wmi,
 static int ath12k_wmi_tlv_svc_rdy_parse(struct ath12k_base *ab, u16 tag, u16 len,
 					const void *ptr, void *data)
 {
-	struct wmi_tlv_svc_ready_parse *svc_ready = data;
+	struct ath12k_wmi_svc_ready_parse *svc_ready = data;
 	struct ath12k_wmi_pdev *wmi_handle = &ab->wmi_ab.wmi[0];
 	u16 expect_len;
 
@@ -658,7 +658,7 @@ static int ath12k_wmi_tlv_svc_rdy_parse(struct ath12k_base *ab, u16 tag, u16 len
 
 static int ath12k_service_ready_event(struct ath12k_base *ab, struct sk_buff *skb)
 {
-	struct wmi_tlv_svc_ready_parse svc_ready = { };
+	struct ath12k_wmi_svc_ready_parse svc_ready = { };
 	int ret;
 
 	ret = ath12k_wmi_tlv_iter(ab, skb->data, skb->len,
@@ -3627,7 +3627,7 @@ static int ath12k_wmi_tlv_hw_mode_caps_parse(struct ath12k_base *soc,
 					     u16 tag, u16 len,
 					     const void *ptr, void *data)
 {
-	struct wmi_tlv_svc_rdy_ext_parse *svc_rdy_ext = data;
+	struct ath12k_wmi_svc_rdy_ext_parse *svc_rdy_ext = data;
 	struct ath12k_wmi_hw_mode_cap_params *hw_mode_cap;
 	u32 phy_map = 0;
 
@@ -3653,7 +3653,7 @@ static int ath12k_wmi_tlv_hw_mode_caps_parse(struct ath12k_base *soc,
 static int ath12k_wmi_tlv_hw_mode_caps(struct ath12k_base *soc,
 				       u16 len, const void *ptr, void *data)
 {
-	struct wmi_tlv_svc_rdy_ext_parse *svc_rdy_ext = data;
+	struct ath12k_wmi_svc_rdy_ext_parse *svc_rdy_ext = data;
 	const struct ath12k_wmi_hw_mode_cap_params *hw_mode_caps;
 	enum wmi_host_hw_mode_config_type mode, pref;
 	u32 i;
@@ -3695,7 +3695,7 @@ static int ath12k_wmi_tlv_mac_phy_caps_parse(struct ath12k_base *soc,
 					     u16 tag, u16 len,
 					     const void *ptr, void *data)
 {
-	struct wmi_tlv_svc_rdy_ext_parse *svc_rdy_ext = data;
+	struct ath12k_wmi_svc_rdy_ext_parse *svc_rdy_ext = data;
 
 	if (tag != WMI_TAG_MAC_PHY_CAPABILITIES)
 		return -EPROTO;
@@ -3720,7 +3720,7 @@ static int ath12k_wmi_tlv_ext_hal_reg_caps_parse(struct ath12k_base *soc,
 						 u16 tag, u16 len,
 						 const void *ptr, void *data)
 {
-	struct wmi_tlv_svc_rdy_ext_parse *svc_rdy_ext = data;
+	struct ath12k_wmi_svc_rdy_ext_parse *svc_rdy_ext = data;
 
 	if (tag != WMI_TAG_HAL_REG_CAPABILITIES_EXT)
 		return -EPROTO;
@@ -3736,7 +3736,7 @@ static int ath12k_wmi_tlv_ext_hal_reg_caps(struct ath12k_base *soc,
 					   u16 len, const void *ptr, void *data)
 {
 	struct ath12k_wmi_pdev *wmi_handle = &soc->wmi_ab.wmi[0];
-	struct wmi_tlv_svc_rdy_ext_parse *svc_rdy_ext = data;
+	struct ath12k_wmi_svc_rdy_ext_parse *svc_rdy_ext = data;
 	struct ath12k_wmi_hal_reg_capabilities_ext_arg reg_cap;
 	int ret;
 	u32 i;
@@ -3772,7 +3772,7 @@ static int ath12k_wmi_tlv_ext_soc_hal_reg_caps_parse(struct ath12k_base *soc,
 						     void *data)
 {
 	struct ath12k_wmi_pdev *wmi_handle = &soc->wmi_ab.wmi[0];
-	struct wmi_tlv_svc_rdy_ext_parse *svc_rdy_ext = data;
+	struct ath12k_wmi_svc_rdy_ext_parse *svc_rdy_ext = data;
 	u8 hw_mode_id = le32_to_cpu(svc_rdy_ext->pref_hw_mode_caps.hw_mode_id);
 	u32 phy_id_map;
 	int pdev_index = 0;
@@ -3821,7 +3821,7 @@ static int ath12k_wmi_tlv_dma_ring_caps_parse(struct ath12k_base *soc,
 					      u16 tag, u16 len,
 					      const void *ptr, void *data)
 {
-	struct wmi_tlv_dma_ring_caps_parse *parse = data;
+	struct ath12k_wmi_dma_ring_caps_parse *parse = data;
 
 	if (tag != WMI_TAG_DMA_RING_CAPABILITIES)
 		return -EPROTO;
@@ -3856,7 +3856,7 @@ static void ath12k_wmi_free_dbring_caps(struct ath12k_base *ab)
 static int ath12k_wmi_tlv_dma_ring_caps(struct ath12k_base *ab,
 					u16 len, const void *ptr, void *data)
 {
-	struct wmi_tlv_dma_ring_caps_parse *dma_caps_parse = data;
+	struct ath12k_wmi_dma_ring_caps_parse *dma_caps_parse = data;
 	struct ath12k_wmi_dma_ring_caps_params *dma_caps;
 	struct ath12k_dbring_cap *dir_buff_caps;
 	int ret;
@@ -3913,7 +3913,7 @@ static int ath12k_wmi_tlv_svc_rdy_ext_parse(struct ath12k_base *ab,
 					    const void *ptr, void *data)
 {
 	struct ath12k_wmi_pdev *wmi_handle = &ab->wmi_ab.wmi[0];
-	struct wmi_tlv_svc_rdy_ext_parse *svc_rdy_ext = data;
+	struct ath12k_wmi_svc_rdy_ext_parse *svc_rdy_ext = data;
 	int ret;
 
 	switch (tag) {
@@ -3990,7 +3990,7 @@ static int ath12k_wmi_tlv_svc_rdy_ext_parse(struct ath12k_base *ab,
 static int ath12k_service_ready_ext_event(struct ath12k_base *ab,
 					  struct sk_buff *skb)
 {
-	struct wmi_tlv_svc_rdy_ext_parse svc_rdy_ext = { };
+	struct ath12k_wmi_svc_rdy_ext_parse svc_rdy_ext = { };
 	int ret;
 
 	ret = ath12k_wmi_tlv_iter(ab, skb->data, skb->len,
@@ -4016,7 +4016,7 @@ static int ath12k_wmi_tlv_svc_rdy_ext2_parse(struct ath12k_base *ab,
 					     u16 tag, u16 len,
 					     const void *ptr, void *data)
 {
-	struct wmi_tlv_svc_rdy_ext2_parse *parse = data;
+	struct ath12k_wmi_svc_rdy_ext2_parse *parse = data;
 	int ret;
 
 	switch (tag) {
@@ -4040,7 +4040,7 @@ static int ath12k_wmi_tlv_svc_rdy_ext2_parse(struct ath12k_base *ab,
 static int ath12k_service_ready_ext2_event(struct ath12k_base *ab,
 					   struct sk_buff *skb)
 {
-	struct wmi_tlv_svc_rdy_ext2_parse svc_rdy_ext2 = { };
+	struct ath12k_wmi_svc_rdy_ext2_parse svc_rdy_ext2 = { };
 	int ret;
 
 	ret = ath12k_wmi_tlv_iter(ab, skb->data, skb->len,
@@ -5218,7 +5218,7 @@ mem_free:
 static int ath12k_wmi_tlv_rdy_parse(struct ath12k_base *ab, u16 tag, u16 len,
 				    const void *ptr, void *data)
 {
-	struct wmi_tlv_rdy_parse *rdy_parse = data;
+	struct ath12k_wmi_rdy_parse *rdy_parse = data;
 	struct wmi_ready_event fixed_param;
 	struct ath12k_wmi_mac_addr_params *addr_list;
 	struct ath12k_pdev *pdev;
@@ -5261,7 +5261,7 @@ static int ath12k_wmi_tlv_rdy_parse(struct ath12k_base *ab, u16 tag, u16 len,
 
 static int ath12k_ready_event(struct ath12k_base *ab, struct sk_buff *skb)
 {
-	struct wmi_tlv_rdy_parse rdy_parse = { };
+	struct ath12k_wmi_rdy_parse rdy_parse = { };
 	int ret;
 
 	ret = ath12k_wmi_tlv_iter(ab, skb->data, skb->len,
