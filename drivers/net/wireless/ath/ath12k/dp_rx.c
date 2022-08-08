@@ -1735,10 +1735,10 @@ void ath12k_dp_htt_htc_t2h_msg_handler(struct ath12k_base *ab,
 
 	switch (type) {
 	case HTT_T2H_MSG_TYPE_VERSION_CONF:
-		dp->htt_tgt_ver_major = FIELD_GET(HTT_T2H_VERSION_CONF_MAJOR,
-						  resp->version_msg.version);
-		dp->htt_tgt_ver_minor = FIELD_GET(HTT_T2H_VERSION_CONF_MINOR,
-						  resp->version_msg.version);
+		dp->htt_tgt_ver_major = u32_get_bits(resp->version_msg.version,
+						     HTT_T2H_VERSION_CONF_MAJOR);
+		dp->htt_tgt_ver_minor = u32_get_bits(resp->version_msg.version,
+						     HTT_T2H_VERSION_CONF_MINOR);
 		complete(&dp->htt_tgt_version_received);
 		break;
 	/* TODO: remove unused peer map versions after testing */
