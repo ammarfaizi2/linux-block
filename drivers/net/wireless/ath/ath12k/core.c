@@ -24,12 +24,6 @@ static unsigned int ath12k_crypto_mode;
 module_param_named(crypto_mode, ath12k_crypto_mode, uint, 0644);
 MODULE_PARM_DESC(crypto_mode, "crypto mode: 0-hardware, 1-software");
 
-/* frame mode values are mapped as per enum ath12k_hw_txrx_mode */
-unsigned int ath12k_frame_mode = ATH12K_HW_TXRX_NATIVE_WIFI;
-module_param_named(frame_mode, ath12k_frame_mode, uint, 0644);
-MODULE_PARM_DESC(frame_mode,
-		 "Datapath frame mode (0: raw, 1: native wifi (default), 2: ethernet)");
-
 int ath12k_core_suspend(struct ath12k_base *ab)
 {
 	int ret;
@@ -626,9 +620,6 @@ int ath12k_core_qmi_firmware_ready(struct ath12k_base *ab)
 		ath12k_info(ab, "invalid crypto_mode: %d\n", ath12k_crypto_mode);
 		return -EINVAL;
 	}
-
-	if (ath12k_frame_mode == ATH12K_HW_TXRX_RAW)
-		set_bit(ATH12K_FLAG_RAW_MODE, &ab->dev_flags);
 
 	mutex_lock(&ab->core_lock);
 	ret = ath12k_core_start(ab, ATH12K_FIRMWARE_MODE_NORMAL);

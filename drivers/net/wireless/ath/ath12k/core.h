@@ -36,8 +36,6 @@
 #define	ATH12K_RX_RATE_TABLE_NUM	320
 #define	ATH12K_RX_RATE_TABLE_11AX_NUM	576
 
-extern unsigned int ath12k_frame_mode;
-
 #define ATH12K_MON_TIMER_INTERVAL  10
 #define ATH12K_RESET_TIMEOUT_HZ			(20 * HZ)
 #define ATH12K_RESET_MAX_FAIL_COUNT_FIRST	3

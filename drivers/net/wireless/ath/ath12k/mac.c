@@ -4803,9 +4803,8 @@ static void ath12k_mac_op_update_vif_offload(struct ieee80211_hw *hw,
 	int ret;
 
 	param_id = WMI_VDEV_PARAM_TX_ENCAP_TYPE;
-	if (ath12k_frame_mode != ATH12K_HW_TXRX_ETHERNET ||
-	    (vif->type != NL80211_IFTYPE_STATION &&
-	     vif->type != NL80211_IFTYPE_AP))
+	if (vif->type != NL80211_IFTYPE_STATION &&
+	    vif->type != NL80211_IFTYPE_AP)
 		vif->offload_flags &= ~(IEEE80211_OFFLOAD_ENCAP_ENABLED |
 					IEEE80211_OFFLOAD_DECAP_ENABLED);
 
@@ -6752,10 +6751,7 @@ static int __ath12k_mac_register(struct ath12k *ar)
 	ieee80211_hw_set(ar->hw, QUEUE_CONTROL);
 	ieee80211_hw_set(ar->hw, SUPPORTS_TX_FRAG);
 	ieee80211_hw_set(ar->hw, REPORTS_LOW_ACK);
-	if (ath12k_frame_mode == ATH12K_HW_TXRX_ETHERNET) {
-		ieee80211_hw_set(ar->hw, SUPPORTS_TX_ENCAP_OFFLOAD);
-		ieee80211_hw_set(ar->hw, SUPPORTS_RX_DECAP_OFFLOAD);
-	}
+
 	if (ht_cap & WMI_HT_CAP_ENABLED) {
 		ieee80211_hw_set(ar->hw, AMPDU_AGGREGATION);
 		ieee80211_hw_set(ar->hw, TX_AMPDU_SETUP_IN_HW);
