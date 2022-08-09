@@ -17,7 +17,6 @@ ath12k-y += core.o \
 	    peer.o \
 	    dbring.o \
 	    hw.o \
-	    wow.o \
 	    mhi.o \
 	    pci.o \
 	    dp_mon.o

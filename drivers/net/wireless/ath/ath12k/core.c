@@ -14,7 +14,6 @@
 #include "dp_rx.h"
 #include "debug.h"
 #include "hif.h"
-#include "wow.h"
 
 unsigned int ath12k_debug_mask;
 module_param_named(debug_mask, ath12k_debug_mask, uint, 0644);
@@ -36,12 +35,6 @@ int ath12k_core_suspend(struct ath12k_base *ab)
 	if (ret) {
 		ath12k_warn(ab, "failed to stop dp rx (and timer) pktlog during suspend: %d\n",
 			    ret);
-		return ret;
-	}
-
-	ret = ath12k_wow_enable(ab);
-	if (ret) {
-		ath12k_warn(ab, "failed to enable wow during suspend: %d\n", ret);
 		return ret;
 	}
 
@@ -84,12 +77,6 @@ int ath12k_core_resume(struct ath12k_base *ab)
 	if (ret) {
 		ath12k_warn(ab, "failed to start rx pktlog during resume: %d\n",
 			    ret);
-		return ret;
-	}
-
-	ret = ath12k_wow_wakeup(ab);
-	if (ret) {
-		ath12k_warn(ab, "failed to wakeup wow during resume: %d\n", ret);
 		return ret;
 	}
 
@@ -933,7 +920,6 @@ struct ath12k_base *ath12k_core_alloc(struct device *dev, size_t priv_size,
 	INIT_WORK(&ab->reset_work, ath12k_core_reset);
 	timer_setup(&ab->rx_replenish_retry, ath12k_ce_rx_replenish_retry, 0);
 	init_completion(&ab->htc_suspend);
-	init_completion(&ab->wow.wakeup_completed);
 
 	ab->dev = dev;
 	ab->hif.bus = bus;

@@ -6244,59 +6244,6 @@ static void ath12k_probe_resp_tx_status_event(struct ath12k_base *ab,
 	kfree(tb);
 }
 
-static int ath12k_wmi_wow_wakeup_host_parse(struct ath12k_base *ab,
-					    u16 tag, u16 len,
-					    const void *ptr, void *data)
-{
-	struct wmi_wow_ev_arg *ev = data;
-	const char *wow_pg_fault;
-	int wow_pg_len;
-
-	switch (tag) {
-	case WMI_TAG_WOW_EVENT_INFO:
-		memcpy(ev, ptr, sizeof(*ev));
-		ath12k_dbg(ab, ATH12K_DBG_WMI, "wow wakeup host reason %d %s\n",
-			   ev->wake_reason, wow_reason(ev->wake_reason));
-		break;
-
-	case WMI_TAG_ARRAY_BYTE:
-		if (ev && ev->wake_reason == WOW_REASON_PAGE_FAULT) {
-			wow_pg_fault = ptr;
-			/* the first 4 bytes are length */
-			wow_pg_len = *(int *)wow_pg_fault;
-			wow_pg_fault += sizeof(int);
-			ath12k_dbg(ab, ATH12K_DBG_WMI, "wow data_len = %d\n",
-				   wow_pg_len);
-			ath12k_dbg_dump(ab, ATH12K_DBG_WMI,
-					"wow_event_info_type packet present",
-					"wow_pg_fault ",
-					wow_pg_fault,
-					wow_pg_len);
-		}
-		break;
-	default:
-		break;
-	}
-
-	return 0;
-}
-
-static void ath12k_wmi_event_wow_wakeup_host(struct ath12k_base *ab, struct sk_buff *skb)
-{
-	struct wmi_wow_ev_arg ev = { };
-	int ret;
-
-	ret = ath12k_wmi_tlv_iter(ab, skb->data, skb->len,
-				  ath12k_wmi_wow_wakeup_host_parse,
-				  &ev);
-	if (ret) {
-		ath12k_warn(ab, "failed to parse wmi wow tlv: %d\n", ret);
-		return;
-	}
-
-	complete(&ab->wow.wakeup_completed);
-}
-
 static void ath12k_wmi_op_rx(struct ath12k_base *ab, struct sk_buff *skb)
 {
 	struct wmi_cmd_hdr *cmd_hdr;
@@ -6403,9 +6350,6 @@ static void ath12k_wmi_op_rx(struct ath12k_base *ab, struct sk_buff *skb)
 		break;
 	case WMI_VDEV_DELETE_RESP_EVENTID:
 		ath12k_vdev_delete_resp_event(ab, skb);
-		break;
-	case WMI_WOW_WAKEUP_HOST_EVENTID:
-		ath12k_wmi_event_wow_wakeup_host(ab, skb);
 		break;
 	/* TODO: Add remaining events */
 	default:
@@ -6616,46 +6560,4 @@ void ath12k_wmi_detach(struct ath12k_base *ab)
 		ath12k_wmi_pdev_detach(ab, i);
 
 	ath12k_wmi_free_dbring_caps(ab);
-}
-
-int ath12k_wmi_wow_host_wakeup_ind(struct ath12k *ar)
-{
-	struct wmi_wow_host_wakeup_ind *cmd;
-	struct sk_buff *skb;
-	size_t len;
-
-	len = sizeof(*cmd);
-	skb = ath12k_wmi_alloc_skb(ar->wmi->wmi_ab, len);
-	if (!skb)
-		return -ENOMEM;
-
-	cmd = (struct wmi_wow_host_wakeup_ind *)skb->data;
-	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_WOW_HOSTWAKEUP_FROM_SLEEP_CMD,
-						 sizeof(*cmd));
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI, "wmi tlv wow host wakeup ind\n");
-
-	return ath12k_wmi_cmd_send(ar->wmi, skb, WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID);
-}
-
-int ath12k_wmi_wow_enable(struct ath12k *ar)
-{
-	struct wmi_wow_enable_cmd *cmd;
-	struct sk_buff *skb;
-	int len;
-
-	len = sizeof(*cmd);
-	skb = ath12k_wmi_alloc_skb(ar->wmi->wmi_ab, len);
-	if (!skb)
-		return -ENOMEM;
-
-	cmd = (struct wmi_wow_enable_cmd *)skb->data;
-	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_WOW_ENABLE_CMD,
-						 sizeof(*cmd));
-
-	cmd->enable = cpu_to_le32(1);
-	cmd->pause_iface_config = cpu_to_le32(WOW_IFACE_PAUSE_ENABLED);
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI, "wmi tlv wow enable\n");
-
-	return ath12k_wmi_cmd_send(ar->wmi, skb, WMI_WOW_ENABLE_CMDID);
 }
