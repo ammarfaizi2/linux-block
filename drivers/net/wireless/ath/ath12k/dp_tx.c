@@ -539,9 +539,11 @@ void ath12k_dp_tx_completion_handler(struct ath12k_base *ab, int ring_id)
 
 	ath12k_hal_srng_access_begin(ab, status_ring);
 
-	while ((ATH12K_TX_COMPL_NEXT(tx_ring->tx_status_head) !=
-		tx_ring->tx_status_tail) &&
-	       (desc = ath12k_hal_srng_dst_get_next_entry(ab, status_ring))) {
+	while (ATH12K_TX_COMPL_NEXT(tx_ring->tx_status_head) != tx_ring->tx_status_tail) {
+		desc = ath12k_hal_srng_dst_get_next_entry(ab, status_ring);
+		if (!desc)
+			break;
+
 		memcpy(&tx_ring->tx_status[tx_ring->tx_status_head],
 		       desc, sizeof(struct hal_wbm_release_ring));
 		tx_ring->tx_status_head =
