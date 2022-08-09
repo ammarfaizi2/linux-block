@@ -827,12 +827,12 @@ void ath12k_dp_rx_peer_tid_delete(struct ath12k *ar,
 }
 
 static int ath12k_dp_rx_link_desc_return(struct ath12k_base *ab,
-					 u32 *link_desc,
+					 void *link_desc,
 					 enum hal_wbm_rel_bm_act action)
 {
 	struct ath12k_dp *dp = &ab->dp;
 	struct hal_srng *srng;
-	u32 *desc;
+	void *desc;
 	int ret = 0;
 
 	srng = &ab->hal.srng_list[dp->wbm_desc_rel_ring.ring_id];
@@ -2639,6 +2639,7 @@ int ath12k_dp_rx_process(struct ath12k_base *ab, int ring_id,
 	struct ath12k_rx_desc_info *desc_info;
 	struct ath12k_dp *dp = &ab->dp;
 	struct dp_rxdma_ring *rx_ring = &dp->rx_refill_buf_ring;
+	struct hal_reo_dest_ring *desc;
 	int num_buffs_reaped = 0;
 	struct sk_buff_head msdu_list;
 	struct ath12k_skb_rxcb *rxcb;
@@ -2647,7 +2648,6 @@ int ath12k_dp_rx_process(struct ath12k_base *ab, int ring_id,
 	struct sk_buff *msdu;
 	bool done = false;
 	int mac_id;
-	u32 *rx_desc;
 	int i;
 	u64 desc_va;
 
@@ -2660,18 +2660,17 @@ int ath12k_dp_rx_process(struct ath12k_base *ab, int ring_id,
 try_again:
 	ath12k_hal_srng_access_begin(ab, srng);
 
-	while ((rx_desc = ath12k_hal_srng_dst_get_next_entry(ab, srng))) {
-		struct hal_reo_dest_ring desc = *(struct hal_reo_dest_ring *)rx_desc;
+	while ((desc = ath12k_hal_srng_dst_get_next_entry(ab, srng))) {
 		enum hal_reo_dest_ring_push_reason push_reason;
 		u32 cookie;
 
-		cookie = le32_get_bits(desc.buf_addr_info.info1,
+		cookie = le32_get_bits(desc->buf_addr_info.info1,
 				       BUFFER_ADDR_INFO1_SW_COOKIE);
 
-		mac_id = u32_get_bits(desc.info0,
+		mac_id = u32_get_bits(desc->info0,
 				      HAL_REO_DEST_RING_INFO0_SRC_LINK_ID);
 
-		desc_va = ((u64)desc.buf_va_hi << 32 | desc.buf_va_lo);
+		desc_va = ((u64)desc->buf_va_hi << 32 | desc->buf_va_lo);
 		desc_info = (struct ath12k_rx_desc_info *)((unsigned long)desc_va);
 
 		/* retry manual desc retrieval */
@@ -2700,7 +2699,7 @@ try_again:
 
 		num_buffs_reaped++;
 
-		push_reason = u32_get_bits(desc.info0,
+		push_reason = u32_get_bits(desc->info0,
 					   HAL_REO_DEST_RING_INFO0_PUSH_REASON);
 		if (push_reason !=
 		    HAL_REO_DEST_RING_PUSH_REASON_ROUTING_INSTRUCTION) {
@@ -2709,16 +2708,16 @@ try_again:
 			continue;
 		}
 
-		rxcb->is_first_msdu = !!(desc.rx_msdu_info.info0 &
+		rxcb->is_first_msdu = !!(desc->rx_msdu_info.info0 &
 					 RX_MSDU_DESC_INFO0_FIRST_MSDU_IN_MPDU);
-		rxcb->is_last_msdu = !!(desc.rx_msdu_info.info0 &
+		rxcb->is_last_msdu = !!(desc->rx_msdu_info.info0 &
 					RX_MSDU_DESC_INFO0_LAST_MSDU_IN_MPDU);
-		rxcb->is_continuation = !!(desc.rx_msdu_info.info0 &
+		rxcb->is_continuation = !!(desc->rx_msdu_info.info0 &
 					   RX_MSDU_DESC_INFO0_MSDU_CONTINUATION);
 		rxcb->mac_id = mac_id;
-		rxcb->peer_id = u32_get_bits(desc.rx_mpdu_info.peer_meta_data,
+		rxcb->peer_id = u32_get_bits(desc->rx_mpdu_info.peer_meta_data,
 					     RX_MPDU_DESC_META_DATA_PEER_ID);
-		rxcb->tid = u32_get_bits(desc.rx_mpdu_info.info0,
+		rxcb->tid = u32_get_bits(desc->rx_mpdu_info.info0,
 					 RX_MPDU_DESC_INFO0_TID);
 
 		__skb_queue_tail(&msdu_list, msdu);
@@ -3222,7 +3221,7 @@ ath12k_dp_rx_h_defrag_validate_incr_pn(struct ath12k *ar, struct ath12k_dp_rx_ti
 
 static int ath12k_dp_rx_frag_h_mpdu(struct ath12k *ar,
 				    struct sk_buff *msdu,
-				    u32 *ring_desc)
+				    struct hal_reo_dest_ring *ring_desc)
 {
 	struct ath12k_base *ab = ar->ab;
 	struct hal_rx_desc *rx_desc;
@@ -3339,7 +3338,7 @@ out_unlock:
 }
 
 static int
-ath12k_dp_process_rx_err_buf(struct ath12k *ar, u32 *ring_desc,
+ath12k_dp_process_rx_err_buf(struct ath12k *ar, struct hal_reo_dest_ring *desc,
 			     bool drop, u32 cookie)
 {
 	struct ath12k_base *ab = ar->ab;
@@ -3348,11 +3347,10 @@ ath12k_dp_process_rx_err_buf(struct ath12k *ar, u32 *ring_desc,
 	struct hal_rx_desc *rx_desc;
 	u16 msdu_len;
 	u32 hal_rx_desc_sz = ab->hw_params->hal_desc_sz;
-	struct hal_reo_dest_ring desc = *(struct hal_reo_dest_ring *)ring_desc;
 	struct ath12k_rx_desc_info *desc_info;
 	u64 desc_va;
 
-	desc_va = ((u64)desc.buf_va_hi << 32 | desc.buf_va_lo);
+	desc_va = ((u64)desc->buf_va_hi << 32 | desc->buf_va_lo);
 	desc_info = (struct ath12k_rx_desc_info *)((unsigned long)desc_va);
 
 	/* retry manual desc retrieval */
@@ -3406,9 +3404,9 @@ ath12k_dp_process_rx_err_buf(struct ath12k *ar, u32 *ring_desc,
 
 	skb_put(msdu, hal_rx_desc_sz + msdu_len);
 
-	if (ath12k_dp_rx_frag_h_mpdu(ar, msdu, ring_desc)) {
+	if (ath12k_dp_rx_frag_h_mpdu(ar, msdu, desc)) {
 		dev_kfree_skb_any(msdu);
-		ath12k_dp_rx_link_desc_return(ar->ab, ring_desc,
+		ath12k_dp_rx_link_desc_return(ar->ab, desc,
 					      HAL_WBM_REL_BM_ACT_PUT_IN_IDLE);
 	}
 exit:
@@ -3423,6 +3421,7 @@ int ath12k_dp_rx_process_err(struct ath12k_base *ab, struct napi_struct *napi,
 	struct dp_link_desc_bank *link_desc_banks;
 	enum hal_rx_buf_return_buf_manager rbm;
 	int tot_n_bufs_reaped, quota, ret, i;
+	struct hal_reo_dest_ring *reo_desc;
 	struct dp_rxdma_ring *rx_ring;
 	struct dp_srng *reo_except;
 	u32 desc_bank, num_msdus;
@@ -3432,7 +3431,6 @@ int ath12k_dp_rx_process_err(struct ath12k_base *ab, struct napi_struct *napi,
 	int mac_id;
 	struct ath12k *ar;
 	dma_addr_t paddr;
-	u32 *desc;
 	bool is_frag;
 	u8 drop = 0;
 
@@ -3450,11 +3448,9 @@ int ath12k_dp_rx_process_err(struct ath12k_base *ab, struct napi_struct *napi,
 	ath12k_hal_srng_access_begin(ab, srng);
 
 	while (budget &&
-	       (desc = ath12k_hal_srng_dst_get_next_entry(ab, srng))) {
-		struct hal_reo_dest_ring *reo_desc = (struct hal_reo_dest_ring *)desc;
-
+	       (reo_desc = ath12k_hal_srng_dst_get_next_entry(ab, srng))) {
 		ab->soc_stats.err_ring_pkts++;
-		ret = ath12k_hal_desc_reo_parse_err(ab, desc, &paddr,
+		ret = ath12k_hal_desc_reo_parse_err(ab, reo_desc, &paddr,
 						    &desc_bank);
 		if (ret) {
 			ath12k_warn(ab, "failed to parse error reo desc %d\n",
@@ -3470,7 +3466,7 @@ int ath12k_dp_rx_process_err(struct ath12k_base *ab, struct napi_struct *napi,
 		    rbm != ab->hw_params->hal_params->rx_buf_rbm) {
 			ab->soc_stats.invalid_rbm++;
 			ath12k_warn(ab, "invalid return buffer manager %d\n", rbm);
-			ath12k_dp_rx_link_desc_return(ab, desc,
+			ath12k_dp_rx_link_desc_return(ab, reo_desc,
 						      HAL_WBM_REL_BM_ACT_REL_MSDU);
 			continue;
 		}
@@ -3483,7 +3479,7 @@ int ath12k_dp_rx_process_err(struct ath12k_base *ab, struct napi_struct *napi,
 		if (!is_frag || num_msdus > 1) {
 			drop = 1;
 			/* Return the link desc back to wbm idle list */
-			ath12k_dp_rx_link_desc_return(ab, desc,
+			ath12k_dp_rx_link_desc_return(ab, reo_desc,
 						      HAL_WBM_REL_BM_ACT_PUT_IN_IDLE);
 		}
 
@@ -3493,7 +3489,7 @@ int ath12k_dp_rx_process_err(struct ath12k_base *ab, struct napi_struct *napi,
 
 			ar = ab->pdevs[mac_id].ar;
 
-			if (!ath12k_dp_process_rx_err_buf(ar, desc, drop,
+			if (!ath12k_dp_process_rx_err_buf(ar, reo_desc, drop,
 							  msdu_cookies[i]))
 				tot_n_bufs_reaped++;
 		}
@@ -3746,7 +3742,7 @@ int ath12k_dp_rx_process_wbm_err(struct ath12k_base *ab,
 	struct sk_buff *msdu;
 	struct sk_buff_head msdu_list[MAX_RADIOS];
 	struct ath12k_skb_rxcb *rxcb;
-	u32 *rx_desc;
+	void *rx_desc;
 	int mac_id;
 	int num_buffs_reaped = 0;
 	int total_num_buffs_reaped = 0;
@@ -3864,10 +3860,10 @@ done:
 void ath12k_dp_rx_process_reo_status(struct ath12k_base *ab)
 {
 	struct ath12k_dp *dp = &ab->dp;
+	struct hal_tlv_64_hdr *hdr;
 	struct hal_srng *srng;
 	struct ath12k_dp_rx_reo_cmd *cmd, *tmp;
 	bool found = false;
-	u32 *reo_desc;
 	u16 tag;
 	struct hal_reo_status reo_status;
 
@@ -3879,36 +3875,36 @@ void ath12k_dp_rx_process_reo_status(struct ath12k_base *ab)
 
 	ath12k_hal_srng_access_begin(ab, srng);
 
-	while ((reo_desc = ath12k_hal_srng_dst_get_next_entry(ab, srng))) {
-		tag = u32_get_bits(*reo_desc, HAL_SRNG_TLV_HDR_TAG);
+	while ((hdr = ath12k_hal_srng_dst_get_next_entry(ab, srng))) {
+		tag = u64_get_bits(hdr->tl, HAL_SRNG_TLV_HDR_TAG);
 
 		switch (tag) {
 		case HAL_REO_GET_QUEUE_STATS_STATUS:
-			ath12k_hal_reo_status_queue_stats(ab, reo_desc,
+			ath12k_hal_reo_status_queue_stats(ab, hdr,
 							  &reo_status);
 			break;
 		case HAL_REO_FLUSH_QUEUE_STATUS:
-			ath12k_hal_reo_flush_queue_status(ab, reo_desc,
+			ath12k_hal_reo_flush_queue_status(ab, hdr,
 							  &reo_status);
 			break;
 		case HAL_REO_FLUSH_CACHE_STATUS:
-			ath12k_hal_reo_flush_cache_status(ab, reo_desc,
+			ath12k_hal_reo_flush_cache_status(ab, hdr,
 							  &reo_status);
 			break;
 		case HAL_REO_UNBLOCK_CACHE_STATUS:
-			ath12k_hal_reo_unblk_cache_status(ab, reo_desc,
+			ath12k_hal_reo_unblk_cache_status(ab, hdr,
 							  &reo_status);
 			break;
 		case HAL_REO_FLUSH_TIMEOUT_LIST_STATUS:
-			ath12k_hal_reo_flush_timeout_list_status(ab, reo_desc,
+			ath12k_hal_reo_flush_timeout_list_status(ab, hdr,
 								 &reo_status);
 			break;
 		case HAL_REO_DESCRIPTOR_THRESHOLD_REACHED_STATUS:
-			ath12k_hal_reo_desc_thresh_reached_status(ab, reo_desc,
+			ath12k_hal_reo_desc_thresh_reached_status(ab, hdr,
 								  &reo_status);
 			break;
 		case HAL_REO_UPDATE_RX_REO_QUEUE_STATUS:
-			ath12k_hal_reo_update_rx_reo_queue_status(ab, reo_desc,
+			ath12k_hal_reo_update_rx_reo_queue_status(ab, hdr,
 								  &reo_status);
 			break;
 		default:

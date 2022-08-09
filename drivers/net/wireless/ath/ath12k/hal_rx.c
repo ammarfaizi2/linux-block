@@ -320,10 +320,10 @@ void ath12k_hal_rx_msdu_link_info_get(void *link_desc, u32 *num_msdus,
 	}
 }
 
-int ath12k_hal_desc_reo_parse_err(struct ath12k_base *ab, u32 *rx_desc,
+int ath12k_hal_desc_reo_parse_err(struct ath12k_base *ab,
+				  struct hal_reo_dest_ring *desc,
 				  dma_addr_t *paddr, u32 *desc_bank)
 {
-	struct hal_reo_dest_ring *desc = (struct hal_reo_dest_ring *)rx_desc;
 	enum hal_reo_dest_ring_push_reason push_reason;
 	enum hal_reo_dest_ring_error_code err_code;
 	u32 cookie, val;
@@ -347,7 +347,7 @@ int ath12k_hal_desc_reo_parse_err(struct ath12k_base *ab, u32 *rx_desc,
 		return -EINVAL;
 	}
 
-	ath12k_hal_rx_reo_ent_paddr_get(ab, rx_desc, paddr, &cookie);
+	ath12k_hal_rx_reo_ent_paddr_get(ab, desc, paddr, &cookie);
 	*desc_bank = u32_get_bits(cookie, DP_LINK_DESC_BANK_MASK);
 
 	return 0;
@@ -467,10 +467,9 @@ void ath12k_hal_rx_msdu_link_desc_set(struct ath12k_base *ab, void *desc,
 					   HAL_WBM_RELEASE_INFO0_DESC_TYPE);
 }
 
-void ath12k_hal_reo_status_queue_stats(struct ath12k_base *ab, u32 *reo_desc,
+void ath12k_hal_reo_status_queue_stats(struct ath12k_base *ab, struct hal_tlv_64_hdr *tlv,
 				       struct hal_reo_status *status)
 {
-	struct hal_tlv_64_hdr *tlv = (struct hal_tlv_64_hdr *)reo_desc;
 	struct hal_reo_get_queue_stats_status *desc =
 		(struct hal_reo_get_queue_stats_status *)tlv->value;
 
@@ -531,10 +530,9 @@ void ath12k_hal_reo_status_queue_stats(struct ath12k_base *ab, u32 *reo_desc,
 				HAL_REO_GET_QUEUE_STATS_STATUS_INFO5_LOOPING_CNT));
 }
 
-void ath12k_hal_reo_flush_queue_status(struct ath12k_base *ab, u32 *reo_desc,
+void ath12k_hal_reo_flush_queue_status(struct ath12k_base *ab, struct hal_tlv_64_hdr *tlv,
 				       struct hal_reo_status *status)
 {
-	struct hal_tlv_64_hdr *tlv = (struct hal_tlv_64_hdr *)reo_desc;
 	struct hal_reo_flush_queue_status *desc =
 		(struct hal_reo_flush_queue_status *)tlv->value;
 
@@ -549,11 +547,10 @@ void ath12k_hal_reo_flush_queue_status(struct ath12k_base *ab, u32 *reo_desc,
 				     HAL_REO_FLUSH_QUEUE_INFO0_ERR_DETECTED);
 }
 
-void ath12k_hal_reo_flush_cache_status(struct ath12k_base *ab, u32 *reo_desc,
+void ath12k_hal_reo_flush_cache_status(struct ath12k_base *ab, struct hal_tlv_64_hdr *tlv,
 				       struct hal_reo_status *status)
 {
 	struct ath12k_hal *hal = &ab->hal;
-	struct hal_tlv_64_hdr *tlv = (struct hal_tlv_64_hdr *)reo_desc;
 	struct hal_reo_flush_cache_status *desc =
 		(struct hal_reo_flush_cache_status *)tlv->value;
 
@@ -591,11 +588,10 @@ void ath12k_hal_reo_flush_cache_status(struct ath12k_base *ab, u32 *reo_desc,
 			     HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_COUNT);
 }
 
-void ath12k_hal_reo_unblk_cache_status(struct ath12k_base *ab, u32 *reo_desc,
+void ath12k_hal_reo_unblk_cache_status(struct ath12k_base *ab, struct hal_tlv_64_hdr *tlv,
 				       struct hal_reo_status *status)
 {
 	struct ath12k_hal *hal = &ab->hal;
-	struct hal_tlv_64_hdr *tlv = (struct hal_tlv_64_hdr *)reo_desc;
 	struct hal_reo_unblock_cache_status *desc =
 		(struct hal_reo_unblock_cache_status *)tlv->value;
 
@@ -620,10 +616,9 @@ void ath12k_hal_reo_unblk_cache_status(struct ath12k_base *ab, u32 *reo_desc,
 }
 
 void ath12k_hal_reo_flush_timeout_list_status(struct ath12k_base *ab,
-					      u32 *reo_desc,
+					      struct hal_tlv_64_hdr *tlv,
 					      struct hal_reo_status *status)
 {
-	struct hal_tlv_64_hdr *tlv = (struct hal_tlv_64_hdr *)reo_desc;
 	struct hal_reo_flush_timeout_list_status *desc =
 		(struct hal_reo_flush_timeout_list_status *)tlv->value;
 
@@ -650,10 +645,9 @@ void ath12k_hal_reo_flush_timeout_list_status(struct ath12k_base *ab,
 }
 
 void ath12k_hal_reo_desc_thresh_reached_status(struct ath12k_base *ab,
-					       u32 *reo_desc,
+					       struct hal_tlv_64_hdr *tlv,
 					       struct hal_reo_status *status)
 {
-	struct hal_tlv_64_hdr *tlv = (struct hal_tlv_64_hdr *)reo_desc;
 	struct hal_reo_desc_thresh_reached_status *desc =
 		(struct hal_reo_desc_thresh_reached_status *)tlv->value;
 
@@ -686,10 +680,9 @@ void ath12k_hal_reo_desc_thresh_reached_status(struct ath12k_base *ab,
 }
 
 void ath12k_hal_reo_update_rx_reo_queue_status(struct ath12k_base *ab,
-					       u32 *reo_desc,
+					       struct hal_tlv_64_hdr *tlv,
 					       struct hal_reo_status *status)
 {
-	struct hal_tlv_64_hdr *tlv = (struct hal_tlv_64_hdr *)reo_desc;
 	struct hal_reo_status_hdr *desc =
 		(struct hal_reo_status_hdr *)tlv->value;
 

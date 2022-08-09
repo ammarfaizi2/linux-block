@@ -1556,10 +1556,10 @@ void *ath12k_hal_srng_dst_peek(struct ath12k_base *ab, struct hal_srng *srng)
 	return NULL;
 }
 
-u32 *ath12k_hal_srng_dst_get_next_entry(struct ath12k_base *ab,
-					struct hal_srng *srng)
+void *ath12k_hal_srng_dst_get_next_entry(struct ath12k_base *ab,
+					 struct hal_srng *srng)
 {
-	u32 *desc;
+	void *desc;
 
 	lockdep_assert_held(&srng->lock);
 

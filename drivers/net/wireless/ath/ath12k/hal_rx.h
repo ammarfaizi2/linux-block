@@ -649,22 +649,26 @@ static inline u32 ath12k_he_ru_tones_to_nl80211_he_ru_alloc(u16 ru_tones)
 	return ret;
 }
 
-void ath12k_hal_reo_status_queue_stats(struct ath12k_base *ab, u32 *reo_desc,
+void ath12k_hal_reo_status_queue_stats(struct ath12k_base *ab,
+				       struct hal_tlv_64_hdr *tlv,
 				       struct hal_reo_status *status);
-void ath12k_hal_reo_flush_queue_status(struct ath12k_base *ab, u32 *reo_desc,
+void ath12k_hal_reo_flush_queue_status(struct ath12k_base *ab,
+				       struct hal_tlv_64_hdr *tlv,
 				       struct hal_reo_status *status);
-void ath12k_hal_reo_flush_cache_status(struct ath12k_base *ab, u32 *reo_desc,
+void ath12k_hal_reo_flush_cache_status(struct ath12k_base *ab,
+				       struct hal_tlv_64_hdr *tlv,
 				       struct hal_reo_status *status);
-void ath12k_hal_reo_unblk_cache_status(struct ath12k_base *ab, u32 *reo_desc,
+void ath12k_hal_reo_unblk_cache_status(struct ath12k_base *ab,
+				       struct hal_tlv_64_hdr *tlv,
 				       struct hal_reo_status *status);
 void ath12k_hal_reo_flush_timeout_list_status(struct ath12k_base *ab,
-					      u32 *reo_desc,
+					      struct hal_tlv_64_hdr *tlv,
 					      struct hal_reo_status *status);
 void ath12k_hal_reo_desc_thresh_reached_status(struct ath12k_base *ab,
-					       u32 *reo_desc,
+					       struct hal_tlv_64_hdr *tlv,
 					       struct hal_reo_status *status);
 void ath12k_hal_reo_update_rx_reo_queue_status(struct ath12k_base *ab,
-					       u32 *reo_desc,
+					       struct hal_tlv_64_hdr *tlv,
 					       struct hal_reo_status *status);
 void ath12k_hal_rx_msdu_link_info_get(void *link_desc, u32 *num_msdus,
 				      u32 *msdu_cookies,
@@ -676,7 +680,8 @@ void ath12k_hal_rx_buf_addr_info_set(void *desc, dma_addr_t paddr,
 				     u32 cookie, u8 manager);
 void ath12k_hal_rx_buf_addr_info_get(void *desc, dma_addr_t *paddr,
 				     u32 *cookie, u8 *rbm);
-int ath12k_hal_desc_reo_parse_err(struct ath12k_base *ab, u32 *rx_desc,
+int ath12k_hal_desc_reo_parse_err(struct ath12k_base *ab,
+				  struct hal_reo_dest_ring *desc,
 				  dma_addr_t *paddr, u32 *desc_bank);
 int ath12k_hal_wbm_desc_parse_err(struct ath12k_base *ab, void *desc,
 				  struct hal_rx_wbm_rel_info *rel_info);

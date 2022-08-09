@@ -531,7 +531,7 @@ void ath12k_dp_tx_completion_handler(struct ath12k_base *ab, int ring_id)
 	struct sk_buff *msdu;
 	struct hal_tx_status ts = { 0 };
 	struct dp_tx_ring *tx_ring = &dp->tx_ring[ring_id];
-	u32 *desc;
+	struct hal_wbm_release_ring *desc;
 	u8 mac_id;
 	u64 desc_va;
 
@@ -545,7 +545,7 @@ void ath12k_dp_tx_completion_handler(struct ath12k_base *ab, int ring_id)
 			break;
 
 		memcpy(&tx_ring->tx_status[tx_ring->tx_status_head],
-		       desc, sizeof(struct hal_wbm_release_ring));
+		       desc, sizeof(*desc));
 		tx_ring->tx_status_head =
 			ATH12K_TX_COMPL_NEXT(tx_ring->tx_status_head);
 	}

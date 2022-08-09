@@ -324,7 +324,7 @@ static int ath12k_ce_completed_recv_next(struct ath12k_ce_pipe *pipe,
 	struct hal_srng *srng;
 	unsigned int sw_index;
 	unsigned int nentries_mask;
-	u32 *desc;
+	void *desc;
 	int ret = 0;
 
 	spin_lock_bh(&ab->ce.ce_lock);
