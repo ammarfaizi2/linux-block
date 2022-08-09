@@ -509,71 +509,6 @@ struct hal_rx_resp_req_info {
 	__le32 reserved2[5];
 } __packed;
 
-void ath12k_hal_reo_status_queue_stats(struct ath12k_base *ab, u32 *reo_desc,
-				       struct hal_reo_status *status);
-void ath12k_hal_reo_flush_queue_status(struct ath12k_base *ab, u32 *reo_desc,
-				       struct hal_reo_status *status);
-void ath12k_hal_reo_flush_cache_status(struct ath12k_base *ab, u32 *reo_desc,
-				       struct hal_reo_status *status);
-void ath12k_hal_reo_unblk_cache_status(struct ath12k_base *ab, u32 *reo_desc,
-				       struct hal_reo_status *status);
-void ath12k_hal_reo_flush_timeout_list_status(struct ath12k_base *ab,
-					      u32 *reo_desc,
-					      struct hal_reo_status *status);
-void ath12k_hal_reo_desc_thresh_reached_status(struct ath12k_base *ab,
-					       u32 *reo_desc,
-					       struct hal_reo_status *status);
-void ath12k_hal_reo_update_rx_reo_queue_status(struct ath12k_base *ab,
-					       u32 *reo_desc,
-					       struct hal_reo_status *status);
-void ath12k_hal_rx_msdu_link_info_get(void *link_desc, u32 *num_msdus,
-				      u32 *msdu_cookies,
-				      enum hal_rx_buf_return_buf_manager *rbm);
-void ath12k_hal_rx_msdu_link_desc_set(struct ath12k_base *ab, void *desc,
-				      void *link_desc,
-				      enum hal_wbm_rel_bm_act action);
-void ath12k_hal_rx_buf_addr_info_set(void *desc, dma_addr_t paddr,
-				     u32 cookie, u8 manager);
-void ath12k_hal_rx_buf_addr_info_get(void *desc, dma_addr_t *paddr,
-				     u32 *cookie, u8 *rbm);
-int ath12k_hal_desc_reo_parse_err(struct ath12k_base *ab, u32 *rx_desc,
-				  dma_addr_t *paddr, u32 *desc_bank);
-int ath12k_hal_wbm_desc_parse_err(struct ath12k_base *ab, void *desc,
-				  struct hal_rx_wbm_rel_info *rel_info);
-void ath12k_hal_rx_reo_ent_paddr_get(struct ath12k_base *ab, void *desc,
-				     dma_addr_t *paddr, u32 *cookie);
-void ath12k_hal_rx_reo_ent_buf_paddr_get(void *rx_desc,
-					 dma_addr_t *paddr, u32 *sw_cookie,
-					 void **pp_buf_addr_info, u8 *rbm,
-					 u32 *msdu_cnt);
-
-static inline u32 ath12k_he_ru_tones_to_nl80211_he_ru_alloc(u16 ru_tones)
-{
-	u32 ret = 0;
-
-	switch (ru_tones) {
-	case RU_26:
-		ret = NL80211_RATE_INFO_HE_RU_ALLOC_26;
-		break;
-	case RU_52:
-		ret = NL80211_RATE_INFO_HE_RU_ALLOC_52;
-		break;
-	case RU_106:
-		ret = NL80211_RATE_INFO_HE_RU_ALLOC_106;
-		break;
-	case RU_242:
-		ret = NL80211_RATE_INFO_HE_RU_ALLOC_242;
-		break;
-	case RU_484:
-		ret = NL80211_RATE_INFO_HE_RU_ALLOC_484;
-		break;
-	case RU_996:
-		ret = NL80211_RATE_INFO_HE_RU_ALLOC_996;
-		break;
-	}
-	return ret;
-}
-
 #define REO_QUEUE_DESC_MAGIC_DEBUG_PATTERN_0 0xDDBEEF
 #define REO_QUEUE_DESC_MAGIC_DEBUG_PATTERN_1 0xADBEEF
 #define REO_QUEUE_DESC_MAGIC_DEBUG_PATTERN_2 0xBDBEEF
@@ -686,4 +621,70 @@ static inline u32 ath12k_he_ru_tones_to_nl80211_he_ru_alloc(u16 ru_tones)
 #define HAL_RX_MPDU_ERR_MSDU_LEN		BIT(5)
 #define HAL_RX_MPDU_ERR_MPDU_LEN		BIT(6)
 #define HAL_RX_MPDU_ERR_UNENCRYPTED_FRAME	BIT(7)
+
+static inline u32 ath12k_he_ru_tones_to_nl80211_he_ru_alloc(u16 ru_tones)
+{
+	u32 ret = 0;
+
+	switch (ru_tones) {
+	case RU_26:
+		ret = NL80211_RATE_INFO_HE_RU_ALLOC_26;
+		break;
+	case RU_52:
+		ret = NL80211_RATE_INFO_HE_RU_ALLOC_52;
+		break;
+	case RU_106:
+		ret = NL80211_RATE_INFO_HE_RU_ALLOC_106;
+		break;
+	case RU_242:
+		ret = NL80211_RATE_INFO_HE_RU_ALLOC_242;
+		break;
+	case RU_484:
+		ret = NL80211_RATE_INFO_HE_RU_ALLOC_484;
+		break;
+	case RU_996:
+		ret = NL80211_RATE_INFO_HE_RU_ALLOC_996;
+		break;
+	}
+	return ret;
+}
+
+void ath12k_hal_reo_status_queue_stats(struct ath12k_base *ab, u32 *reo_desc,
+				       struct hal_reo_status *status);
+void ath12k_hal_reo_flush_queue_status(struct ath12k_base *ab, u32 *reo_desc,
+				       struct hal_reo_status *status);
+void ath12k_hal_reo_flush_cache_status(struct ath12k_base *ab, u32 *reo_desc,
+				       struct hal_reo_status *status);
+void ath12k_hal_reo_unblk_cache_status(struct ath12k_base *ab, u32 *reo_desc,
+				       struct hal_reo_status *status);
+void ath12k_hal_reo_flush_timeout_list_status(struct ath12k_base *ab,
+					      u32 *reo_desc,
+					      struct hal_reo_status *status);
+void ath12k_hal_reo_desc_thresh_reached_status(struct ath12k_base *ab,
+					       u32 *reo_desc,
+					       struct hal_reo_status *status);
+void ath12k_hal_reo_update_rx_reo_queue_status(struct ath12k_base *ab,
+					       u32 *reo_desc,
+					       struct hal_reo_status *status);
+void ath12k_hal_rx_msdu_link_info_get(void *link_desc, u32 *num_msdus,
+				      u32 *msdu_cookies,
+				      enum hal_rx_buf_return_buf_manager *rbm);
+void ath12k_hal_rx_msdu_link_desc_set(struct ath12k_base *ab, void *desc,
+				      void *link_desc,
+				      enum hal_wbm_rel_bm_act action);
+void ath12k_hal_rx_buf_addr_info_set(void *desc, dma_addr_t paddr,
+				     u32 cookie, u8 manager);
+void ath12k_hal_rx_buf_addr_info_get(void *desc, dma_addr_t *paddr,
+				     u32 *cookie, u8 *rbm);
+int ath12k_hal_desc_reo_parse_err(struct ath12k_base *ab, u32 *rx_desc,
+				  dma_addr_t *paddr, u32 *desc_bank);
+int ath12k_hal_wbm_desc_parse_err(struct ath12k_base *ab, void *desc,
+				  struct hal_rx_wbm_rel_info *rel_info);
+void ath12k_hal_rx_reo_ent_paddr_get(struct ath12k_base *ab, void *desc,
+				     dma_addr_t *paddr, u32 *cookie);
+void ath12k_hal_rx_reo_ent_buf_paddr_get(void *rx_desc,
+					 dma_addr_t *paddr, u32 *sw_cookie,
+					 void **pp_buf_addr_info, u8 *rbm,
+					 u32 *msdu_cnt);
+
 #endif
