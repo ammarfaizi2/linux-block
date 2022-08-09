@@ -3,7 +3,6 @@
 #define _SPARC_TERMIOS_H
 
 #include <uapi/asm/termios.h>
-#include <linux/uaccess.h>
 
 
 /*

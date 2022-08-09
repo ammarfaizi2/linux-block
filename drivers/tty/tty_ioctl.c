@@ -8,6 +8,7 @@
  */
 
 #include <linux/types.h>
+#include <linux/uaccess.h>
 #include <linux/termios.h>
 #include <linux/errno.h>
 #include <linux/sched/signal.h>
@@ -25,7 +26,6 @@
 #include "tty.h"
 
 #include <asm/io.h>
-#include <linux/uaccess.h>
 
 #undef TTY_DEBUG_WAIT_UNTIL_SENT
 

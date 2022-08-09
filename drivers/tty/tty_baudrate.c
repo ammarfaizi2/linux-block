@@ -5,6 +5,7 @@
 
 #include <linux/types.h>
 #include <linux/kernel.h>
+#include <linux/uaccess.h>
 #include <linux/termios.h>
 #include <linux/tty.h>
 #include <linux/export.h>

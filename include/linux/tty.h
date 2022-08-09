@@ -4,6 +4,7 @@
 
 #include <linux/fs.h>
 #include <linux/major.h>
+#include <linux/uaccess.h>
 #include <linux/termios.h>
 #include <linux/workqueue.h>
 #include <linux/tty_buffer.h>

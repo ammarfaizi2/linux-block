@@ -98,8 +98,8 @@
 #include <linux/if.h>
 #include <linux/bitops.h>
 
-#include <asm/termios.h>
 #include <linux/uaccess.h>
+#include <linux/termios.h>
 #include "tty.h"
 
 /*

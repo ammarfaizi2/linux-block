@@ -14,6 +14,7 @@
 #include <linux/module.h>
 #include <linux/if_arp.h>
 #include <linux/if.h>
+#include <linux/uaccess.h>
 #include <linux/termios.h>	/* For TIOCOUTQ/INQ */
 #include <linux/list.h>
 #include <linux/slab.h>

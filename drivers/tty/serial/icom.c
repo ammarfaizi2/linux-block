@@ -15,6 +15,7 @@
 #include <linux/timer.h>
 #include <linux/interrupt.h>
 #include <linux/tty.h>
+#include <linux/uaccess.h>
 #include <linux/termios.h>
 #include <linux/fs.h>
 #include <linux/tty_flip.h>
@@ -40,7 +41,6 @@
 
 #include <linux/io.h>
 #include <asm/irq.h>
-#include <linux/uaccess.h>
 
 /*#define ICOM_TRACE		 enable port trace capabilities */
 

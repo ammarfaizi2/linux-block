@@ -30,6 +30,7 @@
 #include <linux/serial_reg.h>
 #include <linux/slab.h>
 #include <linux/string.h>
+#include <linux/uaccess.h>
 #include <linux/termios.h>
 #include <linux/tty.h>
 #include <linux/tty_flip.h>

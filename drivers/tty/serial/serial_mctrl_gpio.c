@@ -9,6 +9,7 @@
 #include <linux/device.h>
 #include <linux/irq.h>
 #include <linux/gpio/consumer.h>
+#include <linux/uaccess.h>
 #include <linux/termios.h>
 #include <linux/serial_core.h>
 #include <linux/module.h>

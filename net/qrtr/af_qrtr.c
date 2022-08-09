@@ -6,6 +6,7 @@
 #include <linux/module.h>
 #include <linux/netlink.h>
 #include <linux/qrtr.h>
+#include <linux/uaccess.h>
 #include <linux/termios.h>	/* For TIOCINQ/OUTQ */
 #include <linux/spinlock.h>
 #include <linux/wait.h>

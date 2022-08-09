@@ -65,6 +65,7 @@
 #include <asm/dma.h>
 #include <linux/bitops.h>
 #include <asm/types.h>
+#include <linux/uaccess.h>
 #include <linux/termios.h>
 #include <linux/workqueue.h>
 #include <linux/hdlc.h>
@@ -83,8 +84,6 @@
 #define COPY_FROM_USER(error,dest,src,size) error = copy_from_user(dest,src,size) ? -EFAULT : 0
 #define PUT_USER(error,value,addr) error = put_user(value,addr)
 #define COPY_TO_USER(error,dest,src,size) error = copy_to_user(dest,src,size) ? -EFAULT : 0
-
-#include <linux/uaccess.h>
 
 static MGSL_PARAMS default_params = {
 	MGSL_MODE_HDLC,			/* unsigned long mode */

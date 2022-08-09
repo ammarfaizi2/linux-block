@@ -49,6 +49,7 @@
 #include <linux/capability.h>
 #include <linux/module.h>
 #include <linux/if_arp.h>
+#include <linux/uaccess.h>
 #include <linux/termios.h>	/* For TIOCOUTQ/INQ */
 #include <linux/compat.h>
 #include <linux/slab.h>

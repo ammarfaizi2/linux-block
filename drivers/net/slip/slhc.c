@@ -63,6 +63,7 @@
 #include <linux/mm.h>
 #include <linux/socket.h>
 #include <linux/sockios.h>
+#include <linux/uaccess.h>
 #include <linux/termios.h>
 #include <linux/in.h>
 #include <linux/fcntl.h>
@@ -75,7 +76,6 @@
 #include <linux/skbuff.h>
 #include <net/sock.h>
 #include <linux/timer.h>
-#include <linux/uaccess.h>
 #include <net/checksum.h>
 #include <asm/unaligned.h>
 

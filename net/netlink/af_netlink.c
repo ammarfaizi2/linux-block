@@ -33,12 +33,12 @@
 #include <linux/socket.h>
 #include <linux/un.h>
 #include <linux/fcntl.h>
+#include <linux/uaccess.h>
 #include <linux/termios.h>
 #include <linux/sockios.h>
 #include <linux/net.h>
 #include <linux/fs.h>
 #include <linux/slab.h>
-#include <linux/uaccess.h>
 #include <linux/skbuff.h>
 #include <linux/netdevice.h>
 #include <linux/rtnetlink.h>

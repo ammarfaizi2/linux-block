@@ -45,6 +45,7 @@
 #include <net/sock.h>
 #include <linux/fcntl.h>
 #include <linux/mm.h>
+#include <linux/uaccess.h>
 #include <linux/termios.h>
 #include <linux/interrupt.h>
 #include <linux/proc_fs.h>

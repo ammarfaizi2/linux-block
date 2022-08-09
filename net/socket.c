@@ -88,7 +88,6 @@
 #include <linux/nospec.h>
 #include <linux/indirect_call_wrapper.h>
 
-#include <linux/uaccess.h>
 #include <asm/unistd.h>
 
 #include <net/compat.h>
@@ -101,6 +100,7 @@
 #include <linux/if_tun.h>
 #include <linux/ipv6_route.h>
 #include <linux/route.h>
+#include <linux/uaccess.h>
 #include <linux/termios.h>
 #include <linux/sockios.h>
 #include <net/busy_poll.h>

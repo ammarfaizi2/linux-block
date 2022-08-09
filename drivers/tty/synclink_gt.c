@@ -66,6 +66,7 @@
 #include <linux/init.h>
 #include <linux/delay.h>
 #include <linux/ioctl.h>
+#include <linux/uaccess.h>
 #include <linux/termios.h>
 #include <linux/bitops.h>
 #include <linux/workqueue.h>
@@ -76,7 +77,6 @@
 #include <asm/irq.h>
 #include <asm/dma.h>
 #include <asm/types.h>
-#include <linux/uaccess.h>
 
 #if defined(CONFIG_HDLC) || (defined(CONFIG_HDLC_MODULE) && defined(CONFIG_SYNCLINK_GT_MODULE))
 #define SYNCLINK_GENERIC_HDLC 1
