@@ -20,10 +20,6 @@ unsigned int ath12k_debug_mask;
 module_param_named(debug_mask, ath12k_debug_mask, uint, 0644);
 MODULE_PARM_DESC(debug_mask, "Debugging mask");
 
-static unsigned int ath12k_crypto_mode;
-module_param_named(crypto_mode, ath12k_crypto_mode, uint, 0644);
-MODULE_PARM_DESC(crypto_mode, "crypto mode: 0-hardware, 1-software");
-
 int ath12k_core_suspend(struct ath12k_base *ab)
 {
 	int ret;
@@ -605,20 +601,6 @@ int ath12k_core_qmi_firmware_ready(struct ath12k_base *ab)
 	if (ret) {
 		ath12k_err(ab, "failed to init DP: %d\n", ret);
 		goto err_firmware_stop;
-	}
-
-	switch (ath12k_crypto_mode) {
-	case ATH12K_CRYPT_MODE_SW:
-		set_bit(ATH12K_FLAG_HW_CRYPTO_DISABLED, &ab->dev_flags);
-		set_bit(ATH12K_FLAG_RAW_MODE, &ab->dev_flags);
-		break;
-	case ATH12K_CRYPT_MODE_HW:
-		clear_bit(ATH12K_FLAG_HW_CRYPTO_DISABLED, &ab->dev_flags);
-		clear_bit(ATH12K_FLAG_RAW_MODE, &ab->dev_flags);
-		break;
-	default:
-		ath12k_info(ab, "invalid crypto_mode: %d\n", ath12k_crypto_mode);
-		return -EINVAL;
 	}
 
 	mutex_lock(&ab->core_lock);
