@@ -855,7 +855,6 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.supports_monitor = false,
 
 		.idle_ps = false,
-		.cold_boot_calib = false,
 		.download_calib = true,
 		.supports_suspend = false,
 		.tcl_ring_retry = true,
@@ -914,7 +913,6 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.supports_monitor = false,
 
 		.idle_ps = false,
-		.cold_boot_calib = false,
 		.download_calib = false,
 		.supports_suspend = false,
 		.tcl_ring_retry = false,

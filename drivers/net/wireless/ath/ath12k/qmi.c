@@ -17,11 +17,6 @@
 #define PLATFORM_CAP_PCIE_GLOBAL_RESET	0x08
 #define ATH12K_QMI_MAX_CHUNK_SIZE	2097152
 
-bool ath12k_cold_boot_cal = 1;
-module_param_named(cold_boot_cal, ath12k_cold_boot_cal, bool, 0644);
-MODULE_PARM_DESC(cold_boot_cal,
-		 "Decrease the channel switch time but increase the driver load time (Default: true)");
-
 static struct qmi_elem_info qmi_wlfw_qdss_trace_config_download_req_msg_v01_ei[] = {
 	{
 		.data_type      = QMI_OPT_FLAG,
@@ -2008,13 +2003,6 @@ static struct qmi_elem_info qmi_wlanfw_fw_ready_ind_msg_v01_ei[] = {
 	},
 };
 
-static struct qmi_elem_info qmi_wlanfw_cold_boot_cal_done_ind_msg_v01_ei[] = {
-	{
-		.data_type = QMI_EOTI,
-		.array_type = NO_ARRAY,
-	},
-};
-
 static int ath12k_qmi_send_qdss_trace_config_download_req(struct ath12k_base *ab,
 							  const u8 *buffer,
 							  unsigned int buffer_len)
@@ -2985,32 +2973,6 @@ int ath12k_qmi_firmware_start(struct ath12k_base *ab,
 	return 0;
 }
 
-static int ath12k_qmi_process_coldboot_calibration(struct ath12k_base *ab)
-{
-	int timeout;
-	int ret;
-
-	ret = ath12k_qmi_wlanfw_mode_send(ab, ATH12K_FIRMWARE_MODE_COLD_BOOT);
-	if (ret < 0) {
-		ath12k_warn(ab, "qmi failed to send wlan fw mode:%d\n", ret);
-		return ret;
-	}
-
-	ath12k_dbg(ab, ATH12K_DBG_QMI, "Coldboot calibration wait started\n");
-
-	timeout = wait_event_timeout(ab->qmi.cold_boot_waitq,
-				     (ab->qmi.cal_done  == 1),
-				     ATH12K_COLD_BOOT_FW_RESET_DELAY);
-	if (timeout <= 0) {
-		ath12k_warn(ab, "Coldboot Calibration failed - wait ended\n");
-		return 0;
-	}
-
-	ath12k_dbg(ab, ATH12K_DBG_QMI, "Coldboot calibration done\n");
-
-	return 0;
-}
-
 static int
 ath12k_qmi_driver_event_post(struct ath12k_qmi *qmi,
 			     enum ath12k_qmi_event_type type,
@@ -3167,20 +3129,6 @@ static void ath12k_qmi_msg_fw_ready_cb(struct qmi_handle *qmi_hdl,
 	ath12k_qmi_driver_event_post(qmi, ATH12K_QMI_EVENT_FW_READY, NULL);
 }
 
-static void ath12k_qmi_msg_cold_boot_cal_done_cb(struct qmi_handle *qmi_hdl,
-						 struct sockaddr_qrtr *sq,
-						 struct qmi_txn *txn,
-						 const void *decoded)
-{
-	struct ath12k_qmi *qmi = container_of(qmi_hdl,
-					      struct ath12k_qmi, handle);
-	struct ath12k_base *ab = qmi->ab;
-
-	ab->qmi.cal_done = 1;
-	wake_up(&ab->qmi.cold_boot_waitq);
-	ath12k_dbg(ab, ATH12K_DBG_QMI, "qmi cold boot calibration done\n");
-}
-
 static const struct qmi_msg_handler ath12k_qmi_msg_handlers[] = {
 	{
 		.type = QMI_INDICATION,
@@ -3202,14 +3150,6 @@ static const struct qmi_msg_handler ath12k_qmi_msg_handlers[] = {
 		.ei = qmi_wlanfw_fw_ready_ind_msg_v01_ei,
 		.decoded_size = sizeof(struct qmi_wlanfw_fw_ready_ind_msg_v01),
 		.fn = ath12k_qmi_msg_fw_ready_cb,
-	},
-	{
-		.type = QMI_INDICATION,
-		.msg_id = QMI_WLFW_COLD_BOOT_CAL_DONE_IND_V01,
-		.ei = qmi_wlanfw_cold_boot_cal_done_ind_msg_v01_ei,
-		.decoded_size =
-			sizeof(struct qmi_wlanfw_fw_cold_cal_done_ind_msg_v01),
-		.fn = ath12k_qmi_msg_cold_boot_cal_done_cb,
 	},
 };
 
@@ -3299,19 +3239,12 @@ static void ath12k_qmi_driver_event_work(struct work_struct *work)
 				break;
 			}
 
-			if (ath12k_cold_boot_cal && ab->qmi.cal_done == 0 &&
-			    ab->hw_params->cold_boot_calib) {
-				ath12k_qmi_process_coldboot_calibration(ab);
-			} else {
-				clear_bit(ATH12K_FLAG_CRASH_FLUSH,
-					  &ab->dev_flags);
-				clear_bit(ATH12K_FLAG_RECOVERY, &ab->dev_flags);
-				ath12k_core_qmi_firmware_ready(ab);
-				set_bit(ATH12K_FLAG_REGISTERED, &ab->dev_flags);
-			}
+			clear_bit(ATH12K_FLAG_CRASH_FLUSH,
+				  &ab->dev_flags);
+			clear_bit(ATH12K_FLAG_RECOVERY, &ab->dev_flags);
+			ath12k_core_qmi_firmware_ready(ab);
+			set_bit(ATH12K_FLAG_REGISTERED, &ab->dev_flags);
 
-			break;
-		case ATH12K_QMI_EVENT_COLD_BOOT_CAL_DONE:
 			break;
 		default:
 			ath12k_warn(ab, "invalid event type: %d", event->type);

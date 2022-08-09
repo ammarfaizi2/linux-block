@@ -120,12 +120,7 @@ enum ath12k_firmware_mode {
 
 	/* factory tests etc */
 	ATH12K_FIRMWARE_MODE_FTM,
-
-	/* Cold boot calibration */
-	ATH12K_FIRMWARE_MODE_COLD_BOOT = 7,
 };
-
-extern bool ath12k_cold_boot_cal;
 
 #define ATH12K_IRQ_NUM_MAX 57
 #define ATH12K_EXT_IRQ_NUM_MAX	16
