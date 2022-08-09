@@ -2306,6 +2306,7 @@ struct io_wait_queue {
 	struct io_ring_ctx *ctx;
 	unsigned cq_tail;
 	unsigned nr_timeouts;
+	ktime_t min_time;
 };
 
 static inline bool io_has_work(struct io_ring_ctx *ctx)
@@ -2325,7 +2326,9 @@ static inline bool io_should_wake(struct io_wait_queue *iowq)
 	 * started waiting. For timeouts, we always want to return to userspace,
 	 * regardless of event count.
 	 */
-	return dist >= 0 || atomic_read(&ctx->cq_timeouts) != iowq->nr_timeouts;
+	if (dist >= 0 && ktime_after(ktime_get_ns(), iowq->min_time))
+		return true;
+	return atomic_read(&ctx->cq_timeouts) != iowq->nr_timeouts;
 }
 
 static int io_wake_function(struct wait_queue_entry *curr, unsigned int mode,
@@ -2374,8 +2377,13 @@ static inline int io_cqring_wait_schedule(struct io_ring_ctx *ctx,
 		if (check_cq & BIT(IO_CHECK_CQ_DROPPED_BIT))
 			return -EBADR;
 	}
-	if (!schedule_hrtimeout(&timeout, HRTIMER_MODE_ABS))
-		return -ETIME;
+	if (iowq->min_time != KTIME_MIN && !ktime_after(ktime_get_ns(),
+							iowq->min_time)) {
+		schedule_hrtimeout(&iowq->min_time, HRTIMER_MODE_ABS);
+	} else {
+		if (!schedule_hrtimeout(&timeout, HRTIMER_MODE_ABS))
+			return -ETIME;
+	}
 	return 1;
 }
 
@@ -2385,7 +2393,8 @@ static inline int io_cqring_wait_schedule(struct io_ring_ctx *ctx,
  */
 static int io_cqring_wait(struct io_ring_ctx *ctx, int min_events,
 			  const sigset_t __user *sig, size_t sigsz,
-			  struct __kernel_timespec __user *uts)
+			  struct __kernel_timespec __user *uts,
+			  unsigned int min_uts)
 {
 	struct io_wait_queue iowq;
 	struct io_rings *rings = ctx->rings;
@@ -2402,7 +2411,7 @@ static int io_cqring_wait(struct io_ring_ctx *ctx, int min_events,
 			return ret;
 		io_cqring_overflow_flush(ctx);
 
-		if (io_cqring_events(ctx) >= min_events)
+		if (!min_uts && io_cqring_events(ctx) >= min_events)
 			return 0;
 	} while (ret > 0);
 
@@ -2426,6 +2435,10 @@ static int io_cqring_wait(struct io_ring_ctx *ctx, int min_events,
 			return -EFAULT;
 		timeout = ktime_add_ns(timespec64_to_ktime(ts), ktime_get_ns());
 	}
+	if (min_uts)
+		iowq.min_time = ktime_add_us(ktime_get_ns(), min_uts);
+	else
+		iowq.min_time = KTIME_MIN;
 
 	init_waitqueue_func_entry(&iowq.wq, io_wake_function);
 	iowq.wq.private = current;
@@ -3113,19 +3126,16 @@ static unsigned long io_uring_nommu_get_unmapped_area(struct file *file,
 
 static int io_validate_ext_arg(unsigned flags, const void __user *argp, size_t argsz)
 {
-	if (flags & IORING_ENTER_EXT_ARG) {
-		struct io_uring_getevents_arg arg;
-
-		if (argsz != sizeof(arg))
-			return -EINVAL;
-		if (copy_from_user(&arg, argp, sizeof(arg)))
-			return -EFAULT;
-	}
-	return 0;
+	if (!(flags & IORING_ENTER_EXT_ARG))
+		return 0;
+	if (argsz == sizeof(struct io_uring_getevents_arg))
+		return 0;
+	return -EINVAL;
 }
 
 static int io_get_ext_arg(unsigned flags, const void __user *argp, size_t *argsz,
 			  struct __kernel_timespec __user **ts,
+			  unsigned int *min_ts,
 			  const sigset_t __user **sig)
 {
 	struct io_uring_getevents_arg arg;
@@ -3137,6 +3147,7 @@ static int io_get_ext_arg(unsigned flags, const void __user *argp, size_t *argsz
 	if (!(flags & IORING_ENTER_EXT_ARG)) {
 		*sig = (const sigset_t __user *) argp;
 		*ts = NULL;
+		*min_ts = 0;
 		return 0;
 	}
 
@@ -3148,11 +3159,10 @@ static int io_get_ext_arg(unsigned flags, const void __user *argp, size_t *argsz
 		return -EINVAL;
 	if (copy_from_user(&arg, argp, sizeof(arg)))
 		return -EFAULT;
-	if (arg.pad)
-		return -EINVAL;
 	*sig = u64_to_user_ptr(arg.sigmask);
 	*argsz = arg.sigmask_sz;
 	*ts = u64_to_user_ptr(arg.ts);
+	*min_ts = arg.min_ts_usec;
 	return 0;
 }
 
@@ -3256,13 +3266,15 @@ iopoll_locked:
 		} else {
 			const sigset_t __user *sig;
 			struct __kernel_timespec __user *ts;
+			unsigned int min_ts;
 
-			ret2 = io_get_ext_arg(flags, argp, &argsz, &ts, &sig);
+			ret2 = io_get_ext_arg(flags, argp, &argsz, &ts, &min_ts,
+						&sig);
 			if (likely(!ret2)) {
 				min_complete = min(min_complete,
 						   ctx->cq_entries);
 				ret2 = io_cqring_wait(ctx, min_complete, sig,
-						      argsz, ts);
+						      argsz, ts, min_ts);
 			}
 		}
 
@@ -3534,7 +3546,7 @@ static __cold int io_uring_create(unsigned entries, struct io_uring_params *p,
 			IORING_FEAT_POLL_32BITS | IORING_FEAT_SQPOLL_NONFIXED |
 			IORING_FEAT_EXT_ARG | IORING_FEAT_NATIVE_WORKERS |
 			IORING_FEAT_RSRC_TAGS | IORING_FEAT_CQE_SKIP |
-			IORING_FEAT_LINKED_FILE;
+			IORING_FEAT_LINKED_FILE | IORING_FEAT_EXT_ARG_MIN_TS;
 
 	if (copy_to_user(params, p, sizeof(*p))) {
 		ret = -EFAULT;
