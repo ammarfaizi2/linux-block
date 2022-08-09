@@ -2665,8 +2665,8 @@ try_again:
 		enum hal_reo_dest_ring_push_reason push_reason;
 		u32 cookie;
 
-		cookie = u32_get_bits(desc.buf_addr_info.info1,
-				      BUFFER_ADDR_INFO1_SW_COOKIE);
+		cookie = le32_get_bits(desc.buf_addr_info.info1,
+				       BUFFER_ADDR_INFO1_SW_COOKIE);
 
 		mac_id = u32_get_bits(desc.info0,
 				      HAL_REO_DEST_RING_INFO0_SRC_LINK_ID);

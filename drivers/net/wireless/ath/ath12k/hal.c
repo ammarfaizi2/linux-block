@@ -1539,13 +1539,13 @@ u32 ath12k_hal_ce_dst_status_get_length(void *buf)
 void ath12k_hal_set_link_desc_addr(struct hal_wbm_link_desc *desc, u32 cookie,
 				   dma_addr_t paddr)
 {
-	desc->buf_addr_info.info0 = u32_encode_bits((paddr & HAL_ADDR_LSB_REG_MASK),
-						    BUFFER_ADDR_INFO0_ADDR);
+	desc->buf_addr_info.info0 = le32_encode_bits((paddr & HAL_ADDR_LSB_REG_MASK),
+						     BUFFER_ADDR_INFO0_ADDR);
 	desc->buf_addr_info.info1 =
-			u32_encode_bits(((u64)paddr >> HAL_ADDR_MSB_REG_SHIFT),
-					BUFFER_ADDR_INFO1_ADDR) |
-			u32_encode_bits(1, BUFFER_ADDR_INFO1_RET_BUF_MGR) |
-			u32_encode_bits(cookie, BUFFER_ADDR_INFO1_SW_COOKIE);
+			le32_encode_bits(((u64)paddr >> HAL_ADDR_MSB_REG_SHIFT),
+					 BUFFER_ADDR_INFO1_ADDR) |
+			le32_encode_bits(1, BUFFER_ADDR_INFO1_RET_BUF_MGR) |
+			le32_encode_bits(cookie, BUFFER_ADDR_INFO1_SW_COOKIE);
 }
 
 u32 *ath12k_hal_srng_dst_peek(struct ath12k_base *ab, struct hal_srng *srng)
@@ -1766,13 +1766,13 @@ void ath12k_hal_setup_link_idle_list(struct ath12k_base *ab,
 	link_addr = (void *)sbuf[0].vaddr + HAL_WBM_IDLE_SCATTER_BUF_SIZE;
 
 	for (i = 1; i < nsbufs; i++) {
-		link_addr->info0 = sbuf[i].paddr & HAL_ADDR_LSB_REG_MASK;
+		link_addr->info0 = cpu_to_le32(sbuf[i].paddr & HAL_ADDR_LSB_REG_MASK);
 
 		link_addr->info1 =
-			u32_encode_bits((u64)sbuf[i].paddr >> HAL_ADDR_MSB_REG_SHIFT,
-					HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32) |
-			u32_encode_bits(BASE_ADDR_MATCH_TAG_VAL,
-					HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_MATCH_TAG);
+			le32_encode_bits((u64)sbuf[i].paddr >> HAL_ADDR_MSB_REG_SHIFT,
+					 HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_39_32) |
+			le32_encode_bits(BASE_ADDR_MATCH_TAG_VAL,
+					 HAL_WBM_SCATTERED_DESC_MSB_BASE_ADDR_MATCH_TAG);
 
 		link_addr = (void *)sbuf[i].vaddr +
 			     HAL_WBM_IDLE_SCATTER_BUF_SIZE;

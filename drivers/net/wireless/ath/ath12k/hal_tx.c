@@ -40,13 +40,13 @@ void ath12k_hal_tx_cmd_desc_setup(struct ath12k_base *ab, void *cmd,
 	struct hal_tcl_data_cmd *tcl_cmd = (struct hal_tcl_data_cmd *)cmd;
 
 	tcl_cmd->buf_addr_info.info0 =
-		u32_encode_bits(ti->paddr, BUFFER_ADDR_INFO0_ADDR);
+		le32_encode_bits(ti->paddr, BUFFER_ADDR_INFO0_ADDR);
 	tcl_cmd->buf_addr_info.info1 =
-		u32_encode_bits(((uint64_t)ti->paddr >> HAL_ADDR_MSB_REG_SHIFT),
-				BUFFER_ADDR_INFO1_ADDR);
+		le32_encode_bits(((uint64_t)ti->paddr >> HAL_ADDR_MSB_REG_SHIFT),
+				 BUFFER_ADDR_INFO1_ADDR);
 	tcl_cmd->buf_addr_info.info1 |=
-		u32_encode_bits((ti->rbm_id), BUFFER_ADDR_INFO1_RET_BUF_MGR) |
-		u32_encode_bits(ti->desc_id, BUFFER_ADDR_INFO1_SW_COOKIE);
+		le32_encode_bits((ti->rbm_id), BUFFER_ADDR_INFO1_RET_BUF_MGR) |
+		le32_encode_bits(ti->desc_id, BUFFER_ADDR_INFO1_SW_COOKIE);
 
 	tcl_cmd->info0 =
 		u32_encode_bits(ti->type, HAL_TCL_DATA_CMD_INFO0_DESC_TYPE) |

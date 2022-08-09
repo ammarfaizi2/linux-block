@@ -15,8 +15,8 @@
 #define BUFFER_ADDR_INFO1_SW_COOKIE    GENMASK(31, 12)
 
 struct ath12k_buffer_addr {
-	u32 info0;
-	u32 info1;
+	__le32 info0;
+	__le32 info1;
 } __packed;
 
 /* ath12k_buffer_addr

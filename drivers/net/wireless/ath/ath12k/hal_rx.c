@@ -273,10 +273,10 @@ void ath12k_hal_rx_buf_addr_info_set(void *desc, dma_addr_t paddr,
 
 	paddr_lo = lower_32_bits(paddr);
 	paddr_hi = upper_32_bits(paddr);
-	binfo->info0 = u32_encode_bits(paddr_lo, BUFFER_ADDR_INFO0_ADDR);
-	binfo->info1 = u32_encode_bits(paddr_hi, BUFFER_ADDR_INFO1_ADDR) |
-		       u32_encode_bits(cookie, BUFFER_ADDR_INFO1_SW_COOKIE) |
-		       u32_encode_bits(manager, BUFFER_ADDR_INFO1_RET_BUF_MGR);
+	binfo->info0 = le32_encode_bits(paddr_lo, BUFFER_ADDR_INFO0_ADDR);
+	binfo->info1 = le32_encode_bits(paddr_hi, BUFFER_ADDR_INFO1_ADDR) |
+		       le32_encode_bits(cookie, BUFFER_ADDR_INFO1_SW_COOKIE) |
+		       le32_encode_bits(manager, BUFFER_ADDR_INFO1_RET_BUF_MGR);
 }
 
 void ath12k_hal_rx_buf_addr_info_get(void *desc, dma_addr_t *paddr,
@@ -284,11 +284,10 @@ void ath12k_hal_rx_buf_addr_info_get(void *desc, dma_addr_t *paddr,
 {
 	struct ath12k_buffer_addr *binfo = (struct ath12k_buffer_addr *)desc;
 
-	*paddr =
-		(((u64)u32_get_bits(binfo->info1, BUFFER_ADDR_INFO1_ADDR)) << 32) |
-		u32_get_bits(binfo->info0, BUFFER_ADDR_INFO0_ADDR);
-	*cookie = u32_get_bits(binfo->info1, BUFFER_ADDR_INFO1_SW_COOKIE);
-	*rbm = u32_get_bits(binfo->info1, BUFFER_ADDR_INFO1_RET_BUF_MGR);
+	*paddr = (((u64)le32_get_bits(binfo->info1, BUFFER_ADDR_INFO1_ADDR)) << 32) |
+		le32_get_bits(binfo->info0, BUFFER_ADDR_INFO0_ADDR);
+	*cookie = le32_get_bits(binfo->info1, BUFFER_ADDR_INFO1_SW_COOKIE);
+	*rbm = le32_get_bits(binfo->info1, BUFFER_ADDR_INFO1_RET_BUF_MGR);
 }
 
 void ath12k_hal_rx_msdu_link_info_get(void *link_desc, u32 *num_msdus,
@@ -302,19 +301,19 @@ void ath12k_hal_rx_msdu_link_info_get(void *link_desc, u32 *num_msdus,
 	*num_msdus = HAL_NUM_RX_MSDUS_PER_LINK_DESC;
 
 	msdu = &link->msdu_link[0];
-	*rbm = u32_get_bits(msdu->buf_addr_info.info1,
-			    BUFFER_ADDR_INFO1_RET_BUF_MGR);
+	*rbm = le32_get_bits(msdu->buf_addr_info.info1,
+			     BUFFER_ADDR_INFO1_RET_BUF_MGR);
 
 	for (i = 0; i < *num_msdus; i++) {
 		msdu = &link->msdu_link[i];
 
-		if (!u32_get_bits(msdu->buf_addr_info.info0,
+		if (!le32_get_bits(msdu->buf_addr_info.info0,
 				  BUFFER_ADDR_INFO0_ADDR)) {
 			*num_msdus = i;
 			break;
 		}
-		*msdu_cookies = u32_get_bits(msdu->buf_addr_info.info1,
-					     BUFFER_ADDR_INFO1_SW_COOKIE);
+		*msdu_cookies = le32_get_bits(msdu->buf_addr_info.info1,
+					      BUFFER_ADDR_INFO1_SW_COOKIE);
 		msdu_cookies++;
 	}
 }
@@ -382,15 +381,15 @@ int ath12k_hal_wbm_desc_parse_err(struct ath12k_base *ab, void *desc,
 				  HAL_WBM_RELEASE_RX_INFO0_CC_STATUS);
 
 	if (!hw_cc_done) {
-		if (u32_get_bits(wbm_desc->buf_addr_info.info1,
-				 BUFFER_ADDR_INFO1_RET_BUF_MGR)
-				 != HAL_RX_BUF_RBM_SW3_BM) {
+		if (le32_get_bits(wbm_desc->buf_addr_info.info1,
+				  BUFFER_ADDR_INFO1_RET_BUF_MGR)
+				  != HAL_RX_BUF_RBM_SW3_BM) {
 			ab->soc_stats.invalid_rbm++;
 			return -EINVAL;
 		}
 
-		rel_info->cookie = u32_get_bits(wbm_desc->buf_addr_info.info1,
-						BUFFER_ADDR_INFO1_SW_COOKIE);
+		rel_info->cookie = le32_get_bits(wbm_desc->buf_addr_info.info1,
+						 BUFFER_ADDR_INFO1_SW_COOKIE);
 
 		rel_info->rx_desc = NULL;
 	} else {
@@ -443,11 +442,11 @@ void ath12k_hal_rx_reo_ent_paddr_get(struct ath12k_base *ab, void *desc,
 {
 	struct ath12k_buffer_addr *buff_addr = desc;
 
-	*paddr = ((u64)(u32_get_bits(buff_addr->info1,
-				     BUFFER_ADDR_INFO1_ADDR)) << 32) |
-		  u32_get_bits(buff_addr->info0, BUFFER_ADDR_INFO0_ADDR);
+	*paddr = ((u64)(le32_get_bits(buff_addr->info1,
+				      BUFFER_ADDR_INFO1_ADDR)) << 32) |
+		le32_get_bits(buff_addr->info0, BUFFER_ADDR_INFO0_ADDR);
 
-	*cookie = u32_get_bits(buff_addr->info1, BUFFER_ADDR_INFO1_SW_COOKIE);
+	*cookie = le32_get_bits(buff_addr->info1, BUFFER_ADDR_INFO1_SW_COOKIE);
 }
 
 void ath12k_hal_rx_msdu_link_desc_set(struct ath12k_base *ab, void *desc,
@@ -880,15 +879,15 @@ void ath12k_hal_rx_reo_ent_buf_paddr_get(void *rx_desc, dma_addr_t *paddr,
 
 	buf_addr_info = (struct ath12k_buffer_addr *)&reo_ent_ring->buf_addr_info;
 
-	*paddr = (((u64)u32_get_bits(buf_addr_info->info1,
-				     BUFFER_ADDR_INFO1_ADDR)) << 32) |
-			u32_get_bits(buf_addr_info->info0,
-				     BUFFER_ADDR_INFO0_ADDR);
+	*paddr = (((u64)le32_get_bits(buf_addr_info->info1,
+				      BUFFER_ADDR_INFO1_ADDR)) << 32) |
+		le32_get_bits(buf_addr_info->info0,
+			      BUFFER_ADDR_INFO0_ADDR);
 
-	*sw_cookie = u32_get_bits(buf_addr_info->info1,
-				  BUFFER_ADDR_INFO1_SW_COOKIE);
-	*rbm = u32_get_bits(buf_addr_info->info1,
-			    BUFFER_ADDR_INFO1_RET_BUF_MGR);
+	*sw_cookie = le32_get_bits(buf_addr_info->info1,
+				   BUFFER_ADDR_INFO1_SW_COOKIE);
+	*rbm = le32_get_bits(buf_addr_info->info1,
+			     BUFFER_ADDR_INFO1_RET_BUF_MGR);
 
 	*pp_buf_addr = (void *)buf_addr_info;
 }

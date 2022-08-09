@@ -290,8 +290,8 @@ int ath12k_dbring_buffer_release_event(struct ath12k_base *ab,
 	spin_lock_bh(&srng->lock);
 
 	while (num_buff_reaped < num_entry) {
-		desc.info0 = le32_to_cpu(ev->buf_entry[num_buff_reaped].paddr_lo);
-		desc.info1 = le32_to_cpu(ev->buf_entry[num_buff_reaped].paddr_hi);
+		desc.info0 = ev->buf_entry[num_buff_reaped].paddr_lo;
+		desc.info1 = ev->buf_entry[num_buff_reaped].paddr_hi;
 		handler_data.meta = ev->meta_data[num_buff_reaped];
 
 		num_buff_reaped++;
