@@ -857,31 +857,3 @@ void ath12k_hal_reo_hw_setup(struct ath12k_base *ab, u32 ring_hash_map)
 	ath12k_hif_write32(ab, reo_base + HAL_REO1_DEST_RING_CTRL_IX_3,
 			   ring_hash_map);
 }
-
-void ath12k_hal_rx_reo_ent_buf_paddr_get(void *rx_desc, dma_addr_t *paddr,
-					 u32 *sw_cookie, void **pp_buf_addr,
-					 u8 *rbm, u32 *msdu_cnt)
-{
-	struct hal_reo_entrance_ring *reo_ent_ring = rx_desc;
-	struct ath12k_buffer_addr *buf_addr_info;
-	struct rx_mpdu_desc *rx_mpdu_desc_info_details;
-
-	rx_mpdu_desc_info_details = &reo_ent_ring->rx_mpdu_info;
-
-	*msdu_cnt = u32_get_bits(rx_mpdu_desc_info_details->info0,
-				 RX_MPDU_DESC_INFO0_MSDU_COUNT);
-
-	buf_addr_info = &reo_ent_ring->buf_addr_info;
-
-	*paddr = (((u64)le32_get_bits(buf_addr_info->info1,
-				      BUFFER_ADDR_INFO1_ADDR)) << 32) |
-		le32_get_bits(buf_addr_info->info0,
-			      BUFFER_ADDR_INFO0_ADDR);
-
-	*sw_cookie = le32_get_bits(buf_addr_info->info1,
-				   BUFFER_ADDR_INFO1_SW_COOKIE);
-	*rbm = le32_get_bits(buf_addr_info->info1,
-			     BUFFER_ADDR_INFO1_RET_BUF_MGR);
-
-	*pp_buf_addr = buf_addr_info;
-}

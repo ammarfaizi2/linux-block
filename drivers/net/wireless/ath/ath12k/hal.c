@@ -1689,17 +1689,6 @@ u32 *ath12k_hal_srng_src_get_next_reaped(struct ath12k_base *ab,
 	return desc;
 }
 
-u32 *ath12k_hal_srng_src_peek(struct ath12k_base *ab, struct hal_srng *srng)
-{
-	lockdep_assert_held(&srng->lock);
-
-	if (((srng->u.src_ring.hp + srng->entry_size) % srng->ring_size) ==
-	    srng->u.src_ring.cached_tp)
-		return NULL;
-
-	return srng->ring_base_vaddr + srng->u.src_ring.hp;
-}
-
 void ath12k_hal_srng_access_begin(struct ath12k_base *ab, struct hal_srng *srng)
 {
 	lockdep_assert_held(&srng->lock);
