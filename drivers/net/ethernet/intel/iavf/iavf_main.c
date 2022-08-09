@@ -843,7 +843,7 @@ static void iavf_restore_filters(struct iavf_adapter *adapter)
  * iavf_get_num_vlans_added - get number of VLANs added
  * @adapter: board private structure
  */
-static u16 iavf_get_num_vlans_added(struct iavf_adapter *adapter)
+u16 iavf_get_num_vlans_added(struct iavf_adapter *adapter)
 {
 	return bitmap_weight(adapter->vsi.active_cvlans, VLAN_N_VID) +
 		bitmap_weight(adapter->vsi.active_svlans, VLAN_N_VID);
@@ -905,11 +905,6 @@ static int iavf_vlan_rx_add_vid(struct net_device *netdev,
 
 	if (!iavf_add_vlan(adapter, IAVF_VLAN(vid, be16_to_cpu(proto))))
 		return -ENOMEM;
-
-	if (proto == cpu_to_be16(ETH_P_8021Q))
-		set_bit(vid, adapter->vsi.active_cvlans);
-	else
-		set_bit(vid, adapter->vsi.active_svlans);
 
 	return 0;
 }
@@ -2331,7 +2326,6 @@ int iavf_parse_vf_resource_msg(struct iavf_adapter *adapter)
 
 	adapter->vsi.back = adapter;
 	adapter->vsi.base_vector = 1;
-	adapter->vsi.work_limit = IAVF_DEFAULT_IRQ_WORK;
 	vsi->netdev = adapter->netdev;
 	vsi->qs_handle = adapter->vsi_res->qset_handle;
 	if (adapter->vf_res->vf_cap_flags & VIRTCHNL_VF_OFFLOAD_RSS_PF) {
@@ -3043,6 +3037,9 @@ continue_reset:
 	adapter->aq_required |= IAVF_FLAG_AQ_ADD_MAC_FILTER;
 	adapter->aq_required |= IAVF_FLAG_AQ_ADD_CLOUD_FILTER;
 	iavf_misc_irq_enable(adapter);
+
+	bitmap_clear(adapter->vsi.active_cvlans, 0, VLAN_N_VID);
+	bitmap_clear(adapter->vsi.active_svlans, 0, VLAN_N_VID);
 
 	mod_delayed_work(iavf_wq, &adapter->watchdog_task, 2);
 
@@ -3835,6 +3832,29 @@ static int iavf_handle_tclass(struct iavf_adapter *adapter, u32 tc,
 }
 
 /**
+ * iavf_find_cf - Find the cloud filter in the list
+ * @adapter: Board private structure
+ * @cookie: filter specific cookie
+ *
+ * Returns ptr to the filter object or NULL. Must be called while holding the
+ * cloud_filter_list_lock.
+ */
+static struct iavf_cloud_filter *iavf_find_cf(struct iavf_adapter *adapter,
+					      unsigned long *cookie)
+{
+	struct iavf_cloud_filter *filter = NULL;
+
+	if (!cookie)
+		return NULL;
+
+	list_for_each_entry(filter, &adapter->cloud_filter_list, list) {
+		if (!memcmp(cookie, &filter->cookie, sizeof(filter->cookie)))
+			return filter;
+	}
+	return NULL;
+}
+
+/**
  * iavf_configure_clsflower - Add tc flower filters
  * @adapter: board private structure
  * @cls_flower: Pointer to struct flow_cls_offload
@@ -3865,6 +3885,15 @@ static int iavf_configure_clsflower(struct iavf_adapter *adapter,
 
 	filter->cookie = cls_flower->cookie;
 
+	/* bail out here if filter already exists */
+	spin_lock_bh(&adapter->cloud_filter_list_lock);
+	if (iavf_find_cf(adapter, &cls_flower->cookie)) {
+		dev_err(&adapter->pdev->dev, "Failed to add TC Flower filter, it already exists\n");
+		err = -EEXIST;
+		goto spin_unlock;
+	}
+	spin_unlock_bh(&adapter->cloud_filter_list_lock);
+
 	/* set the mask to all zeroes to begin with */
 	memset(&filter->f.mask.tcp_spec, 0, sizeof(struct virtchnl_l4_spec));
 	/* start out with flow type and eth type IPv4 to begin with */
@@ -3883,6 +3912,7 @@ static int iavf_configure_clsflower(struct iavf_adapter *adapter,
 	adapter->num_cloud_filters++;
 	filter->add = true;
 	adapter->aq_required |= IAVF_FLAG_AQ_ADD_CLOUD_FILTER;
+spin_unlock:
 	spin_unlock_bh(&adapter->cloud_filter_list_lock);
 err:
 	if (err)
@@ -3890,28 +3920,6 @@ err:
 
 	mutex_unlock(&adapter->crit_lock);
 	return err;
-}
-
-/* iavf_find_cf - Find the cloud filter in the list
- * @adapter: Board private structure
- * @cookie: filter specific cookie
- *
- * Returns ptr to the filter object or NULL. Must be called while holding the
- * cloud_filter_list_lock.
- */
-static struct iavf_cloud_filter *iavf_find_cf(struct iavf_adapter *adapter,
-					      unsigned long *cookie)
-{
-	struct iavf_cloud_filter *filter = NULL;
-
-	if (!cookie)
-		return NULL;
-
-	list_for_each_entry(filter, &adapter->cloud_filter_list, list) {
-		if (!memcmp(cookie, &filter->cookie, sizeof(filter->cookie)))
-			return filter;
-	}
-	return NULL;
 }
 
 /**
