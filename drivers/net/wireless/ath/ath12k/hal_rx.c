@@ -296,6 +296,7 @@ void ath12k_hal_rx_msdu_link_info_get(void *link_desc, u32 *num_msdus,
 {
 	struct hal_rx_msdu_link *link = (struct hal_rx_msdu_link *)link_desc;
 	struct hal_rx_msdu_details *msdu;
+	u32 val;
 	int i;
 
 	*num_msdus = HAL_NUM_RX_MSDUS_PER_LINK_DESC;
@@ -307,8 +308,9 @@ void ath12k_hal_rx_msdu_link_info_get(void *link_desc, u32 *num_msdus,
 	for (i = 0; i < *num_msdus; i++) {
 		msdu = &link->msdu_link[i];
 
-		if (!le32_get_bits(msdu->buf_addr_info.info0,
-				  BUFFER_ADDR_INFO0_ADDR)) {
+		val = le32_get_bits(msdu->buf_addr_info.info0,
+				    BUFFER_ADDR_INFO0_ADDR);
+		if (val == 0) {
 			*num_msdus = i;
 			break;
 		}
@@ -324,7 +326,7 @@ int ath12k_hal_desc_reo_parse_err(struct ath12k_base *ab, u32 *rx_desc,
 	struct hal_reo_dest_ring *desc = (struct hal_reo_dest_ring *)rx_desc;
 	enum hal_reo_dest_ring_push_reason push_reason;
 	enum hal_reo_dest_ring_error_code err_code;
-	u32 cookie;
+	u32 cookie, val;
 
 	push_reason = u32_get_bits(desc->info0,
 				   HAL_REO_DEST_RING_INFO0_PUSH_REASON);
@@ -339,8 +341,8 @@ int ath12k_hal_desc_reo_parse_err(struct ath12k_base *ab, u32 *rx_desc,
 		return -EINVAL;
 	}
 
-	if (u32_get_bits(desc->info0, HAL_REO_DEST_RING_INFO0_BUFFER_TYPE) !=
-	    HAL_REO_DEST_RING_BUFFER_TYPE_LINK_DESC) {
+	val = u32_get_bits(desc->info0, HAL_REO_DEST_RING_INFO0_BUFFER_TYPE);
+	if (val != HAL_REO_DEST_RING_BUFFER_TYPE_LINK_DESC) {
 		ath12k_warn(ab, "expected buffer type link_desc");
 		return -EINVAL;
 	}
@@ -360,6 +362,7 @@ int ath12k_hal_wbm_desc_parse_err(struct ath12k_base *ab, void *desc,
 	enum hal_wbm_rel_src_module rel_src;
 	bool hw_cc_done;
 	u64 desc_va;
+	u32 val;
 
 	type = u32_get_bits(wbm_desc->info0, HAL_WBM_RELEASE_INFO0_DESC_TYPE);
 	/* We expect only WBM_REL buffer type */
@@ -381,9 +384,9 @@ int ath12k_hal_wbm_desc_parse_err(struct ath12k_base *ab, void *desc,
 				  HAL_WBM_RELEASE_RX_INFO0_CC_STATUS);
 
 	if (!hw_cc_done) {
-		if (le32_get_bits(wbm_desc->buf_addr_info.info1,
-				  BUFFER_ADDR_INFO1_RET_BUF_MGR)
-				  != HAL_RX_BUF_RBM_SW3_BM) {
+		val = le32_get_bits(wbm_desc->buf_addr_info.info1,
+				    BUFFER_ADDR_INFO1_RET_BUF_MGR);
+		if (val != HAL_RX_BUF_RBM_SW3_BM) {
 			ab->soc_stats.invalid_rbm++;
 			return -EINVAL;
 		}
@@ -393,9 +396,9 @@ int ath12k_hal_wbm_desc_parse_err(struct ath12k_base *ab, void *desc,
 
 		rel_info->rx_desc = NULL;
 	} else {
-		if (u32_get_bits(wbm_cc_desc->info0,
-				 HAL_WBM_RELEASE_RX_CC_INFO0_RBM)
-				 != HAL_RX_BUF_RBM_SW3_BM) {
+		val = u32_get_bits(wbm_cc_desc->info0,
+				   HAL_WBM_RELEASE_RX_CC_INFO0_RBM);
+		if (val != HAL_RX_BUF_RBM_SW3_BM) {
 			ab->soc_stats.invalid_rbm++;
 			return -EINVAL;
 		}
