@@ -37,7 +37,7 @@ static const u8 dscp_tid_map[DSCP_TID_MAP_TBL_ENTRY_SIZE] = {
 void ath12k_hal_tx_cmd_desc_setup(struct ath12k_base *ab, void *cmd,
 				  struct hal_tx_info *ti)
 {
-	struct hal_tcl_data_cmd *tcl_cmd = (struct hal_tcl_data_cmd *)cmd;
+	struct hal_tcl_data_cmd *tcl_cmd = cmd;
 
 	tcl_cmd->buf_addr_info.info0 =
 		le32_encode_bits(ti->paddr, BUFFER_ADDR_INFO0_ADDR);

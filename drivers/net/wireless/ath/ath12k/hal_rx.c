@@ -725,7 +725,7 @@ u32 ath12k_hal_reo_qdesc_size(u32 ba_window_size, u8 tid)
 void ath12k_hal_reo_qdesc_setup(void *vaddr, int tid, u32 ba_window_size,
 				u32 start_seq, enum hal_pn_type type)
 {
-	struct hal_rx_reo_queue *qdesc = (struct hal_rx_reo_queue *)vaddr;
+	struct hal_rx_reo_queue *qdesc = vaddr;
 	struct hal_rx_reo_queue_ext *ext_desc;
 
 	memset(qdesc, 0, sizeof(*qdesc));
@@ -869,18 +869,16 @@ void ath12k_hal_rx_reo_ent_buf_paddr_get(void *rx_desc, dma_addr_t *paddr,
 					 u32 *sw_cookie, void **pp_buf_addr,
 					 u8 *rbm, u32 *msdu_cnt)
 {
-	struct hal_reo_entrance_ring *reo_ent_ring =
-		(struct hal_reo_entrance_ring *)rx_desc;
+	struct hal_reo_entrance_ring *reo_ent_ring = rx_desc;
 	struct ath12k_buffer_addr *buf_addr_info;
 	struct rx_mpdu_desc *rx_mpdu_desc_info_details;
 
-	rx_mpdu_desc_info_details =
-			(struct rx_mpdu_desc *)&reo_ent_ring->rx_mpdu_info;
+	rx_mpdu_desc_info_details = &reo_ent_ring->rx_mpdu_info;
 
 	*msdu_cnt = u32_get_bits(rx_mpdu_desc_info_details->info0,
 				 RX_MPDU_DESC_INFO0_MSDU_COUNT);
 
-	buf_addr_info = (struct ath12k_buffer_addr *)&reo_ent_ring->buf_addr_info;
+	buf_addr_info = &reo_ent_ring->buf_addr_info;
 
 	*paddr = (((u64)le32_get_bits(buf_addr_info->info1,
 				      BUFFER_ADDR_INFO1_ADDR)) << 32) |
@@ -892,5 +890,5 @@ void ath12k_hal_rx_reo_ent_buf_paddr_get(void *rx_desc, dma_addr_t *paddr,
 	*rbm = le32_get_bits(buf_addr_info->info1,
 			     BUFFER_ADDR_INFO1_RET_BUF_MGR);
 
-	*pp_buf_addr = (void *)buf_addr_info;
+	*pp_buf_addr = buf_addr_info;
 }
