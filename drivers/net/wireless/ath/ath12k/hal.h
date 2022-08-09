@@ -1118,7 +1118,7 @@ void ath12k_hal_srng_get_params(struct ath12k_base *ab, struct hal_srng *srng,
 				struct hal_srng_params *params);
 u32 *ath12k_hal_srng_dst_get_next_entry(struct ath12k_base *ab,
 					struct hal_srng *srng);
-u32 *ath12k_hal_srng_dst_peek(struct ath12k_base *ab, struct hal_srng *srng);
+void *ath12k_hal_srng_dst_peek(struct ath12k_base *ab, struct hal_srng *srng);
 int ath12k_hal_srng_dst_num_free(struct ath12k_base *ab, struct hal_srng *srng,
 				 bool sync_hw_ptr);
 u32 *ath12k_hal_srng_src_peek(struct ath12k_base *ab, struct hal_srng *srng);

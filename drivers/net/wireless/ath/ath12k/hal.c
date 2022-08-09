@@ -1546,7 +1546,7 @@ void ath12k_hal_set_link_desc_addr(struct hal_wbm_link_desc *desc, u32 cookie,
 			le32_encode_bits(cookie, BUFFER_ADDR_INFO1_SW_COOKIE);
 }
 
-u32 *ath12k_hal_srng_dst_peek(struct ath12k_base *ab, struct hal_srng *srng)
+void *ath12k_hal_srng_dst_peek(struct ath12k_base *ab, struct hal_srng *srng)
 {
 	lockdep_assert_held(&srng->lock);
 

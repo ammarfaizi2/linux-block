@@ -2100,8 +2100,7 @@ int ath12k_dp_mon_srng_process(struct ath12k *ar, int mac_id, int *budget,
 
 	while (likely(*budget)) {
 		*budget -= 1;
-		mon_dst_desc = (struct hal_mon_dest_desc *)
-				ath12k_hal_srng_dst_peek(ab, srng);
+		mon_dst_desc = ath12k_hal_srng_dst_peek(ab, srng);
 		if (unlikely(!mon_dst_desc))
 			break;
 
@@ -2507,8 +2506,7 @@ int ath12k_dp_mon_rx_process_stats(struct ath12k *ar, int mac_id,
 
 	while (likely(*budget)) {
 		*budget -= 1;
-		mon_dst_desc = (struct hal_mon_dest_desc *)
-				ath12k_hal_srng_dst_peek(ab, srng);
+		mon_dst_desc = ath12k_hal_srng_dst_peek(ab, srng);
 		if (unlikely(!mon_dst_desc))
 			break;
 		cookie = mon_dst_desc->cookie;
