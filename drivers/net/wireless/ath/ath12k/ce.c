@@ -414,7 +414,7 @@ static struct sk_buff *ath12k_ce_completed_send_next(struct ath12k_ce_pipe *pipe
 	unsigned int sw_index;
 	unsigned int nentries_mask;
 	struct sk_buff *skb;
-	u32 *desc;
+	void *desc;
 
 	spin_lock_bh(&ab->ce.ce_lock);
 
