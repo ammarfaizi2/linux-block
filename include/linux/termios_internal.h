@@ -4,6 +4,9 @@
 
 #include <linux/uaccess.h>
 #include <asm/termios.h>
+#ifdef CONFIG_ARCH_HAS_TERMIOS_INTERNAL
+#include <asm/termios-internal.h>
+#endif
 
 /*	intr=^C		quit=^\		erase=del	kill=^U
 	eof=^D		vtime=\0	vmin=\1		sxtc=\0

@@ -2,10 +2,6 @@
 #ifndef _SPARC_TERMIOS_H
 #define _SPARC_TERMIOS_H
 
-#include <uapi/asm/termios.h>
-#include <linux/uaccess.h>
-
-
 /*
  * c_cc characters in the termio structure.  Oh, how I love being
  * backwardly compatible.  Notice that character 4 and 5 are
