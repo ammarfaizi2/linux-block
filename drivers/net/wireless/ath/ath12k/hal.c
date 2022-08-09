@@ -1672,10 +1672,10 @@ u32 *ath12k_hal_srng_src_reap_next(struct ath12k_base *ab,
 	return desc;
 }
 
-u32 *ath12k_hal_srng_src_get_next_reaped(struct ath12k_base *ab,
-					 struct hal_srng *srng)
+void *ath12k_hal_srng_src_get_next_reaped(struct ath12k_base *ab,
+					  struct hal_srng *srng)
 {
-	u32 *desc;
+	void *desc;
 
 	lockdep_assert_held(&srng->lock);
 

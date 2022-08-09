@@ -641,7 +641,7 @@ int ath12k_ce_send(struct ath12k_base *ab, struct sk_buff *skb, u8 pipe_id,
 {
 	struct ath12k_ce_pipe *pipe = &ab->ce.ce_pipe[pipe_id];
 	struct hal_srng *srng;
-	u32 *desc;
+	void *desc;
 	unsigned int write_index, sw_index;
 	unsigned int nentries_mask;
 	int ret = 0;
