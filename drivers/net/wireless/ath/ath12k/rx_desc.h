@@ -1404,7 +1404,7 @@ struct hal_rx_desc_qcn9274 {
 
 struct rx_pkt_hdr_tlv {
 	__le64 tag;
-	u64 phy_ppdu_id;
+	__le64 phy_ppdu_id;
 	char rx_pkt_hdr[HAL_RX_BE_PKT_HDR_TLV_LEN];
 };
 
