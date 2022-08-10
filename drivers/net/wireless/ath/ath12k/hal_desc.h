@@ -2373,23 +2373,23 @@ enum hal_rx_reo_queue_pn_size {
 
 struct hal_rx_reo_queue {
 	struct hal_desc_header desc_hdr;
-	u32 rx_queue_num;
-	u32 info0;
-	u32 info1;
-	u32 pn[4];
-	u32 last_rx_enqueue_timestamp;
-	u32 last_rx_dequeue_timestamp;
-	u32 next_aging_queue[2];
-	u32 prev_aging_queue[2];
-	u32 rx_bitmap[9];
-	u32 info2;
-	u32 info3;
-	u32 info4;
-	u32 processed_mpdus;
-	u32 processed_msdus;
-	u32 processed_total_bytes;
-	u32 info5;
-	u32 rsvd[2];
+	__le32 rx_queue_num;
+	__le32 info0;
+	__le32 info1;
+	__le32 pn[4];
+	__le32 last_rx_enqueue_timestamp;
+	__le32 last_rx_dequeue_timestamp;
+	__le32 next_aging_queue[2];
+	__le32 prev_aging_queue[2];
+	__le32 rx_bitmap[9];
+	__le32 info2;
+	__le32 info3;
+	__le32 info4;
+	__le32 processed_mpdus;
+	__le32 processed_msdus;
+	__le32 processed_total_bytes;
+	__le32 info5;
+	__le32 rsvd[2];
 	struct hal_rx_reo_queue_ext ext_desc[];
 } __packed;
 
@@ -2510,11 +2510,11 @@ struct hal_rx_reo_queue {
 
 struct hal_reo_update_rx_queue {
 	struct hal_reo_cmd_hdr cmd;
-	u32 queue_addr_lo;
-	u32 info0;
-	u32 info1;
-	u32 info2;
-	u32 pn[4];
+	__le32 queue_addr_lo;
+	__le32 info0;
+	__le32 info1;
+	__le32 info2;
+	__le32 pn[4];
 } __packed;
 
 #define HAL_REO_UNBLOCK_CACHE_INFO0_UNBLK_CACHE		BIT(0)
@@ -2522,8 +2522,8 @@ struct hal_reo_update_rx_queue {
 
 struct hal_reo_unblock_cache {
 	struct hal_reo_cmd_hdr cmd;
-	u32 info0;
-	u32 rsvd[7];
+	__le32 info0;
+	__le32 rsvd[7];
 } __packed;
 
 enum hal_reo_exec_status {
@@ -2538,8 +2538,8 @@ enum hal_reo_exec_status {
 #define HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS	GENMASK(27, 26)
 
 struct hal_reo_status_hdr {
-	u32 info0;
-	u32 timestamp;
+	__le32 info0;
+	__le32 timestamp;
 } __packed;
 
 /* hal_reo_status_hdr
@@ -2581,19 +2581,19 @@ struct hal_reo_status_hdr {
 
 struct hal_reo_get_queue_stats_status {
 	struct hal_reo_status_hdr hdr;
-	u32 info0;
-	u32 pn[4];
-	u32 last_rx_enqueue_timestamp;
-	u32 last_rx_dequeue_timestamp;
-	u32 rx_bitmap[9];
-	u32 info1;
-	u32 info2;
-	u32 info3;
-	u32 num_mpdu_frames;
-	u32 num_msdu_frames;
-	u32 total_bytes;
-	u32 info4;
-	u32 info5;
+	__le32 info0;
+	__le32 pn[4];
+	__le32 last_rx_enqueue_timestamp;
+	__le32 last_rx_dequeue_timestamp;
+	__le32 rx_bitmap[9];
+	__le32 info1;
+	__le32 info2;
+	__le32 info3;
+	__le32 num_mpdu_frames;
+	__le32 num_msdu_frames;
+	__le32 total_bytes;
+	__le32 info4;
+	__le32 info5;
 } __packed;
 
 /* hal_reo_get_queue_stats_status
@@ -2676,9 +2676,9 @@ struct hal_reo_get_queue_stats_status {
 
 struct hal_reo_flush_queue_status {
 	struct hal_reo_status_hdr hdr;
-	u32 info0;
-	u32 rsvd0[21];
-	u32 info1;
+	__le32 info0;
+	__le32 rsvd0[21];
+	__le32 info1;
 } __packed;
 
 /* hal_reo_flush_queue_status
@@ -2711,9 +2711,9 @@ struct hal_reo_flush_queue_status {
 
 struct hal_reo_flush_cache_status {
 	struct hal_reo_status_hdr hdr;
-	u32 info0;
-	u32 rsvd0[21];
-	u32 info1;
+	__le32 info0;
+	__le32 rsvd0[21];
+	__le32 info1;
 } __packed;
 
 /* hal_reo_flush_cache_status
@@ -2773,9 +2773,9 @@ struct hal_reo_flush_cache_status {
 
 struct hal_reo_unblock_cache_status {
 	struct hal_reo_status_hdr hdr;
-	u32 info0;
-	u32 rsvd0[21];
-	u32 info1;
+	__le32 info0;
+	__le32 rsvd0[21];
+	__le32 info1;
 } __packed;
 
 /* hal_reo_unblock_cache_status
@@ -2809,10 +2809,10 @@ struct hal_reo_unblock_cache_status {
 
 struct hal_reo_flush_timeout_list_status {
 	struct hal_reo_status_hdr hdr;
-	u32 info0;
-	u32 info1;
-	u32 rsvd0[20];
-	u32 info2;
+	__le32 info0;
+	__le32 info1;
+	__le32 rsvd0[20];
+	__le32 info2;
 } __packed;
 
 /* hal_reo_flush_timeout_list_status
@@ -2852,13 +2852,13 @@ struct hal_reo_flush_timeout_list_status {
 
 struct hal_reo_desc_thresh_reached_status {
 	struct hal_reo_status_hdr hdr;
-	u32 info0;
-	u32 info1;
-	u32 info2;
-	u32 info3;
-	u32 info4;
-	u32 rsvd0[17];
-	u32 info5;
+	__le32 info0;
+	__le32 info1;
+	__le32 info2;
+	__le32 info3;
+	__le32 info4;
+	__le32 rsvd0[17];
+	__le32 info5;
 } __packed;
 
 /* hal_reo_desc_thresh_reached_status
@@ -2893,14 +2893,14 @@ struct hal_reo_desc_thresh_reached_status {
 #define HAL_TCL_ENTRANCE_FROM_PPE_RING_INFO0_VALID_TOGGLE	BIT(31)
 
 struct hal_tcl_entrance_from_ppe_ring {
-	u32 buffer_addr;
-	u32 info0;
+	__le32 buffer_addr;
+	__le32 info0;
 } __packed;
 
 struct hal_mon_buf_ring {
-	u32 paddr_lo;
-	u32 paddr_hi;
-	u64 cookie;
+	__le32 paddr_lo;
+	__le32 paddr_hi;
+	__le64 cookie;
 };
 
 /* hal_mon_buf_ring
@@ -2927,10 +2927,10 @@ struct hal_mon_buf_ring {
 #define HAL_MON_DEST_INFO0_LOOPING_COUNT	GENMASK(31, 28)
 
 struct hal_mon_dest_desc {
-	u32 cookie;
-	u32 reserved;
-	u32 ppdu_id;
-	u32 info0;
+	__le32 cookie;
+	__le32 reserved;
+	__le32 ppdu_id;
+	__le32 info0;
 };
 
 /* hal_mon_dest_ring

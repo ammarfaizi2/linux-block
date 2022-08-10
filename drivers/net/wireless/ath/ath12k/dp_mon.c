@@ -1309,9 +1309,9 @@ int ath12k_dp_mon_buf_replenish(struct ath12k_base *ab,
 
 		cookie = u32_encode_bits(buf_id, DP_RXDMA_BUF_COOKIE_BUF_ID);
 
-		mon_buf->paddr_lo = lower_32_bits(paddr);
-		mon_buf->paddr_hi = upper_32_bits(paddr);
-		mon_buf->cookie = cookie;
+		mon_buf->paddr_lo = cpu_to_le32(lower_32_bits(paddr));
+		mon_buf->paddr_hi = cpu_to_le32(upper_32_bits(paddr));
+		mon_buf->cookie = cpu_to_le64(cookie);
 
 		req_entries--;
 	}
@@ -2104,7 +2104,7 @@ int ath12k_dp_mon_srng_process(struct ath12k *ar, int mac_id, int *budget,
 		if (unlikely(!mon_dst_desc))
 			break;
 
-		cookie = mon_dst_desc->cookie;
+		cookie = le32_to_cpu(mon_dst_desc->cookie);
 		buf_id = u32_get_bits(cookie, DP_RXDMA_BUF_COOKIE_BUF_ID);
 
 		spin_lock_bh(&buf_ring->idr_lock);
@@ -2124,9 +2124,9 @@ int ath12k_dp_mon_srng_process(struct ath12k *ar, int mac_id, int *budget,
 
 		pmon->dest_skb_q[dest_idx] = skb;
 		dest_idx++;
-		ppdu_id = mon_dst_desc->ppdu_id;
-		end_of_ppdu = u32_get_bits(mon_dst_desc->info0,
-					   HAL_MON_DEST_INFO0_END_OF_PPDU);
+		ppdu_id = le32_to_cpu(mon_dst_desc->ppdu_id);
+		end_of_ppdu = le32_get_bits(mon_dst_desc->info0,
+					    HAL_MON_DEST_INFO0_END_OF_PPDU);
 		if (!end_of_ppdu)
 			continue;
 
@@ -2509,7 +2509,7 @@ int ath12k_dp_mon_rx_process_stats(struct ath12k *ar, int mac_id,
 		mon_dst_desc = ath12k_hal_srng_dst_peek(ab, srng);
 		if (unlikely(!mon_dst_desc))
 			break;
-		cookie = mon_dst_desc->cookie;
+		cookie = le32_to_cpu(mon_dst_desc->cookie);
 		buf_id = u32_get_bits(cookie, DP_RXDMA_BUF_COOKIE_BUF_ID);
 
 		spin_lock_bh(&buf_ring->idr_lock);
@@ -2528,8 +2528,8 @@ int ath12k_dp_mon_rx_process_stats(struct ath12k *ar, int mac_id,
 				 DMA_FROM_DEVICE);
 		pmon->dest_skb_q[dest_idx] = skb;
 		dest_idx++;
-		end_of_ppdu = u32_get_bits(mon_dst_desc->info0,
-					   HAL_MON_DEST_INFO0_END_OF_PPDU);
+		end_of_ppdu = le32_get_bits(mon_dst_desc->info0,
+					    HAL_MON_DEST_INFO0_END_OF_PPDU);
 		if (!end_of_ppdu)
 			continue;
 
