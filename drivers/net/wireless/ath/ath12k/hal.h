@@ -1091,7 +1091,8 @@ extern const struct hal_ops hal_qcn9274_ops;
 extern const struct hal_ops hal_wcn7850_ops;
 
 u32 ath12k_hal_reo_qdesc_size(u32 ba_window_size, u8 tid);
-void ath12k_hal_reo_qdesc_setup(void *vaddr, int tid, u32 ba_window_size,
+void ath12k_hal_reo_qdesc_setup(struct hal_rx_reo_queue *qdesc,
+				int tid, u32 ba_window_size,
 				u32 start_seq, enum hal_pn_type type);
 void ath12k_hal_reo_init_cmd_ring(struct ath12k_base *ab,
 				  struct hal_srng *srng);

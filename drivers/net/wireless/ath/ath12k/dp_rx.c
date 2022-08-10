@@ -274,8 +274,8 @@ int ath12k_dp_rx_bufs_replenish(struct ath12k_base *ab, int mac_id,
 				enum hal_rx_buf_return_buf_manager mgr,
 				bool hw_cc)
 {
+	struct ath12k_buffer_addr *desc;
 	struct hal_srng *srng;
-	u32 *desc;
 	struct sk_buff *skb;
 	int num_free;
 	int num_remain;
@@ -938,10 +938,10 @@ int ath12k_dp_rx_peer_tid_setup(struct ath12k *ar, const u8 *peer_mac, int vdev_
 {
 	struct ath12k_base *ab = ar->ab;
 	struct ath12k_dp *dp = &ab->dp;
+	struct hal_rx_reo_queue *addr_aligned;
 	struct ath12k_peer *peer;
 	struct ath12k_dp_rx_tid *rx_tid;
 	u32 hw_desc_sz;
-	u32 *addr_aligned;
 	void *vaddr;
 	dma_addr_t paddr;
 	int ret;
@@ -3030,7 +3030,8 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar,
 	link_desc_banks = dp->link_desc_banks;
 	reo_dest_ring = rx_tid->dst_ring_desc;
 
-	ath12k_hal_rx_reo_ent_paddr_get(ab, reo_dest_ring, &link_paddr, &cookie);
+	ath12k_hal_rx_reo_ent_paddr_get(ab, &reo_dest_ring->buf_addr_info,
+					&link_paddr, &cookie);
 	desc_bank = u32_get_bits(cookie, DP_LINK_DESC_BANK_MASK);
 
 	msdu_link = (struct hal_rx_msdu_link *)(link_desc_banks[desc_bank].vaddr +
@@ -3079,7 +3080,8 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar,
 
 	ATH12K_SKB_RXCB(defrag_skb)->paddr = buf_paddr;
 
-	ath12k_hal_rx_buf_addr_info_set(msdu0, buf_paddr, desc_info->cookie,
+	ath12k_hal_rx_buf_addr_info_set(&msdu0->buf_addr_info, buf_paddr,
+					desc_info->cookie,
 					HAL_RX_BUF_RBM_SW3_BM);
 
 	/* Fill mpdu details into reo entrace ring */
@@ -3097,7 +3099,8 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar,
 	}
 	memset(reo_ent_ring, 0, sizeof(*reo_ent_ring));
 
-	ath12k_hal_rx_buf_addr_info_set(reo_ent_ring, link_paddr, cookie,
+	ath12k_hal_rx_buf_addr_info_set(&reo_ent_ring->buf_addr_info, link_paddr,
+					cookie,
 					HAL_RX_BUF_RBM_WBM_CHIP0_IDLE_DESC_LIST);
 
 	mpdu_info = u32_encode_bits(1, RX_MPDU_DESC_INFO0_MSDU_COUNT) |
@@ -3420,6 +3423,7 @@ int ath12k_dp_rx_process_err(struct ath12k_base *ab, struct napi_struct *napi,
 	u32 msdu_cookies[HAL_NUM_RX_MSDUS_PER_LINK_DESC];
 	struct dp_link_desc_bank *link_desc_banks;
 	enum hal_rx_buf_return_buf_manager rbm;
+	struct hal_rx_msdu_link *link_desc_va;
 	int tot_n_bufs_reaped, quota, ret, i;
 	struct hal_reo_dest_ring *reo_desc;
 	struct dp_rxdma_ring *rx_ring;
@@ -3427,7 +3431,6 @@ int ath12k_dp_rx_process_err(struct ath12k_base *ab, struct napi_struct *napi,
 	u32 desc_bank, num_msdus;
 	struct hal_srng *srng;
 	struct ath12k_dp *dp;
-	void *link_desc_va;
 	int mac_id;
 	struct ath12k *ar;
 	dma_addr_t paddr;

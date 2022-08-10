@@ -265,10 +265,9 @@ out:
 	return ret;
 }
 
-void ath12k_hal_rx_buf_addr_info_set(void *desc, dma_addr_t paddr,
-				     u32 cookie, u8 manager)
+void ath12k_hal_rx_buf_addr_info_set(struct ath12k_buffer_addr *binfo,
+				     dma_addr_t paddr, u32 cookie, u8 manager)
 {
-	struct ath12k_buffer_addr *binfo = (struct ath12k_buffer_addr *)desc;
 	u32 paddr_lo, paddr_hi;
 
 	paddr_lo = lower_32_bits(paddr);
@@ -279,22 +278,20 @@ void ath12k_hal_rx_buf_addr_info_set(void *desc, dma_addr_t paddr,
 		       le32_encode_bits(manager, BUFFER_ADDR_INFO1_RET_BUF_MGR);
 }
 
-void ath12k_hal_rx_buf_addr_info_get(void *desc, dma_addr_t *paddr,
+void ath12k_hal_rx_buf_addr_info_get(struct ath12k_buffer_addr *binfo,
+				     dma_addr_t *paddr,
 				     u32 *cookie, u8 *rbm)
 {
-	struct ath12k_buffer_addr *binfo = (struct ath12k_buffer_addr *)desc;
-
 	*paddr = (((u64)le32_get_bits(binfo->info1, BUFFER_ADDR_INFO1_ADDR)) << 32) |
 		le32_get_bits(binfo->info0, BUFFER_ADDR_INFO0_ADDR);
 	*cookie = le32_get_bits(binfo->info1, BUFFER_ADDR_INFO1_SW_COOKIE);
 	*rbm = le32_get_bits(binfo->info1, BUFFER_ADDR_INFO1_RET_BUF_MGR);
 }
 
-void ath12k_hal_rx_msdu_link_info_get(void *link_desc, u32 *num_msdus,
+void ath12k_hal_rx_msdu_link_info_get(struct hal_rx_msdu_link *link, u32 *num_msdus,
 				      u32 *msdu_cookies,
 				      enum hal_rx_buf_return_buf_manager *rbm)
 {
-	struct hal_rx_msdu_link *link = (struct hal_rx_msdu_link *)link_desc;
 	struct hal_rx_msdu_details *msdu;
 	u32 val;
 	int i;
@@ -347,7 +344,7 @@ int ath12k_hal_desc_reo_parse_err(struct ath12k_base *ab,
 		return -EINVAL;
 	}
 
-	ath12k_hal_rx_reo_ent_paddr_get(ab, desc, paddr, &cookie);
+	ath12k_hal_rx_reo_ent_paddr_get(ab, &desc->buf_addr_info, paddr, &cookie);
 	*desc_bank = u32_get_bits(cookie, DP_LINK_DESC_BANK_MASK);
 
 	return 0;
@@ -440,11 +437,10 @@ int ath12k_hal_wbm_desc_parse_err(struct ath12k_base *ab, void *desc,
 	return 0;
 }
 
-void ath12k_hal_rx_reo_ent_paddr_get(struct ath12k_base *ab, void *desc,
+void ath12k_hal_rx_reo_ent_paddr_get(struct ath12k_base *ab,
+				     struct ath12k_buffer_addr *buff_addr,
 				     dma_addr_t *paddr, u32 *cookie)
 {
-	struct ath12k_buffer_addr *buff_addr = desc;
-
 	*paddr = ((u64)(le32_get_bits(buff_addr->info1,
 				      BUFFER_ADDR_INFO1_ADDR)) << 32) |
 		le32_get_bits(buff_addr->info0, BUFFER_ADDR_INFO0_ADDR);
@@ -452,13 +448,11 @@ void ath12k_hal_rx_reo_ent_paddr_get(struct ath12k_base *ab, void *desc,
 	*cookie = le32_get_bits(buff_addr->info1, BUFFER_ADDR_INFO1_SW_COOKIE);
 }
 
-void ath12k_hal_rx_msdu_link_desc_set(struct ath12k_base *ab, void *desc,
-				      void *link_desc,
+void ath12k_hal_rx_msdu_link_desc_set(struct ath12k_base *ab,
+				      struct hal_wbm_release_ring *dst_desc,
+				      struct hal_wbm_release_ring *src_desc,
 				      enum hal_wbm_rel_bm_act action)
 {
-	struct hal_wbm_release_ring *dst_desc = desc;
-	struct hal_wbm_release_ring *src_desc = link_desc;
-
 	dst_desc->buf_addr_info = src_desc->buf_addr_info;
 	dst_desc->info0 |= u32_encode_bits(HAL_WBM_REL_SRC_MODULE_SW,
 					   HAL_WBM_RELEASE_INFO0_REL_SRC_MODULE) |
@@ -715,10 +709,10 @@ u32 ath12k_hal_reo_qdesc_size(u32 ba_window_size, u8 tid)
 		(num_ext_desc * sizeof(struct hal_rx_reo_queue_ext));
 }
 
-void ath12k_hal_reo_qdesc_setup(void *vaddr, int tid, u32 ba_window_size,
+void ath12k_hal_reo_qdesc_setup(struct hal_rx_reo_queue *qdesc,
+				int tid, u32 ba_window_size,
 				u32 start_seq, enum hal_pn_type type)
 {
-	struct hal_rx_reo_queue *qdesc = vaddr;
 	struct hal_rx_reo_queue_ext *ext_desc;
 
 	memset(qdesc, 0, sizeof(*qdesc));
