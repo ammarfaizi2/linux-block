@@ -1742,7 +1742,7 @@ int ath12k_wmi_vdev_install_key(struct ath12k *ar,
 
 	tlv = (struct wmi_tlv *)(skb->data + sizeof(*cmd));
 	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_BYTE, key_len_aligned);
-	memcpy(tlv->value, (u8 *)arg->key_data, key_len_aligned);
+	memcpy(tlv->value, arg->key_data, key_len_aligned);
 
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_VDEV_INSTALL_KEY_CMDID);
 	if (ret) {
@@ -2706,8 +2706,7 @@ int ath12k_wmi_send_init_country_cmd(struct ath12k *ar,
 	switch (arg->flags) {
 	case ALPHA_IS_SET:
 		cmd->init_cc_type = WMI_COUNTRY_INFO_TYPE_ALPHA;
-		memcpy((u8 *)&cmd->cc_info.alpha2,
-		       arg->cc_info.alpha2, 3);
+		memcpy(&cmd->cc_info.alpha2, arg->cc_info.alpha2, 3);
 		break;
 	case CC_IS_SET:
 		cmd->init_cc_type = cpu_to_le32(WMI_COUNTRY_INFO_TYPE_COUNTRY_CODE);

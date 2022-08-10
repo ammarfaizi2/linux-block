@@ -357,7 +357,7 @@ static u16 ath12k_hw_qcn9274_rx_desc_get_mpdu_peer_id(struct hal_rx_desc *desc)
 static void ath12k_hw_qcn9274_rx_desc_copy_end_tlv(struct hal_rx_desc *fdesc,
 						   struct hal_rx_desc *ldesc)
 {
-	memcpy((u8 *)&fdesc->u.qcn9274.msdu_end, (u8 *)&ldesc->u.qcn9274.msdu_end,
+	memcpy(&fdesc->u.qcn9274.msdu_end, &ldesc->u.qcn9274.msdu_end,
 	       sizeof(struct rx_msdu_end_qcn9274));
 }
 
@@ -790,7 +790,7 @@ static u16 ath12k_hw_wcn7850_rx_desc_get_mpdu_peer_id(struct hal_rx_desc *desc)
 static void ath12k_hw_wcn7850_rx_desc_copy_end_tlv(struct hal_rx_desc *fdesc,
 						   struct hal_rx_desc *ldesc)
 {
-	memcpy((u8 *)&fdesc->u.wcn7850.msdu_end, (u8 *)&ldesc->u.wcn7850.msdu_end,
+	memcpy(&fdesc->u.wcn7850.msdu_end, &ldesc->u.wcn7850.msdu_end,
 	       sizeof(struct rx_msdu_end_qcn9274));
 }
 

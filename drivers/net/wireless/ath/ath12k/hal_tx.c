@@ -111,7 +111,7 @@ void ath12k_hal_tx_set_dscp_tid_map(struct ath12k_base *ab, int id)
 			u32_encode_bits(dscp_tid_map[i + 7],
 					HAL_TCL1_RING_FIELD_DSCP_TID_MAP7);
 
-		memcpy(&hw_map_val[cnt], (u8 *)&value, 3);
+		memcpy(&hw_map_val[cnt], &value, 3);
 		cnt += 3;
 	}
 

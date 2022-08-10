@@ -1205,7 +1205,7 @@ static int ath12k_htt_tlv_ppdu_stats_parse(struct ath12k_base *ab,
 				    len, tag);
 			return -EINVAL;
 		}
-		memcpy((void *)&ppdu_info->ppdu_stats.common, ptr,
+		memcpy(&ppdu_info->ppdu_stats.common, ptr,
 		       sizeof(struct htt_ppdu_stats_common));
 		break;
 	case HTT_PPDU_STATS_TAG_USR_RATE:
@@ -1223,7 +1223,7 @@ static int ath12k_htt_tlv_ppdu_stats_parse(struct ath12k_base *ab,
 		user_stats = &ppdu_info->ppdu_stats.user_stats[cur_user];
 		user_stats->peer_id = peer_id;
 		user_stats->is_valid_peer_id = true;
-		memcpy((void *)&user_stats->rate, ptr,
+		memcpy(&user_stats->rate, ptr,
 		       sizeof(struct htt_ppdu_stats_user_rate));
 		user_stats->tlv_flags |= BIT(tag);
 		break;
@@ -1242,7 +1242,7 @@ static int ath12k_htt_tlv_ppdu_stats_parse(struct ath12k_base *ab,
 		user_stats = &ppdu_info->ppdu_stats.user_stats[cur_user];
 		user_stats->peer_id = peer_id;
 		user_stats->is_valid_peer_id = true;
-		memcpy((void *)&user_stats->cmpltn_cmn, ptr,
+		memcpy(&user_stats->cmpltn_cmn, ptr,
 		       sizeof(struct htt_ppdu_stats_usr_cmpltn_cmn));
 		user_stats->tlv_flags |= BIT(tag);
 		break;
@@ -1263,7 +1263,7 @@ static int ath12k_htt_tlv_ppdu_stats_parse(struct ath12k_base *ab,
 		user_stats = &ppdu_info->ppdu_stats.user_stats[cur_user];
 		user_stats->peer_id = peer_id;
 		user_stats->is_valid_peer_id = true;
-		memcpy((void *)&user_stats->ack_ba, ptr,
+		memcpy(&user_stats->ack_ba, ptr,
 		       sizeof(struct htt_ppdu_stats_usr_cmpltn_ack_ba_status));
 		user_stats->tlv_flags |= BIT(tag);
 		break;
@@ -2044,7 +2044,7 @@ static void ath12k_dp_rx_h_undecap_nwifi(struct ath12k *ar,
 	/* TODO Add other QoS ctl fields when required */
 
 	/* copy decap header before overwriting for reuse below */
-	memcpy(decap_hdr, (uint8_t *)hdr, hdr_len);
+	memcpy(decap_hdr, hdr, hdr_len);
 
 	/* Rebuild crypto header for mac80211 use */
 	if (!(status->flag & RX_FLAG_IV_STRIPPED)) {
@@ -2113,8 +2113,7 @@ static void ath12k_dp_rx_h_undecap_raw(struct ath12k *ar, struct sk_buff *msdu,
 		hdr_len = ieee80211_hdrlen(hdr->frame_control);
 		crypto_len = ath12k_dp_rx_crypto_param_len(ar, enctype);
 
-		memmove((void *)msdu->data + crypto_len,
-			(void *)msdu->data, hdr_len);
+		memmove(msdu->data + crypto_len, msdu->data, hdr_len);
 		skb_pull(msdu, crypto_len);
 	}
 }
@@ -2937,8 +2936,8 @@ static void ath12k_dp_rx_h_undecap_frag(struct ath12k *ar, struct sk_buff *msdu,
 		hdr_len = ieee80211_hdrlen(hdr->frame_control);
 		crypto_len = ath12k_dp_rx_crypto_param_len(ar, enctype);
 
-		memmove((void *)msdu->data + hal_rx_desc_sz + crypto_len,
-			(void *)msdu->data + hal_rx_desc_sz, hdr_len);
+		memmove(msdu->data + hal_rx_desc_sz + crypto_len,
+			msdu->data + hal_rx_desc_sz, hdr_len);
 		skb_pull(msdu, crypto_len);
 	}
 }
