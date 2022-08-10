@@ -778,8 +778,8 @@ int ath12k_dp_link_desc_setup(struct ath12k_base *ab,
 	u32 tot_mem_sz;
 	u32 n_link_desc_bank, last_bank_sz;
 	u32 entry_sz, align_bytes, n_entries;
+	struct hal_wbm_link_desc *desc;
 	u32 paddr;
-	u32 *desc;
 	int i, ret;
 	u32 cookie;
 
@@ -842,7 +842,7 @@ int ath12k_dp_link_desc_setup(struct ath12k_base *ab,
 		while (n_entries &&
 		       (desc = ath12k_hal_srng_src_get_next_entry(ab, srng))) {
 			cookie = DP_LINK_DESC_COOKIE_SET(n_entries, i);
-			ath12k_hal_set_link_desc_addr((struct hal_wbm_link_desc *)desc,
+			ath12k_hal_set_link_desc_addr(desc,
 						      cookie, paddr);
 			n_entries--;
 			paddr += HAL_LINK_DESC_SIZE;

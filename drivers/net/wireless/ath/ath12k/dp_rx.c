@@ -1727,13 +1727,15 @@ void ath12k_dp_htt_htc_t2h_msg_handler(struct ath12k_base *ab,
 {
 	struct ath12k_dp *dp = &ab->dp;
 	struct htt_resp_msg *resp = (struct htt_resp_msg *)skb->data;
-	enum htt_t2h_msg_type type = u32_get_bits(*(u32 *)resp, HTT_T2H_MSG_TYPE);
+	enum htt_t2h_msg_type type;
 	u16 peer_id;
 	u8 vdev_id;
 	u8 mac_addr[ETH_ALEN];
 	u16 peer_mac_h16;
 	u16 ast_hash = 0;
 	u16 hw_peer_id;
+
+	type = u32_get_bits(resp->version_msg.version, HTT_T2H_MSG_TYPE);
 
 	ath12k_dbg(ab, ATH12K_DBG_DP_HTT, "dp_htt rx msg type :0x%0x\n", type);
 
