@@ -130,12 +130,12 @@ int ath12k_dp_tx(struct ath12k *ar, struct ath12k_vif *arvif,
 	struct ath12k_tx_desc_info *tx_desc = NULL;
 	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
 	struct ath12k_skb_cb *skb_cb = ATH12K_SKB_CB(skb);
+	struct hal_tcl_data_cmd *hal_tcl_desc;
 	struct hal_tx_msdu_ext_desc *msg;
 	struct sk_buff *skb_ext_desc;
 	struct hal_srng *tcl_ring;
 	struct ieee80211_hdr *hdr = (void *)skb->data;
 	struct dp_tx_ring *tx_ring;
-	void *hal_tcl_desc;
 	u8 pool_id;
 	u8 hal_ring_id;
 	int ret;
