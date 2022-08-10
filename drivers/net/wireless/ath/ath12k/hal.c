@@ -1500,31 +1500,31 @@ u32 ath12k_hal_ce_get_desc_size(enum hal_ce_desc type)
 void ath12k_hal_ce_src_set_desc(struct hal_ce_srng_src_desc *desc, dma_addr_t paddr,
 				u32 len, u32 id, u8 byte_swap_data)
 {
-	desc->buffer_addr_low = paddr & HAL_ADDR_LSB_REG_MASK;
+	desc->buffer_addr_low = cpu_to_le32(paddr & HAL_ADDR_LSB_REG_MASK);
 	desc->buffer_addr_info =
-		u32_encode_bits(((u64)paddr >> HAL_ADDR_MSB_REG_SHIFT),
-				HAL_CE_SRC_DESC_ADDR_INFO_ADDR_HI) |
-		u32_encode_bits(byte_swap_data,
-				HAL_CE_SRC_DESC_ADDR_INFO_BYTE_SWAP) |
-		u32_encode_bits(0, HAL_CE_SRC_DESC_ADDR_INFO_GATHER) |
-		u32_encode_bits(len, HAL_CE_SRC_DESC_ADDR_INFO_LEN);
-	desc->meta_info = u32_encode_bits(id, HAL_CE_SRC_DESC_META_INFO_DATA);
+		le32_encode_bits(((u64)paddr >> HAL_ADDR_MSB_REG_SHIFT),
+				 HAL_CE_SRC_DESC_ADDR_INFO_ADDR_HI) |
+		le32_encode_bits(byte_swap_data,
+				 HAL_CE_SRC_DESC_ADDR_INFO_BYTE_SWAP) |
+		le32_encode_bits(0, HAL_CE_SRC_DESC_ADDR_INFO_GATHER) |
+		le32_encode_bits(len, HAL_CE_SRC_DESC_ADDR_INFO_LEN);
+	desc->meta_info = le32_encode_bits(id, HAL_CE_SRC_DESC_META_INFO_DATA);
 }
 
 void ath12k_hal_ce_dst_set_desc(struct hal_ce_srng_dest_desc *desc, dma_addr_t paddr)
 {
-	desc->buffer_addr_low = paddr & HAL_ADDR_LSB_REG_MASK;
+	desc->buffer_addr_low = cpu_to_le32(paddr & HAL_ADDR_LSB_REG_MASK);
 	desc->buffer_addr_info =
-		u32_encode_bits(((u64)paddr >> HAL_ADDR_MSB_REG_SHIFT),
-				HAL_CE_DEST_DESC_ADDR_INFO_ADDR_HI);
+		le32_encode_bits(((u64)paddr >> HAL_ADDR_MSB_REG_SHIFT),
+				 HAL_CE_DEST_DESC_ADDR_INFO_ADDR_HI);
 }
 
 u32 ath12k_hal_ce_dst_status_get_length(struct hal_ce_srng_dst_status_desc *desc)
 {
 	u32 len;
 
-	len = u32_get_bits(desc->flags, HAL_CE_DST_STATUS_DESC_FLAGS_LEN);
-	desc->flags &= ~HAL_CE_DST_STATUS_DESC_FLAGS_LEN;
+	len = le32_get_bits(desc->flags, HAL_CE_DST_STATUS_DESC_FLAGS_LEN);
+	desc->flags &= ~cpu_to_le32(HAL_CE_DST_STATUS_DESC_FLAGS_LEN);
 
 	return len;
 }

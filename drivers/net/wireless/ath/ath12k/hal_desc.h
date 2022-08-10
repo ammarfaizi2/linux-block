@@ -1509,10 +1509,10 @@ struct hal_tcl_status_ring {
 #define HAL_CE_SRC_DESC_FLAGS_LOOP_CNT		HAL_SRNG_DESC_LOOP_CNT
 
 struct hal_ce_srng_src_desc {
-	u32 buffer_addr_low;
-	u32 buffer_addr_info; /* %HAL_CE_SRC_DESC_ADDR_INFO_ */
-	u32 meta_info; /* %HAL_CE_SRC_DESC_META_INFO_ */
-	u32 flags; /* %HAL_CE_SRC_DESC_FLAGS_ */
+	__le32 buffer_addr_low;
+	__le32 buffer_addr_info; /* %HAL_CE_SRC_DESC_ADDR_INFO_ */
+	__le32 meta_info; /* %HAL_CE_SRC_DESC_META_INFO_ */
+	__le32 flags; /* %HAL_CE_SRC_DESC_FLAGS_ */
 } __packed;
 
 /* hal_ce_srng_src_desc
@@ -1597,8 +1597,8 @@ struct hal_ce_srng_src_desc {
 #define HAL_CE_DEST_DESC_ADDR_INFO_LOOP_CNT		HAL_SRNG_DESC_LOOP_CNT
 
 struct hal_ce_srng_dest_desc {
-	u32 buffer_addr_low;
-	u32 buffer_addr_info; /* %HAL_CE_DEST_DESC_ADDR_INFO_ */
+	__le32 buffer_addr_low;
+	__le32 buffer_addr_info; /* %HAL_CE_DEST_DESC_ADDR_INFO_ */
 } __packed;
 
 /* hal_ce_srng_dest_desc
@@ -1652,10 +1652,10 @@ struct hal_ce_srng_dest_desc {
 #define HAL_CE_DST_STATUS_DESC_META_INFO_LOOP_CNT	HAL_SRNG_DESC_LOOP_CNT
 
 struct hal_ce_srng_dst_status_desc {
-	u32 flags; /* %HAL_CE_DST_STATUS_DESC_FLAGS_ */
-	u32 toeplitz_hash0;
-	u32 toeplitz_hash1;
-	u32 meta_info; /* HAL_CE_DST_STATUS_DESC_META_INFO_ */
+	__le32 flags; /* %HAL_CE_DST_STATUS_DESC_FLAGS_ */
+	__le32 toeplitz_hash0;
+	__le32 toeplitz_hash1;
+	__le32 meta_info; /* HAL_CE_DST_STATUS_DESC_META_INFO_ */
 } __packed;
 
 /* hal_ce_srng_dst_status_desc
