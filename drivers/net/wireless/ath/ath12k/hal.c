@@ -1886,11 +1886,6 @@ int ath12k_hal_srng_setup(struct ath12k_base *ab, enum hal_ring_type type,
 	memset(srng->ring_base_vaddr, 0,
 	       (srng->entry_size * srng->num_entries) << 2);
 
-	/* TODO: Add comments on these swap configurations */
-	if (IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
-		srng->flags |= HAL_SRNG_FLAGS_MSI_SWAP | HAL_SRNG_FLAGS_DATA_TLV_SWAP |
-			       HAL_SRNG_FLAGS_RING_PTR_SWAP;
-
 	reg_base = srng->hwreg_base[HAL_SRNG_REG_GRP_R2];
 
 	if (srng->ring_dir == HAL_SRNG_DIR_SRC) {

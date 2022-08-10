@@ -728,8 +728,6 @@ int ath12k_wmi_mgmt_send(struct ath12k *ar, u32 vdev_id, u32 buf_id,
 
 	memcpy(frame_tlv->value, frame->data, buf_len);
 
-	ath12k_ce_byte_swap(frame_tlv->value, buf_len);
-
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_MGMT_TX_SEND_CMDID);
 	if (ret) {
 		ath12k_warn(ar->ab,
@@ -4586,8 +4584,6 @@ static int ath12k_pull_mgmt_rx_params_tlv(struct ath12k_base *ab,
 	skb_put(skb, frame - skb->data);
 	skb_pull(skb, frame - skb->data);
 	skb_put(skb, hdr->buf_len);
-
-	ath12k_ce_byte_swap(skb->data, hdr->buf_len);
 
 	kfree(tb);
 	return 0;

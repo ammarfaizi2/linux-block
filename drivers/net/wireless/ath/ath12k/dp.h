@@ -1980,11 +1980,6 @@ struct htt_mac_addr {
 
 static inline void ath12k_dp_get_mac_addr(u32 addr_l32, u16 addr_h16, u8 *addr)
 {
-	if (IS_ENABLED(CONFIG_CPU_BIG_ENDIAN)) {
-		addr_l32 = swab32(addr_l32);
-		addr_h16 = swab16(addr_h16);
-	}
-
 	memcpy(addr, &addr_l32, 4);
 	memcpy(addr + 4, &addr_h16, ETH_ALEN - 4);
 }

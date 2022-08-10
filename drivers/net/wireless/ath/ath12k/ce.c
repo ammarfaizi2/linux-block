@@ -962,25 +962,6 @@ int ath12k_ce_alloc_pipes(struct ath12k_base *ab)
 	return 0;
 }
 
-/* For Big Endian Host, Copy Engine byte_swap is enabled
- * When Copy Engine does byte_swap, need to byte swap again for the
- * Host to get/put buffer content in the correct byte order
- */
-void ath12k_ce_byte_swap(void *mem, u32 len)
-{
-	int i;
-
-	if (IS_ENABLED(CONFIG_CPU_BIG_ENDIAN)) {
-		if (!mem)
-			return;
-
-		for (i = 0; i < (len / 4); i++) {
-			*(u32 *)mem = swab32(*(u32 *)mem);
-			mem += 4;
-		}
-	}
-}
-
 int ath12k_ce_get_attr_flags(struct ath12k_base *ab, int ce_id)
 {
 	if (ce_id >= ab->hw_params->ce_count)

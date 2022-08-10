@@ -16,16 +16,10 @@
 #define CE_ATTR_DIS_INTR		8
 
 /* Host software's Copy Engine configuration. */
-#ifdef __BIG_ENDIAN
-#define CE_ATTR_FLAGS CE_ATTR_BYTE_SWAP_DATA
-#else
 #define CE_ATTR_FLAGS 0
-#endif
 
 /* Threshold to poll for tx completion in case of Interrupt disabled CE's */
 #define ATH12K_CE_USAGE_THRESHOLD 32
-
-void ath12k_ce_byte_swap(void *mem, u32 len);
 
 /* Directions for interconnect pipe configuration.
  * These definitions may be used during configuration and are shared
