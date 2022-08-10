@@ -13,6 +13,7 @@
 #include "ce.h"
 #include "hw.h"
 #include "mhi.h"
+#include "dp_rx.h"
 
 static u8 ath12k_hw_qcn9274_mac_from_pdev_id(int pdev_idx)
 {

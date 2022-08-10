@@ -190,10 +190,6 @@ struct ath12k_hw_params {
 	unsigned int qdss_config_len;
 };
 
-/* BRINGUP: move to dp.h */
-int ath12k_dp_rxdma_ring_sel_config_qcn9274(struct ath12k_base *ab);
-int ath12k_dp_rxdma_ring_sel_config_wcn7850(struct ath12k_base *ab);
-
 struct ath12k_hw_ops {
 	u8 (*get_hw_mac_from_pdev_id)(int pdev_id);
 	int (*mac_id_to_pdev_id)(const struct ath12k_hw_params *hw, int mac_id);
