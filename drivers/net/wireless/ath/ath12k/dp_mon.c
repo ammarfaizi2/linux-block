@@ -880,10 +880,8 @@ ath12k_dp_mon_rx_merg_msdus(struct ath12k *ar,
 	struct hal_rx_desc *rx_desc;
 	u8 *hdr_desc, *dest, decap_format;
 	struct ieee80211_hdr_3addr *wh;
-	static u32 pkt_type;
 	u32 err_bitmap;
 
-	pkt_type++;
 	mpdu_buf = NULL;
 
 	if (!head_msdu)
