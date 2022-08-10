@@ -1058,6 +1058,8 @@ asmlinkage long sys_memfd_secret(unsigned int flags);
 asmlinkage long sys_set_mempolicy_home_node(unsigned long start, unsigned long len,
 					    unsigned long home_node,
 					    unsigned long flags);
+asmlinkage long sys_readfile(int dfd, const char __user *filename,
+			     char __user *buffer, size_t bufsize, int flags);
 
 /*
  * Architecture-specific system calls
