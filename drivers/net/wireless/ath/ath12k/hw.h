@@ -141,9 +141,9 @@ struct ath12k_hw_params {
 	} fw;
 
 	u8 max_radios;
-	bool single_pdev_only;
+	bool single_pdev_only:1;
 	u32 qmi_service_ins_id;
-	bool internal_sleep_clock;
+	bool internal_sleep_clock:1;
 
 	const struct ath12k_hw_ops *hw_ops;
 	const struct ath12k_hw_ring_mask *ring_mask;
@@ -158,26 +158,26 @@ struct ath12k_hw_params {
 
 	const struct ath12k_hw_hal_params *hal_params;
 
-	bool rxdma1_enable;
+	bool rxdma1_enable:1;
 	int num_rxmda_per_pdev;
 	int num_rxdma_dst_ring;
-	bool rx_mac_buf_ring;
-	bool vdev_start_delay;
+	bool rx_mac_buf_ring:1;
+	bool vdev_start_delay:1;
 
 	u16 interface_modes;
-	bool supports_monitor;
+	bool supports_monitor:1;
 
-	bool idle_ps;
-	bool download_calib;
-	bool supports_suspend;
-	bool tcl_ring_retry;
-	bool reoq_lut_support;
-	bool supports_shadow_regs;
+	bool idle_ps:1;
+	bool download_calib:1;
+	bool supports_suspend:1;
+	bool tcl_ring_retry:1;
+	bool reoq_lut_support:1;
+	bool supports_shadow_regs:1;
 
 	u32 hal_desc_sz;
 	u32 num_tcl_banks;
 	u32 max_tx_ring;
-	bool static_window_map;
+	bool static_window_map:1;
 
 	struct mhi_controller_config *mhi_config;
 
