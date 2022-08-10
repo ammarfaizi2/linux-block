@@ -227,7 +227,7 @@ static int ath12k_ce_rx_buf_enqueue_pipe(struct ath12k_ce_pipe *pipe,
 	struct hal_srng *srng;
 	unsigned int write_index;
 	unsigned int nentries_mask = ring->nentries_mask;
-	u32 *desc;
+	struct hal_ce_srng_dest_desc *desc;
 	int ret;
 
 	lockdep_assert_held(&ab->ce.ce_lock);
