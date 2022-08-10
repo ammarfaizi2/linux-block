@@ -4671,69 +4671,6 @@ struct ath12k_wmi_base {
 
 #define ATH12K_FW_STATS_BUF_SIZE (1024 * 1024)
 
-static inline const char *ath12k_wmi_phymode_str(enum wmi_phy_mode mode)
-{
-	switch (mode) {
-	case MODE_11A:
-		return "11a";
-	case MODE_11G:
-		return "11g";
-	case MODE_11B:
-		return "11b";
-	case MODE_11GONLY:
-		return "11gonly";
-	case MODE_11NA_HT20:
-		return "11na-ht20";
-	case MODE_11NG_HT20:
-		return "11ng-ht20";
-	case MODE_11NA_HT40:
-		return "11na-ht40";
-	case MODE_11NG_HT40:
-		return "11ng-ht40";
-	case MODE_11AC_VHT20:
-		return "11ac-vht20";
-	case MODE_11AC_VHT40:
-		return "11ac-vht40";
-	case MODE_11AC_VHT80:
-		return "11ac-vht80";
-	case MODE_11AC_VHT160:
-		return "11ac-vht160";
-	case MODE_11AC_VHT80_80:
-		return "11ac-vht80+80";
-	case MODE_11AC_VHT20_2G:
-		return "11ac-vht20-2g";
-	case MODE_11AC_VHT40_2G:
-		return "11ac-vht40-2g";
-	case MODE_11AC_VHT80_2G:
-		return "11ac-vht80-2g";
-	case MODE_11AX_HE20:
-		return "11ax-he20";
-	case MODE_11AX_HE40:
-		return "11ax-he40";
-	case MODE_11AX_HE80:
-		return "11ax-he80";
-	case MODE_11AX_HE80_80:
-		return "11ax-he80+80";
-	case MODE_11AX_HE160:
-		return "11ax-he160";
-	case MODE_11AX_HE20_2G:
-		return "11ax-he20-2g";
-	case MODE_11AX_HE40_2G:
-		return "11ax-he40-2g";
-	case MODE_11AX_HE80_2G:
-		return "11ax-he80-2g";
-	case MODE_UNKNOWN:
-		/* skip */
-		break;
-
-		/* no default handler to allow compiler to check that the
-		 * enum is fully handled
-		 */
-	}
-
-	return "<unknown>";
-}
-
 void ath12k_wmi_init_qcn9274(struct ath12k_base *ab,
 			     struct ath12k_wmi_resource_config_arg *config);
 void ath12k_wmi_init_wcn7850(struct ath12k_base *ab,

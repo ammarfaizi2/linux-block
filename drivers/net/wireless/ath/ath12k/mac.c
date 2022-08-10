@@ -241,6 +241,69 @@ static const u32 ath12k_smps_map[] = {
 static int ath12k_start_vdev_delay(struct ieee80211_hw *hw,
 				   struct ieee80211_vif *vif);
 
+static const char *ath12k_mac_phymode_str(enum wmi_phy_mode mode)
+{
+	switch (mode) {
+	case MODE_11A:
+		return "11a";
+	case MODE_11G:
+		return "11g";
+	case MODE_11B:
+		return "11b";
+	case MODE_11GONLY:
+		return "11gonly";
+	case MODE_11NA_HT20:
+		return "11na-ht20";
+	case MODE_11NG_HT20:
+		return "11ng-ht20";
+	case MODE_11NA_HT40:
+		return "11na-ht40";
+	case MODE_11NG_HT40:
+		return "11ng-ht40";
+	case MODE_11AC_VHT20:
+		return "11ac-vht20";
+	case MODE_11AC_VHT40:
+		return "11ac-vht40";
+	case MODE_11AC_VHT80:
+		return "11ac-vht80";
+	case MODE_11AC_VHT160:
+		return "11ac-vht160";
+	case MODE_11AC_VHT80_80:
+		return "11ac-vht80+80";
+	case MODE_11AC_VHT20_2G:
+		return "11ac-vht20-2g";
+	case MODE_11AC_VHT40_2G:
+		return "11ac-vht40-2g";
+	case MODE_11AC_VHT80_2G:
+		return "11ac-vht80-2g";
+	case MODE_11AX_HE20:
+		return "11ax-he20";
+	case MODE_11AX_HE40:
+		return "11ax-he40";
+	case MODE_11AX_HE80:
+		return "11ax-he80";
+	case MODE_11AX_HE80_80:
+		return "11ax-he80+80";
+	case MODE_11AX_HE160:
+		return "11ax-he160";
+	case MODE_11AX_HE20_2G:
+		return "11ax-he20-2g";
+	case MODE_11AX_HE40_2G:
+		return "11ax-he40-2g";
+	case MODE_11AX_HE80_2G:
+		return "11ax-he80-2g";
+	case MODE_UNKNOWN:
+		/* skip */
+		break;
+
+		/* no default handler to allow compiler to check that the
+		 * enum is fully handled
+		 */
+	}
+
+	return "<unknown>";
+}
+
 u8 ath12k_mac_bw_to_mac80211_bw(u8 bw)
 {
 	u8 ret = 0;
@@ -1945,7 +2008,7 @@ static void ath12k_peer_assoc_h_phymode(struct ath12k *ar,
 	}
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_MAC, "mac peer %pM phymode %s\n",
-		   sta->addr, ath12k_wmi_phymode_str(phymode));
+		   sta->addr, ath12k_mac_phymode_str(phymode));
 
 	arg->peer_phymode = phymode;
 	WARN_ON(phymode == MODE_UNKNOWN);
@@ -5385,7 +5448,7 @@ ath12k_mac_vdev_start_restart(struct ath12k_vif *arvif,
 	ath12k_dbg(ab, ATH12K_DBG_MAC,
 		   "mac vdev %d start center_freq %d phymode %s\n",
 		   arg.vdev_id, arg.freq,
-		   ath12k_wmi_phymode_str(arg.mode));
+		   ath12k_mac_phymode_str(arg.mode));
 
 	ret = ath12k_wmi_vdev_start(ar, &arg, restart);
 	if (ret) {
