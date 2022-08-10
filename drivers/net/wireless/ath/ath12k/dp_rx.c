@@ -2672,10 +2672,11 @@ try_again:
 		cookie = le32_get_bits(desc->buf_addr_info.info1,
 				       BUFFER_ADDR_INFO1_SW_COOKIE);
 
-		mac_id = u32_get_bits(desc->info0,
-				      HAL_REO_DEST_RING_INFO0_SRC_LINK_ID);
+		mac_id = le32_get_bits(desc->info0,
+				       HAL_REO_DEST_RING_INFO0_SRC_LINK_ID);
 
-		desc_va = ((u64)desc->buf_va_hi << 32 | desc->buf_va_lo);
+		desc_va = ((u64)le32_to_cpu(desc->buf_va_hi) << 32 |
+			   le32_to_cpu(desc->buf_va_lo));
 		desc_info = (struct ath12k_rx_desc_info *)((unsigned long)desc_va);
 
 		/* retry manual desc retrieval */
@@ -2704,8 +2705,8 @@ try_again:
 
 		num_buffs_reaped++;
 
-		push_reason = u32_get_bits(desc->info0,
-					   HAL_REO_DEST_RING_INFO0_PUSH_REASON);
+		push_reason = le32_get_bits(desc->info0,
+					    HAL_REO_DEST_RING_INFO0_PUSH_REASON);
 		if (push_reason !=
 		    HAL_REO_DEST_RING_PUSH_REASON_ROUTING_INSTRUCTION) {
 			dev_kfree_skb_any(msdu);
@@ -2713,17 +2714,17 @@ try_again:
 			continue;
 		}
 
-		rxcb->is_first_msdu = !!(desc->rx_msdu_info.info0 &
+		rxcb->is_first_msdu = !!(le32_to_cpu(desc->rx_msdu_info.info0) &
 					 RX_MSDU_DESC_INFO0_FIRST_MSDU_IN_MPDU);
-		rxcb->is_last_msdu = !!(desc->rx_msdu_info.info0 &
+		rxcb->is_last_msdu = !!(le32_to_cpu(desc->rx_msdu_info.info0) &
 					RX_MSDU_DESC_INFO0_LAST_MSDU_IN_MPDU);
-		rxcb->is_continuation = !!(desc->rx_msdu_info.info0 &
+		rxcb->is_continuation = !!(le32_to_cpu(desc->rx_msdu_info.info0) &
 					   RX_MSDU_DESC_INFO0_MSDU_CONTINUATION);
 		rxcb->mac_id = mac_id;
-		rxcb->peer_id = u32_get_bits(desc->rx_mpdu_info.peer_meta_data,
-					     RX_MPDU_DESC_META_DATA_PEER_ID);
-		rxcb->tid = u32_get_bits(desc->rx_mpdu_info.info0,
-					 RX_MPDU_DESC_INFO0_TID);
+		rxcb->peer_id = le32_get_bits(desc->rx_mpdu_info.peer_meta_data,
+					      RX_MPDU_DESC_META_DATA_PEER_ID);
+		rxcb->tid = le32_get_bits(desc->rx_mpdu_info.info0,
+					  RX_MPDU_DESC_INFO0_TID);
 
 		__skb_queue_tail(&msdu_list, msdu);
 
@@ -3042,7 +3043,7 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar,
 	msdu_link = (struct hal_rx_msdu_link *)(link_desc_banks[desc_bank].vaddr +
 			(link_paddr - link_desc_banks[desc_bank].paddr));
 	msdu0 = &msdu_link->msdu_link[0];
-	msdu_ext_info = msdu0->rx_msdu_ext_info.info0;
+	msdu_ext_info = le32_to_cpu(msdu0->rx_msdu_ext_info.info0);
 	dst_ind = u32_get_bits(msdu_ext_info, RX_MSDU_EXT_DESC_INFO0_REO_DEST_IND);
 
 	memset(msdu0, 0, sizeof(*msdu0));
@@ -3054,8 +3055,8 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar,
 				    RX_MSDU_DESC_INFO0_MSDU_LENGTH) |
 		    u32_encode_bits(1, RX_MSDU_DESC_INFO0_VALID_SA) |
 		    u32_encode_bits(1, RX_MSDU_DESC_INFO0_VALID_DA);
-	msdu0->rx_msdu_info.info0 = msdu_info;
-	msdu0->rx_msdu_ext_info.info0 = msdu_ext_info;
+	msdu0->rx_msdu_info.info0 = cpu_to_le32(msdu_info);
+	msdu0->rx_msdu_ext_info.info0 = cpu_to_le32(msdu_ext_info);
 
 	/* change msdu len in hal rx desc */
 	ath12k_dp_rxdesc_set_msdu_len(ab, rx_desc, defrag_skb->len - hal_rx_desc_sz);
@@ -3114,21 +3115,23 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar,
 		    u32_encode_bits(1, RX_MPDU_DESC_INFO0_VALID_PN) |
 		    u32_encode_bits(rx_tid->tid, RX_MPDU_DESC_INFO0_TID);
 
-	reo_ent_ring->rx_mpdu_info.info0 = mpdu_info;
+	reo_ent_ring->rx_mpdu_info.info0 = cpu_to_le32(mpdu_info);
 	reo_ent_ring->rx_mpdu_info.peer_meta_data =
 		reo_dest_ring->rx_mpdu_info.peer_meta_data;
 
-	reo_ent_ring->queue_addr_lo = lower_32_bits(rx_tid->paddr);
-	reo_ent_ring->info0 = u32_encode_bits(upper_32_bits(rx_tid->paddr),
-					      HAL_REO_ENTR_RING_INFO0_QUEUE_ADDR_HI) |
-			      u32_encode_bits(dst_ind, HAL_REO_ENTR_RING_INFO0_DEST_IND);
+	reo_ent_ring->queue_addr_lo = cpu_to_le32(lower_32_bits(rx_tid->paddr));
+	reo_ent_ring->info0 = le32_encode_bits(upper_32_bits(rx_tid->paddr),
+					       HAL_REO_ENTR_RING_INFO0_QUEUE_ADDR_HI) |
+		le32_encode_bits(dst_ind, HAL_REO_ENTR_RING_INFO0_DEST_IND);
 
-	reo_ent_ring->info1 = u32_encode_bits(rx_tid->cur_sn,
-					      HAL_REO_ENTR_RING_INFO1_MPDU_SEQ_NUM);
-	dest_ring_info0 = u32_get_bits(reo_dest_ring->info0,
-				       HAL_REO_DEST_RING_INFO0_SRC_LINK_ID);
-	reo_ent_ring->info2 = u32_get_bits(dest_ring_info0,
-					   HAL_REO_ENTR_RING_INFO2_SRC_LINK_ID);
+	reo_ent_ring->info1 = le32_encode_bits(rx_tid->cur_sn,
+					       HAL_REO_ENTR_RING_INFO1_MPDU_SEQ_NUM);
+	dest_ring_info0 = le32_get_bits(reo_dest_ring->info0,
+					HAL_REO_DEST_RING_INFO0_SRC_LINK_ID);
+	reo_ent_ring->info2 =
+		cpu_to_le32(u32_get_bits(dest_ring_info0,
+					 HAL_REO_ENTR_RING_INFO2_SRC_LINK_ID));
+
 	ath12k_hal_srng_access_end(ab, srng);
 	spin_unlock_bh(&srng->lock);
 
@@ -3358,7 +3361,8 @@ ath12k_dp_process_rx_err_buf(struct ath12k *ar, struct hal_reo_dest_ring *desc,
 	struct ath12k_rx_desc_info *desc_info;
 	u64 desc_va;
 
-	desc_va = ((u64)desc->buf_va_hi << 32 | desc->buf_va_lo);
+	desc_va = ((u64)le32_to_cpu(desc->buf_va_hi) << 32 |
+		   le32_to_cpu(desc->buf_va_lo));
 	desc_info = (struct ath12k_rx_desc_info *)((unsigned long)desc_va);
 
 	/* retry manual desc retrieval */
@@ -3479,7 +3483,8 @@ int ath12k_dp_rx_process_err(struct ath12k_base *ab, struct napi_struct *napi,
 			continue;
 		}
 
-		is_frag = !!(reo_desc->rx_mpdu_info.info0 & RX_MPDU_DESC_INFO0_FRAG_FLAG);
+		is_frag = !!(le32_to_cpu(reo_desc->rx_mpdu_info.info0) &
+			     RX_MPDU_DESC_INFO0_FRAG_FLAG);
 
 		/* Process only rx fragments with one msdu per link desc below, and drop
 		 * msdu's indicated due to error reasons.
@@ -3492,8 +3497,8 @@ int ath12k_dp_rx_process_err(struct ath12k_base *ab, struct napi_struct *napi,
 		}
 
 		for (i = 0; i < num_msdus; i++) {
-			mac_id = u32_get_bits(reo_desc->info0,
-					      HAL_REO_DEST_RING_INFO0_SRC_LINK_ID);
+			mac_id = le32_get_bits(reo_desc->info0,
+					       HAL_REO_DEST_RING_INFO0_SRC_LINK_ID);
 
 			ar = ab->pdevs[mac_id].ar;
 

@@ -573,7 +573,7 @@ enum hal_tlv_tag {
 #define HAL_TLV_ALIGN	4
 
 struct hal_tlv_hdr {
-	u32 tl;
+	__le32 tl;
 	u8 value[];
 } __packed;
 
@@ -601,8 +601,8 @@ struct hal_tlv_64_hdr {
 #define RX_MPDU_DESC_META_DATA_PEER_ID		GENMASK(15, 0)
 
 struct rx_mpdu_desc {
-	u32 info0; /* %RX_MPDU_DESC_INFO */
-	u32 peer_meta_data;
+	__le32 info0; /* %RX_MPDU_DESC_INFO */
+	__le32 peer_meta_data;
 } __packed;
 
 /* rx_mpdu_desc
@@ -686,7 +686,7 @@ enum hal_rx_msdu_desc_reo_dest_ind {
 	(u32_get_bits((val), RX_MSDU_DESC_INFO0_MSDU_LENGTH))
 
 struct rx_msdu_desc {
-	u32 info0;
+	__le32 info0;
 } __packed;
 
 /* rx_msdu_desc
@@ -773,7 +773,7 @@ struct rx_msdu_desc {
 #define RX_MSDU_EXT_DESC_INFO0_SRC_LINK_ID	GENMASK(29, 27)
 
 struct rx_msdu_ext_desc {
-	u32 info0;
+	__le32 info0;
 } __packed;
 
 /* rx_msdu_ext_desc
@@ -839,9 +839,9 @@ struct hal_reo_dest_ring {
 	struct ath12k_buffer_addr buf_addr_info;
 	struct rx_mpdu_desc rx_mpdu_info;
 	struct rx_msdu_desc rx_msdu_info;
-	u32 buf_va_lo;
-	u32 buf_va_hi;
-	u32 info0; /* %HAL_REO_DEST_RING_INFO0_ */
+	__le32 buf_va_lo;
+	__le32 buf_va_hi;
+	__le32 info0; /* %HAL_REO_DEST_RING_INFO0_ */
 } __packed;
 
 /* hal_reo_dest_ring
@@ -923,8 +923,8 @@ struct hal_reo_dest_ring {
 #define HAL_REO_TO_PPE_RING_INFO0_MORE	BIT(31)
 
 struct hal_reo_to_ppe_ring {
-	u32 buffer_addr;
-	u32 info0; /* %HAL_REO_TO_PPE_RING_INFO0_ */
+	__le32 buffer_addr;
+	__le32 info0; /* %HAL_REO_TO_PPE_RING_INFO0_ */
 } __packed;
 
 /* hal_reo_to_ppe_ring
@@ -1023,10 +1023,10 @@ enum hal_rx_reo_dest_ring {
 struct hal_reo_entrance_ring {
 	struct ath12k_buffer_addr buf_addr_info;
 	struct rx_mpdu_desc rx_mpdu_info;
-	u32 queue_addr_lo;
-	u32 info0; /* %HAL_REO_ENTR_RING_INFO0_ */
-	u32 info1; /* %HAL_REO_ENTR_RING_INFO1_ */
-	u32 info2; /* %HAL_REO_DEST_RING_INFO2_ */
+	__le32 queue_addr_lo;
+	__le32 info0; /* %HAL_REO_ENTR_RING_INFO0_ */
+	__le32 info1; /* %HAL_REO_ENTR_RING_INFO1_ */
+	__le32 info2; /* %HAL_REO_DEST_RING_INFO2_ */
 
 } __packed;
 
@@ -1134,7 +1134,7 @@ struct hal_reo_entrance_ring {
 #define HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED	BIT(16)
 
 struct hal_reo_cmd_hdr {
-	u32 info0;
+	__le32 info0;
 } __packed;
 
 #define HAL_REO_GET_QUEUE_STATS_INFO0_QUEUE_ADDR_HI	GENMASK(7, 0)
@@ -1142,10 +1142,10 @@ struct hal_reo_cmd_hdr {
 
 struct hal_reo_get_queue_stats {
 	struct hal_reo_cmd_hdr cmd;
-	u32 queue_addr_lo;
-	u32 info0;
-	u32 rsvd0[6];
-	u32 tlv64_pad;
+	__le32 queue_addr_lo;
+	__le32 info0;
+	__le32 rsvd0[6];
+	__le32 tlv64_pad;
 } __packed;
 
 /* hal_reo_get_queue_stats
@@ -1185,9 +1185,9 @@ struct hal_reo_get_queue_stats {
 
 struct hal_reo_flush_queue {
 	struct hal_reo_cmd_hdr cmd;
-	u32 desc_addr_lo;
-	u32 info0;
-	u32 rsvd0[6];
+	__le32 desc_addr_lo;
+	__le32 info0;
+	__le32 rsvd0[6];
 } __packed;
 
 #define HAL_REO_FLUSH_CACHE_INFO0_CACHE_ADDR_HI		GENMASK(7, 0)
@@ -1200,9 +1200,9 @@ struct hal_reo_flush_queue {
 
 struct hal_reo_flush_cache {
 	struct hal_reo_cmd_hdr cmd;
-	u32 cache_addr_lo;
-	u32 info0;
-	u32 rsvd0[6];
+	__le32 cache_addr_lo;
+	__le32 info0;
+	__le32 rsvd0[6];
 } __packed;
 
 #define HAL_TCL_DATA_CMD_INFO0_CMD_TYPE			BIT(0)
@@ -1279,12 +1279,12 @@ enum hal_wbm_htt_tx_comp_status {
 
 struct hal_tcl_data_cmd {
 	struct ath12k_buffer_addr buf_addr_info;
-	u32 info0;
-	u32 info1;
-	u32 info2;
-	u32 info3;
-	u32 info4;
-	u32 info5;
+	__le32 info0;
+	__le32 info1;
+	__le32 info2;
+	__le32 info3;
+	__le32 info4;
+	__le32 info5;
 } __packed;
 
 /* hal_tcl_data_cmd
@@ -1448,18 +1448,18 @@ struct hal_tcl_data_cmd {
 #define HAL_TX_MSDU_EXT_INFO1_BUF_LEN		GENMASK(31, 16)
 
 struct hal_tx_msdu_ext_desc {
-	u32 rsvd0[6];
-	u32 info0;
-	u32 info1;
-	u32 rsvd1[10];
+	__le32 rsvd0[6];
+	__le32 info0;
+	__le32 info1;
+	__le32 rsvd1[10];
 };
 
 struct hal_tcl_gse_cmd {
-	u32 ctrl_buf_addr_lo;
-	u32 info0;
-	u32 meta_data[2];
-	u32 rsvd0[2];
-	u32 info1;
+	__le32 ctrl_buf_addr_lo;
+	__le32 info0;
+	__le32 meta_data[2];
+	__le32 rsvd0[2];
+	__le32 info1;
 } __packed;
 
 /* hal_tcl_gse_cmd
@@ -1479,13 +1479,13 @@ enum hal_tcl_cache_op_res {
 };
 
 struct hal_tcl_status_ring {
-	u32 info0;
-	u32 msdu_byte_count;
-	u32 msdu_timestamp;
-	u32 meta_data[2];
-	u32 info1;
-	u32 rsvd0;
-	u32 info2;
+	__le32 info0;
+	__le32 msdu_byte_count;
+	__le32 msdu_timestamp;
+	__le32 meta_data[2];
+	__le32 info1;
+	__le32 rsvd0;
+	__le32 info2;
 } __packed;
 
 /* hal_tcl_status_ring
@@ -1758,8 +1758,8 @@ enum hal_tx_rate_stats_sgi {
 };
 
 struct hal_tx_rate_stats {
-	u32 info0;
-	u32 tsf;
+	__le32 info0;
+	__le32 tsf;
 } __packed;
 
 struct hal_wbm_link_desc {
@@ -1848,13 +1848,13 @@ enum hal_wbm_rel_bm_act {
 #define HAL_WBM_COMPL_RX_INFO1_LOOPING_COUNT		GENMASK(31, 28)
 
 struct hal_wbm_completion_ring_rx {
-	u32 addr_lo;
-	u32 addr_hi;
-	u32 info0;
+	__le32 addr_lo;
+	__le32 addr_hi;
+	__le32 info0;
 	struct rx_mpdu_desc rx_mpdu_info;
 	struct rx_msdu_desc rx_msdu_info;
-	u32 phy_addr_lo;
-	u32 info1;
+	__le32 phy_addr_lo;
+	__le32 info1;
 } __packed;
 
 #define HAL_WBM_COMPL_TX_INFO0_REL_SRC_MODULE		GENMASK(2, 0)
@@ -1882,13 +1882,13 @@ struct hal_wbm_completion_ring_rx {
 #define HAL_WBM_COMPL_TX_INFO3_LOOPING_COUNT		GENMASK(31, 28)
 
 struct hal_wbm_completion_ring_tx {
-	u32 buf_va_lo;
-	u32 buf_va_hi;
-	u32 info0;
-	u32 info1;
-	u32 info2;
+	__le32 buf_va_lo;
+	__le32 buf_va_hi;
+	__le32 info0;
+	__le32 info1;
+	__le32 info2;
 	struct hal_tx_rate_stats rate_stats;
-	u32 info3;
+	__le32 info3;
 } __packed;
 
 #define HAL_WBM_RELEASE_TX_INFO0_REL_SRC_MODULE		GENMASK(2, 0)
@@ -1917,11 +1917,11 @@ struct hal_wbm_completion_ring_tx {
 
 struct hal_wbm_release_ring_tx {
 	struct ath12k_buffer_addr buf_addr_info;
-	u32 info0;
-	u32 info1;
-	u32 info2;
+	__le32 info0;
+	__le32 info1;
+	__le32 info2;
 	struct hal_tx_rate_stats rate_stats;
-	u32 info3;
+	__le32 info3;
 } __packed;
 
 #define HAL_WBM_RELEASE_RX_INFO0_REL_SRC_MODULE		GENMASK(2, 0)
@@ -1940,24 +1940,24 @@ struct hal_wbm_release_ring_tx {
 
 struct hal_wbm_release_ring_rx {
 	struct ath12k_buffer_addr buf_addr_info;
-	u32 info0;
+	__le32 info0;
 	struct rx_mpdu_desc rx_mpdu_info;
 	struct rx_msdu_desc rx_msdu_info;
-	u32 info1;
-	u32 info2;
+	__le32 info1;
+	__le32 info2;
 } __packed;
 
 #define HAL_WBM_RELEASE_RX_CC_INFO0_RBM			GENMASK(12, 9)
 #define HAL_WBM_RELEASE_RX_CC_INFO1_COOKIE		GENMASK(27, 8)
 /* Used when hw cc is success */
 struct hal_wbm_release_ring_cc_rx {
-	u32 buf_va_lo;
-	u32 buf_va_hi;
-	u32 info0;
+	__le32 buf_va_lo;
+	__le32 buf_va_hi;
+	__le32 info0;
 	struct rx_mpdu_desc rx_mpdu_info;
 	struct rx_msdu_desc rx_msdu_info;
-	u32 buf_pa_lo;
-	u32 info1;
+	__le32 buf_pa_lo;
+	__le32 info1;
 } __packed;
 
 #define HAL_WBM_RELEASE_INFO0_REL_SRC_MODULE		GENMASK(2, 0)
@@ -1977,12 +1977,12 @@ struct hal_wbm_release_ring_cc_rx {
 
 struct hal_wbm_release_ring {
 	struct ath12k_buffer_addr buf_addr_info;
-	u32 info0;
-	u32 info1;
-	u32 info2;
-	u32 info3;
-	u32 info4;
-	u32 info5;
+	__le32 info0;
+	__le32 info1;
+	__le32 info2;
+	__le32 info3;
+	__le32 info4;
+	__le32 info5;
 } __packed;
 
 /* hal_wbm_release_ring
@@ -2086,8 +2086,8 @@ struct hal_sw_monitor_ring {
 	struct ath12k_buffer_addr buf_addr_info;
 	struct rx_mpdu_desc rx_mpdu_info;
 	struct ath12k_buffer_addr status_buff_addr_info;
-	u32 info0; /* %HAL_SW_MONITOR_RING_INFO0 */
-	u32 info1; /* %HAL_SW_MONITOR_RING_INFO1 */
+	__le32 info0; /* %HAL_SW_MONITOR_RING_INFO0 */
+	__le32 info1; /* %HAL_SW_MONITOR_RING_INFO1 */
 } __packed;
 
 /* hal_sw_monitor_ring
@@ -2284,7 +2284,7 @@ enum hal_desc_buf_type {
 #define HAL_DESC_HDR_INFO0_DBG_RESERVED	GENMASK(31, 8)
 
 struct hal_desc_header {
-	u32 info0;
+	__le32 info0;
 } __packed;
 
 struct hal_rx_mpdu_link_ptr {
@@ -2303,14 +2303,14 @@ struct hal_rx_msdu_details {
 struct hal_rx_msdu_link {
 	struct hal_desc_header desc_hdr;
 	struct ath12k_buffer_addr buf_addr_info;
-	u32 info0;
-	u32 pn[4];
+	__le32 info0;
+	__le32 pn[4];
 	struct hal_rx_msdu_details msdu_link[6];
 } __packed;
 
 struct hal_rx_reo_queue_ext {
 	struct hal_desc_header desc_hdr;
-	u32 rsvd;
+	__le32 rsvd;
 	struct hal_rx_mpdu_link_ptr mpdu_link[15];
 } __packed;
 

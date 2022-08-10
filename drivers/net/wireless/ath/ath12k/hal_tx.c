@@ -48,26 +48,26 @@ void ath12k_hal_tx_cmd_desc_setup(struct ath12k_base *ab,
 		le32_encode_bits(ti->desc_id, BUFFER_ADDR_INFO1_SW_COOKIE);
 
 	tcl_cmd->info0 =
-		u32_encode_bits(ti->type, HAL_TCL_DATA_CMD_INFO0_DESC_TYPE) |
-		u32_encode_bits(ti->bank_id, HAL_TCL_DATA_CMD_INFO0_BANK_ID);
+		le32_encode_bits(ti->type, HAL_TCL_DATA_CMD_INFO0_DESC_TYPE) |
+		le32_encode_bits(ti->bank_id, HAL_TCL_DATA_CMD_INFO0_BANK_ID);
 
 	tcl_cmd->info1 =
-		u32_encode_bits(ti->meta_data_flags,
-				HAL_TCL_DATA_CMD_INFO1_CMD_NUM);
+		le32_encode_bits(ti->meta_data_flags,
+				 HAL_TCL_DATA_CMD_INFO1_CMD_NUM);
 
-	tcl_cmd->info2 = ti->flags0 |
-		u32_encode_bits(ti->data_len, HAL_TCL_DATA_CMD_INFO2_DATA_LEN) |
-		u32_encode_bits(ti->pkt_offset, HAL_TCL_DATA_CMD_INFO2_PKT_OFFSET);
+	tcl_cmd->info2 = cpu_to_le32(ti->flags0) |
+		le32_encode_bits(ti->data_len, HAL_TCL_DATA_CMD_INFO2_DATA_LEN) |
+		le32_encode_bits(ti->pkt_offset, HAL_TCL_DATA_CMD_INFO2_PKT_OFFSET);
 
-	tcl_cmd->info3 = (ti->flags1 |
-		u32_encode_bits(ti->tid, HAL_TCL_DATA_CMD_INFO3_TID)) |
-		u32_encode_bits(ti->lmac_id, HAL_TCL_DATA_CMD_INFO3_PMAC_ID) |
-		u32_encode_bits(ti->vdev_id, HAL_TCL_DATA_CMD_INFO3_VDEV_ID);
+	tcl_cmd->info3 = cpu_to_le32(ti->flags1) |
+		le32_encode_bits(ti->tid, HAL_TCL_DATA_CMD_INFO3_TID) |
+		le32_encode_bits(ti->lmac_id, HAL_TCL_DATA_CMD_INFO3_PMAC_ID) |
+		le32_encode_bits(ti->vdev_id, HAL_TCL_DATA_CMD_INFO3_VDEV_ID);
 
-	tcl_cmd->info4 = u32_encode_bits(ti->bss_ast_idx,
-					 HAL_TCL_DATA_CMD_INFO4_SEARCH_INDEX) |
-			 u32_encode_bits(ti->bss_ast_hash,
-					 HAL_TCL_DATA_CMD_INFO4_CACHE_SET_NUM);
+	tcl_cmd->info4 = le32_encode_bits(ti->bss_ast_idx,
+					  HAL_TCL_DATA_CMD_INFO4_SEARCH_INDEX) |
+			 le32_encode_bits(ti->bss_ast_hash,
+					  HAL_TCL_DATA_CMD_INFO4_CACHE_SET_NUM);
 	tcl_cmd->info5 = 0;
 }
 

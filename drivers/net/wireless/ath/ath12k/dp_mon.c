@@ -1203,9 +1203,9 @@ ath12k_dp_mon_parse_rx_dest(struct ath12k_base *ab, struct ath12k_mon_data *pmon
 
 	do {
 		tlv = (struct hal_tlv_hdr *)ptr;
-		tlv_tag = u32_get_bits(tlv->tl, HAL_TLV_HDR_TAG);
-		tlv_len = u32_get_bits(tlv->tl, HAL_TLV_HDR_LEN);
-		tlv_userid = u32_get_bits(tlv->tl, HAL_TLV_USR_ID);
+		tlv_tag = le32_get_bits(tlv->tl, HAL_TLV_HDR_TAG);
+		tlv_len = le32_get_bits(tlv->tl, HAL_TLV_HDR_LEN);
+		tlv_userid = le32_get_bits(tlv->tl, HAL_TLV_USR_ID);
 		ptr += sizeof(*tlv);
 
 		/* The actual length of PPDU_END is the combined length of many PHY
@@ -2024,7 +2024,7 @@ ath12k_dp_mon_tx_parse_mon_status(struct ath12k *ar,
 		return -ENOMEM;
 
 	tlv = (struct hal_tlv_hdr *)ptr;
-	tlv_tag = u32_get_bits(tlv->tl, HAL_TLV_HDR_TAG);
+	tlv_tag = le32_get_bits(tlv->tl, HAL_TLV_HDR_TAG);
 
 	tlv_status = ath12k_dp_mon_tx_status_get_num_user(tlv_tag, tlv, &num_user);
 	if (tlv_status == DP_MON_TX_STATUS_PPDU_NOT_DONE || !num_user)
@@ -2037,9 +2037,9 @@ ath12k_dp_mon_tx_parse_mon_status(struct ath12k *ar,
 
 	do {
 		tlv = (struct hal_tlv_hdr *)ptr;
-		tlv_tag = u32_get_bits(tlv->tl, HAL_TLV_HDR_TAG);
-		tlv_len = u32_get_bits(tlv->tl, HAL_TLV_HDR_LEN);
-		tlv_userid = u32_get_bits(tlv->tl, HAL_TLV_USR_ID);
+		tlv_tag = le32_get_bits(tlv->tl, HAL_TLV_HDR_TAG);
+		tlv_len = le32_get_bits(tlv->tl, HAL_TLV_HDR_LEN);
+		tlv_userid = le32_get_bits(tlv->tl, HAL_TLV_USR_ID);
 
 		tlv_status = ath12k_dp_mon_tx_parse_status_tlv(ab, pmon,
 							       tlv_tag, ptr,

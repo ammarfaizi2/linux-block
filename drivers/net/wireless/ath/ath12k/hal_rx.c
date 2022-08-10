@@ -14,11 +14,11 @@
 static void ath12k_hal_reo_set_desc_hdr(struct hal_desc_header *hdr,
 					u8 owner, u8 buffer_type, u32 magic)
 {
-	hdr->info0 = u32_encode_bits(owner, HAL_DESC_HDR_INFO0_OWNER) |
-		     u32_encode_bits(buffer_type, HAL_DESC_HDR_INFO0_BUF_TYPE);
+	hdr->info0 = le32_encode_bits(owner, HAL_DESC_HDR_INFO0_OWNER) |
+		     le32_encode_bits(buffer_type, HAL_DESC_HDR_INFO0_BUF_TYPE);
 
 	/* Magic pattern in reserved bits for debugging */
-	hdr->info0 |= u32_encode_bits(magic, HAL_DESC_HDR_INFO0_DBG_RESERVED);
+	hdr->info0 |= le32_encode_bits(magic, HAL_DESC_HDR_INFO0_DBG_RESERVED);
 }
 
 static int ath12k_hal_reo_cmd_queue_stats(struct hal_tlv_64_hdr *tlv,
@@ -33,17 +33,17 @@ static int ath12k_hal_reo_cmd_queue_stats(struct hal_tlv_64_hdr *tlv,
 	memset(&desc->queue_addr_lo, 0,
 	       (sizeof(*desc) - sizeof(struct hal_reo_cmd_hdr)));
 
-	desc->cmd.info0 &= ~HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED;
+	desc->cmd.info0 &= ~cpu_to_le32(HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED);
 	if (cmd->flag & HAL_REO_CMD_FLG_NEED_STATUS)
-		desc->cmd.info0 |= HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED;
+		desc->cmd.info0 |= cpu_to_le32(HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED);
 
-	desc->queue_addr_lo = cmd->addr_lo;
-	desc->info0 = u32_encode_bits(cmd->addr_hi,
-				      HAL_REO_GET_QUEUE_STATS_INFO0_QUEUE_ADDR_HI);
+	desc->queue_addr_lo = cpu_to_le32(cmd->addr_lo);
+	desc->info0 = le32_encode_bits(cmd->addr_hi,
+				       HAL_REO_GET_QUEUE_STATS_INFO0_QUEUE_ADDR_HI);
 	if (cmd->flag & HAL_REO_CMD_FLG_STATS_CLEAR)
-		desc->info0 |= HAL_REO_GET_QUEUE_STATS_INFO0_CLEAR_STATS;
+		desc->info0 |= cpu_to_le32(HAL_REO_GET_QUEUE_STATS_INFO0_CLEAR_STATS);
 
-	return u32_get_bits(desc->cmd.info0, HAL_REO_CMD_HDR_INFO0_CMD_NUMBER);
+	return le32_get_bits(desc->cmd.info0, HAL_REO_CMD_HDR_INFO0_CMD_NUMBER);
 }
 
 static int ath12k_hal_reo_cmd_flush_cache(struct ath12k_hal *hal,
@@ -67,31 +67,31 @@ static int ath12k_hal_reo_cmd_flush_cache(struct ath12k_hal *hal,
 	memset(&desc->cache_addr_lo, 0,
 	       (sizeof(*desc) - sizeof(struct hal_reo_cmd_hdr)));
 
-	desc->cmd.info0 &= ~HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED;
+	desc->cmd.info0 &= ~cpu_to_le32(HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED);
 	if (cmd->flag & HAL_REO_CMD_FLG_NEED_STATUS)
-		desc->cmd.info0 |= HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED;
+		desc->cmd.info0 |= cpu_to_le32(HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED);
 
-	desc->cache_addr_lo = cmd->addr_lo;
-	desc->info0 = u32_encode_bits(cmd->addr_hi,
-				      HAL_REO_FLUSH_CACHE_INFO0_CACHE_ADDR_HI);
+	desc->cache_addr_lo = cpu_to_le32(cmd->addr_lo);
+	desc->info0 = le32_encode_bits(cmd->addr_hi,
+				       HAL_REO_FLUSH_CACHE_INFO0_CACHE_ADDR_HI);
 
 	if (cmd->flag & HAL_REO_CMD_FLG_FLUSH_FWD_ALL_MPDUS)
-		desc->info0 |= HAL_REO_FLUSH_CACHE_INFO0_FWD_ALL_MPDUS;
+		desc->info0 |= cpu_to_le32(HAL_REO_FLUSH_CACHE_INFO0_FWD_ALL_MPDUS);
 
 	if (cmd->flag & HAL_REO_CMD_FLG_FLUSH_BLOCK_LATER) {
-		desc->info0 |= HAL_REO_FLUSH_CACHE_INFO0_BLOCK_CACHE_USAGE;
+		desc->info0 |= cpu_to_le32(HAL_REO_FLUSH_CACHE_INFO0_BLOCK_CACHE_USAGE);
 		desc->info0 |=
-			u32_encode_bits(avail_slot,
-					HAL_REO_FLUSH_CACHE_INFO0_BLOCK_RESRC_IDX);
+			le32_encode_bits(avail_slot,
+					 HAL_REO_FLUSH_CACHE_INFO0_BLOCK_RESRC_IDX);
 	}
 
 	if (cmd->flag & HAL_REO_CMD_FLG_FLUSH_NO_INVAL)
-		desc->info0 |= HAL_REO_FLUSH_CACHE_INFO0_FLUSH_WO_INVALIDATE;
+		desc->info0 |= cpu_to_le32(HAL_REO_FLUSH_CACHE_INFO0_FLUSH_WO_INVALIDATE);
 
 	if (cmd->flag & HAL_REO_CMD_FLG_FLUSH_ALL)
-		desc->info0 |= HAL_REO_FLUSH_CACHE_INFO0_FLUSH_ALL;
+		desc->info0 |= cpu_to_le32(HAL_REO_FLUSH_CACHE_INFO0_FLUSH_ALL);
 
-	return u32_get_bits(desc->cmd.info0, HAL_REO_CMD_HDR_INFO0_CMD_NUMBER);
+	return le32_get_bits(desc->cmd.info0, HAL_REO_CMD_HDR_INFO0_CMD_NUMBER);
 }
 
 static int ath12k_hal_reo_cmd_update_rx_queue(struct hal_tlv_64_hdr *tlv,
@@ -106,9 +106,9 @@ static int ath12k_hal_reo_cmd_update_rx_queue(struct hal_tlv_64_hdr *tlv,
 	memset(&desc->queue_addr_lo, 0,
 	       (sizeof(*desc) - sizeof(struct hal_reo_cmd_hdr)));
 
-	desc->cmd.info0 &= ~HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED;
+	desc->cmd.info0 &= ~cpu_to_le32(HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED);
 	if (cmd->flag & HAL_REO_CMD_FLG_NEED_STATUS)
-		desc->cmd.info0 |= HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED;
+		desc->cmd.info0 |= cpu_to_le32(HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED);
 
 	desc->queue_addr_lo = cmd->addr_lo;
 	desc->info0 =
@@ -217,7 +217,7 @@ static int ath12k_hal_reo_cmd_update_rx_queue(struct hal_tlv_64_hdr *tlv,
 		u32_encode_bits(!!(cmd->upd2 & HAL_REO_CMD_UPD2_PN_ERR),
 				HAL_REO_UPD_RX_QUEUE_INFO2_PN_ERR);
 
-	return u32_get_bits(desc->cmd.info0, HAL_REO_CMD_HDR_INFO0_CMD_NUMBER);
+	return le32_get_bits(desc->cmd.info0, HAL_REO_CMD_HDR_INFO0_CMD_NUMBER);
 }
 
 int ath12k_hal_reo_cmd_send(struct ath12k_base *ab, struct hal_srng *srng,
@@ -325,10 +325,10 @@ int ath12k_hal_desc_reo_parse_err(struct ath12k_base *ab,
 	enum hal_reo_dest_ring_error_code err_code;
 	u32 cookie, val;
 
-	push_reason = u32_get_bits(desc->info0,
-				   HAL_REO_DEST_RING_INFO0_PUSH_REASON);
-	err_code = u32_get_bits(desc->info0,
-				HAL_REO_DEST_RING_INFO0_ERROR_CODE);
+	push_reason = le32_get_bits(desc->info0,
+				    HAL_REO_DEST_RING_INFO0_PUSH_REASON);
+	err_code = le32_get_bits(desc->info0,
+				 HAL_REO_DEST_RING_INFO0_ERROR_CODE);
 	ab->soc_stats.reo_error[err_code]++;
 
 	if (push_reason != HAL_REO_DEST_RING_PUSH_REASON_ERR_DETECTED &&
@@ -338,7 +338,7 @@ int ath12k_hal_desc_reo_parse_err(struct ath12k_base *ab,
 		return -EINVAL;
 	}
 
-	val = u32_get_bits(desc->info0, HAL_REO_DEST_RING_INFO0_BUFFER_TYPE);
+	val = le32_get_bits(desc->info0, HAL_REO_DEST_RING_INFO0_BUFFER_TYPE);
 	if (val != HAL_REO_DEST_RING_BUFFER_TYPE_LINK_DESC) {
 		ath12k_warn(ab, "expected buffer type link_desc");
 		return -EINVAL;
@@ -361,15 +361,15 @@ int ath12k_hal_wbm_desc_parse_err(struct ath12k_base *ab, void *desc,
 	u64 desc_va;
 	u32 val;
 
-	type = u32_get_bits(wbm_desc->info0, HAL_WBM_RELEASE_INFO0_DESC_TYPE);
+	type = le32_get_bits(wbm_desc->info0, HAL_WBM_RELEASE_INFO0_DESC_TYPE);
 	/* We expect only WBM_REL buffer type */
 	if (type != HAL_WBM_REL_DESC_TYPE_REL_MSDU) {
 		WARN_ON(1);
 		return -EINVAL;
 	}
 
-	rel_src = u32_get_bits(wbm_desc->info0,
-			       HAL_WBM_RELEASE_INFO0_REL_SRC_MODULE);
+	rel_src = le32_get_bits(wbm_desc->info0,
+				HAL_WBM_RELEASE_INFO0_REL_SRC_MODULE);
 	if (rel_src != HAL_WBM_REL_SRC_MODULE_RXDMA &&
 	    rel_src != HAL_WBM_REL_SRC_MODULE_REO)
 		return -EINVAL;
@@ -377,8 +377,8 @@ int ath12k_hal_wbm_desc_parse_err(struct ath12k_base *ab, void *desc,
 	/* The format of wbm rel ring desc changes based on the
 	 * hw cookie conversion status
 	 */
-	hw_cc_done = u32_get_bits(wbm_desc->info0,
-				  HAL_WBM_RELEASE_RX_INFO0_CC_STATUS);
+	hw_cc_done = le32_get_bits(wbm_desc->info0,
+				   HAL_WBM_RELEASE_RX_INFO0_CC_STATUS);
 
 	if (!hw_cc_done) {
 		val = le32_get_bits(wbm_desc->buf_addr_info.info1,
@@ -393,17 +393,18 @@ int ath12k_hal_wbm_desc_parse_err(struct ath12k_base *ab, void *desc,
 
 		rel_info->rx_desc = NULL;
 	} else {
-		val = u32_get_bits(wbm_cc_desc->info0,
-				   HAL_WBM_RELEASE_RX_CC_INFO0_RBM);
+		val = le32_get_bits(wbm_cc_desc->info0,
+				    HAL_WBM_RELEASE_RX_CC_INFO0_RBM);
 		if (val != HAL_RX_BUF_RBM_SW3_BM) {
 			ab->soc_stats.invalid_rbm++;
 			return -EINVAL;
 		}
 
-		rel_info->cookie = u32_get_bits(wbm_cc_desc->info1,
-						HAL_WBM_RELEASE_RX_CC_INFO1_COOKIE);
+		rel_info->cookie = le32_get_bits(wbm_cc_desc->info1,
+						 HAL_WBM_RELEASE_RX_CC_INFO1_COOKIE);
 
-		desc_va = ((u64)wbm_cc_desc->buf_va_hi << 32 | wbm_cc_desc->buf_va_lo);
+		desc_va = ((u64)le32_to_cpu(wbm_cc_desc->buf_va_hi) << 32 |
+			   le32_to_cpu(wbm_cc_desc->buf_va_lo));
 		rel_info->rx_desc =
 			(struct ath12k_rx_desc_info *)((unsigned long)desc_va);
 	}
@@ -411,27 +412,27 @@ int ath12k_hal_wbm_desc_parse_err(struct ath12k_base *ab, void *desc,
 	rel_info->err_rel_src = rel_src;
 	rel_info->hw_cc_done = hw_cc_done;
 
-	rel_info->first_msdu = u32_get_bits(wbm_desc->info3,
-					    HAL_WBM_RELEASE_INFO3_FIRST_MSDU);
-	rel_info->last_msdu = u32_get_bits(wbm_desc->info3,
-					   HAL_WBM_RELEASE_INFO3_LAST_MSDU);
-	rel_info->continuation = u32_get_bits(wbm_desc->info3,
-					      HAL_WBM_RELEASE_INFO3_CONTINUATION);
+	rel_info->first_msdu = le32_get_bits(wbm_desc->info3,
+					     HAL_WBM_RELEASE_INFO3_FIRST_MSDU);
+	rel_info->last_msdu = le32_get_bits(wbm_desc->info3,
+					    HAL_WBM_RELEASE_INFO3_LAST_MSDU);
+	rel_info->continuation = le32_get_bits(wbm_desc->info3,
+					       HAL_WBM_RELEASE_INFO3_CONTINUATION);
 
 	if (rel_info->err_rel_src == HAL_WBM_REL_SRC_MODULE_REO) {
 		rel_info->push_reason =
-			u32_get_bits(wbm_desc->info0,
-				     HAL_WBM_RELEASE_INFO0_REO_PUSH_REASON);
+			le32_get_bits(wbm_desc->info0,
+				      HAL_WBM_RELEASE_INFO0_REO_PUSH_REASON);
 		rel_info->err_code =
-			u32_get_bits(wbm_desc->info0,
-				     HAL_WBM_RELEASE_INFO0_REO_ERROR_CODE);
+			le32_get_bits(wbm_desc->info0,
+				      HAL_WBM_RELEASE_INFO0_REO_ERROR_CODE);
 	} else {
 		rel_info->push_reason =
-			u32_get_bits(wbm_desc->info0,
-				     HAL_WBM_RELEASE_INFO0_RXDMA_PUSH_REASON);
+			le32_get_bits(wbm_desc->info0,
+				      HAL_WBM_RELEASE_INFO0_RXDMA_PUSH_REASON);
 		rel_info->err_code =
-			u32_get_bits(wbm_desc->info0,
-				     HAL_WBM_RELEASE_INFO0_RXDMA_ERROR_CODE);
+			le32_get_bits(wbm_desc->info0,
+				      HAL_WBM_RELEASE_INFO0_RXDMA_ERROR_CODE);
 	}
 
 	return 0;
@@ -454,11 +455,11 @@ void ath12k_hal_rx_msdu_link_desc_set(struct ath12k_base *ab,
 				      enum hal_wbm_rel_bm_act action)
 {
 	dst_desc->buf_addr_info = src_desc->buf_addr_info;
-	dst_desc->info0 |= u32_encode_bits(HAL_WBM_REL_SRC_MODULE_SW,
-					   HAL_WBM_RELEASE_INFO0_REL_SRC_MODULE) |
-			   u32_encode_bits(action, HAL_WBM_RELEASE_INFO0_BM_ACTION) |
-			   u32_encode_bits(HAL_WBM_REL_DESC_TYPE_MSDU_LINK,
-					   HAL_WBM_RELEASE_INFO0_DESC_TYPE);
+	dst_desc->info0 |= le32_encode_bits(HAL_WBM_REL_SRC_MODULE_SW,
+					    HAL_WBM_RELEASE_INFO0_REL_SRC_MODULE) |
+			   le32_encode_bits(action, HAL_WBM_RELEASE_INFO0_BM_ACTION) |
+			   le32_encode_bits(HAL_WBM_REL_DESC_TYPE_MSDU_LINK,
+					    HAL_WBM_RELEASE_INFO0_DESC_TYPE);
 }
 
 void ath12k_hal_reo_status_queue_stats(struct ath12k_base *ab, struct hal_tlv_64_hdr *tlv,
@@ -809,9 +810,8 @@ void ath12k_hal_reo_init_cmd_ring(struct ath12k_base *ab,
 	for (i = 0; i < params.num_entries; i++) {
 		tlv = (struct hal_tlv_64_hdr *)entry;
 		desc = (struct hal_reo_get_queue_stats *)tlv->value;
-		desc->cmd.info0 =
-			u32_encode_bits(cmd_num++,
-					HAL_REO_CMD_HDR_INFO0_CMD_NUMBER);
+		desc->cmd.info0 = le32_encode_bits(cmd_num++,
+						   HAL_REO_CMD_HDR_INFO0_CMD_NUMBER);
 		entry += entry_size;
 	}
 }

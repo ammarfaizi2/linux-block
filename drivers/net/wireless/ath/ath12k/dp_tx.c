@@ -107,18 +107,18 @@ static void ath12k_hal_tx_cmd_ext_desc_setup(struct ath12k_base *ab, void *cmd,
 {
 	struct hal_tx_msdu_ext_desc *tcl_ext_cmd = (struct hal_tx_msdu_ext_desc *)cmd;
 
-	tcl_ext_cmd->info0 = u32_encode_bits(ti->paddr,
-					     HAL_TX_MSDU_EXT_INFO0_BUF_PTR_LO);
-	tcl_ext_cmd->info1 = u32_encode_bits(0x0,
-					     HAL_TX_MSDU_EXT_INFO1_BUF_PTR_HI) |
-			       u32_encode_bits(ti->data_len,
-					       HAL_TX_MSDU_EXT_INFO1_BUF_LEN);
+	tcl_ext_cmd->info0 = le32_encode_bits(ti->paddr,
+					      HAL_TX_MSDU_EXT_INFO0_BUF_PTR_LO);
+	tcl_ext_cmd->info1 = le32_encode_bits(0x0,
+					      HAL_TX_MSDU_EXT_INFO1_BUF_PTR_HI) |
+			       le32_encode_bits(ti->data_len,
+						HAL_TX_MSDU_EXT_INFO1_BUF_LEN);
 
-	tcl_ext_cmd->info1 = u32_encode_bits(1, HAL_TX_MSDU_EXT_INFO1_EXTN_OVERRIDE) |
-				u32_encode_bits(ti->encap_type,
-						HAL_TX_MSDU_EXT_INFO1_ENCAP_TYPE) |
-				u32_encode_bits(ti->encrypt_type,
-						HAL_TX_MSDU_EXT_INFO1_ENCRYPT_TYPE);
+	tcl_ext_cmd->info1 = le32_encode_bits(1, HAL_TX_MSDU_EXT_INFO1_EXTN_OVERRIDE) |
+				le32_encode_bits(ti->encap_type,
+						 HAL_TX_MSDU_EXT_INFO1_ENCAP_TYPE) |
+				le32_encode_bits(ti->encrypt_type,
+						 HAL_TX_MSDU_EXT_INFO1_ENCRYPT_TYPE);
 }
 
 int ath12k_dp_tx(struct ath12k *ar, struct ath12k_vif *arvif,
@@ -502,7 +502,7 @@ static void ath12k_dp_tx_status_parse(struct ath12k_base *ab,
 				      struct hal_tx_status *ts)
 {
 	ts->buf_rel_source =
-		u32_get_bits(desc->info0, HAL_WBM_COMPL_TX_INFO0_REL_SRC_MODULE);
+		le32_get_bits(desc->info0, HAL_WBM_COMPL_TX_INFO0_REL_SRC_MODULE);
 	if (ts->buf_rel_source != HAL_WBM_REL_SRC_MODULE_FW &&
 	    ts->buf_rel_source != HAL_WBM_REL_SRC_MODULE_TQM)
 		return;
@@ -510,13 +510,13 @@ static void ath12k_dp_tx_status_parse(struct ath12k_base *ab,
 	if (ts->buf_rel_source == HAL_WBM_REL_SRC_MODULE_FW)
 		return;
 
-	ts->status = u32_get_bits(desc->info0,
-				  HAL_WBM_COMPL_TX_INFO0_TQM_RELEASE_REASON);
+	ts->status = le32_get_bits(desc->info0,
+				   HAL_WBM_COMPL_TX_INFO0_TQM_RELEASE_REASON);
 
-	ts->ppdu_id = u32_get_bits(desc->info1,
-				   HAL_WBM_COMPL_TX_INFO1_TQM_STATUS_NUMBER);
-	if (desc->rate_stats.info0 & HAL_TX_RATE_STATS_INFO0_VALID)
-		ts->rate_stats = desc->rate_stats.info0;
+	ts->ppdu_id = le32_get_bits(desc->info1,
+				    HAL_WBM_COMPL_TX_INFO1_TQM_STATUS_NUMBER);
+	if (le32_to_cpu(desc->rate_stats.info0) & HAL_TX_RATE_STATS_INFO0_VALID)
+		ts->rate_stats = le32_to_cpu(desc->rate_stats.info0);
 	else
 		ts->rate_stats = 0;
 }
@@ -569,15 +569,15 @@ void ath12k_dp_tx_completion_handler(struct ath12k_base *ab, int ring_id)
 		tx_status = &tx_ring->tx_status[tx_ring->tx_status_tail];
 		ath12k_dp_tx_status_parse(ab, tx_status, &ts);
 
-		if (u32_get_bits(tx_status->info0, HAL_WBM_COMPL_TX_INFO0_CC_DONE)) {
+		if (le32_get_bits(tx_status->info0, HAL_WBM_COMPL_TX_INFO0_CC_DONE)) {
 			/* HW done cookie conversion */
-			desc_va = ((u64)tx_status->buf_va_hi << 32 |
-					tx_status->buf_va_lo);
+			desc_va = ((u64)le32_to_cpu(tx_status->buf_va_hi) << 32 |
+				   le32_to_cpu(tx_status->buf_va_lo));
 			tx_desc = (struct ath12k_tx_desc_info *)((unsigned long)desc_va);
 		} else {
 			/* SW does cookie conversion to VA */
-			desc_id = u32_get_bits(tx_status->buf_va_hi,
-					       BUFFER_ADDR_INFO1_SW_COOKIE);
+			desc_id = le32_get_bits(tx_status->buf_va_hi,
+						BUFFER_ADDR_INFO1_SW_COOKIE);
 
 			tx_desc = ath12k_dp_get_tx_desc(ab, desc_id);
 		}
