@@ -993,7 +993,7 @@ void ath12k_dp_pdev_pre_alloc(struct ath12k_base *ab)
 		atomic_set(&dp->num_tx_pending, 0);
 		init_waitqueue_head(&dp->tx_empty_waitq);
 
-		/*TODO Add any RXDMA setup required per pdev*/
+		/* TODO: Add any RXDMA setup required per pdev */
 	}
 }
 
@@ -1007,7 +1007,7 @@ int ath12k_dp_pdev_alloc(struct ath12k_base *ab)
 	if (ret)
 		goto out;
 
-	/* TODO:Per-pdev rx ring unlike tx ring which is mapped to different AC's */
+	/* TODO: Per-pdev rx ring unlike tx ring which is mapped to different AC's */
 	for (i = 0; i < ab->num_radios; i++) {
 		ar = ab->pdevs[i].ar;
 		ret = ath12k_dp_rx_pdev_alloc(ab, i);
@@ -1062,7 +1062,7 @@ static void ath12k_dp_update_vdev_search(struct ath12k_vif *arvif)
 {
 	switch (arvif->vdev_type) {
 	case WMI_VDEV_TYPE_STA:
-		/* TODO Verify the search type and flags since ast hash
+		/* TODO: Verify the search type and flags since ast hash
 		 * is not part of peer mapv3
 		 */
 		arvif->hal_addr_search_flags = HAL_TX_ADDRY_EN;
@@ -1519,7 +1519,7 @@ int ath12k_dp_alloc(struct ath12k_base *ab)
 		dp->tx_ring[i].tx_status = kmalloc(size, GFP_KERNEL);
 		if (!dp->tx_ring[i].tx_status) {
 			ret = -ENOMEM;
-			/* FIXME The allocated tx status is not freed
+			/* FIXME: The allocated tx status is not freed
 			 * properly here
 			 */
 			goto fail_cmn_reoq_cleanup;

@@ -2041,7 +2041,7 @@ static void ath12k_dp_rx_h_undecap_nwifi(struct ath12k *ar,
 	if (ath12k_dp_rx_h_mesh_ctl_present(ab, rxcb->rx_desc))
 		qos_ctl |= IEEE80211_QOS_CTL_MESH_CONTROL_PRESENT;
 
-	/* TODO Add other QoS ctl fields when required */
+	/* TODO: Add other QoS ctl fields when required */
 
 	/* copy decap header before overwriting for reuse below */
 	memcpy(decap_hdr, hdr, hdr_len);
@@ -2156,7 +2156,7 @@ static void ath12k_get_dot11_hdr_from_rx_desc(struct ath12k *ar,
 		if (ath12k_dp_rx_h_mesh_ctl_present(ab, rx_desc))
 			qos_ctl |= IEEE80211_QOS_CTL_MESH_CONTROL_PRESENT;
 
-		/* TODO Add other QoS ctl fields when required */
+		/* TODO: Add other QoS ctl fields when required */
 		memcpy(msdu->data + (hdr_len - IEEE80211_QOS_CTL_LEN),
 		       &qos_ctl, IEEE80211_QOS_CTL_LEN);
 	}
@@ -3796,7 +3796,7 @@ int ath12k_dp_rx_process_wbm_err(struct ath12k_base *ab,
 			}
 		}
 
-		/* FIXME Extract mac id correctly. Since descs are not tied
+		/* FIXME: Extract mac id correctly. Since descs are not tied
 		 * to mac, we can extract from vdev id in ring desc.
 		 */
 		mac_id = 0;
@@ -4000,7 +4000,7 @@ int ath12k_dp_rxdma_ring_sel_config_qcn9274(struct ath12k_base *ab)
 	tlv_filter.rx_msdu_end_offset =
 		ab->hw_params->hal_ops->rx_desc_get_msdu_end_offset();
 
-	/*TODO Selectively subscribe to required qwords within msdu_end
+	/* TODO: Selectively subscribe to required qwords within msdu_end
 	 * and mpdu_start and setup the mask in below msg
 	 * and modify the rx_desc struct
 	 */
@@ -4038,7 +4038,7 @@ int ath12k_dp_rxdma_ring_sel_config_wcn7850(struct ath12k_base *ab)
 	tlv_filter.rx_msdu_end_offset =
 		ab->hw_params->hal_ops->rx_desc_get_msdu_end_offset();
 
-	/*TODO Selectively subscribe to required qwords within msdu_end
+	/* TODO: Selectively subscribe to required qwords within msdu_end
 	 * and mpdu_start and setup the mask in below msg
 	 * and modify the rx_desc struct
 	 */

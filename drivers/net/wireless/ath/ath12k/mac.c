@@ -604,7 +604,7 @@ static void ath12k_pdev_caps_update(struct ath12k *ar)
 
 	ar->max_tx_power = ab->target_caps.hw_max_tx_power;
 
-	/* FIXME Set min_tx_power to ab->target_caps.hw_min_tx_power.
+	/* FIXME: Set min_tx_power to ab->target_caps.hw_min_tx_power.
 	 * But since the received value in svcrdy is same as hw_max_tx_power,
 	 * we can set ar->min_tx_power to 0 currently until
 	 * this is fixed in firmware
@@ -1858,7 +1858,7 @@ static int ath12k_peer_assoc_qos_ap(struct ath12k *ar,
 	if (ret)
 		goto err;
 
-	/* TODO revisit during testing */
+	/* TODO: revisit during testing */
 	arg.param = WMI_AP_PS_PEER_PARAM_SIFS_RESP_FRMTYPE;
 	arg.value = DISABLE_SIFS_RESPONSE_TRIGGER;
 	ret = ath12k_wmi_send_set_ap_ps_param_cmd(ar, sta->addr, &arg);
@@ -4812,7 +4812,7 @@ ath12k_mac_prepare_he_mode(struct ath12k_pdev *pdev, u32 viftype)
 		 u32_encode_bits(HECAP_PHY_ULMUMIMO_GET(hecap_phy_ptr),
 				 HE_MODE_UL_MUMIMO);
 
-	/* TODO WDS and other modes */
+	/* TODO: WDS and other modes */
 	if (viftype == NL80211_IFTYPE_AP) {
 		hemode |= u32_encode_bits(HECAP_PHY_MUBFMR_GET(hecap_phy_ptr),
 					  HE_MODE_MU_TX_BFER) |
@@ -5474,7 +5474,7 @@ ath12k_mac_vdev_start_restart(struct ath12k_vif *arvif,
 	 * done before channel usage. This flags is used to drop rx packets.
 	 * during CAC.
 	 */
-	/* TODO Set the flag for other interface types as required */
+	/* TODO: Set the flag for other interface types as required */
 	if (arvif->vdev_type == WMI_VDEV_TYPE_AP &&
 	    chandef->chan->dfs_cac_ms &&
 	    chandef->chan->dfs_state == NL80211_DFS_USABLE) {
@@ -6996,7 +6996,7 @@ int ath12k_mac_allocate(struct ath12k_base *ab)
 		ar->lmac_id = ath12k_hw_get_mac_from_pdev_id(ab->hw_params, i);
 
 		ar->wmi = &ab->wmi_ab.wmi[i];
-		/* FIXME wmi[0] is already initialized during attach,
+		/* FIXME: wmi[0] is already initialized during attach,
 		 * Should we do this again?
 		 */
 		ath12k_wmi_pdev_attach(ab, i);

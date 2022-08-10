@@ -197,7 +197,7 @@ struct ath12k_pdev_dp {
 
 #define ATH12K_NUM_POOL_TX_DESC	32768
 
-/* TODO revisit this count during testing */
+/* TODO: revisit this count during testing */
 #define ATH12K_RX_DESC_COUNT	(12288)
 
 #define ATH12K_PAGE_SIZE	PAGE_SIZE
