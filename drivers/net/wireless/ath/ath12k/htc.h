@@ -56,8 +56,8 @@ enum ath12k_htc_rx_flags {
 };
 
 struct ath12k_htc_hdr {
-	u32 htc_info;
-	u32 ctrl_info;
+	__le32 htc_info;
+	__le32 ctrl_info;
 } __packed __aligned(4);
 
 enum ath12k_htc_msg_id {
@@ -97,35 +97,35 @@ enum ath12k_htc_conn_svc_status {
 };
 
 struct ath12k_htc_ready {
-	u32 id_credit_count;
-	u32 size_ep;
+	__le32 id_credit_count;
+	__le32 size_ep;
 } __packed;
 
 struct ath12k_htc_ready_extended {
 	struct ath12k_htc_ready base;
-	u32 ver_bundle;
+	__le32 ver_bundle;
 } __packed;
 
 struct ath12k_htc_conn_svc {
-	u32 msg_svc_id;
-	u32 flags_len;
+	__le32 msg_svc_id;
+	__le32 flags_len;
 } __packed;
 
 struct ath12k_htc_conn_svc_resp {
-	u32 msg_svc_id;
-	u32 flags_len;
-	u32 svc_meta_pad;
+	__le32 msg_svc_id;
+	__le32 flags_len;
+	__le32 svc_meta_pad;
 } __packed;
 
 struct ath12k_htc_setup_complete_extended {
-	u32 msg_id;
-	u32 flags;
-	u32 max_msgs_per_bundled_recv;
+	__le32 msg_id;
+	__le32 flags;
+	__le32 max_msgs_per_bundled_recv;
 } __packed;
 
 struct ath12k_htc_msg {
-	u32 msg_svc_id;
-	u32 flags_len;
+	__le32 msg_svc_id;
+	__le32 flags_len;
 } __packed __aligned(4);
 
 enum ath12k_htc_record_id {
