@@ -216,7 +216,7 @@ struct hal_rx_mon_ppdu_info {
 	u8 data_sequence_control_info_valid;
 	u8 ltf_size;
 	u8 rxpcu_filter_pass;
-	char rssi_chain[8][8];
+	s8 rssi_chain[8][8];
 	u32 num_users;
 	u32 mpdu_fcs_ok_bitmap[HAL_RX_NUM_WORDS_PER_PPDU_BITMAP];
 	u8 addr1[ETH_ALEN];
