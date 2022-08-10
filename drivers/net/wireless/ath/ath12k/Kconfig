@@ -3,7 +3,6 @@ config ATH12K
 	tristate "Qualcomm Technologies 802.11be chipset support"
 	depends on MAC80211 && HAS_DMA && PCI
 	depends on CRYPTO_MICHAEL_MIC
-	select ATH_COMMON
 	select QCOM_QMI_HELPERS
 	select MHI_BUS
 	select QRTR
