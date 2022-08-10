@@ -321,10 +321,10 @@ static int ath12k_ce_completed_recv_next(struct ath12k_ce_pipe *pipe,
 					 struct sk_buff **skb, int *nbytes)
 {
 	struct ath12k_base *ab = pipe->ab;
+	struct hal_ce_srng_dst_status_desc *desc;
 	struct hal_srng *srng;
 	unsigned int sw_index;
 	unsigned int nentries_mask;
-	void *desc;
 	int ret = 0;
 
 	spin_lock_bh(&ab->ce.ce_lock);
@@ -410,11 +410,11 @@ static void ath12k_ce_recv_process_cb(struct ath12k_ce_pipe *pipe)
 static struct sk_buff *ath12k_ce_completed_send_next(struct ath12k_ce_pipe *pipe)
 {
 	struct ath12k_base *ab = pipe->ab;
+	struct hal_ce_srng_src_desc *desc;
 	struct hal_srng *srng;
 	unsigned int sw_index;
 	unsigned int nentries_mask;
 	struct sk_buff *skb;
-	void *desc;
 
 	spin_lock_bh(&ab->ce.ce_lock);
 
@@ -640,8 +640,8 @@ int ath12k_ce_send(struct ath12k_base *ab, struct sk_buff *skb, u8 pipe_id,
 		   u16 transfer_id)
 {
 	struct ath12k_ce_pipe *pipe = &ab->ce.ce_pipe[pipe_id];
+	struct hal_ce_srng_src_desc *desc;
 	struct hal_srng *srng;
-	void *desc;
 	unsigned int write_index, sw_index;
 	unsigned int nentries_mask;
 	int ret = 0;
