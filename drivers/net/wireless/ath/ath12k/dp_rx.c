@@ -826,13 +826,18 @@ void ath12k_dp_rx_peer_tid_delete(struct ath12k *ar,
 	rx_tid->active = false;
 }
 
+/* TODO: it's strange (and ugly) that struct hal_reo_dest_ring is converted
+ * to struct hal_wbm_release_ring, I couldn't figure out the logic behind
+ * that.
+ */
 static int ath12k_dp_rx_link_desc_return(struct ath12k_base *ab,
-					 void *link_desc,
+					 struct hal_reo_dest_ring *ring,
 					 enum hal_wbm_rel_bm_act action)
 {
+	struct hal_wbm_release_ring *link_desc = (struct hal_wbm_release_ring *)ring;
+	struct hal_wbm_release_ring *desc;
 	struct ath12k_dp *dp = &ab->dp;
 	struct hal_srng *srng;
-	void *desc;
 	int ret = 0;
 
 	srng = &ab->hal.srng_list[dp->wbm_desc_rel_ring.ring_id];
@@ -847,8 +852,7 @@ static int ath12k_dp_rx_link_desc_return(struct ath12k_base *ab,
 		goto exit;
 	}
 
-	ath12k_hal_rx_msdu_link_desc_set(ab, (void *)desc, (void *)link_desc,
-					 action);
+	ath12k_hal_rx_msdu_link_desc_set(ab, desc, link_desc, action);
 
 exit:
 	ath12k_hal_srng_access_end(ab, srng);
@@ -867,7 +871,7 @@ static void ath12k_dp_rx_frags_cleanup(struct ath12k_dp_rx_tid *rx_tid,
 
 	if (rx_tid->dst_ring_desc) {
 		if (rel_link_desc)
-			ath12k_dp_rx_link_desc_return(ab, (u32 *)rx_tid->dst_ring_desc,
+			ath12k_dp_rx_link_desc_return(ab, rx_tid->dst_ring_desc,
 						      HAL_WBM_REL_BM_ACT_PUT_IN_IDLE);
 		kfree(rx_tid->dst_ring_desc);
 		rx_tid->dst_ring_desc = NULL;
