@@ -959,4 +959,3 @@ int ath12k_hw_init(struct ath12k_base *ab)
 
 	return 0;
 }
-
