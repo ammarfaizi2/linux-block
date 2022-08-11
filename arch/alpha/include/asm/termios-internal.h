@@ -2,8 +2,6 @@
 #ifndef _ALPHA_TERMIOS_H
 #define _ALPHA_TERMIOS_H
 
-#include <uapi/asm/termios.h>
-
 /*
  * Translate a "termio" structure into a "termios". Ugh.
  */
