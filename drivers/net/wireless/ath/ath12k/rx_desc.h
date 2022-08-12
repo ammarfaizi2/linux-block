@@ -213,8 +213,8 @@ struct rx_mpdu_start_qcn9274 {
  *		buffers shall be disabled based on an RXDMA configuration,
  *		as PPE may not support such packets.
  *
- *		Supported only in full AP chips like Waikiki, not in client/soft
- *		 AP chips like Hamilton
+ *		Supported only in full AP chips, not in client/soft
+ *		chips
  *
  * ppe_routing_enable
  *		Global enable/disable bit for routing to PPE, used to disable
@@ -1197,7 +1197,7 @@ struct rx_msdu_end_qcn9274 {
  *		RX PPDU start descriptor, RX MPDU start/end descriptor,
  *		RX MSDU start/end descriptors and RX Attention descriptor
  *		are all valid.  This bit is in the last 64-bit of the descriptor
- *		expected to be subscribed to in Waikiki and Hamilton v2.
+ *		expected to be subscribed in future hardware.
  *
  * flow_id_toeplitz
  *		Toeplitz hash of 5-tuple
