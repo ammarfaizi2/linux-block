@@ -6,8 +6,11 @@
  */
 
 #include <linux/syscalls.h>
-#include <asm/unistd.h>
 #include <asm/cacheflush.h>
+#include <asm/cpufeature.h>
+#include <asm/hwprobe.h>
+#include <asm/uaccess.h>
+#include <asm/unistd.h>
 #include <asm-generic/mman-common.h>
 
 static long riscv_sys_mmap(unsigned long addr, unsigned long len,
@@ -71,4 +74,117 @@ SYSCALL_DEFINE3(riscv_flush_icache, uintptr_t, start, uintptr_t, end,
 	flush_icache_mm(current->mm, flags & SYS_RISCV_FLUSH_ICACHE_LOCAL);
 
 	return 0;
+}
+
+static long set_hwprobe(struct riscv_hwprobe __user *pair, u64 key, u64 val)
+{
+	long ret;
+
+	ret = put_user(key, &pair->key);
+	if (ret < 0)
+		return ret;
+	ret = put_user(val, &pair->val);
+	if (ret < 0)
+		return ret;
+
+	return 0;
+}
+
+static long hwprobe_mid(struct riscv_hwprobe __user *pair, size_t key,
+			cpumask_t *cpus)
+{
+	long cpu, id;
+	bool first, valid;
+
+	first = true;
+	valid = false;
+	for_each_cpu(cpu, cpus) {
+		struct riscv_cpuinfo * ci = per_cpu_ptr(&riscv_cpuinfo, cpu);
+		long cpu_id;
+
+		switch (key) {
+		case RISCV_HWPROBE_KEY_MVENDORID:
+			cpu_id = ci->mvendorid;
+			break;
+		case RISCV_HWPROBE_KEY_MIMPID:
+			cpu_id = ci->mimpid;
+			break;
+		case RISCV_HWPROBE_KEY_MARCHID:
+			cpu_id = ci->marchid;
+			break;
+		}
+
+		if (first) {
+			id = cpu_id;
+			valid = true;
+		}
+
+		if (id != cpu_id)
+			valid = false;
+	}
+
+	/*
+	 * put_user() returns 0 on success, so use 1 to indicate it wasn't
+	 * called and we should skip having incremented the output.
+	 */
+	if (!valid)
+		return 1;
+
+	return set_hwprobe(pair, key, id);
+}
+
+static
+long do_riscv_hwprobe(struct riscv_hwprobe __user *pairs, long pair_count,
+		      long key_offset, long cpu_count,
+		      unsigned long __user *cpus_user, unsigned long flags)
+{
+	size_t out, k;
+	long ret;
+	struct cpumask cpus;
+
+	/* Check the reserved flags. */
+	if (flags != 0)
+		return -EINVAL;
+
+	/*
+	 * The only supported values must be the same on all CPUs, but check to
+	 * make sure userspace at least tried to provide something here for
+	 * future compatibility.
+	 */
+	cpumask_clear(&cpus);
+	if (cpu_count > cpumask_size())
+		cpu_count = cpumask_size();
+	ret = copy_from_user(&cpus, cpus_user, cpu_count);
+	if (!ret)
+		return -EFAULT;
+
+	out = 0;
+	k = key_offset;
+	while (out < pair_count && k < RISCV_HWPROBE_MAX_KEY) {
+		long ret;
+
+		switch (k) {
+		case RISCV_HWPROBE_KEY_MVENDORID:
+		case RISCV_HWPROBE_KEY_MARCHID:
+		case RISCV_HWPROBE_KEY_MIMPID:
+			ret = hwprobe_mid(pairs + out, k, &cpus);
+			break;
+		}
+
+		if (ret < 0)
+			return ret;
+		if (ret == 0)
+			out++;
+	}
+
+	return out;
+
+}
+
+SYSCALL_DEFINE6(riscv_hwprobe, uintptr_t, pairs, uintptr_t, pair_count,
+		uintptr_t, offset, uintptr_t, cpu_count, uintptr_t, cpus,
+		uintptr_t, flags)
+{
+	return do_riscv_hwprobe((void __user *)pairs, pair_count, offset,
+				cpu_count, (void __user *)cpus, flags);
 }
