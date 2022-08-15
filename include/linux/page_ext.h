@@ -43,14 +43,34 @@ extern void pgdat_page_ext_init(struct pglist_data *pgdat);
 static inline void page_ext_init_flatmem(void)
 {
 }
-extern void page_ext_init(void);
 static inline void page_ext_init_flatmem_late(void)
 {
 }
+extern void _page_ext_init(void);
+#ifdef CONFIG_DEFERRED_STRUCT_PAGE_INIT
+static inline void page_ext_init_early(void)
+{
+}
+static inline void page_ext_init_late(void)
+{
+	_page_ext_init();
+}
+#else
+static inline void page_ext_init_early(void)
+{
+	_page_ext_init();
+}
+static inline void page_ext_init_late(void)
+{
+}
+#endif /* CONFIG_DEFERRED_STRUCT_PAGE_INIT */
 #else
 extern void page_ext_init_flatmem(void);
 extern void page_ext_init_flatmem_late(void);
-static inline void page_ext_init(void)
+static inline void page_ext_init_early(void)
+{
+}
+static inline void page_ext_init_late(void)
 {
 }
 #endif
@@ -76,7 +96,11 @@ static inline struct page_ext *lookup_page_ext(const struct page *page)
 	return NULL;
 }
 
-static inline void page_ext_init(void)
+static inline void page_ext_init_early(void)
+{
+}
+
+static inline void page_ext_init_late(void)
 {
 }
 
