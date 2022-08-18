@@ -3,6 +3,7 @@
 #define __LINUX_BOOTMEM_INFO_H
 
 #include <linux/mm.h>
+#include <linux/kmemleak.h>
 
 /*
  * Types for free bootmem stored in page->lru.next. These have to be in
@@ -38,9 +39,10 @@ static inline void free_bootmem_page(struct page *page)
 	 */
 	VM_BUG_ON_PAGE(page_ref_count(page) != 2, page);
 
-	if (magic == SECTION_INFO || magic == MIX_SECTION_INFO)
+	if (magic == SECTION_INFO || magic == MIX_SECTION_INFO) {
+		kmemleak_free_part(page_to_virt(page), PAGE_SIZE);
 		put_page_bootmem(page);
-	else
+	} else
 		VM_BUG_ON_PAGE(1, page);
 }
 #else
