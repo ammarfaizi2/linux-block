@@ -171,6 +171,9 @@ __vfs_setxattr(struct user_namespace *mnt_userns, struct dentry *dentry,
 {
 	const struct xattr_handler *handler;
 
+	if (is_posix_acl_xattr(name))
+		return -EOPNOTSUPP;
+
 	handler = xattr_resolve_name(inode, &name);
 	if (IS_ERR(handler))
 		return PTR_ERR(handler);
@@ -392,6 +395,9 @@ __vfs_getxattr(struct dentry *dentry, struct inode *inode, const char *name,
 {
 	const struct xattr_handler *handler;
 
+	if (is_posix_acl_xattr(name))
+		return -EOPNOTSUPP;
+
 	handler = xattr_resolve_name(inode, &name);
 	if (IS_ERR(handler))
 		return PTR_ERR(handler);
@@ -463,6 +469,9 @@ __vfs_removexattr(struct user_namespace *mnt_userns, struct dentry *dentry,
 {
 	struct inode *inode = d_inode(dentry);
 	const struct xattr_handler *handler;
+
+	if (is_posix_acl_xattr(name))
+		return -EOPNOTSUPP;
 
 	handler = xattr_resolve_name(inode, &name);
 	if (IS_ERR(handler))
@@ -573,19 +582,41 @@ int setxattr_copy(const char __user *name, struct xattr_ctx *ctx)
 	return error;
 }
 
-static void setxattr_convert(struct user_namespace *mnt_userns,
-			     struct dentry *d, struct xattr_ctx *ctx)
+static int setxattr_convert(struct user_namespace *mnt_userns, struct dentry *d,
+			    struct xattr_ctx *ctx)
 {
-	if (ctx->size && is_posix_acl_xattr(ctx->kname->name))
-		posix_acl_fix_xattr_from_user(ctx->kvalue, ctx->size);
+	struct posix_acl *acl;
+
+	if (!ctx->size || !is_posix_acl_xattr(ctx->kname->name))
+		return 0;
+
+	/*
+	 * Note that posix_acl_from_xattr() uses GFP_NOFS when it probably
+	 * doesn't need to here.
+	 */
+	acl = posix_acl_from_xattr(current_user_ns(), ctx->kvalue, ctx->size);
+	if (IS_ERR(acl))
+		return PTR_ERR(acl);
+
+	ctx->acl = acl;
+	return 0;
 }
 
 int do_setxattr(struct user_namespace *mnt_userns, struct dentry *dentry,
 		struct xattr_ctx *ctx)
 {
-	setxattr_convert(mnt_userns, dentry, ctx);
+	int error;
+
+	error = setxattr_convert(mnt_userns, dentry, ctx);
+	if (error)
+		return error;
+
+	if (is_posix_acl_xattr(ctx->kname->name))
+		return vfs_set_acl(mnt_userns, dentry,
+				   ctx->kname->name, ctx->acl);
+
 	return vfs_setxattr(mnt_userns, dentry, ctx->kname->name,
-			ctx->kvalue, ctx->size, ctx->flags);
+			    ctx->kvalue, ctx->size, ctx->flags);
 }
 
 static long
@@ -597,6 +628,7 @@ setxattr(struct user_namespace *mnt_userns, struct dentry *d,
 	struct xattr_ctx ctx = {
 		.cvalue   = value,
 		.kvalue   = NULL,
+		.acl	  = NULL,
 		.size     = size,
 		.kname    = &kname,
 		.flags    = flags,
@@ -610,6 +642,7 @@ setxattr(struct user_namespace *mnt_userns, struct dentry *d,
 	error = do_setxattr(mnt_userns, d, &ctx);
 
 	kvfree(ctx.kvalue);
+	posix_acl_release(ctx.acl);
 	return error;
 }
 
@@ -690,10 +723,18 @@ do_getxattr(struct user_namespace *mnt_userns, struct dentry *d,
 			return -ENOMEM;
 	}
 
-	error = vfs_getxattr(mnt_userns, d, kname, ctx->kvalue, ctx->size);
+	if (is_posix_acl_xattr(ctx->kname->name)) {
+		ctx->acl = vfs_get_acl(mnt_userns, d, ctx->kname->name);
+		if (IS_ERR(ctx->acl))
+			return PTR_ERR(ctx->acl);
+
+		error = vfs_posix_acl_to_xattr(mnt_userns, d_inode(d), ctx->acl,
+					       ctx->kvalue, ctx->size);
+		posix_acl_release(ctx->acl);
+	} else {
+		error = vfs_getxattr(mnt_userns, d, kname, ctx->kvalue, ctx->size);
+	}
 	if (error > 0) {
-		if (is_posix_acl_xattr(kname))
-			posix_acl_fix_xattr_to_user(ctx->kvalue, error);
 		if (ctx->size && copy_to_user(ctx->value, ctx->kvalue, error))
 			error = -EFAULT;
 	} else if (error == -ERANGE && ctx->size >= XATTR_SIZE_MAX) {
@@ -867,6 +908,9 @@ removexattr(struct user_namespace *mnt_userns, struct dentry *d,
 		error = -ERANGE;
 	if (error < 0)
 		return error;
+
+	if (is_posix_acl_xattr(kname))
+		return vfs_remove_acl(mnt_userns, d, kname);
 
 	return vfs_removexattr(mnt_userns, d, kname);
 }
