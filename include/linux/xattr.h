@@ -73,6 +73,8 @@ ssize_t vfs_getxattr_alloc(struct user_namespace *mnt_userns,
 			   char **xattr_value, size_t size, gfp_t flags);
 
 int xattr_supported_namespace(struct inode *inode, const char *prefix);
+int xattr_permission(struct user_namespace *mnt_userns, struct inode *inode,
+		     const char *name, int mask);
 
 static inline const char *xattr_prefix(const struct xattr_handler *handler)
 {
