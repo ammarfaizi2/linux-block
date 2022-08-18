@@ -8,9 +8,9 @@
 #define MEMTIER_CHUNK_BITS	7
 #define MEMTIER_CHUNK_SIZE	(1 << MEMTIER_CHUNK_BITS)
 /*
- * Smaller abstract distance values imply faster(higher) memory tiers. Offset
+ * Smaller abstract distance values imply faster (higher) memory tiers. Offset
  * the DRAM adistance so that we can accommodate devices with a slightly lower
- * adistance value (slightly slower) than default DRAM adistance to be part of
+ * adistance value (slightly faster) than default DRAM adistance to be part of
  * the same memory tier.
  */
 #define MEMTIER_ADISTANCE_DRAM	((4 * MEMTIER_CHUNK_SIZE) + (MEMTIER_CHUNK_SIZE >> 1))
