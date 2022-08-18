@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
-#include <linux/nodemask.h>
 #include <linux/slab.h>
 #include <linux/lockdep.h>
 #include <linux/sysfs.h>
@@ -21,27 +19,10 @@ struct memory_tier {
 	int adistance_start;
 };
 
-struct memory_dev_type {
-	/* list of memory types that are part of same tier as this type */
-	struct list_head tier_sibiling;
-	/* abstract distance for this specific memory type */
-	int adistance;
-	/* Nodes of same abstract distance */
-	nodemask_t nodes;
-	struct memory_tier *memtier;
-};
-
 static DEFINE_MUTEX(memory_tier_lock);
 static LIST_HEAD(memory_tiers);
 static struct memory_dev_type *node_memory_types[MAX_NUMNODES];
-/*
- * For now we can have 4 faster memory tiers with smaller adistance
- * than default DRAM tier.
- */
-static struct memory_dev_type default_dram_type  = {
-	.adistance = MEMTIER_ADISTANCE_DRAM,
-	.tier_sibiling = LIST_HEAD_INIT(default_dram_type.tier_sibiling),
-};
+static struct memory_dev_type *default_dram_type;
 
 static struct memory_tier *find_create_memory_tier(struct memory_dev_type *memtype)
 {
@@ -87,6 +68,14 @@ static struct memory_tier *find_create_memory_tier(struct memory_dev_type *memty
 	return new_memtier;
 }
 
+static inline void __init_node_memory_type(int node, struct memory_dev_type *memtype)
+{
+	if (!node_memory_types[node]) {
+		node_memory_types[node] = memtype;
+		kref_get(&memtype->kref);
+	}
+}
+
 static struct memory_tier *set_node_memory_tier(int node)
 {
 	struct memory_tier *memtier;
@@ -97,8 +86,7 @@ static struct memory_tier *set_node_memory_tier(int node)
 	if (!node_state(node, N_MEMORY))
 		return ERR_PTR(-EINVAL);
 
-	if (!node_memory_types[node])
-		node_memory_types[node] = &default_dram_type;
+	__init_node_memory_type(node, default_dram_type);
 
 	memtype = node_memory_types[node];
 	node_set(node, memtype->nodes);
@@ -144,6 +132,57 @@ static bool clear_node_memory_tier(int node)
 	return cleared;
 }
 
+static void release_memtype(struct kref *kref)
+{
+	struct memory_dev_type *memtype;
+
+	memtype = container_of(kref, struct memory_dev_type, kref);
+	kfree(memtype);
+}
+
+struct memory_dev_type *alloc_memory_type(int adistance)
+{
+	struct memory_dev_type *memtype;
+
+	memtype = kmalloc(sizeof(*memtype), GFP_KERNEL);
+	if (!memtype)
+		return ERR_PTR(-ENOMEM);
+
+	memtype->adistance = adistance;
+	INIT_LIST_HEAD(&memtype->tier_sibiling);
+	memtype->nodes  = NODE_MASK_NONE;
+	memtype->memtier = NULL;
+	kref_init(&memtype->kref);
+	return memtype;
+}
+EXPORT_SYMBOL_GPL(alloc_memory_type);
+
+void destroy_memory_type(struct memory_dev_type *memtype)
+{
+	kref_put(&memtype->kref, release_memtype);
+}
+EXPORT_SYMBOL_GPL(destroy_memory_type);
+
+void init_node_memory_type(int node, struct memory_dev_type *memtype)
+{
+
+	mutex_lock(&memory_tier_lock);
+	__init_node_memory_type(node, memtype);
+	mutex_unlock(&memory_tier_lock);
+}
+EXPORT_SYMBOL_GPL(init_node_memory_type);
+
+void clear_node_memory_type(int node, struct memory_dev_type *memtype)
+{
+	mutex_lock(&memory_tier_lock);
+	if (node_memory_types[node] == memtype) {
+		node_memory_types[node] = NULL;
+		kref_put(&memtype->kref, release_memtype);
+	}
+	mutex_unlock(&memory_tier_lock);
+}
+EXPORT_SYMBOL_GPL(clear_node_memory_type);
+
 static int __meminit memtier_hotplug_callback(struct notifier_block *self,
 					      unsigned long action, void *_arg)
 {
@@ -178,6 +217,14 @@ static int __init memory_tier_init(void)
 	struct memory_tier *memtier;
 
 	mutex_lock(&memory_tier_lock);
+	/*
+	 * For now we can have 4 faster memory tiers with smaller adistance
+	 * than default DRAM tier.
+	 */
+	default_dram_type = alloc_memory_type(MEMTIER_ADISTANCE_DRAM);
+	if (!default_dram_type)
+		panic("%s() failed to allocate default DRAM tier\n", __func__);
+
 	/*
 	 * Look at all the existing N_MEMORY nodes and add them to
 	 * default memory tier or to a tier if we already have memory
