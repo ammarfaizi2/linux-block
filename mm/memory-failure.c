@@ -1658,6 +1658,8 @@ int mf_dax_kill_procs(struct address_space *mapping, pgoff_t index,
 		collect_procs_fsdax(page, mapping, index, &to_kill);
 		unmap_and_kill(&to_kill, page_to_pfn(page), mapping,
 				index, mf_flags);
+		/* Reinitialize to_kill list for later resuing. */
+		INIT_LIST_HEAD(&to_kill);
 unlock:
 		dax_unlock_mapping_entry(mapping, index, cookie);
 	}
