@@ -402,13 +402,16 @@ static void assert_expected_ioctls_present(uint64_t mode, uint64_t ioctls)
 
 static int __userfaultfd_open_dev(void)
 {
-	int fd, _uffd = -1;
+	int fd, _uffd;
 
 	fd = open("/dev/userfaultfd", O_RDWR | O_CLOEXEC);
 	if (fd < 0)
-		return -1;
+		errexit(KSFT_SKIP, "opening /dev/userfaultfd failed");
 
 	_uffd = ioctl(fd, USERFAULTFD_IOC_NEW, UFFD_FLAGS);
+	if (_uffd < 0)
+		errexit(errno == ENOTTY ? KSFT_SKIP : 1,
+			"creating userfaultfd failed");
 	close(fd);
 	return _uffd;
 }
@@ -419,10 +422,12 @@ static void userfaultfd_open(uint64_t *features)
 
 	if (test_dev_userfaultfd)
 		uffd = __userfaultfd_open_dev();
-	else
+	else {
 		uffd = syscall(__NR_userfaultfd, UFFD_FLAGS);
-	if (uffd < 0)
-		errexit(KSFT_SKIP, "creating userfaultfd failed");
+		if (uffd < 0)
+			errexit(errno == ENOSYS ? KSFT_SKIP : 1,
+				"creating userfaultfd failed");
+	}
 	uffd_flags = fcntl(uffd, F_GETFD, NULL);
 
 	uffdio_api.api = UFFD_API;
