@@ -2114,11 +2114,6 @@ SYSCALL_DEFINE1(userfaultfd, int, flags)
 	return new_userfaultfd(flags);
 }
 
-static int userfaultfd_dev_open(struct inode *inode, struct file *file)
-{
-	return 0;
-}
-
 static long userfaultfd_dev_ioctl(struct file *file, unsigned int cmd, unsigned long flags)
 {
 	if (cmd != USERFAULTFD_IOC_NEW)
@@ -2128,7 +2123,6 @@ static long userfaultfd_dev_ioctl(struct file *file, unsigned int cmd, unsigned 
 }
 
 static const struct file_operations userfaultfd_dev_fops = {
-	.open = userfaultfd_dev_open,
 	.unlocked_ioctl = userfaultfd_dev_ioctl,
 	.compat_ioctl = userfaultfd_dev_ioctl,
 	.owner = THIS_MODULE,
@@ -2143,7 +2137,11 @@ static struct miscdevice userfaultfd_misc = {
 
 static int __init userfaultfd_init(void)
 {
-	WARN_ON(misc_register(&userfaultfd_misc));
+	int ret;
+
+	ret = misc_register(&userfaultfd_misc);
+	if (ret)
+		return ret;
 
 	userfaultfd_ctx_cachep = kmem_cache_create("userfaultfd_ctx_cache",
 						sizeof(struct userfaultfd_ctx),
