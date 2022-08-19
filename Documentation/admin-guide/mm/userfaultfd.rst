@@ -66,14 +66,14 @@ userfaultfd(2) syscall. Access to this is controlled in several ways:
   only. Such a userfaultfd can be created using the userfaultfd(2) syscall
   with the flag UFFD_USER_MODE_ONLY.
 
-- In order to also trap kernel page faults for the address space, then either
-  the process needs the CAP_SYS_PTRACE capability, or the system must have
+- In order to also trap kernel page faults for the address space, either the
+  process needs the CAP_SYS_PTRACE capability, or the system must have
   vm.unprivileged_userfaultfd set to 1. By default, vm.unprivileged_userfaultfd
   is set to 0.
 
-The second way, added to the kernel more recently, is by opening and issuing a
-USERFAULTFD_IOC_NEW ioctl to /dev/userfaultfd. This method yields equivalent
-userfaultfds to the userfaultfd(2) syscall.
+The second way, added to the kernel more recently, is by opening
+/dev/userfaultfd and issuing a USERFAULTFD_IOC_NEW ioctl to it. This method
+yields equivalent userfaultfds to the userfaultfd(2) syscall.
 
 Unlike userfaultfd(2), access to /dev/userfaultfd is controlled via normal
 filesystem permissions (user/group/mode), which gives fine grained access to
