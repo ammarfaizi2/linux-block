@@ -183,11 +183,11 @@ ia64_clock_getres(const clockid_t which_clock, struct __kernel_timespec __user *
 	 * clocks.
 	 */
 	switch (which_clock) {
-		case CLOCK_REALTIME:
-		case CLOCK_MONOTONIC:
-			s64 tick_ns = DIV_ROUND_UP(NSEC_PER_SEC, local_cpu_data->itc_freq);
-			struct timespec64 rtn_tp = ns_to_timespec64(tick_ns);
-			return put_timespec64(&rtn_tp, tp);
+	case CLOCK_REALTIME:
+	case CLOCK_MONOTONIC:
+		s64 tick_ns = DIV_ROUND_UP(NSEC_PER_SEC, local_cpu_data->itc_freq);
+		struct timespec64 rtn_tp = ns_to_timespec64(tick_ns);
+		return put_timespec64(&rtn_tp, tp);
 	}
 
 	return sys_clock_getres(which_clock, tp);
