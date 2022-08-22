@@ -25,14 +25,12 @@ static int walk_pte_range_inner(pte_t *pte, unsigned long addr,
 {
 	const struct mm_walk_ops *ops = walk->ops;
 
-	for (;;) {
+	for (;; addr += PAGE_SIZE, pte++) {
 		int err = ops->pte_entry(pte, addr, addr + PAGE_SIZE, walk);
 		if (err)
 			return err;
 		if (addr >= end - PAGE_SIZE)
 			break;
-		addr += PAGE_SIZE;
-		pte++;
 	}
 	return 0;
 }
@@ -42,13 +40,14 @@ static int walk_pte_range(pmd_t *pmd, unsigned long addr, unsigned long end,
 {
 	pte_t *pte;
 	int err;
-	spinlock_t *ptl;
 
 	if (walk->no_vma) {
 		pte = pte_offset_map(pmd, addr);
 		err = walk_pte_range_inner(pte, addr, end, walk);
 		pte_unmap(pte);
 	} else {
+		spinlock_t *ptl;
+
 		pte = pte_offset_map_lock(walk->mm, pmd, addr, &ptl);
 		err = walk_pte_range_inner(pte, addr, end, walk);
 		pte_unmap_unlock(pte, ptl);
@@ -71,7 +70,7 @@ static int walk_hugepd_range(hugepd_t *phpd, unsigned long addr,
 	if (addr & (page_size - 1))
 		return 0;
 
-	for (;;) {
+	for (;; addr += page_size) {
 		pte_t *pte;
 		int err;
 
@@ -84,7 +83,6 @@ static int walk_hugepd_range(hugepd_t *phpd, unsigned long addr,
 			return err;
 		if (addr >= end - page_size)
 			break;
-		addr += page_size;
 	}
 	return 0;
 }
@@ -307,14 +305,13 @@ static int walk_hugetlb_range(unsigned long addr, unsigned long end,
 	unsigned long next;
 	unsigned long hmask = huge_page_mask(h);
 	unsigned long sz = huge_page_size(h);
-	pte_t *pte;
 	const struct mm_walk_ops *ops = walk->ops;
 
-	do {
+	for (; addr < end; addr = next) {
 		int err;
+		pte_t *pte = huge_pte_offset(walk->mm, addr & hmask, sz);
 
 		next = hugetlb_entry_end(h, addr, end);
-		pte = huge_pte_offset(walk->mm, addr & hmask, sz);
 
 		if (pte)
 			err = ops->hugetlb_entry(pte, hmask, addr, next, walk);
@@ -323,7 +320,7 @@ static int walk_hugetlb_range(unsigned long addr, unsigned long end,
 
 		if (err)
 			return err;
-	} while (addr = next, addr != end);
+	}
 
 	return 0;
 }
@@ -461,14 +458,13 @@ int walk_page_range(struct mm_struct *mm, unsigned long start,
 	do {
 		int err;
 
+		walk.vma = vma;
 		if (!vma) { /* after the last vma */
-			walk.vma = NULL;
 			next = end;
 		} else if (start < vma->vm_start) { /* outside vma */
 			walk.vma = NULL;
 			next = min(end, vma->vm_start);
 		} else { /* inside vma */
-			walk.vma = vma;
 			next = min(end, vma->vm_end);
 			vma = find_vma(mm, vma->vm_end);
 
@@ -595,11 +591,11 @@ int walk_page_mapping(struct address_space *mapping, pgoff_t first_index,
 	};
 	struct vm_area_struct *vma;
 	pgoff_t vba, vea, cba, cea;
-	unsigned long start_addr, end_addr;
 
 	lockdep_assert_held(&mapping->i_mmap_rwsem);
 	vma_interval_tree_foreach(vma, &mapping->i_mmap, first_index,
 				  first_index + nr - 1) {
+		unsigned long start_addr, end_addr;
 		int err;
 
 		/* Clip to the vma */
