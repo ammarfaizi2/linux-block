@@ -506,6 +506,8 @@ int walk_page_range(struct mm_struct *mm, unsigned long start,
  * not backed by VMAs. Because 'unusual' entries may be walked this function
  * will also not lock the PTEs for the pte_entry() callback. This is useful for
  * walking the kernel pages tables or page tables for firmware.
+ *
+ * Either mm or pgd may be NULL, but not both.
  */
 int walk_page_range_novma(struct mm_struct *mm, unsigned long start,
 			  unsigned long end, const struct mm_walk_ops *ops,
@@ -520,10 +522,11 @@ int walk_page_range_novma(struct mm_struct *mm, unsigned long start,
 		.no_vma		= true
 	};
 
-	if (start >= end || !walk.mm)
+	if (start >= end || (!walk.mm && !walk.pgd))
 		return -EINVAL;
 
-	mmap_assert_locked(walk.mm);
+	if (walk.mm)
+		mmap_assert_locked(walk.mm);
 
 	return walk_pgd_range(start, end, &walk);
 }
