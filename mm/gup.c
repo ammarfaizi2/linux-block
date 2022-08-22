@@ -2087,11 +2087,13 @@ static long __gup_longterm_locked(struct mm_struct *mm,
 					       NULL, gup_flags);
 	flags = memalloc_pin_save();
 	do {
-		nr_pinned_pages = __get_user_pages_locked(mm, start, nr_pages, pages, vmas,
-							  NULL, gup_flags);
+		nr_pinned_pages = __get_user_pages_locked(mm, start, nr_pages,
+							  pages, vmas, NULL,
+							  gup_flags);
 		if (nr_pinned_pages <= 0)
 			break;
-		rc = check_and_migrate_movable_pages(nr_pinned_pages, pages, gup_flags);
+		rc = check_and_migrate_movable_pages(nr_pinned_pages, pages,
+						     gup_flags);
 	} while (rc == -EAGAIN);
 	memalloc_pin_restore(flags);
 
