@@ -3429,9 +3429,6 @@ static bool should_skip_mm(struct mm_struct *mm, struct lru_gen_mm_walk *walk)
 	if (size < MIN_LRU_BATCH)
 		return true;
 
-	if (mm_is_oom_victim(mm))
-		return true;
-
 	return !mmget_not_zero(mm);
 }
 
@@ -4129,9 +4126,6 @@ restart:
 			continue;
 
 		walk_pmd_range(&val, addr, next, args);
-
-		if (mm_is_oom_victim(args->mm))
-			return 1;
 
 		/* a racy check to curtail the waiting time */
 		if (wq_has_sleeper(&walk->lruvec->mm_state.wait))
