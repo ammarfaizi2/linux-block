@@ -220,7 +220,7 @@ struct maple_tree {
 /**
  * MTREE_INIT() - Initialize a maple tree
  * @name: The maple tree name
- * @flags: The maple tree flags
+ * @__flags: The maple tree flags
  *
  */
 #define MTREE_INIT(name, __flags) {					\
@@ -232,8 +232,8 @@ struct maple_tree {
 /**
  * MTREE_INIT_EXT() - Initialize a maple tree with an external lock.
  * @name: The tree name
- * @flags: The maple tree flags
- * @lock: The external lock
+ * @__flags: The maple tree flags
+ * @__lock: The external lock
  */
 #ifdef CONFIG_LOCKDEP
 #define MTREE_INIT_EXT(name, __flags, __lock) {				\
@@ -509,9 +509,9 @@ static inline void mas_reset(struct ma_state *mas)
 
 /**
  * mas_for_each() - Iterate over a range of the maple tree.
- * @mas: Maple Tree operation state (maple_state)
- * @entry: Entry retrieved from the tree
- * @max: maximum index to retrieve from the tree
+ * @__mas: Maple Tree operation state (maple_state)
+ * @__entry: Entry retrieved from the tree
+ * @__max: maximum index to retrieve from the tree
  *
  * When returned, mas->index and mas->last will hold the entire range for the
  * entry.
@@ -646,10 +646,10 @@ void *mt_next(struct maple_tree *mt, unsigned long index, unsigned long max);
 
 /**
  * mt_for_each - Iterate over each entry starting at index until max.
- * @tree: The Maple Tree
- * @entry: The current entry
- * @index: The index to update to track the location in the tree
- * @max: The maximum limit for @index
+ * @__tree: The Maple Tree
+ * @__entry: The current entry
+ * @__index: The index to update to track the location in the tree
+ * @__max: The maximum limit for @index
  *
  * Note: Will not return the zero entry.
  */
