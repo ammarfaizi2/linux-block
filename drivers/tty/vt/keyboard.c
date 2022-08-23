@@ -606,7 +606,7 @@ static void fn_scroll_back(struct vc_data *vc)
 
 static void fn_show_mem(struct vc_data *vc)
 {
-	show_mem(0, NULL);
+	show_mem(0, NULL, GFP_HIGHUSER_MOVABLE);
 }
 
 static void fn_show_state(struct vc_data *vc)
