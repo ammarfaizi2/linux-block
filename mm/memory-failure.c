@@ -1450,9 +1450,6 @@ static bool hwpoison_user_mappings(struct page *p, unsigned long pfn,
 	 * First collect all the processes that have the page
 	 * mapped in dirty form.  This has to be done before try_to_unmap,
 	 * because ttu takes the rmap data structures down.
-	 *
-	 * Error handling: We ignore errors here because
-	 * there's nothing that can be done.
 	 */
 	collect_procs(hpage, &tokill, flags & MF_ACTION_REQUIRED);
 
