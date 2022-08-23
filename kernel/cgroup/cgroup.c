@@ -6247,8 +6247,6 @@ err:
 	if (dst_cgrp)
 		cgroup_put(dst_cgrp);
 	put_css_set(cset);
-	if (kargs->cset)
-		put_css_set(kargs->cset);
 	return ret;
 }
 
