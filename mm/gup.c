@@ -2078,7 +2078,6 @@ err:
 static long check_and_migrate_movable_pages(unsigned long nr_pages,
 					    struct page **pages)
 {
-	int ret;
 	unsigned long collected;
 	LIST_HEAD(movable_page_list);
 
