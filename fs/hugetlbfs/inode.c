@@ -434,6 +434,8 @@ static void hugetlb_unmap_file_folio(struct hstate *h,
 					struct folio *folio, pgoff_t index)
 {
 	struct rb_root_cached *root = &mapping->i_mmap;
+	unsigned long skipped_vm_start;
+	struct mm_struct *skipped_mm;
 	struct page *page = &folio->page;
 	struct vm_area_struct *vma;
 	unsigned long v_start;
@@ -444,6 +446,8 @@ static void hugetlb_unmap_file_folio(struct hstate *h,
 	end = ((index + 1) * pages_per_huge_page(h));
 
 	i_mmap_lock_write(mapping);
+retry:
+	skipped_mm = NULL;
 
 	vma_interval_tree_foreach(vma, root, start, end - 1) {
 		v_start = vma_offset_start(vma, start);
@@ -452,11 +456,49 @@ static void hugetlb_unmap_file_folio(struct hstate *h,
 		if (!hugetlb_vma_maps_page(vma, vma->vm_start + v_start, page))
 			continue;
 
+		if (!hugetlb_vma_trylock_write(vma)) {
+			/*
+			 * If we can not get vma lock, we need to drop
+			 * immap_sema and take locks in order.
+			 */
+			skipped_vm_start = vma->vm_start;
+			skipped_mm = vma->vm_mm;
+			/* grab mm-struct as we will be dropping i_mmap_sema */
+			mmgrab(skipped_mm);
+			break;
+		}
+
 		unmap_hugepage_range(vma, vma->vm_start + v_start, v_end,
 				NULL, ZAP_FLAG_DROP_MARKER);
+		hugetlb_vma_unlock_write(vma);
 	}
 
 	i_mmap_unlock_write(mapping);
+
+	if (skipped_mm) {
+		mmap_read_lock(skipped_mm);
+		vma = find_vma(skipped_mm, skipped_vm_start);
+		if (!vma || !is_vm_hugetlb_page(vma) ||
+					vma->vm_file->f_mapping != mapping ||
+					vma->vm_start != skipped_vm_start) {
+			mmap_read_unlock(skipped_mm);
+			mmdrop(skipped_mm);
+			goto retry;
+		}
+
+		hugetlb_vma_lock_write(vma);
+		i_mmap_lock_write(mapping);
+		mmap_read_unlock(skipped_mm);
+		mmdrop(skipped_mm);
+
+		v_start = vma_offset_start(vma, start);
+		v_end = vma_offset_end(vma, end);
+		unmap_hugepage_range(vma, vma->vm_start + v_start, v_end,
+				NULL, ZAP_FLAG_DROP_MARKER);
+		hugetlb_vma_unlock_write(vma);
+
+		goto retry;
+	}
 }
 
 static void
@@ -474,11 +516,15 @@ hugetlb_vmdelete_list(struct rb_root_cached *root, pgoff_t start, pgoff_t end,
 		unsigned long v_start;
 		unsigned long v_end;
 
+		if (!hugetlb_vma_trylock_write(vma))
+			continue;
+
 		v_start = vma_offset_start(vma, start);
 		v_end = vma_offset_end(vma, end);
 
 		unmap_hugepage_range(vma, vma->vm_start + v_start, v_end,
 				     NULL, zap_flags);
+		hugetlb_vma_unlock_write(vma);
 	}
 }
 
