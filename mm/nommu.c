@@ -1361,9 +1361,13 @@ int split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
 		return -ENOMEM;
 
 	new = vm_area_dup(vma);
-	if (!new) {
-		kmem_cache_free(vm_region_jar, region);
-		return -ENOMEM;
+	if (!new)
+		goto err_vma_dup;
+
+	if (mas_preallocate(&mas, vma, GFP_KERNEL)) {
+		pr_warn("Allocation of vma tree for process %d failed\n",
+			current->pid);
+		goto err_mas_preallocate;
 	}
 
 	/* most fields are the same, copy all, and then fixup */
@@ -1394,11 +1398,6 @@ int split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
 	add_nommu_region(vma->vm_region);
 	add_nommu_region(new->vm_region);
 	up_write(&nommu_region_sem);
-	if (mas_preallocate(&mas, vma, GFP_KERNEL)) {
-		pr_warn("Allocation of vma tree for process %d failed\n",
-		       current->pid);
-		return -ENOMEM;
-	}
 
 	setup_vma_to_mm(vma, mm);
 	setup_vma_to_mm(new, mm);
@@ -1406,6 +1405,12 @@ int split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
 	mas_store(&mas, vma);
 	vma_mas_store(new, &mas);
 	return 0;
+
+err_mas_preallocate:
+	vm_area_free(new);
+err_vma_dup:
+	kmem_cache_free(vm_region_jar, region);
+	return -ENOMEM;
 }
 
 /*
