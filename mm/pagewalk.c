@@ -225,7 +225,7 @@ static int walk_p4d_range(pgd_t *pgd, unsigned long addr, unsigned long end,
 
 	p4d = p4d_offset(pgd, addr);
 	do {
-		int err;
+		int err = 0;
 
 		next = p4d_addr_end(addr, end);
 		if (p4d_none_or_clear_bad(p4d)) {
