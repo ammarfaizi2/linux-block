@@ -134,7 +134,7 @@ static bool clear_node_memory_tier(int node)
 		memtype = node_memory_types[node];
 		node_clear(node, memtype->nodes);
 		if (nodes_empty(memtype->nodes)) {
-			list_del(&memtype->tier_sibiling);
+			list_del_init(&memtype->tier_sibiling);
 			memtype->memtier = NULL;
 			if (list_empty(&memtier->memory_types))
 				destroy_memory_tier(memtier);
