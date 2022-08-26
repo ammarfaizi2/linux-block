@@ -91,7 +91,7 @@ unsigned long page_ext_size = sizeof(struct page_ext);
 static unsigned long total_usage;
 static struct page_ext *lookup_page_ext(const struct page *page);
 
-bool early_page_ext __meminitdata;
+bool early_page_ext;
 static int __init setup_early_page_ext(char *str)
 {
 	early_page_ext = true;
