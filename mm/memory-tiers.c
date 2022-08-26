@@ -19,9 +19,14 @@ struct memory_tier {
 	int adistance_start;
 };
 
+struct node_memory_type_map {
+	struct memory_dev_type *memtype;
+	int map_count;
+};
+
 static DEFINE_MUTEX(memory_tier_lock);
 static LIST_HEAD(memory_tiers);
-static struct memory_dev_type *node_memory_types[MAX_NUMNODES];
+static struct node_memory_type_map node_memory_types[MAX_NUMNODES];
 static struct memory_dev_type *default_dram_type;
 
 static struct memory_tier *find_create_memory_tier(struct memory_dev_type *memtype)
@@ -70,9 +75,19 @@ static struct memory_tier *find_create_memory_tier(struct memory_dev_type *memty
 
 static inline void __init_node_memory_type(int node, struct memory_dev_type *memtype)
 {
-	if (!node_memory_types[node]) {
-		node_memory_types[node] = memtype;
-		kref_get(&memtype->kref);
+	if (!node_memory_types[node].memtype)
+		node_memory_types[node].memtype = memtype;
+	/*
+	 * for each device getting added in the same NUMA node
+	 * with this specific memtype, bump the map count. We
+	 * Only take memtype device reference once, so that
+	 * changing a node memtype can be done by droping the
+	 * only reference count taken here.
+	 */
+
+	if (node_memory_types[node].memtype == memtype) {
+		if (!node_memory_types[node].map_count++)
+			kref_get(&memtype->kref);
 	}
 }
 
@@ -88,7 +103,7 @@ static struct memory_tier *set_node_memory_tier(int node)
 
 	__init_node_memory_type(node, default_dram_type);
 
-	memtype = node_memory_types[node];
+	memtype = node_memory_types[node].memtype;
 	node_set(node, memtype->nodes);
 	memtier = find_create_memory_tier(memtype);
 	return memtier;
@@ -119,7 +134,7 @@ static bool clear_node_memory_tier(int node)
 	if (memtier) {
 		struct memory_dev_type *memtype;
 
-		memtype = node_memory_types[node];
+		memtype = node_memory_types[node].memtype;
 		node_clear(node, memtype->nodes);
 		if (nodes_empty(memtype->nodes)) {
 			list_del_init(&memtype->tier_sibiling);
@@ -175,8 +190,14 @@ EXPORT_SYMBOL_GPL(init_node_memory_type);
 void clear_node_memory_type(int node, struct memory_dev_type *memtype)
 {
 	mutex_lock(&memory_tier_lock);
-	if (node_memory_types[node] == memtype) {
-		node_memory_types[node] = NULL;
+	if (node_memory_types[node].memtype == memtype)
+		node_memory_types[node].map_count--;
+	/*
+	 * If we umapped all the attached devices to this node,
+	 * clear the node memory type.
+	 */
+	if (!node_memory_types[node].map_count) {
+		node_memory_types[node].memtype = NULL;
 		kref_put(&memtype->kref, release_memtype);
 	}
 	mutex_unlock(&memory_tier_lock);
