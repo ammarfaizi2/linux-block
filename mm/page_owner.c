@@ -326,7 +326,7 @@ void pagetypeinfo_showmixedcount_print(struct seq_file *m,
 				continue;
 
 			if (!test_bit(PAGE_EXT_OWNER_ALLOCATED, &page_ext->flags))
-				goto loop;
+				goto ext_put_continue;
 
 			page_owner = get_page_owner(page_ext);
 			page_mt = gfp_migratetype(page_owner->gfp_mask);
@@ -341,7 +341,7 @@ void pagetypeinfo_showmixedcount_print(struct seq_file *m,
 				break;
 			}
 			pfn += (1UL << page_owner->order) - 1;
-loop:
+ext_put_continue:
 			page_ext_put(page_ext);
 		}
 	}
@@ -561,14 +561,14 @@ read_page_owner(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 		 * because we don't hold the zone lock.
 		 */
 		if (!test_bit(PAGE_EXT_OWNER, &page_ext->flags))
-			goto loop;
+			goto ext_put_continue;
 
 		/*
 		 * Although we do have the info about past allocation of free
 		 * pages, it's not relevant for current memory usage.
 		 */
 		if (!test_bit(PAGE_EXT_OWNER_ALLOCATED, &page_ext->flags))
-			goto loop;
+			goto ext_put_continue;
 
 		page_owner = get_page_owner(page_ext);
 
@@ -577,7 +577,7 @@ read_page_owner(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 		 * would inflate the stats.
 		 */
 		if (!IS_ALIGNED(pfn, 1 << page_owner->order))
-			goto loop;
+			goto ext_put_continue;
 
 		/*
 		 * Access to page_ext->handle isn't synchronous so we should
@@ -585,7 +585,7 @@ read_page_owner(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 		 */
 		handle = READ_ONCE(page_owner->handle);
 		if (!handle)
-			goto loop;
+			goto ext_put_continue;
 
 		/* Record the next PFN to read in the file offset */
 		*ppos = (pfn - min_low_pfn) + 1;
@@ -594,7 +594,7 @@ read_page_owner(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 		page_ext_put(page_ext);
 		return print_page_owner(buf, count, pfn, page,
 				&page_owner_tmp, handle);
-loop:
+ext_put_continue:
 		page_ext_put(page_ext);
 	}
 
@@ -654,13 +654,13 @@ static void init_pages_in_zone(pg_data_t *pgdat, struct zone *zone)
 
 			/* Maybe overlapping zone */
 			if (test_bit(PAGE_EXT_OWNER, &page_ext->flags))
-				goto loop;
+				goto ext_put_continue;
 
 			/* Found early allocated page */
 			__set_page_owner_handle(page_ext, early_handle,
 						0, 0);
 			count++;
-loop:
+ext_put_continue:
 			page_ext_put(page_ext);
 		}
 		cond_resched();
