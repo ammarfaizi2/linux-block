@@ -1556,7 +1556,7 @@ cache_fail:
 	return -ENOMEM;
 }
 
-static int __init init_zswap(void)
+static int __init zswap_init(void)
 {
 	/* skip init if zswap is disabled when system startup */
 	if (!zswap_enabled)
@@ -1565,7 +1565,7 @@ static int __init init_zswap(void)
 }
 
 /* must be late so crypto has time to come up */
-late_initcall(init_zswap);
+late_initcall(zswap_init);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Seth Jennings <sjennings@variantweb.net>");
