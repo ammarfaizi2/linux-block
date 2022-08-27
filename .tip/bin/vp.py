@@ -188,34 +188,37 @@ def verify_commit_ref(sha1, name):
 dc = None
 
 # my words
-dc_words = [ "ACPI", "AER", "allocator", "AMD", "AMD64",
+dc_words = [ "3rd", "ACPI", "AER", "allocator", "AMD", "AMD64",
          # that's some stupid dictionary
          "amongst", "AMX", "APEI", "arm64", "asm",
          "binutils", "bitmask", "bitfield", "bool", "breakpoint", "brk", "btree",
-         "C1E", "cacheline", "callee", "CLAC", "clocksource", "CMCI", "cmdline", "Coccinelle", "codename",
-         "config", "CPER", "CPPC", "CPUID", "CSM", "DCT", "devicetree",
+         "C1E", "cacheline", "callee", "CLAC", "clocksource", "CMCI", "cmdline", "CMOV", "CMPXCHG",
+         "Coccinelle", "codename", "config", "CPER", "CPPC", "CPUID", "CSM", "Cyrix",
+         "DCT", "devicetree",
          "DF", "distro", "DIMM", "DMA", "dmesg", "e820", "EAX", "EBDA", "ECC", "EDAC", "EHCI", "enablement",
          "ENDBR", "ENQCMD", "EPT", "ERMS",
-         "fixup", "gcc", "GHES", "goto", "GPR", "GUID", "hotplug", "hugepage", "Hygon",
+         "fixup", "gcc", "GHES", "goto", "GPR", "GUID", "HEST", "hotplug", "hugepage", "Hygon",
          "hypercall", "HyperV", "HV", "hwpoison", "i387", "i915", "I/O", "IBPB", "IBS", "IMA", "init", "inlined",
-         "INT3", "IRET", "IOMMU", "IRQ",
+         "INT3", "IPI", "IRET", "IOMMU", "IRQ",
          "kallsyms", "KASAN", "KASLR", "Kbuild", "Kconfig", "kdump", "kexec", "kmemleak", "kobject", "kPTI", "KVM",
-         "LFENCE", "libc", "linux", "livepatch", "LSB", "lvalue", "maintainership", "Makefile",
+         "LFENCE", "libc", "linux", "livepatch", "LSB", "lvalue", "LVT",
+         "maintainership", "Makefile",
          "MCE", "MDS", "MMIO", "modpost", "ModRM", "MOVDIR64B", "MSR", "MTRR",
-         "NMI", "NOHZ", "noinstr", "NOP", "NX",
+         "NOHZ", "noinstr", "NOP", "NX",
          "objtool", "OEM", "ok", "oneliner", "OVMF", "pahole", "passthrough", "pdf", "percpu", "perf", "PPIN",
          "preemptible",
          "prepend", # derived from append, not in the dictionaries
-         "PTE",
+         "printk", "PTE",
          "PV", "PVALIDATE", "QEMU", "QOS", "refcount", "repurposing", "RCU", "RET", "retpoline", "rFLAGS",
          "RMPUPDATE", "RNG", "RSB", "RTM",
          "runtime", "Ryzen", "s390",
          "scalable", "SDM", "selftest", "SETcc",
-         "SGX", "sideband", "SIGSEGV", "Skylake", "Smatch", "SMN", "SNP", "SPDX", "SRAR", "SRBDS", "SLS", "STAC",
+         "SGX", "sideband", "Skylake", "Smatch", "SMN", "SNP", "SPDX", "SRAR", "SRBDS", "SLS", "STAC",
          "STLF", "stringify", "struct", "SWAPGS", "swiotlb",
          "symtab", "Synopsys", "SYSENTER", "sysfs", "TAA", "TCC", "TDCALL", "TDGETVEINFO",
          "TDVMCALL", "tl;dr", "TLB", "TODO",
-         "TPM", "tracepoint", "TSC", "UC", "uarch", "uncacheable", "uncore",
+         "TPM", "tracepoint", "TSC", "TZCNT", "UC", "uarch", "udev", "uncacheable", "uncore",
+         "uncorrectable",
          # too late for that one to enforce even as the dictionary says it is wrong
          "untrusted", "unwinder", "userspace", "vCPU", "VERW", "VLA",
          "VMSA", "VMware", "vsyscall", "vTOM",
@@ -238,9 +241,9 @@ regexes_pats = [ r'^U?ABI$',
             r'^all(mod|yes)config$',
             r'^AP[IMU]$',
             r'^AVX(512)?(-FP16)?$',
-            r'BIOS(e[sn])?', r'boot(loader|up)', r'boot_params([\.\w_]+)?$', r'BS[PS]$',
+            r'BIOS(e[sn])?', r'boot(loader|up)', r'boot_params([\.\w_]+)?$', r'BS[FPS]$',
             r'^B[HT]B$',
-            r'^C[1-6]$', r'^cpuinfo(_x86)?$', r'^CR[1-4]$',
+            r'^C[1-6]$', r'^CPU\d+$', r'^cpuinfo(_x86)?$', r'^CR[1-4]$',
             r'default_(attrs|groups)', r'^DDR([1-5])?$',
             r'^S?DRAM$',
             r'^[Ee].g.$', r'^[eE]?IBRS$', r'^E?VEX$',
@@ -253,13 +256,15 @@ regexes_pats = [ r'^U?ABI$',
             r'^[ku]probes?$', r'^L[0-3]$',
             r'S?MCA$', r'^[Mm]em(block|cpy|move|remap|set|type)$',
             r'^microarchitectur(al|e)$', r'^mispredict(ed)?$',
-            r'MOVSB?',
+            r'MOVSB?', r'^[NS]MI$',
             r'^param(s)?$',
             r'^([Pp]ara)?virt(ualiz(ed|ing|ation))?$',
             # embedded modifier which goes at the beginning of the regex
             r'(?i)^pasid$', r'^PCIe?$', r'PS[CP]', r'^P[MU]D$',
             r'RD(MSR|RAND|SEED)$', r'^RMP(ADJUST)?$',
-            r'sev_(features|status)', r'^SEV(-(ES|SNP))?$', r'^SM[ET]$',
+            r'sev_(features|status)', r'^SEV(-(ES|SNP))?$', r'(?i)^SHA(1|256|512|384)$',
+            r'^SIG(BUS|SEGV)$',
+            r'^SM[ET]$',
             r'^SM[AE]P$', r'^[Ss]pectre(_v2)*$', r'^STI(BP)?$',
             r'^str(lcat|tab)$', r'^SV[AM]$',
             r'T[DS]X', r'^u(16|32|64)$',
@@ -947,6 +952,7 @@ f"""Class patch:
                 verify_symbol_exports(f, hunk)
                 verify_include_paths(f, hunk)
                 check_for_asserts(f, hunk)
+                check_for_deprecated_apis(f, hunk)
 
     def __insert_tag(self, tag, name):
         try:
@@ -1478,6 +1484,8 @@ def verify_include_paths(pfile, h):
     if not pfile.startswith("arch/x86/boot"):
         return
 
+    # XXX move all those regexes up - those functions are called in a loop so no need to compile
+    # them each time
     rex_include = re.compile(r'^\+#include\s+<linux/.*$')
 
     for line in h.target_lines():
@@ -1496,6 +1504,19 @@ def check_for_asserts(pfile, h):
         l = str(line)
         warn_on(rex_bug_ons.match(l),
                 f"Avoid BUG(_ON)s at any cost. At { pfile }:{ line.target_line_no } [{ l.strip() }]\n")
+
+# check for deprecated interfaces
+def  check_for_deprecated_apis(pfile, h):
+    if not h.added:
+        return
+
+    rex_deprecated = re.compile(r'^\+[^*].*kmap_atomic\(.*$')
+
+    for line in h.target_lines():
+        l = str(line)
+
+        warn_on(rex_deprecated.match(l),
+                f"{ pfile }:{ line.target_line_no }: Do not use kmap_atomic() - use kmap_local() instead.\n")
 
 
 def verify_commit_quotation(linenum, prev, cur, nxt):
@@ -1601,7 +1622,7 @@ def init_parser():
             options:dict -- config options
     """
 
-    parser = argparse.ArgumentParser(description='patch verification and preparation script', prog='vp')
+    parser = argparse.ArgumentParser(description='tip patch verification and preparation script', prog='vp')
 
     parser.add_argument("--add-tag",
                         help="Add tag to the tags list in the patch",
@@ -1631,6 +1652,10 @@ def init_parser():
     parser.add_argument("-v", "--verbose",
                         action="count",
                         help="Enable more verbose output")
+
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        sys.exit(0)
 
     return parser.parse_args()
 
