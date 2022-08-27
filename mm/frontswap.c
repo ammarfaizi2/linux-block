@@ -125,7 +125,8 @@ void frontswap_init(unsigned type, unsigned long *map)
 	 * p->frontswap set to something valid to work properly.
 	 */
 	frontswap_map_set(sis, map);
-	frontswap_ops->init(type);
+	if (frontswap_ops)
+		frontswap_ops->init(type);
 }
 
 static bool __frontswap_test(struct swap_info_struct *sis,
