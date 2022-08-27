@@ -1982,7 +1982,13 @@ static inline bool is_via_compact_memory(int order)
 
 static bool kswapd_is_running(pg_data_t *pgdat)
 {
-	return pgdat->kswapd && task_is_running(pgdat->kswapd);
+	bool running;
+
+	pgdat_kswapd_lock(pgdat);
+	running = pgdat->kswapd && task_is_running(pgdat->kswapd);
+	pgdat_kswapd_unlock(pgdat);
+
+	return running;
 }
 
 /*
