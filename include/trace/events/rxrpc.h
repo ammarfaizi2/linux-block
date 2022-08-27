@@ -17,7 +17,8 @@
  * Declare tracing information enums and their string mappings for display.
  */
 #define rxrpc_skb_traces \
-	EM(rxrpc_skb_cleaned,			"CLN") \
+	EM(rxrpc_skb_cleaned,			"CLE") \
+	EM(rxrpc_skb_cloned,			"CLO") \
 	EM(rxrpc_skb_freed,			"FRE") \
 	EM(rxrpc_skb_got,			"GOT") \
 	EM(rxrpc_skb_lost,			"*L*") \
@@ -103,7 +104,12 @@
 	EM(rxrpc_receive_incoming,		"INC") \
 	EM(rxrpc_receive_queue,			"QUE") \
 	EM(rxrpc_receive_queue_last,		"QLS") \
-	E_(rxrpc_receive_rotate,		"ROT")
+	EM(rxrpc_receive_queue_oos,		"QUO") \
+	EM(rxrpc_receive_queue_oos_last,	"QOL") \
+	EM(rxrpc_receive_oos,			"OOS") \
+	EM(rxrpc_receive_oos_last,		"OSL") \
+	EM(rxrpc_receive_rotate,		"ROT") \
+	E_(rxrpc_receive_rotate_last,		"RLS")
 
 #define rxrpc_recvmsg_traces \
 	EM(rxrpc_recvmsg_cont,			"CONT") \
@@ -633,16 +639,15 @@ TRACE_EVENT(rxrpc_transmit,
 
 TRACE_EVENT(rxrpc_rx_data,
 	    TP_PROTO(unsigned int call, rxrpc_seq_t seq,
-		     rxrpc_serial_t serial, u8 flags, u8 anno),
+		     rxrpc_serial_t serial, u8 flags),
 
-	    TP_ARGS(call, seq, serial, flags, anno),
+	    TP_ARGS(call, seq, serial, flags),
 
 	    TP_STRUCT__entry(
 		    __field(unsigned int,		call		)
 		    __field(rxrpc_seq_t,		seq		)
 		    __field(rxrpc_serial_t,		serial		)
 		    __field(u8,				flags		)
-		    __field(u8,				anno		)
 			     ),
 
 	    TP_fast_assign(
@@ -650,15 +655,13 @@ TRACE_EVENT(rxrpc_rx_data,
 		    __entry->seq = seq;
 		    __entry->serial = serial;
 		    __entry->flags = flags;
-		    __entry->anno = anno;
 			   ),
 
-	    TP_printk("c=%08x DATA %08x q=%08x fl=%02x a=%02x",
+	    TP_printk("c=%08x DATA %08x q=%08x fl=%02x",
 		      __entry->call,
 		      __entry->serial,
 		      __entry->seq,
-		      __entry->flags,
-		      __entry->anno)
+		      __entry->flags)
 	    );
 
 TRACE_EVENT(rxrpc_rx_ack,
@@ -856,47 +859,73 @@ TRACE_EVENT(rxrpc_tx_ack,
 
 TRACE_EVENT(rxrpc_receive,
 	    TP_PROTO(struct rxrpc_call *call, enum rxrpc_receive_trace why,
-		     rxrpc_serial_t serial, rxrpc_seq_t seq),
+		     rxrpc_serial_t serial, rxrpc_seq_t seq, u8 nr_sub),
 
-	    TP_ARGS(call, why, serial, seq),
+	    TP_ARGS(call, why, serial, seq, nr_sub),
 
 	    TP_STRUCT__entry(
 		    __field(unsigned int,		call		)
 		    __field(enum rxrpc_receive_trace,	why		)
+		    __field(u8,				nr_sub		)
 		    __field(rxrpc_serial_t,		serial		)
 		    __field(rxrpc_seq_t,		seq		)
-		    __field(rxrpc_seq_t,		hard_ack	)
-		    __field(rxrpc_seq_t,		top		)
+		    __field(u64,			window		)
 			     ),
 
 	    TP_fast_assign(
 		    __entry->call = call->debug_id;
 		    __entry->why = why;
+		    __entry->nr_sub = nr_sub;
 		    __entry->serial = serial;
 		    __entry->seq = seq;
-		    __entry->hard_ack = call->rx_hard_ack;
-		    __entry->top = call->rx_top;
+		    __entry->window = atomic64_read(&call->ackr_window);
 			   ),
 
-	    TP_printk("c=%08x %s r=%08x q=%08x w=%08x-%08x",
+	    TP_printk("c=%08x %s r=%08x q=%08x+%x w=%08x-%08x",
 		      __entry->call,
 		      __print_symbolic(__entry->why, rxrpc_receive_traces),
 		      __entry->serial,
 		      __entry->seq,
-		      __entry->hard_ack,
-		      __entry->top)
+		      __entry->nr_sub,
+		      lower_32_bits(__entry->window),
+		      upper_32_bits(__entry->window))
 	    );
 
 TRACE_EVENT(rxrpc_recvmsg,
 	    TP_PROTO(struct rxrpc_call *call, enum rxrpc_recvmsg_trace why,
-		     rxrpc_seq_t seq, unsigned int offset, unsigned int len,
 		     int ret),
 
-	    TP_ARGS(call, why, seq, offset, len, ret),
+	    TP_ARGS(call, why, ret),
 
 	    TP_STRUCT__entry(
 		    __field(unsigned int,		call		)
 		    __field(enum rxrpc_recvmsg_trace,	why		)
+		    __field(int,			ret		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->call = call ? call->debug_id : 0;
+		    __entry->why = why;
+		    __entry->ret = ret;
+			   ),
+
+	    TP_printk("c=%08x %s ret=%d",
+		      __entry->call,
+		      __print_symbolic(__entry->why, rxrpc_recvmsg_traces),
+		      __entry->ret)
+	    );
+
+TRACE_EVENT(rxrpc_recvdata,
+	    TP_PROTO(struct rxrpc_call *call, enum rxrpc_recvmsg_trace why,
+		     rxrpc_seq_t seq, u8 sub, unsigned int offset, unsigned int len,
+		     int ret),
+
+	    TP_ARGS(call, why, seq, sub, offset, len, ret),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		call		)
+		    __field(enum rxrpc_recvmsg_trace,	why		)
+		    __field(u8,				sub		)
 		    __field(rxrpc_seq_t,		seq		)
 		    __field(unsigned int,		offset		)
 		    __field(unsigned int,		len		)
@@ -907,15 +936,17 @@ TRACE_EVENT(rxrpc_recvmsg,
 		    __entry->call = call ? call->debug_id : 0;
 		    __entry->why = why;
 		    __entry->seq = seq;
+		    __entry->sub = sub;
 		    __entry->offset = offset;
 		    __entry->len = len;
 		    __entry->ret = ret;
 			   ),
 
-	    TP_printk("c=%08x %s q=%08x o=%u l=%u ret=%d",
+	    TP_printk("c=%08x %s q=%08x s=%u o=%u l=%u ret=%d",
 		      __entry->call,
 		      __print_symbolic(__entry->why, rxrpc_recvmsg_traces),
 		      __entry->seq,
+		      __entry->sub,
 		      __entry->offset,
 		      __entry->len,
 		      __entry->ret)
@@ -1440,7 +1471,7 @@ TRACE_EVENT(rxrpc_call_reset,
 		    __entry->call_serial = call->rx_serial;
 		    __entry->conn_serial = call->conn->hi_serial;
 		    __entry->tx_seq = call->tx_hard_ack;
-		    __entry->rx_seq = call->rx_hard_ack;
+		    __entry->rx_seq = call->rx_highest_seq;
 			   ),
 
 	    TP_printk("c=%08x %08x:%08x r=%08x/%08x tx=%08x rx=%08x",
