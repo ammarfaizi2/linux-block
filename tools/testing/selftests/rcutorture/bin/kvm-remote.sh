@@ -43,10 +43,9 @@ shift
 # TD:	  kvm-remote.sh.$$
 # ds:	  yyyy.mm.dd-hh.mm.ss-remote
 
-TD=kvm-remote.sh.$$
-T=${TMPDIR-/tmp}/$TD
+TD=kvm-remote.sh.XXXXXX
+T="`mktemp -d ${TMPDIR-/tmp}/$TD`"
 trap 'rm -rf $T' 0
-mkdir $T
 
 resdir="$T/res"
 ds=`date +%Y.%m.%d-%H.%M.%S`-remote
