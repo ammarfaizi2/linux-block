@@ -478,7 +478,7 @@ static void remove_inode_hugepages(struct inode *inode, loff_t lstart,
 			folio_lock(folio);
 			/*
 			 * We must free the huge page and remove from page
-			 * cache BEFORE removing the * region/reserve map
+			 * cache BEFORE removing the region/reserve map
 			 * (hugetlb_unreserve_pages).  In rare out of memory
 			 * conditions, removal of the region/reserve map could
 			 * fail. Correspondingly, the subpool and global
