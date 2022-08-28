@@ -541,7 +541,6 @@ static void remove_inode_hugepages(struct inode *inode, loff_t lstart,
 	struct folio_batch fbatch;
 	struct folio *folio;
 	pgoff_t next, index;
-	int i, freed = 0;
 	unsigned int i;
 	long freed = 0;
 	u32 hash;
