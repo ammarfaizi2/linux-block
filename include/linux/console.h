@@ -184,7 +184,17 @@ extern void console_list_unlock(void) __releases(console_mutex);
  * Requires console_lock to be held which guarantees that the
  * list is immutable.
  */
-#define for_each_console(con)						\
+#define for_each_console(con) \
+	for (con = console_drivers; con != NULL; con = con->next)
+
+/**
+ * for_each_console_kgdb() - Iterator over registered consoles for KGDB
+ * @con:	struct console pointer used as loop cursor
+ *
+ * Has no serialization requirements and KGDB pretends that this is safe.
+ * Don't use outside of the KGDB fairy tale land!
+ */
+#define for_each_console_kgdb(con)				\
 	for (con = console_drivers; con != NULL; con = con->next)
 
 extern int console_set_on_cmdline;
