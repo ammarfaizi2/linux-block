@@ -537,7 +537,7 @@ static void remove_inode_hugepages(struct inode *inode, loff_t lstart,
 	const pgoff_t start = lstart >> huge_page_shift(h);
 	const pgoff_t end = lend >> huge_page_shift(h);
 	pgoff_t m_end = lm_end >> huge_page_shift(h);
-	pgoff_t m_start, m_index;
+	pgoff_t m_start;
 	struct folio_batch fbatch;
 	struct folio *folio;
 	pgoff_t next, index;
@@ -560,7 +560,7 @@ static void remove_inode_hugepages(struct inode *inode, loff_t lstart,
 			 * due to a race with fault code.
 			 */
 			freed += fault_lock_inode_indicies(h, inode, mapping,
-						m_start, m_index, truncate_op);
+						m_start, index, truncate_op);
 
 			/*
 			 * Remove folio that was part of folio_batch.
