@@ -147,13 +147,8 @@ static int __init pdc_console_tty_driver_init(void)
 
 	struct console *tmp;
 
-	console_lock();
-	for_each_console(tmp)
-		if (tmp == &pdc_cons)
-			break;
-	console_unlock();
-
-	if (!tmp) {
+	/* Pretend that this works as much as it pretended to work historically */
+	if (hlist_unhashed_lockless(&pdc_cons.node)) {
 		printk(KERN_INFO "PDC console driver not registered anymore, not creating %s\n", pdc_cons.name);
 		return -ENODEV;
 	}
@@ -272,15 +267,15 @@ void pdc_console_restart(bool hpmc)
 	if (pdc_console_initialized)
 		return;
 
-	if (!hpmc && console_drivers)
+	if (!hpmc && !hlist_empty(&console_list))
 		return;
 
 	/* If we've already seen the output, don't bother to print it again */
-	if (console_drivers != NULL)
+	if (!hlist_empty(&console_list))
 		pdc_cons.flags &= ~CON_PRINTBUFFER;
 
-	while ((console = console_drivers) != NULL)
-		unregister_console(console_drivers);
+	while (!hlist_empty(&console_list))
+		unregister_console(READ_ONCE(console_list.first));
 
 	/* force registering the pdc console */
 	pdc_console_init_force();
