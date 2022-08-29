@@ -54,7 +54,8 @@ bootargs=
 dryrun=
 dur=
 default_link="cp -R"
-rundir="`pwd`/tools/testing/selftests/rcutorture/res/`date +%Y.%m.%d-%H.%M.%S-again`"
+resdir="`pwd`/tools/testing/selftests/rcutorture/res"
+rundir="$resdir/`date +%Y.%m.%d-%H.%M.%S-again`"
 
 startdate="`date`"
 starttime="`get_starttime`"
@@ -62,6 +63,7 @@ starttime="`get_starttime`"
 usage () {
 	echo "Usage: $scriptname $oldrun [ arguments ]:"
 	echo "       --bootargs kernel-boot-arguments"
+	echo "       --datestamp string"
 	echo "       --dryrun"
 	echo "       --duration minutes | <seconds>s | <hours>h | <days>d"
 	echo "       --link hard|soft|copy"
@@ -76,6 +78,17 @@ do
 	--bootargs|--bootarg)
 		checkarg --bootargs "(list of kernel boot arguments)" "$#" "$2" '.*' '^--'
 		bootargs="$bootargs $2"
+		shift
+		;;
+	--datestamp)
+		checkarg --datestamp "(relative pathname)" "$#" "$2" '^[a-zA-Z0-9._/-]*$' '^--'
+		ds=$2
+		rundir="$resdir/$ds"
+		if test -e "$rundir"
+		then
+			echo "--rundir $2: Already exists."
+			usage
+		fi
 		shift
 		;;
 	--dryrun)
@@ -128,8 +141,11 @@ do
 		shift
 		;;
 	*)
-		echo Unknown argument $1
-		usage
+		if test -n "$1"
+		then
+			echo Unknown argument $1
+			usage
+		fi
 		;;
 	esac
 	shift
