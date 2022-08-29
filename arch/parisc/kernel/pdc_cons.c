@@ -237,18 +237,42 @@ void __init pdc_console_init(void)
 
 
 /*
- * Used for emergencies. Currently only used if an HPMC occurs. If an
- * HPMC occurs, it is possible that the current console may not be
- * properly initialised after the PDC IO reset. This routine unregisters
- * all of the current consoles, reinitializes the pdc console and
- * registers it.
+ * <Historical comments>
+ *
+ * Used for emergencies.
+ *
+ *  - If an HPMC occurs, it is possible that the current console may not be
+ *    properly initialised after the PDC IO reset. This routine unregisters
+ *    all of the current consoles, reinitializes the pdc console and registers
+ *    it.
+ *
+ *  - Maybe the kernel hasn't booted very far yet and hasn't been able
+ *    to initialize the serial or STI console. In that case we should
+ *    re-enable the pdc console, so that the user will be able to
+ *    identify the problem.
+ *
+ * </Historical comments>
+ *
+ * The above is all wishful thinking:
+ *
+ *  - Invoking [un]register_console() from exception contexts is obviously
+ *    unsafe.
+ *
+ *  - If the HPMC left the machine in unpleasant state and the pdc console
+ *    was already initialized, but later removed due to CON_BOOT then this
+ *    will do nothing.
+ *
+ * Pretend that any of the below works in the same way as we pretend that
+ * any of PARISC works.
  */
-
-void pdc_console_restart(void)
+void pdc_console_restart(bool hpmc)
 {
 	struct console *console;
 
 	if (pdc_console_initialized)
+		return;
+
+	if (!hpmc && console_drivers)
 		return;
 
 	/* If we've already seen the output, don't bother to print it again */
