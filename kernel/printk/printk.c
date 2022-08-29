@@ -79,10 +79,14 @@ int oops_in_progress;
 EXPORT_SYMBOL(oops_in_progress);
 
 /*
- * console_sem protects the console_drivers list, and also
- * provides serialisation for access to the entire console
- * driver system.
+ * console_sem protects the console_drivers list, and also provides
+ * serialization for access to the entire console driver system.
+ *
+ * console_mutex serializes register/unregister. console_sem has to be
+ * taken for any list manipulation inside the console_mutex locked
+ * section to keep the console BKL machinery happy.
  */
+static DEFINE_MUTEX(console_mutex);
 static DEFINE_SEMAPHORE(console_sem);
 struct console *console_drivers;
 EXPORT_SYMBOL_GPL(console_drivers);
@@ -103,6 +107,12 @@ static int __read_mostly suppress_panic_printk;
 static struct lockdep_map console_lock_dep_map = {
 	.name = "console_lock"
 };
+
+void lockdep_assert_console_list_lock_held(void)
+{
+	lockdep_assert_held(&console_mutex);
+}
+
 #endif
 
 enum devkmsg_log_bits {
@@ -219,6 +229,26 @@ int devkmsg_sysctl_set_loglvl(struct ctl_table *table, int write,
 	return 0;
 }
 #endif /* CONFIG_PRINTK && CONFIG_SYSCTL */
+
+/**
+ * console_list_lock - Lock the console list
+ *
+ * For non-console related list walks, e.g. procfs, sysfs...
+ */
+void console_list_lock(void)
+{
+	mutex_lock(&console_mutex);
+}
+
+/**
+ * console_list_unlock - Unlock the console list
+ *
+ * Counterpart to console_list_lock()
+ */
+void console_list_unlock(void)
+{
+	mutex_unlock(&console_mutex);
+}
 
 /*
  * Helper macros to handle lockdep when locking/unlocking console_sem. We use
@@ -2978,17 +3008,21 @@ struct tty_driver *console_device(int *index)
 void console_stop(struct console *console)
 {
 	__pr_flush(console, 1000, true);
+	console_list_lock();
 	console_lock();
 	console->flags &= ~CON_ENABLED;
 	console_unlock();
+	console_list_unlock();
 }
 EXPORT_SYMBOL(console_stop);
 
 void console_start(struct console *console)
 {
+	console_list_lock();
 	console_lock();
 	console->flags |= CON_ENABLED;
 	console_unlock();
+	console_list_unlock();
 	__pr_flush(console, 1000, true);
 }
 EXPORT_SYMBOL(console_start);
@@ -3081,6 +3115,8 @@ static void try_enable_default_console(struct console *newcon)
 	       (con->flags & CON_BOOT) ? "boot" : "",	\
 	       con->name, con->index, ##__VA_ARGS__)
 
+static int console_unregister_locked(struct console *console);
+
 /*
  * The console driver calls this routine during kernel initialization
  * to register the console printing procedure with printk() and to
@@ -3107,13 +3143,14 @@ void register_console(struct console *newcon)
 	bool realcon_enabled = false;
 	int err;
 
-	for_each_console(con) {
+	console_list_lock();
+	for_each_registered_console(con) {
 		if (WARN(con == newcon, "console '%s%d' already registered\n",
 					 con->name, con->index))
-			return;
+			goto unlock;
 	}
 
-	for_each_console(con) {
+	for_each_registered_console(con) {
 		if (con->flags & CON_BOOT)
 			bootcon_enabled = true;
 		else
@@ -3124,7 +3161,7 @@ void register_console(struct console *newcon)
 	if (newcon->flags & CON_BOOT && realcon_enabled) {
 		pr_info("Too late to register bootconsole %s%d\n",
 			newcon->name, newcon->index);
-		return;
+		goto unlock;
 	}
 
 	/*
@@ -3155,7 +3192,7 @@ void register_console(struct console *newcon)
 
 	/* printk() messages are not printed to the Braille console. */
 	if (err || newcon->flags & CON_BRL)
-		return;
+		goto unlock;
 
 	/*
 	 * If we have a bootconsole, and are switching to a real console,
@@ -3209,14 +3246,17 @@ void register_console(struct console *newcon)
 	if (bootcon_enabled &&
 	    ((newcon->flags & (CON_CONSDEV | CON_BOOT)) == CON_CONSDEV) &&
 	    !keep_bootcon) {
-		for_each_console(con)
+		for_each_console(con) {
 			if (con->flags & CON_BOOT)
-				unregister_console(con);
+				console_unregister_locked(con);
+		}
 	}
+unlock:
+	console_list_unlock();
 }
 EXPORT_SYMBOL(register_console);
 
-int unregister_console(struct console *console)
+static int console_unregister_locked(struct console *console)
 {
 	struct console *con;
 	int res;
@@ -3267,6 +3307,16 @@ out_disable_unlock:
 	console->flags &= ~CON_ENABLED;
 	console_unlock();
 
+	return res;
+}
+
+int unregister_console(struct console *console)
+{
+	int res;
+
+	console_list_lock();
+	res = console_unregister_locked(console);
+	console_list_unlock();
 	return res;
 }
 EXPORT_SYMBOL(unregister_console);
@@ -3320,7 +3370,8 @@ static int __init printk_late_init(void)
 	struct console *con;
 	int ret;
 
-	for_each_console(con) {
+	console_list_lock();
+	for_each_registered_console(con) {
 		if (!(con->flags & CON_BOOT))
 			continue;
 
@@ -3337,9 +3388,11 @@ static int __init printk_late_init(void)
 			 */
 			pr_warn("bootconsole [%s%d] uses init memory and must be disabled even before the real one is ready\n",
 				con->name, con->index);
-			unregister_console(con);
+			console_unregister_locked(con);
 		}
 	}
+	console_list_unlock();
+
 	ret = cpuhp_setup_state_nocalls(CPUHP_PRINTK_DEAD, "printk:dead", NULL,
 					console_cpu_notify);
 	WARN_ON(ret < 0);
