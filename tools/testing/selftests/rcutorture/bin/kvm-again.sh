@@ -56,6 +56,8 @@ dur=
 default_link="cp -R"
 resdir="`pwd`/tools/testing/selftests/rcutorture/res"
 rundir="$resdir/`date +%Y.%m.%d-%H.%M.%S-again`"
+got_datestamp=
+got_rundir=
 
 startdate="`date`"
 starttime="`get_starttime`"
@@ -69,6 +71,7 @@ usage () {
 	echo "       --link hard|soft|copy"
 	echo "       --remote"
 	echo "       --rundir /new/res/path"
+	echo "Command line: $scriptname $args"
 	exit 1
 }
 
@@ -82,11 +85,17 @@ do
 		;;
 	--datestamp)
 		checkarg --datestamp "(relative pathname)" "$#" "$2" '^[a-zA-Z0-9._/-]*$' '^--'
+		if test -n "$got_rundir" || test -n "$got_datestamp"
+		then
+			echo Only one of --datestamp or --rundir may be specified
+			usage
+		fi
+		got_datestamp=y
 		ds=$2
 		rundir="$resdir/$ds"
 		if test -e "$rundir"
 		then
-			echo "--rundir $2: Already exists."
+			echo "--datestamp $2: Already exists."
 			usage
 		fi
 		shift
@@ -132,6 +141,12 @@ do
 		;;
 	--rundir)
 		checkarg --rundir "(absolute pathname)" "$#" "$2" '^/' '^error'
+		if test -n "$got_rundir" || test -n "$got_datestamp"
+		then
+			echo Only one of --datestamp or --rundir may be specified
+			usage
+		fi
+		got_rundir=y
 		rundir=$2
 		if test -e "$rundir"
 		then
