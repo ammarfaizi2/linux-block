@@ -2456,6 +2456,7 @@ static int soft_offline_in_use_page(struct page *page)
 			pr_info("soft offline: %#lx: thp split failed\n", pfn);
 			return -EBUSY;
 		}
+		hpage = page;
 	}
 
 	lock_page(page);
