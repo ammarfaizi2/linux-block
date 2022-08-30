@@ -63,8 +63,8 @@ static void *c_start(struct seq_file *m, loff_t *pos)
 	struct console *con;
 	loff_t off = 0;
 
-	console_lock();
-	for_each_console(con)
+	console_list_lock();
+	for_each_registered_console(con)
 		if (off++ == *pos)
 			break;
 
@@ -80,7 +80,7 @@ static void *c_next(struct seq_file *m, void *v, loff_t *pos)
 
 static void c_stop(struct seq_file *m, void *v)
 {
-	console_unlock();
+	console_list_unlock();
 }
 
 static const struct seq_operations consoles_op = {

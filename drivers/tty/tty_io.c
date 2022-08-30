@@ -3535,8 +3535,8 @@ static ssize_t show_cons_active(struct device *dev,
 	struct console *c;
 	ssize_t count = 0;
 
-	console_lock();
-	for_each_console(c) {
+	console_list_lock();
+	for_each_registered_console(c) {
 		if (!c->device)
 			continue;
 		if (!c->write)
@@ -3560,7 +3560,7 @@ static ssize_t show_cons_active(struct device *dev,
 
 		count += sprintf(buf + count, "%c", i ? ' ':'\n');
 	}
-	console_unlock();
+	console_list_unlock();
 
 	return count;
 }

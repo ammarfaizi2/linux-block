@@ -2985,18 +2985,18 @@ void console_flush_on_panic(enum con_flush_mode mode)
  */
 struct tty_driver *console_device(int *index)
 {
-	struct console *c;
 	struct tty_driver *driver = NULL;
+	struct console *c;
 
-	console_lock();
-	for_each_console(c) {
+	console_list_lock();
+	for_each_registered_console(c) {
 		if (!c->device)
 			continue;
 		driver = c->device(c, index);
 		if (driver)
 			break;
 	}
-	console_unlock();
+	console_list_unlock();
 	return driver;
 }
 
