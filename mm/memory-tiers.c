@@ -179,7 +179,7 @@ bool node_is_toptier(int node)
 		toptier = true;
 		goto out;
 	}
-	if (memtier->adistance_start < top_tier_adistance)
+	if (memtier->adistance_start <= top_tier_adistance)
 		toptier = true;
 	else
 		toptier = false;
@@ -361,7 +361,8 @@ static void establish_demotion_targets(void)
 			 * abstract distance below the max value of this memtier
 			 * is considered toptier.
 			 */
-			top_tier_adistance = memtier->adistance_start + MEMTIER_CHUNK_SIZE;
+			top_tier_adistance = memtier->adistance_start +
+						MEMTIER_CHUNK_SIZE - 1;
 			break;
 		}
 	}
