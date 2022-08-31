@@ -1272,7 +1272,7 @@ error_maple_preallocate:
 	kmem_cache_free(vm_region_jar, region);
 	vm_area_free(vma);
 	pr_warn("Allocation of vma tree for process %d failed\n", current->pid);
-	show_free_areas(0, NULL, GFP_KERNEL);
+	show_free_areas(0, NULL);
 	return -ENOMEM;
 
 }
