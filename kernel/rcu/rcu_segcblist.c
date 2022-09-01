@@ -38,7 +38,7 @@ void rcu_cblist_enqueue(struct rcu_cblist *rclp, struct rcu_head *rhp)
  * element of the second rcu_cblist structure, but ensuring that the second
  * rcu_cblist structure, if initially non-empty, always appears non-empty
  * throughout the process.  If rdp is NULL, the second rcu_cblist structure
- * is instead initialized to empty.
+ * is instead initialized to empty. Also account for lazy_len for lazy CBs.
  */
 void rcu_cblist_flush_enqueue(struct rcu_cblist *drclp,
 			      struct rcu_cblist *srclp,
