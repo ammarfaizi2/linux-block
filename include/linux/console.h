@@ -173,6 +173,20 @@ enum cons_flags {
 };
 
 /**
+ * struct cons_text_buf - console output text buffer
+ * @ext_text:		Buffer for extended log format text
+ * @dropped_text:	Buffer for dropped text
+ * @text:		Buffer for ringbuffer text
+ */
+struct cons_text_buf {
+	union {
+		char	ext_text[CONSOLE_EXT_LOG_MAX];
+		char	dropped_text[DROPPED_TEXT_MAX];
+	};
+	char		text[CONSOLE_LOG_MAX];
+};
+
+/**
  * struct console - The console descriptor structure
  * @name:		The name of the console driver
  * @write:		Write callback to output messages (Optional)
