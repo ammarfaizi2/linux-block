@@ -33,6 +33,27 @@ void rcu_cblist_enqueue(struct rcu_cblist *rclp, struct rcu_head *rhp)
 }
 
 /*
+ * Set a debug flag on all CBs in the unsegmented cblist @rclp.
+ *
+ * The callback causing the flush. Should be NULL if its a timer that does it.
+ */
+#ifdef CONFIG_RCU_TRACE_CB
+void rcu_cblist_set_flush(struct rcu_cblist *rcl,
+			 enum cb_debug_flags flags,
+			 unsigned long flush_jiff)
+{
+	if (!rcl || !rcl->head)
+		return;
+
+	for (struct rcu_head *head = rcl->head;
+			head && head != *(rcl->tail); head = head->next) {
+		head->di.flags |= flags;
+		head->di.cb_flush_jiff = flush_jiff;
+	}
+}
+#endif
+
+/*
  * Flush the second rcu_cblist structure onto the first one, obliterating
  * any contents of the first.  If rhp is non-NULL, enqueue it as the sole
  * element of the second rcu_cblist structure, but ensuring that the second
