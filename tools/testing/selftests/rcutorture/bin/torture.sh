@@ -585,6 +585,7 @@ then
 					cp -l "$i/$v".xz "`dirname "$v"`"
 				done
 			done
+			cd "$dirstash"
 		fi
 		echo Size after compressing $n2compress files: `du -sh $tdir | awk '{ print $1 }'` `date` 2>&1 | tee -a "$tdir/log-xz" | tee -a $T/log
 		echo Total duration `get_starttime_duration $starttime`. | tee -a $T/log
