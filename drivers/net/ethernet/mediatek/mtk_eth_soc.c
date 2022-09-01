@@ -1573,8 +1573,8 @@ static int mtk_xdp_submit_frame(struct mtk_eth *eth, struct xdp_frame *xdpf,
 		.last	= !xdp_frame_has_frags(xdpf),
 	};
 	int err, index = 0, n_desc = 1, nr_frags;
-	struct mtk_tx_dma *htxd, *txd, *txd_pdma;
 	struct mtk_tx_buf *htx_buf, *tx_buf;
+	struct mtk_tx_dma *htxd, *txd;
 	void *data = xdpf->data;
 
 	if (unlikely(test_bit(MTK_RESETTING, &eth->state)))
@@ -1608,7 +1608,6 @@ static int mtk_xdp_submit_frame(struct mtk_eth *eth, struct xdp_frame *xdpf,
 
 		if (MTK_HAS_CAPS(soc->caps, MTK_QDMA) || (index & 0x1)) {
 			txd = mtk_qdma_phys_to_virt(ring, txd->txd2);
-			txd_pdma = qdma_to_pdma(ring, txd);
 			if (txd == ring->last_free)
 				goto unmap;
 
@@ -1629,7 +1628,8 @@ static int mtk_xdp_submit_frame(struct mtk_eth *eth, struct xdp_frame *xdpf,
 	htx_buf->data = xdpf;
 
 	if (!MTK_HAS_CAPS(soc->caps, MTK_QDMA)) {
-		txd_pdma = qdma_to_pdma(ring, txd);
+		struct mtk_tx_dma *txd_pdma = qdma_to_pdma(ring, txd);
+
 		if (index & 1)
 			txd_pdma->txd2 |= TX_DMA_LS0;
 		else
@@ -1660,13 +1660,15 @@ static int mtk_xdp_submit_frame(struct mtk_eth *eth, struct xdp_frame *xdpf,
 
 unmap:
 	while (htxd != txd) {
-		txd_pdma = qdma_to_pdma(ring, htxd);
 		tx_buf = mtk_desc_to_tx_buf(ring, htxd, soc->txrx.txd_size);
 		mtk_tx_unmap(eth, tx_buf, NULL, false);
 
 		htxd->txd3 = TX_DMA_LS0 | TX_DMA_OWNER_CPU;
-		if (!MTK_HAS_CAPS(soc->caps, MTK_QDMA))
+		if (!MTK_HAS_CAPS(soc->caps, MTK_QDMA)) {
+			struct mtk_tx_dma *txd_pdma = qdma_to_pdma(ring, htxd);
+
 			txd_pdma->txd2 = TX_DMA_DESP2_DEF;
+		}
 
 		htxd = mtk_qdma_phys_to_virt(ring, htxd->txd2);
 	}
@@ -1732,7 +1734,7 @@ static u32 mtk_xdp_run(struct mtk_eth *eth, struct mtk_rx_ring *ring,
 	case XDP_TX: {
 		struct xdp_frame *xdpf = xdp_convert_buff_to_frame(xdp);
 
-		if (mtk_xdp_submit_frame(eth, xdpf, dev, false)) {
+		if (!xdpf || mtk_xdp_submit_frame(eth, xdpf, dev, false)) {
 			count = &hw_stats->xdp_stats.rx_xdp_tx_errors;
 			act = XDP_DROP;
 			break;
@@ -1891,10 +1893,19 @@ static int mtk_poll_rx(struct napi_struct *napi, int budget,
 		skb->dev = netdev;
 		bytes += skb->len;
 
-		if (MTK_HAS_CAPS(eth->soc->caps, MTK_NETSYS_V2))
+		if (MTK_HAS_CAPS(eth->soc->caps, MTK_NETSYS_V2)) {
+			hash = trxd.rxd5 & MTK_RXD5_FOE_ENTRY;
+			if (hash != MTK_RXD5_FOE_ENTRY)
+				skb_set_hash(skb, jhash_1word(hash, 0),
+					     PKT_HASH_TYPE_L4);
 			rxdcsum = &trxd.rxd3;
-		else
+		} else {
+			hash = trxd.rxd4 & MTK_RXD4_FOE_ENTRY;
+			if (hash != MTK_RXD4_FOE_ENTRY)
+				skb_set_hash(skb, jhash_1word(hash, 0),
+					     PKT_HASH_TYPE_L4);
 			rxdcsum = &trxd.rxd4;
+		}
 
 		if (*rxdcsum & eth->soc->txrx.rx_dma_l4_valid)
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
@@ -1902,16 +1913,9 @@ static int mtk_poll_rx(struct napi_struct *napi, int budget,
 			skb_checksum_none_assert(skb);
 		skb->protocol = eth_type_trans(skb, netdev);
 
-		hash = trxd.rxd4 & MTK_RXD4_FOE_ENTRY;
-		if (hash != MTK_RXD4_FOE_ENTRY) {
-			hash = jhash_1word(hash, 0);
-			skb_set_hash(skb, hash, PKT_HASH_TYPE_L4);
-		}
-
 		reason = FIELD_GET(MTK_RXD4_PPE_CPU_REASON, trxd.rxd4);
 		if (reason == MTK_PPE_CPU_REASON_HIT_UNBIND_RATE_REACHED)
-			mtk_ppe_check_skb(eth->ppe, skb,
-					  trxd.rxd4 & MTK_RXD4_FOE_ENTRY);
+			mtk_ppe_check_skb(eth->ppe, skb, hash);
 
 		if (netdev->features & NETIF_F_HW_VLAN_CTAG_RX) {
 			if (MTK_HAS_CAPS(eth->soc->caps, MTK_NETSYS_V2)) {
