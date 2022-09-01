@@ -5358,7 +5358,6 @@ retry_avoidcopy:
 			u32 hash;
 
 			put_page(old_page);
-			BUG_ON(huge_pte_none(pte));
 			/*
 			 * Drop hugetlb_fault_mutex and i_mmap_rwsem before
 			 * unmapping.  unmapping needs to hold i_mmap_rwsem
