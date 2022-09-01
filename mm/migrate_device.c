@@ -193,20 +193,17 @@ again:
 			bool anon_exclusive;
 			pte_t swp_pte;
 
-			anon_exclusive = PageAnon(page) && PageAnonExclusive(page);
-			if (anon_exclusive) {
-				flush_cache_page(vma, addr, pte_pfn(*ptep));
-				ptep_clear_flush(vma, addr, ptep);
+			flush_cache_page(vma, addr, pte_pfn(*ptep));
+			ptep_get_and_clear(mm, addr, ptep);
 
-				if (page_try_share_anon_rmap(page)) {
-					set_pte_at(mm, addr, ptep, pte);
-					unlock_page(page);
-					put_page(page);
-					mpfn = 0;
-					goto next;
-				}
-			} else {
-				ptep_get_and_clear(mm, addr, ptep);
+			/* See page_try_share_anon_rmap(): clear PTE first. */
+			anon_exclusive = PageAnon(page) && PageAnonExclusive(page);
+			if (anon_exclusive && page_try_share_anon_rmap(page)) {
+				set_pte_at(mm, addr, ptep, pte);
+				unlock_page(page);
+				put_page(page);
+				mpfn = 0;
+				goto next;
 			}
 
 			migrate->cpages++;
