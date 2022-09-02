@@ -25,6 +25,8 @@
 
 unsigned long elf_hwcap __read_mostly;
 
+bool riscv_tso_hw __read_mostly;
+
 /* Host ISA bitmap */
 static DECLARE_BITMAP(riscv_isa, RISCV_ISA_EXT_MAX) __read_mostly;
 
@@ -204,6 +206,7 @@ void __init riscv_fill_hwcap(void)
 				SET_ISA_EXT_MAP("zicbom", RISCV_ISA_EXT_ZICBOM);
 				SET_ISA_EXT_MAP("zihintpause", RISCV_ISA_EXT_ZIHINTPAUSE);
 				SET_ISA_EXT_MAP("sstc", RISCV_ISA_EXT_SSTC);
+				SET_ISA_EXT_MAP("ztso", RISCV_ISA_EXT_ZTSO);
 			}
 #undef SET_ISA_EXT_MAP
 		}

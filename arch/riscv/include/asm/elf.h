@@ -14,6 +14,7 @@
 #include <asm/auxvec.h>
 #include <asm/byteorder.h>
 #include <asm/cacheinfo.h>
+#include <asm/hwcap.h>
 
 /*
  * These are used to set parameters in the core dumps.
@@ -30,11 +31,23 @@
 
 #define ELF_DATA	ELFDATA2LSB
 
+#define EF_RISCV_TSO	0x0010
+
 /*
- * This is used to ensure we don't load something for the wrong architecture.
+ * Checks to make sure TSO is supported on the 
+ */
+static inline int riscv_elf_tso_ok(long eflags)
+{
+	return likely(!(eflags & EF_RISCV_TSO)) || riscv_tso_hw;
+}
+
+/*
+ * This is used to ensure we don't load something for the wrong architecture or
+ * variant.
  */
 #define elf_check_arch(x) (((x)->e_machine == EM_RISCV) && \
-			   ((x)->e_ident[EI_CLASS] == ELF_CLASS))
+			   ((x)->e_ident[EI_CLASS] == ELF_CLASS) && \
+			   riscv_elf_tso_ok((x)->e_flags))
 
 extern bool compat_elf_check_arch(Elf32_Ehdr *hdr);
 #define compat_elf_check_arch	compat_elf_check_arch
