@@ -175,6 +175,7 @@ struct ath11k_hw_params {
 	bool idle_ps;
 	bool supports_sta_ps;
 	bool cold_boot_calib;
+	bool cbcal_restart_fw;
 	int fw_mem_mode;
 	u32 num_vdevs;
 	u32 num_peers;
@@ -200,6 +201,7 @@ struct ath11k_hw_params {
 	bool hybrid_bus_type;
 	bool fixed_fw_mem;
 	bool support_off_channel_tx;
+	bool supports_multi_bssid;
 };
 
 struct ath11k_hw_ops {
