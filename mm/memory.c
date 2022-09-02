@@ -3726,8 +3726,8 @@ static vm_fault_t handle_pte_marker(struct vm_fault *vmf)
 vm_fault_t do_swap_page(struct vm_fault *vmf)
 {
 	struct vm_area_struct *vma = vmf->vma;
-	struct folio *folio;
-	struct page *page = NULL, *swapcache;
+	struct folio *swapcache, *folio = NULL;
+	struct page *page;
 	struct swap_info_struct *si = NULL;
 	rmap_t rmap_flags = RMAP_NONE;
 	bool exclusive = false;
@@ -3770,11 +3770,11 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
 		goto out;
 
 	page = lookup_swap_cache(entry, vma, vmf->address);
-	swapcache = page;
 	if (page)
 		folio = page_folio(page);
+	swapcache = folio;
 
-	if (!page) {
+	if (!folio) {
 		if (data_race(si->flags & SWP_SYNCHRONOUS_IO) &&
 		    __swap_count(entry) == 1) {
 			/* skip swapcache */
@@ -3807,12 +3807,12 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
 		} else {
 			page = swapin_readahead(entry, GFP_HIGHUSER_MOVABLE,
 						vmf);
-			swapcache = page;
 			if (page)
 				folio = page_folio(page);
+			swapcache = folio;
 		}
 
-		if (!page) {
+		if (!folio) {
 			/*
 			 * Back out if somebody else faulted in this pte
 			 * while we released the pte lock.
@@ -3864,7 +3864,6 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
 		page = ksm_might_need_to_copy(page, vma, vmf->address);
 		if (unlikely(!page)) {
 			ret = VM_FAULT_OOM;
-			page = swapcache;
 			goto out_page;
 		}
 		folio = page_folio(page);
@@ -3875,7 +3874,7 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
 		 * owner. Try removing the extra reference from the local LRU
 		 * pagevecs if required.
 		 */
-		if ((vmf->flags & FAULT_FLAG_WRITE) && page == swapcache &&
+		if ((vmf->flags & FAULT_FLAG_WRITE) && folio == swapcache &&
 		    !folio_test_ksm(folio) && !folio_test_lru(folio))
 			lru_add_drain();
 	}
@@ -3916,7 +3915,7 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
 		 * without __HAVE_ARCH_PTE_SWP_EXCLUSIVE.
 		 */
 		exclusive = pte_swp_exclusive(vmf->orig_pte);
-		if (page != swapcache) {
+		if (folio != swapcache) {
 			/*
 			 * We have a fresh page that is not exposed to the
 			 * swapcache -> certainly exclusive.
@@ -3984,7 +3983,7 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
 	vmf->orig_pte = pte;
 
 	/* ksm created a completely new copy */
-	if (unlikely(page != swapcache && swapcache)) {
+	if (unlikely(folio != swapcache && swapcache)) {
 		page_add_new_anon_rmap(page, vma, vmf->address);
 		folio_add_lru_vma(folio, vma);
 	} else {
@@ -3997,7 +3996,7 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
 	arch_do_swap_page(vma->vm_mm, vma, vmf->address, pte, vmf->orig_pte);
 
 	folio_unlock(folio);
-	if (page != swapcache && swapcache) {
+	if (folio != swapcache && swapcache) {
 		/*
 		 * Hold the lock to avoid the swap entry to be reused
 		 * until we take the PT lock for the pte_same() check
@@ -4006,8 +4005,8 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
 		 * so that the swap count won't change under a
 		 * parallel locked swapcache.
 		 */
-		unlock_page(swapcache);
-		put_page(swapcache);
+		folio_unlock(swapcache);
+		folio_put(swapcache);
 	}
 
 	if (vmf->flags & FAULT_FLAG_WRITE) {
@@ -4031,9 +4030,9 @@ out_page:
 	folio_unlock(folio);
 out_release:
 	folio_put(folio);
-	if (page != swapcache && swapcache) {
-		unlock_page(swapcache);
-		put_page(swapcache);
+	if (folio != swapcache && swapcache) {
+		folio_unlock(swapcache);
+		folio_put(swapcache);
 	}
 	if (si)
 		put_swap_device(si);
