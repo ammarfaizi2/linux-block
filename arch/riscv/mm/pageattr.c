@@ -5,6 +5,7 @@
 
 #include <linux/pagewalk.h>
 #include <linux/pgtable.h>
+#include <linux/sched.h>
 #include <asm/tlbflush.h>
 #include <asm/bitops.h>
 #include <asm/set_memory.h>
@@ -104,24 +105,69 @@ static const struct mm_walk_ops pageattr_ops = {
 	.pte_hole = pageattr_pte_hole,
 };
 
+static int __set_memory_mm(struct mm_struct *mm, unsigned long start,
+			   unsigned long end, pgprot_t set_mask,
+			   pgprot_t clear_mask)
+{
+	int ret;
+	struct pageattr_masks masks = {
+		.set_mask = set_mask,
+		.clear_mask = clear_mask
+	};
+
+	mmap_read_lock(mm);
+	ret = walk_page_range_novma(mm, start, end, &pageattr_ops, NULL,
+				    &masks);
+	mmap_read_unlock(mm);
+
+	return ret;
+}
+
+void fix_kernel_mem_early(char *startp, char *endp, pgprot_t set_mask,
+			  pgprot_t clear_mask)
+{
+	struct task_struct *t, *s;
+
+	unsigned long start = (unsigned long)startp;
+	unsigned long end = PAGE_ALIGN((unsigned long)endp);
+
+	/*
+	 * In the SYSTEM_FREEING_INITMEM state we expect that all async code
+	 * is done and no new userspace task can be created.
+	 * So rcu_read_lock() should be enough here.
+	 */
+	WARN_ON(system_state != SYSTEM_FREEING_INITMEM);
+
+	__set_memory_mm(current->active_mm, start, end, set_mask, clear_mask);
+	__set_memory_mm(&init_mm, start, end, set_mask, clear_mask);
+
+	rcu_read_lock();
+	for_each_process(t) {
+		if (t->flags & PF_KTHREAD)
+			continue;
+		for_each_thread(t, s) {
+			if (s->mm) {
+				__set_memory_mm(s->mm, start, end, set_mask,
+						clear_mask);
+			}
+		}
+	}
+	rcu_read_unlock();
+
+	flush_tlb_kernel_range(start, end);
+}
+
 static int __set_memory(unsigned long addr, int numpages, pgprot_t set_mask,
 			pgprot_t clear_mask)
 {
 	int ret;
 	unsigned long start = addr;
 	unsigned long end = start + PAGE_SIZE * numpages;
-	struct pageattr_masks masks = {
-		.set_mask = set_mask,
-		.clear_mask = clear_mask
-	};
 
 	if (!numpages)
 		return 0;
 
-	mmap_read_lock(&init_mm);
-	ret =  walk_page_range_novma(&init_mm, start, end, &pageattr_ops, NULL,
-				     &masks);
-	mmap_read_unlock(&init_mm);
+	ret = __set_memory_mm(&init_mm, start, end, set_mask, clear_mask);
 
 	flush_tlb_kernel_range(start, end);
 

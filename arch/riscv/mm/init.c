@@ -16,7 +16,6 @@
 #include <linux/of_fdt.h>
 #include <linux/of_reserved_mem.h>
 #include <linux/libfdt.h>
-#include <linux/set_memory.h>
 #include <linux/dma-map-ops.h>
 #include <linux/crash_dump.h>
 #include <linux/hugetlb.h>
@@ -28,6 +27,7 @@
 #include <asm/io.h>
 #include <asm/ptdump.h>
 #include <asm/numa.h>
+#include <asm/set_memory.h>
 
 #include "../kernel/head.h"
 
@@ -714,10 +714,14 @@ static __init pgprot_t pgprot_from_va(uintptr_t va)
 
 void mark_rodata_ro(void)
 {
-	set_kernel_memory(__start_rodata, _data, set_memory_ro);
-	if (IS_ENABLED(CONFIG_64BIT))
-		set_kernel_memory(lm_alias(__start_rodata), lm_alias(_data),
-				  set_memory_ro);
+	pgprot_t set_mask = __pgprot(_PAGE_READ);
+	pgprot_t clear_mask = __pgprot(_PAGE_WRITE);
+
+	fix_kernel_mem_early(__start_rodata, _data, set_mask, clear_mask);
+	if (IS_ENABLED(CONFIG_64BIT)) {
+		fix_kernel_mem_early(lm_alias(__start_rodata), lm_alias(_data),
+				     set_mask, clear_mask);
+	}
 
 	debug_checkwx();
 }
@@ -1243,3 +1247,18 @@ int __meminit vmemmap_populate(unsigned long start, unsigned long end, int node,
 	return vmemmap_populate_basepages(start, end, node, NULL);
 }
 #endif
+
+void free_initmem(void)
+{
+	pgprot_t set_mask = __pgprot(_PAGE_READ | _PAGE_WRITE);
+	pgprot_t clear_mask = IS_ENABLED(CONFIG_64BIT) ?
+			      __pgprot(0) : __pgprot(_PAGE_EXEC);
+
+	if (IS_ENABLED(CONFIG_STRICT_KERNEL_RWX)) {
+		fix_kernel_mem_early(lm_alias(__init_begin),
+				     lm_alias(__init_end),
+				     set_mask, clear_mask);
+	}
+
+	free_initmem_default(POISON_FREE_INITMEM);
+}

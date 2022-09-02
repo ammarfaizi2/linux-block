@@ -16,28 +16,16 @@ int set_memory_rw(unsigned long addr, int numpages);
 int set_memory_x(unsigned long addr, int numpages);
 int set_memory_nx(unsigned long addr, int numpages);
 int set_memory_rw_nx(unsigned long addr, int numpages);
-static __always_inline int set_kernel_memory(char *startp, char *endp,
-					     int (*set_memory)(unsigned long start,
-							       int num_pages))
-{
-	unsigned long start = (unsigned long)startp;
-	unsigned long end = (unsigned long)endp;
-	int num_pages = PAGE_ALIGN(end - start) >> PAGE_SHIFT;
-
-	return set_memory(start, num_pages);
-}
+void fix_kernel_mem_early(char *startp, char *endp, pgprot_t set_mask,
+			  pgprot_t clear_mask);
 #else
 static inline int set_memory_ro(unsigned long addr, int numpages) { return 0; }
 static inline int set_memory_rw(unsigned long addr, int numpages) { return 0; }
 static inline int set_memory_x(unsigned long addr, int numpages) { return 0; }
 static inline int set_memory_nx(unsigned long addr, int numpages) { return 0; }
 static inline int set_memory_rw_nx(unsigned long addr, int numpages) { return 0; }
-static inline int set_kernel_memory(char *startp, char *endp,
-				    int (*set_memory)(unsigned long start,
-						      int num_pages))
-{
-	return 0;
-}
+static inline void fix_kernel_mem_early(char *startp, char *endp,
+					pgprot_t set_mask, pgprot_t clear_mask) { }
 #endif
 
 int set_direct_map_invalid_noflush(struct page *page);
