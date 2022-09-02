@@ -936,6 +936,7 @@ static int dbgfs_rm_context(char *name)
 		new_ctxs[j++] = dbgfs_ctxs[i];
 	}
 
+	dput(dir);
 	kfree(dbgfs_dirs);
 	kfree(dbgfs_ctxs);
 
