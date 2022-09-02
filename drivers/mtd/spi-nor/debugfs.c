@@ -228,11 +228,11 @@ static void spi_nor_debugfs_unregister(void *data)
 
 void spi_nor_debugfs_register(struct spi_nor *nor)
 {
-	struct dentry *rootdir, *d;
+	static struct dentry *rootdir;
+	struct dentry *d;
 	int ret;
 
 	/* Create rootdir once. Will never be deleted again. */
-	rootdir = debugfs_lookup(SPI_NOR_DEBUGFS_ROOT, NULL);
 	if (!rootdir)
 		rootdir = debugfs_create_dir(SPI_NOR_DEBUGFS_ROOT, NULL);
 
