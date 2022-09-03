@@ -187,6 +187,21 @@ struct cons_text_buf {
 };
 
 /**
+ * struct cons_outbuf_desc - console output buffer descriptor
+ * @txtbuf:		Pointer to buffer for storing the text
+ * @outbuf:		Pointer to the position in @buffer for
+ *			writing it out to the device
+ * @len:		Message length
+ * @extmsg:		Select extended format printing
+ */
+struct cons_outbuf_desc {
+	struct cons_text_buf	*txtbuf;
+	char			*outbuf;
+	unsigned int		len;
+	bool			extmsg;
+};
+
+/**
  * struct console - The console descriptor structure
  * @name:		The name of the console driver
  * @write:		Write callback to output messages (Optional)
