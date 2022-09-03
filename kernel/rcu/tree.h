@@ -220,6 +220,7 @@ struct rcu_data {
 	unsigned long nocb_bypass_first; /* Time (jiffies) of first enqueue. */
 	unsigned long nocb_nobypass_last; /* Last ->cblist enqueue (jiffies). */
 	int nocb_nobypass_count;	/* # ->cblist enqueues at ^^^ time. */
+	long lazy_len;			/* Number of buffered lazy callbacks. */
 
 	/* The following fields are used by GP kthread, hence own cacheline. */
 	raw_spinlock_t nocb_gp_lock ____cacheline_internodealigned_in_smp;
@@ -263,9 +264,6 @@ struct rcu_data {
 	unsigned long last_fqs_resched;	/* Time of last rcu_resched(). */
 	unsigned long last_sched_clock;	/* Jiffies of last rcu_sched_clock_irq(). */
 
-#ifdef CONFIG_RCU_LAZY
-	long lazy_len;			/* Length of buffered lazy callbacks. */
-#endif
 	int cpu;
 };
 
