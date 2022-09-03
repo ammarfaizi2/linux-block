@@ -1560,7 +1560,7 @@ static void zs_object_copy(struct size_class *class, unsigned long dst,
 		 * calls must occurs in reverse order of calls to kmap_atomic().
 		 * So, to call kunmap_atomic(s_addr) we should first call
 		 * kunmap_atomic(d_addr). For more details see
-		 * Documentation/mm/highmem.
+		 * Documentation/mm/highmem.rst.
 		 */
 		if (s_off >= PAGE_SIZE) {
 			kunmap_atomic(d_addr);
