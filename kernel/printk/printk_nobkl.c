@@ -328,7 +328,7 @@ static void cons_context_sequence_init(struct cons_context *ctxt)
  * invalid. Caller has to reacquire the console.
  */
 #ifdef CONFIG_64BIT
-static bool __maybe_unused cons_sequence_try_update(struct cons_context *ctxt)
+static bool cons_sequence_try_update(struct cons_context *ctxt)
 {
 	struct console *con = ctxt->console;
 	struct cons_state old, new;
@@ -355,7 +355,7 @@ static bool __maybe_unused cons_sequence_try_update(struct cons_context *ctxt)
 	return true;
 }
 #else
-static bool __maybe_unused cons_sequence_try_update(struct cons_context *ctxt)
+static bool cons_sequence_try_update(struct cons_context *ctxt)
 {
 	struct console *con = ctxt->console;
 	unsigned long old, new, cur;
@@ -1009,6 +1009,109 @@ bool console_enter_unsafe(struct cons_write_context *wctxt)
 bool console_exit_unsafe(struct cons_write_context *wctxt)
 {
 	return __console_update_unsafe(wctxt, false);
+}
+
+static bool cons_fill_outbuf(struct cons_outbuf_desc *desc);
+
+/**
+ * cons_get_record - Fill the buffer with the next pending ringbuffer record
+ * @wctxt:	The write context which will be handed to the write function
+ *
+ * Returns:	True if there are records to print. If the output buffer is
+ *		filled @wctxt->outbuf points to the text, otherwise it is NULL.
+ *
+ *		False signals that there are no pending records anymore and
+ *		the printing can stop.
+ */
+static bool cons_get_record(struct cons_write_context *wctxt)
+{
+	struct cons_context *ctxt = &ACCESS_PRIVATE(wctxt, ctxt);
+	struct console *con = ctxt->console;
+	struct cons_outbuf_desc desc = {
+		.txtbuf		= ctxt->txtbuf,
+		.extmsg		= con->flags & CON_EXTENDED,
+		.seq		= ctxt->newseq,
+		.dropped	= ctxt->dropped,
+	};
+	bool progress = cons_fill_outbuf(&desc);
+
+	ctxt->newseq = desc.seq;
+	ctxt->dropped = desc.dropped;
+
+	wctxt->pos = 0;
+	wctxt->len = desc.len;
+	wctxt->outbuf = desc.outbuf;
+	return progress;
+}
+
+/**
+ * cons_emit_record - Emit record in the acquired context
+ * @wctxt:	The write context which will be handed to the write function
+ *
+ * Returns:	False if the operation was aborted (takeover)
+ *		True otherwise
+ *
+ * In case of takeover the caller is not allowed to touch console state.
+ * The console is owned by someone else. If the caller wants to print
+ * more it has to reacquire the console first.
+ *
+ * If it returns true @wctxt->ctxt.backlog indicates whether there are
+ * still records pending in the ringbuffer,
+ */
+static int __maybe_unused cons_emit_record(struct cons_write_context *wctxt)
+{
+	struct cons_context *ctxt = &ACCESS_PRIVATE(wctxt, ctxt);
+	struct console *con = ctxt->console;
+	bool done = false;
+
+	/*
+	 * @con->dropped is not protected in case of hostile takeovers so
+	 * the update below is racy. Annotate it accordingly.
+	 */
+	ctxt->dropped = data_race(READ_ONCE(con->dropped));
+
+	/* Fill the output buffer with the next record */
+	ctxt->backlog = cons_get_record(wctxt);
+	if (!ctxt->backlog)
+		return true;
+
+	/* Safety point. Don't touch state in case of takeover */
+	if (!console_can_proceed(wctxt))
+		return false;
+
+	/* Counterpart to the read above */
+	WRITE_ONCE(con->dropped, ctxt->dropped);
+
+	/*
+	 * In case of skipped records, Update sequence state in @con.
+	 */
+	if (!wctxt->outbuf)
+		goto update;
+
+	/* Tell the driver about potential unsafe state */
+	wctxt->unsafe = ctxt->state.unsafe;
+
+	if (!ctxt->thread && con->write_atomic) {
+		done = con->write_atomic(con, wctxt);
+	} else {
+		cons_release(ctxt);
+		WARN_ON_ONCE(1);
+		return false;
+	}
+
+	/* If not done, the write was aborted due to takeover */
+	if (!done)
+		return false;
+
+	ctxt->newseq++;
+update:
+	/*
+	 * The sequence update attempt is not part of console_release()
+	 * because in panic situations the console is not released by
+	 * the panic CPU until all records are written. On 32bit the
+	 * sequence is seperate from state anyway.
+	 */
+	return cons_sequence_try_update(ctxt);
 }
 
 /**
