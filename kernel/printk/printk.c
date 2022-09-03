@@ -666,11 +666,9 @@ struct devkmsg_user {
 	atomic64_t seq;
 	struct ratelimit_state rs;
 	struct mutex lock;
-	char buf[CONSOLE_EXT_LOG_MAX];
-
 	struct printk_info info;
-	char text_buf[CONSOLE_EXT_LOG_MAX];
 	struct printk_record record;
+	struct cons_text_buf txtbuf;
 };
 
 static __printf(3, 4) __cold
@@ -753,6 +751,8 @@ static ssize_t devkmsg_read(struct file *file, char __user *buf,
 {
 	struct devkmsg_user *user = file->private_data;
 	struct printk_record *r = &user->record;
+	char *outbuf = user->txtbuf.ext_text;
+	const int maxlen = sizeof(user->txtbuf.ext_text);
 	size_t len;
 	ssize_t ret;
 
@@ -793,8 +793,8 @@ static ssize_t devkmsg_read(struct file *file, char __user *buf,
 		goto out;
 	}
 
-	len = info_print_ext_header(user->buf, sizeof(user->buf), r->info);
-	len += msg_print_ext_body(user->buf + len, sizeof(user->buf) - len,
+	len = info_print_ext_header(outbuf, maxlen, r->info);
+	len += msg_print_ext_body(outbuf + len, maxlen - len,
 				  &r->text_buf[0], r->info->text_len,
 				  &r->info->dev_info);
 
@@ -805,7 +805,7 @@ static ssize_t devkmsg_read(struct file *file, char __user *buf,
 		goto out;
 	}
 
-	if (copy_to_user(buf, user->buf, len)) {
+	if (copy_to_user(buf, outbuf, len)) {
 		ret = -EFAULT;
 		goto out;
 	}
@@ -904,7 +904,8 @@ static int devkmsg_open(struct inode *inode, struct file *file)
 	mutex_init(&user->lock);
 
 	prb_rec_init_rd(&user->record, &user->info,
-			&user->text_buf[0], sizeof(user->text_buf));
+			user->txtbuf.text,
+			sizeof(user->txtbuf.text));
 
 	atomic64_set(&user->seq, prb_first_valid_seq(prb));
 
@@ -2704,8 +2705,8 @@ static void __console_unlock(void)
  *
  * Requires the console_lock.
  */
-static bool console_emit_next_record(struct console *con, char *text, char *ext_text,
-				     char *dropped_text, bool *handover)
+static bool console_emit_next_record(struct console *con, struct cons_text_buf *txtbuf,
+				     bool *handover, bool extmsg)
 {
 	static int panic_console_dropped;
 	struct printk_info info;
@@ -2714,7 +2715,7 @@ static bool console_emit_next_record(struct console *con, char *text, char *ext_
 	char *write_text;
 	size_t len;
 
-	prb_rec_init_rd(&r, &info, text, CONSOLE_LOG_MAX);
+	prb_rec_init_rd(&r, &info, txtbuf->text, CONSOLE_LOG_MAX);
 
 	*handover = false;
 
@@ -2736,13 +2737,13 @@ static bool console_emit_next_record(struct console *con, char *text, char *ext_
 		goto skip;
 	}
 
-	if (ext_text) {
-		write_text = ext_text;
-		len = info_print_ext_header(ext_text, CONSOLE_EXT_LOG_MAX, r.info);
-		len += msg_print_ext_body(ext_text + len, CONSOLE_EXT_LOG_MAX - len,
+	if (extmsg) {
+		write_text = txtbuf->ext_text;
+		len = info_print_ext_header(write_text, CONSOLE_EXT_LOG_MAX, r.info);
+		len += msg_print_ext_body(write_text + len, CONSOLE_EXT_LOG_MAX - len,
 					  &r.text_buf[0], r.info->text_len, &r.info->dev_info);
 	} else {
-		write_text = text;
+		write_text = txtbuf->text;
 		len = record_print_text(&r, console_msg_format & MSG_FORMAT_SYSLOG, printk_time);
 	}
 
@@ -2760,7 +2761,7 @@ static bool console_emit_next_record(struct console *con, char *text, char *ext_
 	console_lock_spinning_enable();
 
 	stop_critical_timings();	/* don't trace print latency */
-	call_console_driver(con, write_text, len, dropped_text);
+	call_console_driver(con, write_text, len, extmsg ? NULL : txtbuf->dropped_text);
 	start_critical_timings();
 
 	con->seq++;
@@ -2796,9 +2797,7 @@ skip:
  */
 static bool console_flush_all(bool do_cond_resched, u64 *next_seq, bool *handover)
 {
-	static char dropped_text[DROPPED_TEXT_MAX];
-	static char ext_text[CONSOLE_EXT_LOG_MAX];
-	static char text[CONSOLE_LOG_MAX];
+	static struct cons_text_buf txtbuf;
 	bool any_usable = false;
 	struct console *con;
 	bool any_progress;
@@ -2816,16 +2815,9 @@ static bool console_flush_all(bool do_cond_resched, u64 *next_seq, bool *handove
 				continue;
 			any_usable = true;
 
-			if (con->flags & CON_EXTENDED) {
-				/* Extended consoles do not print "dropped messages". */
-				progress = console_emit_next_record(con, &text[0],
-								    &ext_text[0], NULL,
-								    handover);
-			} else {
-				progress = console_emit_next_record(con, &text[0],
-								    NULL, &dropped_text[0],
-								    handover);
-			}
+			progress = console_emit_next_record(con, &txtbuf, handover,
+							    con->flags & CON_EXTENDED);
+
 			if (*handover)
 				return false;
 
