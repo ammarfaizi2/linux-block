@@ -232,6 +232,7 @@ struct cons_text_buf {
  * @txtbuf:		Pointer to buffer for storing the text
  * @outbuf:		Pointer to the position in @buffer for
  *			writing it out to the device
+ * @seq:		The sequence requested
  * @dropped:		The dropped count
  * @len:		Message length
  * @extmsg:		Select extended format printing
@@ -239,6 +240,7 @@ struct cons_text_buf {
 struct cons_outbuf_desc {
 	struct cons_text_buf	*txtbuf;
 	char			*outbuf;
+	u64			seq;
 	unsigned long		dropped;
 	unsigned int		len;
 	bool			extmsg;
