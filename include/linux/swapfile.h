@@ -8,6 +8,8 @@
  */
 extern struct swap_info_struct *swap_info[];
 extern unsigned long generic_max_swapfile_size(void);
+unsigned long arch_max_swapfile_size(void);
+
 /* Maximum swapfile size supported for the arch (not inclusive). */
 extern unsigned long swapfile_maximum_size;
 
