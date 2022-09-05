@@ -24,8 +24,16 @@
 #define ICE_TC_FLWR_FIELD_ETH_TYPE_ID		BIT(17)
 #define ICE_TC_FLWR_FIELD_ENC_OPTS		BIT(18)
 #define ICE_TC_FLWR_FIELD_CVLAN			BIT(19)
+#define ICE_TC_FLWR_FIELD_PPPOE_SESSID		BIT(20)
+#define ICE_TC_FLWR_FIELD_PPP_PROTO		BIT(21)
+#define ICE_TC_FLWR_FIELD_IP_TOS		BIT(22)
+#define ICE_TC_FLWR_FIELD_IP_TTL		BIT(23)
+#define ICE_TC_FLWR_FIELD_ENC_IP_TOS		BIT(24)
+#define ICE_TC_FLWR_FIELD_ENC_IP_TTL		BIT(25)
 
 #define ICE_TC_FLOWER_MASK_32   0xFFFFFFFF
+
+#define ICE_IPV6_HDR_TC_MASK 0xFF00000
 
 struct ice_indr_block_priv {
 	struct net_device *netdev;
@@ -42,6 +50,11 @@ struct ice_tc_vlan_hdr {
 	__be16 vlan_id; /* Only last 12 bits valid */
 	u16 vlan_prio; /* Only last 3 bits valid (valid values: 0..7) */
 	__be16 vlan_tpid;
+};
+
+struct ice_tc_pppoe_hdr {
+	__be16 session_id;
+	__be16 ppp_proto;
 };
 
 struct ice_tc_l2_hdr {
@@ -84,6 +97,7 @@ struct ice_tc_flower_lyr_2_4_hdrs {
 	struct ice_tc_l2_hdr l2_mask;
 	struct ice_tc_vlan_hdr vlan_hdr;
 	struct ice_tc_vlan_hdr cvlan_hdr;
+	struct ice_tc_pppoe_hdr pppoe_hdr;
 	/* L3 (IPv4[6]) layer fields with their mask */
 	struct ice_tc_l3_hdr l3_key;
 	struct ice_tc_l3_hdr l3_mask;

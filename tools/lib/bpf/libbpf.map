@@ -355,11 +355,16 @@ LIBBPF_0.8.0 {
 
 LIBBPF_1.0.0 {
 	global:
+		bpf_obj_get_opts;
 		bpf_prog_query_opts;
+		bpf_program__attach_ksyscall;
+		bpf_program__autoattach;
+		bpf_program__set_autoattach;
 		btf__add_enum64;
 		btf__add_enum64_value;
 		libbpf_bpf_attach_type_str;
 		libbpf_bpf_link_type_str;
 		libbpf_bpf_map_type_str;
 		libbpf_bpf_prog_type_str;
+		perf_buffer__buffer;
 };

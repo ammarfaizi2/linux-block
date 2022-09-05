@@ -5292,7 +5292,7 @@ static bool mlxsw_sp_fi_is_gateway(const struct mlxsw_sp *mlxsw_sp,
 {
 	const struct fib_nh *nh = fib_info_nh(fi, 0);
 
-	return nh->fib_nh_scope == RT_SCOPE_LINK ||
+	return nh->fib_nh_gw_family ||
 	       mlxsw_sp_nexthop4_ipip_type(mlxsw_sp, nh, NULL);
 }
 
@@ -8590,9 +8590,7 @@ static int mlxsw_sp_inetaddr_port_event(struct net_device *port_dev,
 					unsigned long event,
 					struct netlink_ext_ack *extack)
 {
-	if (netif_is_bridge_port(port_dev) ||
-	    netif_is_lag_port(port_dev) ||
-	    netif_is_ovs_port(port_dev))
+	if (netif_is_any_bridge_port(port_dev) || netif_is_lag_port(port_dev))
 		return 0;
 
 	return mlxsw_sp_inetaddr_port_vlan_event(port_dev, port_dev, event,
@@ -9962,14 +9960,14 @@ static int mlxsw_sp_rifs_init(struct mlxsw_sp *mlxsw_sp)
 	idr_init(&mlxsw_sp->router->rif_mac_profiles_idr);
 	atomic_set(&mlxsw_sp->router->rif_mac_profiles_count, 0);
 	atomic_set(&mlxsw_sp->router->rifs_count, 0);
-	devlink_resource_occ_get_register(devlink,
-					  MLXSW_SP_RESOURCE_RIF_MAC_PROFILES,
-					  mlxsw_sp_rif_mac_profiles_occ_get,
-					  mlxsw_sp);
-	devlink_resource_occ_get_register(devlink,
-					  MLXSW_SP_RESOURCE_RIFS,
-					  mlxsw_sp_rifs_occ_get,
-					  mlxsw_sp);
+	devl_resource_occ_get_register(devlink,
+				       MLXSW_SP_RESOURCE_RIF_MAC_PROFILES,
+				       mlxsw_sp_rif_mac_profiles_occ_get,
+				       mlxsw_sp);
+	devl_resource_occ_get_register(devlink,
+				       MLXSW_SP_RESOURCE_RIFS,
+				       mlxsw_sp_rifs_occ_get,
+				       mlxsw_sp);
 
 	return 0;
 }
@@ -9983,9 +9981,9 @@ static void mlxsw_sp_rifs_fini(struct mlxsw_sp *mlxsw_sp)
 	for (i = 0; i < MLXSW_CORE_RES_GET(mlxsw_sp->core, MAX_RIFS); i++)
 		WARN_ON_ONCE(mlxsw_sp->router->rifs[i]);
 
-	devlink_resource_occ_get_unregister(devlink, MLXSW_SP_RESOURCE_RIFS);
-	devlink_resource_occ_get_unregister(devlink,
-					    MLXSW_SP_RESOURCE_RIF_MAC_PROFILES);
+	devl_resource_occ_get_unregister(devlink, MLXSW_SP_RESOURCE_RIFS);
+	devl_resource_occ_get_unregister(devlink,
+					 MLXSW_SP_RESOURCE_RIF_MAC_PROFILES);
 	WARN_ON(!idr_is_empty(&mlxsw_sp->router->rif_mac_profiles_idr));
 	idr_destroy(&mlxsw_sp->router->rif_mac_profiles_idr);
 	kfree(mlxsw_sp->router->rifs);
@@ -10144,7 +10142,7 @@ static void mlxsw_sp_mp4_hash_init(struct mlxsw_sp *mlxsw_sp,
 	unsigned long *fields = config->fields;
 	u32 hash_fields;
 
-	switch (net->ipv4.sysctl_fib_multipath_hash_policy) {
+	switch (READ_ONCE(net->ipv4.sysctl_fib_multipath_hash_policy)) {
 	case 0:
 		mlxsw_sp_mp4_hash_outer_addr(config);
 		break;
@@ -10162,7 +10160,7 @@ static void mlxsw_sp_mp4_hash_init(struct mlxsw_sp *mlxsw_sp,
 		mlxsw_sp_mp_hash_inner_l3(config);
 		break;
 	case 3:
-		hash_fields = net->ipv4.sysctl_fib_multipath_hash_fields;
+		hash_fields = READ_ONCE(net->ipv4.sysctl_fib_multipath_hash_fields);
 		/* Outer */
 		MLXSW_SP_MP_HASH_HEADER_SET(headers, IPV4_EN_NOT_TCP_NOT_UDP);
 		MLXSW_SP_MP_HASH_HEADER_SET(headers, IPV4_EN_TCP_UDP);
@@ -10343,13 +10341,14 @@ static int mlxsw_sp_dscp_init(struct mlxsw_sp *mlxsw_sp)
 static int __mlxsw_sp_router_init(struct mlxsw_sp *mlxsw_sp)
 {
 	struct net *net = mlxsw_sp_net(mlxsw_sp);
-	bool usp = net->ipv4.sysctl_ip_fwd_update_priority;
 	char rgcr_pl[MLXSW_REG_RGCR_LEN];
 	u64 max_rifs;
+	bool usp;
 
 	if (!MLXSW_CORE_RES_VALID(mlxsw_sp->core, MAX_RIFS))
 		return -EIO;
 	max_rifs = MLXSW_CORE_RES_GET(mlxsw_sp->core, MAX_RIFS);
+	usp = READ_ONCE(net->ipv4.sysctl_ip_fwd_update_priority);
 
 	mlxsw_reg_rgcr_pack(rgcr_pl, true, true);
 	mlxsw_reg_rgcr_max_router_interfaces_set(rgcr_pl, max_rifs);
