@@ -1318,10 +1318,6 @@ static void ath12k_hal_srng_src_hw_init(struct ath12k_base *ab,
 	val = u32_encode_bits(srng->entry_size, HAL_REO1_RING_ID_ENTRY_SIZE);
 	ath12k_hif_write32(ab, reg_base + HAL_TCL1_RING_ID_OFFSET(ab), val);
 
-	/* interrupt setup */
-	/* NOTE: IPQ8074 v2 requires the interrupt timer threshold in the
-	 * unit of 8 usecs instead of 1 usec (as required by v1).
-	 */
 	val = u32_encode_bits(srng->intr_timer_thres_us,
 			      HAL_TCL1_RING_CONSR_INT_SETUP_IX0_INTR_TMR_THOLD);
 
