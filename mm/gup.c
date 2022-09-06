@@ -1231,7 +1231,10 @@ retry:
 					   PTR_ERR(page) == -EMLINK, locked);
 			switch (ret) {
 			case 0:
-				goto retry;
+				if (pages)
+					goto retry;
+				else
+					goto next_page;
 			case -EBUSY:
 			case -EAGAIN:
 				ret = 0;
