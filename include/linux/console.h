@@ -276,6 +276,7 @@ struct console;
  * @req_state:		The request state for spin and cleanup
  * @spinwait_max_us:	Limit for spinwait acquire
  * @prio:		Priority of the context
+ * @txtbuf:		Pointer to the text buffer for this context
  * @thread:		The acquire is printk thread context
  * @hostile:		Hostile takeover requested. Cleared on normal
  *			acquire or friendly handover
@@ -289,9 +290,23 @@ struct cons_context {
 	struct cons_state	req_state;
 	unsigned int		spinwait_max_us;
 	enum cons_prio		prio;
+	struct cons_text_buf	*txtbuf;
 	unsigned int		thread		: 1;
 	unsigned int		hostile		: 1;
 	unsigned int		spinwait	: 1;
+};
+
+#define CONS_MAX_NEST_LVL	8
+
+/**
+ * struct cons_context_data - console context data
+ * @txtbuf:		Buffer for storing the text
+ *
+ * Used for early boot embedded into struct console and for
+ * per CPU data.
+ */
+struct cons_context_data {
+	struct cons_text_buf		txtbuf;
 };
 
 /**
@@ -315,6 +330,8 @@ struct cons_context {
  * @node:		hlist node for the console list
  *
  * @atomic_state:	State array for non-BKL consoles. Real and handover
+ * @pcpu_data:		Pointer to percpu context data
+ * @ctxt_data:		Builtin context data for early boot and threaded printing
  */
 struct console {
 	char			name[16];
@@ -336,8 +353,10 @@ struct console {
 	struct hlist_node	node;
 
 	/* NOBKL console specific members */
-	atomic_long_t __private	atomic_state[2];
+	atomic_long_t __private		atomic_state[2];
 
+	struct cons_context_data __percpu	*pcpu_data;
+	struct cons_context_data		ctxt_data;
 };
 
 #ifdef CONFIG_LOCKDEP

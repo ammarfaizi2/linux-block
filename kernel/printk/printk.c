@@ -1071,9 +1071,17 @@ static void __init log_buf_add_cpu(void)
 static inline void log_buf_add_cpu(void) {}
 #endif /* CONFIG_SMP */
 
+static void cons_alloc_percpu_data(struct console *con);
+
 static void __init set_percpu_data_ready(void)
 {
+	struct console *con;
+
+	console_list_lock();
+	for_each_registered_console(con)
+		cons_alloc_percpu_data(con);
 	__printk_percpu_data_ready = true;
+	console_list_unlock();
 }
 
 static unsigned int __init add_to_rb(struct printk_ringbuffer *rb,
@@ -2341,6 +2349,11 @@ static bool __pr_flush(struct console *con, int timeout_ms, bool reset_on_progre
 
 #endif /* !CONFIG_PRINTK */
 
+#define con_printk(lvl, con, fmt, ...)			\
+	printk(lvl pr_fmt("%sconsole [%s%d] " fmt),	\
+	       (con->flags & CON_BOOT) ? "boot" : "",	\
+	       con->name, con->index, ##__VA_ARGS__)
+
 #include "printk_nobkl.c"
 
 #ifdef CONFIG_EARLY_PRINTK
@@ -3190,11 +3203,6 @@ static void try_enable_default_console(struct console *newcon)
 	if (newcon->device)
 		newcon->flags |= CON_CONSDEV;
 }
-
-#define con_printk(lvl, con, fmt, ...)			\
-	printk(lvl pr_fmt("%sconsole [%s%d] " fmt),	\
-	       (con->flags & CON_BOOT) ? "boot" : "",	\
-	       con->name, con->index, ##__VA_ARGS__)
 
 #define cons_first()					\
 	hlist_entry(console_list.first, struct console, node)
