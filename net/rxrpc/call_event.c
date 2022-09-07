@@ -110,13 +110,7 @@ void rxrpc_send_ACK(struct rxrpc_call *call, u8 ack_reason,
 	list_add_tail(&txb->tx_link, &local->ack_tx_queue);
 	spin_unlock_bh(&local->ack_tx_lock);
 	trace_rxrpc_send_ack(call, why, ack_reason, serial);
-
-	if (in_task()) {
-		rxrpc_transmit_ack_packets(call->peer->local);
-	} else {
-		rxrpc_get_local(local);
-		rxrpc_queue_local(local);
-	}
+	rxrpc_wake_up_transmitter(local);
 }
 
 /*

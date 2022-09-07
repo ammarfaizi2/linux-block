@@ -269,11 +269,9 @@ further_rotation:
 	acked = atomic_add_return(call->rx_consumed - old_consumed,
 				  &call->ackr_nr_consumed);
 	if (acked > 2 &&
-	    !test_and_set_bit(RXRPC_CALL_IDLE_ACK_PENDING, &call->flags)) {
+	    !test_and_set_bit(RXRPC_CALL_IDLE_ACK_PENDING, &call->flags))
 		rxrpc_send_ACK(call, RXRPC_ACK_IDLE, serial,
 			       rxrpc_propose_ack_rotate_rx);
-		rxrpc_transmit_ack_packets(call->peer->local);
-	}
 }
 
 /*
@@ -406,7 +404,6 @@ static int rxrpc_recvmsg_data(struct socket *sock, struct rxrpc_call *call,
 				ret = ret2;
 				goto out;
 			}
-			rxrpc_transmit_ack_packets(call->peer->local);
 		} else {
 			trace_rxrpc_recvdata(call, rxrpc_recvmsg_cont, seq,
 					     rx_pkt_sub, rx_pkt_offset, rx_pkt_len, 0);
@@ -603,7 +600,6 @@ try_again:
 		if (ret == -EAGAIN)
 			ret = 0;
 
-		rxrpc_transmit_ack_packets(call->peer->local);
 		if (!skb_queue_empty(&call->rx_queue))
 			rxrpc_notify_socket(call);
 		break;
@@ -733,7 +729,6 @@ int rxrpc_kernel_recv_data(struct socket *sock, struct rxrpc_call *call,
 read_phase_complete:
 	ret = 1;
 out:
-	rxrpc_transmit_ack_packets(call->peer->local);
 	if (_service)
 		*_service = call->service_id;
 	mutex_unlock(&call->user_mutex);

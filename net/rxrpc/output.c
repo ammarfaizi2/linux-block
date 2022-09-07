@@ -72,9 +72,9 @@ static void rxrpc_set_keepalive(struct rxrpc_call *call)
 /*
  * Fill out an ACK packet.
  */
-static size_t rxrpc_fill_out_ack(struct rxrpc_connection *conn,
-				 struct rxrpc_call *call,
-				 struct rxrpc_txbuf *txb)
+static bool rxrpc_fill_out_ack(struct rxrpc_connection *conn,
+			       struct rxrpc_call *call,
+			       struct rxrpc_txbuf *txb)
 {
 	struct rxrpc_ackinfo ackinfo;
 	unsigned int tmp, qsize;
@@ -90,7 +90,7 @@ static size_t rxrpc_fill_out_ack(struct rxrpc_connection *conn,
 	if (!tmp && (txb->ack.reason == RXRPC_ACK_DELAY ||
 		     txb->ack.reason == RXRPC_ACK_IDLE)) {
 		rxrpc_inc_stat(call->rxnet, stat_tx_ack_skip);
-		return 0;
+		return false;
 	}
 
 	rxrpc_inc_stat(call->rxnet, stat_tx_ack_fill);
@@ -158,7 +158,8 @@ retry:
 	*ackp++ = 0;
 	*ackp++ = 0;
 	memcpy(ackp, &ackinfo, sizeof(ackinfo));
-	return txb->ack.nAcks + 3 + sizeof(ackinfo);
+	txb->len = sizeof(txb->ack) + txb->ack.nAcks + 3 + sizeof(ackinfo);
+	return true;
 }
 
 /*
@@ -210,12 +211,11 @@ static void rxrpc_cancel_rtt_probe(struct rxrpc_call *call,
 static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_txbuf *txb)
 {
 	struct rxrpc_connection *conn;
-	struct rxrpc_ack_buffer *pkt;
 	struct rxrpc_call *call = txb->call;
 	struct msghdr msg;
 	struct kvec iov[1];
 	rxrpc_serial_t serial;
-	size_t len, n;
+	size_t len;
 	int ret, rtt_slot = -1;
 
 	if (test_bit(RXRPC_CALL_DISCONNECTED, &call->flags))
@@ -237,12 +237,11 @@ static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_txbuf *
 	if (txb->ack.reason == RXRPC_ACK_IDLE)
 		clear_bit(RXRPC_CALL_IDLE_ACK_PENDING, &call->flags);
 
-	n = rxrpc_fill_out_ack(conn, call, txb);
-	if (n == 0)
+	if (!rxrpc_fill_out_ack(conn, call, txb))
 		return 0;
 
 	iov[0].iov_base	= &txb->wire;
-	iov[0].iov_len	= sizeof(txb->wire) + sizeof(txb->ack) + n;
+	iov[0].iov_len	= sizeof(txb->wire) + txb->len;
 	len = iov[0].iov_len;
 
 	serial = atomic_inc_return(&conn->serial);
@@ -279,7 +278,6 @@ static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_txbuf *
 		rxrpc_set_keepalive(call);
 	}
 
-	kfree(pkt);
 	return ret;
 }
 
@@ -288,7 +286,7 @@ static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_txbuf *
  * transmission, so we can only transmit one packet at a time, ACK, DATA or
  * otherwise.
  */
-void rxrpc_transmit_ack_packets(struct rxrpc_local *local)
+static void rxrpc_transmit_ack_packets(struct rxrpc_local *local)
 {
 	LIST_HEAD(queue);
 	int ret;
@@ -296,9 +294,6 @@ void rxrpc_transmit_ack_packets(struct rxrpc_local *local)
 	trace_rxrpc_local(local->debug_id, rxrpc_local_tx_ack,
 			  refcount_read(&local->ref), NULL);
 	rxrpc_inc_stat(local->rxnet, stat_tx_ack_transmitter);
-
-	if (list_empty(&local->ack_tx_queue))
-		return;
 
 	spin_lock_bh(&local->ack_tx_lock);
 	list_splice_tail_init(&local->ack_tx_queue, &queue);
@@ -794,6 +789,8 @@ int rxrpc_transmitter(void *data)
 
 	for (;;) {
 		rxrpc_inc_stat(local->rxnet, stat_tx_loop);
+		if (!list_empty(&local->ack_tx_queue))
+			rxrpc_transmit_ack_packets(local);
 
 		spin_lock(&local->tx_lock);
 		txb = list_first_entry_or_null(&local->tx_re_queue,

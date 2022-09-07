@@ -443,11 +443,6 @@ static void rxrpc_local_processor(struct work_struct *work)
 			break;
 		}
 
-		if (!list_empty(&local->ack_tx_queue)) {
-			rxrpc_transmit_ack_packets(local);
-			again = true;
-		}
-
 		if (!skb_queue_empty(&local->reject_queue)) {
 			rxrpc_reject_packets(local);
 			again = true;
