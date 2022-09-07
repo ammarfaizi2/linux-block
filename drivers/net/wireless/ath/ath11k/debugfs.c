@@ -1456,11 +1456,13 @@ static ssize_t ath11k_write_twt_add_dialog(struct file *file,
 {
 	struct ath11k_vif *arvif = file->private_data;
 	struct wmi_twt_add_dialog_params params = { 0 };
+	struct wmi_twt_enable_params twt_params = {0};
+	struct ath11k *ar = arvif->ar;
 	u8 buf[128] = {0};
 	int ret;
 
-	if (arvif->ar->twt_enabled == 0) {
-		ath11k_err(arvif->ar->ab, "twt support is not enabled\n");
+	if (ar->twt_enabled == 0) {
+		ath11k_err(ar->ab, "twt support is not enabled\n");
 		return -EOPNOTSUPP;
 	}
 
@@ -1490,13 +1492,38 @@ static ssize_t ath11k_write_twt_add_dialog(struct file *file,
 	if (ret != 16)
 		return -EINVAL;
 
+	/* In the case of station vif, TWT is entirely handled by
+	 * the firmware based on the input parameters in the TWT enable
+	 * WMI command that is sent to the target during assoc.
+	 * For manually testing the TWT feature, we need to first disable
+	 * TWT and send enable command again with TWT input parameter
+	 * sta_cong_timer_ms set to 0.
+	 */
+	if (arvif->vif->type == NL80211_IFTYPE_STATION) {
+		ath11k_wmi_send_twt_disable_cmd(ar, ar->pdev->pdev_id);
+
+		ath11k_wmi_fill_default_twt_params(&twt_params);
+		twt_params.sta_cong_timer_ms = 0;
+
+		ath11k_wmi_send_twt_enable_cmd(ar, ar->pdev->pdev_id, &twt_params);
+	}
+
 	params.vdev_id = arvif->vdev_id;
 
 	ret = ath11k_wmi_send_twt_add_dialog_cmd(arvif->ar, &params);
 	if (ret)
-		return ret;
+		goto err_twt_add_dialog;
 
 	return count;
+
+err_twt_add_dialog:
+	if (arvif->vif->type == NL80211_IFTYPE_STATION) {
+		ath11k_wmi_send_twt_disable_cmd(ar, ar->pdev->pdev_id);
+		ath11k_wmi_fill_default_twt_params(&twt_params);
+		ath11k_wmi_send_twt_enable_cmd(ar, ar->pdev->pdev_id, &twt_params);
+	}
+
+	return ret;
 }
 
 static ssize_t ath11k_write_twt_del_dialog(struct file *file,
@@ -1505,11 +1532,13 @@ static ssize_t ath11k_write_twt_del_dialog(struct file *file,
 {
 	struct ath11k_vif *arvif = file->private_data;
 	struct wmi_twt_del_dialog_params params = { 0 };
+	struct wmi_twt_enable_params twt_params = {0};
+	struct ath11k *ar = arvif->ar;
 	u8 buf[64] = {0};
 	int ret;
 
-	if (arvif->ar->twt_enabled == 0) {
-		ath11k_err(arvif->ar->ab, "twt support is not enabled\n");
+	if (ar->twt_enabled == 0) {
+		ath11k_err(ar->ab, "twt support is not enabled\n");
 		return -EOPNOTSUPP;
 	}
 
@@ -1534,6 +1563,12 @@ static ssize_t ath11k_write_twt_del_dialog(struct file *file,
 	ret = ath11k_wmi_send_twt_del_dialog_cmd(arvif->ar, &params);
 	if (ret)
 		return ret;
+
+	if (arvif->vif->type == NL80211_IFTYPE_STATION) {
+		ath11k_wmi_send_twt_disable_cmd(ar, ar->pdev->pdev_id);
+		ath11k_wmi_fill_default_twt_params(&twt_params);
+		ath11k_wmi_send_twt_enable_cmd(ar, ar->pdev->pdev_id, &twt_params);
+	}
 
 	return count;
 }
@@ -1638,36 +1673,35 @@ static const struct file_operations ath11k_fops_twt_resume_dialog = {
 	.open = simple_open
 };
 
-int ath11k_debugfs_add_interface(struct ath11k_vif *arvif)
+void ath11k_debugfs_add_interface(struct ath11k_vif *arvif)
 {
-	if (arvif->vif->type == NL80211_IFTYPE_AP && !arvif->debugfs_twt) {
-		arvif->debugfs_twt = debugfs_create_dir("twt",
-							arvif->vif->debugfs_dir);
-		if (!arvif->debugfs_twt || IS_ERR(arvif->debugfs_twt)) {
-			ath11k_warn(arvif->ar->ab,
-				    "failed to create directory %p\n",
-				    arvif->debugfs_twt);
-			arvif->debugfs_twt = NULL;
-			return -1;
-		}
+	struct ath11k_base *ab = arvif->ar->ab;
 
-		debugfs_create_file("add_dialog", 0200, arvif->debugfs_twt,
-				    arvif, &ath11k_fops_twt_add_dialog);
+	if (arvif->vif->type != NL80211_IFTYPE_AP &&
+	    !(arvif->vif->type == NL80211_IFTYPE_STATION &&
+	      test_bit(WMI_TLV_SERVICE_STA_TWT, ab->wmi_ab.svc_map)))
+		return;
 
-		debugfs_create_file("del_dialog", 0200, arvif->debugfs_twt,
-				    arvif, &ath11k_fops_twt_del_dialog);
+	arvif->debugfs_twt = debugfs_create_dir("twt",
+						arvif->vif->debugfs_dir);
+	debugfs_create_file("add_dialog", 0200, arvif->debugfs_twt,
+			    arvif, &ath11k_fops_twt_add_dialog);
 
-		debugfs_create_file("pause_dialog", 0200, arvif->debugfs_twt,
-				    arvif, &ath11k_fops_twt_pause_dialog);
+	debugfs_create_file("del_dialog", 0200, arvif->debugfs_twt,
+			    arvif, &ath11k_fops_twt_del_dialog);
 
-		debugfs_create_file("resume_dialog", 0200, arvif->debugfs_twt,
-				    arvif, &ath11k_fops_twt_resume_dialog);
-	}
-	return 0;
+	debugfs_create_file("pause_dialog", 0200, arvif->debugfs_twt,
+			    arvif, &ath11k_fops_twt_pause_dialog);
+
+	debugfs_create_file("resume_dialog", 0200, arvif->debugfs_twt,
+			    arvif, &ath11k_fops_twt_resume_dialog);
 }
 
 void ath11k_debugfs_remove_interface(struct ath11k_vif *arvif)
 {
+	if (!arvif->debugfs_twt)
+		return;
+
 	debugfs_remove_recursive(arvif->debugfs_twt);
 	arvif->debugfs_twt = NULL;
 }
