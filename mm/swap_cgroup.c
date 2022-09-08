@@ -194,7 +194,7 @@ int swap_cgroup_swapon(int type, unsigned long max_pages)
 	return 0;
 nomem:
 	pr_info("couldn't allocate enough memory for swap_cgroup\n");
-	pr_info("swap_cgroup can be disabled by swapaccount=0 boot option\n");
+	pr_info("swap_cgroup can be disabled by swapaccount=[oO][Ff]/N/n/0 boot option\n");
 	return -ENOMEM;
 }
 
