@@ -1117,3 +1117,45 @@ void ovl_copyattr(struct inode *inode)
 	inode->i_ctime = realinode->i_ctime;
 	i_size_write(inode, i_size_read(realinode));
 }
+
+int ovl_copy_acl(struct ovl_fs *ofs, const struct path *path,
+		 struct dentry *dentry, const char *acl_name)
+{
+	int err;
+	struct posix_acl *real_acl = NULL;
+
+	real_acl = ovl_get_acl_path(path, acl_name);
+	if (!real_acl)
+		return 0;
+
+	if (IS_ERR(real_acl)) {
+		err = PTR_ERR(real_acl);
+		if (err == -ENODATA || err == -EOPNOTSUPP)
+			return 0;
+		return err;
+	}
+
+	/*
+	 * If we didn't have to create a copy already because @path was on an
+	 * idmapped mount we need to do so if the upper layer is so we don't
+	 * alter the POSIX ACLs of the filesystem we retrieved them from.
+	 */
+	if (!is_idmapped_mnt(path->mnt) && is_idmapped_mnt(ovl_upper_mnt(ofs))) {
+		struct posix_acl *clone;
+
+		clone = posix_acl_clone(real_acl, GFP_KERNEL);
+		if (!clone) {
+			err = -ENOMEM;
+			goto out;
+		}
+		/* release original acl */
+		posix_acl_release(real_acl);
+		real_acl = clone;
+	}
+
+	err = ovl_do_set_acl(ofs, dentry, acl_name, real_acl);
+out:
+	/* release original or cloned acl */
+	posix_acl_release(real_acl);
+	return err;
+}
