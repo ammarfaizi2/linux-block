@@ -256,6 +256,12 @@ void panic(const char *fmt, ...)
 	if (old_cpu != PANIC_CPU_INVALID && old_cpu != this_cpu)
 		panic_smp_self_stop();
 
+	/*
+	 * No point in saving the previous printk severity level
+	 * here. Panic won't come back
+	 */
+	cons_atomic_enter(CONS_PRIO_PANIC);
+
 	console_verbose();
 	bust_spinlocks(1);
 	va_start(args, fmt);
@@ -602,6 +608,10 @@ struct warn_args {
 void __warn(const char *file, int line, void *caller, unsigned taint,
 	    struct pt_regs *regs, struct warn_args *args)
 {
+	enum cons_prio prev_prio;
+
+	prev_prio = cons_atomic_enter(CONS_PRIO_EMERGENCY);
+
 	disable_trace_on_warning();
 
 	if (file)
@@ -633,6 +643,8 @@ void __warn(const char *file, int line, void *caller, unsigned taint,
 
 	/* Just a warning, don't kill lockdep. */
 	add_taint(taint, LOCKDEP_STILL_OK);
+
+	cons_atomic_exit(CONS_PRIO_EMERGENCY, prev_prio);
 }
 
 #ifndef __WARN_FLAGS
