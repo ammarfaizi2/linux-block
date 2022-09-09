@@ -16,6 +16,7 @@
 
 #include <linux/atomic.h>
 #include <linux/bits.h>
+#include <linux/irq_work.h>
 #include <linux/rculist.h>
 #include <linux/rcuwait.h>
 #include <linux/types.h>
@@ -367,6 +368,7 @@ struct cons_context_data {
  * @atomic_seq:		Sequence for record tracking (32bit only)
  * @kthread:		Pointer to kernel thread
  * @rcuwait:		RCU wait for the kernel thread
+ * @irq_work:		IRQ work for thread wakeup
  * @kthread_running:	Indicator whether the kthread is running
  * @thread_txtbuf:	Pointer to thread private buffer
  * @write_atomic:	Write callback for atomic context
@@ -400,6 +402,7 @@ struct console {
 #endif
 	struct task_struct	*kthread;
 	struct rcuwait		rcuwait;
+	struct irq_work		irq_work;
 	atomic_t		kthread_running;
 	struct cons_text_buf	*thread_txtbuf;
 
@@ -470,6 +473,9 @@ extern void console_list_unlock(void) __releases(console_mutex);
 extern bool console_can_proceed(struct cons_write_context *wctxt);
 extern bool console_enter_unsafe(struct cons_write_context *wctxt);
 extern bool console_exit_unsafe(struct cons_write_context *wctxt);
+
+extern enum cons_prio cons_atomic_enter(enum cons_prio prio);
+extern void cons_atomic_exit(enum cons_prio prio, enum cons_prio prev_prio);
 
 extern int console_set_on_cmdline;
 extern struct console *early_console;
