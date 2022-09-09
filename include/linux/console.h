@@ -253,6 +253,7 @@ struct cons_outbuf_desc {
  * @CONS_PRIO_NORMAL:		Regular printk
  * @CONS_PRIO_EMERGENCY:	Emergency output (WARN/OOPS...)
  * @CONS_PRIO_PANIC:		Panic output
+ * @CONS_PRIO_MAX:		The number of priority levels
  *
  * Emergency output can carefully takeover the console even without consent
  * of the owner, ideally only when @cons_state::unsafe is not set. Panic
@@ -265,6 +266,7 @@ enum cons_prio {
 	CONS_PRIO_NORMAL,
 	CONS_PRIO_EMERGENCY,
 	CONS_PRIO_PANIC,
+	CONS_PRIO_MAX,
 };
 
 struct console;
@@ -327,12 +329,17 @@ struct cons_write_context {
 
 /**
  * struct cons_context_data - console context data
+ * @wctxt:		Write context per priority level
  * @txtbuf:		Buffer for storing the text
  *
  * Used for early boot embedded into struct console and for
  * per CPU data.
+ *
+ * The write contexts are allocated to avoid having them on stack, e.g. in
+ * warn() or panic().
  */
 struct cons_context_data {
+	struct cons_write_context	wctxt[CONS_PRIO_MAX];
 	struct cons_text_buf		txtbuf;
 };
 
