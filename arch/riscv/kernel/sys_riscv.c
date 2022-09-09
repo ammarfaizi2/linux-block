@@ -9,6 +9,7 @@
 #include <asm/cacheflush.h>
 #include <asm/cpufeature.h>
 #include <asm/hwprobe.h>
+#include <asm/switch_to.h>
 #include <asm/uaccess.h>
 #include <asm/unistd.h>
 #include <asm-generic/mman-common.h>
@@ -76,6 +77,11 @@ SYSCALL_DEFINE3(riscv_flush_icache, uintptr_t, start, uintptr_t, end,
 	return 0;
 }
 
+/*
+ * The hwprobe interface, for allowing userspace to probe to see which features
+ * are supported by the hardware.  See Documentation/riscv/hwprobe.rst for more
+ * details.
+ */
 static long set_hwprobe(struct riscv_hwprobe __user *pair, u64 key, u64 val)
 {
 	long ret;
@@ -158,6 +164,15 @@ long do_riscv_hwprobe(struct riscv_hwprobe __user *pairs, long pair_count,
 	if (!ret)
 		return -EFAULT;
 
+
+	/*
+	 * Userspace must provide at least one online CPU, without that there's
+	 * no way to define what is supported.
+	 */
+	cpumask_and(&cpus, &cpus, cpu_online_mask);
+	if (cpumask_empty(&cpus))
+		return -EINVAL;
+
 	out = 0;
 	k = key_offset;
 	while (out < pair_count && k < RISCV_HWPROBE_MAX_KEY) {
@@ -168,6 +183,29 @@ long do_riscv_hwprobe(struct riscv_hwprobe __user *pairs, long pair_count,
 		case RISCV_HWPROBE_KEY_MARCHID:
 		case RISCV_HWPROBE_KEY_MIMPID:
 			ret = hwprobe_mid(pairs + out, k, &cpus);
+			break;
+
+		/*
+		 * The kernel already assumes that the base single-letter ISA
+		 * extensions are supported on all harts, and only supports the
+		 * IMA base, so just cheat a bit here and tell that to
+		 * userspace.
+		 */
+		case RISCV_HWPROBE_KEY_BASE_BEHAVIOR:
+			ret = set_hwprobe(pairs + out, k,
+					  RISCV_HWPROBE_BASE_BEHAVIOR_IMA);
+			break;
+
+		case RISCV_HWPROBE_KEY_IMA_EXT_0:
+			{
+				u64 val = 0;
+
+				if (has_fpu())
+					val |= RISCV_HWPROBE_IMA_FD;
+				if (elf_hwcap & RISCV_ISA_EXT_c)
+					val |= RISCV_HWPROBE_IMA_C;
+				ret = set_hwprobe(pairs + out, k, val);
+			}
 			break;
 		}
 
