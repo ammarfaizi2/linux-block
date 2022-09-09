@@ -31,3 +31,19 @@ The following keys are defined:
   specifications.
 * :RISCV_HWPROBE_KEY_MIMPLID:: Contains the value of :mimplid:, as per the ISA
   specifications.
+* :RISCV_HWPROBE_KEY_BASE_BEHAVIOR:: A bitmask containing the base user-visible
+  behavior that this kernel supports.  The following base user ABIs are defined:
+    * :RISCV_HWPROBE_BASE_BEHAVIOR_IMA:: Support for rv32ima or rv64ima, as
+      defined by version 2.2 of the user ISA and version 1.10 of the privileged
+      ISA, with the following known exceptions (more exceptions may be added,
+      but only if it can be demonstrated that the user ABI is not broken):
+        * The :fence.i: instruction cannot be directly executed by userspace
+          programs (it may still be executed in userspace via a
+          kernel-controlled mechanism such as the vDSO).
+* :RISCV_HWPROBE_KEY_IMA_EXT_0:: A bitmask containing the extensions that are
+  compatible with the :RISCV_HWPROBE_BASE_BEHAVIOR_IMA: base system behavior.
+    * :RISCV_HWPROBE_IMA_FD:: The F and D extensions are supported, as defined
+      by commit cd20cee ("FMIN/FMAX now implement minimumNumber/maximumNumber,
+      not minNum/maxNum") of the RISC-V ISA manual.
+    * :RISCV_HWPROBE_IMA_C:: The C extension is supported, as defined by
+      version 2.2 of the RISC-V ISA manual.
