@@ -3,3 +3,4 @@ sched/fifo
 sched/rt
 sched/urgent
 sched/wait
+sched/psi
