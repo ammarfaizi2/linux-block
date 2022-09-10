@@ -175,28 +175,26 @@ enum cons_flags {
 /**
  * struct cons_text_buf - console output text buffer
  * @ext_text:		Buffer for extended log format text
- * @dropped_text:	Buffer for dropped text
  * @text:		Buffer for ringbuffer text
  */
 struct cons_text_buf {
-	union {
-		char	ext_text[CONSOLE_EXT_LOG_MAX];
-		char	dropped_text[DROPPED_TEXT_MAX];
-	};
-	char		text[CONSOLE_LOG_MAX];
-};
+	char	ext_text[CONSOLE_EXT_LOG_MAX];
+	char	text[CONSOLE_LOG_MAX];
+} __no_randomize_layout;
 
 /**
  * struct cons_outbuf_desc - console output buffer descriptor
  * @txtbuf:		Pointer to buffer for storing the text
  * @outbuf:		Pointer to the position in @buffer for
  *			writing it out to the device
+ * @dropped:		The dropped count
  * @len:		Message length
  * @extmsg:		Select extended format printing
  */
 struct cons_outbuf_desc {
 	struct cons_text_buf	*txtbuf;
 	char			*outbuf;
+	unsigned long		dropped;
 	unsigned int		len;
 	bool			extmsg;
 };

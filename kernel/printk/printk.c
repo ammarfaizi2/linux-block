@@ -1957,27 +1957,6 @@ static int console_trylock_spinning(void)
 }
 
 /*
- * Call the specified console driver, asking it to write out the specified
- * text and length. If @dropped_text is non-NULL and any records have been
- * dropped, a dropped message will be written out first.
- */
-static void call_console_driver(struct console *con, const char *text, size_t len,
-				char *dropped_text)
-{
-	size_t dropped_len;
-
-	if (con->dropped && dropped_text) {
-		dropped_len = snprintf(dropped_text, DROPPED_TEXT_MAX,
-				       "** %lu printk messages dropped **\n",
-				       con->dropped);
-		con->dropped = 0;
-		con->write(con, dropped_text, dropped_len);
-	}
-
-	con->write(con, text, len);
-}
-
-/*
  * Recursion is tracked separately on each CPU. If NMIs are supported, an
  * additional NMI context per CPU is also separately tracked. Until per-CPU
  * is available, a separate "early tracking" is performed.
@@ -2356,10 +2335,6 @@ static ssize_t msg_print_ext_body(char *buf, size_t size,
 				  struct dev_printk_info *dev_info) { return 0; }
 static void console_lock_spinning_enable(void) { }
 static int console_lock_spinning_disable_and_check(void) { return 0; }
-static void call_console_driver(struct console *con, const char *text, size_t len,
-				char *dropped_text)
-{
-}
 static bool suppress_message_printing(int level) { return false; }
 static bool pr_flush(int timeout_ms, bool reset_on_progress) { return true; }
 static bool __pr_flush(struct console *con, int timeout_ms, bool reset_on_progress) { return true; }
@@ -2684,6 +2659,46 @@ static void __console_unlock(void)
 	up_console_sem();
 }
 
+/**
+ * cons_print_dropped - Print 'dropped' message if required
+ * @desc:	Pointer to the output descriptor
+ *
+ * Prints the 'dropped' message info the output buffer if @desc->dropped is
+ * not 0 and the regular format is requested. Extended format does not
+ * need this message because it prints the sequence numbers.
+ *
+ * In regular format the extended message buffer is not in use.
+ * So print into it at the beginning and move the resulting string
+ * just in front of the regular text buffer so that the message can
+ * be printed in one go.
+ *
+ * In case of a message this returns with @desc->outbuf and @desc->len
+ * updated. If no message is required then @desc is not modified.
+ */
+static void cons_print_dropped(struct cons_outbuf_desc *desc)
+{
+	struct cons_text_buf *txtbuf = desc->txtbuf;
+	size_t len;
+
+	if (!desc->dropped || desc->extmsg)
+		return;
+
+	if (WARN_ON_ONCE(desc->outbuf != txtbuf->text))
+		return;
+
+	/* Print it into ext_text which is unused */
+	len = snprintf(txtbuf->ext_text, DROPPED_TEXT_MAX,
+		       "** %lu printk messages dropped **\n", desc->dropped);
+	desc->dropped = 0;
+
+	/* Copy it just below text so it goes out with one write */
+	memcpy(txtbuf->text - len, txtbuf->ext_text, len);
+
+	/* Update the descriptor */
+	desc->len += len;
+	desc->outbuf -= len;
+}
+
 
 /**
  * cons_fill_outbuf - Fill the output buffer with the next record
@@ -2737,17 +2752,26 @@ static bool cons_fill_outbuf(struct console *con, struct cons_outbuf_desc *desc)
 	}
 
 	if (desc->extmsg) {
+		/*
+		 * Extended messages do not require "dropped" message
+		 * as that can be seen from the sequence number
+		 */
 		write_text = txtbuf->ext_text;
 		len = info_print_ext_header(write_text, CONSOLE_EXT_LOG_MAX, r.info);
 		len += msg_print_ext_body(write_text + len, CONSOLE_EXT_LOG_MAX - len,
 					  &r.text_buf[0], r.info->text_len, &r.info->dev_info);
+		desc->len = len;
+		desc->outbuf = write_text;
 	} else {
-		write_text = txtbuf->text;
 		len = record_print_text(&r, console_msg_format & MSG_FORMAT_SYSLOG, printk_time);
+
+		desc->len = len;
+		desc->outbuf = txtbuf->text;
+		desc->dropped = con->dropped;
+		cons_print_dropped(desc);
+		con->dropped = desc->dropped;
 	}
 
-	desc->len = len;
-	desc->outbuf = write_text;
 	return true;
 }
 
@@ -2800,8 +2824,10 @@ static bool console_emit_next_record(struct console *con, struct cons_text_buf *
 	printk_safe_enter_irqsave(flags);
 	console_lock_spinning_enable();
 
-	stop_critical_timings();	/* don't trace print latency */
-	call_console_driver(con, desc.outbuf, desc.len, extmsg ? NULL : txtbuf->dropped_text);
+	/* don't trace print latency */
+	stop_critical_timings();
+	/* Write everything out to the hardware */
+	con->write(con, desc.outbuf, desc.len);
 	start_critical_timings();
 
 	con->seq++;
