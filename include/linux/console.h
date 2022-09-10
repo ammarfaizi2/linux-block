@@ -15,7 +15,7 @@
 #define _LINUX_CONSOLE_H_ 1
 
 #include <linux/atomic.h>
-#include <linux/list.h>
+#include <linux/rculist.h>
 #include <linux/types.h>
 
 struct vc_data;
@@ -161,6 +161,7 @@ struct console {
 #ifdef CONFIG_LOCKDEP
 extern void lockdep_assert_console_lock_held(void);
 extern void lockdep_assert_console_list_lock_held(void);
+extern bool console_srcu_read_lock_is_held(void);
 #else
 static inline void lockdep_assert_console_lock_held(void) { }
 static inline void lockdep_assert_console_list_lock_held(void) { }
@@ -170,6 +171,17 @@ extern struct hlist_head console_list;
 
 extern void console_list_lock(void) __acquires(console_mutex);
 extern void console_list_unlock(void) __releases(console_mutex);
+
+/**
+ * for_each_console_srcu() - Iterator over registered consoles
+ * @con:	struct console pointer used as loop cursor
+ *
+ * Requires console_srcu_read_lock to be held. Can be invoked from
+ * any context.
+ */
+#define for_each_console_srcu(con)					\
+	hlist_for_each_entry_srcu(con, &console_list, node,		\
+				  console_srcu_read_lock_is_held())
 
 /**
  * for_each_registered_console() - Iterator over registered consoles

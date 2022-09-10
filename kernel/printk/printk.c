@@ -90,6 +90,7 @@ static DEFINE_MUTEX(console_mutex);
 static DEFINE_SEMAPHORE(console_sem);
 HLIST_HEAD(console_list);
 EXPORT_SYMBOL_GPL(console_list);
+DEFINE_STATIC_SRCU(console_srcu);
 
 /*
  * System may need to suppress printk message under certain
@@ -118,6 +119,10 @@ void lockdep_assert_console_list_lock_held(void)
 	lockdep_assert_held(&console_mutex);
 }
 
+bool console_srcu_read_lock_is_held(void)
+{
+	return srcu_read_lock_held(&console_srcu);
+}
 #endif
 
 enum devkmsg_log_bits {
@@ -3227,9 +3232,9 @@ void register_console(struct console *newcon)
 	 */
 	console_lock();
 	if (newcon->flags & CON_CONSDEV || hlist_empty(&console_list))
-		hlist_add_head(&newcon->node, &console_list);
+		hlist_add_head_rcu(&newcon->node, &console_list);
 	else
-		hlist_add_behind(&newcon->node, console_list.first);
+		hlist_add_behind_rcu(&newcon->node, console_list.first);
 
 	/* Ensure this flag is always set for the head of the list */
 	cons_first()->flags |= CON_CONSDEV;
@@ -3245,6 +3250,7 @@ void register_console(struct console *newcon)
 		newcon->seq = prb_next_seq(prb);
 	}
 	console_unlock();
+	/* No need to synchronize SRCU here! */
 	console_sysfs_notify();
 
 	/*
@@ -3290,7 +3296,7 @@ static int console_unregister_locked(struct console *console)
 	if (hlist_unhashed(&console->node))
 		goto out_unlock;
 
-	hlist_del_init(&console->node);
+	hlist_del_init_rcu(&console->node);
 
 	/*
 	 * <HISTORICAL>
@@ -3305,6 +3311,10 @@ static int console_unregister_locked(struct console *console)
 		cons_first()->flags |= CON_CONSDEV;
 
 	console_unlock();
+
+	/* Ensure that all SRCU list walks have completed */
+	synchronize_srcu(&console_srcu);
+
 	console_sysfs_notify();
 
 	if (console->exit)
