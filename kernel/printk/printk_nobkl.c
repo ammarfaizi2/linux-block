@@ -50,6 +50,8 @@
  */
 
 #ifdef CONFIG_PRINTK
+static bool printk_threads_enabled __ro_after_init;
+static bool printk_force_atomic __initdata;
 
 static bool cons_release(struct cons_context *ctxt);
 
@@ -238,8 +240,8 @@ static void cons_context_set_text_buf(struct cons_context *ctxt)
 {
 	struct console *con = ctxt->console;
 
-	/* Early boot or allocation fail? */
-	if (!con->pcpu_data)
+	/* Early boot, allocation fail or thread context? */
+	if (!con->pcpu_data || ctxt->thread)
 		ctxt->txtbuf = &con->ctxt_data.txtbuf;
 	else
 		ctxt->txtbuf = &(this_cpu_ptr(con->pcpu_data)->txtbuf);
@@ -844,6 +846,8 @@ static bool __maybe_unused cons_release(struct cons_context *ctxt)
 {
 	bool ret = __cons_release(ctxt);
 
+	/* Invalidate the record pointer. It's not longer valid */
+	ctxt->txtbuf = NULL;
 	ctxt->state.atom = 0;
 	return ret;
 }
@@ -1026,10 +1030,9 @@ static bool cons_fill_outbuf(struct cons_outbuf_desc *desc);
 static bool cons_get_record(struct cons_write_context *wctxt)
 {
 	struct cons_context *ctxt = &ACCESS_PRIVATE(wctxt, ctxt);
-	struct console *con = ctxt->console;
 	struct cons_outbuf_desc desc = {
 		.txtbuf		= ctxt->txtbuf,
-		.extmsg		= con->flags & CON_EXTENDED,
+		.extmsg		= ctxt->console->flags & CON_EXTENDED,
 		.seq		= ctxt->newseq,
 		.dropped	= ctxt->dropped,
 	};
@@ -1058,7 +1061,7 @@ static bool cons_get_record(struct cons_write_context *wctxt)
  * If it returns true @wctxt->ctxt.backlog indicates whether there are
  * still records pending in the ringbuffer,
  */
-static int __maybe_unused cons_emit_record(struct cons_write_context *wctxt)
+static bool cons_emit_record(struct cons_write_context *wctxt)
 {
 	struct cons_context *ctxt = &ACCESS_PRIVATE(wctxt, ctxt);
 	struct console *con = ctxt->console;
@@ -1093,6 +1096,8 @@ static int __maybe_unused cons_emit_record(struct cons_write_context *wctxt)
 
 	if (!ctxt->thread && con->write_atomic) {
 		done = con->write_atomic(con, wctxt);
+	} else if (ctxt->thread && con->write_thread) {
+		done = con->write_thread(con, wctxt);
 	} else {
 		cons_release(ctxt);
 		WARN_ON_ONCE(1);
@@ -1115,6 +1120,194 @@ update:
 }
 
 /**
+ * cons_kthread_should_run - Check whether the printk thread should run
+ * @con:	Console to operate on
+ * @ctxt:	The acquire context which contains the state
+ *		at console_acquire()
+ */
+static bool cons_kthread_should_run(struct console *con, struct cons_context *ctxt)
+{
+	if (kthread_should_stop())
+		return true;
+
+	/* This reads state and sequence on 64bit. On 32bit only state */
+	cons_state_read(con, STATE_REAL, &ctxt->state);
+	/* Bring the sequence in @ctxt up to date */
+	cons_context_sequence_init(ctxt);
+
+	if (!cons_state_ok(ctxt->state))
+		return false;
+
+	/*
+	 * Atomic printing is running on some other CPU. The owner
+	 * will wake the console thread on unlock if necessary.
+	 */
+	if (ctxt->state.locked)
+		return false;
+
+	return prb_read_valid(prb, ctxt->oldseq, NULL);
+}
+
+/**
+ * cons_kthread_func - The printk thread function
+ * @__console:	Console to operate on
+ */
+static int cons_kthread_func(void *__console)
+{
+	struct console *con = __console;
+	struct cons_write_context wctxt = {
+		.ctxt.console	= con,
+		.ctxt.prio	= CONS_PRIO_NORMAL,
+		.ctxt.thread	= 1,
+	};
+	struct cons_context *ctxt = &ACCESS_PRIVATE(&wctxt, ctxt);
+	int ret;
+
+	atomic_set(&con->kthread_running, 1);
+
+	for (;;) {
+		atomic_dec(&con->kthread_running);
+		/*
+		 * Provides a full memory barrier vs. cons_kthread_wake().
+		 */
+		ret = rcuwait_wait_event(&con->rcuwait, cons_kthread_should_run(con, ctxt),
+					 TASK_INTERRUPTIBLE);
+
+		if (kthread_should_stop())
+			break;
+
+		atomic_inc(&con->kthread_running);
+
+		/* Wait was interrupted by a spurious signal, go back to sleep */
+		if (ret)
+			continue;
+
+		for (;;) {
+			bool backlog;
+
+			/*
+			 * Ensure this stays on the CPU to make handover and
+			 * takeover possible.
+			 */
+			migrate_disable();
+
+			/*
+			 * Try to acquire the console without attempting to
+			 * take over.  If an atomic printer wants to hand
+			 * back to the thread it simply wakes it up.
+			 */
+			if (!cons_try_acquire(ctxt))
+				break;
+
+			/* Stop when the console was handed/taken over */
+			if (!cons_emit_record(&wctxt))
+				break;
+
+			backlog = ctxt->backlog;
+
+			/* Stop when the console was handed/taken over */
+			if (!cons_release(ctxt))
+				break;
+
+			/* Backlog done? */
+			if (!backlog)
+				break;
+
+			migrate_enable();
+			cond_resched();
+		}
+		migrate_enable();
+	}
+	return 0;
+}
+
+/**
+ * cons_kthread_wake - Wake up a printk thread
+ * @con:	Console to operate on
+ */
+static inline void cons_kthread_wake(struct console *con)
+{
+	rcuwait_wake_up(&con->rcuwait);
+}
+
+/**
+ * cons_kthread_stop - Stop a printk thread
+ * @con:	Console to operate on
+ */
+static void cons_kthread_stop(struct console *con)
+{
+	struct task_struct *kt;
+
+	lockdep_assert_held(&console_mutex);
+
+	if (!con->kthread)
+		return;
+
+	/*
+	 * Nothing else than the thread itself can see @con->kthread
+	 * anymore. @con is unhashed and all list walkers are synchronized.
+	 */
+	kt = con->kthread;
+	con->kthread = NULL;
+	kthread_stop(kt);
+
+	kfree(con->thread_txtbuf);
+	con->thread_txtbuf = NULL;
+}
+
+/**
+ * cons_kthread_create - Create a printk thread
+ * @con:	Console to operate on
+ *
+ * If it fails, let the console proceed. The atomic part might
+ * be usable and useful.
+ */
+static void cons_kthread_create(struct console *con)
+{
+	struct task_struct *kt;
+
+	lockdep_assert_held(&console_mutex);
+
+	if (!(con->flags & CON_NO_BKL) || !con->write_thread)
+		return;
+
+	if (!printk_threads_enabled || con->kthread)
+		return;
+
+	con->thread_txtbuf = kmalloc(sizeof(*con->thread_txtbuf), GFP_KERNEL);
+	if (!con->thread_txtbuf) {
+		con_printk(KERN_ERR, con, "unable to allocate memory for printing thread\n");
+		return;
+	}
+
+	kt = kthread_run(cons_kthread_func, con, "pr/%s%d", con->name, con->index);
+	if (IS_ERR(kt)) {
+		con_printk(KERN_ERR, con, "unable to start printing thread\n");
+		kfree(con->thread_txtbuf);
+		con->thread_txtbuf = NULL;
+		return;
+	}
+
+	con->kthread = kt;
+}
+
+static int __init printk_setup_threads(void)
+{
+	struct console *con;
+
+	if (printk_force_atomic)
+		return 0;
+
+	console_list_lock();
+	printk_threads_enabled = true;
+	for_each_registered_console(con)
+		cons_kthread_create(con);
+	console_list_unlock();
+	return 0;
+}
+early_initcall(printk_setup_threads);
+
+/**
  * cons_nobkl_init - Initialize the NOBKL console state
  * @con:	Console to initialize
  */
@@ -1127,7 +1320,10 @@ static void cons_nobkl_init(struct console *con)
 
 	cons_alloc_percpu_data(con);
 	cons_forward_sequence(con);
+	rcuwait_init(&con->rcuwait);
+	cons_kthread_create(con);
 	cons_state_set(con, STATE_REAL, &state);
+	cons_kthread_wake(con);
 }
 
 /**
@@ -1138,6 +1334,7 @@ static void cons_nobkl_cleanup(struct console *con)
 {
 	struct cons_state state = { };
 
+	cons_kthread_stop(con);
 	cons_state_set(con, STATE_REAL, &state);
 	cons_free_percpu_data(con);
 }

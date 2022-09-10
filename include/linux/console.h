@@ -17,6 +17,7 @@
 #include <linux/atomic.h>
 #include <linux/bits.h>
 #include <linux/rculist.h>
+#include <linux/rcuwait.h>
 #include <linux/types.h>
 
 struct vc_data;
@@ -357,6 +358,12 @@ struct cons_context_data {
  *
  * @atomic_state:	State array for non-BKL consoles. Real and handover
  * @atomic_seq:		Sequence for record tracking (32bit only)
+ * @kthread:		Pointer to kernel thread
+ * @rcuwait:		RCU wait for the kernel thread
+ * @kthread_running:	Indicator whether the kthread is running
+ * @thread_txtbuf:	Pointer to thread private buffer
+ * @write_atomic:	Write callback for atomic context
+ * @write_thread:	Write callback for threaded printing
  * @pcpu_data:		Pointer to percpu context data
  * @ctxt_data:		Builtin context data for early boot and threaded printing
  */
@@ -384,8 +391,13 @@ struct console {
 #ifndef CONFIG_64BIT
 	atomic_t __private	atomic_seq;
 #endif
+	struct task_struct	*kthread;
+	struct rcuwait		rcuwait;
+	atomic_t		kthread_running;
+	struct cons_text_buf	*thread_txtbuf;
 
 	bool (*write_atomic)(struct console *con, struct cons_write_context *wctxt);
+	bool (*write_thread)(struct console *con, struct cons_write_context *wctxt);
 
 	struct cons_context_data __percpu	*pcpu_data;
 	struct cons_context_data		ctxt_data;
