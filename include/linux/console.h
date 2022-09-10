@@ -157,10 +157,34 @@ struct console {
 	struct	 console *next;
 };
 
-/*
- * for_each_console() allows you to iterate on each console
+#ifdef CONFIG_LOCKDEP
+extern void lockdep_assert_console_list_lock_held(void);
+#else
+static inline void lockdep_assert_console_list_lock_held(void) { }
+#endif
+
+extern void console_list_lock(void) __acquires(console_mutex);
+extern void console_list_unlock(void) __releases(console_mutex);
+
+/**
+ * for_each_registered_console() - Iterator over registered consoles
+ * @con:	struct console pointer used as loop cursor
+ *
+ * Requires console_list_lock to be held. Can only be invoked from
+ * preemptible context.
  */
-#define for_each_console(con) \
+#define for_each_registered_console(con)				\
+	lockdep_assert_console_list_lock_held();			\
+	for (con = console_drivers; con != NULL; con = con->next)
+
+/**
+ * for_each_console() - Iterator over registered consoles
+ * @con:	struct console pointer used as loop cursor
+ *
+ * Requires console_lock to be held which guarantees that the
+ * list is immutable.
+ */
+#define for_each_console(con)						\
 	for (con = console_drivers; con != NULL; con = con->next)
 
 extern int console_set_on_cmdline;
