@@ -462,10 +462,13 @@ static void kgdboc_earlycon_pre_exp_handler(void)
 	 * we have no other choice so we keep using it.  Since not all
 	 * serial drivers might be OK with this, print a warning once per
 	 * boot if we detect this case.
+	 *
+	 * Pretend that walking the console list is safe...
 	 */
-	for_each_console(con)
+	for_each_console_kgdb(con) {
 		if (con == kgdboc_earlycon_io_ops.cons)
 			return;
+	}
 
 	already_warned = true;
 	pr_warn("kgdboc_earlycon is still using bootconsole\n");

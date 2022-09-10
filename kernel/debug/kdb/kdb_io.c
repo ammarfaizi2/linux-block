@@ -558,7 +558,12 @@ static void kdb_msg_write(const char *msg, int msg_len)
 		cp++;
 	}
 
-	for_each_console(c) {
+	/*
+	 * This is a completely unprotected list walk designed by the
+	 * wishful thinking departement. See the oops_inprogress comment
+	 * below - especially the encourage section...
+	 */
+	for_each_console_kgdb(c) {
 		if (!(c->flags & CON_ENABLED))
 			continue;
 		if (c == dbg_io_ops->cons)
