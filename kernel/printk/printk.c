@@ -2740,7 +2740,7 @@ static void cons_print_dropped(struct cons_outbuf_desc *desc)
  * If it is NULL then records have been dropped or skipped and con->seq
  * has been forwarded so the caller can try to print the next record.
  */
-static bool cons_fill_outbuf(struct console *con, struct cons_outbuf_desc *desc)
+static bool cons_fill_outbuf(struct cons_outbuf_desc *desc)
 {
 	static int panic_console_dropped;
 
@@ -2755,12 +2755,12 @@ static bool cons_fill_outbuf(struct console *con, struct cons_outbuf_desc *desc)
 
 	prb_rec_init_rd(&r, &info, txtbuf->text, CONSOLE_LOG_MAX);
 
-	if (!prb_read_valid(prb, con->seq, &r))
+	if (!prb_read_valid(prb, desc->seq, &r))
 		return false;
 
-	if (con->seq != r.info->seq) {
-		con->dropped += r.info->seq - con->seq;
-		con->seq = r.info->seq;
+	if (desc->seq != r.info->seq) {
+		desc->dropped += r.info->seq - desc->seq;
+		desc->seq = r.info->seq;
 		if (panic_in_progress() && panic_console_dropped++ > 10) {
 			suppress_panic_printk = 1;
 			pr_warn_once("Too many dropped messages. Suppress messages on non-panic CPUs to prevent livelock.\n");
@@ -2769,7 +2769,7 @@ static bool cons_fill_outbuf(struct console *con, struct cons_outbuf_desc *desc)
 
 	/* Skip record that has level above the console loglevel. */
 	if (suppress_message_printing(r.info->level)) {
-		con->seq++;
+		desc->seq++;
 		return true;
 	}
 
@@ -2789,9 +2789,7 @@ static bool cons_fill_outbuf(struct console *con, struct cons_outbuf_desc *desc)
 
 		desc->len = len;
 		desc->outbuf = txtbuf->text;
-		desc->dropped = con->dropped;
 		cons_print_dropped(desc);
-		con->dropped = desc->dropped;
 	}
 
 	return true;
@@ -2820,15 +2818,20 @@ static bool console_emit_next_record(struct console *con, struct cons_text_buf *
 				     bool *handover, bool extmsg)
 {
 	struct cons_outbuf_desc desc = {
-		.txtbuf	= txtbuf,
-		.extmsg = extmsg,
+		.txtbuf		= txtbuf,
+		.extmsg		= extmsg,
+		.seq		= con->seq,
+		.dropped	= con->dropped,
 	};
 	unsigned long flags;
 
 	*handover = false;
 
-	if (!cons_fill_outbuf(con, &desc))
+	if (!cons_fill_outbuf(&desc))
 		return false;
+
+	con->seq = desc.seq;
+	con->dropped = desc.dropped;
 
 	if (!desc.outbuf)
 		goto skip;
