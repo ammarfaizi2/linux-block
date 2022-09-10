@@ -359,6 +359,7 @@ static void ath11k_ahb_ext_irq_enable(struct ath11k_base *ab)
 		struct ath11k_ext_irq_grp *irq_grp = &ab->ext_irq_grp[i];
 
 		if (!irq_grp->napi_enabled) {
+			dev_set_threaded(&irq_grp->napi_ndev, true);
 			napi_enable(&irq_grp->napi);
 			irq_grp->napi_enabled = true;
 		}
@@ -691,6 +692,7 @@ static const struct ath11k_hif_ops ath11k_ahb_hif_ops_ipq8074 = {
 	.stop = ath11k_ahb_stop,
 	.read32 = ath11k_ahb_read32,
 	.write32 = ath11k_ahb_write32,
+	.read = NULL,
 	.irq_enable = ath11k_ahb_ext_irq_enable,
 	.irq_disable = ath11k_ahb_ext_irq_disable,
 	.map_service_to_pipe = ath11k_ahb_map_service_to_pipe,
@@ -703,6 +705,7 @@ static const struct ath11k_hif_ops ath11k_ahb_hif_ops_wcn6750 = {
 	.stop = ath11k_pcic_stop,
 	.read32 = ath11k_pcic_read32,
 	.write32 = ath11k_pcic_write32,
+	.read = NULL,
 	.irq_enable = ath11k_pcic_ext_irq_enable,
 	.irq_disable = ath11k_pcic_ext_irq_disable,
 	.get_msi_address =  ath11k_pcic_get_msi_address,
