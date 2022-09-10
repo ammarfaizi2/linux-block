@@ -281,10 +281,12 @@ struct console;
  * @newseq:		The sequence number for progress
  * @prio:		Priority of the context
  * @txtbuf:		Pointer to the text buffer for this context
+ * @dropped:		Dropped counter for the current context
  * @thread:		The acquire is printk thread context
  * @hostile:		Hostile takeover requested. Cleared on normal
  *			acquire or friendly handover
  * @spinwait:		Spinwait on acquire if possible
+ * @backlog:		Ringbuffer has pending records
  */
 struct cons_context {
 	struct console		*console;
@@ -297,9 +299,11 @@ struct cons_context {
 	unsigned int		spinwait_max_us;
 	enum cons_prio		prio;
 	struct cons_text_buf	*txtbuf;
+	unsigned long		dropped;
 	unsigned int		thread		: 1;
 	unsigned int		hostile		: 1;
 	unsigned int		spinwait	: 1;
+	unsigned int		backlog		: 1;
 };
 
 /**
@@ -380,6 +384,9 @@ struct console {
 #ifndef CONFIG_64BIT
 	atomic_t __private	atomic_seq;
 #endif
+
+	bool (*write_atomic)(struct console *con, struct cons_write_context *wctxt);
+
 	struct cons_context_data __percpu	*pcpu_data;
 	struct cons_context_data		ctxt_data;
 };
