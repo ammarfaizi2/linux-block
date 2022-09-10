@@ -300,6 +300,22 @@ struct cons_context {
 	unsigned int		spinwait	: 1;
 };
 
+/**
+ * struct cons_write_context - Context handed to the write callbacks
+ * @ctxt:	The core console context
+ * @outbuf:	Pointer to the text buffer for output
+ * @len:	Length to write
+ * @pos:	Current write position in @outbuf
+ * @unsafe:	Invoked in unsafe state due to force takeover
+ */
+struct cons_write_context {
+	struct cons_context __private	ctxt;
+	char				*outbuf;
+	unsigned int			len;
+	unsigned int			pos;
+	bool				unsafe;
+};
+
 #define CONS_MAX_NEST_LVL	8
 
 /**
@@ -422,6 +438,10 @@ extern void console_list_unlock(void) __releases(console_mutex);
  */
 #define for_each_console_kgdb(con)					\
 	hlist_for_each_entry(con, &console_list, node)
+
+extern bool console_can_proceed(struct cons_write_context *wctxt);
+extern bool console_enter_unsafe(struct cons_write_context *wctxt);
+extern bool console_exit_unsafe(struct cons_write_context *wctxt);
 
 extern int console_set_on_cmdline;
 extern struct console *early_console;
