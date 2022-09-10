@@ -1231,6 +1231,222 @@ static inline void cons_kthread_wake(struct console *con)
 }
 
 /**
+ * cons_irq_work - irq work to wake printk thread
+ * @irq_work:	The irq work to operate on
+ */
+static void cons_irq_work(struct irq_work *irq_work)
+{
+	struct console *con = container_of(irq_work, struct console, irq_work);
+
+	cons_kthread_wake(con);
+}
+
+/**
+ * cons_wake_threads - Wake up printing threads
+ */
+static void cons_wake_threads(void)
+{
+	struct console *con;
+	int cookie;
+
+	cookie = srcu_read_lock(&console_srcu);
+	for_each_console_srcu(con) {
+		if (con->kthread && !atomic_read(&con->kthread_running))
+			irq_work_queue(&con->irq_work);
+	}
+	srcu_read_unlock(&console_srcu, cookie);
+}
+
+/**
+ * struct cons_cpu_state - Per CPU printk context state
+ * @prio:	The current context priority level
+ * @nesting:	Per priority nest counter
+ */
+struct cons_cpu_state {
+	enum cons_prio	prio;
+	int		nesting[CONS_PRIO_MAX];
+};
+
+static DEFINE_PER_CPU(struct cons_cpu_state, cons_pcpu_state);
+static struct cons_cpu_state early_cons_pcpu_state __initdata;
+
+/**
+ * cons_get_cpu_state - Get the per CPU console state pointer
+ *
+ * Returns either a pointer to the per CPU state of the current CPU or to
+ * the init data state during early boot.
+ */
+static __ref struct cons_cpu_state *cons_get_cpu_state(void)
+{
+	if (!printk_percpu_data_ready())
+		return &early_cons_pcpu_state;
+	else
+		return this_cpu_ptr(&cons_pcpu_state);
+}
+
+/**
+ * cons_get_wctxt - Get the write context for atomic printing
+ * @con:	Console to operate on
+ * @prio:	Priority of the context
+ *
+ * Returns either the per CPU context or the builtin context for
+ * early boot.
+ */
+static struct cons_write_context *cons_get_wctxt(struct console *con,
+						 enum cons_prio prio)
+{
+	if (!con->pcpu_data)
+		return &con->ctxt_data.wctxt[prio];
+
+	return &this_cpu_ptr(con->pcpu_data)->wctxt[prio];
+}
+
+/**
+ * cons_atomic_try_acquire - Try to acquire the console for atomic printing
+ * @con:	The console to acquire
+ * @ctxt:	The console context instance to work on
+ * @prio:	The priority of the current context
+ */
+static bool cons_atomic_try_acquire(struct console *con, struct cons_context *ctxt,
+				    enum cons_prio prio)
+{
+	memset(ctxt, 0, sizeof(*ctxt));
+	ctxt->console		= con;
+	ctxt->spinwait_max_us	= 2000;
+	ctxt->prio		= prio;
+	ctxt->spinwait		= 1;
+
+	/* Try to acquire it directly or via a friendly handover */
+	if (cons_try_acquire(ctxt))
+		return true;
+
+	/* Investigate whether a hostile takeover is due */
+	if (ctxt->old_state.cur_prio >= prio)
+		return false;
+
+	ctxt->hostile = 1;
+	return cons_try_acquire(ctxt);
+}
+
+/**
+ * cons_atomic_flush_one - Flush one console in atomic mode
+ * @con:	The console to flush
+ * @prio:	The priority of the current context
+ */
+static void cons_atomic_flush_one(struct console *con, enum cons_prio prio)
+{
+	struct cons_write_context *wctxt = cons_get_wctxt(con, prio);
+	struct cons_context *ctxt = &ACCESS_PRIVATE(wctxt, ctxt);
+
+	if (!cons_atomic_try_acquire(con, ctxt, prio))
+		return;
+
+	do {
+		/*
+		 * cons_emit_record() returns false when the console was
+		 * handed over or taken over. In both cases the context is
+		 * not longer valid.
+		 */
+		if (!cons_emit_record(wctxt))
+			return;
+	} while (ctxt->backlog);
+
+	cons_release(ctxt);
+}
+
+/**
+ * cons_atomic_flush - Flush consoles in atomic mode if required
+ */
+static void cons_atomic_flush(void)
+{
+	struct cons_cpu_state *cpu_state;
+	struct console *con;
+	int cookie;
+
+	cpu_state = cons_get_cpu_state();
+
+	/*
+	 * Let the outermost write of this priority print. This avoids
+	 * nasty hackery for nested WARN() where the printing itself
+	 * generates one.
+	 *
+	 * cpu_state->prio <= CONS_PRIO_NORMAL is not subject to nesting
+	 * and it can fall through for early boot and for consoles which do
+	 * not have a kthread (yet). For simplicity sake just fall through.
+	 */
+	if (cpu_state->prio > CONS_PRIO_NORMAL &&
+	    cpu_state->nesting[cpu_state->prio] != 1)
+		return;
+
+	cookie = srcu_read_lock(&console_srcu);
+	for_each_console_srcu(con) {
+		if (!con->write_atomic)
+			continue;
+
+		if (cpu_state->prio > CONS_PRIO_NORMAL || !con->kthread)
+			cons_atomic_flush_one(con, cpu_state->prio);
+	}
+	srcu_read_unlock(&console_srcu, cookie);
+}
+
+/**
+ * cons_atomic_enter - Enter a context which enforces atomic printing
+ * @prio:	Priority of the context
+ *
+ * Returns:	The previous priority which needs to be fed into
+ *		the corresponding cons_atomic_exit()
+ */
+enum cons_prio cons_atomic_enter(enum cons_prio prio)
+{
+	struct cons_cpu_state *cpu_state;
+	enum cons_prio prev_prio;
+
+	migrate_disable();
+	cpu_state = cons_get_cpu_state();
+
+	prev_prio = cpu_state->prio;
+	if (prev_prio < prio)
+		cpu_state->prio = prio;
+
+	/*
+	 * Increment the nesting on @cpu_state->prio so a WARN()
+	 * nested into a panic printout does not attempt to
+	 * scribble state.
+	 */
+	cpu_state->nesting[cpu_state->prio]++;
+
+	return prev_prio;
+}
+
+/**
+ * cons_atomic_exit - Exit a context which enforces atomic printing
+ * @prio:	Priority of the context to leave
+ * @prev_prio:	Priority of the previous context for restore
+ *
+ * @prev_prio is the priority returned by the corresponding cons_atomic_enter().
+ */
+void cons_atomic_exit(enum cons_prio prio, enum cons_prio prev_prio)
+{
+	struct cons_cpu_state *cpu_state;
+
+	cpu_state = cons_get_cpu_state();
+
+	/*
+	 * Undo the nesting of cons_atomic_enter() at the CPU state
+	 * priority.
+	 */
+	cpu_state->nesting[cpu_state->prio]--;
+
+	/*
+	 * Restore the previous priority which was returned by
+	 * cons_atomic_enter().
+	 */
+	cpu_state->prio = prev_prio;
+
+	migrate_enable();
+}
+
+/**
  * cons_kthread_stop - Stop a printk thread
  * @con:	Console to operate on
  */
@@ -1321,6 +1537,7 @@ static void cons_nobkl_init(struct console *con)
 	cons_alloc_percpu_data(con);
 	cons_forward_sequence(con);
 	rcuwait_init(&con->rcuwait);
+	init_irq_work(&con->irq_work, cons_irq_work);
 	cons_kthread_create(con);
 	cons_state_set(con, STATE_REAL, &state);
 	cons_kthread_wake(con);

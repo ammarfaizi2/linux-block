@@ -1072,6 +1072,8 @@ static inline void log_buf_add_cpu(void) {}
 #endif /* CONFIG_SMP */
 
 static void cons_alloc_percpu_data(struct console *con);
+static void cons_atomic_flush(void);
+static void cons_wake_threads(void);
 
 static void __init set_percpu_data_ready(void)
 {
@@ -2270,16 +2272,20 @@ asmlinkage int vprintk_emit(int facility, int level,
 
 	printed_len = vprintk_store(facility, level, dev_info, fmt, args);
 
+	/*
+	 * The caller may be holding system-critical or
+	 * timing-sensitive locks. Disable preemption during
+	 * printing of all remaining records to all consoles so that
+	 * this context can return as soon as possible. Hopefully
+	 * another printk() caller will take over the printing.
+	 */
+	preempt_disable();
+
+	/* Flush the non-BKL consoles if required */
+	cons_atomic_flush();
+
 	/* If called from the scheduler, we can not call up(). */
 	if (!in_sched) {
-		/*
-		 * The caller may be holding system-critical or
-		 * timing-sensitive locks. Disable preemption during
-		 * printing of all remaining records to all consoles so that
-		 * this context can return as soon as possible. Hopefully
-		 * another printk() caller will take over the printing.
-		 */
-		preempt_disable();
 		/*
 		 * Try to acquire and then immediately release the console
 		 * semaphore. The release will print out buffers. With the
@@ -2288,9 +2294,11 @@ asmlinkage int vprintk_emit(int facility, int level,
 		 */
 		if (console_trylock_spinning())
 			console_unlock();
-		preempt_enable();
 	}
 
+	preempt_enable();
+
+	cons_wake_threads();
 	wake_up_klogd();
 	return printed_len;
 }
