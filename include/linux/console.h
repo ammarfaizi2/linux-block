@@ -15,6 +15,7 @@
 #define _LINUX_CONSOLE_H_ 1
 
 #include <linux/atomic.h>
+#include <linux/list.h>
 #include <linux/types.h>
 
 struct vc_data;
@@ -154,14 +155,18 @@ struct console {
 	u64	seq;
 	unsigned long dropped;
 	void	*data;
-	struct	 console *next;
+	struct hlist_node node;
 };
 
 #ifdef CONFIG_LOCKDEP
+extern void lockdep_assert_console_lock_held(void);
 extern void lockdep_assert_console_list_lock_held(void);
 #else
+static inline void lockdep_assert_console_lock_held(void) { }
 static inline void lockdep_assert_console_list_lock_held(void) { }
 #endif
+
+extern struct hlist_head console_list;
 
 extern void console_list_lock(void) __acquires(console_mutex);
 extern void console_list_unlock(void) __releases(console_mutex);
@@ -175,7 +180,7 @@ extern void console_list_unlock(void) __releases(console_mutex);
  */
 #define for_each_registered_console(con)				\
 	lockdep_assert_console_list_lock_held();			\
-	for (con = console_drivers; con != NULL; con = con->next)
+	hlist_for_each_entry(con, &console_list, node)
 
 /**
  * for_each_console() - Iterator over registered consoles
@@ -184,8 +189,9 @@ extern void console_list_unlock(void) __releases(console_mutex);
  * Requires console_lock to be held which guarantees that the
  * list is immutable.
  */
-#define for_each_console(con) \
-	for (con = console_drivers; con != NULL; con = con->next)
+#define for_each_console(con)						\
+	lockdep_assert_console_lock_held();				\
+	hlist_for_each_entry(con, &console_list, node)
 
 /**
  * for_each_console_kgdb() - Iterator over registered consoles for KGDB
@@ -194,8 +200,8 @@ extern void console_list_unlock(void) __releases(console_mutex);
  * Has no serialization requirements and KGDB pretends that this is safe.
  * Don't use outside of the KGDB fairy tale land!
  */
-#define for_each_console_kgdb(con)				\
-	for (con = console_drivers; con != NULL; con = con->next)
+#define for_each_console_kgdb(con)					\
+	hlist_for_each_entry(con, &console_list, node)
 
 extern int console_set_on_cmdline;
 extern struct console *early_console;
@@ -208,7 +214,6 @@ enum con_flush_mode {
 extern int add_preferred_console(char *name, int idx, char *options);
 extern void register_console(struct console *);
 extern int unregister_console(struct console *);
-extern struct console *console_drivers;
 extern void console_lock(void);
 extern int console_trylock(void);
 extern void console_unlock(void);

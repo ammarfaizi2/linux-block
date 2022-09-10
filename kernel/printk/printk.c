@@ -79,17 +79,17 @@ int oops_in_progress;
 EXPORT_SYMBOL(oops_in_progress);
 
 /*
- * console_sem protects the console_drivers list, and also provides
- * serialization for access to the entire console driver system.
+ * console_sem protects onsole_list, and also provides serialization for
+ * access to the entire console driver system.
  *
  * console_mutex serializes register/unregister. console_sem has to be
- * taken for any list manipulation inside the console_mutex locked
+ * taken for any console_list manipulation inside the console_mutex locked
  * section to keep the console BKL machinery happy.
  */
 static DEFINE_MUTEX(console_mutex);
 static DEFINE_SEMAPHORE(console_sem);
-struct console *console_drivers;
-EXPORT_SYMBOL_GPL(console_drivers);
+HLIST_HEAD(console_list);
+EXPORT_SYMBOL_GPL(console_list);
 
 /*
  * System may need to suppress printk message under certain
@@ -107,6 +107,11 @@ static int __read_mostly suppress_panic_printk;
 static struct lockdep_map console_lock_dep_map = {
 	.name = "console_lock"
 };
+
+void lockdep_assert_console_lock_held(void)
+{
+	lockdep_assert(lock_is_held(&console_lock_dep_map));
+}
 
 void lockdep_assert_console_list_lock_held(void)
 {
@@ -2586,7 +2591,7 @@ static int console_cpu_notify(unsigned int cpu)
  * console_lock - lock the console system for exclusive use.
  *
  * Acquires a lock which guarantees that the caller has
- * exclusive access to the console system and the console_drivers list.
+ * exclusive access to the console system and console_list.
  *
  * Can sleep, returns nothing.
  */
@@ -2606,7 +2611,7 @@ EXPORT_SYMBOL(console_lock);
  * console_trylock - try to lock the console system for exclusive use.
  *
  * Try to acquire a lock which guarantees that the caller has exclusive
- * access to the console system and the console_drivers list.
+ * access to the console system and console_list.
  *
  * returns 1 on success, and 0 on failure to acquire the lock.
  */
@@ -2974,7 +2979,15 @@ void console_flush_on_panic(enum con_flush_mode mode)
 		u64 seq;
 
 		seq = prb_first_valid_seq(prb);
-		for_each_console(c)
+		/*
+		 * This cannot use for_each_console() because it's not established
+		 * that the current context has console locked and neither there is
+		 * a guarantee that there is no concurrency in that case.
+		 *
+		 * Open code it for documentation purposes and pretend that
+		 * it works.
+		 */
+		hlist_for_each_entry(c, &console_list, node)
 			c->seq = seq;
 	}
 	console_unlock();
@@ -3115,6 +3128,9 @@ static void try_enable_default_console(struct console *newcon)
 	       (con->flags & CON_BOOT) ? "boot" : "",	\
 	       con->name, con->index, ##__VA_ARGS__)
 
+#define cons_first()					\
+	hlist_entry(console_list.first, struct console, node)
+
 static int console_unregister_locked(struct console *console);
 
 /*
@@ -3177,8 +3193,8 @@ void register_console(struct console *newcon)
 	 * flag set and will be first in the list.
 	 */
 	if (preferred_console < 0) {
-		if (!console_drivers || !console_drivers->device ||
-		    console_drivers->flags & CON_BOOT) {
+		if (hlist_empty(&console_list) || !cons_first()->device ||
+		    cons_first()->flags & CON_BOOT) {
 			try_enable_default_console(newcon);
 		}
 	}
@@ -3206,21 +3222,17 @@ void register_console(struct console *newcon)
 	}
 
 	/*
-	 *	Put this console in the list - keep the
-	 *	preferred driver at the head of the list.
+	 * Put this console in the list and keep the referred driver at the
+	 * head of the list.
 	 */
 	console_lock();
-	if ((newcon->flags & CON_CONSDEV) || console_drivers == NULL) {
-		newcon->next = console_drivers;
-		console_drivers = newcon;
-		if (newcon->next)
-			newcon->next->flags &= ~CON_CONSDEV;
-		/* Ensure this flag is always set for the head of the list */
-		newcon->flags |= CON_CONSDEV;
-	} else {
-		newcon->next = console_drivers->next;
-		console_drivers->next = newcon;
-	}
+	if (newcon->flags & CON_CONSDEV || hlist_empty(&console_list))
+		hlist_add_head(&newcon->node, &console_list);
+	else
+		hlist_add_behind(&newcon->node, console_list.first);
+
+	/* Ensure this flag is always set for the head of the list */
+	cons_first()->flags |= CON_CONSDEV;
 
 	newcon->dropped = 0;
 	if (newcon->flags & CON_PRINTBUFFER) {
@@ -3246,7 +3258,9 @@ void register_console(struct console *newcon)
 	if (bootcon_enabled &&
 	    ((newcon->flags & (CON_CONSDEV | CON_BOOT)) == CON_CONSDEV) &&
 	    !keep_bootcon) {
-		for_each_console(con) {
+		struct hlist_node *tmp;
+
+		hlist_for_each_entry_safe(con, tmp, &console_list, node) {
 			if (con->flags & CON_BOOT)
 				console_unregister_locked(con);
 		}
@@ -3258,7 +3272,6 @@ EXPORT_SYMBOL(register_console);
 
 static int console_unregister_locked(struct console *console)
 {
-	struct console *con;
 	int res;
 
 	con_printk(KERN_INFO, console, "disabled\n");
@@ -3269,32 +3282,28 @@ static int console_unregister_locked(struct console *console)
 	if (res > 0)
 		return 0;
 
-	res = -ENODEV;
 	console_lock();
-	if (console_drivers == console) {
-		console_drivers=console->next;
-		res = 0;
-	} else {
-		for_each_console(con) {
-			if (con->next == console) {
-				con->next = console->next;
-				res = 0;
-				break;
-			}
-		}
-	}
 
-	if (res)
-		goto out_disable_unlock;
+	/* Disable it unconditionally */
+	console->flags &= ~CON_ENABLED;
+
+	if (hlist_unhashed(&console->node))
+		goto out_unlock;
+
+	hlist_del_init(&console->node);
 
 	/*
+	 * <HISTORICAL>
 	 * If this isn't the last console and it has CON_CONSDEV set, we
 	 * need to set it on the next preferred console.
+	 * </HISTORICAL>
+	 *
+	 * The above makes no sense as there is no guarantee that the next
+	 * console has any device attached. Oh well....
 	 */
-	if (console_drivers != NULL && console->flags & CON_CONSDEV)
-		console_drivers->flags |= CON_CONSDEV;
+	if (!hlist_empty(&console_list) && console->flags & CON_CONSDEV)
+		cons_first()->flags |= CON_CONSDEV;
 
-	console->flags &= ~CON_ENABLED;
 	console_unlock();
 	console_sysfs_notify();
 
@@ -3303,10 +3312,8 @@ static int console_unregister_locked(struct console *console)
 
 	return res;
 
-out_disable_unlock:
-	console->flags &= ~CON_ENABLED;
+out_unlock:
 	console_unlock();
-
 	return res;
 }
 
