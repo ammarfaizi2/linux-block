@@ -275,6 +275,8 @@ struct console;
  * @hov_state:		The handover state for spin and cleanup
  * @req_state:		The request state for spin and cleanup
  * @spinwait_max_us:	Limit for spinwait acquire
+ * @oldseq:		The sequence number at acquire()
+ * @newseq:		The sequence number for progress
  * @prio:		Priority of the context
  * @txtbuf:		Pointer to the text buffer for this context
  * @thread:		The acquire is printk thread context
@@ -288,6 +290,8 @@ struct cons_context {
 	struct cons_state	old_state;
 	struct cons_state	hov_state;
 	struct cons_state	req_state;
+	u64			oldseq;
+	u64			newseq;
 	unsigned int		spinwait_max_us;
 	enum cons_prio		prio;
 	struct cons_text_buf	*txtbuf;
@@ -330,6 +334,7 @@ struct cons_context_data {
  * @node:		hlist node for the console list
  *
  * @atomic_state:	State array for non-BKL consoles. Real and handover
+ * @atomic_seq:		Sequence for record tracking (32bit only)
  * @pcpu_data:		Pointer to percpu context data
  * @ctxt_data:		Builtin context data for early boot and threaded printing
  */
@@ -353,8 +358,10 @@ struct console {
 	struct hlist_node	node;
 
 	/* NOBKL console specific members */
-	atomic_long_t __private		atomic_state[2];
-
+	atomic_long_t __private	atomic_state[2];
+#ifndef CONFIG_64BIT
+	atomic_t __private	atomic_seq;
+#endif
 	struct cons_context_data __percpu	*pcpu_data;
 	struct cons_context_data		ctxt_data;
 };
