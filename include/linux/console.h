@@ -122,6 +122,20 @@ static inline int con_debug_leave(void)
 #define CM_ERASE    (2)
 #define CM_MOVE     (3)
 
+#ifdef CONFIG_PRINTK
+/* The maximum size of a formatted record (i.e. with prefix added per line) */
+#define CONSOLE_LOG_MAX		1024
+
+/* The maximum size for a dropped text message */
+#define DROPPED_TEXT_MAX	64
+#else
+#define CONSOLE_LOG_MAX		0
+#define DROPPED_TEXT_MAX	0
+#endif
+
+/* The maximum size of an formatted extended record */
+#define CONSOLE_EXT_LOG_MAX	8192
+
 /*
  * The interface for a console, or any other device that wants to capture
  * console messages (printer driver?)
