@@ -183,6 +183,12 @@ enum cons_flags {
  *
  * @alive:	Console is alive. Required for teardown
  * @enabled:	Console is enabled. If 0, do not use
+ * @locked:	Console is locked by a writer
+ * @unsafe:	Console is busy in a non takeover region
+ * @thread:	Current owner is the printk thread
+ * @cur_prio:	The priority of the current output
+ * @req_prio:	The priority of a handover request
+ * @cpu:	The CPU on which the writer runs
  *
  * To be used for state read and preparation of atomic_long_cmpxchg()
  * operations.
@@ -199,6 +205,12 @@ struct cons_state {
 				struct {
 					u32 alive	:  1;
 					u32 enabled	:  1;
+					u32 locked	:  1;
+					u32 unsafe	:  1;
+					u32 thread	:  1;
+					u32 cur_prio	:  2;
+					u32 req_prio	:  2;
+					u32 cpu		: 18;
 				};
 			};
 		};
@@ -230,6 +242,56 @@ struct cons_outbuf_desc {
 	unsigned long		dropped;
 	unsigned int		len;
 	bool			extmsg;
+};
+
+/**
+ * cons_prio - console writer priority for NOBKL consoles
+ * @CONS_PRIO_NONE:		Unused
+ * @CONS_PRIO_NORMAL:		Regular printk
+ * @CONS_PRIO_EMERGENCY:	Emergency output (WARN/OOPS...)
+ * @CONS_PRIO_PANIC:		Panic output
+ *
+ * Emergency output can carefully takeover the console even without consent
+ * of the owner, ideally only when @cons_state::unsafe is not set. Panic
+ * output can ignore the unsafe flag as a last resort. If panic output is
+ * active no takeover is possible until the panic output releases the
+ * console.
+ */
+enum cons_prio {
+	CONS_PRIO_NONE = 0,
+	CONS_PRIO_NORMAL,
+	CONS_PRIO_EMERGENCY,
+	CONS_PRIO_PANIC,
+};
+
+struct console;
+
+/**
+ * struct cons_context - Context for console acquire/release
+ * @console:		The associated console
+ * @state:		The state at acquire time
+ * @old_state:		The old state when try_acquire() failed for analyis
+ *			by the caller
+ * @hov_state:		The handover state for spin and cleanup
+ * @req_state:		The request state for spin and cleanup
+ * @spinwait_max_us:	Limit for spinwait acquire
+ * @prio:		Priority of the context
+ * @thread:		The acquire is printk thread context
+ * @hostile:		Hostile takeover requested. Cleared on normal
+ *			acquire or friendly handover
+ * @spinwait:		Spinwait on acquire if possible
+ */
+struct cons_context {
+	struct console		*console;
+	struct cons_state	state;
+	struct cons_state	old_state;
+	struct cons_state	hov_state;
+	struct cons_state	req_state;
+	unsigned int		spinwait_max_us;
+	enum cons_prio		prio;
+	unsigned int		thread		: 1;
+	unsigned int		hostile		: 1;
+	unsigned int		spinwait	: 1;
 };
 
 /**
@@ -275,6 +337,7 @@ struct console {
 
 	/* NOBKL console specific members */
 	atomic_long_t __private	atomic_state[2];
+
 };
 
 #ifdef CONFIG_LOCKDEP
