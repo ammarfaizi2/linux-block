@@ -161,6 +161,8 @@ static inline int con_debug_leave(void)
  *			printk spam for obvious reasons
  * @CON_EXTENDED:	The console supports the extended output format of /dev/kmesg
  *			which requires a larger output record buffer
+ * @CON_NO_BKL:		Console can operate outside of the BKL style console_lock
+ *			constraints.
  */
 enum cons_flags {
 	CON_PRINTBUFFER		= BIT(0),
@@ -170,6 +172,37 @@ enum cons_flags {
 	CON_ANYTIME		= BIT(4),
 	CON_BRL			= BIT(5),
 	CON_EXTENDED		= BIT(6),
+	CON_NO_BKL		= BIT(7),
+};
+
+/**
+ * struct cons_state - console state for NOBKL consoles
+ * @atom:	Compound of the state fields for atomic operations
+ * @seq:	Sequence for record tracking (64bit only)
+ * @bits:	Compound of the state bits below
+ *
+ * @alive:	Console is alive. Required for teardown
+ * @enabled:	Console is enabled. If 0, do not use
+ *
+ * To be used for state read and preparation of atomic_long_cmpxchg()
+ * operations.
+ */
+struct cons_state {
+	union {
+		unsigned long	atom;
+		struct {
+#ifdef CONFIG_64BIT
+			u32	seq;
+#endif
+			union {
+				u32	bits;
+				struct {
+					u32 alive	:  1;
+					u32 enabled	:  1;
+				};
+			};
+		};
+	};
 };
 
 /**
@@ -218,6 +251,8 @@ struct cons_outbuf_desc {
  * @dropped:		Number of dropped ringbuffer records
  * @data:		Driver private data
  * @node:		hlist node for the console list
+ *
+ * @atomic_state:	State array for non-BKL consoles. Real and handover
  */
 struct console {
 	char			name[16];
@@ -237,6 +272,9 @@ struct console {
 	unsigned long		dropped;
 	void			*data;
 	struct hlist_node	node;
+
+	/* NOBKL console specific members */
+	atomic_long_t __private	atomic_state[2];
 };
 
 #ifdef CONFIG_LOCKDEP

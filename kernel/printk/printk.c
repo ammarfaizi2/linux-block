@@ -2339,7 +2339,9 @@ static bool suppress_message_printing(int level) { return false; }
 static bool pr_flush(int timeout_ms, bool reset_on_progress) { return true; }
 static bool __pr_flush(struct console *con, int timeout_ms, bool reset_on_progress) { return true; }
 
-#endif /* CONFIG_PRINTK */
+#endif /* !CONFIG_PRINTK */
+
+#include "printk_nobkl.c"
 
 #ifdef CONFIG_EARLY_PRINTK
 struct console *early_console;
@@ -2635,6 +2637,13 @@ static bool abandon_console_lock_in_panic(void)
  */
 static inline bool console_is_usable(struct console *con)
 {
+	/*
+	 * Exclude the NOBKL consoles. They are handled seperately
+	 * as they do not require the console BKL
+	 */
+	if ((con->flags & CON_NO_BKL))
+		return false;
+
 	if (!(con->flags & CON_ENABLED))
 		return false;
 
@@ -3079,7 +3088,10 @@ void console_stop(struct console *console)
 	console_list_lock();
 	console_lock();
 	console->flags &= ~CON_ENABLED;
+	cons_state_disable(console);
 	console_unlock();
+	/* Ensure that all SRCU list walks have completed */
+	synchronize_srcu(&console_srcu);
 	console_list_unlock();
 }
 EXPORT_SYMBOL(console_stop);
@@ -3089,6 +3101,7 @@ void console_start(struct console *console)
 	console_list_lock();
 	console_lock();
 	console->flags |= CON_ENABLED;
+	cons_state_enable(console);
 	console_unlock();
 	console_list_unlock();
 	__pr_flush(console, 1000, true);
@@ -3276,6 +3289,9 @@ void register_console(struct console *newcon)
 		newcon->flags &= ~CON_PRINTBUFFER;
 	}
 
+	/* Initialize the nobkl data in @newcon */
+	cons_nobkl_init(newcon);
+
 	/*
 	 * Put this console in the list and keep the referred driver at the
 	 * head of the list.
@@ -3342,6 +3358,7 @@ static int console_unregister_locked(struct console *console)
 
 	/* Disable it unconditionally */
 	console->flags &= ~CON_ENABLED;
+	cons_state_disable(console);
 
 	if (hlist_unhashed(&console->node))
 		goto out_unlock;
@@ -3364,6 +3381,8 @@ static int console_unregister_locked(struct console *console)
 
 	/* Ensure that all SRCU list walks have completed */
 	synchronize_srcu(&console_srcu);
+
+	cons_nobkl_cleanup(console);
 
 	console_sysfs_notify();
 
