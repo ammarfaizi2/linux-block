@@ -207,6 +207,43 @@ static inline bool cons_check_panic(void)
 }
 
 /**
+ * cons_context_set_text_buf - Set the output text buffer for the current context
+ * @ctxt:	Pointer to the aquire context
+ *
+ * Buffer selection:
+ *   1) Early boot uses the console builtin buffer
+ *   2) Threads use the console builtin buffer
+ *   3) All other context use the per CPU buffers
+ *
+ * This guarantees that there is no concurrency on the output records
+ * ever. Per CPU nesting is not a problem at all. The takeover logic
+ * tells the interrupted context that the buffer has been overwritten.
+ *
+ * There are two critical regions which matter:
+ *
+ * 1) Context is filling the buffer with a record. After interruption
+ *    it continues to sprintf() the record and before it goes to
+ *    write it out, it checks the state, notices the takeover, discards
+ *    the content and backs out.
+ *
+ * 2) Context is in a unsafe critical region in the driver. After
+ *    interruption it might read overwritten data from the output
+ *    buffer. When it leaves the critical region it notices and backs
+ *    out. Hostile takeovers in driver critical regions are best effort
+ *    and there is not much which can be done about that.
+ */
+static void cons_context_set_text_buf(struct cons_context *ctxt)
+{
+	struct console *con = ctxt->console;
+
+	/* Early boot or allocation fail? */
+	if (!con->pcpu_data)
+		ctxt->txtbuf = &con->ctxt_data.txtbuf;
+	else
+		ctxt->txtbuf = &(this_cpu_ptr(con->pcpu_data)->txtbuf);
+}
+
+/**
  * cons_cleanup_handover - Cleanup a handover request
  * @ctxt:	Pointer to acquire context
  *
@@ -482,6 +519,7 @@ again:
 		return false;
 success:
 	/* Common updates on success */
+	cons_context_set_text_buf(ctxt);
 	return true;
 
 check_hostile:
@@ -610,6 +648,35 @@ static bool __maybe_unused cons_release(struct cons_context *ctxt)
 }
 
 /**
+ * cons_alloc_percpu_data - Allocate percpu data for a console
+ * @con:	Console to allocate for
+ */
+static void cons_alloc_percpu_data(struct console *con)
+{
+	if (!printk_percpu_data_ready())
+		return;
+
+	con->pcpu_data = alloc_percpu(typeof(*con->pcpu_data));
+	if (con->pcpu_data)
+		return;
+
+	con_printk(KERN_WARNING, con, "Failed to allocate percpu buffers\n");
+}
+
+/**
+ * cons_free_percpu_data - Free percpu data of a console on unregister
+ * @con:	Console to clean up
+ */
+static void cons_free_percpu_data(struct console *con)
+{
+	if (!con->pcpu_data)
+		return;
+
+	free_percpu(con->pcpu_data);
+	con->pcpu_data = NULL;
+}
+
+/**
  * cons_nobkl_init - Initialize the NOBKL console state
  * @con:	Console to initialize
  */
@@ -620,6 +687,7 @@ static void cons_nobkl_init(struct console *con)
 		.enabled = !!(con->flags & CON_ENABLED),
 	};
 
+	cons_alloc_percpu_data(con);
 	cons_state_set(con, STATE_REAL, &state);
 }
 
@@ -632,6 +700,7 @@ static void cons_nobkl_cleanup(struct console *con)
 	struct cons_state state = { };
 
 	cons_state_set(con, STATE_REAL, &state);
+	cons_free_percpu_data(con);
 }
 
 #else /* CONFIG_PRINTK */
