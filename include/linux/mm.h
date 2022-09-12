@@ -1255,6 +1255,18 @@ static inline int folio_nid(const struct folio *folio)
 }
 
 #ifdef CONFIG_NUMA_BALANCING
+/* page access time bits needs to hold at least 4 seconds */
+#define PAGE_ACCESS_TIME_MIN_BITS	12
+#if LAST_CPUPID_SHIFT < PAGE_ACCESS_TIME_MIN_BITS
+#define PAGE_ACCESS_TIME_BUCKETS				\
+	(PAGE_ACCESS_TIME_MIN_BITS - LAST_CPUPID_SHIFT)
+#else
+#define PAGE_ACCESS_TIME_BUCKETS	0
+#endif
+
+#define PAGE_ACCESS_TIME_MASK				\
+	(LAST_CPUPID_MASK << PAGE_ACCESS_TIME_BUCKETS)
+
 static inline int cpu_pid_to_cpupid(int cpu, int pid)
 {
 	return ((cpu & LAST__CPU_MASK) << LAST__PID_SHIFT) | (pid & LAST__PID_MASK);
@@ -1318,10 +1330,23 @@ static inline void page_cpupid_reset_last(struct page *page)
 	page->flags |= LAST_CPUPID_MASK << LAST_CPUPID_PGSHIFT;
 }
 #endif /* LAST_CPUPID_NOT_IN_PAGE_FLAGS */
+
+static inline int xchg_page_access_time(struct page *page, int time)
+{
+	int last_time;
+
+	last_time = page_cpupid_xchg_last(page, time >> PAGE_ACCESS_TIME_BUCKETS);
+	return last_time << PAGE_ACCESS_TIME_BUCKETS;
+}
 #else /* !CONFIG_NUMA_BALANCING */
 static inline int page_cpupid_xchg_last(struct page *page, int cpupid)
 {
 	return page_to_nid(page); /* XXX */
+}
+
+static inline int xchg_page_access_time(struct page *page, int time)
+{
+	return 0;
 }
 
 static inline int page_cpupid_last(struct page *page)
@@ -2495,7 +2520,6 @@ extern unsigned long absent_pages_in_range(unsigned long start_pfn,
 						unsigned long end_pfn);
 extern void get_pfn_range_for_nid(unsigned int nid,
 			unsigned long *start_pfn, unsigned long *end_pfn);
-extern unsigned long find_min_pfn_with_active_regions(void);
 
 #ifndef CONFIG_NUMA
 static inline int early_pfn_to_nid(unsigned long pfn)
@@ -2975,8 +2999,8 @@ static inline int vm_fault_to_errno(vm_fault_t vm_fault, int foll_flags)
  * PageAnonExclusive() has to protect against concurrent GUP:
  * * Ordinary GUP: Using the PT lock
  * * GUP-fast and fork(): mm->write_protect_seq
- * * GUP-fast and KSM or temporary unmapping (swap, migration):
- *   clear/invalidate+flush of the page table entry
+ * * GUP-fast and KSM or temporary unmapping (swap, migration): see
+ *    page_try_share_anon_rmap()
  *
  * Must be called with the (sub)page that's actually referenced via the
  * page table entry, which might not necessarily be the head page for a
@@ -2997,6 +3021,11 @@ static inline bool gup_must_unshare(unsigned int flags, struct page *page)
 	 */
 	if (!PageAnon(page))
 		return false;
+
+	/* Paired with a memory barrier in page_try_share_anon_rmap(). */
+	if (IS_ENABLED(CONFIG_HAVE_FAST_GUP))
+		smp_rmb();
+
 	/*
 	 * Note that PageKsm() pages cannot be exclusive, and consequently,
 	 * cannot get pinned.

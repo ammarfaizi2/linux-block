@@ -3226,22 +3226,22 @@ again:
 	if (!sc->force_deactivate) {
 		unsigned long refaults;
 
-		refaults = lruvec_page_state(target_lruvec,
-				WORKINGSET_ACTIVATE_ANON);
-		if (refaults != target_lruvec->refaults[0] ||
-			inactive_is_low(target_lruvec, LRU_INACTIVE_ANON))
-			sc->may_deactivate |= DEACTIVATE_ANON;
-		else
-			sc->may_deactivate &= ~DEACTIVATE_ANON;
-
 		/*
 		 * When refaults are being observed, it means a new
 		 * workingset is being established. Deactivate to get
 		 * rid of any stale active pages quickly.
 		 */
 		refaults = lruvec_page_state(target_lruvec,
+				WORKINGSET_ACTIVATE_ANON);
+		if (refaults != target_lruvec->refaults[WORKINGSET_ANON] ||
+			inactive_is_low(target_lruvec, LRU_INACTIVE_ANON))
+			sc->may_deactivate |= DEACTIVATE_ANON;
+		else
+			sc->may_deactivate &= ~DEACTIVATE_ANON;
+
+		refaults = lruvec_page_state(target_lruvec,
 				WORKINGSET_ACTIVATE_FILE);
-		if (refaults != target_lruvec->refaults[1] ||
+		if (refaults != target_lruvec->refaults[WORKINGSET_FILE] ||
 		    inactive_is_low(target_lruvec, LRU_INACTIVE_FILE))
 			sc->may_deactivate |= DEACTIVATE_FILE;
 		else
@@ -3557,9 +3557,9 @@ static void snapshot_refaults(struct mem_cgroup *target_memcg, pg_data_t *pgdat)
 
 	target_lruvec = mem_cgroup_lruvec(target_memcg, pgdat);
 	refaults = lruvec_page_state(target_lruvec, WORKINGSET_ACTIVATE_ANON);
-	target_lruvec->refaults[0] = refaults;
+	target_lruvec->refaults[WORKINGSET_ANON] = refaults;
 	refaults = lruvec_page_state(target_lruvec, WORKINGSET_ACTIVATE_FILE);
-	target_lruvec->refaults[1] = refaults;
+	target_lruvec->refaults[WORKINGSET_FILE] = refaults;
 }
 
 /*
@@ -4641,16 +4641,17 @@ void kswapd_run(int nid)
 {
 	pg_data_t *pgdat = NODE_DATA(nid);
 
-	if (pgdat->kswapd)
-		return;
-
-	pgdat->kswapd = kthread_run(kswapd, pgdat, "kswapd%d", nid);
-	if (IS_ERR(pgdat->kswapd)) {
-		/* failure at boot is fatal */
-		BUG_ON(system_state < SYSTEM_RUNNING);
-		pr_err("Failed to start kswapd on node %d\n", nid);
-		pgdat->kswapd = NULL;
+	pgdat_kswapd_lock(pgdat);
+	if (!pgdat->kswapd) {
+		pgdat->kswapd = kthread_run(kswapd, pgdat, "kswapd%d", nid);
+		if (IS_ERR(pgdat->kswapd)) {
+			/* failure at boot is fatal */
+			BUG_ON(system_state < SYSTEM_RUNNING);
+			pr_err("Failed to start kswapd on node %d\n", nid);
+			pgdat->kswapd = NULL;
+		}
 	}
+	pgdat_kswapd_unlock(pgdat);
 }
 
 /*
@@ -4659,12 +4660,16 @@ void kswapd_run(int nid)
  */
 void kswapd_stop(int nid)
 {
-	struct task_struct *kswapd = NODE_DATA(nid)->kswapd;
+	pg_data_t *pgdat = NODE_DATA(nid);
+	struct task_struct *kswapd;
 
+	pgdat_kswapd_lock(pgdat);
+	kswapd = pgdat->kswapd;
 	if (kswapd) {
 		kthread_stop(kswapd);
-		NODE_DATA(nid)->kswapd = NULL;
+		pgdat->kswapd = NULL;
 	}
+	pgdat_kswapd_unlock(pgdat);
 }
 
 static int __init kswapd_init(void)
