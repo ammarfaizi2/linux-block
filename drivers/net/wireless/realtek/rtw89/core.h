@@ -34,6 +34,7 @@ extern const struct ieee80211_ops rtw89_ops;
 #define MAX_RSSI 110
 #define RSSI_FACTOR 1
 #define RTW89_RSSI_RAW_TO_DBM(rssi) ((s8)((rssi) >> RSSI_FACTOR) - MAX_RSSI)
+#define RTW89_TX_DIV_RSSI_RAW_TH (2 << RSSI_FACTOR)
 
 #define RTW89_HTC_MASK_VARIANT GENMASK(1, 0)
 #define RTW89_HTC_VARIANT_HE 3
@@ -522,7 +523,7 @@ struct rtw89_rx_phy_ppdu {
 	u8 *buf;
 	u32 len;
 	u8 rssi_avg;
-	s8 rssi[RF_PATH_MAX];
+	u8 rssi[RF_PATH_MAX];
 	u8 mac_id;
 	u8 chan_idx;
 	u8 ie;
@@ -2136,12 +2137,14 @@ struct rtw89_sec_cam_entry {
 struct rtw89_sta {
 	u8 mac_id;
 	bool disassoc;
+	struct rtw89_dev *rtwdev;
 	struct rtw89_vif *rtwvif;
 	struct rtw89_ra_info ra;
 	struct rtw89_ra_report ra_report;
 	int max_agg_wait;
 	u8 prev_rssi;
 	struct ewma_rssi avg_rssi;
+	struct ewma_rssi rssi[RF_PATH_MAX];
 	struct rtw89_ampdu_params ampdu_params[IEEE80211_NUM_TIDS];
 	struct ieee80211_rx_status rx_status;
 	u16 rx_hw_rate;
@@ -2550,6 +2553,27 @@ struct rtw89_imr_info {
 	u32 tmac_imr_set;
 };
 
+struct rtw89_rrsr_cfgs {
+	struct rtw89_reg3_def ref_rate;
+	struct rtw89_reg3_def rsc;
+};
+
+struct rtw89_dig_regs {
+	u32 seg0_pd_reg;
+	u32 pd_lower_bound_mask;
+	u32 pd_spatial_reuse_en;
+	struct rtw89_reg_def p0_lna_init;
+	struct rtw89_reg_def p1_lna_init;
+	struct rtw89_reg_def p0_tia_init;
+	struct rtw89_reg_def p1_tia_init;
+	struct rtw89_reg_def p0_rxb_init;
+	struct rtw89_reg_def p1_rxb_init;
+	struct rtw89_reg_def p0_p20_pagcugc_en;
+	struct rtw89_reg_def p0_s20_pagcugc_en;
+	struct rtw89_reg_def p1_p20_pagcugc_en;
+	struct rtw89_reg_def p1_s20_pagcugc_en;
+};
+
 struct rtw89_chip_info {
 	enum rtw89_core_chip_id chip_id;
 	const struct rtw89_chip_ops *ops;
@@ -2592,6 +2616,7 @@ struct rtw89_chip_info {
 	const struct rtw89_phy_table *nctl_table;
 	const struct rtw89_txpwr_table *byr_table;
 	const struct rtw89_phy_dig_gain_table *dig_table;
+	const struct rtw89_dig_regs *dig_regs;
 	const struct rtw89_phy_tssi_dbw_table *tssi_dbw_table;
 	const s8 (*txpwr_lmt_2g)[RTW89_2G_BW_NUM][RTW89_NTX_NUM]
 				[RTW89_RS_LMT_NUM][RTW89_BF_NUM]
@@ -2657,6 +2682,7 @@ struct rtw89_chip_info {
 	const struct rtw89_reg_def *dcfo_comp;
 	u8 dcfo_comp_sft;
 	const struct rtw89_imr_info *imr_info;
+	const struct rtw89_rrsr_cfgs *rrsr_cfgs;
 };
 
 union rtw89_bus_info {
@@ -2708,6 +2734,7 @@ enum rtw89_fw_feature {
 	RTW89_FW_FEATURE_SCAN_OFFLOAD,
 	RTW89_FW_FEATURE_TX_WAKE,
 	RTW89_FW_FEATURE_CRASH_TRIGGER,
+	RTW89_FW_FEATURE_NO_DEEP_PS,
 };
 
 struct rtw89_fw_suit {
@@ -2823,6 +2850,7 @@ struct rtw89_hal {
 	u32 antenna_rx;
 	u8 tx_nss;
 	u8 rx_nss;
+	bool tx_path_diversity;
 	bool support_cckpd;
 	bool support_igi;
 
@@ -3290,6 +3318,7 @@ struct rtw89_hw_scan_info {
 	u8 op_chan;
 	u8 op_bw;
 	u8 op_band;
+	u32 last_chan_idx;
 };
 
 enum rtw89_phy_bb_gain_band {
@@ -3716,6 +3745,16 @@ static inline struct ieee80211_vif *rtwvif_to_vif(struct rtw89_vif *rtwvif)
 	return container_of(p, struct ieee80211_vif, drv_priv);
 }
 
+static inline struct ieee80211_vif *rtwvif_to_vif_safe(struct rtw89_vif *rtwvif)
+{
+	return rtwvif ? rtwvif_to_vif(rtwvif) : NULL;
+}
+
+static inline struct rtw89_vif *vif_to_rtwvif_safe(struct ieee80211_vif *vif)
+{
+	return vif ? (struct rtw89_vif *)vif->drv_priv : NULL;
+}
+
 static inline struct ieee80211_sta *rtwsta_to_sta(struct rtw89_sta *rtwsta)
 {
 	void *p = rtwsta;
@@ -3756,6 +3795,20 @@ enum nl80211_band rtw89_hw_to_nl80211_band(enum rtw89_band hw_band)
 		return NL80211_BAND_5GHZ;
 	case RTW89_BAND_6G:
 		return NL80211_BAND_6GHZ;
+	}
+}
+
+static inline
+enum rtw89_band rtw89_nl80211_to_hw_band(enum nl80211_band nl_band)
+{
+	switch (nl_band) {
+	default:
+	case NL80211_BAND_2GHZ:
+		return RTW89_BAND_2G;
+	case NL80211_BAND_5GHZ:
+		return RTW89_BAND_5G;
+	case NL80211_BAND_6GHZ:
+		return RTW89_BAND_6G;
 	}
 }
 

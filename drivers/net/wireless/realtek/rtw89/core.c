@@ -768,13 +768,16 @@ static void
 rtw89_core_tx_wake(struct rtw89_dev *rtwdev,
 		   struct rtw89_core_tx_request *tx_req)
 {
+	const struct rtw89_chip_info *chip = rtwdev->chip;
+
 	if (!RTW89_CHK_FW_FEATURE(TX_WAKE, &rtwdev->fw))
 		return;
 
 	if (!test_bit(RTW89_FLAG_LOW_POWER_MODE, rtwdev->flags))
 		return;
 
-	if (tx_req->tx_type != RTW89_CORE_TX_TYPE_MGMT)
+	if (chip->chip_id != RTL8852C &&
+	    tx_req->tx_type != RTW89_CORE_TX_TYPE_MGMT)
 		return;
 
 	rtw89_mac_notify_wake(rtwdev);
@@ -1143,9 +1146,14 @@ static void rtw89_core_rx_process_phy_ppdu_iter(void *data,
 {
 	struct rtw89_sta *rtwsta = (struct rtw89_sta *)sta->drv_priv;
 	struct rtw89_rx_phy_ppdu *phy_ppdu = (struct rtw89_rx_phy_ppdu *)data;
+	struct rtw89_dev *rtwdev = rtwsta->rtwdev;
+	int i;
 
-	if (rtwsta->mac_id == phy_ppdu->mac_id && phy_ppdu->to_self)
+	if (rtwsta->mac_id == phy_ppdu->mac_id && phy_ppdu->to_self) {
 		ewma_rssi_add(&rtwsta->avg_rssi, phy_ppdu->rssi_avg);
+		for (i = 0; i < rtwdev->chip->rf_path_num; i++)
+			ewma_rssi_add(&rtwsta->rssi[i], phy_ppdu->rssi[i]);
+	}
 }
 
 #define VAR_LEN 0xff
@@ -1201,15 +1209,15 @@ static int rtw89_core_process_phy_status_ie(struct rtw89_dev *rtwdev, u8 *addr,
 
 static void rtw89_core_update_phy_ppdu(struct rtw89_rx_phy_ppdu *phy_ppdu)
 {
-	s8 *rssi = phy_ppdu->rssi;
+	u8 *rssi = phy_ppdu->rssi;
 	u8 *buf = phy_ppdu->buf;
 
 	phy_ppdu->ie = RTW89_GET_PHY_STS_IE_MAP(buf);
 	phy_ppdu->rssi_avg = RTW89_GET_PHY_STS_RSSI_AVG(buf);
-	rssi[RF_PATH_A] = RTW89_RSSI_RAW_TO_DBM(RTW89_GET_PHY_STS_RSSI_A(buf));
-	rssi[RF_PATH_B] = RTW89_RSSI_RAW_TO_DBM(RTW89_GET_PHY_STS_RSSI_B(buf));
-	rssi[RF_PATH_C] = RTW89_RSSI_RAW_TO_DBM(RTW89_GET_PHY_STS_RSSI_C(buf));
-	rssi[RF_PATH_D] = RTW89_RSSI_RAW_TO_DBM(RTW89_GET_PHY_STS_RSSI_D(buf));
+	rssi[RF_PATH_A] = RTW89_GET_PHY_STS_RSSI_A(buf);
+	rssi[RF_PATH_B] = RTW89_GET_PHY_STS_RSSI_B(buf);
+	rssi[RF_PATH_C] = RTW89_GET_PHY_STS_RSSI_C(buf);
+	rssi[RF_PATH_D] = RTW89_GET_PHY_STS_RSSI_D(buf);
 }
 
 static int rtw89_core_rx_process_phy_ppdu(struct rtw89_dev *rtwdev,
@@ -1703,7 +1711,8 @@ static enum rtw89_ps_mode rtw89_update_ps_mode(struct rtw89_dev *rtwdev)
 {
 	const struct rtw89_chip_info *chip = rtwdev->chip;
 
-	if (rtw89_disable_ps_mode || !chip->ps_mode_supported)
+	if (rtw89_disable_ps_mode || !chip->ps_mode_supported ||
+	    RTW89_CHK_FW_FEATURE(NO_DEEP_PS, &rtwdev->fw))
 		return RTW89_PS_MODE_NONE;
 
 	if (chip->ps_mode_supported & BIT(RTW89_PS_MODE_PWR_GATED))
@@ -2213,6 +2222,7 @@ static void rtw89_track_work(struct work_struct *work)
 	rtw89_chip_rfk_track(rtwdev);
 	rtw89_phy_ra_update(rtwdev);
 	rtw89_phy_cfo_track(rtwdev);
+	rtw89_phy_tx_path_div_track(rtwdev);
 
 	if (rtwdev->lps_enabled && !rtwdev->btc.lps)
 		rtw89_enter_lps_track(rtwdev);
@@ -2365,6 +2375,7 @@ int rtw89_core_sta_add(struct rtw89_dev *rtwdev,
 	struct rtw89_sta *rtwsta = (struct rtw89_sta *)sta->drv_priv;
 	int i;
 
+	rtwsta->rtwdev = rtwdev;
 	rtwsta->rtwvif = rtwvif;
 	rtwsta->prev_rssi = 0;
 	INIT_LIST_HEAD(&rtwsta->ba_cam_list);
@@ -2373,6 +2384,8 @@ int rtw89_core_sta_add(struct rtw89_dev *rtwdev,
 		rtw89_core_txq_init(rtwdev, sta->txq[i]);
 
 	ewma_rssi_init(&rtwsta->avg_rssi);
+	for (i = 0; i < rtwdev->chip->rf_path_num; i++)
+		ewma_rssi_init(&rtwsta->rssi[i]);
 
 	if (vif->type == NL80211_IFTYPE_STATION && !sta->tdls) {
 		/* for station mode, assign the mac_id from itself */

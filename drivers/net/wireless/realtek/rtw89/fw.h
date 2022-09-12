@@ -63,21 +63,32 @@ enum rtw89_mac_c2h_type {
 	RTW89_FWCMD_C2HREG_FUNC_NULL = 0xFF
 };
 
-struct rtw89_c2h_phy_cap {
-	u32 func:7;
-	u32 ack:1;
-	u32 len:4;
-	u32 seq:4;
-	u32 rx_nss:8;
-	u32 bw:8;
-
-	u32 tx_nss:8;
-	u32 prot:8;
-	u32 nic:8;
-	u32 wl_func:8;
-
-	u32 hw_type:8;
-} __packed;
+#define RTW89_GET_C2H_PHYCAP_FUNC(info) \
+	u32_get_bits(*((const u32 *)(info)), GENMASK(6, 0))
+#define RTW89_GET_C2H_PHYCAP_ACK(info) \
+	u32_get_bits(*((const u32 *)(info)), BIT(7))
+#define RTW89_GET_C2H_PHYCAP_LEN(info) \
+	u32_get_bits(*((const u32 *)(info)), GENMASK(11, 8))
+#define RTW89_GET_C2H_PHYCAP_SEQ(info) \
+	u32_get_bits(*((const u32 *)(info)), GENMASK(15, 12))
+#define RTW89_GET_C2H_PHYCAP_RX_NSS(info) \
+	u32_get_bits(*((const u32 *)(info)), GENMASK(23, 16))
+#define RTW89_GET_C2H_PHYCAP_BW(info) \
+	u32_get_bits(*((const u32 *)(info)), GENMASK(31, 24))
+#define RTW89_GET_C2H_PHYCAP_TX_NSS(info) \
+	u32_get_bits(*((const u32 *)(info) + 1), GENMASK(7, 0))
+#define RTW89_GET_C2H_PHYCAP_PROT(info) \
+	u32_get_bits(*((const u32 *)(info) + 1), GENMASK(15, 8))
+#define RTW89_GET_C2H_PHYCAP_NIC(info) \
+	u32_get_bits(*((const u32 *)(info) + 1), GENMASK(23, 16))
+#define RTW89_GET_C2H_PHYCAP_WL_FUNC(info) \
+	u32_get_bits(*((const u32 *)(info) + 1), GENMASK(31, 24))
+#define RTW89_GET_C2H_PHYCAP_HW_TYPE(info) \
+	u32_get_bits(*((const u32 *)(info) + 2), GENMASK(7, 0))
+#define RTW89_GET_C2H_PHYCAP_ANT_TX_NUM(info) \
+	u32_get_bits(*((const u32 *)(info) + 3), GENMASK(15, 8))
+#define RTW89_GET_C2H_PHYCAP_ANT_RX_NUM(info) \
+	u32_get_bits(*((const u32 *)(info) + 3), GENMASK(23, 16))
 
 enum rtw89_fw_c2h_category {
 	RTW89_C2H_CAT_TEST,
@@ -177,6 +188,7 @@ struct rtw89_h2creg_sch_tx_en {
 	u16 rsvd:15;
 } __packed;
 
+#define RTW89_H2C_MAX_SIZE 2048
 #define RTW89_CHANNEL_TIME 45
 #define RTW89_DFS_CHAN_TIME 105
 #define RTW89_OFF_CHAN_TIME 100
@@ -186,7 +198,10 @@ struct rtw89_h2creg_sch_tx_en {
 #define RTW89_SCANOFLD_MAX_IE_LEN 512
 #define RTW89_SCANOFLD_PKT_NONE 0xFF
 #define RTW89_SCANOFLD_DEBUG_MASK 0x1F
-#define RTW89_MAC_CHINFO_SIZE 20
+#define RTW89_MAC_CHINFO_SIZE 24
+#define RTW89_SCAN_LIST_GUARD 4
+#define RTW89_SCAN_LIST_LIMIT \
+		((RTW89_H2C_MAX_SIZE / RTW89_MAC_CHINFO_SIZE) - RTW89_SCAN_LIST_GUARD)
 
 struct rtw89_mac_chinfo {
 	u8 period;
@@ -2456,6 +2471,8 @@ static inline void RTW89_SET_FWCMD_SCANOFLD_TSF_SLOW(void *cmd, u32 val)
 	le32_get_bits(*((const __le32 *)(c2h) + 2), GENMASK(19, 16))
 #define RTW89_GET_MAC_C2H_SCANOFLD_STATUS(c2h) \
 	le32_get_bits(*((const __le32 *)(c2h) + 2), GENMASK(23, 20))
+#define RTW89_GET_MAC_C2H_ACTUAL_PERIOD(c2h) \
+	le32_get_bits(*((const __le32 *)(c2h) + 2), GENMASK(31, 24))
 #define RTW89_GET_MAC_C2H_SCANOFLD_TX_FAIL(c2h) \
 	le32_get_bits(*((const __le32 *)(c2h) + 5), GENMASK(3, 0))
 #define RTW89_GET_MAC_C2H_SCANOFLD_AIR_DENSITY(c2h) \
@@ -2621,6 +2638,8 @@ int rtw89_fw_h2c_assoc_cmac_tbl(struct rtw89_dev *rtwdev,
 				struct ieee80211_vif *vif,
 				struct ieee80211_sta *sta);
 int rtw89_fw_h2c_txtime_cmac_tbl(struct rtw89_dev *rtwdev,
+				 struct rtw89_sta *rtwsta);
+int rtw89_fw_h2c_txpath_cmac_tbl(struct rtw89_dev *rtwdev,
 				 struct rtw89_sta *rtwsta);
 int rtw89_fw_h2c_update_beacon(struct rtw89_dev *rtwdev,
 			       struct rtw89_vif *rtwvif);

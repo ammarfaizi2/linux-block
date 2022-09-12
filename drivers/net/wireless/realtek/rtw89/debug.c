@@ -2290,7 +2290,10 @@ static void rtw89_sta_info_get_iter(void *data, struct ieee80211_sta *sta)
 	struct rate_info *rate = &rtwsta->ra_report.txrate;
 	struct ieee80211_rx_status *status = &rtwsta->rx_status;
 	struct seq_file *m = (struct seq_file *)data;
+	struct rtw89_dev *rtwdev = rtwsta->rtwdev;
+	struct rtw89_hal *hal = &rtwdev->hal;
 	u8 rssi;
+	int i;
 
 	seq_printf(m, "TX rate [%d]: ", rtwsta->mac_id);
 
@@ -2309,7 +2312,7 @@ static void rtw89_sta_info_get_iter(void *data, struct ieee80211_sta *sta)
 	seq_printf(m, "%s", rtwsta->ra_report.might_fallback_legacy ? " FB_G" : "");
 	seq_printf(m, "\t(hw_rate=0x%x)", rtwsta->ra_report.hw_rate);
 	seq_printf(m, "\t==> agg_wait=%d (%d)\n", rtwsta->max_agg_wait,
-		   sta->max_rc_amsdu_len);
+		   sta->deflink.agg.max_rc_amsdu_len);
 
 	seq_printf(m, "RX rate [%d]: ", rtwsta->mac_id);
 
@@ -2335,8 +2338,15 @@ static void rtw89_sta_info_get_iter(void *data, struct ieee80211_sta *sta)
 	seq_printf(m, "\t(hw_rate=0x%x)\n", rtwsta->rx_hw_rate);
 
 	rssi = ewma_rssi_read(&rtwsta->avg_rssi);
-	seq_printf(m, "RSSI: %d dBm (raw=%d, prev=%d)\n",
+	seq_printf(m, "RSSI: %d dBm (raw=%d, prev=%d) [",
 		   RTW89_RSSI_RAW_TO_DBM(rssi), rssi, rtwsta->prev_rssi);
+	for (i = 0; i < rtwdev->chip->rf_path_num; i++) {
+		rssi = ewma_rssi_read(&rtwsta->rssi[i]);
+		seq_printf(m, "%d%s%s", RTW89_RSSI_RAW_TO_DBM(rssi),
+			   hal->tx_path_diversity && (hal->antenna_tx & BIT(i)) ? "*" : "",
+			   i + 1 == rtwdev->chip->rf_path_num ? "" : ", ");
+	}
+	seq_puts(m, "]\n");
 }
 
 static void
