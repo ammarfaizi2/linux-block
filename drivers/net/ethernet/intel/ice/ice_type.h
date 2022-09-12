@@ -564,6 +564,8 @@ enum ice_rl_type {
 #define ICE_SCHED_INVAL_PROF_ID		0xFFFF
 #define ICE_SCHED_DFLT_BURST_SIZE	(15 * 1024)	/* in bytes (15k) */
 
+#define ICE_MAX_PORT_PER_PCI_DEV 8
+
  /* Data structure for saving BW information */
 enum ice_bw_type {
 	ICE_BW_TYPE_PRIO,
@@ -884,8 +886,6 @@ struct ice_hw {
 #define ICE_INTRL_GRAN_MAX_25	8
 	/* INTRL granularity in 1 us */
 	u8 intrl_gran;
-
-	u8 ucast_shared;	/* true if VSIs can share unicast addr */
 
 #define ICE_PHY_PER_NAC		1
 #define ICE_MAX_QUAD		2

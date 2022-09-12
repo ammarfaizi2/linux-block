@@ -856,11 +856,6 @@ enum {
 	MLX5E_STATE_XDP_ACTIVE,
 };
 
-enum {
-	MLX5E_TC_PRIO = 0,
-	MLX5E_NIC_PRIO
-};
-
 struct mlx5e_modify_sq_param {
 	int curr_state;
 	int next_state;
@@ -959,6 +954,9 @@ struct mlx5e_priv {
 
 	const struct mlx5e_profile *profile;
 	void                      *ppriv;
+#ifdef CONFIG_MLX5_EN_MACSEC
+	struct mlx5e_macsec       *macsec;
+#endif
 #ifdef CONFIG_MLX5_EN_IPSEC
 	struct mlx5e_ipsec        *ipsec;
 #endif

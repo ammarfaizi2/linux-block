@@ -546,8 +546,8 @@ static inline bool napi_if_scheduled_mark_missed(struct napi_struct *n)
 {
 	unsigned long val, new;
 
+	val = READ_ONCE(n->state);
 	do {
-		val = READ_ONCE(n->state);
 		if (val & NAPIF_STATE_DISABLE)
 			return true;
 
@@ -555,7 +555,7 @@ static inline bool napi_if_scheduled_mark_missed(struct napi_struct *n)
 			return false;
 
 		new = val | NAPIF_STATE_MISSED;
-	} while (cmpxchg(&n->state, val, new) != val);
+	} while (!try_cmpxchg(&n->state, &val, new));
 
 	return true;
 }
@@ -1851,7 +1851,6 @@ enum netdev_ml_priv_type {
  *	@tipc_ptr:	TIPC specific data
  *	@atalk_ptr:	AppleTalk link
  *	@ip_ptr:	IPv4 specific data
- *	@dn_ptr:	DECnet specific data
  *	@ip6_ptr:	IPv6 specific data
  *	@ax25_ptr:	AX.25 specific data
  *	@ieee80211_ptr:	IEEE 802.11 specific data, assign before registering
@@ -2146,9 +2145,6 @@ struct net_device {
 #endif
 #if IS_ENABLED(CONFIG_ATALK)
 	void 			*atalk_ptr;
-#endif
-#if IS_ENABLED(CONFIG_DECNET)
-	struct dn_dev __rcu     *dn_ptr;
 #endif
 #if IS_ENABLED(CONFIG_AX25)
 	void			*ax25_ptr;
@@ -2572,8 +2568,6 @@ netif_napi_add_tx_weight(struct net_device *dev,
 	set_bit(NAPI_STATE_NO_BUSY_POLL, &napi->state);
 	netif_napi_add_weight(dev, napi, poll, weight);
 }
-
-#define netif_tx_napi_add netif_napi_add_tx_weight
 
 /**
  * netif_napi_add_tx() - initialize a NAPI context to be used for Tx only
@@ -3357,6 +3351,16 @@ static inline void netdev_txq_bql_complete_prefetchw(struct netdev_queue *dev_qu
 #endif
 }
 
+/**
+ *	netdev_tx_sent_queue - report the number of bytes queued to a given tx queue
+ *	@dev_queue: network device queue
+ *	@bytes: number of bytes queued to the device queue
+ *
+ *	Report the number of bytes queued for sending/completion to the network
+ *	device hardware queue. @bytes should be a good approximation and should
+ *	exactly match netdev_completed_queue() @bytes.
+ *	This is typically called once per packet, from ndo_start_xmit().
+ */
 static inline void netdev_tx_sent_queue(struct netdev_queue *dev_queue,
 					unsigned int bytes)
 {
@@ -3402,13 +3406,14 @@ static inline bool __netdev_tx_sent_queue(struct netdev_queue *dev_queue,
 }
 
 /**
- * 	netdev_sent_queue - report the number of bytes queued to hardware
- * 	@dev: network device
- * 	@bytes: number of bytes queued to the hardware device queue
+ *	netdev_sent_queue - report the number of bytes queued to hardware
+ *	@dev: network device
+ *	@bytes: number of bytes queued to the hardware device queue
  *
- * 	Report the number of bytes queued for sending/completion to the network
- * 	device hardware queue. @bytes should be a good approximation and should
- * 	exactly match netdev_completed_queue() @bytes
+ *	Report the number of bytes queued for sending/completion to the network
+ *	device hardware queue#0. @bytes should be a good approximation and should
+ *	exactly match netdev_completed_queue() @bytes.
+ *	This is typically called once per packet, from ndo_start_xmit().
  */
 static inline void netdev_sent_queue(struct net_device *dev, unsigned int bytes)
 {
@@ -3423,6 +3428,15 @@ static inline bool __netdev_sent_queue(struct net_device *dev,
 				      xmit_more);
 }
 
+/**
+ *	netdev_tx_completed_queue - report number of packets/bytes at TX completion.
+ *	@dev_queue: network device queue
+ *	@pkts: number of packets (currently ignored)
+ *	@bytes: number of bytes dequeued from the device queue
+ *
+ *	Must be called at most once per TX completion round (and not per
+ *	individual packet), so that BQL can adjust its limits appropriately.
+ */
 static inline void netdev_tx_completed_queue(struct netdev_queue *dev_queue,
 					     unsigned int pkts, unsigned int bytes)
 {
