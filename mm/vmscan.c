@@ -3781,7 +3781,10 @@ static bool get_next_vma(unsigned long mask, unsigned long size, struct mm_walk 
 	VM_WARN_ON_ONCE(mask & size);
 	VM_WARN_ON_ONCE((start & mask) != (*vm_start & mask));
 
-	for_each_vma_range(vmi, args->vma, end) {
+	for_each_vma(vmi, args->vma) {
+		if (end && end <= args->vma->vm_start)
+			return false;
+
 		if (should_skip_vma(args->vma->vm_start, args->vma->vm_end, args))
 			continue;
 
