@@ -598,6 +598,9 @@ static bool damon_va_target_valid(void *target)
 	struct damon_target *t = target;
 	struct task_struct *task;
 
+	if (!damon_nr_regions(t))
+		return false;
+
 	task = damon_get_task_struct(t);
 	if (task) {
 		put_task_struct(task);
