@@ -139,6 +139,24 @@ static long hwprobe_mid(struct riscv_hwprobe __user *pair, size_t key,
 	return set_hwprobe(pair, key, id);
 }
 
+static long hwprobe_misaligned(cpumask_t *cpus)
+{
+	long cpu, perf = -1;
+
+	for_each_cpu(cpu, cpus) {
+		long this_perf = per_cpu(misaligned_access_speed, cpu);
+		if (perf == -1)
+			perf = this_perf;
+
+		if (perf != this_perf)
+			perf = RISCV_HWPROBE_MISALIGNED_UNKNOWN;
+	}
+
+	if (perf == -1)
+		return RISCV_HWPROBE_MISALIGNED_UNKNOWN;
+	return perf;
+}
+
 static
 long do_riscv_hwprobe(struct riscv_hwprobe __user *pairs, long pair_count,
 		      long key_offset, long cpu_count,
@@ -206,6 +224,10 @@ long do_riscv_hwprobe(struct riscv_hwprobe __user *pairs, long pair_count,
 					val |= RISCV_HWPROBE_IMA_C;
 				ret = set_hwprobe(pairs + out, k, val);
 			}
+			break;
+
+		case RISCV_HWPROBE_KEY_CPUPERF_0:
+			set_hwprobe(pairs + out, k, hwprobe_misaligned(&cpus));
 			break;
 		}
 

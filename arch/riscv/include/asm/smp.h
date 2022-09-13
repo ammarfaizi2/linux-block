@@ -26,6 +26,13 @@ struct riscv_ipi_ops {
  */
 extern unsigned long __cpuid_to_hartid_map[NR_CPUS];
 #define cpuid_to_hartid_map(cpu)    __cpuid_to_hartid_map[cpu]
+static inline long hartid_to_cpuid_map(unsigned long hartid) {
+	long i;
+	for (i = 0; i < NR_CPUS; ++i)
+		if (cpuid_to_hartid_map(i) == hartid)
+			return i;
+	return -1;
+}
 
 /* print IPI stats */
 void show_ipi_stats(struct seq_file *p, int prec);
