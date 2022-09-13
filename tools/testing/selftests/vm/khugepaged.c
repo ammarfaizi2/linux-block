@@ -453,6 +453,8 @@ static void get_finfo(const char *dir)
 		exit(EXIT_FAILURE);
 	}
 	finfo.type = fs.f_type == TMPFS_MAGIC ? VMA_SHMEM : VMA_FILE;
+	if (finfo.type == VMA_SHMEM)
+		return;
 
 	/* Find owning device's queue/read_ahead_kb control */
 	if (snprintf(path, sizeof(path), "/sys/dev/block/%d:%d/uevent",
