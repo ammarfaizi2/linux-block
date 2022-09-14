@@ -756,7 +756,6 @@ static int kill_accessing_process(struct task_struct *p, unsigned long pfn,
 	else
 		ret = 0;
 	mmap_read_unlock(p->mm);
-
 	return ret > 0 ? -EHWPOISON : -EFAULT;
 }
 
