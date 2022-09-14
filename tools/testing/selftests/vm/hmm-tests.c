@@ -33,6 +33,7 @@
  */
 #include "../../../../lib/test_hmm_uapi.h"
 #include "../../../../mm/gup_test.h"
+#include "vm_util.h"
 
 struct hmm_buffer {
 	void		*ptr;
@@ -1301,9 +1302,24 @@ static int destroy_cgroup(void)
 	return 0;
 }
 
+/* Returns true if at least one page in the range is on swap */
+static bool pages_swapped(void *ptr, size_t size)
+{
+	int fd = open("/proc/self/pagemap", O_RDONLY);
+	bool ret;
+
+	if (fd < 0)
+		return false;
+
+	ret = pagemap_range_some_swapped(fd, ptr, size);
+	close(fd);
+
+	return ret;
+}
+
 /*
  * Try and migrate a dirty page that has previously been swapped to disk. This
- * checks that we don't loose dirty bits.
+ * checks that we don't lose dirty bits.
  */
 TEST_F(hmm, migrate_dirty_page)
 {
@@ -1340,6 +1356,10 @@ TEST_F(hmm, migrate_dirty_page)
 
 	ASSERT_FALSE(write_cgroup_param(cgroup, "memory.reclaim", 1UL<<30));
 
+	/* Make sure at least some pages got paged to disk. */
+	if (!pages_swapped(buffer->ptr, size))
+		SKIP(return, "Pages weren't swapped when they should have been");
+
 	/* Fault pages back in from swap as clean pages */
 	for (i = 0, ptr = buffer->ptr; i < size / sizeof(*ptr); ++i)
 		tmp += ptr[i];
@@ -1349,10 +1369,10 @@ TEST_F(hmm, migrate_dirty_page)
 		ptr[i] = i;
 
 	/*
-	 * Attempt to migrate memory to device, which should fail because
-	 * hopefully some pages are backed by swap storage.
+	 * Attempt to migrate memory to device. This might fail if some pages
+	 * are/were backed by swap but that's ok.
 	 */
-	ASSERT_TRUE(hmm_migrate_sys_to_dev(self->fd, buffer, npages));
+	hmm_migrate_sys_to_dev(self->fd, buffer, npages);
 
 	ASSERT_FALSE(write_cgroup_param(cgroup, "memory.reclaim", 1UL<<30));
 
