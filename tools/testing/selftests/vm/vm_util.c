@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
 #include "../kselftest.h"
@@ -20,12 +21,33 @@ uint64_t pagemap_get_entry(int fd, char *start)
 	return entry;
 }
 
+bool pagemap_is_swapped(int fd, char *start)
+{
+	uint64_t entry = pagemap_get_entry(fd, start);
+
+	// Check if swap entry bit (62nd bit) is set
+	return entry & 0x4000000000000000ull;
+}
+
 bool pagemap_is_softdirty(int fd, char *start)
 {
 	uint64_t entry = pagemap_get_entry(fd, start);
 
 	// Check if dirty bit (55th bit) is set
 	return entry & 0x0080000000000000ull;
+}
+
+/* Returns true if at least one page in the range is in swap */
+bool pagemap_range_some_swapped(int fd, char *start, size_t len)
+{
+	unsigned long i;
+	unsigned long npages = len / getpagesize();
+
+	for (i = 0; i < npages; i++)
+		if (pagemap_is_swapped(fd, start + i * getpagesize()))
+			return true;
+
+	return false;
 }
 
 void clear_softdirty(void)
