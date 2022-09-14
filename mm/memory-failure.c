@@ -745,6 +745,9 @@ static int kill_accessing_process(struct task_struct *p, unsigned long pfn,
 	};
 	priv.tk.tsk = p;
 
+	if (!p->mm)
+		return -EFAULT;
+
 	mmap_read_lock(p->mm);
 	ret = walk_page_range(p->mm, 0, TASK_SIZE, &hwp_walk_ops,
 			      (void *)&priv);
@@ -753,6 +756,7 @@ static int kill_accessing_process(struct task_struct *p, unsigned long pfn,
 	else
 		ret = 0;
 	mmap_read_unlock(p->mm);
+
 	return ret > 0 ? -EHWPOISON : -EFAULT;
 }
 
