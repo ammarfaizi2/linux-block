@@ -654,6 +654,41 @@ void __srcu_read_unlock(struct srcu_struct *ssp, int idx)
 }
 EXPORT_SYMBOL_GPL(__srcu_read_unlock);
 
+#ifdef CONFIG_NEED_SRCU_NMI_SAFE
+
+/*
+ * Counts the new reader in the appropriate per-CPU element of the
+ * srcu_struct, but in an NMI-safe manner using RMW atomics.
+ * Returns an index that must be passed to the matching srcu_read_unlock().
+ */
+int __srcu_read_lock_nmisafe(struct srcu_struct *ssp)
+{
+	int idx;
+	struct srcu_data *sdp = raw_cpu_ptr(ssp->sda);
+
+	idx = READ_ONCE(ssp->srcu_idx) & 0x1;
+	atomic_long_inc(&sdp->srcu_lock_count[idx]);
+	smp_mb__after_atomic(); /* B */  /* Avoid leaking the critical section. */
+	return idx;
+}
+EXPORT_SYMBOL_GPL(__srcu_read_lock_nmisafe);
+
+/*
+ * Removes the count for the old reader from the appropriate per-CPU
+ * element of the srcu_struct.  Note that this may well be a different
+ * CPU than that which was incremented by the corresponding srcu_read_lock().
+ */
+void __srcu_read_unlock_nmisafe(struct srcu_struct *ssp, int idx)
+{
+	struct srcu_data *sdp = raw_cpu_ptr(ssp->sda);
+
+	smp_mb__before_atomic(); /* C */  /* Avoid leaking the critical section. */
+	atomic_long_inc(&sdp->srcu_unlock_count[idx]);
+}
+EXPORT_SYMBOL_GPL(__srcu_read_unlock_nmisafe);
+
+#endif // #ifdef CONFIG_NEED_SRCU_NMI_SAFE
+
 /*
  * Start an SRCU grace period.
  */
