@@ -1017,9 +1017,12 @@ ssize_t simple_attr_write(struct file *file, const char __user *buf,
 		goto out;
 
 	attr->set_buf[size] = '\0';
-	ret = kstrtoull(attr->set_buf, 0, &val);
-	if (ret)
+	ret = sscanf(attr->set_buf, attr->fmt, &val);
+	if (ret != 1) {
+		ret = -EINVAL;
 		goto out;
+	}
+
 	ret = attr->set(attr->data, val);
 	if (ret == 0)
 		ret = len; /* on success, claim we got the whole input */
