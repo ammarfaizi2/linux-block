@@ -379,13 +379,13 @@ struct ath12k_dp {
 #define HTT_TX_WBM_COMP_INFO2_ACK_RSSI		GENMASK(31, 24)
 
 struct htt_tx_wbm_completion {
-	u32 rsvd0[2];
-	u32 info0;
-	u32 info1;
-	u32 info2;
-	u32 info3;
-	u32 info4;
-	u32 rsvd1;
+	__le32 rsvd0[2];
+	__le32 info0;
+	__le32 info1;
+	__le32 info2;
+	__le32 info3;
+	__le32 info4;
+	__le32 rsvd1;
 
 } __packed;
 
@@ -1206,7 +1206,7 @@ enum htt_t2h_msg_type {
 #define HTT_T2H_VERSION_CONF_MAJOR	GENMASK(23, 16)
 
 struct htt_t2h_version_conf_msg {
-	u32 version;
+	__le32 version;
 } __packed;
 
 #define HTT_T2H_PEER_MAP_INFO_VDEV_ID	GENMASK(15, 8)
@@ -1218,10 +1218,10 @@ struct htt_t2h_version_conf_msg {
 #define HTT_T2H_PEER_MAP_INFO2_NEXT_HOP_S	16
 
 struct htt_t2h_peer_map_event {
-	u32 info;
-	u32 mac_addr_l32;
-	u32 info1;
-	u32 info2;
+	__le32 info;
+	__le32 mac_addr_l32;
+	__le32 info1;
+	__le32 info2;
 } __packed;
 
 #define HTT_T2H_PEER_UNMAP_INFO_VDEV_ID	HTT_T2H_PEER_MAP_INFO_VDEV_ID
@@ -1232,9 +1232,9 @@ struct htt_t2h_peer_map_event {
 #define HTT_T2H_PEER_MAP_INFO1_NEXT_HOP_S HTT_T2H_PEER_MAP_INFO2_NEXT_HOP_S
 
 struct htt_t2h_peer_unmap_event {
-	u32 info;
-	u32 mac_addr_l32;
-	u32 info1;
+	__le32 info;
+	__le32 mac_addr_l32;
+	__le32 info1;
 } __packed;
 
 struct htt_resp_msg {
@@ -1378,15 +1378,15 @@ enum htt_backpressure_lmac_ringid {
 #define HTT_T2H_PPDU_STATS_INFO_PAYLOAD_SIZE GENMASK(31, 16)
 
 struct ath12k_htt_ppdu_stats_msg {
-	u32 info;
-	u32 ppdu_id;
-	u32 timestamp;
-	u32 rsvd;
+	__le32 info;
+	__le32 ppdu_id;
+	__le32 timestamp;
+	__le32 rsvd;
 	u8 data[0];
 } __packed;
 
 struct htt_tlv {
-	u32 header;
+	__le32 header;
 	u8 value[0];
 } __packed;
 
@@ -1409,21 +1409,21 @@ enum HTT_PPDU_STATS_BW {
 #define HTT_PPDU_STATS_CMN_FLAGS_BW_M		GENMASK(19, 16)
 
 struct htt_ppdu_stats_common {
-	u32 ppdu_id;
-	u16 sched_cmdid;
+	__le32 ppdu_id;
+	__le16 sched_cmdid;
 	u8 ring_id;
 	u8 num_users;
-	u32 flags; /* %HTT_PPDU_STATS_COMMON_FLAGS_*/
-	u32 chain_mask;
-	u32 fes_duration_us; /* frame exchange sequence */
-	u32 ppdu_sch_eval_start_tstmp_us;
-	u32 ppdu_sch_end_tstmp_us;
-	u32 ppdu_start_tstmp_us;
+	__le32 flags; /* %HTT_PPDU_STATS_COMMON_FLAGS_*/
+	__le32 chain_mask;
+	__le32 fes_duration_us; /* frame exchange sequence */
+	__le32 ppdu_sch_eval_start_tstmp_us;
+	__le32 ppdu_sch_end_tstmp_us;
+	__le32 ppdu_start_tstmp_us;
 	/* BIT [15 :  0] - phy mode (WLAN_PHY_MODE) with which ppdu was transmitted
 	 * BIT [31 : 16] - bandwidth (in MHz) with which ppdu was transmitted
 	 */
-	u16 phy_mode;
-	u16 bw_mhz;
+	__le16 phy_mode;
+	__le16 bw_mhz;
 } __packed;
 
 enum htt_ppdu_stats_gi {
@@ -1465,17 +1465,17 @@ enum HTT_PPDU_STATS_PPDU_TYPE {
 #define HTT_PPDU_STATS_USER_RATE_FLAGS_LDPC_M		BIT(29)
 
 #define HTT_USR_RATE_PREAMBLE(_val) \
-		u32_get_bits(_val, HTT_PPDU_STATS_USER_RATE_FLAGS_PREAMBLE_M)
+		le32_get_bits(_val, HTT_PPDU_STATS_USER_RATE_FLAGS_PREAMBLE_M)
 #define HTT_USR_RATE_BW(_val) \
-		u32_get_bits(_val, HTT_PPDU_STATS_USER_RATE_FLAGS_BW_M)
+		le32_get_bits(_val, HTT_PPDU_STATS_USER_RATE_FLAGS_BW_M)
 #define HTT_USR_RATE_NSS(_val) \
-		u32_get_bits(_val, HTT_PPDU_STATS_USER_RATE_FLAGS_NSS_M)
+		le32_get_bits(_val, HTT_PPDU_STATS_USER_RATE_FLAGS_NSS_M)
 #define HTT_USR_RATE_MCS(_val) \
-		u32_get_bits(_val, HTT_PPDU_STATS_USER_RATE_FLAGS_MCS_M)
+		le32_get_bits(_val, HTT_PPDU_STATS_USER_RATE_FLAGS_MCS_M)
 #define HTT_USR_RATE_GI(_val) \
-		u32_get_bits(_val, HTT_PPDU_STATS_USER_RATE_FLAGS_GI_M)
+		le32_get_bits(_val, HTT_PPDU_STATS_USER_RATE_FLAGS_GI_M)
 #define HTT_USR_RATE_DCM(_val) \
-		u32_get_bits(_val, HTT_PPDU_STATS_USER_RATE_FLAGS_DCM_M)
+		le32_get_bits(_val, HTT_PPDU_STATS_USER_RATE_FLAGS_DCM_M)
 
 #define HTT_PPDU_STATS_USER_RATE_RESP_FLAGS_LTF_SIZE_M		GENMASK(1, 0)
 #define HTT_PPDU_STATS_USER_RATE_RESP_FLAGS_STBC_M		BIT(2)
@@ -1492,16 +1492,16 @@ enum HTT_PPDU_STATS_PPDU_TYPE {
 struct htt_ppdu_stats_user_rate {
 	u8 tid_num;
 	u8 reserved0;
-	u16 sw_peer_id;
-	u32 info0; /* %HTT_PPDU_STATS_USER_RATE_INFO0_*/
-	u16 ru_end;
-	u16 ru_start;
-	u16 resp_ru_end;
-	u16 resp_ru_start;
-	u32 info1; /* %HTT_PPDU_STATS_USER_RATE_INFO1_ */
-	u32 rate_flags; /* %HTT_PPDU_STATS_USER_RATE_FLAGS_ */
+	__le16 sw_peer_id;
+	__le32 info0; /* %HTT_PPDU_STATS_USER_RATE_INFO0_*/
+	__le16 ru_end;
+	__le16 ru_start;
+	__le16 resp_ru_end;
+	__le16 resp_ru_start;
+	__le32 info1; /* %HTT_PPDU_STATS_USER_RATE_INFO1_ */
+	__le32 rate_flags; /* %HTT_PPDU_STATS_USER_RATE_FLAGS_ */
 	/* Note: resp_rate_info is only valid for if resp_type is UL */
-	u32 resp_rate_flags; /* %HTT_PPDU_STATS_USER_RATE_RESP_FLAGS_ */
+	__le32 resp_rate_flags; /* %HTT_PPDU_STATS_USER_RATE_RESP_FLAGS_ */
 } __packed;
 
 #define HTT_PPDU_STATS_TX_INFO_FLAGS_RATECODE_M		GENMASK(7, 0)
@@ -1522,14 +1522,14 @@ struct htt_ppdu_stats_user_rate {
 
 struct htt_tx_ppdu_stats_info {
 	struct htt_tlv tlv_hdr;
-	u32 tx_success_bytes;
-	u32 tx_retry_bytes;
-	u32 tx_failed_bytes;
-	u32 flags; /* %HTT_PPDU_STATS_TX_INFO_FLAGS_ */
-	u16 tx_success_msdus;
-	u16 tx_retry_msdus;
-	u16 tx_failed_msdus;
-	u16 tx_duration; /* united in us */
+	__le32 tx_success_bytes;
+	__le32 tx_retry_bytes;
+	__le32 tx_failed_bytes;
+	__le32 flags; /* %HTT_PPDU_STATS_TX_INFO_FLAGS_ */
+	__le16 tx_success_msdus;
+	__le16 tx_retry_msdus;
+	__le16 tx_failed_msdus;
+	__le16 tx_duration; /* united in us */
 } __packed;
 
 enum  htt_ppdu_stats_usr_compln_status {
@@ -1546,21 +1546,21 @@ enum  htt_ppdu_stats_usr_compln_status {
 #define HTT_PPDU_STATS_USR_CMPLTN_CMN_FLAGS_RESP_TYPE_M		GENMASK(12, 9)
 
 #define HTT_USR_CMPLTN_IS_AMPDU(_val) \
-	    u32_get_bits(_val, HTT_PPDU_STATS_USR_CMPLTN_CMN_FLAGS_IS_AMPDU_M)
+	    le32_get_bits(_val, HTT_PPDU_STATS_USR_CMPLTN_CMN_FLAGS_IS_AMPDU_M)
 #define HTT_USR_CMPLTN_LONG_RETRY(_val) \
-	    u32_get_bits(_val, HTT_PPDU_STATS_USR_CMPLTN_CMN_FLAGS_LONG_RETRY_M)
+	    le32_get_bits(_val, HTT_PPDU_STATS_USR_CMPLTN_CMN_FLAGS_LONG_RETRY_M)
 #define HTT_USR_CMPLTN_SHORT_RETRY(_val) \
-	    u32_get_bits(_val, HTT_PPDU_STATS_USR_CMPLTN_CMN_FLAGS_SHORT_RETRY_M)
+	    le32_get_bits(_val, HTT_PPDU_STATS_USR_CMPLTN_CMN_FLAGS_SHORT_RETRY_M)
 
 struct htt_ppdu_stats_usr_cmpltn_cmn {
 	u8 status;
 	u8 tid_num;
-	u16 sw_peer_id;
+	__le16 sw_peer_id;
 	/* RSSI value of last ack packet (units = dB above noise floor) */
-	u32 ack_rssi;
-	u16 mpdu_tried;
-	u16 mpdu_success;
-	u32 flags; /* %HTT_PPDU_STATS_USR_CMPLTN_CMN_FLAGS_LONG_RETRIES*/
+	__le32 ack_rssi;
+	__le16 mpdu_tried;
+	__le16 mpdu_success;
+	__le32 flags; /* %HTT_PPDU_STATS_USR_CMPLTN_CMN_FLAGS_LONG_RETRIES*/
 } __packed;
 
 #define HTT_PPDU_STATS_ACK_BA_INFO_NUM_MPDU_M	GENMASK(8, 0)
@@ -1570,13 +1570,13 @@ struct htt_ppdu_stats_usr_cmpltn_cmn {
 #define HTT_PPDU_STATS_NON_QOS_TID	16
 
 struct htt_ppdu_stats_usr_cmpltn_ack_ba_status {
-	u32 ppdu_id;
-	u16 sw_peer_id;
-	u16 reserved0;
-	u32 info; /* %HTT_PPDU_STATS_USR_CMPLTN_CMN_INFO_ */
-	u16 current_seq;
-	u16 start_seq;
-	u32 success_bytes;
+	__le32 ppdu_id;
+	__le16 sw_peer_id;
+	__le16 reserved0;
+	__le32 info; /* %HTT_PPDU_STATS_USR_CMPLTN_CMN_INFO_ */
+	__le16 current_seq;
+	__le16 start_seq;
+	__le32 success_bytes;
 } __packed;
 
 struct htt_ppdu_user_stats {
@@ -1642,7 +1642,7 @@ struct htt_ppdu_stats_info {
  *     Value: payload size in bytes (payload size is a multiple of 4 bytes)
  */
 struct htt_pktlog_msg {
-	u32 hdr;
+	__le32 hdr;
 	u8 payload[0];
 };
 

@@ -409,16 +409,16 @@ ath12k_dp_tx_process_htt_tx_complete(struct ath12k_base *ab,
 
 	status_desc = desc + HTT_TX_WBM_COMP_STATUS_OFFSET;
 
-	wbm_status = u32_get_bits(status_desc->info0,
-				  HTT_TX_WBM_COMP_INFO0_STATUS);
+	wbm_status = le32_get_bits(status_desc->info0,
+				   HTT_TX_WBM_COMP_INFO0_STATUS);
 
 	switch (wbm_status) {
 	case HAL_WBM_REL_HTT_TX_COMP_STATUS_OK:
 	case HAL_WBM_REL_HTT_TX_COMP_STATUS_DROP:
 	case HAL_WBM_REL_HTT_TX_COMP_STATUS_TTL:
 		ts.acked = (wbm_status == HAL_WBM_REL_HTT_TX_COMP_STATUS_OK);
-		ts.ack_rssi = u32_get_bits(status_desc->info2,
-					   HTT_TX_WBM_COMP_INFO2_ACK_RSSI);
+		ts.ack_rssi = le32_get_bits(status_desc->info2,
+					    HTT_TX_WBM_COMP_INFO2_ACK_RSSI);
 		ath12k_dp_tx_htt_tx_complete_buf(ab, msdu, tx_ring, &ts);
 		break;
 	case HAL_WBM_REL_HTT_TX_COMP_STATUS_REINJ:
