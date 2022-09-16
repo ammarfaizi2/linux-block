@@ -303,7 +303,7 @@ struct ath11k_dp {
 
 #define HTT_TX_WBM_COMP_STATUS_OFFSET 8
 
-/* HTT tx completion is overlayed in wbm_release_ring */
+/* HTT tx completion is overlaid in wbm_release_ring */
 #define HTT_TX_WBM_COMP_INFO0_STATUS		GENMASK(12, 9)
 #define HTT_TX_WBM_COMP_INFO0_REINJECT_REASON	GENMASK(16, 13)
 #define HTT_TX_WBM_COMP_INFO0_REINJECT_REASON	GENMASK(16, 13)
@@ -470,7 +470,7 @@ enum htt_srng_ring_id {
  *                     3'b010: 4 usec
  *                     3'b011: 8 usec (default)
  *                     3'b100: 16 usec
- *                     Others: Reserverd
+ *                     Others: Reserved
  *           b'19    - response_required:
  *                     Host needs HTT_T2H_MSG_TYPE_SRING_SETUP_DONE as response
  *           b'20:31 - reserved:  reserved for future use
@@ -997,8 +997,7 @@ struct htt_rx_ring_tlv_filter {
 #define HTT_RX_FULL_MON_MODE_CFG_CMD_CFG_NON_ZERO_MPDUS_END	BIT(2)
 #define HTT_RX_FULL_MON_MODE_CFG_CMD_CFG_RELEASE_RING		GENMASK(10, 3)
 
-/**
- * Enumeration for full monitor mode destination ring select
+/* Enumeration for full monitor mode destination ring select
  * 0 - REO destination ring select
  * 1 - FW destination ring select
  * 2 - SW destination ring select
@@ -1395,8 +1394,7 @@ struct htt_ppdu_stats_info {
 	struct list_head list;
 };
 
-/**
- * @brief target -> host packet log message
+/* @brief target -> host packet log message
  *
  * @details
  * The following field definitions describe the format of the packet log
@@ -1434,8 +1432,7 @@ struct htt_pktlog_msg {
 	u8 payload[];
 };
 
-/**
- * @brief host -> target FW extended statistics retrieve
+/* @brief host -> target FW extended statistics retrieve
  *
  * @details
  * The following field definitions describe the format of the HTT host
@@ -1570,8 +1567,7 @@ struct htt_ext_stats_cfg_params {
 	u32 cfg3;
 };
 
-/**
- * @brief target -> host extended statistics upload
+/* @brief target -> host extended statistics upload
  *
  * @details
  * The following field definitions describe the format of the HTT target

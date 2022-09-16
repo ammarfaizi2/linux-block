@@ -17,7 +17,7 @@ struct ath11k_vif;
 
 #define PSOC_HOST_MAX_NUM_SS (8)
 
-/* defines to set Packet extension values whic can be 0 us, 8 usec or 16 usec */
+/* defines to set Packet extension values which can be 0 us, 8 usec or 16 usec */
 #define MAX_HE_NSS               8
 #define MAX_HE_MODULATION        8
 #define MAX_HE_RU                4
@@ -4482,7 +4482,7 @@ struct wmi_pdev_radar_ev {
 } __packed;
 
 struct wmi_pdev_temperature_event {
-	/* temperature value in Celcius degree */
+	/* temperature value in Celsius degree */
 	s32 temp;
 	u32 pdev_id;
 } __packed;
@@ -4708,7 +4708,7 @@ enum wmi_sta_ps_param_tx_wake_threshold {
  */
 enum wmi_sta_ps_param_pspoll_count {
 	WMI_STA_PS_PSPOLL_COUNT_NO_MAX = 0,
-	/* Values greater than 0 indicate the maximum numer of PS-Poll frames
+	/* Values greater than 0 indicate the maximum number of PS-Poll frames
 	 * FW will send before waking up.
 	 */
 };
@@ -4820,9 +4820,9 @@ enum wmi_rate_preamble {
 
 /**
  * enum wmi_rtscts_prot_mode - Enable/Disable RTS/CTS and CTS2Self Protection.
- * @WMI_RTS_CTS_DISABLED : RTS/CTS protection is disabled.
- * @WMI_USE_RTS_CTS : RTS/CTS Enabled.
- * @WMI_USE_CTS2SELF : CTS to self protection Enabled.
+ * @WMI_RTS_CTS_DISABLED: RTS/CTS protection is disabled.
+ * @WMI_USE_RTS_CTS: RTS/CTS Enabled.
+ * @WMI_USE_CTS2SELF: CTS to self protection Enabled.
  */
 enum wmi_rtscts_prot_mode {
 	WMI_RTS_CTS_DISABLED = 0,
@@ -4833,13 +4833,13 @@ enum wmi_rtscts_prot_mode {
 /**
  * enum wmi_rtscts_profile - Selection of RTS CTS profile along with enabling
  *                           protection mode.
- * @WMI_RTSCTS_FOR_NO_RATESERIES - Neither of rate-series should use RTS-CTS
- * @WMI_RTSCTS_FOR_SECOND_RATESERIES - Only second rate-series will use RTS-CTS
- * @WMI_RTSCTS_ACROSS_SW_RETRIES - Only the second rate-series will use RTS-CTS,
- *                                 but if there's a sw retry, both the rate
- *                                 series will use RTS-CTS.
- * @WMI_RTSCTS_ERP - RTS/CTS used for ERP protection for every PPDU.
- * @WMI_RTSCTS_FOR_ALL_RATESERIES - Enable RTS-CTS for all rate series.
+ * @WMI_RTSCTS_FOR_NO_RATESERIES: Neither of rate-series should use RTS-CTS
+ * @WMI_RTSCTS_FOR_SECOND_RATESERIES: Only second rate-series will use RTS-CTS
+ * @WMI_RTSCTS_ACROSS_SW_RETRIES: Only the second rate-series will use RTS-CTS,
+ *                                but if there's a sw retry, both the rate
+ *                                series will use RTS-CTS.
+ * @WMI_RTSCTS_ERP: RTS/CTS used for ERP protection for every PPDU.
+ * @WMI_RTSCTS_FOR_ALL_RATESERIES: Enable RTS-CTS for all rate series.
  */
 enum wmi_rtscts_profile {
 	WMI_RTSCTS_FOR_NO_RATESERIES = 0,
