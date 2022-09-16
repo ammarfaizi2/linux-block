@@ -1579,17 +1579,6 @@ struct htt_ppdu_stats_usr_cmpltn_ack_ba_status {
 	u32 success_bytes;
 } __packed;
 
-struct htt_ppdu_stats_usr_cmn_array {
-	struct htt_tlv tlv_hdr;
-	u32 num_ppdu_stats;
-	/* tx_ppdu_stats_info is filled by multiple struct htt_tx_ppdu_stats_info
-	 * elements.
-	 * tx_ppdu_stats_info is variable length, with length =
-	 *     number_of_ppdu_stats * sizeof (struct htt_tx_ppdu_stats_info)
-	 */
-	struct htt_tx_ppdu_stats_info tx_ppdu_info[0];
-} __packed;
-
 struct htt_ppdu_user_stats {
 	u16 peer_id;
 	u16 delay_ba;
@@ -1873,109 +1862,6 @@ enum vdev_stats_offload_timer_duration {
 	ATH12K_STATS_TIMER_DUR_500MS = 1,
 	ATH12K_STATS_TIMER_DUR_1SEC = 2,
 	ATH12K_STATS_TIMER_DUR_2SEC = 3,
-};
-
-#define HTT_H2T_VDEV_TXRX_HDR_MSG_TYPE		GENMASK(7, 0)
-#define HTT_H2T_VDEV_TXRX_HDR_PDEV_ID		GENMASK(15, 8)
-#define HTT_H2T_VDEV_TXRX_HDR_ENABLE		BIT(16)
-#define HTT_H2T_VDEV_TXRX_HDR_INTERVAL		GENMASK(24, 17)
-#define HTT_H2T_VDEV_TXRX_HDR_RESET_STATS	BIT(31)
-#define HTT_H2T_VDEV_TXRX_LO_BITMASK		GENMASK(31, 0)
-#define HTT_H2T_VDEV_TXRX_HI_BITMASK		GENMASK(63, 32)
-
-struct htt_h2t_msg_type_vdev_txrx_stats_req {
-	u32 hdr;
-	u32 vdev_id_lo_bitmask;
-	u32 vdev_id_hi_bitmask;
-};
-
-/* @brief target -> host extended statistics upload
- *
- * @details
- * The following field definitions describe the format of the HTT target
- * to host stats upload confirmation message.
- * The message contains a cookie echoed from the HTT host->target stats
- * upload request, which identifies which request the confirmation is
- * for, and a single stats can span over multiple HTT stats indication
- * due to the HTT message size limitation so every HTT ext stats indication
- * will have tag-length-value stats information elements.
- * The tag-length header for each HTT stats IND message also includes a
- * status field, to indicate whether the request for the stat type in
- * question was fully met, partially met, unable to be met, or invalid
- * (if the stat type in question is disabled in the target).
- * A Done bit 1's indicate the end of the of stats info elements.
- *
- *
- * |31                         16|15    12|11|10 8|7   5|4       0|
- * |--------------------------------------------------------------|
- * |                   reserved                   |    msg type   |
- * |--------------------------------------------------------------|
- * |                         cookie LSBs                          |
- * |--------------------------------------------------------------|
- * |                         cookie MSBs                          |
- * |--------------------------------------------------------------|
- * |      stats entry length     | rsvd   | D|  S |   stat type   |
- * |--------------------------------------------------------------|
- * |                   type-specific stats info                   |
- * |                      (see htt_stats.h)                       |
- * |--------------------------------------------------------------|
- * Header fields:
- *  - MSG_TYPE
- *    Bits 7:0
- *    Purpose: Identifies this is a extended statistics upload confirmation
- *             message.
- *    Value: 0x1c
- *  - COOKIE_LSBS
- *    Bits 31:0
- *    Purpose: Provide a mechanism to match a target->host stats confirmation
- *        message with its preceding host->target stats request message.
- *    Value: LSBs of the opaque cookie specified by the host-side requestor
- *  - COOKIE_MSBS
- *    Bits 31:0
- *    Purpose: Provide a mechanism to match a target->host stats confirmation
- *        message with its preceding host->target stats request message.
- *    Value: MSBs of the opaque cookie specified by the host-side requestor
- *
- * Stats Information Element tag-length header fields:
- *  - STAT_TYPE
- *    Bits 7:0
- *    Purpose: identifies the type of statistics info held in the
- *        following information element
- *    Value: htt_dbg_ext_stats_type
- *  - STATUS
- *    Bits 10:8
- *    Purpose: indicate whether the requested stats are present
- *    Value: htt_dbg_ext_stats_status
- *  - DONE
- *    Bits 11
- *    Purpose:
- *        Indicates the completion of the stats entry, this will be the last
- *        stats conf HTT segment for the requested stats type.
- *    Value:
- *        0 -> the stats retrieval is ongoing
- *        1 -> the stats retrieval is complete
- *  - LENGTH
- *    Bits 31:16
- *    Purpose: indicate the stats information size
- *    Value: This field specifies the number of bytes of stats information
- *       that follows the element tag-length header.
- *       It is expected but not required that this length is a multiple of
- *       4 bytes.
- */
-
-#define HTT_T2H_EXT_STATS_INFO1_DONE	BIT(11)
-#define HTT_T2H_EXT_STATS_INFO1_LENGTH   GENMASK(31, 16)
-
-struct ath12k_htt_extd_stats_msg {
-	u32 info0;
-	u64 cookie;
-	u32 info1;
-	u8 data[0];
-} __packed;
-
-struct htt_mac_addr {
-	u32 mac_addr_l32;
-	u32 mac_addr_h16;
 };
 
 static inline void ath12k_dp_get_mac_addr(u32 addr_l32, u16 addr_h16, u8 *addr)
