@@ -708,25 +708,25 @@ int ath12k_dp_tx_htt_srng_setup(struct ath12k_base *ab, u32 ring_id,
 
 	skb_put(skb, len);
 	cmd = (struct htt_srng_setup_cmd *)skb->data;
-	cmd->info0 = u32_encode_bits(HTT_H2T_MSG_TYPE_SRING_SETUP,
-				     HTT_SRNG_SETUP_CMD_INFO0_MSG_TYPE);
+	cmd->info0 = le32_encode_bits(HTT_H2T_MSG_TYPE_SRING_SETUP,
+				      HTT_SRNG_SETUP_CMD_INFO0_MSG_TYPE);
 	if (htt_ring_type == HTT_SW_TO_HW_RING ||
 	    htt_ring_type == HTT_HW_TO_SW_RING)
-		cmd->info0 |= u32_encode_bits(DP_SW2HW_MACID(mac_id),
-					      HTT_SRNG_SETUP_CMD_INFO0_PDEV_ID);
+		cmd->info0 |= le32_encode_bits(DP_SW2HW_MACID(mac_id),
+					       HTT_SRNG_SETUP_CMD_INFO0_PDEV_ID);
 	else
-		cmd->info0 |= u32_encode_bits(mac_id,
-					      HTT_SRNG_SETUP_CMD_INFO0_PDEV_ID);
-	cmd->info0 |= u32_encode_bits(htt_ring_type,
-				      HTT_SRNG_SETUP_CMD_INFO0_RING_TYPE);
-	cmd->info0 |= u32_encode_bits(htt_ring_id,
-				      HTT_SRNG_SETUP_CMD_INFO0_RING_ID);
+		cmd->info0 |= le32_encode_bits(mac_id,
+					       HTT_SRNG_SETUP_CMD_INFO0_PDEV_ID);
+	cmd->info0 |= le32_encode_bits(htt_ring_type,
+				       HTT_SRNG_SETUP_CMD_INFO0_RING_TYPE);
+	cmd->info0 |= le32_encode_bits(htt_ring_id,
+				       HTT_SRNG_SETUP_CMD_INFO0_RING_ID);
 
-	cmd->ring_base_addr_lo = params.ring_base_paddr &
-				 HAL_ADDR_LSB_REG_MASK;
+	cmd->ring_base_addr_lo = cpu_to_le32(params.ring_base_paddr &
+					     HAL_ADDR_LSB_REG_MASK);
 
-	cmd->ring_base_addr_hi = (u64)params.ring_base_paddr >>
-				 HAL_ADDR_MSB_REG_SHIFT;
+	cmd->ring_base_addr_hi = cpu_to_le32((u64)params.ring_base_paddr >>
+					     HAL_ADDR_MSB_REG_SHIFT);
 
 	ret = ath12k_hal_srng_get_entrysize(ab, ring_type);
 	if (ret < 0)
@@ -735,40 +735,40 @@ int ath12k_dp_tx_htt_srng_setup(struct ath12k_base *ab, u32 ring_id,
 	ring_entry_sz = ret;
 
 	ring_entry_sz >>= 2;
-	cmd->info1 = u32_encode_bits(ring_entry_sz,
-				     HTT_SRNG_SETUP_CMD_INFO1_RING_ENTRY_SIZE);
-	cmd->info1 |= u32_encode_bits(params.num_entries * ring_entry_sz,
-				      HTT_SRNG_SETUP_CMD_INFO1_RING_SIZE);
-	cmd->info1 |= u32_encode_bits(!!(params.flags & HAL_SRNG_FLAGS_MSI_SWAP),
-				      HTT_SRNG_SETUP_CMD_INFO1_RING_FLAGS_MSI_SWAP);
-	cmd->info1 |= u32_encode_bits(!!(params.flags & HAL_SRNG_FLAGS_DATA_TLV_SWAP),
-				 HTT_SRNG_SETUP_CMD_INFO1_RING_FLAGS_TLV_SWAP);
-	cmd->info1 |= u32_encode_bits(!!(params.flags & HAL_SRNG_FLAGS_RING_PTR_SWAP),
-				      HTT_SRNG_SETUP_CMD_INFO1_RING_FLAGS_HOST_FW_SWAP);
+	cmd->info1 = le32_encode_bits(ring_entry_sz,
+				      HTT_SRNG_SETUP_CMD_INFO1_RING_ENTRY_SIZE);
+	cmd->info1 |= le32_encode_bits(params.num_entries * ring_entry_sz,
+				       HTT_SRNG_SETUP_CMD_INFO1_RING_SIZE);
+	cmd->info1 |= le32_encode_bits(!!(params.flags & HAL_SRNG_FLAGS_MSI_SWAP),
+				       HTT_SRNG_SETUP_CMD_INFO1_RING_FLAGS_MSI_SWAP);
+	cmd->info1 |= le32_encode_bits(!!(params.flags & HAL_SRNG_FLAGS_DATA_TLV_SWAP),
+				       HTT_SRNG_SETUP_CMD_INFO1_RING_FLAGS_TLV_SWAP);
+	cmd->info1 |= le32_encode_bits(!!(params.flags & HAL_SRNG_FLAGS_RING_PTR_SWAP),
+				       HTT_SRNG_SETUP_CMD_INFO1_RING_FLAGS_HOST_FW_SWAP);
 	if (htt_ring_type == HTT_SW_TO_HW_RING)
-		cmd->info1 |= HTT_SRNG_SETUP_CMD_INFO1_RING_LOOP_CNT_DIS;
+		cmd->info1 |= cpu_to_le32(HTT_SRNG_SETUP_CMD_INFO1_RING_LOOP_CNT_DIS);
 
-	cmd->ring_head_off32_remote_addr_lo = lower_32_bits(hp_addr);
-	cmd->ring_head_off32_remote_addr_hi = upper_32_bits(hp_addr);
+	cmd->ring_head_off32_remote_addr_lo = cpu_to_le32(lower_32_bits(hp_addr));
+	cmd->ring_head_off32_remote_addr_hi = cpu_to_le32(upper_32_bits(hp_addr));
 
-	cmd->ring_tail_off32_remote_addr_lo = lower_32_bits(tp_addr);
-	cmd->ring_tail_off32_remote_addr_hi = upper_32_bits(tp_addr);
+	cmd->ring_tail_off32_remote_addr_lo = cpu_to_le32(lower_32_bits(tp_addr));
+	cmd->ring_tail_off32_remote_addr_hi = cpu_to_le32(upper_32_bits(tp_addr));
 
-	cmd->ring_msi_addr_lo = lower_32_bits(params.msi_addr);
-	cmd->ring_msi_addr_hi = upper_32_bits(params.msi_addr);
-	cmd->msi_data = params.msi_data;
+	cmd->ring_msi_addr_lo = cpu_to_le32(lower_32_bits(params.msi_addr));
+	cmd->ring_msi_addr_hi = cpu_to_le32(upper_32_bits(params.msi_addr));
+	cmd->msi_data = cpu_to_le32(params.msi_data);
 
 	cmd->intr_info =
-		u32_encode_bits(params.intr_batch_cntr_thres_entries * ring_entry_sz,
-				HTT_SRNG_SETUP_CMD_INTR_INFO_BATCH_COUNTER_THRESH);
+		le32_encode_bits(params.intr_batch_cntr_thres_entries * ring_entry_sz,
+				 HTT_SRNG_SETUP_CMD_INTR_INFO_BATCH_COUNTER_THRESH);
 	cmd->intr_info |=
-		u32_encode_bits(params.intr_timer_thres_us >> 3,
-				HTT_SRNG_SETUP_CMD_INTR_INFO_INTR_TIMER_THRESH);
+		le32_encode_bits(params.intr_timer_thres_us >> 3,
+				 HTT_SRNG_SETUP_CMD_INTR_INFO_INTR_TIMER_THRESH);
 
 	cmd->info2 = 0;
 	if (params.flags & HAL_SRNG_FLAGS_LOW_THRESH_INTR_EN) {
-		cmd->info2 = u32_encode_bits(params.low_threshold,
-					     HTT_SRNG_SETUP_CMD_INFO2_INTR_LOW_THRESH);
+		cmd->info2 = le32_encode_bits(params.low_threshold,
+					      HTT_SRNG_SETUP_CMD_INFO2_INTR_LOW_THRESH);
 	}
 
 	ath12k_dbg(ab, ATH12K_DBG_HAL,
@@ -810,8 +810,8 @@ int ath12k_dp_tx_htt_h2t_ver_req_msg(struct ath12k_base *ab)
 
 	skb_put(skb, len);
 	cmd = (struct htt_ver_req_cmd *)skb->data;
-	cmd->ver_reg_info = u32_encode_bits(HTT_H2T_MSG_TYPE_VERSION_REQ,
-					    HTT_VER_REQ_INFO_MSG_ID);
+	cmd->ver_reg_info = le32_encode_bits(HTT_H2T_MSG_TYPE_VERSION_REQ,
+					     HTT_VER_REQ_INFO_MSG_ID);
 
 	ret = ath12k_htc_send(&ab->htc, dp->eid, skb);
 	if (ret) {
@@ -853,12 +853,12 @@ int ath12k_dp_tx_htt_h2t_ppdu_stats_req(struct ath12k *ar, u32 mask)
 
 		skb_put(skb, len);
 		cmd = (struct htt_ppdu_stats_cfg_cmd *)skb->data;
-		cmd->msg = u32_encode_bits(HTT_H2T_MSG_TYPE_PPDU_STATS_CFG,
-					   HTT_PPDU_STATS_CFG_MSG_TYPE);
+		cmd->msg = le32_encode_bits(HTT_H2T_MSG_TYPE_PPDU_STATS_CFG,
+					    HTT_PPDU_STATS_CFG_MSG_TYPE);
 
 		pdev_mask = 1 << (i + 1);
-		cmd->msg |= u32_encode_bits(pdev_mask, HTT_PPDU_STATS_CFG_PDEV_ID);
-		cmd->msg |= u32_encode_bits(mask, HTT_PPDU_STATS_CFG_TLV_TYPE_BITMASK);
+		cmd->msg |= le32_encode_bits(pdev_mask, HTT_PPDU_STATS_CFG_PDEV_ID);
+		cmd->msg |= le32_encode_bits(mask, HTT_PPDU_STATS_CFG_TLV_TYPE_BITMASK);
 
 		ret = ath12k_htc_send(&ab->htc, dp->eid, skb);
 		if (ret) {
@@ -899,61 +899,61 @@ int ath12k_dp_tx_htt_rx_filter_setup(struct ath12k_base *ab, u32 ring_id,
 
 	skb_put(skb, len);
 	cmd = (struct htt_rx_ring_selection_cfg_cmd *)skb->data;
-	cmd->info0 = u32_encode_bits(HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG,
-				     HTT_RX_RING_SELECTION_CFG_CMD_INFO0_MSG_TYPE);
+	cmd->info0 = le32_encode_bits(HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG,
+				      HTT_RX_RING_SELECTION_CFG_CMD_INFO0_MSG_TYPE);
 	if (htt_ring_type == HTT_SW_TO_HW_RING ||
 	    htt_ring_type == HTT_HW_TO_SW_RING)
 		cmd->info0 |=
-			u32_encode_bits(DP_SW2HW_MACID(mac_id),
-					HTT_RX_RING_SELECTION_CFG_CMD_INFO0_PDEV_ID);
+			le32_encode_bits(DP_SW2HW_MACID(mac_id),
+					 HTT_RX_RING_SELECTION_CFG_CMD_INFO0_PDEV_ID);
 	else
 		cmd->info0 |=
-			u32_encode_bits(mac_id,
-					HTT_RX_RING_SELECTION_CFG_CMD_INFO0_PDEV_ID);
-	cmd->info0 |= u32_encode_bits(htt_ring_id,
-				      HTT_RX_RING_SELECTION_CFG_CMD_INFO0_RING_ID);
-	cmd->info0 |= u32_encode_bits(!!(params.flags & HAL_SRNG_FLAGS_MSI_SWAP),
-				      HTT_RX_RING_SELECTION_CFG_CMD_INFO0_SS);
-	cmd->info0 |= u32_encode_bits(!!(params.flags & HAL_SRNG_FLAGS_DATA_TLV_SWAP),
-				      HTT_RX_RING_SELECTION_CFG_CMD_INFO0_PS);
-	cmd->info0 |= u32_encode_bits(tlv_filter->offset_valid,
-				      HTT_RX_RING_SELECTION_CFG_CMD_OFFSET_VALID);
-	cmd->info1 = u32_encode_bits(rx_buf_size,
-				     HTT_RX_RING_SELECTION_CFG_CMD_INFO1_BUF_SIZE);
-	cmd->pkt_type_en_flags0 = tlv_filter->pkt_filter_flags0;
-	cmd->pkt_type_en_flags1 = tlv_filter->pkt_filter_flags1;
-	cmd->pkt_type_en_flags2 = tlv_filter->pkt_filter_flags2;
-	cmd->pkt_type_en_flags3 = tlv_filter->pkt_filter_flags3;
-	cmd->rx_filter_tlv = tlv_filter->rx_filter;
+			le32_encode_bits(mac_id,
+					 HTT_RX_RING_SELECTION_CFG_CMD_INFO0_PDEV_ID);
+	cmd->info0 |= le32_encode_bits(htt_ring_id,
+				       HTT_RX_RING_SELECTION_CFG_CMD_INFO0_RING_ID);
+	cmd->info0 |= le32_encode_bits(!!(params.flags & HAL_SRNG_FLAGS_MSI_SWAP),
+				       HTT_RX_RING_SELECTION_CFG_CMD_INFO0_SS);
+	cmd->info0 |= le32_encode_bits(!!(params.flags & HAL_SRNG_FLAGS_DATA_TLV_SWAP),
+				       HTT_RX_RING_SELECTION_CFG_CMD_INFO0_PS);
+	cmd->info0 |= le32_encode_bits(tlv_filter->offset_valid,
+				       HTT_RX_RING_SELECTION_CFG_CMD_OFFSET_VALID);
+	cmd->info1 = le32_encode_bits(rx_buf_size,
+				      HTT_RX_RING_SELECTION_CFG_CMD_INFO1_BUF_SIZE);
+	cmd->pkt_type_en_flags0 = cpu_to_le32(tlv_filter->pkt_filter_flags0);
+	cmd->pkt_type_en_flags1 = cpu_to_le32(tlv_filter->pkt_filter_flags1);
+	cmd->pkt_type_en_flags2 = cpu_to_le32(tlv_filter->pkt_filter_flags2);
+	cmd->pkt_type_en_flags3 = cpu_to_le32(tlv_filter->pkt_filter_flags3);
+	cmd->rx_filter_tlv = cpu_to_le32(tlv_filter->rx_filter);
 
 	if (tlv_filter->offset_valid) {
 		cmd->rx_packet_offset =
-			u32_encode_bits(tlv_filter->rx_packet_offset,
-					HTT_RX_RING_SELECTION_CFG_RX_PACKET_OFFSET);
+			le32_encode_bits(tlv_filter->rx_packet_offset,
+					 HTT_RX_RING_SELECTION_CFG_RX_PACKET_OFFSET);
 
 		cmd->rx_packet_offset |=
-			u32_encode_bits(tlv_filter->rx_header_offset,
-					HTT_RX_RING_SELECTION_CFG_RX_HEADER_OFFSET);
+			le32_encode_bits(tlv_filter->rx_header_offset,
+					 HTT_RX_RING_SELECTION_CFG_RX_HEADER_OFFSET);
 
 		cmd->rx_mpdu_offset =
-			u32_encode_bits(tlv_filter->rx_mpdu_end_offset,
-					HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_OFFSET);
+			le32_encode_bits(tlv_filter->rx_mpdu_end_offset,
+					 HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_OFFSET);
 
 		cmd->rx_mpdu_offset |=
-			u32_encode_bits(tlv_filter->rx_mpdu_start_offset,
-					HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_OFFSET);
+			le32_encode_bits(tlv_filter->rx_mpdu_start_offset,
+					 HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_OFFSET);
 
 		cmd->rx_msdu_offset =
-			u32_encode_bits(tlv_filter->rx_msdu_end_offset,
-					HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_OFFSET);
+			le32_encode_bits(tlv_filter->rx_msdu_end_offset,
+					 HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_OFFSET);
 
 		cmd->rx_msdu_offset |=
-			u32_encode_bits(tlv_filter->rx_msdu_start_offset,
-					HTT_RX_RING_SELECTION_CFG_RX_MSDU_START_OFFSET);
+			le32_encode_bits(tlv_filter->rx_msdu_start_offset,
+					 HTT_RX_RING_SELECTION_CFG_RX_MSDU_START_OFFSET);
 
 		cmd->rx_attn_offset =
-			u32_encode_bits(tlv_filter->rx_attn_offset,
-					HTT_RX_RING_SELECTION_CFG_RX_ATTENTION_OFFSET);
+			le32_encode_bits(tlv_filter->rx_attn_offset,
+					 HTT_RX_RING_SELECTION_CFG_RX_ATTENTION_OFFSET);
 	}
 
 	ret = ath12k_htc_send(&ab->htc, ab->dp.eid, skb);
@@ -993,12 +993,12 @@ ath12k_dp_tx_htt_h2t_ext_stats_req(struct ath12k *ar, u8 type,
 	cmd->hdr.pdev_mask = 1 << ar->pdev->pdev_id;
 
 	cmd->hdr.stats_type = type;
-	cmd->cfg_param0 = cfg_params->cfg0;
-	cmd->cfg_param1 = cfg_params->cfg1;
-	cmd->cfg_param2 = cfg_params->cfg2;
-	cmd->cfg_param3 = cfg_params->cfg3;
-	cmd->cookie_lsb = lower_32_bits(cookie);
-	cmd->cookie_msb = upper_32_bits(cookie);
+	cmd->cfg_param0 = cpu_to_le32(cfg_params->cfg0);
+	cmd->cfg_param1 = cpu_to_le32(cfg_params->cfg1);
+	cmd->cfg_param2 = cpu_to_le32(cfg_params->cfg2);
+	cmd->cfg_param3 = cpu_to_le32(cfg_params->cfg3);
+	cmd->cookie_lsb = cpu_to_le32(lower_32_bits(cookie));
+	cmd->cookie_msb = cpu_to_le32(upper_32_bits(cookie));
 
 	ret = ath12k_htc_send(&ab->htc, dp->eid, skb);
 	if (ret) {
@@ -1104,67 +1104,72 @@ int ath12k_dp_tx_htt_tx_filter_setup(struct ath12k_base *ab, u32 ring_id,
 
 	skb_put(skb, len);
 	cmd = (struct htt_tx_ring_selection_cfg_cmd *)skb->data;
-	cmd->info0 = u32_encode_bits(HTT_H2T_MSG_TYPE_TX_MONITOR_CFG,
-				     HTT_TX_RING_SELECTION_CFG_CMD_INFO0_MSG_TYPE);
+	cmd->info0 = le32_encode_bits(HTT_H2T_MSG_TYPE_TX_MONITOR_CFG,
+				      HTT_TX_RING_SELECTION_CFG_CMD_INFO0_MSG_TYPE);
 	if (htt_ring_type == HTT_SW_TO_HW_RING ||
 	    htt_ring_type == HTT_HW_TO_SW_RING)
 		cmd->info0 |=
-			u32_encode_bits(DP_SW2HW_MACID(mac_id),
-					HTT_TX_RING_SELECTION_CFG_CMD_INFO0_PDEV_ID);
+			le32_encode_bits(DP_SW2HW_MACID(mac_id),
+					 HTT_TX_RING_SELECTION_CFG_CMD_INFO0_PDEV_ID);
 	else
 		cmd->info0 |=
-			u32_encode_bits(mac_id,
-					HTT_TX_RING_SELECTION_CFG_CMD_INFO0_PDEV_ID);
-	cmd->info0 |= u32_encode_bits(htt_ring_id,
-				      HTT_TX_RING_SELECTION_CFG_CMD_INFO0_RING_ID);
-	cmd->info0 |= u32_encode_bits(!!(params.flags & HAL_SRNG_FLAGS_MSI_SWAP),
-				      HTT_TX_RING_SELECTION_CFG_CMD_INFO0_SS);
-	cmd->info0 |= u32_encode_bits(!!(params.flags & HAL_SRNG_FLAGS_DATA_TLV_SWAP),
-				      HTT_TX_RING_SELECTION_CFG_CMD_INFO0_PS);
+			le32_encode_bits(mac_id,
+					 HTT_TX_RING_SELECTION_CFG_CMD_INFO0_PDEV_ID);
+	cmd->info0 |= le32_encode_bits(htt_ring_id,
+				       HTT_TX_RING_SELECTION_CFG_CMD_INFO0_RING_ID);
+	cmd->info0 |= le32_encode_bits(!!(params.flags & HAL_SRNG_FLAGS_MSI_SWAP),
+				       HTT_TX_RING_SELECTION_CFG_CMD_INFO0_SS);
+	cmd->info0 |= le32_encode_bits(!!(params.flags & HAL_SRNG_FLAGS_DATA_TLV_SWAP),
+				       HTT_TX_RING_SELECTION_CFG_CMD_INFO0_PS);
 
-	cmd->info1 |= u32_encode_bits(tx_buf_size,
-				      HTT_TX_RING_SELECTION_CFG_CMD_INFO1_RING_BUFF_SIZE);
+	cmd->info1 |=
+		le32_encode_bits(tx_buf_size,
+				 HTT_TX_RING_SELECTION_CFG_CMD_INFO1_RING_BUFF_SIZE);
 
 	if (htt_tlv_filter->tx_mon_mgmt_filter) {
 		cmd->info1 |=
-			u32_encode_bits(HTT_STATS_FRAME_CTRL_TYPE_MGMT,
-					HTT_TX_RING_SELECTION_CFG_CMD_INFO1_PKT_TYPE);
+			le32_encode_bits(HTT_STATS_FRAME_CTRL_TYPE_MGMT,
+					 HTT_TX_RING_SELECTION_CFG_CMD_INFO1_PKT_TYPE);
 		cmd->info1 |=
-		u32_encode_bits(htt_tlv_filter->tx_mon_pkt_dma_len,
-				HTT_TX_RING_SELECTION_CFG_CMD_INFO1_CONF_LEN_MGMT);
+		le32_encode_bits(htt_tlv_filter->tx_mon_pkt_dma_len,
+				 HTT_TX_RING_SELECTION_CFG_CMD_INFO1_CONF_LEN_MGMT);
 		cmd->info2 |=
-		u32_encode_bits(HTT_STATS_FRAME_CTRL_TYPE_MGMT,
-				HTT_TX_RING_SELECTION_CFG_CMD_INFO2_PKT_TYPE_EN_FLAG);
+		le32_encode_bits(HTT_STATS_FRAME_CTRL_TYPE_MGMT,
+				 HTT_TX_RING_SELECTION_CFG_CMD_INFO2_PKT_TYPE_EN_FLAG);
 	}
 
 	if (htt_tlv_filter->tx_mon_data_filter) {
 		cmd->info1 |=
-			u32_encode_bits(HTT_STATS_FRAME_CTRL_TYPE_CTRL,
-					HTT_TX_RING_SELECTION_CFG_CMD_INFO1_PKT_TYPE);
+			le32_encode_bits(HTT_STATS_FRAME_CTRL_TYPE_CTRL,
+					 HTT_TX_RING_SELECTION_CFG_CMD_INFO1_PKT_TYPE);
 		cmd->info1 |=
-		u32_encode_bits(htt_tlv_filter->tx_mon_pkt_dma_len,
-				HTT_TX_RING_SELECTION_CFG_CMD_INFO1_CONF_LEN_CTRL);
+		le32_encode_bits(htt_tlv_filter->tx_mon_pkt_dma_len,
+				 HTT_TX_RING_SELECTION_CFG_CMD_INFO1_CONF_LEN_CTRL);
 		cmd->info2 |=
-		u32_encode_bits(HTT_STATS_FRAME_CTRL_TYPE_CTRL,
-				HTT_TX_RING_SELECTION_CFG_CMD_INFO2_PKT_TYPE_EN_FLAG);
+		le32_encode_bits(HTT_STATS_FRAME_CTRL_TYPE_CTRL,
+				 HTT_TX_RING_SELECTION_CFG_CMD_INFO2_PKT_TYPE_EN_FLAG);
 	}
 
 	if (htt_tlv_filter->tx_mon_ctrl_filter) {
 		cmd->info1 |=
-			u32_encode_bits(HTT_STATS_FRAME_CTRL_TYPE_DATA,
-					HTT_TX_RING_SELECTION_CFG_CMD_INFO1_PKT_TYPE);
+			le32_encode_bits(HTT_STATS_FRAME_CTRL_TYPE_DATA,
+					 HTT_TX_RING_SELECTION_CFG_CMD_INFO1_PKT_TYPE);
 		cmd->info1 |=
-		u32_encode_bits(htt_tlv_filter->tx_mon_pkt_dma_len,
-				HTT_TX_RING_SELECTION_CFG_CMD_INFO1_CONF_LEN_DATA);
+		le32_encode_bits(htt_tlv_filter->tx_mon_pkt_dma_len,
+				 HTT_TX_RING_SELECTION_CFG_CMD_INFO1_CONF_LEN_DATA);
 		cmd->info2 |=
-		u32_encode_bits(HTT_STATS_FRAME_CTRL_TYPE_DATA,
-				HTT_TX_RING_SELECTION_CFG_CMD_INFO2_PKT_TYPE_EN_FLAG);
+		le32_encode_bits(HTT_STATS_FRAME_CTRL_TYPE_DATA,
+				 HTT_TX_RING_SELECTION_CFG_CMD_INFO2_PKT_TYPE_EN_FLAG);
 	}
 
-	cmd->tlv_filter_mask_in0 = htt_tlv_filter->tx_mon_downstream_tlv_flags;
-	cmd->tlv_filter_mask_in1 = htt_tlv_filter->tx_mon_upstream_tlv_flags0;
-	cmd->tlv_filter_mask_in2 = htt_tlv_filter->tx_mon_upstream_tlv_flags1;
-	cmd->tlv_filter_mask_in3 = htt_tlv_filter->tx_mon_upstream_tlv_flags2;
+	cmd->tlv_filter_mask_in0 =
+		cpu_to_le32(htt_tlv_filter->tx_mon_downstream_tlv_flags);
+	cmd->tlv_filter_mask_in1 =
+		cpu_to_le32(htt_tlv_filter->tx_mon_upstream_tlv_flags0);
+	cmd->tlv_filter_mask_in2 =
+		cpu_to_le32(htt_tlv_filter->tx_mon_upstream_tlv_flags1);
+	cmd->tlv_filter_mask_in3 =
+		cpu_to_le32(htt_tlv_filter->tx_mon_upstream_tlv_flags2);
 
 	ret = ath12k_htc_send(&ab->htc, ab->dp.eid, skb);
 	if (ret)

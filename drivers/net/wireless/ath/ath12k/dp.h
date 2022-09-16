@@ -402,7 +402,7 @@ enum htt_h2t_msg_type {
 #define HTT_VER_REQ_INFO_MSG_ID		GENMASK(7, 0)
 
 struct htt_ver_req_cmd {
-	u32 ver_reg_info;
+	__le32 ver_reg_info;
 } __packed;
 
 enum htt_srng_ring_type {
@@ -572,19 +572,19 @@ enum htt_srng_ring_id {
 #define HTT_SRNG_SETUP_CMD_INFO2_RESPONSE_REQUIRED	BIT(19)
 
 struct htt_srng_setup_cmd {
-	u32 info0;
-	u32 ring_base_addr_lo;
-	u32 ring_base_addr_hi;
-	u32 info1;
-	u32 ring_head_off32_remote_addr_lo;
-	u32 ring_head_off32_remote_addr_hi;
-	u32 ring_tail_off32_remote_addr_lo;
-	u32 ring_tail_off32_remote_addr_hi;
-	u32 ring_msi_addr_lo;
-	u32 ring_msi_addr_hi;
-	u32 msi_data;
-	u32 intr_info;
-	u32 info2;
+	__le32 info0;
+	__le32 ring_base_addr_lo;
+	__le32 ring_base_addr_hi;
+	__le32 info1;
+	__le32 ring_head_off32_remote_addr_lo;
+	__le32 ring_head_off32_remote_addr_hi;
+	__le32 ring_tail_off32_remote_addr_lo;
+	__le32 ring_tail_off32_remote_addr_hi;
+	__le32 ring_msi_addr_lo;
+	__le32 ring_msi_addr_hi;
+	__le32 msi_data;
+	__le32 intr_info;
+	__le32 info2;
 } __packed;
 
 /* host -> target FW  PPDU_STATS config message
@@ -621,7 +621,7 @@ struct htt_srng_setup_cmd {
  */
 
 struct htt_ppdu_stats_cfg_cmd {
-	u32 msg;
+	__le32 msg;
 } __packed;
 
 #define HTT_PPDU_STATS_CFG_MSG_TYPE		GENMASK(7, 0)
@@ -1070,17 +1070,17 @@ enum htt_rx_data_pkt_filter_tlv_flasg3 {
 #define HTT_TX_RING_SELECTION_CFG_CMD_INFO0_PDEV_ID	GENMASK(15, 8)
 
 struct htt_rx_ring_selection_cfg_cmd {
-	u32 info0;
-	u32 info1;
-	u32 pkt_type_en_flags0;
-	u32 pkt_type_en_flags1;
-	u32 pkt_type_en_flags2;
-	u32 pkt_type_en_flags3;
-	u32 rx_filter_tlv;
-	u32 rx_packet_offset;
-	u32 rx_mpdu_offset;
-	u32 rx_msdu_offset;
-	u32 rx_attn_offset;
+	__le32 info0;
+	__le32 info1;
+	__le32 pkt_type_en_flags0;
+	__le32 pkt_type_en_flags1;
+	__le32 pkt_type_en_flags2;
+	__le32 pkt_type_en_flags3;
+	__le32 rx_filter_tlv;
+	__le32 rx_packet_offset;
+	__le32 rx_mpdu_offset;
+	__le32 rx_msdu_offset;
+	__le32 rx_attn_offset;
 } __packed;
 
 struct htt_rx_ring_tlv_filter {
@@ -1119,14 +1119,14 @@ struct htt_rx_ring_tlv_filter {
 #define HTT_TX_RING_SELECTION_CFG_CMD_INFO2_PKT_TYPE_EN_FLAG	GENMASK(2, 0)
 
 struct htt_tx_ring_selection_cfg_cmd {
-	u32 info0;
-	u32 info1;
-	u32 info2;
-	u32 tlv_filter_mask_in0;
-	u32 tlv_filter_mask_in1;
-	u32 tlv_filter_mask_in2;
-	u32 tlv_filter_mask_in3;
-	u32 reserverd[3];
+	__le32 info0;
+	__le32 info1;
+	__le32 info2;
+	__le32 tlv_filter_mask_in0;
+	__le32 tlv_filter_mask_in1;
+	__le32 tlv_filter_mask_in2;
+	__le32 tlv_filter_mask_in3;
+	__le32 reserverd[3];
 };
 
 #define HTT_TX_RING_TLV_FILTER_MGMT_DMA_LEN	GENMASK(3, 0)
@@ -1809,13 +1809,13 @@ struct htt_ext_stats_cfg_hdr {
 
 struct htt_ext_stats_cfg_cmd {
 	struct htt_ext_stats_cfg_hdr hdr;
-	u32 cfg_param0;
-	u32 cfg_param1;
-	u32 cfg_param2;
-	u32 cfg_param3;
-	u32 reserved;
-	u32 cookie_lsb;
-	u32 cookie_msb;
+	__le32 cfg_param0;
+	__le32 cfg_param1;
+	__le32 cfg_param2;
+	__le32 cfg_param3;
+	__le32 reserved;
+	__le32 cookie_lsb;
+	__le32 cookie_msb;
 } __packed;
 
 /* htt stats config default params */
