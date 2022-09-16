@@ -146,8 +146,6 @@ static int __init dmi_walk_early(void (*decode)(const struct dmi_header *,
 
 	dmi_decode_table(buf, decode, NULL);
 
-	add_device_randomness(buf, dmi_len);
-
 	dmi_early_unmap(buf, orig_dmi_len);
 	return 0;
 }
@@ -803,6 +801,16 @@ static int __init dmi_init(void)
 }
 subsys_initcall(dmi_init);
 
+static void __init dmi_random_walk(void)
+{
+	u8 *buf = dmi_early_remap(dmi_base, dmi_len);
+	if (buf == NULL)
+		return;
+
+	add_device_randomness(buf, dmi_len);
+	dmi_early_unmap(buf, dmi_len);
+}
+
 /**
  *	dmi_setup - scan and setup DMI system information
  *
@@ -817,6 +825,7 @@ void __init dmi_setup(void)
 	if (!dmi_available)
 		return;
 
+	dmi_random_walk();
 	dmi_memdev_walk();
 	dump_stack_set_arch_desc("%s", dmi_ids_string);
 }
