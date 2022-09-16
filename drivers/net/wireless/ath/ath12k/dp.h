@@ -1127,7 +1127,7 @@ struct htt_tx_ring_selection_cfg_cmd {
 	__le32 tlv_filter_mask_in2;
 	__le32 tlv_filter_mask_in3;
 	__le32 reserverd[3];
-};
+} __packed;
 
 #define HTT_TX_RING_TLV_FILTER_MGMT_DMA_LEN	GENMASK(3, 0)
 #define HTT_TX_RING_TLV_FILTER_CTRL_DMA_LEN	GENMASK(7, 4)
