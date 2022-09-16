@@ -1275,10 +1275,10 @@ static int ath12k_htt_tlv_ppdu_stats_parse(struct ath12k_base *ab,
 	return 0;
 }
 
-int ath12k_dp_htt_tlv_iter(struct ath12k_base *ab, const void *ptr, size_t len,
-			   int (*iter)(struct ath12k_base *ar, u16 tag, u16 len,
-				       const void *ptr, void *data),
-			   void *data)
+static int ath12k_dp_htt_tlv_iter(struct ath12k_base *ab, const void *ptr, size_t len,
+				  int (*iter)(struct ath12k_base *ar, u16 tag, u16 len,
+					      const void *ptr, void *data),
+				  void *data)
 {
 	const struct htt_tlv *tlv;
 	const void *begin = ptr;
