@@ -367,19 +367,6 @@ int ath12k_mac_hw_ratecode_to_legacy_rate(u8 hw_rc, u8 preamble, u8 *rateidx,
 	return -EINVAL;
 }
 
-static int get_num_chains(u32 mask)
-{
-	int num_chains = 0;
-
-	while (mask) {
-		if (mask & BIT(0))
-			num_chains++;
-		mask >>= 1;
-	}
-
-	return num_chains;
-}
-
 u8 ath12k_mac_bitrate_to_idx(const struct ieee80211_supported_band *sband,
 			     u32 bitrate)
 {
@@ -943,7 +930,7 @@ static int ath12k_mac_monitor_vdev_create(struct ath12k *ar)
 		return ret;
 	}
 
-	nss = get_num_chains(ar->cfg_tx_chainmask) ? : 1;
+	nss = hweight32(ar->cfg_tx_chainmask) ? : 1;
 	ret = ath12k_wmi_vdev_set_param_cmd(ar, ar->monitor_vdev_id,
 					    WMI_VDEV_PARAM_NSS, nss);
 	if (ret) {
@@ -4312,7 +4299,7 @@ static int __ath12k_set_antenna(struct ath12k *ar, u32 tx_ant, u32 rx_ant)
 		return ret;
 	}
 
-	ar->num_tx_chains = get_num_chains(tx_ant);
+	ar->num_tx_chains = hweight32(tx_ant);
 
 	ret = ath12k_wmi_pdev_set_param(ar, WMI_PDEV_PARAM_RX_CHAIN_MASK,
 					rx_ant, ar->pdev->pdev_id);
@@ -4322,7 +4309,7 @@ static int __ath12k_set_antenna(struct ath12k *ar, u32 tx_ant, u32 rx_ant)
 		return ret;
 	}
 
-	ar->num_rx_chains = get_num_chains(rx_ant);
+	ar->num_rx_chains = hweight32(rx_ant);
 
 	/* Reload HT/VHT/HE capability */
 	ath12k_mac_setup_ht_vht_cap(ar, &ar->pdev->cap, NULL);
@@ -5008,7 +4995,7 @@ static int ath12k_mac_op_add_interface(struct ieee80211_hw *hw,
 
 	ath12k_mac_op_update_vif_offload(hw, vif);
 
-	nss = get_num_chains(ar->cfg_tx_chainmask) ? : 1;
+	nss = hweight32(ar->cfg_tx_chainmask) ? : 1;
 	ret = ath12k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
 					    WMI_VDEV_PARAM_NSS, nss);
 	if (ret) {
@@ -7003,8 +6990,8 @@ int ath12k_mac_allocate(struct ath12k_base *ab)
 
 		ar->cfg_tx_chainmask = pdev->cap.tx_chain_mask;
 		ar->cfg_rx_chainmask = pdev->cap.rx_chain_mask;
-		ar->num_tx_chains = get_num_chains(pdev->cap.tx_chain_mask);
-		ar->num_rx_chains = get_num_chains(pdev->cap.rx_chain_mask);
+		ar->num_tx_chains = hweight32(pdev->cap.tx_chain_mask);
+		ar->num_rx_chains = hweight32(pdev->cap.rx_chain_mask);
 
 		pdev->ar = ar;
 		spin_lock_init(&ar->data_lock);
