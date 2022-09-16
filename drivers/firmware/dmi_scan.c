@@ -15,6 +15,8 @@
 #define SMBIOS_ENTRY_POINT_SCAN_START 0xF0000
 #endif
 
+#define RNG_SEED_PREFIX "RNG_SEED="
+
 struct kobject *dmi_kobj;
 EXPORT_SYMBOL_GPL(dmi_kobj);
 
@@ -69,7 +71,9 @@ static const char * __init dmi_string(const struct dmi_header *dm, u8 s)
 	char *str;
 	size_t len;
 
-	if (bp == dmi_empty_string)
+	if (bp == dmi_empty_string ||
+	    /* Never ever save the very sensitive use-and-burn RNG seed. */
+	    !strncmp(bp, RNG_SEED_PREFIX, sizeof(RNG_SEED_PREFIX) - 1))
 		return dmi_empty_string;
 
 	len = strlen(bp) + 1;
@@ -801,6 +805,32 @@ static int __init dmi_init(void)
 }
 subsys_initcall(dmi_init);
 
+static void __init decode_random_seed(const struct dmi_header *dm, void *v)
+{
+	unsigned int i, count;
+	size_t len;
+	char *str;
+	u8 seed_buffer[512]; /* 32 bytes is enough, but support more. */
+
+	if (dm->type != 11 || dm->length < 5)
+		return;
+
+	count = *(u8 *)(dm + 1);
+	for (i = 0; i < count; ++i) {
+		str = (char *)dmi_string_nosave(dm, i + 1);
+
+		if (strncmp(str, RNG_SEED_PREFIX, sizeof(RNG_SEED_PREFIX) - 1))
+			continue;
+		str += sizeof(RNG_SEED_PREFIX) - 1;
+		len = min(sizeof(seed_buffer), strlen(str) / 2);
+		if (hex2bin(seed_buffer, str, len))
+			continue;
+		add_bootloader_randomness(seed_buffer, len);
+		memzero_explicit(seed_buffer, len);
+		memzero_explicit(str, len * 2);
+	}
+}
+
 static void __init dmi_random_walk(void)
 {
 	u8 *buf = dmi_early_remap(dmi_base, dmi_len);
@@ -808,6 +838,7 @@ static void __init dmi_random_walk(void)
 		return;
 
 	add_device_randomness(buf, dmi_len);
+	dmi_walk_early(decode_random_seed);
 	dmi_early_unmap(buf, dmi_len);
 }
 
