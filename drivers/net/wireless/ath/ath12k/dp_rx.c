@@ -1191,6 +1191,9 @@ static int ath12k_htt_tlv_ppdu_stats_parse(struct ath12k_base *ab,
 					   u16 tag, u16 len, const void *ptr,
 					   void *data)
 {
+	const struct htt_ppdu_stats_usr_cmpltn_ack_ba_status *ba_status;
+	const struct htt_ppdu_stats_usr_cmpltn_cmn *cmplt_cmn;
+	const struct htt_ppdu_stats_user_rate *user_rate;
 	struct htt_ppdu_stats_info *ppdu_info;
 	struct htt_ppdu_user_stats *user_stats;
 	int cur_user;
@@ -1214,8 +1217,8 @@ static int ath12k_htt_tlv_ppdu_stats_parse(struct ath12k_base *ab,
 				    len, tag);
 			return -EINVAL;
 		}
-
-		peer_id = le16_to_cpu(((struct htt_ppdu_stats_user_rate *)ptr)->sw_peer_id);
+		user_rate = ptr;
+		peer_id = le16_to_cpu(user_rate->sw_peer_id);
 		cur_user = ath12k_get_ppdu_user_index(&ppdu_info->ppdu_stats,
 						      peer_id);
 		if (cur_user < 0)
@@ -1234,7 +1237,8 @@ static int ath12k_htt_tlv_ppdu_stats_parse(struct ath12k_base *ab,
 			return -EINVAL;
 		}
 
-		peer_id = le16_to_cpu(((struct htt_ppdu_stats_usr_cmpltn_cmn *)ptr)->sw_peer_id);
+		cmplt_cmn = ptr;
+		peer_id = le16_to_cpu(cmplt_cmn->sw_peer_id);
 		cur_user = ath12k_get_ppdu_user_index(&ppdu_info->ppdu_stats,
 						      peer_id);
 		if (cur_user < 0)
@@ -1254,7 +1258,8 @@ static int ath12k_htt_tlv_ppdu_stats_parse(struct ath12k_base *ab,
 			return -EINVAL;
 		}
 
-		peer_id = le16_to_cpu(((struct htt_ppdu_stats_usr_cmpltn_ack_ba_status *)ptr)->sw_peer_id);
+		ba_status = ptr;
+		peer_id = le16_to_cpu(ba_status->sw_peer_id);
 		cur_user = ath12k_get_ppdu_user_index(&ppdu_info->ppdu_stats,
 						      peer_id);
 		if (cur_user < 0)
@@ -1322,7 +1327,7 @@ ath12k_update_per_peer_tx_stats(struct ath12k *ar,
 	int ret;
 	u8 flags, mcs, nss, bw, sgi, dcm, rate_idx = 0;
 	u32 v, succ_bytes = 0;
-	u16 rate = 0, succ_pkts = 0;
+	u16 tones, rate = 0, succ_pkts = 0;
 	u32 tx_duration = 0;
 	u8 tid = HTT_PPDU_STATS_NON_QOS_TID;
 	bool is_ampdu = false;
@@ -1431,8 +1436,9 @@ ath12k_update_per_peer_tx_stats(struct ath12k *ar,
 		arsta->txrate.flags = RATE_INFO_FLAGS_HE_MCS;
 		arsta->txrate.he_dcm = dcm;
 		arsta->txrate.he_gi = ath12k_he_gi_to_nl80211_he_gi(sgi);
-		v = ath12k_he_ru_tones_to_nl80211_he_ru_alloc((le16_to_cpu(user_rate->ru_end) -
-							       le16_to_cpu(user_rate->ru_start)) + 1);
+		tones = le16_to_cpu(user_rate->ru_end) -
+			le16_to_cpu(user_rate->ru_start) + 1;
+		v = ath12k_he_ru_tones_to_nl80211_he_ru_alloc(tones);
 		arsta->txrate.he_ru_alloc = v;
 		break;
 	}
@@ -1511,7 +1517,8 @@ static void ath12k_copy_to_delay_stats(struct ath12k_peer *peer,
 	peer->ppdu_stats_delayba.ru_start = le16_to_cpu(usr_stats->rate.ru_start);
 	peer->ppdu_stats_delayba.info1 = le32_to_cpu(usr_stats->rate.info1);
 	peer->ppdu_stats_delayba.rate_flags = le32_to_cpu(usr_stats->rate.rate_flags);
-	peer->ppdu_stats_delayba.resp_rate_flags = le32_to_cpu(usr_stats->rate.resp_rate_flags);
+	peer->ppdu_stats_delayba.resp_rate_flags =
+		le32_to_cpu(usr_stats->rate.resp_rate_flags);
 
 	peer->delayba_flag = true;
 }
@@ -1525,7 +1532,8 @@ static void ath12k_copy_to_bar(struct ath12k_peer *peer,
 	usr_stats->rate.ru_start = cpu_to_le16(peer->ppdu_stats_delayba.ru_start);
 	usr_stats->rate.info1 = cpu_to_le32(peer->ppdu_stats_delayba.info1);
 	usr_stats->rate.rate_flags = cpu_to_le32(peer->ppdu_stats_delayba.rate_flags);
-	usr_stats->rate.resp_rate_flags = cpu_to_le32(peer->ppdu_stats_delayba.resp_rate_flags);
+	usr_stats->rate.resp_rate_flags =
+		cpu_to_le32(peer->ppdu_stats_delayba.resp_rate_flags);
 
 	peer->delayba_flag = false;
 }
