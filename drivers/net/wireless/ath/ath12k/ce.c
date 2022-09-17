@@ -301,7 +301,6 @@ static int ath12k_ce_rx_post_pipe(struct ath12k_ce_pipe *pipe)
 		ATH12K_SKB_RXCB(skb)->paddr = paddr;
 
 		ret = ath12k_ce_rx_buf_enqueue_pipe(pipe, skb, paddr);
-
 		if (ret) {
 			ath12k_warn(ab, "failed to enqueue rx buf: %d\n", ret);
 			dma_unmap_single(ab->dev, paddr,
@@ -687,14 +686,14 @@ int ath12k_ce_send(struct ath12k_base *ab, struct sk_buff *skb, u8 pipe_id,
 	if (unlikely(ath12k_hal_srng_src_num_free(ab, srng, false) < 1)) {
 		ath12k_hal_srng_access_end(ab, srng);
 		ret = -ENOBUFS;
-		goto err_unlock;
+		goto unlock;
 	}
 
 	desc = ath12k_hal_srng_src_get_next_reaped(ab, srng);
 	if (!desc) {
 		ath12k_hal_srng_access_end(ab, srng);
 		ret = -ENOBUFS;
-		goto err_unlock;
+		goto unlock;
 	}
 
 	if (pipe->attr_flags & CE_ATTR_BYTE_SWAP_DATA)
@@ -709,13 +708,7 @@ int ath12k_ce_send(struct ath12k_base *ab, struct sk_buff *skb, u8 pipe_id,
 
 	ath12k_hal_srng_access_end(ab, srng);
 
-	spin_unlock_bh(&srng->lock);
-
-	spin_unlock_bh(&ab->ce.ce_lock);
-
-	return 0;
-
-err_unlock:
+unlock:
 	spin_unlock_bh(&srng->lock);
 
 	spin_unlock_bh(&ab->ce.ce_lock);
