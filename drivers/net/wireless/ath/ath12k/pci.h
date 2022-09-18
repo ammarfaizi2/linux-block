@@ -66,7 +66,7 @@
 #define QRTR_PCI_BUS_NUMBER_MASK	GENMASK(3, 0)
 
 struct ath12k_msi_user {
-	char *name;
+	const char *name;
 	int num_vectors;
 	u32 base_vector;
 };
@@ -74,7 +74,7 @@ struct ath12k_msi_user {
 struct ath12k_msi_config {
 	int total_vectors;
 	int total_users;
-	struct ath12k_msi_user *users;
+	const struct ath12k_msi_user *users;
 };
 
 enum ath12k_pci_flags {
