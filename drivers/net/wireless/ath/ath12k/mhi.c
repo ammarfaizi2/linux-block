@@ -261,7 +261,7 @@ static int ath12k_mhi_get_msi(struct ath12k_pci *ab_pci)
 	ath12k_dbg(ab, ATH12K_DBG_PCI, "Number of assigned MSI for MHI is %d, base vector is %d\n",
 		   num_vectors, base_vector);
 
-	irq = kcalloc(num_vectors, sizeof(int), GFP_KERNEL);
+	irq = kcalloc(num_vectors, sizeof(*irq), GFP_KERNEL);
 	if (!irq)
 		return -ENOMEM;
 
@@ -402,6 +402,7 @@ void ath12k_mhi_unregister(struct ath12k_pci *ab_pci)
 	mhi_unregister_controller(mhi_ctrl);
 	kfree(mhi_ctrl->irq);
 	mhi_free_controller(mhi_ctrl);
+	ab_pci->mhi_ctrl = NULL;
 }
 
 static char *ath12k_mhi_state_to_str(enum ath12k_mhi_state mhi_state)
