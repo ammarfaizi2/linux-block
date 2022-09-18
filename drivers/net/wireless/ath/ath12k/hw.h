@@ -179,7 +179,7 @@ struct ath12k_hw_params {
 	u32 max_tx_ring;
 	bool static_window_map:1;
 
-	struct mhi_controller_config *mhi_config;
+	const struct mhi_controller_config *mhi_config;
 
 	void (*wmi_init)(struct ath12k_base *ab,
 			 struct ath12k_wmi_resource_config_arg *config);
