@@ -30,8 +30,8 @@ enum ath12k_mhi_state {
 	ATH12K_MHI_RDDM_DONE,
 };
 
-extern struct mhi_controller_config ath12k_mhi_config_qcn9274;
-extern struct mhi_controller_config ath12k_mhi_config_wcn7850;
+extern const struct mhi_controller_config ath12k_mhi_config_qcn9274;
+extern const struct mhi_controller_config ath12k_mhi_config_wcn7850;
 
 int ath12k_mhi_start(struct ath12k_pci *ar_pci);
 void ath12k_mhi_stop(struct ath12k_pci *ar_pci);

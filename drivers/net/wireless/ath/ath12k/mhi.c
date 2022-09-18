@@ -14,7 +14,7 @@
 
 #define MHI_TIMEOUT_DEFAULT_MS	90000
 
-static struct mhi_channel_config ath12k_mhi_channels_qcn9274[] = {
+static const struct mhi_channel_config ath12k_mhi_channels_qcn9274[] = {
 	{
 		.num = 0,
 		.name = "LOOPBACK",
@@ -96,7 +96,7 @@ static struct mhi_event_config ath12k_mhi_events_qcn9274[] = {
 	},
 };
 
-struct mhi_controller_config ath12k_mhi_config_qcn9274 = {
+const struct mhi_controller_config ath12k_mhi_config_qcn9274 = {
 	.max_channels = 30,
 	.timeout_ms = 10000,
 	.use_bounce_buf = false,
@@ -107,7 +107,7 @@ struct mhi_controller_config ath12k_mhi_config_qcn9274 = {
 	.event_cfg = ath12k_mhi_events_qcn9274,
 };
 
-static struct mhi_channel_config ath12k_mhi_channels_wcn7850[] = {
+static const struct mhi_channel_config ath12k_mhi_channels_wcn7850[] = {
 	{
 		.num = 0,
 		.name = "LOOPBACK",
@@ -189,7 +189,7 @@ static struct mhi_event_config ath12k_mhi_events_wcn7850[] = {
 	},
 };
 
-struct mhi_controller_config ath12k_mhi_config_wcn7850 = {
+const struct mhi_controller_config ath12k_mhi_config_wcn7850 = {
 	.max_channels = 128,
 	.timeout_ms = 2000,
 	.use_bounce_buf = false,
