@@ -816,6 +816,14 @@ static void mv88e6393x_phylink_get_caps(struct mv88e6xxx_chip *chip, int port,
 				MAC_10000FD;
 		}
 	}
+
+	if (port == 0) {
+		__set_bit(PHY_INTERFACE_MODE_RMII, supported);
+		__set_bit(PHY_INTERFACE_MODE_RGMII, supported);
+		__set_bit(PHY_INTERFACE_MODE_RGMII_ID, supported);
+		__set_bit(PHY_INTERFACE_MODE_RGMII_RXID, supported);
+		__set_bit(PHY_INTERFACE_MODE_RGMII_TXID, supported);
+	}
 }
 
 static void mv88e6xxx_get_caps(struct dsa_switch *ds, int port,
@@ -1128,7 +1136,7 @@ static void mv88e6xxx_atu_vtu_get_strings(uint8_t *data)
 	unsigned int i;
 
 	for (i = 0; i < ARRAY_SIZE(mv88e6xxx_atu_vtu_stats_strings); i++)
-		strlcpy(data + i * ETH_GSTRING_LEN,
+		strscpy(data + i * ETH_GSTRING_LEN,
 			mv88e6xxx_atu_vtu_stats_strings[i],
 			ETH_GSTRING_LEN);
 }

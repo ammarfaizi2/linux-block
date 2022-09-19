@@ -770,6 +770,7 @@ static int lan966x_probe_port(struct lan966x *lan966x, u32 p,
 	port->phylink_config.mac_capabilities = MAC_ASYM_PAUSE | MAC_SYM_PAUSE |
 		MAC_10 | MAC_100 | MAC_1000FD | MAC_2500FD;
 
+	phy_interface_set_rgmii(port->phylink_config.supported_interfaces);
 	__set_bit(PHY_INTERFACE_MODE_MII,
 		  port->phylink_config.supported_interfaces);
 	__set_bit(PHY_INTERFACE_MODE_GMII,
@@ -777,6 +778,8 @@ static int lan966x_probe_port(struct lan966x *lan966x, u32 p,
 	__set_bit(PHY_INTERFACE_MODE_SGMII,
 		  port->phylink_config.supported_interfaces);
 	__set_bit(PHY_INTERFACE_MODE_QSGMII,
+		  port->phylink_config.supported_interfaces);
+	__set_bit(PHY_INTERFACE_MODE_QUSGMII,
 		  port->phylink_config.supported_interfaces);
 	__set_bit(PHY_INTERFACE_MODE_1000BASEX,
 		  port->phylink_config.supported_interfaces);
@@ -969,7 +972,8 @@ static int lan966x_reset_switch(struct lan966x *lan966x)
 	int val = 0;
 	int ret;
 
-	switch_reset = devm_reset_control_get_shared(lan966x->dev, "switch");
+	switch_reset = devm_reset_control_get_optional_shared(lan966x->dev,
+							      "switch");
 	if (IS_ERR(switch_reset))
 		return dev_err_probe(lan966x->dev, PTR_ERR(switch_reset),
 				     "Could not obtain switch reset");
