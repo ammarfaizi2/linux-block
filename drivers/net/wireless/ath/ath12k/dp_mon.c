@@ -16,8 +16,10 @@ static void ath12k_dp_mon_rx_handle_ofdma_info(void *rx_tlv,
 	struct hal_rx_ppdu_end_user_stats *ppdu_end_user =
 				(struct hal_rx_ppdu_end_user_stats *)rx_tlv;
 
-	rx_user_status->ul_ofdma_user_v0_word0 = __le32_to_cpu(ppdu_end_user->info6);
-	rx_user_status->ul_ofdma_user_v0_word1 = __le32_to_cpu(ppdu_end_user->rsvd2[10]);
+	rx_user_status->ul_ofdma_user_v0_word0 =
+		__le32_to_cpu(ppdu_end_user->usr_resp_ref);
+	rx_user_status->ul_ofdma_user_v0_word1 =
+		__le32_to_cpu(ppdu_end_user->usr_resp_ref_ext);
 }
 
 static void
@@ -26,15 +28,15 @@ ath12k_dp_mon_rx_populate_byte_count(void *rx_tlv, void *ppduinfo,
 {
 	struct hal_rx_ppdu_end_user_stats *ppdu_end_user =
 		(struct hal_rx_ppdu_end_user_stats *)rx_tlv;
-	u32 mpdu_ok_byte_count = __le32_to_cpu(ppdu_end_user->rsvd2[6]);
-	u32 mpdu_err_byte_count = __le32_to_cpu(ppdu_end_user->rsvd2[8]);
+	u32 mpdu_ok_byte_count = __le32_to_cpu(ppdu_end_user->mpdu_ok_cnt);
+	u32 mpdu_err_byte_count = __le32_to_cpu(ppdu_end_user->mpdu_err_cnt);
 
 	rx_user_status->mpdu_ok_byte_count =
 		u32_get_bits(mpdu_ok_byte_count,
-			     HAL_RX_PPDU_END_USER_STATS_RSVD2_6_MPDU_OK_BYTE_COUNT);
+			     HAL_RX_PPDU_END_USER_STATS_MPDU_DELIM_OK_BYTE_COUNT);
 	rx_user_status->mpdu_err_byte_count =
 		u32_get_bits(mpdu_err_byte_count,
-			     HAL_RX_PPDU_END_USER_STATS_RSVD2_8_MPDU_ERR_BYTE_COUNT);
+			     HAL_RX_PPDU_END_USER_STATS_MPDU_DELIM_ERR_BYTE_COUNT);
 }
 
 static void
@@ -612,20 +614,20 @@ ath12k_dp_mon_rx_parse_status_tlv(struct ath12k_base *ab,
 	case HAL_RX_PPDU_END_USER_STATS: {
 		struct hal_rx_ppdu_end_user_stats *eu_stats =
 			(struct hal_rx_ppdu_end_user_stats *)tlv_data;
-		u32 tid = __le32_to_cpu(eu_stats->rsvd2[0]);
 
 		info[0] = __le32_to_cpu(eu_stats->info0);
 		info[1] = __le32_to_cpu(eu_stats->info1);
 		info[2] = __le32_to_cpu(eu_stats->info2);
 		info[4] = __le32_to_cpu(eu_stats->info4);
 		info[5] = __le32_to_cpu(eu_stats->info5);
+		info[6] = __le32_to_cpu(eu_stats->info6);
 
 		ppdu_info->ast_index =
 			u32_get_bits(info[2], HAL_RX_PPDU_END_USER_STATS_INFO2_AST_INDEX);
 		ppdu_info->fc_valid =
 			u32_get_bits(info[1], HAL_RX_PPDU_END_USER_STATS_INFO1_FC_VALID);
 		ppdu_info->tid =
-			ffs(u32_get_bits(tid,
+			ffs(u32_get_bits(info[6],
 					 HAL_RX_PPDU_END_USER_STATS_INFO6_TID_BITMAP)
 					 - 1);
 		ppdu_info->tcp_msdu_count =
