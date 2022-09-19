@@ -43,11 +43,10 @@ void ath12k_dbg_dump(struct ath12k_base *ab,
 		     const char *msg, const char *prefix,
 		     const void *buf, size_t len);
 #else /* CONFIG_ATH12K_DEBUG */
-static inline int __ath12k_dbg(struct ath12k_base *ab,
-			       enum ath12k_debug_mask dbg_mask,
-			       const char *fmt, ...)
+static inline void __ath12k_dbg(struct ath12k_base *ab,
+				enum ath12k_debug_mask dbg_mask,
+				const char *fmt, ...)
 {
-	return 0;
 }
 
 static inline void ath12k_dbg_dump(struct ath12k_base *ab,

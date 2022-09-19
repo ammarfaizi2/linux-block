@@ -78,15 +78,16 @@ static int ath12k_dbring_fill_bufs(struct ath12k *ar,
 {
 	struct ath12k_dbring_element *buff;
 	struct hal_srng *srng;
+	struct ath12k_base *ab = ar->ab;
 	int num_remain, req_entries, num_free;
 	u32 align;
 	int size, ret;
 
-	srng = &ar->ab->hal.srng_list[ring->refill_srng.ring_id];
+	srng = &ab->hal.srng_list[ring->refill_srng.ring_id];
 
 	spin_lock_bh(&srng->lock);
 
-	num_free = ath12k_hal_srng_src_num_free(ar->ab, srng, true);
+	num_free = ath12k_hal_srng_src_num_free(ab, srng, true);
 	req_entries = min(num_free, ring->bufs_max);
 	num_remain = req_entries;
 	align = ring->buf_align;
@@ -99,7 +100,7 @@ static int ath12k_dbring_fill_bufs(struct ath12k *ar,
 
 		ret = ath12k_dbring_bufs_replenish(ar, ring, buff, gfp);
 		if (ret) {
-			ath12k_warn(ar->ab, "failed to replenish db ring num_remain %d req_ent %d\n",
+			ath12k_warn(ab, "failed to replenish db ring num_remain %d req_ent %d\n",
 				    num_remain, req_entries);
 			kfree(buff);
 			break;
