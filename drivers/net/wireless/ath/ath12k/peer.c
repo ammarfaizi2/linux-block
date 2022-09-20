@@ -77,8 +77,7 @@ struct ath12k_peer *ath12k_peer_find_by_id(struct ath12k_base *ab,
 	return NULL;
 }
 
-struct ath12k_peer *ath12k_peer_find_by_vdev_id(struct ath12k_base *ab,
-						int vdev_id)
+bool ath12k_peer_exist_by_vdev_id(struct ath12k_base *ab, int vdev_id)
 {
 	struct ath12k_peer *peer;
 
@@ -87,11 +86,11 @@ struct ath12k_peer *ath12k_peer_find_by_vdev_id(struct ath12k_base *ab,
 	list_for_each_entry(peer, &ab->peers, list) {
 		if (vdev_id == peer->vdev_id) {
 			spin_unlock_bh(&ab->base_lock);
-			return peer;
+			return true;
 		}
 	}
 	spin_unlock_bh(&ab->base_lock);
-	return NULL;
+	return false;
 }
 
 struct ath12k_peer *ath12k_peer_find_by_ast(struct ath12k_base *ab,
