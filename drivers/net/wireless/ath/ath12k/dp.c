@@ -411,6 +411,7 @@ static void ath12k_dp_deinit_bank_profiles(struct ath12k_base *ab)
 	struct ath12k_dp *dp = &ab->dp;
 
 	kfree(dp->bank_profiles);
+	dp->bank_profiles = NULL;
 }
 
 static int ath12k_dp_init_bank_profiles(struct ath12k_base *ab)
