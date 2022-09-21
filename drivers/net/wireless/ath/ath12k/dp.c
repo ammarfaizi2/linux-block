@@ -73,7 +73,7 @@ int ath12k_dp_peer_setup(struct ath12k *ar, int vdev_id, const u8 *addr)
 	ret = ath12k_dp_rx_peer_frag_setup(ar, addr, vdev_id);
 	if (ret) {
 		ath12k_warn(ab, "failed to setup rx defrag context\n");
-		return ret;
+		goto peer_clean;
 	}
 
 	/* TODO: Setup other peer specific resource used in data path */
