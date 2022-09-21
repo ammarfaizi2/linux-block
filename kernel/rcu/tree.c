@@ -676,12 +676,33 @@ void __rcu_irq_enter_check_tick(void)
  * scheduler-clock interrupt.
  *
  * Just check whether or not this CPU has non-offloaded RCU callbacks
- * queued.
+ * queued that need immediate attention.
  */
-int rcu_needs_cpu(void)
+int rcu_needs_cpu(u64 basemono, u64 *nextevt)
 {
-	return !rcu_segcblist_empty(&this_cpu_ptr(&rcu_data)->cblist) &&
-		!rcu_rdp_is_offloaded(this_cpu_ptr(&rcu_data));
+	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
+	struct rcu_segcblist *rsclp = &rdp->cblist;
+
+	// Disabled, empty, or offloaded means nothing to do.
+	if (!rcu_segcblist_is_enabled(rsclp) ||
+	    rcu_segcblist_empty(rsclp) || rcu_rdp_is_offloaded(rdp)) {
+		*nextevt = KTIME_MAX;
+		return 0;
+	}
+
+	// Callbacks ready to invoke or that have not already been
+	// assigned a grace period need immediate attention.
+	if (!rcu_segcblist_segempty(rsclp, RCU_DONE_TAIL) ||
+	    !rcu_segcblist_segempty(rsclp, RCU_NEXT_TAIL))
+		return 1;
+
+	// There are callbacks waiting for some later grace period.
+	// Wait for about a grace period or two for the next tick, at which
+	// point there is high probability that this CPU will need to do some
+	// work for RCU.
+	*nextevt = basemono + TICK_NSEC * (READ_ONCE(jiffies_till_first_fqs) +
+					   READ_ONCE(jiffies_till_next_fqs) + 1);
+	return 0;
 }
 
 /*
