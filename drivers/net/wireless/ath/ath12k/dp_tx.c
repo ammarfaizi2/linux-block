@@ -84,7 +84,7 @@ static void ath12k_dp_tx_release_txbuf(struct ath12k_dp *dp,
 static struct ath12k_tx_desc_info *ath12k_dp_tx_assign_buffer(struct ath12k_dp *dp,
 							      u8 pool_id)
 {
-	struct ath12k_tx_desc_info *desc = NULL;
+	struct ath12k_tx_desc_info *desc;
 
 	spin_lock_bh(&dp->tx_desc_lock[pool_id]);
 	desc = list_first_entry_or_null(&dp->tx_desc_free_list[pool_id],
@@ -139,7 +139,7 @@ int ath12k_dp_tx(struct ath12k *ar, struct ath12k_vif *arvif,
 	u8 pool_id;
 	u8 hal_ring_id;
 	int ret;
-	u8 ring_selector = 0, ring_map = 0;
+	u8 ring_selector, ring_map = 0;
 	bool tcl_ring_retry;
 	bool msdu_ext_desc = false;
 
@@ -1014,7 +1014,7 @@ ath12k_dp_tx_htt_h2t_ext_stats_req(struct ath12k *ar, u8 type,
 int ath12k_dp_tx_htt_monitor_mode_ring_config(struct ath12k *ar, bool reset)
 {
 	struct ath12k_base *ab = ar->ab;
-	int ret = 0;
+	int ret;
 
 	ret = ath12k_dp_tx_htt_tx_monitor_mode_ring_config(ar, reset);
 	if (ret) {
@@ -1036,7 +1036,7 @@ int ath12k_dp_tx_htt_rx_monitor_mode_ring_config(struct ath12k *ar, bool reset)
 	struct ath12k_base *ab = ar->ab;
 	struct ath12k_dp *dp = &ab->dp;
 	struct htt_rx_ring_tlv_filter tlv_filter = {0};
-	int ret = 0, ring_id = 0;
+	int ret, ring_id;
 
 	ring_id = dp->rxdma_mon_buf_ring.refill_buf_ring.ring_id;
 	tlv_filter.offset_valid = false;
@@ -1187,7 +1187,7 @@ int ath12k_dp_tx_htt_tx_monitor_mode_ring_config(struct ath12k *ar, bool reset)
 	struct ath12k_base *ab = ar->ab;
 	struct ath12k_dp *dp = &ab->dp;
 	struct htt_tx_ring_tlv_filter tlv_filter = {0};
-	int ret = 0, ring_id = 0;
+	int ret, ring_id;
 
 	ring_id = dp->tx_mon_buf_ring.refill_buf_ring.ring_id;
 
