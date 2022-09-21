@@ -1019,14 +1019,12 @@ int ath12k_dp_pdev_alloc(struct ath12k_base *ab)
 		}
 		ret = ath12k_dp_rx_pdev_mon_attach(ar);
 		if (ret) {
-			ath12k_warn(ab, "failed to initialize mon pdev %d\n",
-				    i);
+			ath12k_warn(ab, "failed to initialize mon pdev %d\n", i);
 			goto err;
 		}
 	}
 
 	return 0;
-
 err:
 	ath12k_dp_pdev_free(ab);
 out:
@@ -1035,12 +1033,9 @@ out:
 
 int ath12k_dp_htt_connect(struct ath12k_dp *dp)
 {
-	struct ath12k_htc_svc_conn_req conn_req;
-	struct ath12k_htc_svc_conn_resp conn_resp;
+	struct ath12k_htc_svc_conn_req conn_req = {0};
+	struct ath12k_htc_svc_conn_resp conn_resp = {0};
 	int status;
-
-	memset(&conn_req, 0, sizeof(conn_req));
-	memset(&conn_resp, 0, sizeof(conn_resp));
 
 	conn_req.ep_ops.ep_tx_complete = ath12k_dp_htt_htc_tx_complete;
 	conn_req.ep_ops.ep_rx_complete = ath12k_dp_htt_htc_t2h_msg_handler;
