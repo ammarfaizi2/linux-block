@@ -872,7 +872,7 @@ int ath12k_dp_service_srng(struct ath12k_base *ab,
 	int work_done = 0;
 	int i = 0, j;
 	int tot_work_done = 0;
-	bool flag;
+	enum dp_monitor_mode monitor_mode;
 
 	while (i < ab->hw_params->max_tx_ring) {
 		if (ab->hw_params->ring_mask->tx[grp_id] &
@@ -915,13 +915,13 @@ int ath12k_dp_service_srng(struct ath12k_base *ab,
 			for (j = 0; j < ab->hw_params->num_rxmda_per_pdev; j++) {
 				int id = i * ab->hw_params->num_rxmda_per_pdev + j;
 
-				flag = ATH12K_DP_RX_MONITOR_MODE;
+				monitor_mode = ATH12K_DP_RX_MONITOR_MODE;
 
 				if (ab->hw_params->ring_mask->rx_mon_dest[grp_id] &
 					BIT(id)) {
 					work_done =
 					ath12k_dp_mon_process_ring(ab, id, napi, budget,
-								   flag);
+								   monitor_mode);
 					budget -= work_done;
 					tot_work_done += work_done;
 
@@ -937,13 +937,13 @@ int ath12k_dp_service_srng(struct ath12k_base *ab,
 			for (j = 0; j < ab->hw_params->num_rxmda_per_pdev; j++) {
 				int id = i * ab->hw_params->num_rxmda_per_pdev + j;
 
-				flag = ATH12K_DP_TX_MONITOR_MODE;
+				monitor_mode = ATH12K_DP_TX_MONITOR_MODE;
 
 				if (ab->hw_params->ring_mask->tx_mon_dest[grp_id] &
 					BIT(id)) {
 					work_done =
 					ath12k_dp_mon_process_ring(ab, id, napi, budget,
-								   flag);
+								   monitor_mode);
 					budget -= work_done;
 					tot_work_done += work_done;
 

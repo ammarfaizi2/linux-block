@@ -2056,7 +2056,8 @@ ath12k_dp_mon_tx_parse_mon_status(struct ath12k *ar,
 }
 
 int ath12k_dp_mon_srng_process(struct ath12k *ar, int mac_id, int *budget,
-			       bool flag, struct napi_struct *napi)
+			       enum dp_monitor_mode monitor_mode,
+			       struct napi_struct *napi)
 {
 	struct hal_mon_dest_desc *mon_dst_desc;
 	struct ath12k_pdev_dp *pdev_dp = &ar->dp;
@@ -2084,7 +2085,7 @@ int ath12k_dp_mon_srng_process(struct ath12k *ar, int mac_id, int *budget,
 
 	srng_id = ath12k_hw_mac_id_to_srng_id(ab->hw_params, mac_id);
 
-	if (flag == ATH12K_DP_RX_MONITOR_MODE) {
+	if (monitor_mode == ATH12K_DP_RX_MONITOR_MODE) {
 		mon_dst_ring = &pdev_dp->rxdma_mon_dst_ring[srng_id];
 		buf_ring = &dp->rxdma_mon_buf_ring;
 	} else {
@@ -2136,7 +2137,7 @@ int ath12k_dp_mon_srng_process(struct ath12k *ar, int mac_id, int *budget,
 				trace_ath12k_htt_rxdesc(ar, skb->data,
 							log_type, rx_buf_sz);
 
-			if (flag == ATH12K_DP_RX_MONITOR_MODE)
+			if (monitor_mode == ATH12K_DP_RX_MONITOR_MODE)
 				ath12k_dp_mon_rx_parse_mon_status(ar, pmon, mac_id,
 								  skb, napi);
 			else
@@ -2585,7 +2586,8 @@ move_next:
 }
 
 int ath12k_dp_mon_process_ring(struct ath12k_base *ab, int mac_id,
-			       struct napi_struct *napi, int budget, bool flag)
+			       struct napi_struct *napi, int budget,
+			       enum dp_monitor_mode monitor_mode)
 {
 	struct ath12k *ar = ath12k_ab_to_ar(ab, mac_id);
 	int num_buffs_reaped = 0;
@@ -2594,7 +2596,7 @@ int ath12k_dp_mon_process_ring(struct ath12k_base *ab, int mac_id,
 		ath12k_dp_mon_rx_process_stats(ar, mac_id, napi, &budget);
 	else
 		num_buffs_reaped = ath12k_dp_mon_srng_process(ar, mac_id, &budget,
-							      flag, napi);
+							      monitor_mode, napi);
 
 	return num_buffs_reaped;
 }

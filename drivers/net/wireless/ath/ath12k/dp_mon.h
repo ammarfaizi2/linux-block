@@ -9,8 +9,10 @@
 
 #include "core.h"
 
-#define ATH12K_DP_TX_MONITOR_MODE 0
-#define ATH12K_DP_RX_MONITOR_MODE 1
+enum dp_monitor_mode {
+	ATH12K_DP_TX_MONITOR_MODE,
+	ATH12K_DP_RX_MONITOR_MODE
+};
 
 enum dp_mon_tx_ppdu_info_type {
 	DP_MON_TX_PROT_PPDU_INFO,
@@ -81,10 +83,11 @@ int ath12k_dp_mon_buf_replenish(struct ath12k_base *ab,
 				struct dp_rxdma_ring *buf_ring,
 				int req_entries);
 int ath12k_dp_mon_srng_process(struct ath12k *ar, int mac_id,
-			       int *budget, bool flag,
+			       int *budget, enum dp_monitor_mode monitor_mode,
 			       struct napi_struct *napi);
 int ath12k_dp_mon_process_ring(struct ath12k_base *ab, int mac_id,
-			       struct napi_struct *napi, int budget, bool flag);
+			       struct napi_struct *napi, int budget,
+			       enum dp_monitor_mode monitor_mode);
 struct sk_buff *ath12k_dp_mon_tx_alloc_skb(void);
 enum dp_mon_tx_tlv_status
 ath12k_dp_mon_tx_status_get_num_user(u16 tlv_tag,
