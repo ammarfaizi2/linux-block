@@ -442,18 +442,18 @@ static void ath12k_dp_srng_common_cleanup(struct ath12k_base *ab)
 	struct ath12k_dp *dp = &ab->dp;
 	int i;
 
-	ath12k_dp_srng_cleanup(ab, &dp->wbm_desc_rel_ring);
-	ath12k_dp_srng_cleanup(ab, &dp->tcl_cmd_ring);
-	ath12k_dp_srng_cleanup(ab, &dp->tcl_status_ring);
-	for (i = 0; i < ab->hw_params->max_tx_ring; i++) {
-		ath12k_dp_srng_cleanup(ab, &dp->tx_ring[i].tcl_data_ring);
-		ath12k_dp_srng_cleanup(ab, &dp->tx_ring[i].tcl_comp_ring);
-	}
-	ath12k_dp_srng_cleanup(ab, &dp->reo_reinject_ring);
-	ath12k_dp_srng_cleanup(ab, &dp->rx_rel_ring);
-	ath12k_dp_srng_cleanup(ab, &dp->reo_except_ring);
-	ath12k_dp_srng_cleanup(ab, &dp->reo_cmd_ring);
 	ath12k_dp_srng_cleanup(ab, &dp->reo_status_ring);
+	ath12k_dp_srng_cleanup(ab, &dp->reo_cmd_ring);
+	ath12k_dp_srng_cleanup(ab, &dp->reo_except_ring);
+	ath12k_dp_srng_cleanup(ab, &dp->rx_rel_ring);
+	ath12k_dp_srng_cleanup(ab, &dp->reo_reinject_ring);
+	for (i = 0; i < ab->hw_params->max_tx_ring; i++) {
+		ath12k_dp_srng_cleanup(ab, &dp->tx_ring[i].tcl_comp_ring);
+		ath12k_dp_srng_cleanup(ab, &dp->tx_ring[i].tcl_data_ring);
+	}
+	ath12k_dp_srng_cleanup(ab, &dp->tcl_status_ring);
+	ath12k_dp_srng_cleanup(ab, &dp->tcl_cmd_ring);
+	ath12k_dp_srng_cleanup(ab, &dp->wbm_desc_rel_ring);
 }
 
 static int ath12k_dp_srng_common_setup(struct ath12k_base *ab)
