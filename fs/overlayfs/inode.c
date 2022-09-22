@@ -550,8 +550,8 @@ struct posix_acl *ovl_get_inode_acl(struct inode *inode, int type, bool rcu)
 	return clone;
 }
 
-static struct posix_acl *ovl_get_acl_path(const struct path *path,
-					  const char *acl_name)
+struct posix_acl *ovl_get_acl_path(const struct path *path,
+				   const char *acl_name)
 {
 	struct posix_acl *real_acl, *clone;
 	struct user_namespace *mnt_userns;
