@@ -1374,9 +1374,16 @@ int security_inode_set_acl(struct user_namespace *mnt_userns,
 			   struct dentry *dentry, const char *acl_name,
 			   struct posix_acl *kacl)
 {
+	int ret;
+
 	if (unlikely(IS_PRIVATE(d_backing_inode(dentry))))
 		return 0;
-	return call_int_hook(inode_set_acl, 0, mnt_userns, dentry, acl_name, kacl);
+
+	ret = call_int_hook(inode_set_acl, 0, mnt_userns, dentry, acl_name, kacl);
+	if (ret)
+		return ret;
+
+	return evm_inode_set_acl(mnt_userns, dentry, acl_name, kacl);
 }
 
 void security_inode_post_setxattr(struct dentry *dentry, const char *name,
