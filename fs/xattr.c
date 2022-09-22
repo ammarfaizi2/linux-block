@@ -84,9 +84,8 @@ xattr_resolve_name(struct inode *inode, const char **name)
  * Check permissions for extended attribute access.  This is a bit complicated
  * because different namespaces have very different rules.
  */
-static int
-xattr_permission(struct user_namespace *mnt_userns, struct inode *inode,
-		 const char *name, int mask)
+int xattr_permission(struct user_namespace *mnt_userns, struct inode *inode,
+		     const char *name, int mask)
 {
 	/*
 	 * We can never set or remove an extended attribute on a read-only
