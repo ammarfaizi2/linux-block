@@ -8,6 +8,7 @@
 #include <linux/namei.h>
 #include <linux/io_uring.h>
 #include <linux/xattr.h>
+#include <linux/posix_acl_xattr.h>
 
 #include <uapi/linux/io_uring.h>
 
@@ -31,6 +32,7 @@ void io_xattr_cleanup(struct io_kiocb *req)
 
 	kfree(ix->ctx.kname);
 	kvfree(ix->ctx.kvalue);
+	posix_acl_release(ix->ctx.acl);
 }
 
 static void io_xattr_finish(struct io_kiocb *req, int ret)

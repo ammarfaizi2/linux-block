@@ -206,6 +206,7 @@ struct xattr_ctx {
 		const void __user *cvalue;
 		void __user *value;
 	};
+	struct posix_acl *acl;
 	void *kvalue;
 	size_t size;
 	/* Attribute name */
