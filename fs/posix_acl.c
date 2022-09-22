@@ -24,6 +24,7 @@
 #include <linux/user_namespace.h>
 #include <linux/namei.h>
 #include <linux/mnt_idmapping.h>
+#include <linux/security.h>
 #include <linux/fsnotify.h>
 
 static struct posix_acl **acl_by_type(struct inode *inode, int type)
@@ -1333,6 +1334,10 @@ retry_deleg:
 	 * us otherwise POSIX ACLs aren't subject to any VFS restrictions.
 	 */
 	error = xattr_permission(mnt_userns, inode, acl_name, MAY_WRITE);
+	if (error)
+		goto out_inode_unlock;
+
+	error = security_inode_set_acl(mnt_userns, dentry, acl_name, kacl);
 	if (error)
 		goto out_inode_unlock;
 
