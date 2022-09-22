@@ -297,7 +297,7 @@ static int check_acl(struct user_namespace *mnt_userns,
 		acl = get_cached_acl_rcu(inode, ACL_TYPE_ACCESS);
 	        if (!acl)
 	                return -EAGAIN;
-		/* no ->get_acl() calls in RCU mode... */
+		/* no ->get_inode_acl() calls in RCU mode... */
 		if (is_uncached_acl(acl))
 			return -ECHILD;
 	        return posix_acl_permission(mnt_userns, inode, acl, mask);
