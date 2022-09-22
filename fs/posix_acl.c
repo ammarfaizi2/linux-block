@@ -25,6 +25,7 @@
 #include <linux/namei.h>
 #include <linux/mnt_idmapping.h>
 #include <linux/security.h>
+#include <linux/evm.h>
 #include <linux/fsnotify.h>
 
 static struct posix_acl **acl_by_type(struct inode *inode, int type)
@@ -1351,8 +1352,10 @@ retry_deleg:
 		error = -EIO;
 	else
 		error = -EOPNOTSUPP;
-	if (!error)
+	if (!error) {
 		fsnotify_xattr(dentry);
+		evm_inode_post_set_acl(dentry, acl_name, kacl);
+	}
 
 out_inode_unlock:
 	inode_unlock(inode);
