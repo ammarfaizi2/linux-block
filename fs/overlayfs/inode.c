@@ -14,6 +14,8 @@
 #include <linux/fileattr.h>
 #include <linux/security.h>
 #include <linux/namei.h>
+#include <linux/posix_acl.h>
+#include <linux/posix_acl_xattr.h>
 #include "overlayfs.h"
 
 
@@ -460,9 +462,9 @@ ssize_t ovl_listxattr(struct dentry *dentry, char *list, size_t size)
  * of the POSIX ACLs retrieved from the lower layer to this function to not
  * alter the POSIX ACLs for the underlying filesystem.
  */
-static void ovl_idmap_posix_acl(struct inode *realinode,
-				struct user_namespace *mnt_userns,
-				struct posix_acl *acl)
+void ovl_idmap_posix_acl(struct inode *realinode,
+			 struct user_namespace *mnt_userns,
+			 struct posix_acl *acl)
 {
 	struct user_namespace *fs_userns = i_user_ns(realinode);
 
@@ -495,7 +497,7 @@ static void ovl_idmap_posix_acl(struct inode *realinode,
  *
  * This is obviously only relevant when idmapped layers are used.
  */
-struct posix_acl *ovl_get_acl(struct inode *inode, int type, bool rcu)
+struct posix_acl *ovl_get_inode_acl(struct inode *inode, int type, bool rcu)
 {
 	struct inode *realinode = ovl_inode_real(inode);
 	struct posix_acl *acl, *clone;
@@ -546,6 +548,51 @@ struct posix_acl *ovl_get_acl(struct inode *inode, int type, bool rcu)
 	 */
 	posix_acl_release(acl);
 	return clone;
+}
+
+static struct posix_acl *ovl_get_acl_path(const struct path *path,
+					  const char *acl_name)
+{
+	struct posix_acl *real_acl, *clone;
+	struct user_namespace *mnt_userns;
+
+	mnt_userns = mnt_user_ns(path->mnt);
+
+	real_acl = vfs_get_acl(mnt_userns, path->dentry, acl_name);
+	if (IS_ERR_OR_NULL(real_acl))
+		return real_acl;
+
+	if (!is_idmapped_mnt(path->mnt))
+		return real_acl;
+
+	/*
+        * We cannot alter the ACLs returned from the relevant layer as that
+        * would alter the cached values filesystem wide for the lower
+        * filesystem. Instead we can clone the ACLs and then apply the
+        * relevant idmapping of the layer.
+        */
+	clone = posix_acl_clone(real_acl, GFP_KERNEL);
+	if (clone)
+		ovl_idmap_posix_acl(d_inode(path->dentry), mnt_userns, clone);
+	else
+		clone = ERR_PTR(-ENOMEM);
+	/* Drop reference to original posix acls. */
+	posix_acl_release(real_acl);
+	return clone;
+}
+
+struct posix_acl *ovl_get_acl(struct user_namespace *mnt_userns,
+			      struct dentry *dentry, int type)
+{
+	struct posix_acl *acl = NULL;
+	const struct cred *old_cred;
+	struct path realpath;
+
+	ovl_path_real(dentry, &realpath);
+	old_cred = ovl_override_creds(dentry->d_sb);
+	acl = ovl_get_acl_path(&realpath, posix_acl_xattr_name(type));
+	revert_creds(old_cred);
+	return acl;
 }
 #endif
 
@@ -721,7 +768,8 @@ static const struct inode_operations ovl_file_inode_operations = {
 	.permission	= ovl_permission,
 	.getattr	= ovl_getattr,
 	.listxattr	= ovl_listxattr,
-	.get_inode_acl	= ovl_get_acl,
+	.get_inode_acl	= ovl_get_inode_acl,
+	.get_acl	= ovl_get_acl,
 	.update_time	= ovl_update_time,
 	.fiemap		= ovl_fiemap,
 	.fileattr_get	= ovl_fileattr_get,
@@ -741,7 +789,8 @@ static const struct inode_operations ovl_special_inode_operations = {
 	.permission	= ovl_permission,
 	.getattr	= ovl_getattr,
 	.listxattr	= ovl_listxattr,
-	.get_inode_acl	= ovl_get_acl,
+	.get_inode_acl	= ovl_get_inode_acl,
+	.get_acl	= ovl_get_acl,
 	.update_time	= ovl_update_time,
 };
 
