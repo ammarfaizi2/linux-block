@@ -13,6 +13,7 @@
 #include "reg.h"
 #include "sar.h"
 #include "ser.h"
+#include "util.h"
 
 static void rtw89_ops_tx(struct ieee80211_hw *hw,
 			 struct ieee80211_tx_control *control,
@@ -610,6 +611,20 @@ static void rtw89_ops_sta_statistics(struct ieee80211_hw *hw,
 	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_BITRATE);
 }
 
+static
+void __rtw89_drop_packets(struct rtw89_dev *rtwdev, struct ieee80211_vif *vif)
+{
+	struct rtw89_vif *rtwvif;
+
+	if (vif) {
+		rtwvif = (struct rtw89_vif *)vif->drv_priv;
+		rtw89_mac_pkt_drop_vif(rtwdev, rtwvif);
+	} else {
+		rtw89_for_each_rtwvif(rtwdev, rtwvif)
+			rtw89_mac_pkt_drop_vif(rtwdev, rtwvif);
+	}
+}
+
 static void rtw89_ops_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 			    u32 queues, bool drop)
 {
@@ -618,7 +633,12 @@ static void rtw89_ops_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	mutex_lock(&rtwdev->mutex);
 	rtw89_leave_lps(rtwdev);
 	rtw89_hci_flush_queues(rtwdev, queues, drop);
-	rtw89_mac_flush_txq(rtwdev, queues, drop);
+
+	if (drop && RTW89_CHK_FW_FEATURE(PACKET_DROP, &rtwdev->fw))
+		__rtw89_drop_packets(rtwdev, vif);
+	else
+		rtw89_mac_flush_txq(rtwdev, queues, drop);
+
 	mutex_unlock(&rtwdev->mutex);
 }
 
@@ -674,12 +694,13 @@ int rtw89_ops_set_antenna(struct ieee80211_hw *hw, u32 tx_ant, u32 rx_ant)
 	struct rtw89_dev *rtwdev = hw->priv;
 	struct rtw89_hal *hal = &rtwdev->hal;
 
-	if (rx_ant != hw->wiphy->available_antennas_rx)
+	if (rx_ant != hw->wiphy->available_antennas_rx && rx_ant != hal->antenna_rx)
 		return -EINVAL;
 
 	mutex_lock(&rtwdev->mutex);
 	hal->antenna_tx = tx_ant;
 	hal->antenna_rx = rx_ant;
+	hal->tx_path_diversity = false;
 	mutex_unlock(&rtwdev->mutex);
 
 	return 0;
@@ -840,6 +861,34 @@ static void rtw89_ops_unassign_vif_chanctx(struct ieee80211_hw *hw,
 	mutex_unlock(&rtwdev->mutex);
 }
 
+static void rtw89_set_tid_config_iter(void *data, struct ieee80211_sta *sta)
+{
+	struct cfg80211_tid_config *tid_config = data;
+	struct rtw89_sta *rtwsta = (struct rtw89_sta *)sta->drv_priv;
+	struct rtw89_dev *rtwdev = rtwsta->rtwvif->rtwdev;
+
+	rtw89_core_set_tid_config(rtwdev, sta, tid_config);
+}
+
+static int rtw89_ops_set_tid_config(struct ieee80211_hw *hw,
+				    struct ieee80211_vif *vif,
+				    struct ieee80211_sta *sta,
+				    struct cfg80211_tid_config *tid_config)
+{
+	struct rtw89_dev *rtwdev = hw->priv;
+
+	mutex_lock(&rtwdev->mutex);
+	if (sta)
+		rtw89_core_set_tid_config(rtwdev, sta, tid_config);
+	else
+		ieee80211_iterate_stations_atomic(rtwdev->hw,
+						  rtw89_set_tid_config_iter,
+						  tid_config);
+	mutex_unlock(&rtwdev->mutex);
+
+	return 0;
+}
+
 const struct ieee80211_ops rtw89_ops = {
 	.tx			= rtw89_ops_tx,
 	.wake_tx_queue		= rtw89_ops_wake_tx_queue,
@@ -875,5 +924,6 @@ const struct ieee80211_ops rtw89_ops = {
 	.unassign_vif_chanctx	= rtw89_ops_unassign_vif_chanctx,
 	.set_sar_specs		= rtw89_ops_set_sar_specs,
 	.sta_rc_update		= rtw89_ops_sta_rc_update,
+	.set_tid_config		= rtw89_ops_set_tid_config,
 };
 EXPORT_SYMBOL(rtw89_ops);
