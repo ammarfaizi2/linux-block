@@ -151,7 +151,7 @@ struct ath12k_htc_record {
 	struct ath12k_htc_record_hdr hdr;
 	union {
 		struct ath12k_htc_credit_report credit_report[0];
-		u8 pauload[0];
+		u8 payload[0];
 	};
 } __packed __aligned(4);
 

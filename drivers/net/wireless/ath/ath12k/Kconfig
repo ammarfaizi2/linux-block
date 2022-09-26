@@ -22,7 +22,7 @@ config ATH12K_DEBUG
 	  be enabled separately using the debug_mask module parameter.
 
 	  If unsure, say Y to make it easier to debug problems. But if
-	  you want optimal perfomance choose N.
+	  you want optimal performance choose N.
 
 config ATH12K_TRACING
 	bool "ath12k tracing support"
@@ -31,4 +31,4 @@ config ATH12K_TRACING
 	  Enable ath12k tracing infrastructure.
 
 	  If unsure, say Y to make it easier to debug problems. But if
-	  you want optimal perfomance choose N.
+	  you want optimal performance choose N.
