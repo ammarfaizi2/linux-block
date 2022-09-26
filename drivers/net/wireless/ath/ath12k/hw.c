@@ -570,7 +570,6 @@ static const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_qcn9274 = {
 	.tx_mon_dest = {
 		ATH12K_TX_MON_RING_MASK_0,
 		ATH12K_TX_MON_RING_MASK_1,
-		0, 0, 0, 0, 0, 0
 	},
 };
 
@@ -580,7 +579,8 @@ static const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_wcn7850 = {
 		ATH12K_TX_RING_MASK_2,
 		ATH12K_TX_RING_MASK_4,
 	},
-
+	.rx_mon_dest = {
+	},
 	.rx = {
 		0, 0, 0,
 		ATH12K_RX_RING_MASK_0,
@@ -597,8 +597,9 @@ static const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_wcn7850 = {
 	.reo_status = {
 		ATH12K_REO_STATUS_RING_MASK_0,
 	},
-
 	.host2rxdma = {
+	},
+	.tx_mon_dest = {
 	},
 };
 
