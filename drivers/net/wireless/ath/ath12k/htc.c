@@ -440,12 +440,15 @@ static void ath12k_htc_reset_endpoint_states(struct ath12k_htc *htc)
 static u8 ath12k_htc_get_credit_allocation(struct ath12k_htc *htc,
 					   u16 service_id)
 {
+	struct ath12k_htc_svc_tx_credits *serv_entry;
 	u8 i, allocation = 0;
 
+	serv_entry = htc->service_alloc_table;
+
 	for (i = 0; i < ATH12K_HTC_MAX_SERVICE_ALLOC_ENTRIES; i++) {
-		if (htc->service_alloc_table[i].service_id == service_id) {
-			allocation =
-				htc->service_alloc_table[i].credit_allocation;
+		if (serv_entry[i].service_id == service_id) {
+			allocation = serv_entry[i].credit_allocation;
+			break;
 		}
 	}
 
