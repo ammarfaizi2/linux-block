@@ -680,6 +680,9 @@ void __rcu_irq_enter_check_tick(void)
  */
 int rcu_needs_cpu(u64 basemono, u64 *nextevt)
 {
+	unsigned long j;
+	unsigned long jlast;
+	unsigned long jwait;
 	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
 	struct rcu_segcblist *rsclp = &rdp->cblist;
 
@@ -697,11 +700,15 @@ int rcu_needs_cpu(u64 basemono, u64 *nextevt)
 		return 1;
 
 	// There are callbacks waiting for some later grace period.
-	// Wait for about a grace period or two for the next tick, at which
+	// Wait for about a grace period or two since the last tick, at which
 	// point there is high probability that this CPU will need to do some
 	// work for RCU.
-	*nextevt = basemono + TICK_NSEC * (READ_ONCE(jiffies_till_first_fqs) +
-					   READ_ONCE(jiffies_till_next_fqs) + 1);
+	j = jiffies;
+	jlast = __this_cpu_read(rcu_data.last_sched_clock);
+	jwait = READ_ONCE(jiffies_till_first_fqs) + READ_ONCE(jiffies_till_next_fqs) + 1;
+	if (time_after(j, jlast + jwait))
+		return 1;
+	*nextevt = basemono + TICK_NSEC * jlast + jwait - j;
 	return 0;
 }
 
@@ -2345,11 +2352,9 @@ void rcu_sched_clock_irq(int user)
 {
 	unsigned long j;
 
-	if (IS_ENABLED(CONFIG_PROVE_RCU)) {
-		j = jiffies;
-		WARN_ON_ONCE(time_before(j, __this_cpu_read(rcu_data.last_sched_clock)));
-		__this_cpu_write(rcu_data.last_sched_clock, j);
-	}
+	j = jiffies;
+	WARN_ON_ONCE(time_before(j, __this_cpu_read(rcu_data.last_sched_clock)));
+	__this_cpu_write(rcu_data.last_sched_clock, j);
 	trace_rcu_utilization(TPS("Start scheduler-tick"));
 	lockdep_assert_irqs_disabled();
 	raw_cpu_inc(rcu_data.ticks_this_gp);
