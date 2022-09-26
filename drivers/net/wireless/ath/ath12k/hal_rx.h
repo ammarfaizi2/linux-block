@@ -629,14 +629,12 @@ struct hal_rx_resp_req_info {
 #define HAL_RX_MPDU_ERR_MPDU_LEN		BIT(6)
 #define HAL_RX_MPDU_ERR_UNENCRYPTED_FRAME	BIT(7)
 
-static inline u32 ath12k_he_ru_tones_to_nl80211_he_ru_alloc(u16 ru_tones)
+static inline
+enum nl80211_he_ru_alloc ath12k_he_ru_tones_to_nl80211_he_ru_alloc(u16 ru_tones)
 {
-	u32 ret = 0;
+	enum nl80211_he_ru_alloc ret;
 
 	switch (ru_tones) {
-	case RU_26:
-		ret = NL80211_RATE_INFO_HE_RU_ALLOC_26;
-		break;
 	case RU_52:
 		ret = NL80211_RATE_INFO_HE_RU_ALLOC_52;
 		break;
@@ -651,6 +649,11 @@ static inline u32 ath12k_he_ru_tones_to_nl80211_he_ru_alloc(u16 ru_tones)
 		break;
 	case RU_996:
 		ret = NL80211_RATE_INFO_HE_RU_ALLOC_996;
+		break;
+	case RU_26:
+		fallthrough;
+	default:
+		ret = NL80211_RATE_INFO_HE_RU_ALLOC_26;
 		break;
 	}
 	return ret;
