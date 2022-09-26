@@ -182,6 +182,15 @@ static bool ipa_endpoint_data_valid_one(struct ipa *ipa, u32 count,
 		return true;	/* Nothing more to check for RX */
 	}
 
+	/* Starting with IPA v4.5 sequencer replication is obsolete */
+	if (ipa->version >= IPA_VERSION_4_5) {
+		if (data->endpoint.config.tx.seq_rep_type) {
+			dev_err(dev, "no-zero seq_rep_type TX endpoint %u\n",
+				data->endpoint_id);
+			return false;
+		}
+	}
+
 	if (data->endpoint.config.status_enable) {
 		other_name = data->endpoint.config.tx.status_endpoint;
 		if (other_name >= count) {
@@ -494,12 +503,12 @@ static void ipa_endpoint_init_cfg(struct ipa_endpoint *endpoint)
 		enum ipa_version version = endpoint->ipa->version;
 
 		if (endpoint->toward_ipa) {
-			u32 checksum_offset;
+			u32 off;
 
 			/* Checksum header offset is in 4-byte units */
-			checksum_offset = sizeof(struct rmnet_map_header);
-			checksum_offset /= sizeof(u32);
-			val |= u32_encode_bits(checksum_offset,
+			off = sizeof(struct rmnet_map_header);
+			off /= sizeof(u32);
+			val |= u32_encode_bits(off,
 					       CS_METADATA_HDR_OFFSET_FMASK);
 
 			enabled = version < IPA_VERSION_4_5
@@ -590,20 +599,20 @@ static void ipa_endpoint_init_hdr(struct ipa_endpoint *endpoint)
 
 		/* Define how to fill fields in a received QMAP header */
 		if (!endpoint->toward_ipa) {
-			u32 offset;	/* Field offset within header */
+			u32 off;	/* Field offset within header */
 
 			/* Where IPA will write the metadata value */
-			offset = offsetof(struct rmnet_map_header, mux_id);
-			val |= ipa_metadata_offset_encoded(version, offset);
+			off = offsetof(struct rmnet_map_header, mux_id);
+			val |= ipa_metadata_offset_encoded(version, off);
 
 			/* Where IPA will write the length */
-			offset = offsetof(struct rmnet_map_header, pkt_len);
+			off = offsetof(struct rmnet_map_header, pkt_len);
 			/* Upper bits are stored in HDR_EXT with IPA v4.5 */
 			if (version >= IPA_VERSION_4_5)
-				offset &= field_mask(HDR_OFST_PKT_SIZE_FMASK);
+				off &= field_mask(HDR_OFST_PKT_SIZE_FMASK);
 
 			val |= HDR_OFST_PKT_SIZE_VALID_FMASK;
-			val |= u32_encode_bits(offset, HDR_OFST_PKT_SIZE_FMASK);
+			val |= u32_encode_bits(off, HDR_OFST_PKT_SIZE_FMASK);
 		}
 		/* For QMAP TX, metadata offset is 0 (modem assumes this) */
 		val |= HDR_OFST_METADATA_VALID_FMASK;
@@ -653,11 +662,11 @@ static void ipa_endpoint_init_hdr_ext(struct ipa_endpoint *endpoint)
 	if (ipa->version >= IPA_VERSION_4_5) {
 		/* HDR_TOTAL_LEN_OR_PAD_OFFSET is 0, so MSB is 0 */
 		if (endpoint->config.qmap && !endpoint->toward_ipa) {
-			u32 offset;
+			u32 off;
 
-			offset = offsetof(struct rmnet_map_header, pkt_len);
-			offset >>= hweight32(HDR_OFST_PKT_SIZE_FMASK);
-			val |= u32_encode_bits(offset,
+			off = offsetof(struct rmnet_map_header, pkt_len);
+			off >>= hweight32(HDR_OFST_PKT_SIZE_FMASK);
+			val |= u32_encode_bits(off,
 					       HDR_OFST_PKT_SIZE_MSB_FMASK);
 			/* HDR_ADDITIONAL_CONST_LEN is 0 so MSB is 0 */
 		}
@@ -716,45 +725,65 @@ static u32 aggr_byte_limit_encoded(enum ipa_version version, u32 limit)
 	return u32_encode_bits(limit, aggr_byte_limit_fmask(false));
 }
 
-/* Encode the aggregation timer limit (microseconds) based on IPA version */
-static u32 aggr_time_limit_encoded(enum ipa_version version, u32 limit)
+/* For IPA v4.5+, times are expressed using Qtime.  The AP uses one of two
+ * pulse generators (0 and 1) to measure elapsed time.  In ipa_qtime_config()
+ * they're configured to have granularity 100 usec and 1 msec, respectively.
+ *
+ * The return value is the positive or negative Qtime value to use to
+ * express the (microsecond) time provided.  A positive return value
+ * means pulse generator 0 can be used; otherwise use pulse generator 1.
+ */
+static int ipa_qtime_val(u32 microseconds, u32 max)
 {
-	u32 gran_sel;
+	u32 val;
+
+	/* Use 100 microsecond granularity if possible */
+	val = DIV_ROUND_CLOSEST(microseconds, 100);
+	if (val <= max)
+		return (int)val;
+
+	/* Have to use pulse generator 1 (millisecond granularity) */
+	val = DIV_ROUND_CLOSEST(microseconds, 1000);
+	WARN_ON(val > max);
+
+	return (int)-val;
+}
+
+/* Encode the aggregation timer limit (microseconds) based on IPA version */
+static u32 aggr_time_limit_encode(enum ipa_version version, u32 microseconds)
+{
 	u32 fmask;
 	u32 val;
 
-	if (version < IPA_VERSION_4_5) {
-		/* We set aggregation granularity in ipa_hardware_config() */
-		fmask = aggr_time_limit_fmask(true);
-		val = DIV_ROUND_CLOSEST(limit, IPA_AGGR_GRANULARITY);
-		WARN(val > field_max(fmask),
-		     "aggr_time_limit too large (%u > %u usec)\n",
-		     val, field_max(fmask) * IPA_AGGR_GRANULARITY);
+	if (!microseconds)
+		return 0;	/* Nothing to compute if time limit is 0 */
 
-		return u32_encode_bits(val, fmask);
+	if (version >= IPA_VERSION_4_5) {
+		u32 gran_sel;
+		int ret;
+
+		/* Compute the Qtime limit value to use */
+		fmask = aggr_time_limit_fmask(false);
+		ret = ipa_qtime_val(microseconds, field_max(fmask));
+		if (ret < 0) {
+			val = -ret;
+			gran_sel = AGGR_GRAN_SEL_FMASK;
+		} else {
+			val = ret;
+			gran_sel = 0;
+		}
+
+		return gran_sel | u32_encode_bits(val, fmask);
 	}
 
-	/* IPA v4.5 expresses the time limit using Qtime.  The AP has
-	 * pulse generators 0 and 1 available, which were configured
-	 * in ipa_qtime_config() to have granularity 100 usec and
-	 * 1 msec, respectively.  Use pulse generator 0 if possible,
-	 * otherwise fall back to pulse generator 1.
-	 */
-	fmask = aggr_time_limit_fmask(false);
-	val = DIV_ROUND_CLOSEST(limit, 100);
-	if (val > field_max(fmask)) {
-		/* Have to use pulse generator 1 (millisecond granularity) */
-		gran_sel = AGGR_GRAN_SEL_FMASK;
-		val = DIV_ROUND_CLOSEST(limit, 1000);
-		WARN(val > field_max(fmask),
-		     "aggr_time_limit too large (%u > %u usec)\n",
-		     limit, field_max(fmask) * 1000);
-	} else {
-		/* We can use pulse generator 0 (100 usec granularity) */
-		gran_sel = 0;
-	}
+	/* We set aggregation granularity in ipa_hardware_config() */
+	fmask = aggr_time_limit_fmask(true);
+	val = DIV_ROUND_CLOSEST(microseconds, IPA_AGGR_GRANULARITY);
+	WARN(val > field_max(fmask),
+	     "aggr_time_limit too large (%u > %u usec)\n",
+	     val, field_max(fmask) * IPA_AGGR_GRANULARITY);
 
-	return gran_sel | u32_encode_bits(val, fmask);
+	return u32_encode_bits(val, fmask);
 }
 
 static u32 aggr_sw_eof_active_encoded(enum ipa_version version, bool enabled)
@@ -790,7 +819,7 @@ static void ipa_endpoint_init_aggr(struct ipa_endpoint *endpoint)
 			val |= aggr_byte_limit_encoded(version, limit);
 
 			limit = rx_config->aggr_time_limit;
-			val |= aggr_time_limit_encoded(version, limit);
+			val |= aggr_time_limit_encode(version, limit);
 
 			/* AGGR_PKT_LIMIT is 0 (unlimited) */
 
@@ -812,45 +841,15 @@ static void ipa_endpoint_init_aggr(struct ipa_endpoint *endpoint)
 	iowrite32(val, endpoint->ipa->reg_virt + offset);
 }
 
-/* Return the Qtime-based head-of-line blocking timer value that
- * represents the given number of microseconds.  The result
- * includes both the timer value and the selected timer granularity.
- */
-static u32 hol_block_timer_qtime_val(struct ipa *ipa, u32 microseconds)
-{
-	u32 gran_sel;
-	u32 val;
-
-	/* IPA v4.5 expresses time limits using Qtime.  The AP has
-	 * pulse generators 0 and 1 available, which were configured
-	 * in ipa_qtime_config() to have granularity 100 usec and
-	 * 1 msec, respectively.  Use pulse generator 0 if possible,
-	 * otherwise fall back to pulse generator 1.
-	 */
-	val = DIV_ROUND_CLOSEST(microseconds, 100);
-	if (val > field_max(TIME_LIMIT_FMASK)) {
-		/* Have to use pulse generator 1 (millisecond granularity) */
-		gran_sel = GRAN_SEL_FMASK;
-		val = DIV_ROUND_CLOSEST(microseconds, 1000);
-	} else {
-		/* We can use pulse generator 0 (100 usec granularity) */
-		gran_sel = 0;
-	}
-
-	return gran_sel | u32_encode_bits(val, TIME_LIMIT_FMASK);
-}
-
 /* The head-of-line blocking timer is defined as a tick count.  For
  * IPA version 4.5 the tick count is based on the Qtimer, which is
  * derived from the 19.2 MHz SoC XO clock.  For older IPA versions
  * each tick represents 128 cycles of the IPA core clock.
  *
- * Return the encoded value that should be written to that register
- * that represents the timeout period provided.  For IPA v4.2 this
- * encodes a base and scale value, while for earlier versions the
- * value is a simple tick count.
+ * Return the encoded value representing the timeout period provided
+ * that should be written to the ENDP_INIT_HOL_BLOCK_TIMER register.
  */
-static u32 hol_block_timer_val(struct ipa *ipa, u32 microseconds)
+static u32 hol_block_timer_encode(struct ipa *ipa, u32 microseconds)
 {
 	u32 width;
 	u32 scale;
@@ -862,8 +861,22 @@ static u32 hol_block_timer_val(struct ipa *ipa, u32 microseconds)
 	if (!microseconds)
 		return 0;	/* Nothing to compute if timer period is 0 */
 
-	if (ipa->version >= IPA_VERSION_4_5)
-		return hol_block_timer_qtime_val(ipa, microseconds);
+	if (ipa->version >= IPA_VERSION_4_5) {
+		u32 gran_sel;
+		int ret;
+
+		/* Compute the Qtime limit value to use */
+		ret = ipa_qtime_val(microseconds, field_max(TIME_LIMIT_FMASK));
+		if (ret < 0) {
+			val = -ret;
+			gran_sel = GRAN_SEL_FMASK;
+		} else {
+			val = ret;
+			gran_sel = 0;
+		}
+
+		return gran_sel | u32_encode_bits(val, TIME_LIMIT_FMASK);
+	}
 
 	/* Use 64 bit arithmetic to avoid overflow... */
 	rate = ipa_core_clock_rate(ipa);
@@ -911,7 +924,7 @@ static void ipa_endpoint_init_hol_block_timer(struct ipa_endpoint *endpoint,
 
 	/* This should only be changed when HOL_BLOCK_EN is disabled */
 	offset = IPA_REG_ENDP_INIT_HOL_BLOCK_TIMER_N_OFFSET(endpoint_id);
-	val = hol_block_timer_val(ipa, microseconds);
+	val = hol_block_timer_encode(ipa, microseconds);
 	iowrite32(val, ipa->reg_virt + offset);
 }
 
@@ -995,9 +1008,10 @@ static void ipa_endpoint_init_seq(struct ipa_endpoint *endpoint)
 	/* Low-order byte configures primary packet processing */
 	val |= u32_encode_bits(endpoint->config.tx.seq_type, SEQ_TYPE_FMASK);
 
-	/* Second byte configures replicated packet processing */
-	val |= u32_encode_bits(endpoint->config.tx.seq_rep_type,
-			       SEQ_REP_TYPE_FMASK);
+	/* Second byte (if supported) configures replicated packet processing */
+	if (endpoint->ipa->version < IPA_VERSION_4_5)
+		val |= u32_encode_bits(endpoint->config.tx.seq_rep_type,
+				       SEQ_REP_TYPE_FMASK);
 
 	iowrite32(val, endpoint->ipa->reg_virt + offset);
 }
