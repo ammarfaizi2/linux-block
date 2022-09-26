@@ -715,7 +715,7 @@ setup:
 int ath12k_htc_start(struct ath12k_htc *htc)
 {
 	struct sk_buff *skb;
-	int status = 0;
+	int status;
 	struct ath12k_base *ab = htc->ab;
 	struct ath12k_htc_setup_complete_extended *msg;
 
