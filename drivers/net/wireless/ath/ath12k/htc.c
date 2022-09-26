@@ -32,7 +32,7 @@ static void ath12k_htc_control_tx_complete(struct ath12k_base *ab,
 	kfree_skb(skb);
 }
 
-static struct sk_buff *ath12k_htc_build_tx_ctrl_skb(void *ab)
+static struct sk_buff *ath12k_htc_build_tx_ctrl_skb(void)
 {
 	struct sk_buff *skb;
 	struct ath12k_skb_cb *skb_cb;
@@ -47,7 +47,6 @@ static struct sk_buff *ath12k_htc_build_tx_ctrl_skb(void *ab)
 	skb_cb = ATH12K_SKB_CB(skb);
 	memset(skb_cb, 0, sizeof(*skb_cb));
 
-	ath12k_dbg(ab, ATH12K_DBG_HTC, "%s: skb %pK\n", __func__, skb);
 	return skb;
 }
 
@@ -580,7 +579,7 @@ int ath12k_htc_connect_service(struct ath12k_htc *htc,
 			   "boot htc service %s does not allocate target credits\n",
 			   htc_service_name(conn_req->service_id));
 
-	skb = ath12k_htc_build_tx_ctrl_skb(htc->ab);
+	skb = ath12k_htc_build_tx_ctrl_skb();
 	if (!skb) {
 		ath12k_warn(ab, "Failed to allocate HTC packet\n");
 		return -ENOMEM;
@@ -717,7 +716,7 @@ int ath12k_htc_start(struct ath12k_htc *htc)
 	struct ath12k_base *ab = htc->ab;
 	struct ath12k_htc_setup_complete_extended *msg;
 
-	skb = ath12k_htc_build_tx_ctrl_skb(htc->ab);
+	skb = ath12k_htc_build_tx_ctrl_skb();
 	if (!skb)
 		return -ENOMEM;
 
