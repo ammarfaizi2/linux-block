@@ -149,10 +149,7 @@ struct ath12k_htc_credit_report {
 
 struct ath12k_htc_record {
 	struct ath12k_htc_record_hdr hdr;
-	union {
-		struct ath12k_htc_credit_report credit_report[0];
-		u8 payload[0];
-	};
+	struct ath12k_htc_credit_report credit_report[];
 } __packed __aligned(4);
 
 /* note: the trailer offset is dynamic depending
