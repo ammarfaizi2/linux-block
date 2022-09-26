@@ -152,17 +152,25 @@ struct ath12k_htc_record {
 	struct ath12k_htc_credit_report credit_report[];
 } __packed __aligned(4);
 
-/* note: the trailer offset is dynamic depending
+/* HTC FRAME structure layout draft
+ *
+ * note: the trailer offset is dynamic depending
  * on payload length. this is only a struct layout draft
+ *
+ *=======================================================
+ *
+ *                 HTC HEADER
+ *
+ *=======================================================
+ *                      |
+ *      HTC message     |        payload
+ *   (variable length)  |    (variable length)
+ *=======================================================
+ *
+ *                  HTC Record
+ *
+ *=======================================================
  */
-struct ath12k_htc_frame {
-	struct ath12k_htc_hdr hdr;
-	union {
-		struct ath12k_htc_msg msg;
-		u8 payload[0];
-	};
-	struct ath12k_htc_record trailer[0];
-} __packed __aligned(4);
 
 enum ath12k_htc_svc_gid {
 	ATH12K_HTC_SVC_GRP_RSVD = 0,
