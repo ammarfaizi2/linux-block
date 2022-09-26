@@ -1959,8 +1959,8 @@ int ath12k_hal_srng_setup(struct ath12k_base *ab, enum hal_ring_type type,
 
 static void ath12k_hal_srng_update_hp_tp_addr(struct ath12k_base *ab,
 					      int shadow_cfg_idx,
-					  enum hal_ring_type ring_type,
-					  int ring_num)
+					      enum hal_ring_type ring_type,
+					      int ring_num)
 {
 	struct hal_srng *srng;
 	struct ath12k_hal *hal = &ab->hal;
