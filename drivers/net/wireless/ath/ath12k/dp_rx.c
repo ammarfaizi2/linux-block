@@ -1148,7 +1148,8 @@ int ath12k_dp_rx_peer_pn_replay_config(struct ath12k_vif *arvif,
 
 	peer = ath12k_peer_find(ab, arvif->vdev_id, peer_addr);
 	if (!peer) {
-		ath12k_warn(ab, "failed to find the peer to configure pn replay detection\n");
+		ath12k_warn(ab, "failed to find the peer %pM to configure pn replay detection\n",
+			    peer_addr);
 		spin_unlock_bh(&ab->base_lock);
 		return -ENOENT;
 	}
@@ -1163,8 +1164,8 @@ int ath12k_dp_rx_peer_pn_replay_config(struct ath12k_vif *arvif,
 					     HAL_REO_CMD_UPDATE_RX_QUEUE,
 					     &cmd, NULL);
 		if (ret) {
-			ath12k_warn(ab, "failed to configure rx tid %d queue for pn replay detection %d\n",
-				    tid, ret);
+			ath12k_warn(ab, "failed to configure rx tid %d queue of peer %pM for pn replay detection %d\n",
+				    tid, peer_addr, ret);
 			break;
 		}
 	}
