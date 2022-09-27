@@ -647,7 +647,7 @@ static int ath12k_dp_reo_cmd_send(struct ath12k_base *ab, struct ath12k_dp_rx_ti
 		return 0;
 
 	/* Can this be optimized so that we keep the pending command list only
-	 * for tid delete command to free up the resoruce on the command status
+	 * for tid delete command to free up the resource on the command status
 	 * indication?
 	 */
 	dp_cmd = kzalloc(sizeof(*dp_cmd), GFP_ATOMIC);
