@@ -655,7 +655,7 @@ static int ath12k_dp_reo_cmd_send(struct ath12k_base *ab, struct ath12k_dp_rx_ti
 	if (!dp_cmd)
 		return -ENOMEM;
 
-	memcpy(&dp_cmd->data, rx_tid, sizeof(struct ath12k_dp_rx_tid));
+	memcpy(&dp_cmd->data, rx_tid, sizeof(*rx_tid));
 	dp_cmd->cmd_num = cmd_num;
 	dp_cmd->handler = cb;
 
@@ -2189,9 +2189,9 @@ static void ath12k_dp_rx_h_undecap_eth(struct ath12k *ar,
 	ether_addr_copy(da, eth->h_dest);
 	ether_addr_copy(sa, eth->h_source);
 	rfc.snap_type = eth->h_proto;
-	skb_pull(msdu, sizeof(struct ethhdr));
-	memcpy(skb_push(msdu, sizeof(struct ath12k_dp_rx_rfc1042_hdr)), &rfc,
-	       sizeof(struct ath12k_dp_rx_rfc1042_hdr));
+	skb_pull(msdu, sizeof(*eth));
+	memcpy(skb_push(msdu, sizeof(rfc)), &rfc,
+	       sizeof(rfc));
 	ath12k_get_dot11_hdr_from_rx_desc(ar, msdu, rxcb, status, enctype);
 
 	/* original 802.11 header has a different DA and in
@@ -2447,7 +2447,7 @@ void ath12k_dp_rx_h_ppdu(struct ath12k *ar, struct hal_rx_desc *rx_desc,
 		}
 		spin_unlock_bh(&ar->data_lock);
 		ath12k_dbg_dump(ar->ab, ATH12K_DBG_DATA, NULL, "rx_desc: ",
-				rx_desc, sizeof(struct hal_rx_desc));
+				rx_desc, sizeof(*rx_desc));
 	}
 
 	rx_status->freq = ieee80211_channel_to_frequency(channel_num,
@@ -2577,7 +2577,7 @@ static int ath12k_dp_rx_process_msdu(struct ath12k *ar,
 			ret = -EINVAL;
 			ath12k_warn(ab, "invalid msdu len %u\n", msdu_len);
 			ath12k_dbg_dump(ab, ATH12K_DBG_DATA, NULL, "", rx_desc,
-					sizeof(struct hal_rx_desc));
+					sizeof(*rx_desc));
 			goto free_out;
 		}
 		skb_put(msdu, hal_rx_desc_sz + l3_pad_bytes + msdu_len);
@@ -3420,7 +3420,7 @@ ath12k_dp_process_rx_err_buf(struct ath12k *ar, struct hal_reo_dest_ring *desc,
 	if ((msdu_len + hal_rx_desc_sz) > DP_RX_BUFFER_SIZE) {
 		ath12k_warn(ar->ab, "invalid msdu leng %u", msdu_len);
 		ath12k_dbg_dump(ar->ab, ATH12K_DBG_DATA, NULL, "", rx_desc,
-				sizeof(struct hal_rx_desc));
+				sizeof(*rx_desc));
 		dev_kfree_skb_any(msdu);
 		goto exit;
 	}
