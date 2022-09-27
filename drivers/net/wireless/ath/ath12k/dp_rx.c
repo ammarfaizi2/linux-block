@@ -1632,55 +1632,6 @@ static void ath12k_htt_pktlog(struct ath12k_base *ab, struct sk_buff *skb)
 				ar->ab->pktlog_defs_checksum);
 }
 
-static void ath12k_htt_backpressure_event_handler(struct ath12k_base *ab,
-						  struct sk_buff *skb)
-{
-	u32 *data = (u32 *)skb->data;
-	u8 pdev_id, ring_type, ring_id, pdev_idx;
-	u16 hp, tp;
-	u32 backpressure_time;
-	struct ath12k_bp_stats *bp_stats;
-
-	pdev_id = u32_get_bits(*data, HTT_BACKPRESSURE_EVENT_PDEV_ID_M);
-	ring_type = u32_get_bits(*data, HTT_BACKPRESSURE_EVENT_RING_TYPE_M);
-	ring_id = u32_get_bits(*data, HTT_BACKPRESSURE_EVENT_RING_ID_M);
-	++data;
-
-	hp = u32_get_bits(*data, HTT_BACKPRESSURE_EVENT_HP_M);
-	tp = u32_get_bits(*data, HTT_BACKPRESSURE_EVENT_TP_M);
-	++data;
-
-	backpressure_time = *data;
-
-	ath12k_dbg(ab, ATH12K_DBG_DP_HTT, "htt backpressure event, pdev %d, ring type %d,ring id %d, hp %d tp %d, backpressure time %d\n",
-		   pdev_id, ring_type, ring_id, hp, tp, backpressure_time);
-
-	if (ring_type == HTT_BACKPRESSURE_UMAC_RING_TYPE) {
-		if (ring_id >= HTT_SW_UMAC_RING_IDX_MAX)
-			return;
-
-		bp_stats = &ab->soc_stats.bp_stats.umac_ring_bp_stats[ring_id];
-	} else if (ring_type == HTT_BACKPRESSURE_LMAC_RING_TYPE) {
-		pdev_idx = DP_HW2SW_MACID(pdev_id);
-
-		if (ring_id >= HTT_SW_LMAC_RING_IDX_MAX || pdev_idx >= MAX_RADIOS)
-			return;
-
-		bp_stats = &ab->soc_stats.bp_stats.lmac_ring_bp_stats[ring_id][pdev_idx];
-	} else {
-		ath12k_warn(ab, "unknown ring type received in htt bp event %d\n",
-			    ring_type);
-		return;
-	}
-
-	spin_lock_bh(&ab->base_lock);
-	bp_stats->hp = hp;
-	bp_stats->tp = tp;
-	bp_stats->count++;
-	bp_stats->jiffies = jiffies;
-	spin_unlock_bh(&ab->base_lock);
-}
-
 static void ath12k_htt_mlo_offset_event_handler(struct ath12k_base *ab,
 						struct sk_buff *skb)
 {
@@ -1792,9 +1743,6 @@ void ath12k_dp_htt_htc_t2h_msg_handler(struct ath12k_base *ab,
 		break;
 	case HTT_T2H_MSG_TYPE_PKTLOG:
 		ath12k_htt_pktlog(ab, skb);
-		break;
-	case HTT_T2H_MSG_TYPE_BKPRESSURE_EVENT_IND:
-		ath12k_htt_backpressure_event_handler(ab, skb);
 		break;
 	case HTT_T2H_MSG_TYPE_MLO_TIMESTAMP_OFFSET_IND:
 		ath12k_htt_mlo_offset_event_handler(ab, skb);
