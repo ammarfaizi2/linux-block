@@ -3772,7 +3772,6 @@ int ath12k_dp_rx_process_wbm_err(struct ath12k_base *ab,
 	void *rx_desc;
 	int mac_id;
 	int num_buffs_reaped = 0;
-	int total_num_buffs_reaped = 0;
 	struct ath12k_rx_desc_info *desc_info;
 	int ret, i;
 
@@ -3831,7 +3830,6 @@ int ath12k_dp_rx_process_wbm_err(struct ath12k_base *ab,
 				 DMA_FROM_DEVICE);
 
 		num_buffs_reaped++;
-		total_num_buffs_reaped++;
 
 		if (!err_info.continuation)
 			budget--;
@@ -3856,7 +3854,7 @@ int ath12k_dp_rx_process_wbm_err(struct ath12k_base *ab,
 
 	spin_unlock_bh(&srng->lock);
 
-	if (!total_num_buffs_reaped)
+	if (!num_buffs_reaped)
 		goto done;
 
 	ath12k_dp_rx_bufs_replenish(ab, 0, rx_ring, num_buffs_reaped,
@@ -3881,7 +3879,7 @@ int ath12k_dp_rx_process_wbm_err(struct ath12k_base *ab,
 	}
 	rcu_read_unlock();
 done:
-	return total_num_buffs_reaped;
+	return num_buffs_reaped;
 }
 
 void ath12k_dp_rx_process_reo_status(struct ath12k_base *ab)
