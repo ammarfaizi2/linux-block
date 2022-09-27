@@ -708,7 +708,7 @@ int rcu_needs_cpu(u64 basemono, u64 *nextevt)
 	jwait = READ_ONCE(jiffies_till_first_fqs) + READ_ONCE(jiffies_till_next_fqs) + 1;
 	if (time_after(j, jlast + jwait))
 		return 1;
-	*nextevt = basemono + TICK_NSEC * jlast + jwait - j;
+	*nextevt = basemono + TICK_NSEC * (jlast + jwait - j);
 	return 0;
 }
 
