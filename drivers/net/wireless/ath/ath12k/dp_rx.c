@@ -1059,8 +1059,8 @@ int ath12k_dp_rx_ampdu_stop(struct ath12k *ar,
 
 	peer = ath12k_peer_find(ab, vdev_id, params->sta->addr);
 	if (!peer) {
-		ath12k_warn(ab, "failed to find the peer to stop rx aggregation\n");
 		spin_unlock_bh(&ab->base_lock);
+		ath12k_warn(ab, "failed to find the peer to stop rx aggregation\n");
 		return -ENOENT;
 	}
 
@@ -1128,9 +1128,9 @@ int ath12k_dp_rx_peer_pn_replay_config(struct ath12k_vif *arvif,
 
 	peer = ath12k_peer_find(ab, arvif->vdev_id, peer_addr);
 	if (!peer) {
+		spin_unlock_bh(&ab->base_lock);
 		ath12k_warn(ab, "failed to find the peer %pM to configure pn replay detection\n",
 			    peer_addr);
-		spin_unlock_bh(&ab->base_lock);
 		return -ENOENT;
 	}
 
@@ -2792,8 +2792,8 @@ int ath12k_dp_rx_peer_frag_setup(struct ath12k *ar, const u8 *peer_mac, int vdev
 
 	peer = ath12k_peer_find(ab, vdev_id, peer_mac);
 	if (!peer) {
-		ath12k_warn(ab, "failed to find the peer to set up fragment info\n");
 		spin_unlock_bh(&ab->base_lock);
+		ath12k_warn(ab, "failed to find the peer to set up fragment info\n");
 		return -ENOENT;
 	}
 
@@ -3066,9 +3066,9 @@ static int ath12k_dp_rx_h_defrag_reo_reinject(struct ath12k *ar,
 					     struct ath12k_rx_desc_info,
 					     list);
 	if (!desc_info) {
+		spin_unlock_bh(&dp->rx_desc_lock);
 		ath12k_warn(ab, "failed to find rx desc for reinject\n");
 		ret = -ENOMEM;
-		spin_unlock_bh(&dp->rx_desc_lock);
 		goto err_unmap_dma;
 	}
 
