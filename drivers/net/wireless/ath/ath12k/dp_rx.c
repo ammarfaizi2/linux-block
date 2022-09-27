@@ -232,19 +232,6 @@ static u16 ath12k_dp_rxdesc_get_mpdu_frame_ctrl(struct ath12k_base *ab,
 	return ab->hw_params->hal_ops->rx_desc_get_mpdu_frame_ctl(desc);
 }
 
-static void ath12k_dp_service_mon_ring(struct timer_list *t)
-{
-	struct ath12k_base *ab = from_timer(ab, t, mon_reap_timer);
-	int i;
-
-	for (i = 0; i < ab->hw_params->num_rxmda_per_pdev; i++)
-		ath12k_dp_mon_process_ring(ab, i, NULL, DP_MON_SERVICE_BUDGET,
-					   ATH12K_DP_RX_MONITOR_MODE);
-
-	mod_timer(&ab->mon_reap_timer, jiffies +
-		  msecs_to_jiffies(ATH12K_MON_TIMER_INTERVAL));
-}
-
 static int ath12k_dp_purge_mon_ring(struct ath12k_base *ab)
 {
 	int i, reaped = 0;
@@ -544,13 +531,6 @@ static int ath12k_dp_rx_pdev_srng_alloc(struct ath12k *ar)
 	int i;
 	int ret;
 	u32 mac_id = dp->mac_id;
-
-	if (!ar->ab->hw_params->rxdma1_enable) {
-		/* init mon status buffer reap timer */
-		timer_setup(&ar->ab->mon_reap_timer,
-			    ath12k_dp_service_mon_ring, 0);
-		return 0;
-	}
 
 	for (i = 0; i < ab->hw_params->num_rxmda_per_pdev; i++) {
 		ret = ath12k_dp_srng_setup(ar->ab,
@@ -4218,14 +4198,14 @@ int ath12k_dp_rx_pdev_alloc(struct ath12k_base *ab, int mac_id)
 	int i;
 	int ret;
 
+	if (!ab->hw_params->rxdma1_enable)
+		goto out;
+
 	ret = ath12k_dp_rx_pdev_srng_alloc(ar);
 	if (ret) {
 		ath12k_warn(ab, "failed to setup rx srngs\n");
 		return ret;
 	}
-
-	if (!ab->hw_params->rxdma1_enable)
-		goto out;
 
 	for (i = 0; i < ab->hw_params->num_rxmda_per_pdev; i++) {
 		ring_id = dp->rxdma_mon_dst_ring[i].ring_id;

@@ -998,6 +998,27 @@ void ath12k_dp_pdev_pre_alloc(struct ath12k_base *ab)
 	}
 }
 
+static void ath12k_dp_service_mon_ring(struct timer_list *t)
+{
+	struct ath12k_base *ab = from_timer(ab, t, mon_reap_timer);
+	int i;
+
+	for (i = 0; i < ab->hw_params->num_rxmda_per_pdev; i++)
+		ath12k_dp_mon_process_ring(ab, i, NULL, DP_MON_SERVICE_BUDGET,
+					   ATH12K_DP_RX_MONITOR_MODE);
+
+	mod_timer(&ab->mon_reap_timer, jiffies +
+		  msecs_to_jiffies(ATH12K_MON_TIMER_INTERVAL));
+}
+
+static void ath12k_dp_mon_reap_timer_init(struct ath12k_base *ab)
+{
+	if (ab->hw_params->rxdma1_enable)
+		return;
+
+	timer_setup(&ab->mon_reap_timer, ath12k_dp_service_mon_ring, 0);
+}
+
 int ath12k_dp_pdev_alloc(struct ath12k_base *ab)
 {
 	struct ath12k *ar;
@@ -1007,6 +1028,8 @@ int ath12k_dp_pdev_alloc(struct ath12k_base *ab)
 	ret = ath12k_dp_rx_htt_setup(ab);
 	if (ret)
 		goto out;
+
+	ath12k_dp_mon_reap_timer_init(ab);
 
 	/* TODO: Per-pdev rx ring unlike tx ring which is mapped to different AC's */
 	for (i = 0; i < ab->num_radios; i++) {
