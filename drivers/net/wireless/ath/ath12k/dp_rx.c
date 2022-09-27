@@ -692,7 +692,7 @@ static void ath12k_dp_reo_cache_flush(struct ath12k_base *ab,
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.addr_lo = lower_32_bits(rx_tid->paddr);
 	cmd.addr_hi = upper_32_bits(rx_tid->paddr);
-	cmd.flag |= HAL_REO_CMD_FLG_NEED_STATUS;
+	cmd.flag = HAL_REO_CMD_FLG_NEED_STATUS;
 	ret = ath12k_dp_reo_cmd_send(ab, rx_tid,
 				     HAL_REO_CMD_FLUSH_CACHE,
 				     &cmd, ath12k_dp_reo_cmd_free);
@@ -812,7 +812,7 @@ void ath12k_dp_rx_peer_tid_delete(struct ath12k *ar,
 	cmd.flag = HAL_REO_CMD_FLG_NEED_STATUS;
 	cmd.addr_lo = lower_32_bits(rx_tid->paddr);
 	cmd.addr_hi = upper_32_bits(rx_tid->paddr);
-	cmd.upd0 |= HAL_REO_CMD_UPD0_VLD;
+	cmd.upd0 = HAL_REO_CMD_UPD0_VLD;
 	ret = ath12k_dp_reo_cmd_send(ar->ab, rx_tid,
 				     HAL_REO_CMD_UPDATE_RX_QUEUE, &cmd,
 				     ath12k_dp_rx_tid_del_func);
@@ -1122,8 +1122,8 @@ int ath12k_dp_rx_peer_pn_replay_config(struct ath12k_vif *arvif,
 	if (!(key->flags & IEEE80211_KEY_FLAG_PAIRWISE))
 		return 0;
 
-	cmd.flag |= HAL_REO_CMD_FLG_NEED_STATUS;
-	cmd.upd0 |= HAL_REO_CMD_UPD0_PN |
+	cmd.flag = HAL_REO_CMD_FLG_NEED_STATUS;
+	cmd.upd0 = HAL_REO_CMD_UPD0_PN |
 		    HAL_REO_CMD_UPD0_PN_SIZE |
 		    HAL_REO_CMD_UPD0_PN_VALID |
 		    HAL_REO_CMD_UPD0_PN_CHECK |
