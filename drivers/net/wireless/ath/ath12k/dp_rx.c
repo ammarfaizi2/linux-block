@@ -3457,7 +3457,7 @@ int ath12k_dp_rx_process_err(struct ath12k_base *ab, struct napi_struct *napi,
 	struct ath12k *ar;
 	dma_addr_t paddr;
 	bool is_frag;
-	u8 drop = 0;
+	bool drop = false;
 
 	tot_n_bufs_reaped = 0;
 	quota = budget;
@@ -3503,7 +3503,7 @@ int ath12k_dp_rx_process_err(struct ath12k_base *ab, struct napi_struct *napi,
 		 * msdu's indicated due to error reasons.
 		 */
 		if (!is_frag || num_msdus > 1) {
-			drop = 1;
+			drop = true;
 			/* Return the link desc back to wbm idle list */
 			ath12k_dp_rx_link_desc_return(ab, reo_desc,
 						      HAL_WBM_REL_BM_ACT_PUT_IN_IDLE);
