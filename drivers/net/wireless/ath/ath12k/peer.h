@@ -10,7 +10,6 @@
 #include "dp_rx.h"
 
 struct ppdu_user_delayba {
-	u8 reserved0;
 	u16 sw_peer_id;
 	u32 info0;
 	u16 ru_end;
@@ -18,7 +17,7 @@ struct ppdu_user_delayba {
 	u32 info1;
 	u32 rate_flags;
 	u32 resp_rate_flags;
-} __packed;
+};
 
 struct ath12k_peer {
 	struct list_head list;
