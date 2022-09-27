@@ -1184,7 +1184,7 @@ static int ath12k_htt_tlv_ppdu_stats_parse(struct ath12k_base *ab,
 	int cur_user;
 	u16 peer_id;
 
-	ppdu_info = (struct htt_ppdu_stats_info *)data;
+	ppdu_info = data;
 
 	switch (tag) {
 	case HTT_PPDU_STATS_TAG_COMMON:
