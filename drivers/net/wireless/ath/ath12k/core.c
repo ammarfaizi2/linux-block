@@ -527,7 +527,7 @@ static int ath12k_core_start(struct ath12k_base *ab,
 		ret = ath12k_wmi_set_hw_mode(ab, WMI_HOST_HW_MODE_DBS);
 		if (ret) {
 			ath12k_err(ab, "failed to send dbs mode: %d\n", ret);
-			goto err_hif_stop;
+			goto err_reo_cleanup;
 		}
 	}
 
