@@ -335,7 +335,7 @@ int ath12k_dp_rx_bufs_replenish(struct ath12k_base *ab, int mac_id,
 					   rx_ring->bufs_max * 3, GFP_ATOMIC);
 			spin_unlock_bh(&rx_ring->idr_lock);
 			if (buf_id < 0)
-				goto fail_idr_remove;
+				goto fail_dma_unmap;
 			cookie = u32_encode_bits(mac_id,
 						 DP_RXDMA_BUF_COOKIE_PDEV_ID) |
 				 u32_encode_bits(buf_id,
@@ -344,7 +344,7 @@ int ath12k_dp_rx_bufs_replenish(struct ath12k_base *ab, int mac_id,
 
 		desc = ath12k_hal_srng_src_get_next_entry(ab, srng);
 		if (!desc)
-			goto fail_list_desc_add;
+			goto fail_buf_unassign;
 
 		ATH12K_SKB_RXCB(skb)->paddr = paddr;
 
@@ -359,18 +359,18 @@ int ath12k_dp_rx_bufs_replenish(struct ath12k_base *ab, int mac_id,
 
 	return req_entries - num_remain;
 
-fail_list_desc_add:
+fail_buf_unassign:
 	if (hw_cc) {
 		spin_lock_bh(&dp->rx_desc_lock);
 		list_del(&rx_desc->list);
 		list_add_tail(&rx_desc->list, &dp->rx_desc_free_list);
 		rx_desc->skb = NULL;
 		spin_unlock_bh(&dp->rx_desc_lock);
+	} else {
+		spin_lock_bh(&rx_ring->idr_lock);
+		idr_remove(&rx_ring->bufs_idr, buf_id);
+		spin_unlock_bh(&rx_ring->idr_lock);
 	}
-fail_idr_remove:
-	spin_lock_bh(&rx_ring->idr_lock);
-	idr_remove(&rx_ring->bufs_idr, buf_id);
-	spin_unlock_bh(&rx_ring->idr_lock);
 fail_dma_unmap:
 	dma_unmap_single(ab->dev, paddr, skb->len + skb_tailroom(skb),
 			 DMA_FROM_DEVICE);
