@@ -618,6 +618,7 @@ static void ath12k_dp_reo_cmd_free(struct ath12k_dp *dp, void *ctx,
 	dma_unmap_single(dp->ab->dev, rx_tid->paddr, rx_tid->size,
 			 DMA_BIDIRECTIONAL);
 	kfree(rx_tid->vaddr);
+	rx_tid->vaddr = NULL;
 }
 
 static int ath12k_dp_reo_cmd_send(struct ath12k_base *ab, struct ath12k_dp_rx_tid *rx_tid,
@@ -701,6 +702,7 @@ static void ath12k_dp_reo_cache_flush(struct ath12k_base *ab,
 		dma_unmap_single(ab->dev, rx_tid->paddr, rx_tid->size,
 				 DMA_BIDIRECTIONAL);
 		kfree(rx_tid->vaddr);
+		rx_tid->vaddr = NULL;
 	}
 }
 
@@ -753,6 +755,7 @@ free_desc:
 	dma_unmap_single(ab->dev, rx_tid->paddr, rx_tid->size,
 			 DMA_BIDIRECTIONAL);
 	kfree(rx_tid->vaddr);
+	rx_tid->vaddr = NULL;
 }
 
 static void ath12k_peer_rx_tid_qref_setup(struct ath12k_base *ab, u16 peer_id, u16 tid,
@@ -819,6 +822,7 @@ void ath12k_dp_rx_peer_tid_delete(struct ath12k *ar,
 		dma_unmap_single(ar->ab->dev, rx_tid->paddr, rx_tid->size,
 				 DMA_BIDIRECTIONAL);
 		kfree(rx_tid->vaddr);
+		rx_tid->vaddr = NULL;
 	}
 
 	ath12k_peer_rx_tid_qref_reset(ar->ab, peer->peer_id, tid);
