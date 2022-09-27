@@ -2034,7 +2034,7 @@ static void ath12k_dp_rx_h_undecap_nwifi(struct ath12k *ar,
 	struct ieee80211_hdr *hdr;
 	size_t hdr_len;
 	u8 *crypto_hdr;
-	u16 qos_ctl = 0;
+	u16 qos_ctl;
 
 	/* pull decapped header */
 	hdr = (struct ieee80211_hdr *)msdu->data;
@@ -2139,7 +2139,7 @@ static void ath12k_get_dot11_hdr_from_rx_desc(struct ath12k *ar,
 	struct ath12k_base *ab = ar->ab;
 	size_t hdr_len, crypto_len;
 	struct ieee80211_hdr *hdr;
-	u16 qos_ctl = 0;
+	u16 qos_ctl;
 	__le16 fc;
 	u8 *crypto_hdr;
 
@@ -2424,6 +2424,7 @@ void ath12k_dp_rx_h_ppdu(struct ath12k *ar, struct hal_rx_desc *rx_desc,
 	rx_status->nss = 0;
 	rx_status->encoding = RX_ENC_LEGACY;
 	rx_status->bw = RATE_INFO_BW_20;
+	rx_status->enc_flags = 0;
 
 	rx_status->flag |= RX_FLAG_NO_SIGNAL_VAL;
 
@@ -2466,9 +2467,9 @@ static void ath12k_dp_rx_deliver_msdu(struct ath12k *ar, struct napi_struct *nap
 				     IEEE80211_RADIOTAP_HE_DATA1_BW_RU_ALLOC_KNOWN),
 		.data2 = cpu_to_le16(IEEE80211_RADIOTAP_HE_DATA2_GI_KNOWN),
 	};
-	struct ieee80211_radiotap_he *he = NULL;
+	struct ieee80211_radiotap_he *he;
 	struct ieee80211_rx_status *rx_status;
-	struct ieee80211_sta *pubsta = NULL;
+	struct ieee80211_sta *pubsta;
 	struct ath12k_peer *peer;
 	struct ath12k_skb_rxcb *rxcb = ATH12K_SKB_RXCB(msdu);
 	u8 decap = DP_RX_DECAP_TYPE_RAW;
@@ -2487,8 +2488,9 @@ static void ath12k_dp_rx_deliver_msdu(struct ath12k *ar, struct napi_struct *nap
 
 	spin_lock_bh(&ab->base_lock);
 	peer = ath12k_dp_rx_h_find_peer(ab, msdu);
-	if (peer && peer->sta)
-		pubsta = peer->sta;
+
+	pubsta = peer ? peer->sta : NULL;
+
 	spin_unlock_bh(&ab->base_lock);
 
 	ath12k_dbg(ab, ATH12K_DBG_DATA,
