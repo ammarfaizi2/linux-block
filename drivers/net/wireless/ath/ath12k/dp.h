@@ -1283,7 +1283,6 @@ struct htt_t2h_vdev_common_stats_tlv {
 	__le32 soc_drop_count_hi;
 } __packed;
 
-
 /* ppdu stats
  *
  * @details
