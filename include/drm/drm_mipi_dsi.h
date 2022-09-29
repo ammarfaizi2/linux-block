@@ -197,7 +197,7 @@ struct mipi_dsi_device {
 
 #define MIPI_DSI_MODULE_PREFIX "mipi-dsi:"
 
-static inline struct mipi_dsi_device *to_mipi_dsi_device(struct device *dev)
+static inline struct mipi_dsi_device *to_mipi_dsi_device(const struct device *dev)
 {
 	return container_of(dev, struct mipi_dsi_device, dev);
 }

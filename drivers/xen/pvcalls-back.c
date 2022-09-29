@@ -1186,7 +1186,7 @@ static int pvcalls_back_remove(struct xenbus_device *dev)
 	return 0;
 }
 
-static int pvcalls_back_uevent(struct xenbus_device *xdev,
+static int pvcalls_back_uevent(const struct xenbus_device *xdev,
 			       struct kobj_uevent_env *env)
 {
 	return 0;

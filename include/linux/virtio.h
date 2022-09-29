@@ -127,7 +127,7 @@ struct virtio_device {
 	void *priv;
 };
 
-static inline struct virtio_device *dev_to_virtio(struct device *_dev)
+static inline struct virtio_device *dev_to_virtio(const struct device *_dev)
 {
 	return container_of(_dev, struct virtio_device, dev);
 }

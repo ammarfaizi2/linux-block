@@ -76,7 +76,7 @@ struct mcb_device {
 	struct device *dma_dev;
 };
 
-static inline struct mcb_device *to_mcb_device(struct device *dev)
+static inline struct mcb_device *to_mcb_device(const struct device *dev)
 {
 	return container_of(dev, struct mcb_device, dev);
 }

@@ -1309,7 +1309,7 @@ struct hv_device {
 };
 
 
-static inline struct hv_device *device_to_hv_device(struct device *d)
+static inline struct hv_device *device_to_hv_device(const struct device *d)
 {
 	return container_of(d, struct hv_device, device);
 }
