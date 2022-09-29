@@ -229,7 +229,7 @@ static inline bool is_ssam_device(struct device *d)
  * Return: Returns a pointer to the &struct ssam_device wrapping the given
  * device @d.
  */
-static inline struct ssam_device *to_ssam_device(struct device *d)
+static inline struct ssam_device *to_ssam_device(const struct device *d)
 {
 	return container_of(d, struct ssam_device, dev);
 }

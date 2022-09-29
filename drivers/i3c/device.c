@@ -58,7 +58,7 @@ EXPORT_SYMBOL_GPL(i3c_device_do_priv_xfers);
  *
  * Retrieve I3C dev info.
  */
-void i3c_device_get_info(struct i3c_device *dev,
+void i3c_device_get_info(const struct i3c_device *dev,
 			 struct i3c_device_info *info)
 {
 	if (!info)
@@ -194,7 +194,7 @@ EXPORT_SYMBOL_GPL(i3cdev_to_dev);
  *
  * Return: a pointer to an I3C device object.
  */
-struct i3c_device *dev_to_i3cdev(struct device *dev)
+struct i3c_device *dev_to_i3cdev(const struct device *dev)
 {
 	return container_of(dev, struct i3c_device, dev);
 }

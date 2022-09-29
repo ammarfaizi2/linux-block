@@ -186,7 +186,7 @@ static inline struct i3c_driver *drv_to_i3cdrv(struct device_driver *drv)
 }
 
 struct device *i3cdev_to_dev(struct i3c_device *i3cdev);
-struct i3c_device *dev_to_i3cdev(struct device *dev);
+struct i3c_device *dev_to_i3cdev(const struct device *dev);
 
 const struct i3c_device_id *
 i3c_device_match_id(struct i3c_device *i3cdev,
@@ -293,7 +293,7 @@ int i3c_device_do_priv_xfers(struct i3c_device *dev,
 			     struct i3c_priv_xfer *xfers,
 			     int nxfers);
 
-void i3c_device_get_info(struct i3c_device *dev, struct i3c_device_info *info);
+void i3c_device_get_info(const struct i3c_device *dev, struct i3c_device_info *info);
 
 struct i3c_ibi_payload {
 	unsigned int len;

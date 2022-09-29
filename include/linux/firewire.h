@@ -208,7 +208,7 @@ struct fw_device {
 	struct fw_attribute_group attribute_group;
 };
 
-static inline struct fw_device *fw_device(struct device *dev)
+static inline struct fw_device *fw_device(const struct device *dev)
 {
 	return container_of(dev, struct fw_device, device);
 }
@@ -229,7 +229,7 @@ struct fw_unit {
 	struct fw_attribute_group attribute_group;
 };
 
-static inline struct fw_unit *fw_unit(struct device *dev)
+static inline struct fw_unit *fw_unit(const struct device *dev)
 {
 	return container_of(dev, struct fw_unit, device);
 }
@@ -246,7 +246,7 @@ static inline void fw_unit_put(struct fw_unit *unit)
 	put_device(&unit->device);
 }
 
-static inline struct fw_device *fw_parent_device(struct fw_unit *unit)
+static inline struct fw_device *fw_parent_device(const struct fw_unit *unit)
 {
 	return fw_device(unit->device.parent);
 }
