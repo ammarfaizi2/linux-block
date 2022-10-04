@@ -1207,5 +1207,5 @@ int ath12k_dp_tx_htt_tx_monitor_mode_ring_config(struct ath12k *ar, bool reset)
 		}
 	}
 
-	return ret;
+	return 0;
 }
