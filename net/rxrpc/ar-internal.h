@@ -1061,7 +1061,7 @@ extern const struct seq_operations rxrpc_local_seq_ops;
 /*
  * receive.c
  */
-void rxrpc_receive(struct rxrpc_call *);
+void rxrpc_receive(struct rxrpc_call *call, struct sk_buff *skb);
 
 /*
  * recvmsg.c

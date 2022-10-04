@@ -1191,63 +1191,23 @@ static void rxrpc_receive_implicit_end_call(struct rxrpc_sock *rx,
 }
 
 /*
- * Ping the other end to fill our RTT cache and to retrieve the rwind
- * and MTU parameters.
- */
-static void rxrpc_send_initial_ping(struct rxrpc_call *call, struct sk_buff *skb)
-{
-	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
-	ktime_t now = skb->tstamp;
-
-	if (call->peer->rtt_count < 3 ||
-	    ktime_before(ktime_add_ms(call->peer->rtt_last_req, 1000), now))
-		rxrpc_send_ACK(call, RXRPC_ACK_PING, sp->hdr.serial,
-			       rxrpc_propose_ack_ping_for_params);
-}
-
-/*
  * Process a call's receive queue.
  */
-void rxrpc_receive(struct rxrpc_call *call)
+void rxrpc_receive(struct rxrpc_call *call, struct sk_buff *skb)
 {
-	struct rxrpc_skb_priv *sp;
+	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
 	struct rxrpc_sock *rx = rcu_access_pointer(call->socket);
-	struct sk_buff *skb;
-	int error_report;
 
-	for (;;) {
-		error_report = READ_ONCE(call->error_report);
-		if (error_report) {
-			if (error_report & 0x10000) {
-				error_report &= ~0x10000;
-				rxrpc_set_call_completion(
-					call, RXRPC_CALL_LOCAL_ERROR, 0, -error_report);
-			} else {
-				rxrpc_set_call_completion(
-					call, RXRPC_CALL_NETWORK_ERROR, 0, -error_report);
-			}
-		}
-
-		skb = skb_dequeue(&call->input_queue);
-		if (!skb)
-			break;
-
-		sp = rxrpc_skb(skb);
-
-		if (sp->hdr.callNumber != call->call_id) {
-			rxrpc_free_skb(skb, rxrpc_skb_freed);
-			rxrpc_receive_implicit_end_call(rx, call);
-			continue;
-		}
-
-		if (sp->hdr.serviceId != call->service_id)
-			call->service_id = sp->hdr.serviceId;
-		if ((int)sp->hdr.serial - (int)call->rx_serial > 0)
-			call->rx_serial = sp->hdr.serial;
-
-		if (test_and_set_bit(RXRPC_CALL_EV_INITIAL_PING, &call->events))
-			rxrpc_send_initial_ping(call, skb);
-
-		rxrpc_receive_call_packet(call, skb);
+	if (sp->hdr.callNumber != call->call_id) {
+		rxrpc_free_skb(skb, rxrpc_skb_freed);
+		rxrpc_receive_implicit_end_call(rx, call);
+		return;
 	}
+
+	if (sp->hdr.serviceId != call->service_id)
+		call->service_id = sp->hdr.serviceId;
+	if ((int)sp->hdr.serial - (int)call->rx_serial > 0)
+		call->rx_serial = sp->hdr.serial;
+
+	rxrpc_receive_call_packet(call, skb);
 }

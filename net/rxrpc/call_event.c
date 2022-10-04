@@ -316,14 +316,28 @@ void rxrpc_shrink_call_tx_queue(struct rxrpc_call *call)
 }
 
 /*
+ * Ping the other end to fill our RTT cache and to retrieve the rwind
+ * and MTU parameters.
+ */
+static void rxrpc_send_initial_ping(struct rxrpc_call *call)
+{
+	if (call->peer->rtt_count < 3 ||
+	    ktime_before(ktime_add_ms(call->peer->rtt_last_req, 1000),
+			 ktime_get_real()))
+		rxrpc_send_ACK(call, RXRPC_ACK_PING, 0,
+			       rxrpc_propose_ack_ping_for_params);
+}
+
+/*
  * Handle retransmission and deferred ACK/abort generation.
  */
 void rxrpc_process_call(struct work_struct *work)
 {
 	struct rxrpc_call *call =
 		container_of(work, struct rxrpc_call, processor);
+	struct sk_buff *skb;
 	unsigned long now, next, t;
-	unsigned int iterations = 0;
+	unsigned int iterations = 0, error_report;
 	rxrpc_serial_t ackr_serial;
 
 	rxrpc_see_call(call);
@@ -331,8 +345,6 @@ void rxrpc_process_call(struct work_struct *work)
 	//printk("\n--------------------\n");
 	_enter("{%d,%s,%lx}",
 	       call->debug_id, rxrpc_call_states[call->state], call->events);
-
-	rxrpc_receive(call);
 
 recheck_state:
 	/* Limit the number of times we do this before returning to the manager */
@@ -352,6 +364,26 @@ recheck_state:
 		rxrpc_delete_call_timer(call);
 		goto out_put;
 	}
+
+	error_report = READ_ONCE(call->error_report);
+	if (error_report) {
+		if (error_report & 0x10000) {
+			error_report &= ~0x10000;
+			rxrpc_set_call_completion(
+				call, RXRPC_CALL_LOCAL_ERROR, 0, -error_report);
+		} else {
+			rxrpc_set_call_completion(
+				call, RXRPC_CALL_NETWORK_ERROR, 0, -error_report);
+		}
+		goto out_put;
+	}
+
+	if (test_and_set_bit(RXRPC_CALL_EV_INITIAL_PING, &call->events))
+		rxrpc_send_initial_ping(call);
+
+	skb = skb_dequeue(&call->input_queue);
+	if (skb)
+		rxrpc_receive(call, skb);
 
 	/* Work out if any timeouts tripped */
 	now = jiffies;
