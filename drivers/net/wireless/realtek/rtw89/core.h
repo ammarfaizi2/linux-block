@@ -84,6 +84,7 @@ enum rtw89_subband {
 	RTW89_CH_6G_BAND_IDX7, /* Ultra-high */
 
 	RTW89_SUBBAND_NR,
+	RTW89_SUBBAND_2GHZ_5GHZ_NR = RTW89_CH_5G_BAND_4 + 1,
 };
 
 enum rtw89_gain_offset {
@@ -490,6 +491,8 @@ enum rtw89_bandwidth_section_num {
 	RTW89_BW80_SEC_NUM = 2,
 };
 
+#define RTW89_TXPWR_LMT_PAGE_SIZE 40
+
 struct rtw89_txpwr_limit {
 	s8 cck_20m[RTW89_BF_NUM];
 	s8 cck_40m[RTW89_BF_NUM];
@@ -503,6 +506,8 @@ struct rtw89_txpwr_limit {
 };
 
 #define RTW89_RU_SEC_NUM 8
+
+#define RTW89_TXPWR_LMT_RU_PAGE_SIZE 24
 
 struct rtw89_txpwr_limit_ru {
 	s8 ru26[RTW89_RU_SEC_NUM];
@@ -2192,6 +2197,7 @@ struct rtw89_sta {
 
 struct rtw89_efuse {
 	bool valid;
+	bool power_k_valid;
 	u8 xtal_cap;
 	u8 addr[ETH_ALEN];
 	u8 rfe_type;
@@ -3421,8 +3427,10 @@ struct rtw89_phy_bb_gain_info {
 
 struct rtw89_phy_efuse_gain {
 	bool offset_valid;
+	bool comp_valid;
 	s8 offset[RF_PATH_MAX][RTW89_GAIN_OFFSET_NR]; /* S(8, 0) */
 	s8 offset_base[RTW89_PHY_MAX]; /* S(8, 4) */
+	s8 comp[RF_PATH_MAX][RTW89_SUBBAND_NR]; /* S(8, 0) */
 };
 
 struct rtw89_dev {

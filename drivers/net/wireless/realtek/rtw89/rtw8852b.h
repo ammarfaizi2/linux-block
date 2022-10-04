@@ -2,35 +2,35 @@
 /* Copyright(c) 2019-2022  Realtek Corporation
  */
 
-#ifndef __RTW89_8852C_H__
-#define __RTW89_8852C_H__
+#ifndef __RTW89_8852B_H__
+#define __RTW89_8852B_H__
 
 #include "core.h"
 
-#define RF_PATH_NUM_8852C 2
-#define BB_PATH_NUM_8852C 2
+#define RF_PATH_NUM_8852B 2
+#define BB_PATH_NUM_8852B 2
 
-struct rtw8852c_u_efuse {
-	u8 rsvd[0x38];
+struct rtw8852b_u_efuse {
+	u8 rsvd[0x88];
 	u8 mac_addr[ETH_ALEN];
 };
 
-struct rtw8852c_e_efuse {
+struct rtw8852b_e_efuse {
 	u8 mac_addr[ETH_ALEN];
 };
 
-struct rtw8852c_tssi_offset {
+struct rtw8852b_tssi_offset {
 	u8 cck_tssi[TSSI_CCK_CH_GROUP_NUM];
 	u8 bw40_tssi[TSSI_MCS_2G_CH_GROUP_NUM];
 	u8 rsvd[7];
 	u8 bw40_1s_tssi_5g[TSSI_MCS_5G_CH_GROUP_NUM];
 } __packed;
 
-struct rtw8852c_efuse {
+struct rtw8852b_efuse {
 	u8 rsvd[0x210];
-	struct rtw8852c_tssi_offset path_a_tssi;
+	struct rtw8852b_tssi_offset path_a_tssi;
 	u8 rsvd1[10];
-	struct rtw8852c_tssi_offset path_b_tssi;
+	struct rtw8852b_tssi_offset path_b_tssi;
 	u8 rsvd2[94];
 	u8 channel_plan;
 	u8 xtal_k;
@@ -70,18 +70,21 @@ struct rtw8852c_efuse {
 	u8 rsvd12;
 	u8 rx_gain_5g_high;
 	u8 rsvd13[35];
-	u8 bw40_1s_tssi_6g_a[TSSI_MCS_6G_CH_GROUP_NUM];
-	u8 rsvd14[10];
-	u8 bw40_1s_tssi_6g_b[TSSI_MCS_6G_CH_GROUP_NUM];
-	u8 rsvd15[110];
-	u8 channel_plan_6g;
-	u8 rsvd16[71];
+	u8 path_a_cck_pwr_idx[6];
+	u8 path_a_bw40_1tx_pwr_idx[5];
+	u8 path_a_ofdm_1tx_pwr_idx_diff:4;
+	u8 path_a_bw20_1tx_pwr_idx_diff:4;
+	u8 path_a_bw20_2tx_pwr_idx_diff:4;
+	u8 path_a_bw40_2tx_pwr_idx_diff:4;
+	u8 path_a_cck_2tx_pwr_idx_diff:4;
+	u8 path_a_ofdm_2tx_pwr_idx_diff:4;
+	u8 rsvd14[0xf2];
 	union {
-		struct rtw8852c_u_efuse u;
-		struct rtw8852c_e_efuse e;
+		struct rtw8852b_u_efuse u;
+		struct rtw8852b_e_efuse e;
 	};
 } __packed;
 
-extern const struct rtw89_chip_info rtw8852c_chip_info;
+extern const struct rtw89_chip_info rtw8852b_chip_info;
 
 #endif
