@@ -175,8 +175,7 @@ static int rxrpc_recvmsg_term(struct rxrpc_call *call, struct msghdr *msg)
 
 	trace_rxrpc_recvdata(call, rxrpc_recvmsg_terminal,
 			     lower_32_bits(atomic64_read(&call->ackr_window)) - 1,
-			     call->rx_pkt_sub, call->rx_pkt_offset, call->rx_pkt_len,
-			     ret);
+			     call->rx_pkt_offset, call->rx_pkt_len, ret);
 	return ret;
 }
 
@@ -189,7 +188,7 @@ static void rxrpc_end_rx_phase(struct rxrpc_call *call, rxrpc_serial_t serial)
 
 	_enter("%d,%s", call->debug_id, rxrpc_call_states[call->state]);
 
-	trace_rxrpc_receive(call, rxrpc_receive_end, 0, whigh, 0);
+	trace_rxrpc_receive(call, rxrpc_receive_end, 0, whigh);
 
 	if (call->state == RXRPC_CALL_CLIENT_RECV_REPLY)
 		rxrpc_propose_delay_ACK(call, serial, rxrpc_propose_ack_terminal_ack);
@@ -227,7 +226,6 @@ static void rxrpc_rotate_rx_window(struct rxrpc_call *call)
 	rxrpc_seq_t old_consumed = call->rx_consumed, tseq;
 	bool last;
 	int acked;
-	u8 nr_sub;
 
 	_enter("%d", call->debug_id);
 
@@ -236,10 +234,9 @@ further_rotation:
 	rxrpc_see_skb(skb, rxrpc_skb_rotated);
 
 	sp = rxrpc_skb(skb);
-	nr_sub = sp->nr_subpackets;
-	tseq   = sp->hdr.seq + nr_sub - 1;
-	serial = sp->hdr.serial + nr_sub - 1;
-	last   = sp->flags & RXRPC_RX_LAST;
+	tseq   = sp->hdr.seq;
+	serial = sp->hdr.serial;
+	last   = sp->hdr.flags & RXRPC_LAST_PACKET;
 
 	/* Barrier against rxrpc_input_data(). */
 	if (after(tseq, call->rx_consumed))
@@ -248,7 +245,7 @@ further_rotation:
 	rxrpc_free_skb(skb, rxrpc_skb_freed);
 
 	trace_rxrpc_receive(call, last ? rxrpc_receive_rotate_last : rxrpc_receive_rotate,
-			    serial, call->rx_consumed, nr_sub);
+			    serial, call->rx_consumed);
 	if (last) {
 		rxrpc_end_rx_phase(call, serial);
 		return;
@@ -261,7 +258,7 @@ further_rotation:
 	if (skb) {
 		sp = rxrpc_skb(skb);
 		if (sp->hdr.seq != call->rx_consumed &&
-		    after_eq(call->rx_consumed, sp->hdr.seq + sp->nr_subpackets - 1))
+		    after_eq(call->rx_consumed, sp->hdr.seq))
 			goto further_rotation;
 	}
 
@@ -274,76 +271,15 @@ further_rotation:
 }
 
 /*
- * Set up a data location table for a jumbo DATA packet then verify
- * and decrypt all the subpackets and locate the data for each.  We
- * also need to skip over any duplicate subpackets.
+ * Decrypt and verify a subpacket.
  */
 static int rxrpc_verify_data(struct rxrpc_call *call, struct sk_buff *skb)
 {
-	struct rxrpc_jumbo_header jhdr;
-	struct rxrpc_skb_subpacket *subs;
 	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
-	unsigned int offset = sizeof(struct rxrpc_wire_header);
-	unsigned int len = skb->len - sizeof(struct rxrpc_wire_header);
-	rxrpc_seq_t seq = sp->hdr.seq;
-	int nr_subs = sp->nr_subpackets - 1, i = 0, j;
-	u16 cksum = sp->hdr.cksum;
 
-	subs = kcalloc(sp->nr_subpackets, sizeof(*sp->subs), GFP_KERNEL);
-	if (!subs)
-		return -ENOMEM;
-	sp->subs = subs;
-
-	for (j = 0; j < nr_subs; j++, seq++) {
-		if (after(seq, call->rx_consumed)) {
-			subs[i].offset	= offset;
-			subs[i].len	= RXRPC_JUMBO_DATALEN;
-			subs[i].cksum	= cksum;
-			i++;
-		} else {
-			sp->hdr.seq++;
-			sp->nr_subpackets--;
-		}
-		offset += RXRPC_JUMBO_DATALEN;
-		if (skb_copy_bits(skb, offset + 2, &jhdr.cksum, 2) < 0)
-			return -EPROTO;
-		offset += sizeof(jhdr);
-		cksum = ntohs(jhdr.cksum);
-		len -= RXRPC_JUMBO_SUBPKTLEN;
-	}
-
-	subs[i].offset	= offset;
-	subs[i].len	= len;
-	subs[i].cksum	= cksum;
+	if (sp->flags & RXRPC_RX_VERIFIED)
+		return 0;
 	return call->security->verify_packet(call, skb);
-}
-
-/*
- * Locate the data within a packet.  This is complicated by:
- *
- * (1) An skb may contain a jumbo packet - so we have to find the appropriate
- *     subpacket.
- *
- * (2) The (sub)packets may be encrypted and, if so, the encrypted portion
- *     contains an extra header which includes the true length of the data,
- *     excluding any encrypted padding.
- */
-static int rxrpc_locate_data(struct rxrpc_call *call, struct sk_buff *skb,
-			     u8 *_sub, unsigned int *_offset, unsigned int *_len)
-{
-	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
-	int ret;
-
-	if (!(sp->flags & RXRPC_RX_VERIFIED)) {
-		ret = rxrpc_verify_data(call, skb);
-		if (ret < 0)
-			return ret;
-	}
-
-	*_sub    = 0;
-	*_offset = sp->subs[0].offset;
-	*_len    = sp->subs[0].len;
-	return 0;
 }
 
 /*
@@ -361,11 +297,9 @@ static int rxrpc_recvmsg_data(struct socket *sock, struct rxrpc_call *call,
 	size_t remain;
 	unsigned int rx_pkt_offset, rx_pkt_len;
 	int copy, ret = -EAGAIN, ret2;
-	u8 rx_pkt_sub;
 
 	rx_pkt_offset = call->rx_pkt_offset;
 	rx_pkt_len = call->rx_pkt_len;
-	rx_pkt_sub = call->rx_pkt_sub;
 
 	if (call->state >= RXRPC_CALL_SERVER_ACK_REQUEST) {
 		seq = lower_32_bits(atomic64_read(&call->ackr_window)) - 1;
@@ -380,35 +314,35 @@ static int rxrpc_recvmsg_data(struct socket *sock, struct rxrpc_call *call,
 	while (skb) {
 		rxrpc_see_skb(skb, rxrpc_skb_seen);
 		sp = rxrpc_skb(skb);
-		seq = sp->hdr.seq + rx_pkt_sub;
+		seq = sp->hdr.seq;
 
-		if (after_eq(call->rx_consumed, seq + sp->nr_subpackets - 1)) {
-			kdebug("obsolete %x %x", call->rx_consumed, seq + sp->nr_subpackets - 1);
+		if (after_eq(call->rx_consumed, seq)) {
+			kdebug("obsolete %x %x", call->rx_consumed, seq);
 			goto skip_obsolete;
 		}
 
 		if (!(flags & MSG_PEEK))
 			trace_rxrpc_receive(call, rxrpc_receive_front,
-					    sp->hdr.serial, seq, sp->nr_subpackets);
+					    sp->hdr.serial, seq);
 
 		if (msg)
 			sock_recv_timestamp(msg, sock->sk, skb);
 
 		if (rx_pkt_offset == 0) {
-			ret2 = rxrpc_locate_data(call, skb, &rx_pkt_sub,
-						 &rx_pkt_offset, &rx_pkt_len);
+			ret2 = rxrpc_verify_data(call, skb);
+			rx_pkt_offset = sp->offset;
+			rx_pkt_len = sp->len;
 			trace_rxrpc_recvdata(call, rxrpc_recvmsg_next, seq,
-					     rx_pkt_sub, rx_pkt_offset, rx_pkt_len, ret2);
+					     rx_pkt_offset, rx_pkt_len, ret2);
 			if (ret2 < 0) {
 				ret = ret2;
 				goto out;
 			}
 		} else {
 			trace_rxrpc_recvdata(call, rxrpc_recvmsg_cont, seq,
-					     rx_pkt_sub, rx_pkt_offset, rx_pkt_len, 0);
+					     rx_pkt_offset, rx_pkt_len, 0);
 		}
 
-	next_subpacket:
 		/* We have to handle short, empty and used-up DATA packets. */
 		remain = len - *_offset;
 		copy = rx_pkt_len;
@@ -430,26 +364,16 @@ static int rxrpc_recvmsg_data(struct socket *sock, struct rxrpc_call *call,
 
 		if (rx_pkt_len > 0) {
 			trace_rxrpc_recvdata(call, rxrpc_recvmsg_full, seq,
-					     rx_pkt_sub, rx_pkt_offset, rx_pkt_len, 0);
+					     rx_pkt_offset, rx_pkt_len, 0);
 			ASSERTCMP(*_offset, ==, len);
 			ret = 0;
 			break;
-		}
-
-		rx_pkt_sub++;
-		if (rx_pkt_sub < sp->nr_subpackets) {
-			rx_pkt_offset = sp->subs[rx_pkt_sub].offset;
-			rx_pkt_len    = sp->subs[rx_pkt_sub].len;
-			trace_rxrpc_recvdata(call, rxrpc_recvmsg_cont, seq,
-					     rx_pkt_sub, rx_pkt_offset, rx_pkt_len, 0);
-			goto next_subpacket;
 		}
 
 	skip_obsolete:
 		/* The whole packet has been transferred. */
 		if (sp->hdr.flags & RXRPC_LAST_PACKET)
 			ret = 1;
-		rx_pkt_sub = 0;
 		rx_pkt_offset = 0;
 		rx_pkt_len = 0;
 
@@ -463,11 +387,10 @@ out:
 	if (!(flags & MSG_PEEK)) {
 		call->rx_pkt_offset = rx_pkt_offset;
 		call->rx_pkt_len = rx_pkt_len;
-		call->rx_pkt_sub = rx_pkt_sub;
 	}
 done:
 	trace_rxrpc_recvdata(call, rxrpc_recvmsg_data_return, seq,
-			     rx_pkt_sub, rx_pkt_offset, rx_pkt_len, ret);
+			     rx_pkt_offset, rx_pkt_len, ret);
 	if (ret == -EAGAIN)
 		set_bit(RXRPC_CALL_RX_IS_IDLE, &call->flags);
 	return ret;

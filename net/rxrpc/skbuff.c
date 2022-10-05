@@ -70,7 +70,6 @@ void rxrpc_free_skb(struct sk_buff *skb, enum rxrpc_skb_trace op)
 		int n;
 		n = atomic_dec_return(select_skb_count(skb));
 		trace_rxrpc_skb(skb, op, refcount_read(&skb->users), n, here);
-		kfree(sp->subs);
 		kfree_skb(skb);
 	}
 }
@@ -87,7 +86,6 @@ void rxrpc_purge_queue(struct sk_buff_head *list)
 		int n = atomic_dec_return(select_skb_count(skb));
 		trace_rxrpc_skb(skb, rxrpc_skb_purged,
 				refcount_read(&skb->users), n, here);
-		kfree(sp->subs);
 		kfree_skb(skb);
 	}
 }

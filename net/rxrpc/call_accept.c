@@ -371,7 +371,7 @@ struct rxrpc_call *rxrpc_new_incoming_call(struct rxrpc_local *local,
 	}
 
 	trace_rxrpc_receive(call, rxrpc_receive_incoming,
-			    sp->hdr.serial, sp->hdr.seq, sp->nr_subpackets);
+			    sp->hdr.serial, sp->hdr.seq);
 
 	/* Make the call live. */
 	rxrpc_incoming_call(rx, call, skb);

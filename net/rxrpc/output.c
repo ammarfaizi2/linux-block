@@ -77,7 +77,7 @@ static size_t rxrpc_fill_out_ack(struct rxrpc_connection *conn,
 				 struct rxrpc_txbuf *txb)
 {
 	struct rxrpc_ackinfo ackinfo;
-	unsigned int tmp, qsize;
+	unsigned int qsize;
 	rxrpc_seq_t window, wtop, wrap_point, ix, first;
 	int rsize;
 	u64 wtmp;
@@ -85,14 +85,8 @@ static size_t rxrpc_fill_out_ack(struct rxrpc_connection *conn,
 	u8 *ackp = txb->acks;
 	u8 sack_buffer[sizeof(call->ackr_sack_table)] __aligned(8);
 
-	tmp = atomic_xchg(&call->ackr_nr_unacked, 0);
-	tmp |= atomic_xchg(&call->ackr_nr_consumed, 0);
-	if (!tmp && (txb->ack.reason == RXRPC_ACK_DELAY ||
-		     txb->ack.reason == RXRPC_ACK_IDLE)) {
-		rxrpc_inc_stat(call->rxnet, stat_tx_ack_skip);
-		return 0;
-	}
-
+	atomic_set(&call->ackr_nr_unacked, 0);
+	atomic_set(&call->ackr_nr_consumed, 0);
 	rxrpc_inc_stat(call->rxnet, stat_tx_ack_fill);
 
 	/* Barrier against rxrpc_input_data(). */

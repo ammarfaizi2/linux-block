@@ -130,12 +130,10 @@ void rxrpc_resend(struct rxrpc_call *call, struct sk_buff *ack_skb)
 	if (list_empty(&call->tx_buffer))
 		goto no_resend;
 
-	spin_lock(&call->tx_lock);
-
 	if (list_empty(&call->tx_buffer))
 		goto no_further_resend;
 
-	trace_rxrpc_resend(call);
+	trace_rxrpc_resend(call, ack_skb);
 	txb = list_first_entry(&call->tx_buffer, struct rxrpc_txbuf, call_link);
 
 	/* Scan the soft ACK table without dropping the lock and resend any
@@ -217,7 +215,6 @@ void rxrpc_resend(struct rxrpc_call *call, struct sk_buff *ack_skb)
 	}
 
 no_further_resend:
-	spin_unlock(&call->tx_lock);
 no_resend:
 	resend_at = nsecs_to_jiffies(ktime_to_ns(ktime_sub(now, oldest)));
 	resend_at += jiffies + rxrpc_get_rto_backoff(call->peer,
@@ -263,7 +260,6 @@ void rxrpc_shrink_call_tx_buffer(struct rxrpc_call *call)
 	_enter("%x/%x/%x", call->tx_bottom, call->acks_hard_ack, call->tx_top);
 
 	for (;;) {
-		spin_lock(&call->tx_lock);
 		txb = list_first_entry_or_null(&call->tx_buffer,
 					       struct rxrpc_txbuf, call_link);
 		if (!txb)
@@ -277,13 +273,8 @@ void rxrpc_shrink_call_tx_buffer(struct rxrpc_call *call)
 		list_del_rcu(&txb->call_link);
 
 		trace_rxrpc_txqueue(call, rxrpc_txqueue_dequeue);
-
-		spin_unlock(&call->tx_lock);
-
 		rxrpc_put_txbuf(txb, rxrpc_txbuf_put_rotated);
 	}
-
-	spin_unlock(&call->tx_lock);
 }
 
 /*
@@ -485,6 +476,10 @@ recheck_state:
 	if (test_and_clear_bit(RXRPC_CALL_RX_IS_IDLE, &call->flags))
 		rxrpc_send_ACK(call, RXRPC_ACK_IDLE, 0,
 			       rxrpc_propose_ack_rx_underrun);
+
+	if (atomic_read(&call->ackr_nr_unacked) > 2)
+		rxrpc_send_ACK(call, RXRPC_ACK_IDLE, 0,
+			       rxrpc_propose_ack_input_data);
 
 	/* Make sure the timer is restarted */
 	next = call->expect_rx_by;

@@ -190,23 +190,15 @@ struct rxrpc_host_header {
 	u16		serviceId;	/* service ID */
 } __packed;
 
-struct rxrpc_skb_subpacket {
-	u16		offset;		/* Offset of data */
-	u16		len;		/* Length of data */
-	u16		cksum;		/* Security checksum */
-};
-
 /*
  * RxRPC socket buffer private variables
  * - max 48 bytes (struct sk_buff::cb)
  */
 struct rxrpc_skb_priv {
-	struct rxrpc_skb_subpacket *subs; /* Offset and length of data in subpackets */
-	u8		nr_subpackets;	/* Number of subpackets */
-	s8		req_ack;	/* Subpacket marked request-ack (or -1) */
+	u16		offset;		/* Offset of data */
+	u16		len;		/* Length of data */
 	u8		flags;
-#define RXRPC_RX_LAST		0x01	/* Includes last packet */
-#define RXRPC_RX_VERIFIED	0x02
+#define RXRPC_RX_VERIFIED	0x01
 
 	struct rxrpc_host_header hdr;		/* RxRPC packet header from this packet */
 };
@@ -623,7 +615,6 @@ struct rxrpc_call {
 	int			debug_id;	/* debug ID for printks */
 	unsigned short		rx_pkt_offset;	/* Current recvmsg packet offset */
 	unsigned short		rx_pkt_len;	/* Current recvmsg packet len */
-	u8			rx_pkt_sub;	/* Current recvmsg subpacket */
 
 	/* Transmitted data tracking. */
 	spinlock_t		tx_lock;	/* Transmit queue lock */
