@@ -2292,7 +2292,7 @@ int next_demotion_node(int node)
 		 * caching issue, which seems more complicated. So selecting
 		 * target node randomly seems better until now.
 		 */
-		index = get_random_int() % target_nr;
+		index = prandom_u32_max(target_nr);
 		break;
 	}
 

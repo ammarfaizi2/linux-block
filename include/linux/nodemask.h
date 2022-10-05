@@ -509,7 +509,7 @@ static inline int node_random(const nodemask_t *maskp)
 	w = nodes_weight(*maskp);
 	if (w)
 		bit = bitmap_ord_to_pos(maskp->bits,
-			get_random_int() % w, MAX_NUMNODES);
+			prandom_u32_max(w), MAX_NUMNODES);
 	return bit;
 #else
 	return 0;
