@@ -12,27 +12,22 @@
 #define DSCP_TID_MAP_TBL_ENTRY_SIZE 64
 
 /* dscp_tid_map - Default DSCP-TID mapping
- *
+ *=================
  * DSCP        TID
- * 000000      0
- * 001000      1
- * 010000      2
- * 011000      3
- * 100000      4
- * 101000      5
- * 110000      6
- * 111000      7
+ *=================
+ * 000xxx      0
+ * 001xxx      1
+ * 010xxx      2
+ * 011xxx      3
+ * 100xxx      4
+ * 101xxx      5
+ * 110xxx      6
+ * 111xxx      7
  */
-static const u8 dscp_tid_map[DSCP_TID_MAP_TBL_ENTRY_SIZE] = {
-	0, 0, 0, 0, 0, 0, 0, 0,
-	1, 1, 1, 1, 1, 1, 1, 1,
-	2, 2, 2, 2, 2, 2, 2, 2,
-	3, 3, 3, 3, 3, 3, 3, 3,
-	4, 4, 4, 4, 4, 4, 4, 4,
-	5, 5, 5, 5, 5, 5, 5, 5,
-	6, 6, 6, 6, 6, 6, 6, 6,
-	7, 7, 7, 7, 7, 7, 7, 7,
-};
+static inline u8 dscp2tid(u8 dscp)
+{
+	return dscp >> 3;
+}
 
 void ath12k_hal_tx_cmd_desc_setup(struct ath12k_base *ab,
 				  struct hal_tcl_data_cmd *tcl_cmd,
@@ -75,10 +70,9 @@ void ath12k_hal_tx_set_dscp_tid_map(struct ath12k_base *ab, int id)
 {
 	u32 ctrl_reg_val;
 	u32 addr;
-	u8 hw_map_val[HAL_DSCP_TID_TBL_SIZE];
+	u8 hw_map_val[HAL_DSCP_TID_TBL_SIZE], dscp, tid;
 	int i;
 	u32 value;
-	int cnt = 0;
 
 	ctrl_reg_val = ath12k_hif_read32(ab, HAL_SEQ_WCSS_UMAC_TCL_REG +
 					 HAL_TCL1_RING_CMN_CTRL_REG);
@@ -93,26 +87,40 @@ void ath12k_hal_tx_set_dscp_tid_map(struct ath12k_base *ab, int id)
 	/* Configure each DSCP-TID mapping in three bits there by configure
 	 * three bytes in an iteration.
 	 */
-	for (i = 0; i < DSCP_TID_MAP_TBL_ENTRY_SIZE; i += 8) {
-		value = u32_encode_bits(dscp_tid_map[i],
-					HAL_TCL1_RING_FIELD_DSCP_TID_MAP0) |
-			u32_encode_bits(dscp_tid_map[i + 1],
-					HAL_TCL1_RING_FIELD_DSCP_TID_MAP1) |
-			u32_encode_bits(dscp_tid_map[i + 2],
-					HAL_TCL1_RING_FIELD_DSCP_TID_MAP2) |
-			u32_encode_bits(dscp_tid_map[i + 3],
-					HAL_TCL1_RING_FIELD_DSCP_TID_MAP3) |
-			u32_encode_bits(dscp_tid_map[i + 4],
-					HAL_TCL1_RING_FIELD_DSCP_TID_MAP4) |
-			u32_encode_bits(dscp_tid_map[i + 5],
-					HAL_TCL1_RING_FIELD_DSCP_TID_MAP5) |
-			u32_encode_bits(dscp_tid_map[i + 6],
-					HAL_TCL1_RING_FIELD_DSCP_TID_MAP6) |
-			u32_encode_bits(dscp_tid_map[i + 7],
-					HAL_TCL1_RING_FIELD_DSCP_TID_MAP7);
+	for (i = 0, dscp = 0; i < HAL_DSCP_TID_TBL_SIZE; i += 3) {
+		tid = dscp2tid(dscp);
+		value = u32_encode_bits(tid, HAL_TCL1_RING_FIELD_DSCP_TID_MAP0);
+		dscp++;
 
-		memcpy(&hw_map_val[cnt], &value, 3);
-		cnt += 3;
+		tid = dscp2tid(dscp);
+		value |= u32_encode_bits(tid, HAL_TCL1_RING_FIELD_DSCP_TID_MAP1);
+		dscp++;
+
+		tid = dscp2tid(dscp);
+		value |= u32_encode_bits(tid, HAL_TCL1_RING_FIELD_DSCP_TID_MAP2);
+		dscp++;
+
+		tid = dscp2tid(dscp);
+		value |= u32_encode_bits(tid, HAL_TCL1_RING_FIELD_DSCP_TID_MAP3);
+		dscp++;
+
+		tid = dscp2tid(dscp);
+		value |= u32_encode_bits(tid, HAL_TCL1_RING_FIELD_DSCP_TID_MAP4);
+		dscp++;
+
+		tid = dscp2tid(dscp);
+		value |= u32_encode_bits(tid, HAL_TCL1_RING_FIELD_DSCP_TID_MAP5);
+		dscp++;
+
+		tid = dscp2tid(dscp);
+		value |= u32_encode_bits(tid, HAL_TCL1_RING_FIELD_DSCP_TID_MAP6);
+		dscp++;
+
+		tid = dscp2tid(dscp);
+		value |= u32_encode_bits(tid, HAL_TCL1_RING_FIELD_DSCP_TID_MAP7);
+		dscp++;
+
+		memcpy(&hw_map_val[i], &value, 3);
 	}
 
 	for (i = 0; i < HAL_DSCP_TID_TBL_SIZE; i += 4) {
