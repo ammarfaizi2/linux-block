@@ -2120,6 +2120,7 @@ void ath12k_hal_srng_deinit(struct ath12k_base *ab)
 	ath12k_hal_free_cont_rdp(ab);
 	ath12k_hal_free_cont_wrp(ab);
 	kfree(hal->srng_config);
+	hal->srng_config = NULL;
 }
 
 void ath12k_hal_dump_srng_stats(struct ath12k_base *ab)
