@@ -974,7 +974,7 @@ static int __init test_drm_buddy_init(void)
 	int err;
 
 	while (!random_seed)
-		random_seed = get_random_int();
+		random_seed = get_random_u32();
 
 	pr_info("Testing DRM buddy manager (struct drm_buddy), with random_seed=0x%x\n",
 		random_seed);
