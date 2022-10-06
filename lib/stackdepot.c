@@ -438,7 +438,7 @@ depot_stack_handle_t __stack_depot_save(unsigned long *entries,
 	 */
 	nr_entries = filter_irq_stacks(entries, nr_entries);
 
-	if (unlikely(nr_entries == 0) || stack_depot_disable)
+	if (unlikely(nr_entries == 0) || stack_depot_disable || !stack_table)
 		goto fast_exit;
 
 	hash = hash_stack(entries, nr_entries);
