@@ -190,7 +190,7 @@ static int cpuhp_invoke_callback(unsigned int cpu, enum cpuhp_state state,
 
 		trace_cpuhp_enter(cpu, st->target, state, cb);
 		ret = cb(cpu);
-		if (!ret && bringup)
+		if (ret && bringup)
 			pr_warn("%s(%d): %ps returned %d\n", __func__, cpu, cb, ret);
 		trace_cpuhp_exit(cpu, st->state, state, ret);
 		return ret;
@@ -202,7 +202,7 @@ static int cpuhp_invoke_callback(unsigned int cpu, enum cpuhp_state state,
 		WARN_ON_ONCE(lastp && *lastp);
 		trace_cpuhp_multi_enter(cpu, st->target, state, cbm, node);
 		ret = cbm(cpu, node);
-		if (!ret && bringup)
+		if (ret && bringup)
 			pr_warn("%s(%d): %ps returned %d\n", __func__, cpu, cbm, ret);
 		trace_cpuhp_exit(cpu, st->state, state, ret);
 		return ret;
@@ -216,7 +216,7 @@ static int cpuhp_invoke_callback(unsigned int cpu, enum cpuhp_state state,
 
 		trace_cpuhp_multi_enter(cpu, st->target, state, cbm, node);
 		ret = cbm(cpu, node);
-		if (!ret && bringup)
+		if (ret && bringup)
 			pr_warn("%s(%d): %ps returned %d\n", __func__, cpu, cbm, ret);
 		trace_cpuhp_exit(cpu, st->state, state, ret);
 		if (ret) {
@@ -243,7 +243,7 @@ err:
 
 		trace_cpuhp_multi_enter(cpu, st->target, state, cbm, node);
 		ret = cbm(cpu, node);
-		if (!ret && bringup)
+		if (ret && bringup)
 			pr_warn("%s(%d): %ps returned %d\n", __func__, cpu, cbm, ret);
 		trace_cpuhp_exit(cpu, st->state, state, ret);
 		/*
