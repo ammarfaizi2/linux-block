@@ -45,6 +45,33 @@ static struct semaphore rxrpc_call_limiter =
 static struct semaphore rxrpc_kernel_call_limiter =
 	__SEMAPHORE_INITIALIZER(rxrpc_kernel_call_limiter, 1000);
 
+static void rxrpc_destroy_call(struct work_struct *work);
+
+void rxrpc_poke_call(struct rxrpc_call *call, enum rxrpc_call_poke_trace what)
+{
+	struct rxrpc_local *local;
+	struct rxrpc_peer *peer = call->peer;
+	unsigned long flags;
+	bool busy;
+
+	if (WARN_ON_ONCE(!peer))
+		return;
+	local = peer->local;
+
+	if (call->state < RXRPC_CALL_COMPLETE) {
+		spin_lock_irqsave(&local->rx_queue.lock, flags);
+		busy = (call->poke->next != NULL);
+		trace_rxrpc_poke_call(call, busy, what);
+		if (!busy) {
+			rxrpc_get_call(call, rxrpc_call_got_poke);
+			rxrpc_get_skb(call->poke, rxrpc_skb_got);
+			__skb_queue_tail(&local->rx_queue, call->poke);
+		}
+		spin_unlock_irqrestore(&local->rx_queue.lock, flags);
+		rxrpc_wake_up_io_thread(local);
+	}
+}
+
 static void rxrpc_call_timer_expired(struct timer_list *t)
 {
 	struct rxrpc_call *call = from_timer(call, t, timer);
@@ -53,9 +80,7 @@ static void rxrpc_call_timer_expired(struct timer_list *t)
 
 	if (call->state < RXRPC_CALL_COMPLETE) {
 		trace_rxrpc_timer_expired(call, jiffies);
-		__rxrpc_queue_call(call);
-	} else {
-		rxrpc_put_call(call, rxrpc_call_put);
+		rxrpc_poke_call(call, rxrpc_call_poke_timer);
 	}
 }
 
@@ -64,17 +89,13 @@ void rxrpc_reduce_call_timer(struct rxrpc_call *call,
 			     unsigned long now,
 			     enum rxrpc_timer_trace why)
 {
-	if (rxrpc_try_get_call(call, rxrpc_call_got_timer)) {
-		trace_rxrpc_timer(call, why, now);
-		if (timer_reduce(&call->timer, expire_at))
-			rxrpc_put_call(call, rxrpc_call_put_notimer);
-	}
+	trace_rxrpc_timer(call, why, now);
+	timer_reduce(&call->timer, expire_at);
 }
 
 void rxrpc_delete_call_timer(struct rxrpc_call *call)
 {
-	if (del_timer_sync(&call->timer))
-		rxrpc_put_call(call, rxrpc_call_put_timer);
+	del_timer_sync(&call->timer);
 }
 
 static struct lock_class_key rxrpc_call_user_mutex_lock_class_key;
@@ -122,12 +143,23 @@ found_extant_call:
 struct rxrpc_call *rxrpc_alloc_call(struct rxrpc_sock *rx, gfp_t gfp,
 				    unsigned int debug_id)
 {
+	struct rxrpc_skb_priv *sp;
 	struct rxrpc_call *call;
 	struct rxrpc_net *rxnet = rxrpc_net(sock_net(&rx->sk));
 
 	call = kmem_cache_zalloc(rxrpc_call_jar, gfp);
 	if (!call)
 		return NULL;
+
+	call->poke = alloc_skb(0, gfp);
+	if (!call->poke) {
+		kmem_cache_free(rxrpc_call_jar, call);
+		return NULL;
+	}
+
+	rxrpc_new_skb(call->poke, rxrpc_skb_new);
+	sp = rxrpc_skb(call->poke);
+	sp->call = call;
 
 	mutex_init(&call->user_mutex);
 
@@ -139,7 +171,7 @@ struct rxrpc_call *rxrpc_alloc_call(struct rxrpc_sock *rx, gfp_t gfp,
 				  &rxrpc_call_user_mutex_lock_class_key);
 
 	timer_setup(&call->timer, rxrpc_call_timer_expired, 0);
-	INIT_WORK(&call->processor, &rxrpc_process_call);
+	INIT_WORK(&call->destructor, rxrpc_destroy_call);
 	INIT_LIST_HEAD(&call->link);
 	INIT_LIST_HEAD(&call->chan_wait_link);
 	INIT_LIST_HEAD(&call->accept_link);
@@ -147,7 +179,6 @@ struct rxrpc_call *rxrpc_alloc_call(struct rxrpc_sock *rx, gfp_t gfp,
 	INIT_LIST_HEAD(&call->sock_link);
 	INIT_LIST_HEAD(&call->tx_sendmsg);
 	INIT_LIST_HEAD(&call->tx_buffer);
-	skb_queue_head_init(&call->input_queue);
 	skb_queue_head_init(&call->rx_queue);
 	skb_queue_head_init(&call->rx_oos_queue);
 	init_waitqueue_head(&call->waitq);
@@ -160,6 +191,7 @@ struct rxrpc_call *rxrpc_alloc_call(struct rxrpc_sock *rx, gfp_t gfp,
 	call->next_rx_timo = 20 * HZ;
 	call->next_req_timo = 1 * HZ;
 	atomic64_set(&call->ackr_window, 0x100000001ULL);
+	__set_bit(RXRPC_CALL_START_TIMERS, &call->flags);
 
 	memset(&call->sock_node, 0xed, sizeof(call->sock_node));
 
@@ -219,6 +251,7 @@ static void rxrpc_start_call_timer(struct rxrpc_call *call)
 	call->ack_lost_at = j;
 	call->resend_at = j;
 	call->ping_at = j;
+	call->keepalive_at = j;
 	call->expect_rx_by = j;
 	call->expect_req_by = j;
 	call->expect_term_by = j;
@@ -347,7 +380,6 @@ struct rxrpc_call *rxrpc_new_client_call(struct rxrpc_sock *rx,
 
 	trace_rxrpc_call(call->debug_id, rxrpc_call_connected,
 			 refcount_read(&call->ref), here, NULL);
-
 	rxrpc_start_call_timer(call);
 
 	_net("CALL new %d on CONN %d", call->debug_id, call->conn->debug_id);
@@ -452,40 +484,6 @@ void rxrpc_incoming_call(struct rxrpc_sock *rx,
 
 	rxrpc_start_call_timer(call);
 	_leave("");
-}
-
-/*
- * Queue a call's work processor, getting a ref to pass to the work queue.
- */
-bool rxrpc_queue_call(struct rxrpc_call *call)
-{
-	const void *here = __builtin_return_address(0);
-	int n;
-
-	if (!__refcount_inc_not_zero(&call->ref, &n))
-		return false;
-	if (rxrpc_queue_work(&call->processor))
-		trace_rxrpc_call(call->debug_id, rxrpc_call_queued, n + 1,
-				 here, NULL);
-	else
-		rxrpc_put_call(call, rxrpc_call_put_noqueue);
-	return true;
-}
-
-/*
- * Queue a call's work processor, passing the callers ref to the work queue.
- */
-bool __rxrpc_queue_call(struct rxrpc_call *call)
-{
-	const void *here = __builtin_return_address(0);
-	int n = refcount_read(&call->ref);
-	ASSERTCMP(n, >=, 1);
-	if (rxrpc_queue_work(&call->processor))
-		trace_rxrpc_call(call->debug_id, rxrpc_call_queued_ref, n,
-				 here, NULL);
-	else
-		rxrpc_put_call(call, rxrpc_call_put_noqueue);
-	return true;
 }
 
 /*
@@ -659,11 +657,12 @@ void rxrpc_put_call(struct rxrpc_call *call, enum rxrpc_call_trace op)
  */
 static void rxrpc_destroy_call(struct work_struct *work)
 {
-	struct rxrpc_call *call = container_of(work, struct rxrpc_call, processor);
+	struct rxrpc_call *call = container_of(work, struct rxrpc_call, destructor);
 	struct rxrpc_net *rxnet = call->rxnet;
 
 	rxrpc_delete_call_timer(call);
 
+	rxrpc_free_skb(call->poke, rxrpc_skb_cleaned);
 	rxrpc_put_connection(call->conn);
 	rxrpc_put_peer(call->peer);
 	kmem_cache_free(rxrpc_call_jar, call);
@@ -679,11 +678,10 @@ static void rxrpc_rcu_destroy_call(struct rcu_head *rcu)
 	struct rxrpc_call *call = container_of(rcu, struct rxrpc_call, rcu);
 
 	if (in_softirq()) {
-		INIT_WORK(&call->processor, rxrpc_destroy_call);
-		if (!rxrpc_queue_work(&call->processor))
+		if (!rxrpc_queue_work(&call->destructor))
 			BUG();
 	} else {
-		rxrpc_destroy_call(&call->processor);
+		rxrpc_destroy_call(&call->destructor);
 	}
 }
 
@@ -713,8 +711,6 @@ void rxrpc_cleanup_call(struct rxrpc_call *call)
 		rxrpc_put_txbuf(txb, rxrpc_txbuf_put_cleaned);
 	}
 	rxrpc_put_txbuf(call->tx_pending, rxrpc_txbuf_put_cleaned);
-	rxrpc_purge_queue(&call->input_queue);
-
 	call_rcu(&call->rcu, rxrpc_rcu_destroy_call);
 }
 

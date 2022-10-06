@@ -1067,27 +1067,35 @@ no_free:
  *
  * TODO: If callNumber > call_id + 1, renegotiate security.
  */
-static void rxrpc_receive_implicit_end_call(struct rxrpc_sock *rx,
-					    struct rxrpc_call *call)
+void rxrpc_implicit_end_call(struct rxrpc_call *call, struct sk_buff *skb)
 {
 	struct rxrpc_connection *conn = call->conn;
+	struct rxrpc_sock *rx = rcu_access_pointer(call->socket);
 
-	switch (READ_ONCE(call->state)) {
-	case RXRPC_CALL_SERVER_AWAIT_ACK:
-		rxrpc_call_completed(call);
-		fallthrough;
-	case RXRPC_CALL_COMPLETE:
-		break;
-	default:
-		if (rxrpc_abort_call("IMP", call, 0, RX_CALL_DEAD, -ESHUTDOWN))
-			rxrpc_send_abort_packet(call);
-		trace_rxrpc_improper_term(call);
-		break;
+	/* We present the message to the call we're terminating to make sure it
+	 * gets terminated.
+	 */
+	if (call->state < RXRPC_CALL_COMPLETE) {
+		set_bit(RXRPC_CALL_IS_DEAD, &call->flags);
+		rxrpc_input_call_packet(call, skb);
+
+		switch (READ_ONCE(call->state)) {
+		case RXRPC_CALL_SERVER_AWAIT_ACK:
+			rxrpc_call_completed(call);
+			fallthrough;
+		case RXRPC_CALL_COMPLETE:
+			break;
+		default:
+			if (rxrpc_abort_call("IMP", call, 0, RX_CALL_DEAD, -ESHUTDOWN))
+				rxrpc_send_abort_packet(call);
+			trace_rxrpc_improper_term(call);
+			break;
+		}
+
+		spin_lock_bh(&rx->incoming_lock);
+		__rxrpc_disconnect_call(conn, call);
+		spin_unlock_bh(&rx->incoming_lock);
 	}
-
-	spin_lock_bh(&rx->incoming_lock);
-	__rxrpc_disconnect_call(conn, call);
-	spin_unlock_bh(&rx->incoming_lock);
 }
 
 /*
@@ -1096,13 +1104,6 @@ static void rxrpc_receive_implicit_end_call(struct rxrpc_sock *rx,
 void rxrpc_receive(struct rxrpc_call *call, struct sk_buff *skb)
 {
 	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
-	struct rxrpc_sock *rx = rcu_access_pointer(call->socket);
-
-	if (sp->hdr.callNumber != call->call_id) {
-		rxrpc_free_skb(skb, rxrpc_skb_freed);
-		rxrpc_receive_implicit_end_call(rx, call);
-		return;
-	}
 
 	if (sp->hdr.serviceId != call->service_id)
 		call->service_id = sp->hdr.serviceId;

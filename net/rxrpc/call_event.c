@@ -290,30 +290,6 @@ static void rxrpc_send_initial_ping(struct rxrpc_call *call)
 			       rxrpc_propose_ack_ping_for_params);
 }
 
-/*
- * Decant some if the sendmsg prepared queue into the transmission buffer.
- */
-static void rxrpc_decant_prepared_tx(struct rxrpc_call *call)
-{
-	struct rxrpc_txbuf *txb;
-
-	if (rxrpc_is_client_call(call) &&
-	    !test_bit(RXRPC_CALL_EXPOSED, &call->flags))
-		rxrpc_expose_client_call(call);
-
-	if ((txb = list_first_entry_or_null(&call->tx_sendmsg,
-					    struct rxrpc_txbuf, call_link))) {
-		spin_lock(&call->tx_lock);
-		list_del(&txb->call_link);
-		spin_unlock(&call->tx_lock);
-
-		call->tx_top = txb->seq;
-		list_add_tail(&txb->call_link, &call->tx_buffer);
-
-		rxrpc_transmit_one(call, txb);
-	}
-}
-
 static bool rxrpc_can_decant(struct rxrpc_call *call)
 {
 	unsigned int winsize;
@@ -329,16 +305,39 @@ static bool rxrpc_can_decant(struct rxrpc_call *call)
 }
 
 /*
+ * Decant some if the sendmsg prepared queue into the transmission buffer.
+ */
+static void rxrpc_decant_prepared_tx(struct rxrpc_call *call)
+{
+	struct rxrpc_txbuf *txb;
+
+	if (rxrpc_is_client_call(call) &&
+	    !test_bit(RXRPC_CALL_EXPOSED, &call->flags))
+		rxrpc_expose_client_call(call);
+
+	while (rxrpc_can_decant(call) &&
+	       (txb = list_first_entry_or_null(&call->tx_sendmsg,
+					       struct rxrpc_txbuf, call_link))) {
+		spin_lock(&call->tx_lock);
+		list_del(&txb->call_link);
+		spin_unlock(&call->tx_lock);
+
+		call->tx_top = txb->seq;
+		list_add_tail(&txb->call_link, &call->tx_buffer);
+
+		rxrpc_transmit_one(call, txb);
+	}
+}
+
+/*
  * Handle retransmission and deferred ACK/abort generation.
  */
-void rxrpc_process_call(struct work_struct *work)
+void rxrpc_input_call_packet(struct rxrpc_call *call, struct sk_buff *skb)
 {
-	struct rxrpc_call *call =
-		container_of(work, struct rxrpc_call, processor);
-	struct sk_buff *skb;
 	unsigned long now, next, t;
-	unsigned int iterations = 0, error_report;
+	unsigned int error_report;
 	rxrpc_serial_t ackr_serial;
+	bool resend = false, expired = false;
 
 	rxrpc_see_call(call);
 
@@ -346,26 +345,12 @@ void rxrpc_process_call(struct work_struct *work)
 	_enter("{%d,%s,%lx}",
 	       call->debug_id, rxrpc_call_states[call->state], call->events);
 
-recheck_state:
 	if (call->acks_hard_ack != call->tx_bottom)
 		rxrpc_shrink_call_tx_buffer(call);
 
-	/* Limit the number of times we do this before returning to the manager */
-	if (!rxrpc_can_decant(call) &&
-	    skb_queue_empty(&call->input_queue)) {
-		iterations++;
-		if (iterations > 5)
-			goto requeue;
-	}
-
-	if (test_and_clear_bit(RXRPC_CALL_EV_ABORT, &call->events)) {
-		rxrpc_send_abort_packet(call);
-		goto recheck_state;
-	}
-
 	if (call->state == RXRPC_CALL_COMPLETE) {
 		rxrpc_delete_call_timer(call);
-		goto out_put;
+		return;
 	}
 
 	error_report = READ_ONCE(call->error_report);
@@ -378,11 +363,75 @@ recheck_state:
 			rxrpc_set_call_completion(
 				call, RXRPC_CALL_NETWORK_ERROR, 0, -error_report);
 		}
-		goto out_put;
+		goto out;
 	}
 
-	if ((skb = skb_dequeue(&call->input_queue)))
+	//if (test_and_clear_bit(RXRPC_CALL_START_TIMERS, &call->flags))
+	//	rxrpc_start_call_timer(call);
+
+	/* If we see our async-event poke, check for timeout trippage. */
+	if (skb == call->poke) {
+		now = jiffies;
+		t = READ_ONCE(call->expect_rx_by);
+		if (time_after_eq(now, t)) {
+			trace_rxrpc_timer(call, rxrpc_timer_exp_normal, now);
+			expired = true;
+		}
+
+		t = READ_ONCE(call->expect_req_by);
+		if (call->state == RXRPC_CALL_SERVER_RECV_REQUEST &&
+		    time_after_eq(now, t)) {
+			trace_rxrpc_timer(call, rxrpc_timer_exp_idle, now);
+			expired = true;
+		}
+
+		t = READ_ONCE(call->expect_term_by);
+		if (time_after_eq(now, t)) {
+			trace_rxrpc_timer(call, rxrpc_timer_exp_hard, now);
+			expired = true;
+		}
+
+		t = READ_ONCE(call->delay_ack_at);
+		if (time_after_eq(now, t)) {
+			trace_rxrpc_timer(call, rxrpc_timer_exp_ack, now);
+			cmpxchg(&call->delay_ack_at, t, now + MAX_JIFFY_OFFSET);
+			ackr_serial = xchg(&call->ackr_serial, 0);
+			rxrpc_send_ACK(call, RXRPC_ACK_DELAY, ackr_serial,
+				       rxrpc_propose_ack_ping_for_lost_ack);
+		}
+
+		t = READ_ONCE(call->ack_lost_at);
+		if (time_after_eq(now, t)) {
+			trace_rxrpc_timer(call, rxrpc_timer_exp_lost_ack, now);
+			cmpxchg(&call->ack_lost_at, t, now + MAX_JIFFY_OFFSET);
+			set_bit(RXRPC_CALL_EV_ACK_LOST, &call->events);
+		}
+
+		t = READ_ONCE(call->keepalive_at);
+		if (time_after_eq(now, t)) {
+			trace_rxrpc_timer(call, rxrpc_timer_exp_keepalive, now);
+			cmpxchg(&call->keepalive_at, t, now + MAX_JIFFY_OFFSET);
+			rxrpc_send_ACK(call, RXRPC_ACK_PING, 0,
+				       rxrpc_propose_ack_ping_for_keepalive);
+		}
+
+		t = READ_ONCE(call->ping_at);
+		if (time_after_eq(now, t)) {
+			trace_rxrpc_timer(call, rxrpc_timer_exp_ping, now);
+			cmpxchg(&call->ping_at, t, now + MAX_JIFFY_OFFSET);
+			rxrpc_send_ACK(call, RXRPC_ACK_PING, 0,
+				       rxrpc_propose_ack_ping_for_keepalive);
+		}
+
+		t = READ_ONCE(call->resend_at);
+		if (time_after_eq(now, t)) {
+			trace_rxrpc_timer(call, rxrpc_timer_exp_resend, now);
+			cmpxchg(&call->resend_at, t, now + MAX_JIFFY_OFFSET);
+			resend = true;
+		}
+	} else {
 		rxrpc_receive(call, skb);
+	}
 
 	if (rxrpc_can_decant(call))
 		rxrpc_decant_prepared_tx(call);
@@ -390,68 +439,8 @@ recheck_state:
 	if (!test_and_set_bit(RXRPC_CALL_EV_INITIAL_PING, &call->events))
 		rxrpc_send_initial_ping(call);
 
-	/* Work out if any timeouts tripped */
-	now = jiffies;
-	t = READ_ONCE(call->expect_rx_by);
-	if (time_after_eq(now, t)) {
-		trace_rxrpc_timer(call, rxrpc_timer_exp_normal, now);
-		set_bit(RXRPC_CALL_EV_EXPIRED, &call->events);
-	}
-
-	t = READ_ONCE(call->expect_req_by);
-	if (call->state == RXRPC_CALL_SERVER_RECV_REQUEST &&
-	    time_after_eq(now, t)) {
-		trace_rxrpc_timer(call, rxrpc_timer_exp_idle, now);
-		set_bit(RXRPC_CALL_EV_EXPIRED, &call->events);
-	}
-
-	t = READ_ONCE(call->expect_term_by);
-	if (time_after_eq(now, t)) {
-		trace_rxrpc_timer(call, rxrpc_timer_exp_hard, now);
-		set_bit(RXRPC_CALL_EV_EXPIRED, &call->events);
-	}
-
-	t = READ_ONCE(call->delay_ack_at);
-	if (time_after_eq(now, t)) {
-		trace_rxrpc_timer(call, rxrpc_timer_exp_ack, now);
-		cmpxchg(&call->delay_ack_at, t, now + MAX_JIFFY_OFFSET);
-		ackr_serial = xchg(&call->ackr_serial, 0);
-		rxrpc_send_ACK(call, RXRPC_ACK_DELAY, ackr_serial,
-			       rxrpc_propose_ack_ping_for_lost_ack);
-	}
-
-	t = READ_ONCE(call->ack_lost_at);
-	if (time_after_eq(now, t)) {
-		trace_rxrpc_timer(call, rxrpc_timer_exp_lost_ack, now);
-		cmpxchg(&call->ack_lost_at, t, now + MAX_JIFFY_OFFSET);
-		set_bit(RXRPC_CALL_EV_ACK_LOST, &call->events);
-	}
-
-	t = READ_ONCE(call->keepalive_at);
-	if (time_after_eq(now, t)) {
-		trace_rxrpc_timer(call, rxrpc_timer_exp_keepalive, now);
-		cmpxchg(&call->keepalive_at, t, now + MAX_JIFFY_OFFSET);
-		rxrpc_send_ACK(call, RXRPC_ACK_PING, 0,
-			       rxrpc_propose_ack_ping_for_keepalive);
-	}
-
-	t = READ_ONCE(call->ping_at);
-	if (time_after_eq(now, t)) {
-		trace_rxrpc_timer(call, rxrpc_timer_exp_ping, now);
-		cmpxchg(&call->ping_at, t, now + MAX_JIFFY_OFFSET);
-		rxrpc_send_ACK(call, RXRPC_ACK_PING, 0,
-			       rxrpc_propose_ack_ping_for_keepalive);
-	}
-
-	t = READ_ONCE(call->resend_at);
-	if (time_after_eq(now, t)) {
-		trace_rxrpc_timer(call, rxrpc_timer_exp_resend, now);
-		cmpxchg(&call->resend_at, t, now + MAX_JIFFY_OFFSET);
-		set_bit(RXRPC_CALL_EV_RESEND, &call->events);
-	}
-
 	/* Process events */
-	if (test_and_clear_bit(RXRPC_CALL_EV_EXPIRED, &call->events)) {
+	if (expired) {
 		if (test_bit(RXRPC_CALL_RX_HEARD, &call->flags) &&
 		    (int)call->conn->hi_serial - (int)call->rx_serial > 0) {
 			trace_rxrpc_call_reset(call);
@@ -459,19 +448,16 @@ recheck_state:
 		} else {
 			rxrpc_abort_call("EXP", call, 0, RX_CALL_TIMEOUT, -ETIME);
 		}
-		set_bit(RXRPC_CALL_EV_ABORT, &call->events);
-		goto recheck_state;
+		rxrpc_send_abort_packet(call);
+		goto out;
 	}
 
 	if (test_and_clear_bit(RXRPC_CALL_EV_ACK_LOST, &call->events))
 		rxrpc_send_ACK(call, RXRPC_ACK_PING, 0,
 			       rxrpc_propose_ack_ping_for_lost_ack);
 
-	if (test_and_clear_bit(RXRPC_CALL_EV_RESEND, &call->events) &&
-	    call->state != RXRPC_CALL_CLIENT_RECV_REPLY) {
-		rxrpc_resend(call, skb);
-		goto recheck_state;
-	}
+	if (resend && call->state != RXRPC_CALL_CLIENT_RECV_REPLY)
+		rxrpc_resend(call, NULL);
 
 	if (test_and_clear_bit(RXRPC_CALL_RX_IS_IDLE, &call->flags))
 		rxrpc_send_ACK(call, RXRPC_ACK_IDLE, 0,
@@ -482,35 +468,28 @@ recheck_state:
 			       rxrpc_propose_ack_input_data);
 
 	/* Make sure the timer is restarted */
-	next = call->expect_rx_by;
+	if (call->state != RXRPC_CALL_COMPLETE) {
+		next = call->expect_rx_by;
 
 #define set(T) { t = READ_ONCE(T); if (time_before(t, next)) next = t; }
 
-	set(call->expect_req_by);
-	set(call->expect_term_by);
-	set(call->delay_ack_at);
-	set(call->ack_lost_at);
-	set(call->resend_at);
-	set(call->keepalive_at);
-	set(call->ping_at);
+		set(call->expect_req_by);
+		set(call->expect_term_by);
+		set(call->delay_ack_at);
+		set(call->ack_lost_at);
+		set(call->resend_at);
+		set(call->keepalive_at);
+		set(call->ping_at);
 
-	now = jiffies;
-	if (time_after_eq(now, next))
-		goto recheck_state;
+		now = jiffies;
+		if (time_after_eq(now, next))
+			rxrpc_poke_call(call, rxrpc_call_poke_timer_now);
 
-	rxrpc_reduce_call_timer(call, next, now, rxrpc_timer_restart);
+		rxrpc_reduce_call_timer(call, next, now, rxrpc_timer_restart);
+	}
 
-	/* other events may have been raised since we started checking */
-	if (call->events && call->state < RXRPC_CALL_COMPLETE)
-		goto requeue;
-
-out_put:
-	rxrpc_put_call(call, rxrpc_call_put);
 out:
+	if (call->state == RXRPC_CALL_COMPLETE)
+		rxrpc_delete_call_timer(call);
 	_leave("");
-	return;
-
-requeue:
-	__rxrpc_queue_call(call);
-	goto out;
 }

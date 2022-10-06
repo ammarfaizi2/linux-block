@@ -509,7 +509,7 @@ static void rxrpc_distribute_error(struct rxrpc_peer *peer, int error_report)
 		rxrpc_see_call(call);
 		if (call->state < RXRPC_CALL_COMPLETE &&
 		    cmpxchg(&call->error_report, 0, error_report) == 0)
-			rxrpc_queue_call(call);
+			rxrpc_poke_call(call, rxrpc_call_poke_error);
 	}
 }
 

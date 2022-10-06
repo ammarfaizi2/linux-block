@@ -16,6 +16,13 @@
 /*
  * Declare tracing information enums and their string mappings for display.
  */
+#define rxrpc_call_poke_traces \
+	EM(rxrpc_call_poke_error,		"Error")	\
+	EM(rxrpc_call_poke_idle,		"Idle")		\
+	EM(rxrpc_call_poke_start,		"Start")	\
+	EM(rxrpc_call_poke_timer,		"Timer")	\
+	E_(rxrpc_call_poke_timer_now,		"Timer-now")
+
 #define rxrpc_skb_traces \
 	EM(rxrpc_skb_ack,			"ACK") \
 	EM(rxrpc_skb_cleaned,			"CLE") \
@@ -75,6 +82,7 @@
 	EM(rxrpc_call_error,			"*E*") \
 	EM(rxrpc_call_got,			"GOT") \
 	EM(rxrpc_call_got_kernel,		"Gke") \
+	EM(rxrpc_call_got_poke,			"Gpo") \
 	EM(rxrpc_call_got_timer,		"GTM") \
 	EM(rxrpc_call_got_tx,			"Gtx") \
 	EM(rxrpc_call_got_userid,		"Gus") \
@@ -84,6 +92,7 @@
 	EM(rxrpc_call_put_kernel,		"Pke") \
 	EM(rxrpc_call_put_noqueue,		"PnQ") \
 	EM(rxrpc_call_put_notimer,		"PnT") \
+	EM(rxrpc_call_put_poke,			"Ppo") \
 	EM(rxrpc_call_put_timer,		"PTM") \
 	EM(rxrpc_call_put_tx,			"Ptx") \
 	EM(rxrpc_call_put_userid,		"Pus") \
@@ -289,6 +298,7 @@
 #define EM(a, b) a,
 #define E_(a, b) a
 
+enum rxrpc_call_poke_trace	{ rxrpc_call_poke_traces } __mode(byte);
 enum rxrpc_call_trace		{ rxrpc_call_traces } __mode(byte);
 enum rxrpc_client_trace		{ rxrpc_client_traces } __mode(byte);
 enum rxrpc_congest_change	{ rxrpc_congest_changes } __mode(byte);
@@ -318,6 +328,7 @@ enum rxrpc_txqueue_trace	{ rxrpc_txqueue_traces } __mode(byte);
 #define EM(a, b) TRACE_DEFINE_ENUM(a);
 #define E_(a, b) TRACE_DEFINE_ENUM(a);
 
+rxrpc_call_poke_traces;
 rxrpc_call_traces;
 rxrpc_client_traces;
 rxrpc_congest_changes;
@@ -1596,6 +1607,47 @@ TRACE_EVENT(rxrpc_txbuf,
 		      __entry->seq,
 		      __print_symbolic(__entry->what, rxrpc_txbuf_traces),
 		      __entry->ref)
+	    );
+
+TRACE_EVENT(rxrpc_poke_call,
+	    TP_PROTO(struct rxrpc_call *call, bool busy,
+		     enum rxrpc_call_poke_trace what),
+
+	    TP_ARGS(call, busy, what),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		call_debug_id	)
+		    __field(bool,			busy		)
+		    __field(enum rxrpc_call_poke_trace,	what		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->call_debug_id = call->debug_id;
+		    __entry->busy = busy;
+		    __entry->what = what;
+			   ),
+
+	    TP_printk("c=%08x %s%s",
+		      __entry->call_debug_id,
+		      __print_symbolic(__entry->what, rxrpc_call_poke_traces),
+		      __entry->busy ? "!" : "")
+	    );
+
+TRACE_EVENT(rxrpc_call_poked,
+	    TP_PROTO(struct rxrpc_call *call),
+
+	    TP_ARGS(call),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		call_debug_id	)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->call_debug_id = call->debug_id;
+			   ),
+
+	    TP_printk("c=%08x",
+		      __entry->call_debug_id)
 	    );
 
 #undef EM

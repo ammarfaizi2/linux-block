@@ -66,7 +66,6 @@ void rxrpc_free_skb(struct sk_buff *skb, enum rxrpc_skb_trace op)
 {
 	const void *here = __builtin_return_address(0);
 	if (skb) {
-		struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
 		int n;
 		n = atomic_dec_return(select_skb_count(skb));
 		trace_rxrpc_skb(skb, op, refcount_read(&skb->users), n, here);
@@ -82,7 +81,6 @@ void rxrpc_purge_queue(struct sk_buff_head *list)
 	const void *here = __builtin_return_address(0);
 	struct sk_buff *skb;
 	while ((skb = skb_dequeue((list))) != NULL) {
-		struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
 		int n = atomic_dec_return(select_skb_count(skb));
 		trace_rxrpc_skb(skb, rxrpc_skb_purged,
 				refcount_read(&skb->users), n, here);

@@ -497,3 +497,77 @@ void rxrpc_process_connection(struct work_struct *work)
 	_leave("");
 	return;
 }
+
+/*
+ * post connection-level events to the connection
+ * - this includes challenges, responses, some aborts and call terminal packet
+ *   retransmission.
+ */
+static void rxrpc_post_packet_to_conn(struct rxrpc_connection *conn,
+				      struct sk_buff *skb)
+{
+	_enter("%p,%p", conn, skb);
+
+	skb_queue_tail(&conn->rx_queue, skb);
+	rxrpc_queue_conn(conn);
+}
+
+/*
+ * Input a connection-level packet.
+ */
+int rxrpc_input_conn_packet(struct rxrpc_connection *conn, struct sk_buff *skb)
+{
+	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
+	__be32 wtmp;
+	u32 abort_code;
+
+	if (conn->state >= RXRPC_CONN_REMOTELY_ABORTED) {
+		_leave(" = -ECONNABORTED [%u]", conn->state);
+		return -ECONNABORTED;
+	}
+
+	_enter("{%d},{%u,%%%u},", conn->debug_id, sp->hdr.type, sp->hdr.serial);
+
+	switch (sp->hdr.type) {
+	case RXRPC_PACKET_TYPE_DATA:
+	case RXRPC_PACKET_TYPE_ACK:
+		rxrpc_conn_retransmit_call(conn, skb,
+					   sp->hdr.cid & RXRPC_CHANNELMASK);
+		rxrpc_free_skb(skb, rxrpc_skb_freed);
+		return 0;
+
+	case RXRPC_PACKET_TYPE_BUSY:
+		/* Just ignore BUSY packets for now. */
+		rxrpc_free_skb(skb, rxrpc_skb_freed);
+		return 0;
+
+	case RXRPC_PACKET_TYPE_ABORT:
+		if (skb_copy_bits(skb, sizeof(struct rxrpc_wire_header),
+				  &wtmp, sizeof(wtmp)) < 0) {
+			trace_rxrpc_rx_eproto(NULL, sp->hdr.serial,
+					      tracepoint_string("bad_abort"));
+			return -EPROTO;
+		}
+		abort_code = ntohl(wtmp);
+		_proto("Rx ABORT %%%u { ac=%d }", sp->hdr.serial, abort_code);
+
+		conn->error = -ECONNABORTED;
+		conn->abort_code = abort_code;
+		conn->state = RXRPC_CONN_REMOTELY_ABORTED;
+		set_bit(RXRPC_CONN_DONT_REUSE, &conn->flags);
+		rxrpc_abort_calls(conn, RXRPC_CALL_REMOTELY_ABORTED, sp->hdr.serial);
+		rxrpc_free_skb(skb, rxrpc_skb_freed);
+		return -ECONNABORTED;
+
+	case RXRPC_PACKET_TYPE_CHALLENGE:
+	case RXRPC_PACKET_TYPE_RESPONSE:
+		rxrpc_post_packet_to_conn(conn, skb);
+		return 0;
+
+	default:
+		trace_rxrpc_rx_eproto(NULL, sp->hdr.serial,
+				      tracepoint_string("bad_conn_pkt"));
+		rxrpc_free_skb(skb, rxrpc_skb_freed);
+		return -EPROTO;
+	}
+}

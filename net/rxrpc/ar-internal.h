@@ -195,6 +195,7 @@ struct rxrpc_host_header {
  * - max 48 bytes (struct sk_buff::cb)
  */
 struct rxrpc_skb_priv {
+	struct rxrpc_call *call;	/* Call referred to (poke packet) */
 	u16		offset;		/* Offset of data */
 	u16		len;		/* Length of data */
 	u8		flags;
@@ -279,11 +280,10 @@ struct rxrpc_local {
 	struct rxrpc_net	*rxnet;		/* The network ns in which this resides */
 	struct hlist_node	link;
 	struct socket		*socket;	/* my UDP socket */
-	struct work_struct	processor;
+	struct task_struct	*io_thread;
 	struct rxrpc_sock __rcu	*service;	/* Service(s) listening on this endpoint */
 	struct rw_semaphore	defrag_sem;	/* control re-enablement of IP DF bit */
-	struct sk_buff_head	reject_queue;	/* packets awaiting rejection */
-	struct sk_buff_head	event_queue;	/* endpoint event packets awaiting processing */
+	struct sk_buff_head	rx_queue;	/* Received packets */
 	struct rb_root		client_bundles;	/* Client connection bundles by socket params */
 	spinlock_t		client_bundles_lock; /* Lock for client_bundles */
 	spinlock_t		lock;		/* access lock */
@@ -504,15 +504,13 @@ enum rxrpc_call_flag {
 	RXRPC_CALL_UPGRADE,		/* Service upgrade was requested for the call */
 	RXRPC_CALL_RX_IS_IDLE,		/* Reception is idle - send an ACK */
 	RXRPC_CALL_IS_DEAD,		/* The call is not interested in any further packets */
+	RXRPC_CALL_START_TIMERS,	/* The timers need starting */
 };
 
 /*
  * Events that can be raised on a call.
  */
 enum rxrpc_call_event {
-	RXRPC_CALL_EV_ABORT,		/* need to generate abort */
-	RXRPC_CALL_EV_RESEND,		/* Tx resend required */
-	RXRPC_CALL_EV_EXPIRED,		/* Expiry occurred */
 	RXRPC_CALL_EV_ACK_LOST,		/* ACK may be lost, send ping */
 	RXRPC_CALL_EV_INITIAL_PING,	/* Send initial ping for a new service call */
 };
@@ -583,7 +581,7 @@ struct rxrpc_call {
 	u32			next_req_timo;	/* Timeout for next Rx request packet (jif) */
 	struct skcipher_request	*cipher_req;	/* Packet cipher request buffer */
 	struct timer_list	timer;		/* Combined event timer */
-	struct work_struct	processor;	/* Event processor */
+	struct work_struct	destructor;	/* Call destructor */
 	rxrpc_notify_rx_t	notify_rx;	/* kernel service Rx notification function */
 	struct list_head	link;		/* link in master call list */
 	struct list_head	chan_wait_link;	/* Link in conn->bundle->waiting_calls */
@@ -592,6 +590,7 @@ struct rxrpc_call {
 	struct list_head	recvmsg_link;	/* Link in rx->recvmsg_q */
 	struct list_head	sock_link;	/* Link in rx->sock_calls */
 	struct rb_node		sock_node;	/* Node in rx->calls */
+	struct sk_buff		*poke;		/* Socket buffer used to poke the call */
 	struct rxrpc_txbuf	*tx_pending;	/* Tx buffer being filled */
 	wait_queue_head_t	waitq;		/* Wait queue for channel or Tx */
 	s64			tx_total_len;	/* Total length left to be transmitted (or -1) */
@@ -631,7 +630,6 @@ struct rxrpc_call {
 	ktime_t			tx_last_sent;	/* Last time a transmission occurred */
 
 	/* Received data tracking */
-	struct sk_buff_head	input_queue;	/* Received call-level packets */
 	struct sk_buff_head	rx_queue;	/* Queue of packets ready for recvmsg() */
 	struct sk_buff_head	rx_oos_queue;	/* Queue of out of sequence packets */
 
@@ -816,6 +814,7 @@ void rxrpc_reduce_call_timer(struct rxrpc_call *call,
 			     enum rxrpc_timer_trace why);
 
 void rxrpc_delete_call_timer(struct rxrpc_call *call);
+void rxrpc_input_call_packet(struct rxrpc_call *call, struct sk_buff *skb);
 
 /*
  * call_object.c
@@ -824,6 +823,7 @@ extern const char *const rxrpc_call_states[];
 extern const char *const rxrpc_call_completions[];
 extern struct kmem_cache *rxrpc_call_jar;
 
+void rxrpc_poke_call(struct rxrpc_call *call, enum rxrpc_call_poke_trace what);
 struct rxrpc_call *rxrpc_find_call_by_user_ID(struct rxrpc_sock *, unsigned long);
 struct rxrpc_call *rxrpc_alloc_call(struct rxrpc_sock *, gfp_t, unsigned int);
 struct rxrpc_call *rxrpc_new_client_call(struct rxrpc_sock *,
@@ -835,8 +835,6 @@ void rxrpc_incoming_call(struct rxrpc_sock *, struct rxrpc_call *,
 			 struct sk_buff *);
 void rxrpc_release_call(struct rxrpc_sock *, struct rxrpc_call *);
 void rxrpc_release_calls_on_socket(struct rxrpc_sock *);
-bool __rxrpc_queue_call(struct rxrpc_call *);
-bool rxrpc_queue_call(struct rxrpc_call *);
 void rxrpc_see_call(struct rxrpc_call *);
 bool rxrpc_try_get_call(struct rxrpc_call *call, enum rxrpc_call_trace op);
 void rxrpc_get_call(struct rxrpc_call *, enum rxrpc_call_trace);
@@ -880,6 +878,7 @@ void rxrpc_clean_up_local_conns(struct rxrpc_local *);
  */
 void rxrpc_process_connection(struct work_struct *);
 void rxrpc_process_delayed_final_acks(struct rxrpc_connection *, bool);
+int rxrpc_input_conn_packet(struct rxrpc_connection *conn, struct sk_buff *skb);
 
 /*
  * conn_object.c
@@ -943,6 +942,11 @@ void rxrpc_unpublish_service_conn(struct rxrpc_connection *);
  * input.c
  */
 int rxrpc_input_packet(struct sock *, struct sk_buff *);
+int rxrpc_io_thread(void *data);
+static inline void rxrpc_wake_up_io_thread(struct rxrpc_local *local)
+{
+	wake_up_process(local->io_thread);
+}
 
 /*
  * insecure.c
@@ -961,7 +965,9 @@ int rxrpc_get_server_data_key(struct rxrpc_connection *, const void *, time64_t,
 /*
  * local_event.c
  */
-extern void rxrpc_process_local_events(struct rxrpc_local *);
+void rxrpc_send_version_request(struct rxrpc_local *local,
+				struct rxrpc_host_header *hdr,
+				struct sk_buff *skb);
 
 /*
  * local_object.c
@@ -972,7 +978,7 @@ struct rxrpc_local *rxrpc_get_local_maybe(struct rxrpc_local *);
 void rxrpc_put_local(struct rxrpc_local *);
 struct rxrpc_local *rxrpc_use_local(struct rxrpc_local *);
 void rxrpc_unuse_local(struct rxrpc_local *);
-void rxrpc_queue_local(struct rxrpc_local *);
+void rxrpc_destroy_local(struct rxrpc_local *local);
 void rxrpc_destroy_all_locals(struct rxrpc_net *);
 
 static inline bool __rxrpc_unuse_local(struct rxrpc_local *local)
@@ -1012,7 +1018,7 @@ static inline struct rxrpc_net *rxrpc_net(struct net *net)
 int rxrpc_send_ack_packet(struct rxrpc_call *call, struct rxrpc_txbuf *txb);
 int rxrpc_send_abort_packet(struct rxrpc_call *);
 int rxrpc_send_data_packet(struct rxrpc_call *, struct rxrpc_txbuf *);
-void rxrpc_reject_packets(struct rxrpc_local *);
+void rxrpc_reject_packet(struct rxrpc_local *local, struct sk_buff *skb);
 void rxrpc_send_keepalive(struct rxrpc_peer *);
 void rxrpc_transmit_one(struct rxrpc_call *call, struct rxrpc_txbuf *txb);
 
@@ -1050,6 +1056,7 @@ extern const struct seq_operations rxrpc_local_seq_ops;
 /*
  * receive.c
  */
+void rxrpc_implicit_end_call(struct rxrpc_call *call, struct sk_buff *skb);
 void rxrpc_receive(struct rxrpc_call *call, struct sk_buff *skb);
 
 /*

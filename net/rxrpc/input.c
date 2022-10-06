@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /* RxRPC packet reception
  *
- * Copyright (C) 2007, 2016 Red Hat, Inc. All Rights Reserved.
+ * Copyright (C) 2007, 2016, 2022 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
@@ -10,103 +10,58 @@
 #include "ar-internal.h"
 
 /*
- * Post a call-level packet to a call.
- */
-static void rxrpc_post_packet_to_call(struct rxrpc_call *call, struct sk_buff *skb)
-{
-	if (!test_bit(RXRPC_CALL_RX_HEARD, &call->flags))
-		set_bit(RXRPC_CALL_RX_HEARD, &call->flags);
-	if (!test_bit(RXRPC_CALL_IS_DEAD, &call->flags)) {
-		skb_queue_tail(&call->input_queue, skb);
-		rxrpc_queue_call(call);
-	} else {
-		rxrpc_free_skb(skb, rxrpc_skb_freed);
-	}
-}
-
-/*
- * Handle a new service call on a channel implicitly completing the preceding
- * call on that channel.  This does not apply to client conns.
+ * handle data received on the local endpoint
+ * - may be called in interrupt context
  *
- * TODO: If callNumber > call_id + 1, renegotiate security.
+ * [!] Note that as this is called from the encap_rcv hook, the socket is not
+ * held locked by the caller and nothing prevents sk_user_data on the UDP from
+ * being cleared in the middle of processing this function.
+ *
+ * Called with the RCU read lock held from the IP layer via UDP.
  */
-static struct sk_buff *rxrpc_input_implicit_end_call(struct rxrpc_sock *rx,
-						     struct rxrpc_channel *chan,
-						     struct rxrpc_call *call,
-						     struct sk_buff *skb)
+int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 {
-	struct sk_buff *copy;
+	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
+	struct rxrpc_local *local = rcu_dereference_sk_user_data(udp_sk);
 
-	/* We post a copy of the message to the call we're terminating to make
-	 * sure it gets terminated.  If we fail to copy the message, we steal
-	 * the original and hope the server sends us a new copy.
-	 */
-	if (call->state < RXRPC_CALL_COMPLETE &&
-	    cmpxchg(&chan->call, call, NULL) == call) {
-		set_bit(RXRPC_CALL_IS_DEAD, &call->flags);
-		copy = skb_clone(skb, GFP_ATOMIC | __GFP_NOWARN);
-		if (copy) {
-			rxrpc_new_skb(skb, rxrpc_skb_new);
-		} else {
-			copy = skb;
-			skb = NULL;
-		}
-		skb_queue_tail(&call->input_queue, copy);
-		rxrpc_queue_call(call);
+	if (unlikely(!local)) {
+		kfree_skb(skb);
+		return 0;
 	}
+	if (skb->tstamp == 0)
+		skb->tstamp = ktime_get_real();
 
-	return skb;
+	rxrpc_new_skb(skb, rxrpc_skb_received);
+	memset(sp, 0, sizeof(*sp));
+	skb_queue_tail(&local->rx_queue, skb);
+	rxrpc_wake_up_io_thread(local);
+	return 0;
 }
 
 /*
- * post connection-level events to the connection
- * - this includes challenges, responses, some aborts and call terminal packet
- *   retransmission.
+ * Process event packets targeted at a local endpoint.
  */
-static void rxrpc_post_packet_to_conn(struct rxrpc_connection *conn,
-				      struct sk_buff *skb)
+static void rxrpc_input_version(struct rxrpc_local *local, struct sk_buff *skb)
 {
-	_enter("%p,%p", conn, skb);
+	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
+	char v;
 
-	skb_queue_tail(&conn->rx_queue, skb);
-	rxrpc_queue_conn(conn);
-}
+	_enter("");
 
-/*
- * post endpoint-level events to the local endpoint
- * - this includes debug and version messages
- */
-static void rxrpc_post_packet_to_local(struct rxrpc_local *local,
-				       struct sk_buff *skb)
-{
-	_enter("%p,%p", local, skb);
-
-	if (rxrpc_get_local_maybe(local)) {
-		skb_queue_tail(&local->event_queue, skb);
-		rxrpc_queue_local(local);
-	} else {
-		rxrpc_free_skb(skb, rxrpc_skb_freed);
+	rxrpc_see_skb(skb, rxrpc_skb_seen);
+	if (skb_copy_bits(skb, sizeof(struct rxrpc_wire_header), &v, 1) >= 0) {
+		_proto("Rx VERSION { %02x }", v);
+		if (v == 0)
+			rxrpc_send_version_request(local, &sp->hdr, skb);
 	}
-}
 
-/*
- * put a packet up for transport-level abort
- */
-static void rxrpc_reject_packet(struct rxrpc_local *local, struct sk_buff *skb)
-{
-	if (rxrpc_get_local_maybe(local)) {
-		skb_queue_tail(&local->reject_queue, skb);
-		rxrpc_queue_local(local);
-	} else {
-		rxrpc_free_skb(skb, rxrpc_skb_freed);
-	}
+	rxrpc_free_skb(skb, rxrpc_skb_freed);
 }
 
 /*
  * Extract the wire header from a packet and translate the byte order.
  */
-static noinline
-int rxrpc_extract_header(struct rxrpc_skb_priv *sp, struct sk_buff *skb)
+static int rxrpc_extract_header(struct rxrpc_skb_priv *sp, struct sk_buff *skb)
 {
 	struct rxrpc_wire_header whdr;
 
@@ -117,7 +72,6 @@ int rxrpc_extract_header(struct rxrpc_skb_priv *sp, struct sk_buff *skb)
 		return -EBADMSG;
 	}
 
-	memset(sp, 0, sizeof(*sp));
 	sp->hdr.epoch		= ntohl(whdr.epoch);
 	sp->hdr.cid		= ntohl(whdr.cid);
 	sp->hdr.callNumber	= ntohl(whdr.callNumber);
@@ -133,18 +87,11 @@ int rxrpc_extract_header(struct rxrpc_skb_priv *sp, struct sk_buff *skb)
 }
 
 /*
- * handle data received on the local endpoint
- * - may be called in interrupt context
- *
- * [!] Note that as this is called from the encap_rcv hook, the socket is not
- * held locked by the caller and nothing prevents sk_user_data on the UDP from
- * being cleared in the middle of processing this function.
- *
- * Called with the RCU read lock held from the IP layer via UDP.
+ * Process a socket buffer, distributing it to the appropriate connection or
+ * call.
  */
-int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
+static void rxrpc_input_one_packet(struct rxrpc_local *local, struct sk_buff *skb)
 {
-	struct rxrpc_local *local = rcu_dereference_sk_user_data(udp_sk);
 	struct rxrpc_connection *conn;
 	struct rxrpc_channel *chan;
 	struct rxrpc_call *call = NULL;
@@ -153,23 +100,17 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 	struct rxrpc_sock *rx = NULL;
 	unsigned int channel;
 
-	_enter("%p", udp_sk);
-
-	if (unlikely(!local)) {
-		kfree_skb(skb);
-		return 0;
-	}
-	if (skb->tstamp == 0)
-		skb->tstamp = ktime_get_real();
-
-	rxrpc_new_skb(skb, rxrpc_skb_received);
+	_enter("");
 
 	skb_pull(skb, sizeof(struct udphdr));
 
-	/* The UDP protocol already released all skb resources;
-	 * we are free to add our own data there.
-	 */
 	sp = rxrpc_skb(skb);
+	if (sp->call) {
+		trace_rxrpc_call_poked(sp->call);
+		rxrpc_input_call_packet(sp->call, skb);
+		rxrpc_put_call(sp->call, rxrpc_call_put_poke);
+		goto discard;
+	}
 
 	/* dig out the RxRPC connection details */
 	if (rxrpc_extract_header(sp, skb) < 0)
@@ -180,19 +121,17 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 		if ((lose++ & 7) == 7) {
 			trace_rxrpc_rx_lose(sp);
 			rxrpc_free_skb(skb, rxrpc_skb_lost);
-			return 0;
+			return;
 		}
 	}
 
-	if (skb->tstamp == 0)
-		skb->tstamp = ktime_get_real();
 	trace_rxrpc_rx_packet(sp);
 
 	switch (sp->hdr.type) {
 	case RXRPC_PACKET_TYPE_VERSION:
 		if (rxrpc_to_client(sp))
 			goto discard;
-		rxrpc_post_packet_to_local(local, skb);
+		rxrpc_input_version(local, skb);
 		goto out;
 
 	case RXRPC_PACKET_TYPE_BUSY:
@@ -272,7 +211,7 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 		if (sp->hdr.callNumber == 0) {
 			/* Connection-level packet */
 			_debug("CONN %p {%d}", conn, conn->debug_id);
-			rxrpc_post_packet_to_conn(conn, skb);
+			rxrpc_input_conn_packet(conn, skb);
 			goto out;
 		}
 
@@ -307,7 +246,7 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 						    sp->hdr.seq,
 						    sp->hdr.serial,
 						    sp->hdr.flags);
-			rxrpc_post_packet_to_conn(conn, skb);
+			rxrpc_input_conn_packet(conn, skb);
 			goto out;
 		}
 
@@ -317,11 +256,10 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 			if (rxrpc_to_client(sp))
 				goto reject_packet;
 			if (call) {
-				skb = rxrpc_input_implicit_end_call(rx, chan, call, skb);
-				if (!skb)
-					goto out;
+				rxrpc_implicit_end_call(call, skb);
+				chan->call = NULL;
+				call = NULL;
 			}
-			call = NULL;
 		}
 	}
 
@@ -339,14 +277,16 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 	/* Process a call packet; this either discards or passes on the ref
 	 * elsewhere.
 	 */
-	rxrpc_post_packet_to_call(call, skb);
+	if (!test_bit(RXRPC_CALL_RX_HEARD, &call->flags))
+		set_bit(RXRPC_CALL_RX_HEARD, &call->flags);
+	rxrpc_input_call_packet(call, skb);
 	goto out;
 
 discard:
 	rxrpc_free_skb(skb, rxrpc_skb_freed);
 out:
 	trace_rxrpc_rx_done(0, 0);
-	return 0;
+	return;
 
 wrong_security:
 	trace_rxrpc_abort(0, "SEC", sp->hdr.cid, sp->hdr.callNumber, sp->hdr.seq,
@@ -376,5 +316,44 @@ reject_packet:
 	trace_rxrpc_rx_done(skb->mark, skb->priority);
 	rxrpc_reject_packet(local, skb);
 	_leave(" [badmsg]");
+	return;
+}
+
+/*
+ * I/O and event handling thread.
+ */
+int rxrpc_io_thread(void *data)
+{
+	struct sk_buff_head rx_queue;
+	struct rxrpc_local *local = data;
+	struct sk_buff *skb;
+
+	skb_queue_head_init(&rx_queue);
+
+	set_user_nice(current, MIN_NICE);
+
+	for (;;) {
+		if (!skb_queue_empty(&local->rx_queue)) {
+			spin_lock_irq(&local->rx_queue.lock);
+			skb_queue_splice_tail_init(&local->rx_queue, &rx_queue);
+			spin_unlock_irq(&local->rx_queue.lock);
+		}
+
+		while ((skb = __skb_dequeue(&rx_queue)))
+			rxrpc_input_one_packet(local, skb);
+
+		set_current_state(TASK_INTERRUPTIBLE);
+		if (kthread_should_stop())
+			break;
+		if (!skb_queue_empty(&local->rx_queue)) {
+			__set_current_state(TASK_RUNNING);
+			continue;
+		}
+		schedule();
+	}
+
+	__set_current_state(TASK_RUNNING);
+	rxrpc_destroy_local(local);
+	local->io_thread = NULL;
 	return 0;
 }
