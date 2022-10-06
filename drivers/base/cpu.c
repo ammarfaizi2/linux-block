@@ -52,8 +52,10 @@ static int cpu_subsys_online(struct device *dev)
 	int ret;
 
 	from_nid = cpu_to_node(cpuid);
-	if (from_nid == NUMA_NO_NODE)
+	if (from_nid == NUMA_NO_NODE) {
+		pr_warn("%s(%d): returned %d due to from_nid == NUMA_NO_NODE.\n", __func__, cpuid, -ENODEV);
 		return -ENODEV;
+	}
 
 	ret = cpu_device_up(dev);
 	/*

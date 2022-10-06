@@ -190,6 +190,8 @@ static int cpuhp_invoke_callback(unsigned int cpu, enum cpuhp_state state,
 
 		trace_cpuhp_enter(cpu, st->target, state, cb);
 		ret = cb(cpu);
+		if (!ret && bringup)
+			pr_warn("%s(%d): %ps returned %d\n", __func__, cpu, cb, ret);
 		trace_cpuhp_exit(cpu, st->state, state, ret);
 		return ret;
 	}
@@ -200,6 +202,8 @@ static int cpuhp_invoke_callback(unsigned int cpu, enum cpuhp_state state,
 		WARN_ON_ONCE(lastp && *lastp);
 		trace_cpuhp_multi_enter(cpu, st->target, state, cbm, node);
 		ret = cbm(cpu, node);
+		if (!ret && bringup)
+			pr_warn("%s(%d): %ps returned %d\n", __func__, cpu, cb, ret);
 		trace_cpuhp_exit(cpu, st->state, state, ret);
 		return ret;
 	}
@@ -212,6 +216,8 @@ static int cpuhp_invoke_callback(unsigned int cpu, enum cpuhp_state state,
 
 		trace_cpuhp_multi_enter(cpu, st->target, state, cbm, node);
 		ret = cbm(cpu, node);
+		if (!ret && bringup)
+			pr_warn("%s(%d): %ps returned %d\n", __func__, cpu, cb, ret);
 		trace_cpuhp_exit(cpu, st->state, state, ret);
 		if (ret) {
 			if (!lastp)
@@ -237,6 +243,8 @@ err:
 
 		trace_cpuhp_multi_enter(cpu, st->target, state, cbm, node);
 		ret = cbm(cpu, node);
+		if (!ret && bringup)
+			pr_warn("%s(%d): %ps returned %d\n", __func__, cpu, cb, ret);
 		trace_cpuhp_exit(cpu, st->state, state, ret);
 		/*
 		 * Rollback must not fail,
@@ -1341,6 +1349,7 @@ static int _cpu_up(unsigned int cpu, int tasks_frozen, enum cpuhp_state target)
 	cpus_write_lock();
 
 	if (!cpu_present(cpu)) {
+		pr_warn("%s(%d): returned %d due to !cpu_present(cpu).\n", __func__, cpu, -EINVAL);
 		ret = -EINVAL;
 		goto out;
 	}
@@ -1357,6 +1366,7 @@ static int _cpu_up(unsigned int cpu, int tasks_frozen, enum cpuhp_state target)
 		idle = idle_thread_get(cpu);
 		if (IS_ERR(idle)) {
 			ret = PTR_ERR(idle);
+			pr_warn("%s(%d): returned %d due to IS_ERR(idle_thread_get(cpu)).\n", __func__, cpu, ret);
 			goto out;
 		}
 	}
@@ -1402,6 +1412,7 @@ static int cpu_up(unsigned int cpu, enum cpuhp_state target)
 #if defined(CONFIG_IA64)
 		pr_err("please check additional_cpus= boot parameter\n");
 #endif
+		pr_warn("%s(%d): returned %d due to !cpu_possible(cpu).\n", __func__, cpu, -EINVAL);
 		return -EINVAL;
 	}
 
@@ -1412,10 +1423,12 @@ static int cpu_up(unsigned int cpu, enum cpuhp_state target)
 	cpu_maps_update_begin();
 
 	if (cpu_hotplug_disabled) {
+		pr_warn("%s(%d): returned %d due to cpu_hotplug_disabled.\n", __func__, cpu, -EBUSY);
 		err = -EBUSY;
 		goto out;
 	}
 	if (!cpu_smt_allowed(cpu)) {
+		pr_warn("%s(%d): returned %d due to !cpu_smt_allowed(cpu).\n", __func__, cpu, -EPERM);
 		err = -EPERM;
 		goto out;
 	}
