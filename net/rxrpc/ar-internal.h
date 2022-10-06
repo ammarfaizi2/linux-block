@@ -627,9 +627,10 @@ struct rxrpc_call {
 	unsigned long		events;
 	spinlock_t		notify_lock;	/* Kernel notification lock */
 	spinlock_t		state_lock;	/* lock for state transition */
-	const char		*send_abort_why; /* String indicating why the abort was sent */
+	unsigned int		send_abort_why; /* Why the abort [enum rxrpc_abort_reason] */
 	s32			send_abort;	/* Abort code to be sent */
 	short			send_abort_err;	/* Error to be associated with the abort */
+	rxrpc_seq_t		send_abort_seq;	/* DATA packet that incurred the abort (or 0) */
 	s32			abort_code;	/* Local/remote abort code */
 	int			error;		/* Local error incurred */
 	enum rxrpc_call_state	state;		/* current state of call */
@@ -842,7 +843,7 @@ void rxrpc_reduce_call_timer(struct rxrpc_call *call,
 			     unsigned long now,
 			     enum rxrpc_timer_trace why);
 
-void rxrpc_input_call_event(struct rxrpc_call *call, struct sk_buff *skb);
+bool rxrpc_input_call_event(struct rxrpc_call *call, struct sk_buff *skb);
 
 /*
  * call_object.c
@@ -904,12 +905,13 @@ void rxrpc_clean_up_local_conns(struct rxrpc_local *);
 /*
  * conn_event.c
  */
+int rxrpc_abort_conn(struct rxrpc_connection *, struct sk_buff *, s32, int,
+		     enum rxrpc_abort_reason);
 void rxrpc_conn_retransmit_call(struct rxrpc_connection *, struct sk_buff *,
 				unsigned int);
-int rxrpc_abort_conn(struct rxrpc_connection *, struct sk_buff *, s32, int, const char *);
 void rxrpc_process_connection(struct work_struct *);
 void rxrpc_process_delayed_final_acks(struct rxrpc_connection *, bool);
-int rxrpc_input_conn_packet(struct rxrpc_connection *conn, struct sk_buff *skb);
+bool rxrpc_input_conn_packet(struct rxrpc_connection *conn, struct sk_buff *skb);
 void rxrpc_input_conn_event(struct rxrpc_connection *, struct sk_buff *);
 
 /*
@@ -974,10 +976,16 @@ void rxrpc_implicit_end_call(struct rxrpc_call *, struct sk_buff *);
  */
 int rxrpc_encap_rcv(struct sock *, struct sk_buff *);
 void rxrpc_error_report(struct sock *);
+bool rxrpc_direct_abort(struct sk_buff *, enum rxrpc_abort_reason, s32, int);
 int rxrpc_io_thread(void *data);
 static inline void rxrpc_wake_up_io_thread(struct rxrpc_local *local)
 {
 	wake_up_process(local->io_thread);
+}
+
+static inline bool rxrpc_protocol_error(struct sk_buff *skb, enum rxrpc_abort_reason why)
+{
+	return rxrpc_direct_abort(skb, why, RX_PROTOCOL_ERROR, -EPROTO);
 }
 
 /*
@@ -1108,28 +1116,23 @@ bool __rxrpc_set_call_completion(struct rxrpc_call *, enum rxrpc_call_completion
 bool rxrpc_set_call_completion(struct rxrpc_call *, enum rxrpc_call_completion, u32, int);
 bool __rxrpc_call_completed(struct rxrpc_call *);
 bool rxrpc_call_completed(struct rxrpc_call *);
-bool __rxrpc_abort_call(const char *, struct rxrpc_call *, rxrpc_seq_t, u32, int);
-bool rxrpc_abort_call(const char *, struct rxrpc_call *, rxrpc_seq_t, u32, int);
+bool __rxrpc_abort_call(struct rxrpc_call *, rxrpc_seq_t, u32, int, enum rxrpc_abort_reason);
+bool rxrpc_abort_call(struct rxrpc_call *, rxrpc_seq_t, u32, int, enum rxrpc_abort_reason);
 int rxrpc_recvmsg(struct socket *, struct msghdr *, size_t, int);
 
 /*
  * Abort a call due to a protocol error.
  */
-static inline bool __rxrpc_abort_eproto(struct rxrpc_call *call,
-					struct sk_buff *skb,
-					const char *eproto_why,
-					const char *why,
-					u32 abort_code)
+static inline int rxrpc_abort_eproto(struct rxrpc_call *call,
+				     struct sk_buff *skb,
+				     s32 abort_code,
+				     enum rxrpc_abort_reason why)
 {
 	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
 
-	trace_rxrpc_rx_eproto(call, sp->hdr.serial, eproto_why);
-	return rxrpc_abort_call(why, call, sp->hdr.seq, abort_code, -EPROTO);
+	rxrpc_abort_call(call, sp->hdr.seq, abort_code, -EPROTO, why);
+	return -EPROTO;
 }
-
-#define rxrpc_abort_eproto(call, skb, eproto_why, abort_why, abort_code) \
-	__rxrpc_abort_eproto((call), (skb), tracepoint_string(eproto_why), \
-			     (abort_why), (abort_code))
 
 /*
  * rtt.c
@@ -1162,7 +1165,7 @@ struct key *rxrpc_look_up_server_security(struct rxrpc_connection *,
 /*
  * sendmsg.c
  */
-bool rxrpc_propose_abort(struct rxrpc_call *, u32, int, const char *);
+bool rxrpc_propose_abort(struct rxrpc_call *, s32, int, enum rxrpc_abort_reason);
 int rxrpc_do_sendmsg(struct rxrpc_sock *, struct msghdr *, size_t);
 
 /*
