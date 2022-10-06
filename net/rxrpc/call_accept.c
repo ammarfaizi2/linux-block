@@ -339,10 +339,9 @@ bool rxrpc_new_incoming_call(struct rxrpc_local *local,
 
 	_enter("");
 
-	/* Don't set up a call for anything other than the first DATA packet. */
-	if (sp->hdr.seq != 1 ||
-	    sp->hdr.type != RXRPC_PACKET_TYPE_DATA)
-		return true; /* Just discard */
+	/* Don't set up a call for anything other than a DATA packet. */
+	if (sp->hdr.type != RXRPC_PACKET_TYPE_DATA)
+		return rxrpc_protocol_error(skb, rxrpc_eproto_no_service_call);
 
 	rcu_read_lock();
 
@@ -363,16 +362,14 @@ bool rxrpc_new_incoming_call(struct rxrpc_local *local,
 	if (!conn) {
 		sec = rxrpc_get_incoming_security(rx, skb);
 		if (!sec)
-			goto reject;
+			goto unsupported_security;
 	}
 
 	spin_lock(&rx->incoming_lock);
 	if (rx->sk.sk_state == RXRPC_SERVER_LISTEN_DISABLED ||
 	    rx->sk.sk_state == RXRPC_CLOSE) {
-		trace_rxrpc_abort(0, "CLS", sp->hdr.cid, sp->hdr.callNumber,
-				  sp->hdr.seq, RX_INVALID_OPERATION, ESHUTDOWN);
-		skb->mark = RXRPC_SKB_MARK_REJECT_ABORT;
-		skb->priority = RX_INVALID_OPERATION;
+		rxrpc_direct_abort(skb, rxrpc_abort_shut_down,
+				   RX_INVALID_OPERATION, -ESHUTDOWN);
 		goto no_call;
 	}
 
@@ -416,13 +413,15 @@ bool rxrpc_new_incoming_call(struct rxrpc_local *local,
 	return true;
 
 unsupported_service:
-	trace_rxrpc_abort(0, "INV", sp->hdr.cid, sp->hdr.callNumber, sp->hdr.seq,
-			  RX_INVALID_OPERATION, EOPNOTSUPP);
-	skb->priority = RX_INVALID_OPERATION;
-	goto reject;
+	rcu_read_unlock();
+	return rxrpc_direct_abort(skb, rxrpc_abort_service_not_offered,
+				  RX_INVALID_OPERATION, -EOPNOTSUPP);
+unsupported_security:
+	rcu_read_unlock();
+	return rxrpc_direct_abort(skb, rxrpc_abort_service_not_offered,
+				  RX_INVALID_OPERATION, -EKEYREJECTED);
 no_call:
 	spin_unlock(&rx->incoming_lock);
-reject:
 	rcu_read_unlock();
 	_leave(" = f [%u]", skb->mark);
 	return false;
