@@ -585,7 +585,7 @@ void rxrpc_reject_packet(struct rxrpc_local *local, struct sk_buff *skb)
 		ioc = 2;
 		break;
 	default:
-		goto out;
+		return;
 	}
 
 	if (rxrpc_extract_addr_from_skb(&srx, skb) == 0) {
@@ -608,10 +608,6 @@ void rxrpc_reject_packet(struct rxrpc_local *local, struct sk_buff *skb)
 			trace_rxrpc_tx_packet(local->debug_id, &whdr,
 					      rxrpc_tx_point_reject);
 	}
-
-out:
-	rxrpc_free_skb(skb, rxrpc_skb_put_input);
-	_leave("");
 }
 
 /*

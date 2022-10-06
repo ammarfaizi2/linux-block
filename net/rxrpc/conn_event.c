@@ -494,6 +494,7 @@ static void rxrpc_post_packet_to_conn(struct rxrpc_connection *conn,
 {
 	_enter("%p,%p", conn, skb);
 
+	rxrpc_get_skb(skb, rxrpc_skb_get_conn_work);
 	skb_queue_tail(&conn->rx_queue, skb);
 	rxrpc_queue_conn(conn, rxrpc_conn_queue_rx_work);
 }
@@ -517,12 +518,10 @@ int rxrpc_input_conn_packet(struct rxrpc_connection *conn, struct sk_buff *skb)
 	case RXRPC_PACKET_TYPE_ACK:
 		rxrpc_conn_retransmit_call(conn, skb,
 					   sp->hdr.cid & RXRPC_CHANNELMASK);
-		rxrpc_free_skb(skb, rxrpc_skb_put_input);
 		return 0;
 
 	case RXRPC_PACKET_TYPE_BUSY:
 		/* Just ignore BUSY packets for now. */
-		rxrpc_free_skb(skb, rxrpc_skb_put_input);
 		return 0;
 
 	case RXRPC_PACKET_TYPE_ABORT:
@@ -531,7 +530,6 @@ int rxrpc_input_conn_packet(struct rxrpc_connection *conn, struct sk_buff *skb)
 		conn->state = RXRPC_CONN_REMOTELY_ABORTED;
 		set_bit(RXRPC_CONN_DONT_REUSE, &conn->flags);
 		rxrpc_abort_calls(conn, RXRPC_CALL_REMOTELY_ABORTED, sp->hdr.serial);
-		rxrpc_free_skb(skb, rxrpc_skb_put_input);
 		return -ECONNABORTED;
 
 	case RXRPC_PACKET_TYPE_CHALLENGE:
@@ -542,7 +540,6 @@ int rxrpc_input_conn_packet(struct rxrpc_connection *conn, struct sk_buff *skb)
 	default:
 		trace_rxrpc_rx_eproto(NULL, sp->hdr.serial,
 				      tracepoint_string("bad_conn_pkt"));
-		rxrpc_free_skb(skb, rxrpc_skb_put_input);
 		return -EPROTO;
 	}
 }

@@ -77,8 +77,6 @@ static void rxrpc_input_version(struct rxrpc_local *local, struct sk_buff *skb)
 		if (v == 0)
 			rxrpc_send_version_request(local, &sp->hdr, skb);
 	}
-
-	rxrpc_free_skb(skb, rxrpc_skb_put_input);
 }
 
 /*
@@ -150,7 +148,6 @@ static int rxrpc_input_packet(struct rxrpc_local *local, struct sk_buff *skb)
 		static int lose;
 		if ((lose++ & 7) == 7) {
 			trace_rxrpc_rx_lose(sp);
-			rxrpc_free_skb(skb, rxrpc_skb_put_lose);
 			return 0;
 		}
 	}
@@ -160,13 +157,13 @@ static int rxrpc_input_packet(struct rxrpc_local *local, struct sk_buff *skb)
 	switch (sp->hdr.type) {
 	case RXRPC_PACKET_TYPE_VERSION:
 		if (rxrpc_to_client(sp))
-			goto discard;
+			return 0;
 		rxrpc_input_version(local, skb);
-		goto out;
+		return 0;
 
 	case RXRPC_PACKET_TYPE_BUSY:
 		if (rxrpc_to_server(sp))
-			goto discard;
+			return 0;
 		fallthrough;
 	case RXRPC_PACKET_TYPE_ACK:
 	case RXRPC_PACKET_TYPE_ACKALL:
@@ -186,18 +183,18 @@ static int rxrpc_input_packet(struct rxrpc_local *local, struct sk_buff *skb)
 
 	case RXRPC_PACKET_TYPE_CHALLENGE:
 		if (rxrpc_to_server(sp))
-			goto discard;
+			return 0;
 		break;
 	case RXRPC_PACKET_TYPE_RESPONSE:
 		if (rxrpc_to_client(sp))
-			goto discard;
+			return 0;
 		break;
 
 		/* Packet types 9-11 should just be ignored. */
 	case RXRPC_PACKET_TYPE_PARAMS:
 	case RXRPC_PACKET_TYPE_10:
 	case RXRPC_PACKET_TYPE_11:
-		goto discard;
+		return 0;
 
 	default:
 		goto bad_message;
@@ -217,7 +214,7 @@ static int rxrpc_input_packet(struct rxrpc_local *local, struct sk_buff *skb)
 			if (sp->hdr.type == RXRPC_PACKET_TYPE_DATA &&
 			    sp->hdr.seq == 1)
 				goto unsupported_service;
-			goto discard;
+			return 0;
 		}
 	}
 
@@ -243,7 +240,7 @@ static int rxrpc_input_packet(struct rxrpc_local *local, struct sk_buff *skb)
 			/* Connection-level packet */
 			_debug("CONN %p {%d}", conn, conn->debug_id);
 			rxrpc_input_conn_packet(conn, skb);
-			goto out;
+			return 0;
 		}
 
 		if ((int)sp->hdr.serial - (int)conn->hi_serial > 0)
@@ -255,19 +252,19 @@ static int rxrpc_input_packet(struct rxrpc_local *local, struct sk_buff *skb)
 
 		/* Ignore really old calls */
 		if (sp->hdr.callNumber < chan->last_call)
-			goto discard;
+			return 0;
 
 		if (sp->hdr.callNumber == chan->last_call) {
 			if (chan->call ||
 			    sp->hdr.type == RXRPC_PACKET_TYPE_ABORT)
-				goto discard;
+				return 0;
 
 			/* For the previous service call, if completed
 			 * successfully, we discard all further packets.
 			 */
 			if (rxrpc_conn_is_service(conn) &&
 			    chan->last_type == RXRPC_PACKET_TYPE_ACK)
-				goto discard;
+				return 0;
 
 			/* But otherwise we need to retransmit the final packet
 			 * from data cached in the connection record.
@@ -278,7 +275,7 @@ static int rxrpc_input_packet(struct rxrpc_local *local, struct sk_buff *skb)
 						    sp->hdr.serial,
 						    sp->hdr.flags);
 			rxrpc_input_conn_packet(conn, skb);
-			goto out;
+			return 0;
 		}
 
 		call = rcu_dereference(chan->call);
@@ -299,7 +296,7 @@ static int rxrpc_input_packet(struct rxrpc_local *local, struct sk_buff *skb)
 		    sp->hdr.type != RXRPC_PACKET_TYPE_DATA)
 			goto bad_message;
 		if (sp->hdr.seq != 1)
-			goto discard;
+			return 0;
 		call = rxrpc_new_incoming_call(local, rx, skb);
 		if (!call)
 			goto reject_packet;
@@ -313,12 +310,6 @@ static int rxrpc_input_packet(struct rxrpc_local *local, struct sk_buff *skb)
 	rcu_read_unlock();
 	rxrpc_input_call_event(call, skb);
 	rcu_read_lock();
-	goto out;
-
-discard:
-	rxrpc_free_skb(skb, rxrpc_skb_put_input);
-out:
-	trace_rxrpc_rx_done(0, 0);
 	return 0;
 
 wrong_security:
@@ -346,9 +337,7 @@ protocol_error:
 post_abort:
 	skb->mark = RXRPC_SKB_MARK_REJECT_ABORT;
 reject_packet:
-	trace_rxrpc_rx_done(skb->mark, skb->priority);
 	rxrpc_reject_packet(local, skb);
-	_leave(" [badmsg]");
 	return 0;
 }
 
@@ -387,9 +376,12 @@ int rxrpc_io_thread(void *data)
 		if ((skb = __skb_dequeue(&rx_queue))) {
 			switch (skb->mark) {
 			case RXRPC_SKB_MARK_PACKET:
+				skb->priority = 0;
 				rcu_read_lock();
 				rxrpc_input_packet(local, skb);
 				rcu_read_unlock();
+				trace_rxrpc_rx_done(skb->mark, skb->priority);
+				rxrpc_free_skb(skb, rxrpc_skb_put_input);
 				break;
 			case RXRPC_SKB_MARK_ERROR:
 				rxrpc_input_error(local, skb);
