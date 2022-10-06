@@ -6847,7 +6847,7 @@ void __hugetlb_vma_unlock_write_put(struct hugetlb_vma_lock *vma_lock)
 	kref_put(&vma_lock->refs, hugetlb_vma_lock_release);
 }
 
-void __hugetlb_vma_unlock_write_free(struct vm_area_struct *vma)
+static void __hugetlb_vma_unlock_write_free(struct vm_area_struct *vma)
 {
 	if (__vma_shareable_flags_pmd(vma)) {
 		struct hugetlb_vma_lock *vma_lock = vma->vm_private_data;
@@ -7016,6 +7016,10 @@ void hugetlb_vma_assert_locked(struct vm_area_struct *vma)
 }
 
 void hugetlb_vma_lock_release(struct kref *kref)
+{
+}
+
+static void __hugetlb_vma_unlock_write_free(struct vm_area_struct *vma)
 {
 }
 
