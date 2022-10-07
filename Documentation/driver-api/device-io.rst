@@ -427,7 +427,8 @@ It should also not be used for actual RAM, as the returned pointer is an
 ``__iomem`` token. memremap() can be used for mapping normal RAM that is outside
 of the linear kernel memory area to a regular pointer.
 
-Portable drivers should avoid the use of ioremap_cache().
+Portable drivers should avoid the use of ioremap_cache().  Drivers that use
+ioremap_cache() must depend on ``CONFIG_HAVE_IOREMAP_CACHE``.
 
 Architecture example
 --------------------

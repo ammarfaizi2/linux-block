@@ -188,6 +188,12 @@ config USER_RETURN_NOTIFIER
 	  Provide a kernel-internal notification when a cpu is about to
 	  switch to user mode.
 
+# Not recommended for new ports, as the semantics of ioremap_cache() differ
+# between architectures and thus any portable use of it is likely wrong.
+# ioremap_cache() has long been deprecated in favor of memremap().
+config HAVE_IOREMAP_CACHE
+	def_bool n
+
 config HAVE_IOREMAP_PROT
 	bool
 

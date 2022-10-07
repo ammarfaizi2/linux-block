@@ -183,7 +183,7 @@ config MTD_SBC_GXX
 
 config MTD_PXA2XX
 	tristate "CFI Flash device mapped on Intel XScale PXA2xx based boards"
-	depends on (PXA25x || PXA27x) && MTD_CFI_INTELEXT
+	depends on (PXA25x || PXA27x) && MTD_CFI_INTELEXT && HAVE_IOREMAP_CACHE
 	help
 	  This provides a driver for the NOR flash attached to a PXA2xx chip.
 

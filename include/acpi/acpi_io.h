@@ -6,7 +6,7 @@
 
 #include <asm/acpi.h>
 
-#ifndef acpi_os_ioremap
+#if !defined(acpi_os_ioremap) && defined(CONFIG_HAVE_IOREMAP_CACHE)
 static inline void __iomem *acpi_os_ioremap(acpi_physical_address phys,
 					    acpi_size size)
 {

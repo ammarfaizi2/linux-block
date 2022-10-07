@@ -10,7 +10,7 @@ config ACPI_APEI
 	select MISC_FILESYSTEMS
 	select PSTORE
 	select UEFI_CPER
-	depends on HAVE_ACPI_APEI
+	depends on HAVE_ACPI_APEI && HAVE_IOREMAP_CACHE
 	help
 	  APEI allows to report errors (for example from the chipset)
 	  to the operating system. This improves NMI handling

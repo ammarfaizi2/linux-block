@@ -405,7 +405,7 @@ source "drivers/gpu/drm/sprd/Kconfig"
 
 config DRM_HYPERV
 	tristate "DRM Support for Hyper-V synthetic video device"
-	depends on DRM && PCI && MMU && HYPERV
+	depends on DRM && PCI && MMU && HYPERV && HAVE_IOREMAP_CACHE
 	select DRM_KMS_HELPER
 	select DRM_GEM_SHMEM_HELPER
 	help

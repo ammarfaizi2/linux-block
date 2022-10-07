@@ -7,5 +7,6 @@ config MESON_SM
 	depends on ARCH_MESON || COMPILE_TEST
 	default y
 	depends on ARM64_4K_PAGES
+	depends on HAVE_IOREMAP_CACHE
 	help
 	  Say y here to enable the Amlogic secure monitor driver
