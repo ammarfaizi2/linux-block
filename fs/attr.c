@@ -40,6 +40,33 @@ static bool setattr_drop_sgid(struct user_namespace *mnt_userns,
 }
 
 /**
+ * should_remove_sgid - determine whether the setgid bit needs to be removed
+ * @mnt_userns:	User namespace of the mount the inode was created from
+ * @inode: inode to check
+ *
+ * This function determines whether the setgid bit needs to be removed.
+ * We retain backwards compatibility and require setgid bit to be removed
+ * unconditionally if S_IXGRP is set. Otherwise we have the exact same
+ * requirements as setattr_prepare() and setattr_copy().
+ *
+ * Return: ATTR_KILL_SGID if setgid bit needs to be removed, 0 otherwise.
+ */
+int should_remove_sgid(struct user_namespace *mnt_userns,
+		       const struct inode *inode)
+{
+	umode_t mode = inode->i_mode;
+
+	if (!(mode & S_ISGID))
+		return 0;
+	if (mode & S_IXGRP)
+		return ATTR_KILL_SGID;
+	if (setattr_drop_sgid(mnt_userns, inode,
+			      i_gid_into_vfsgid(mnt_userns, inode)))
+		return ATTR_KILL_SGID;
+	return 0;
+}
+
+/**
  * chown_ok - verify permissions to chown inode
  * @mnt_userns:	user namespace of the mount @inode was found from
  * @inode:	inode to check permissions on
