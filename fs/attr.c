@@ -19,6 +19,27 @@
 #include <linux/ima.h>
 
 /**
+ * setattr_drop_sgid - check generic setgid permissions
+ * @mnt_userns:	User namespace of the mount the inode was created from
+ * @inode: inode to check
+ * @vfsgid: the new/current vfsgid of @inode
+ *
+ * This function determines whether the setgid bit needs to be removed because
+ * the caller lacks privileges over the inode.
+ *
+ * Return: true if the setgid bit needs to be removed, false if not.
+ */
+static bool setattr_drop_sgid(struct user_namespace *mnt_userns,
+			      const struct inode *inode, vfsgid_t vfsgid)
+{
+	if (vfsgid_in_group_p(vfsgid))
+		return false;
+	if (capable_wrt_inode_uidgid(mnt_userns, inode, CAP_FSETID))
+		return false;
+	return true;
+}
+
+/**
  * chown_ok - verify permissions to chown inode
  * @mnt_userns:	user namespace of the mount @inode was found from
  * @inode:	inode to check permissions on
@@ -140,8 +161,7 @@ int setattr_prepare(struct user_namespace *mnt_userns, struct dentry *dentry,
 			vfsgid = i_gid_into_vfsgid(mnt_userns, inode);
 
 		/* Also check the setgid bit! */
-		if (!vfsgid_in_group_p(vfsgid) &&
-		    !capable_wrt_inode_uidgid(mnt_userns, inode, CAP_FSETID))
+		if (setattr_drop_sgid(mnt_userns, inode, vfsgid))
 			attr->ia_mode &= ~S_ISGID;
 	}
 
@@ -251,9 +271,8 @@ void setattr_copy(struct user_namespace *mnt_userns, struct inode *inode,
 		inode->i_ctime = attr->ia_ctime;
 	if (ia_valid & ATTR_MODE) {
 		umode_t mode = attr->ia_mode;
-		vfsgid_t vfsgid = i_gid_into_vfsgid(mnt_userns, inode);
-		if (!vfsgid_in_group_p(vfsgid) &&
-		    !capable_wrt_inode_uidgid(mnt_userns, inode, CAP_FSETID))
+		if (setattr_drop_sgid(mnt_userns, inode,
+				      i_gid_into_vfsgid(mnt_userns, inode)))
 			mode &= ~S_ISGID;
 		inode->i_mode = mode;
 	}
