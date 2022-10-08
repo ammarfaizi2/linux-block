@@ -798,17 +798,17 @@ int ath12k_wmi_vdev_create(struct ath12k *ar, u8 *macaddr,
 	txrx_streams->supported_rx_streams =
 				 args->chains[NL80211_BAND_5GHZ].rx;
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "WMI vdev create: id %d type %d subtype %d macaddr %pM pdevid %d\n",
+		   args->if_id, args->type, args->subtype,
+		   macaddr, args->pdev_id);
+
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_VDEV_CREATE_CMDID);
 	if (ret) {
 		ath12k_warn(ar->ab,
 			    "failed to submit WMI_VDEV_CREATE_CMDID\n");
 		dev_kfree_skb(skb);
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "WMI vdev create: id %d type %d subtype %d macaddr %pM pdevid %d\n",
-		   args->if_id, args->type, args->subtype,
-		   macaddr, args->pdev_id);
 
 	return ret;
 }
@@ -829,13 +829,13 @@ int ath12k_wmi_vdev_delete(struct ath12k *ar, u8 vdev_id)
 						 sizeof(*cmd));
 	cmd->vdev_id = cpu_to_le32(vdev_id);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI, "WMI vdev delete id %d\n", vdev_id);
+
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_VDEV_DELETE_CMDID);
 	if (ret) {
 		ath12k_warn(ar->ab, "failed to submit WMI_VDEV_DELETE_CMDID\n");
 		dev_kfree_skb(skb);
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI, "WMI vdev delete id %d\n", vdev_id);
 
 	return ret;
 }
@@ -857,13 +857,13 @@ int ath12k_wmi_vdev_stop(struct ath12k *ar, u8 vdev_id)
 						 sizeof(*cmd));
 	cmd->vdev_id = cpu_to_le32(vdev_id);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI, "WMI vdev stop id 0x%x\n", vdev_id);
+
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_VDEV_STOP_CMDID);
 	if (ret) {
 		ath12k_warn(ar->ab, "failed to submit WMI_VDEV_STOP cmd\n");
 		dev_kfree_skb(skb);
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI, "WMI vdev stop id 0x%x\n", vdev_id);
 
 	return ret;
 }
@@ -885,13 +885,13 @@ int ath12k_wmi_vdev_down(struct ath12k *ar, u8 vdev_id)
 						 sizeof(*cmd));
 	cmd->vdev_id = cpu_to_le32(vdev_id);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI, "WMI vdev down id 0x%x\n", vdev_id);
+
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_VDEV_DOWN_CMDID);
 	if (ret) {
 		ath12k_warn(ar->ab, "failed to submit WMI_VDEV_DOWN cmd\n");
 		dev_kfree_skb(skb);
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI, "WMI vdev down id 0x%x\n", vdev_id);
 
 	return ret;
 }
@@ -1001,6 +1001,10 @@ int ath12k_wmi_vdev_start(struct ath12k *ar, struct wmi_vdev_start_req_arg *arg,
 
 	ptr += sizeof(*tlv);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI, "vdev %s id 0x%x freq 0x%x mode 0x%x\n",
+		   restart ? "restart" : "start", arg->vdev_id,
+		   arg->freq, arg->mode);
+
 	if (restart)
 		ret = ath12k_wmi_cmd_send(wmi, skb,
 					  WMI_VDEV_RESTART_REQUEST_CMDID);
@@ -1012,10 +1016,6 @@ int ath12k_wmi_vdev_start(struct ath12k *ar, struct wmi_vdev_start_req_arg *arg,
 			    restart ? "restart" : "start");
 		dev_kfree_skb(skb);
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI, "vdev %s id 0x%x freq 0x%x mode 0x%x\n",
-		   restart ? "restart" : "start", arg->vdev_id,
-		   arg->freq, arg->mode);
 
 	return ret;
 }
@@ -1040,15 +1040,15 @@ int ath12k_wmi_vdev_up(struct ath12k *ar, u32 vdev_id, u32 aid, const u8 *bssid)
 
 	ether_addr_copy(cmd->vdev_bssid.addr, bssid);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "WMI mgmt vdev up id 0x%x assoc id %d bssid %pM\n",
+		   vdev_id, aid, bssid);
+
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_VDEV_UP_CMDID);
 	if (ret) {
 		ath12k_warn(ar->ab, "failed to submit WMI_VDEV_UP cmd\n");
 		dev_kfree_skb(skb);
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "WMI mgmt vdev up id 0x%x assoc id %d bssid %pM\n",
-		   vdev_id, aid, bssid);
 
 	return ret;
 }
@@ -1073,15 +1073,15 @@ int ath12k_wmi_send_peer_create_cmd(struct ath12k *ar,
 	cmd->peer_type = cpu_to_le32(arg->peer_type);
 	cmd->vdev_id = cpu_to_le32(arg->vdev_id);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "WMI peer create vdev_id %d peer_addr %pM\n",
+		   arg->vdev_id, arg->peer_addr);
+
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_PEER_CREATE_CMDID);
 	if (ret) {
 		ath12k_warn(ar->ab, "failed to submit WMI_PEER_CREATE cmd\n");
 		dev_kfree_skb(skb);
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "WMI peer create vdev_id %d peer_addr %pM\n",
-		   arg->vdev_id, arg->peer_addr);
 
 	return ret;
 }
@@ -1177,15 +1177,15 @@ int ath12k_wmi_set_peer_param(struct ath12k *ar, const u8 *peer_addr,
 	cmd->param_id = cpu_to_le32(param_id);
 	cmd->param_value = cpu_to_le32(param_val);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "WMI vdev %d peer 0x%pM set param %d value %d\n",
+		   vdev_id, peer_addr, param_id, param_val);
+
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_PEER_SET_PARAM_CMDID);
 	if (ret) {
 		ath12k_warn(ar->ab, "failed to send WMI_PEER_SET_PARAM cmd\n");
 		dev_kfree_skb(skb);
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "WMI vdev %d peer 0x%pM set param %d value %d\n",
-		   vdev_id, peer_addr, param_id, param_val);
 
 	return ret;
 }
@@ -1212,16 +1212,16 @@ int ath12k_wmi_send_peer_flush_tids_cmd(struct ath12k *ar,
 	cmd->peer_tid_bitmap = cpu_to_le32(peer_tid_bitmap);
 	cmd->vdev_id = cpu_to_le32(vdev_id);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "WMI peer flush vdev_id %d peer_addr %pM tids %08x\n",
+		   vdev_id, peer_addr, peer_tid_bitmap);
+
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_PEER_FLUSH_TIDS_CMDID);
 	if (ret) {
 		ath12k_warn(ar->ab,
 			    "failed to send WMI_PEER_FLUSH_TIDS cmd\n");
 		dev_kfree_skb(skb);
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "WMI peer flush vdev_id %d peer_addr %pM tids %08x\n",
-		   vdev_id, peer_addr, peer_tid_bitmap);
 
 	return ret;
 }
@@ -1253,6 +1253,10 @@ int ath12k_wmi_peer_rx_reorder_queue_setup(struct ath12k *ar,
 	cmd->ba_window_size_valid = cpu_to_le32(ba_window_size_valid);
 	cmd->ba_window_size = cpu_to_le32(ba_window_size);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "wmi rx reorder queue setup addr %pM vdev_id %d tid %d\n",
+		   addr, vdev_id, tid);
+
 	ret = ath12k_wmi_cmd_send(ar->wmi, skb,
 				  WMI_PEER_REORDER_QUEUE_SETUP_CMDID);
 	if (ret) {
@@ -1260,10 +1264,6 @@ int ath12k_wmi_peer_rx_reorder_queue_setup(struct ath12k *ar,
 			    "failed to send WMI_PEER_REORDER_QUEUE_SETUP\n");
 		dev_kfree_skb(skb);
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "wmi rx reorder queue setup addr %pM vdev_id %d tid %d\n",
-		   addr, vdev_id, tid);
 
 	return ret;
 }
@@ -1323,15 +1323,15 @@ int ath12k_wmi_pdev_set_param(struct ath12k *ar, u32 param_id,
 	cmd->param_id = cpu_to_le32(param_id);
 	cmd->param_value = cpu_to_le32(param_value);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "WMI pdev set param %d pdev id %d value %d\n",
+		   param_id, pdev_id, param_value);
+
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_PDEV_SET_PARAM_CMDID);
 	if (ret) {
 		ath12k_warn(ar->ab, "failed to send WMI_PDEV_SET_PARAM cmd\n");
 		dev_kfree_skb(skb);
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "WMI pdev set param %d pdev id %d value %d\n",
-		   param_id, pdev_id, param_value);
 
 	return ret;
 }
@@ -1353,15 +1353,15 @@ int ath12k_wmi_pdev_set_ps_mode(struct ath12k *ar, int vdev_id, u32 enable)
 	cmd->vdev_id = cpu_to_le32(vdev_id);
 	cmd->sta_ps_mode = cpu_to_le32(enable);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "WMI vdev set psmode %d vdev id %d\n",
+		   enable, vdev_id);
+
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_STA_POWERSAVE_MODE_CMDID);
 	if (ret) {
 		ath12k_warn(ar->ab, "failed to send WMI_PDEV_SET_PARAM cmd\n");
 		dev_kfree_skb(skb);
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "WMI vdev set psmode %d vdev id %d\n",
-		   enable, vdev_id);
 
 	return ret;
 }
@@ -1386,14 +1386,14 @@ int ath12k_wmi_pdev_suspend(struct ath12k *ar, u32 suspend_opt,
 	cmd->suspend_opt = cpu_to_le32(suspend_opt);
 	cmd->pdev_id = cpu_to_le32(pdev_id);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "WMI pdev suspend pdev_id %d\n", pdev_id);
+
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_PDEV_SUSPEND_CMDID);
 	if (ret) {
 		ath12k_warn(ar->ab, "failed to send WMI_PDEV_SUSPEND cmd\n");
 		dev_kfree_skb(skb);
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "WMI pdev suspend pdev_id %d\n", pdev_id);
 
 	return ret;
 }
@@ -1484,16 +1484,16 @@ int ath12k_wmi_send_set_ap_ps_param_cmd(struct ath12k *ar, u8 *peer_addr,
 	cmd->param = cpu_to_le32(arg->param);
 	cmd->value = cpu_to_le32(arg->value);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "WMI set ap ps vdev id %d peer %pM param %d value %d\n",
+		   arg->vdev_id, peer_addr, arg->param, arg->value);
+
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_AP_PS_PEER_PARAM_CMDID);
 	if (ret) {
 		ath12k_warn(ar->ab,
 			    "failed to send WMI_AP_PS_PEER_PARAM_CMDID\n");
 		dev_kfree_skb(skb);
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "WMI set ap ps vdev id %d peer %pM param %d value %d\n",
-		   arg->vdev_id, peer_addr, arg->param, arg->value);
 
 	return ret;
 }
@@ -1580,16 +1580,16 @@ int ath12k_wmi_vdev_set_param_cmd(struct ath12k *ar, u32 vdev_id,
 	cmd->param_id = cpu_to_le32(param_id);
 	cmd->param_value = cpu_to_le32(param_value);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "WMI vdev id 0x%x set param %d value %d\n",
+		   vdev_id, param_id, param_value);
+
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_VDEV_SET_PARAM_CMDID);
 	if (ret) {
 		ath12k_warn(ar->ab,
 			    "failed to send WMI_VDEV_SET_PARAM_CMDID\n");
 		dev_kfree_skb(skb);
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "WMI vdev id 0x%x set param %d value %d\n",
-		   vdev_id, param_id, param_value);
 
 	return ret;
 }
@@ -1610,14 +1610,14 @@ int ath12k_wmi_send_pdev_temperature_cmd(struct ath12k *ar)
 						 sizeof(*cmd));
 	cmd->pdev_id = cpu_to_le32(ar->pdev->pdev_id);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "WMI pdev get temperature for pdev_id %d\n", ar->pdev->pdev_id);
+
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_PDEV_GET_TEMPERATURE_CMDID);
 	if (ret) {
 		ath12k_warn(ar->ab, "failed to send WMI_PDEV_GET_TEMPERATURE cmd\n");
 		dev_kfree_skb(skb);
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "WMI pdev get temperature for pdev_id %d\n", ar->pdev->pdev_id);
 
 	return ret;
 }
@@ -1742,16 +1742,16 @@ int ath12k_wmi_vdev_install_key(struct ath12k *ar,
 	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_BYTE, key_len_aligned);
 	memcpy(tlv->value, arg->key_data, key_len_aligned);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "WMI vdev install key idx %d cipher %d len %d\n",
+		   arg->key_idx, arg->key_cipher, arg->key_len);
+
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_VDEV_INSTALL_KEY_CMDID);
 	if (ret) {
 		ath12k_warn(ar->ab,
 			    "failed to send WMI_VDEV_INSTALL_KEY cmd\n");
 		dev_kfree_skb(skb);
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "WMI vdev install key idx %d cipher %d len %d\n",
-		   arg->key_idx, arg->key_cipher, arg->key_len);
 
 	return ret;
 }
@@ -1971,13 +1971,6 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 		ptr += sizeof(*he_mcs);
 	}
 
-	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_PEER_ASSOC_CMDID);
-	if (ret) {
-		ath12k_warn(ar->ab,
-			    "failed to send WMI_PEER_ASSOC_CMDID\n");
-		dev_kfree_skb(skb);
-	}
-
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "wmi peer assoc vdev id %d assoc id %d peer mac %pM peer_flags %x rate_caps %x peer_caps %x listen_intval %d ht_caps %x max_mpdu %d nss %d phymode %d peer_mpdu_density %d vht_caps %x he cap_info %x he ops %x he cap_info_ext %x he phy %x %x %x peer_bw_rxnss_override %x\n",
 		   cmd->vdev_id, cmd->peer_associd, arg->peer_mac,
@@ -1990,6 +1983,13 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 		   cmd->peer_he_cap_phy[0], cmd->peer_he_cap_phy[1],
 		   cmd->peer_he_cap_phy[2],
 		   cmd->peer_bw_rxnss_override);
+
+	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_PEER_ASSOC_CMDID);
+	if (ret) {
+		ath12k_warn(ar->ab,
+			    "failed to send WMI_PEER_ASSOC_CMDID\n");
+		dev_kfree_skb(skb);
+	}
 
 	return ret;
 }
@@ -3280,6 +3280,9 @@ int ath12k_wmi_pdev_lro_cfg(struct ath12k *ar,
 
 	cmd->pdev_id = cpu_to_le32(pdev_id);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "WMI lro cfg cmd pdev_id 0x%x\n", pdev_id);
+
 	ret = ath12k_wmi_cmd_send(ar->wmi, skb, WMI_LRO_CONFIG_CMDID);
 	if (ret) {
 		ath12k_warn(ar->ab,
@@ -3287,8 +3290,6 @@ int ath12k_wmi_pdev_lro_cfg(struct ath12k *ar,
 		goto err;
 	}
 
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "WMI lro cfg cmd pdev_id 0x%x\n", pdev_id);
 	return 0;
 err:
 	dev_kfree_skb(skb);
@@ -3405,6 +3406,10 @@ int ath12k_wmi_vdev_spectral_conf(struct ath12k *ar,
 	cmd->scan_dbm_adj = cpu_to_le32(arg->scan_dbm_adj);
 	cmd->scan_chn_mask = cpu_to_le32(arg->scan_chn_mask);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "WMI spectral scan config cmd vdev_id 0x%x\n",
+		   arg->vdev_id);
+
 	ret = ath12k_wmi_cmd_send(ar->wmi, skb,
 				  WMI_VDEV_SPECTRAL_SCAN_CONFIGURE_CMDID);
 	if (ret) {
@@ -3412,10 +3417,6 @@ int ath12k_wmi_vdev_spectral_conf(struct ath12k *ar,
 			    "failed to send spectral scan config wmi cmd\n");
 		goto err;
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "WMI spectral scan config cmd vdev_id 0x%x\n",
-		   arg->vdev_id);
 
 	return 0;
 err:
@@ -3442,6 +3443,10 @@ int ath12k_wmi_vdev_spectral_enable(struct ath12k *ar, u32 vdev_id,
 	cmd->trigger_cmd = cpu_to_le32(trigger);
 	cmd->enable_cmd = cpu_to_le32(enable);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "WMI spectral enable cmd vdev id 0x%x\n",
+		   vdev_id);
+
 	ret = ath12k_wmi_cmd_send(ar->wmi, skb,
 				  WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID);
 	if (ret) {
@@ -3449,10 +3454,6 @@ int ath12k_wmi_vdev_spectral_enable(struct ath12k *ar, u32 vdev_id,
 			    "failed to send spectral enable wmi cmd\n");
 		goto err;
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "WMI spectral enable cmd vdev id 0x%x\n",
-		   vdev_id);
 
 	return 0;
 err:
@@ -3488,6 +3489,10 @@ int ath12k_wmi_pdev_dma_ring_cfg(struct ath12k *ar,
 	cmd->num_resp_per_event = cpu_to_le32(arg->num_resp_per_event);
 	cmd->event_timeout_ms = cpu_to_le32(arg->event_timeout_ms);
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "WMI DMA ring cfg req cmd pdev_id 0x%x\n",
+		   arg->pdev_id);
+
 	ret = ath12k_wmi_cmd_send(ar->wmi, skb,
 				  WMI_PDEV_DMA_RING_CFG_REQ_CMDID);
 	if (ret) {
@@ -3495,10 +3500,6 @@ int ath12k_wmi_pdev_dma_ring_cfg(struct ath12k *ar,
 			    "failed to send dma ring cfg req wmi cmd\n");
 		goto err;
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "WMI DMA ring cfg req cmd pdev_id 0x%x\n",
-		   arg->pdev_id);
 
 	return 0;
 err:
@@ -6431,6 +6432,11 @@ ath12k_wmi_send_unit_test_cmd(struct ath12k *ar,
 	for (i = 0; i < le32_to_cpu(ut_cmd.num_args); i++)
 		ut_cmd_args[i] = test_args[i];
 
+	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
+		   "WMI unit test : module %d vdev %d n_args %d token %d\n",
+		   cmd->module_id, cmd->vdev_id, cmd->num_args,
+		   cmd->diag_token);
+
 	ret = ath12k_wmi_cmd_send(wmi, skb, WMI_UNIT_TEST_CMDID);
 
 	if (ret) {
@@ -6438,11 +6444,6 @@ ath12k_wmi_send_unit_test_cmd(struct ath12k *ar,
 			    ret);
 		dev_kfree_skb(skb);
 	}
-
-	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
-		   "WMI unit test : module %d vdev %d n_args %d token %d\n",
-		   cmd->module_id, cmd->vdev_id, cmd->num_args,
-		   cmd->diag_token);
 
 	return ret;
 }
