@@ -304,9 +304,10 @@ static const char *ath12k_mac_phymode_str(enum wmi_phy_mode mode)
 	return "<unknown>";
 }
 
-u8 ath12k_mac_bw_to_mac80211_bw(u8 bw)
+enum rate_info_bw
+ath12k_mac_bw_to_mac80211_bw(enum ath12k_supported_bw bw)
 {
-	u8 ret = 0;
+	u8 ret = ATH12K_BW_20;
 
 	switch (bw) {
 	case ATH12K_BW_20:
@@ -663,7 +664,7 @@ fail:
 static int ath12k_recalc_rtscts_prot(struct ath12k_vif *arvif)
 {
 	struct ath12k *ar = arvif->ar;
-	u32 vdev_param, rts_cts = 0;
+	u32 vdev_param, rts_cts;
 	int ret;
 
 	lockdep_assert_held(&ar->conf_mutex);
@@ -779,7 +780,7 @@ static int ath12k_mac_vdev_setup_sync(struct ath12k *ar)
 
 static int ath12k_monitor_vdev_up(struct ath12k *ar, int vdev_id)
 {
-	int ret = 0;
+	int ret;
 
 	ret = ath12k_wmi_vdev_up(ar, vdev_id, 0, ar->mac_addr);
 	if (ret) {
@@ -796,9 +797,9 @@ static int ath12k_monitor_vdev_up(struct ath12k *ar, int vdev_id)
 static int ath12k_mac_monitor_vdev_start(struct ath12k *ar, int vdev_id,
 					 struct cfg80211_chan_def *chandef)
 {
-	struct ieee80211_channel *channel = NULL;
+	struct ieee80211_channel *channel;
 	struct wmi_vdev_start_req_arg arg = {};
-	int ret = 0;
+	int ret;
 
 	lockdep_assert_held(&ar->conf_mutex);
 
@@ -858,7 +859,7 @@ vdev_stop:
 
 static int ath12k_mac_monitor_vdev_stop(struct ath12k *ar)
 {
-	int ret = 0;
+	int ret;
 
 	lockdep_assert_held(&ar->conf_mutex);
 
@@ -888,9 +889,9 @@ static int ath12k_mac_monitor_vdev_create(struct ath12k *ar)
 {
 	struct ath12k_pdev *pdev = ar->pdev;
 	struct ath12k_wmi_vdev_create_arg arg = {};
-	int bit, ret = 0;
-	u8 tmp_addr[6] = {0};
-	u16 nss = 0;
+	int bit, ret;
+	u8 tmp_addr[6];
+	u16 nss;
 
 	lockdep_assert_held(&ar->conf_mutex);
 
@@ -955,8 +956,8 @@ static int ath12k_mac_monitor_vdev_create(struct ath12k *ar)
 
 static int ath12k_mac_monitor_vdev_delete(struct ath12k *ar)
 {
-	int ret = 0;
-	unsigned long time_left = 0;
+	int ret;
+	unsigned long time_left;
 
 	lockdep_assert_held(&ar->conf_mutex);
 
@@ -1138,7 +1139,7 @@ static void ath12k_control_beaconing(struct ath12k_vif *arvif,
 				     struct ieee80211_bss_conf *info)
 {
 	struct ath12k *ar = arvif->ar;
-	int ret = 0;
+	int ret;
 
 	lockdep_assert_held(&arvif->ar->conf_mutex);
 
@@ -2287,7 +2288,7 @@ static void ath12k_mac_op_bss_info_changed(struct ieee80211_hw *hw,
 	u32 preamble;
 	u16 hw_value;
 	u16 bitrate;
-	int ret = 0;
+	int ret;
 	u8 rateidx;
 	u32 rate;
 
@@ -2721,7 +2722,7 @@ static int ath12k_mac_op_hw_scan(struct ieee80211_hw *hw,
 	struct ath12k_vif *arvif = ath12k_vif_to_arvif(vif);
 	struct cfg80211_scan_request *req = &hw_req->req;
 	struct ath12k_wmi_scan_req_arg arg = {};
-	int ret = 0;
+	int ret;
 	int i;
 
 	mutex_lock(&ar->conf_mutex);
@@ -3109,7 +3110,7 @@ static int ath12k_station_assoc(struct ath12k *ar,
 {
 	struct ath12k_vif *arvif = ath12k_vif_to_arvif(vif);
 	struct ath12k_wmi_peer_assoc_arg peer_arg;
-	int ret = 0;
+	int ret;
 	struct cfg80211_chan_def def;
 	enum nl80211_band band;
 	struct cfg80211_bitrate_mask *mask;
@@ -3190,7 +3191,7 @@ static int ath12k_station_disassoc(struct ath12k *ar,
 				   struct ieee80211_sta *sta)
 {
 	struct ath12k_vif *arvif = (void *)vif->drv_priv;
-	int ret = 0;
+	int ret;
 
 	lockdep_assert_held(&ar->conf_mutex);
 
@@ -3547,7 +3548,7 @@ static int ath12k_mac_op_sta_set_txpwr(struct ieee80211_hw *hw,
 {
 	struct ath12k *ar = hw->priv;
 	struct ath12k_vif *arvif = (void *)vif->drv_priv;
-	int ret = 0;
+	int ret;
 	s16 txpwr;
 
 	if (sta->deflink.txpwr.type == NL80211_TX_POWER_AUTOMATIC) {
@@ -3670,8 +3671,8 @@ static int ath12k_conf_tx_uapsd(struct ath12k *ar, struct ieee80211_vif *vif,
 				u16 ac, bool enable)
 {
 	struct ath12k_vif *arvif = ath12k_vif_to_arvif(vif);
-	u32 value = 0;
-	int ret = 0;
+	u32 value;
+	int ret;
 
 	if (arvif->vdev_type != WMI_VDEV_TYPE_STA)
 		return 0;
@@ -4342,7 +4343,7 @@ int ath12k_mac_tx_mgmt_pending_free(int buf_id, void *skb, void *ctx)
 static int ath12k_mac_vif_txmgmt_idr_remove(int buf_id, void *skb, void *ctx)
 {
 	struct ieee80211_vif *vif = ctx;
-	struct ath12k_skb_cb *skb_cb = ATH12K_SKB_CB((struct sk_buff *)skb);
+	struct ath12k_skb_cb *skb_cb = ATH12K_SKB_CB(skb);
 	struct sk_buff *msdu = skb;
 	struct ath12k *ar = skb_cb->ar;
 	struct ath12k_base *ab = ar->ab;
@@ -4784,7 +4785,7 @@ ath12k_mac_prepare_he_mode(struct ath12k_pdev *pdev, u32 viftype)
 	struct ath12k_pdev_cap *pdev_cap = &pdev->cap;
 	struct ath12k_band_cap *cap_band = NULL;
 	u32 *hecap_phy_ptr = NULL;
-	u32 hemode = 0;
+	u32 hemode;
 
 	if (pdev->cap.supported_bands & WMI_HOST_WLAN_2G_CAP)
 		cap_band = &pdev_cap->band[NL80211_BAND_2GHZ];
@@ -4817,7 +4818,7 @@ static int ath12k_set_he_mu_sounding_mode(struct ath12k *ar,
 {
 	u32 param_id, param_value;
 	struct ath12k_base *ab = ar->ab;
-	int ret = 0;
+	int ret;
 
 	param_id = WMI_VDEV_PARAM_SET_HEMU_MODE;
 	param_value = ath12k_mac_prepare_he_mode(ar->pdev, arvif->vif->type);
@@ -5240,7 +5241,7 @@ static void ath12k_mac_op_configure_filter(struct ieee80211_hw *hw,
 {
 	struct ath12k *ar = hw->priv;
 	bool reset_flag = false;
-	int ret = 0;
+	int ret;
 
 	mutex_lock(&ar->conf_mutex);
 
@@ -5382,7 +5383,7 @@ ath12k_mac_vdev_start_restart(struct ath12k_vif *arvif,
 	struct ath12k_base *ab = ar->ab;
 	struct wmi_vdev_start_req_arg arg = {};
 	int he_support = arvif->vif->bss_conf.he_support;
-	int ret = 0;
+	int ret;
 
 	lockdep_assert_held(&ar->conf_mutex);
 
@@ -5814,8 +5815,6 @@ ath12k_mac_op_assign_vif_chanctx(struct ieee80211_hw *hw,
 	arvif->is_started = true;
 
 	/* TODO: Setup ps and cts/rts protection */
-
-	ret = 0;
 
 out:
 	mutex_unlock(&ar->conf_mutex);

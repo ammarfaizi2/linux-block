@@ -38,6 +38,13 @@ struct ath12k_generic_iter {
 #define ATH12K_TX_POWER_MAX_VAL	70
 #define ATH12K_TX_POWER_MIN_VAL	0
 
+enum ath12k_supported_bw {
+	ATH12K_BW_20    = 0,
+	ATH12K_BW_40    = 1,
+	ATH12K_BW_80    = 2,
+	ATH12K_BW_160   = 3,
+};
+
 extern const struct htt_rx_ring_tlv_filter ath12k_mac_mon_status_filter_default;
 
 void ath12k_mac_destroy(struct ath12k_base *ab);
@@ -63,7 +70,7 @@ struct ath12k *ath12k_mac_get_ar_by_pdev_id(struct ath12k_base *ab, u32 pdev_id)
 void ath12k_mac_drain_tx(struct ath12k *ar);
 void ath12k_mac_peer_cleanup_all(struct ath12k *ar);
 int ath12k_mac_tx_mgmt_pending_free(int buf_id, void *skb, void *ctx);
-u8 ath12k_mac_bw_to_mac80211_bw(u8 bw);
+enum rate_info_bw ath12k_mac_bw_to_mac80211_bw(enum ath12k_supported_bw bw);
 enum ath12k_supported_bw ath12k_mac_mac80211_bw_to_ath12k_bw(enum rate_info_bw bw);
 enum hal_encrypt_type ath12k_dp_tx_get_encrypt_type(u32 cipher);
 #endif

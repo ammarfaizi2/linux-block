@@ -44,13 +44,6 @@
 #define ATH12K_RECONFIGURE_TIMEOUT_HZ		(10 * HZ)
 #define ATH12K_RECOVER_START_TIMEOUT_HZ		(20 * HZ)
 
-enum ath12k_supported_bw {
-	ATH12K_BW_20	= 0,
-	ATH12K_BW_40	= 1,
-	ATH12K_BW_80	= 2,
-	ATH12K_BW_160	= 3,
-};
-
 enum wme_ac {
 	WME_AC_BE,
 	WME_AC_BK,
