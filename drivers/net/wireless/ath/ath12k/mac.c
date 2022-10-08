@@ -406,7 +406,7 @@ ath12k_mac_max_vht_nss(const u16 vht_mcs_mask[NL80211_VHT_NSS_MAX])
 
 static u8 ath12k_parse_mpdudensity(u8 mpdudensity)
 {
-/* 802.11n D2.0 defined values for "Minimum MPDU Start Spacing":
+/*  From IEEE Std 802.11-2020 defined values for "Minimum MPDU Start Spacing":
  *   0 for no restriction
  *   1 for 1/4 us
  *   2 for 1/2 us
@@ -1644,11 +1644,12 @@ static void ath12k_peer_assoc_h_he(struct ath12k *ar,
 	/* the top most byte is used to indicate BSS color info */
 	arg->peer_he_ops &= 0xffffff;
 
-	/* As per section 26.6.1 11ax Draft5.0, if the Max AMPDU Exponent Extension
-	 * in HE cap is zero, use the arg->peer_max_mpdu as calculated while parsing
-	 * VHT caps(if VHT caps is present) or HT caps (if VHT caps is not present).
+	/* As per section 26.6.1 IEEE Std 802.11ax‐2022, if the Max AMPDU
+	 * Exponent Extension in HE cap is zero, use the arg->peer_max_mpdu
+	 * as calculated while parsing VHT caps(if VHT caps is present)
+	 * or HT caps (if VHT caps is not present).
 	 *
-	 * For non-zero value of Max AMPDU Extponent Extension in HE MAC caps,
+	 * For non-zero value of Max AMPDU Exponent Extension in HE MAC caps,
 	 * if a HE STA sends VHT cap and HE cap IE in assoc request then, use
 	 * MAX_AMPDU_LEN_FACTOR as 20 to calculate max_ampdu length.
 	 * If a HE STA that does not send VHT cap, but HE and HT cap in assoc
@@ -2780,7 +2781,7 @@ static int ath12k_mac_op_hw_scan(struct ieee80211_hw *hw,
 		spin_unlock_bh(&ar->data_lock);
 	}
 
-	/* Add a 200ms margin to account for event/command processing */
+	/* Add a margin to account for event/command processing */
 	ieee80211_queue_delayed_work(ar->hw, &ar->scan.timeout,
 				     msecs_to_jiffies(arg.max_scan_time +
 						      ATH12K_MAC_SCAN_TIMEOUT_MSECS));
@@ -3878,8 +3879,6 @@ static int ath12k_mac_set_txbf_conf(struct ath12k_vif *arvif)
 		    arvif->vdev_type == WMI_VDEV_TYPE_AP)
 			value |= WMI_VDEV_PARAM_TXBF_MU_TX_BFER;
 	}
-
-	/* TODO: SUBFEE not validated in HK, disable here until validated? */
 
 	if (vht_cap & IEEE80211_VHT_CAP_SU_BEAMFORMEE_CAPABLE) {
 		value |= WMI_VDEV_PARAM_TXBF_SU_TX_BFEE;

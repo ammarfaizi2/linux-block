@@ -45,7 +45,7 @@ static inline s32 a_sle32_to_cpu(a_sle32 val)
 
 #define PSOC_HOST_MAX_NUM_SS (8)
 
-/* defines to set Packet extension values whic can be 0 us, 8 usec or 16 usec */
+/* defines to set Packet extension values which can be 0 us, 8 usec or 16 usec */
 #define MAX_HE_NSS               8
 #define MAX_HE_MODULATION        8
 #define MAX_HE_RU                4
@@ -3827,7 +3827,7 @@ enum wmi_reg_6g_client_type {
 	WMI_REG_MAX_CLIENT_TYPE = 2,
 };
 
-/* Regaulatory Rule Flags Passed by FW */
+/* Regulatory Rule Flags Passed by FW */
 #define REGULATORY_CHAN_DISABLED     BIT(0)
 #define REGULATORY_CHAN_NO_IR        BIT(1)
 #define REGULATORY_CHAN_RADAR        BIT(3)
