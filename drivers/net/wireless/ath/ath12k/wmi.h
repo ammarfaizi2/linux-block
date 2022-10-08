@@ -223,10 +223,10 @@ enum wmi_host_hw_mode_priority {
 	WMI_HOST_HW_MODE_MAX_PRI
 };
 
-enum {
-	WMI_HOST_WLAN_2G_CAP	= 0x1,
-	WMI_HOST_WLAN_5G_CAP	= 0x2,
-	WMI_HOST_WLAN_2G_5G_CAP	= 0x3,
+enum WMI_HOST_WLAN_BAND {
+	WMI_HOST_WLAN_2G_CAP	= 1,
+	WMI_HOST_WLAN_5G_CAP	= 2,
+	WMI_HOST_WLAN_2G_5G_CAP	= 3,
 };
 
 enum wmi_cmd_group {
@@ -299,9 +299,8 @@ enum wmi_cmd_group {
 #define WMI_CMD_GRP(grp_id) (((grp_id) << 12) | 0x1)
 #define WMI_EVT_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
 
-#define WMI_CMD_UNSUPPORTED 0
-
 enum wmi_tlv_cmd_id {
+	WMI_CMD_UNSUPPORTED = 0,
 	WMI_INIT_CMDID = 0x1,
 	WMI_START_SCAN_CMDID = WMI_TLV_CMD(WMI_GRP_SCAN),
 	WMI_STOP_SCAN_CMDID,
@@ -2161,39 +2160,48 @@ enum {
 	WMI_SMPS_FORCED_MODE_DYNAMIC
 };
 
-#define WMI_TPC_CHAINMASK_CONFIG_BAND_2G      0
-#define WMI_TPC_CHAINMASK_CONFIG_BAND_5G      1
-#define WMI_NUM_SUPPORTED_BAND_MAX 2
+enum wmi_tpc_chainmask {
+	WMI_TPC_CHAINMASK_CONFIG_BAND_2G = 0,
+	WMI_TPC_CHAINMASK_CONFIG_BAND_5G = 1,
+	WMI_NUM_SUPPORTED_BAND_MAX = 2,
+};
 
-#define WMI_PEER_MIMO_PS_STATE                          0x1
-#define WMI_PEER_AMPDU                                  0x2
-#define WMI_PEER_AUTHORIZE                              0x3
-#define WMI_PEER_CHWIDTH                                0x4
-#define WMI_PEER_NSS                                    0x5
-#define WMI_PEER_USE_4ADDR                              0x6
-#define WMI_PEER_MEMBERSHIP                             0x7
-#define WMI_PEER_USERPOS                                0x8
-#define WMI_PEER_CRIT_PROTO_HINT_ENABLED                0x9
-#define WMI_PEER_TX_FAIL_CNT_THR                        0xA
-#define WMI_PEER_SET_HW_RETRY_CTS2S                     0xB
-#define WMI_PEER_IBSS_ATIM_WINDOW_LENGTH                0xC
-#define WMI_PEER_PHYMODE                                0xD
-#define WMI_PEER_USE_FIXED_PWR                          0xE
-#define WMI_PEER_PARAM_FIXED_RATE                       0xF
-#define WMI_PEER_SET_MU_WHITELIST                       0x10
-#define WMI_PEER_SET_MAX_TX_RATE                        0x11
-#define WMI_PEER_SET_MIN_TX_RATE                        0x12
-#define WMI_PEER_SET_DEFAULT_ROUTING                    0x13
+enum wmi_peer_param {
+	WMI_PEER_MIMO_PS_STATE = 1,
+	WMI_PEER_AMPDU = 2,
+	WMI_PEER_AUTHORIZE = 3,
+	WMI_PEER_CHWIDTH = 4,
+	WMI_PEER_NSS = 5,
+	WMI_PEER_USE_4ADDR = 6,
+	WMI_PEER_MEMBERSHIP = 7,
+	WMI_PEER_USERPOS = 8,
+	WMI_PEER_CRIT_PROTO_HINT_ENABLED = 9,
+	WMI_PEER_TX_FAIL_CNT_THR = 10,
+	WMI_PEER_SET_HW_RETRY_CTS2S = 11,
+	WMI_PEER_IBSS_ATIM_WINDOW_LENGTH = 12,
+	WMI_PEER_PHYMODE = 13,
+	WMI_PEER_USE_FIXED_PWR = 14,
+	WMI_PEER_PARAM_FIXED_RATE = 15,
+	WMI_PEER_SET_MU_WHITELIST = 16,
+	WMI_PEER_SET_MAX_TX_RATE = 17,
+	WMI_PEER_SET_MIN_TX_RATE = 18,
+	WMI_PEER_SET_DEFAULT_ROUTING = 19,
+};
 
-#define WMI_VDEV_SLOT_TIME_LONG         0x1
-#define WMI_VDEV_SLOT_TIME_SHORT        0x2
-#define WMI_VDEV_PREAMBLE_LONG          0x1
-#define WMI_VDEV_PREAMBLE_SHORT         0x2
+enum wmi_slot_time {
+	WMI_VDEV_SLOT_TIME_LONG = 1,
+	WMI_VDEV_SLOT_TIME_SHORT = 2,
+};
+
+enum wmi_preamble {
+	WMI_VDEV_PREAMBLE_LONG = 1,
+	WMI_VDEV_PREAMBLE_SHORT = 2,
+};
 
 enum wmi_peer_smps_state {
-	WMI_PEER_SMPS_PS_NONE = 0x0,
-	WMI_PEER_SMPS_STATIC  = 0x1,
-	WMI_PEER_SMPS_DYNAMIC = 0x2
+	WMI_PEER_SMPS_PS_NONE =	0,
+	WMI_PEER_SMPS_STATIC  = 1,
+	WMI_PEER_SMPS_DYNAMIC = 2
 };
 
 enum wmi_peer_chwidth {
@@ -4262,20 +4270,24 @@ enum wmi_ap_ps_peer_param {
 #define WMI_MAX_KEY_INDEX   3
 #define WMI_MAX_KEY_LEN     32
 
-#define WMI_KEY_PAIRWISE 0x00
-#define WMI_KEY_GROUP    0x01
+enum wmi_key_type {
+	WMI_KEY_PAIRWISE = 0,
+	WMI_KEY_GROUP = 1,
+};
 
-#define WMI_CIPHER_NONE     0x0 /* clear key */
-#define WMI_CIPHER_WEP      0x1
-#define WMI_CIPHER_TKIP     0x2
-#define WMI_CIPHER_AES_OCB  0x3
-#define WMI_CIPHER_AES_CCM  0x4
-#define WMI_CIPHER_WAPI     0x5
-#define WMI_CIPHER_CKIP     0x6
-#define WMI_CIPHER_AES_CMAC 0x7
-#define WMI_CIPHER_ANY      0x8
-#define WMI_CIPHER_AES_GCM  0x9
-#define WMI_CIPHER_AES_GMAC 0xa
+enum wmi_cipher_type {
+	WMI_CIPHER_NONE = 0, /* clear key */
+	WMI_CIPHER_WEP = 1,
+	WMI_CIPHER_TKIP = 2,
+	WMI_CIPHER_AES_OCB = 3,
+	WMI_CIPHER_AES_CCM = 4,
+	WMI_CIPHER_WAPI = 5,
+	WMI_CIPHER_CKIP = 6,
+	WMI_CIPHER_AES_CMAC = 7,
+	WMI_CIPHER_ANY = 8,
+	WMI_CIPHER_AES_GCM = 9,
+	WMI_CIPHER_AES_GMAC = 10,
+};
 
 /* Value to disable fixed rate setting */
 #define WMI_FIXED_RATE_NONE	(0xffff)
