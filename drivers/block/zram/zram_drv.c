@@ -759,7 +759,7 @@ static ssize_t writeback_store(struct device *dev,
 			zram_slot_unlock(zram, index);
 			/*
 			 * Return last IO error unless every IO were
-			 * not suceeded.
+			 * not succeeded.
 			 */
 			ret = err;
 			continue;
@@ -1658,7 +1658,7 @@ static int zram_recompress(struct zram *zram, u32 index, struct page *page,
 	/*
 	 * Either a compression error or we failed to compressed the object
 	 * in a way that will save us memory. Mark the object so that we
-	 * don't attemp to re-compress it again (RECOMP_SKIP).
+	 * don't attempt to re-compress it again (RECOMP_SKIP).
 	 */
 	if (comp_len_next >= huge_class_size ||
 	    comp_len_next >= comp_len_prev ||
