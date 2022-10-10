@@ -613,34 +613,14 @@ void rxrpc_put_call(struct rxrpc_call *call, enum rxrpc_call_trace why)
 /*
  * Final call destruction - but must be done in process context.
  */
-static void rxrpc_destroy_call(struct work_struct *work)
+static void rxrpc_destroy_call(struct rcu_head *rcu)
 {
-	struct rxrpc_call *call = container_of(work, struct rxrpc_call, processor);
+	struct rxrpc_call *call = container_of(rcu, struct rxrpc_call, rcu);
 	struct rxrpc_net *rxnet = call->rxnet;
 
-	rxrpc_delete_call_timer(call);
-
-	rxrpc_put_connection(call->conn, rxrpc_conn_put_call);
-	rxrpc_put_peer(call->peer, rxrpc_peer_put_call);
 	kmem_cache_free(rxrpc_call_jar, call);
 	if (atomic_dec_and_test(&rxnet->nr_calls))
 		wake_up_var(&rxnet->nr_calls);
-}
-
-/*
- * Final call destruction under RCU.
- */
-static void rxrpc_rcu_destroy_call(struct rcu_head *rcu)
-{
-	struct rxrpc_call *call = container_of(rcu, struct rxrpc_call, rcu);
-
-	if (rcu_read_lock_held()) {
-		INIT_WORK(&call->processor, rxrpc_destroy_call);
-		if (!rxrpc_queue_work(&call->processor))
-			BUG();
-	} else {
-		rxrpc_destroy_call(&call->processor);
-	}
 }
 
 /*
@@ -663,8 +643,12 @@ void rxrpc_cleanup_call(struct rxrpc_call *call)
 	}
 	rxrpc_put_txbuf(call->tx_pending, rxrpc_txbuf_put_cleaned);
 	rxrpc_free_skb(call->acks_soft_tbl, rxrpc_skb_put_ack);
+	rxrpc_delete_call_timer(call);
 
-	call_rcu(&call->rcu, rxrpc_rcu_destroy_call);
+	rxrpc_put_connection(call->conn, rxrpc_conn_put_call);
+	rxrpc_put_peer(call->peer, rxrpc_peer_put_call);
+
+	call_rcu(&call->rcu, rxrpc_destroy_call);
 }
 
 /*

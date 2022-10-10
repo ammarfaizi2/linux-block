@@ -249,6 +249,15 @@ void rxrpc_kill_connection(struct rxrpc_connection *conn)
 	 */
 	rxrpc_purge_queue(&conn->rx_queue);
 
+	del_timer_sync(&conn->timer);
+	rxrpc_purge_queue(&conn->rx_queue);
+
+	conn->security->clear(conn);
+	key_put(conn->key);
+	rxrpc_put_bundle(conn->bundle, rxrpc_bundle_put_conn);
+	rxrpc_put_peer(conn->peer, rxrpc_peer_put_conn);
+	rxrpc_put_local(conn->local, rxrpc_local_put_kill_conn);
+
 	/* Leave final destruction to RCU.  The connection processor work item
 	 * must carry a ref on the connection to prevent us getting here whilst
 	 * it is queued or running.
@@ -358,17 +367,8 @@ static void rxrpc_destroy_connection(struct rcu_head *rcu)
 
 	ASSERTCMP(refcount_read(&conn->ref), ==, 0);
 
-	del_timer_sync(&conn->timer);
-	rxrpc_purge_queue(&conn->rx_queue);
-
-	conn->security->clear(conn);
-	key_put(conn->key);
-	rxrpc_put_bundle(conn->bundle, rxrpc_bundle_put_conn);
-	rxrpc_put_peer(conn->peer, rxrpc_peer_put_conn);
-
 	if (atomic_dec_and_test(&conn->local->rxnet->nr_conns))
 		wake_up_var(&conn->local->rxnet->nr_conns);
-	rxrpc_put_local(conn->local, rxrpc_local_put_kill_conn);
 
 	kfree(conn);
 	_leave("");
