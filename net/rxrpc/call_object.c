@@ -635,7 +635,7 @@ static void rxrpc_rcu_destroy_call(struct rcu_head *rcu)
 {
 	struct rxrpc_call *call = container_of(rcu, struct rxrpc_call, rcu);
 
-	if (in_softirq()) {
+	if (rcu_read_lock_held()) {
 		INIT_WORK(&call->processor, rxrpc_destroy_call);
 		if (!rxrpc_queue_work(&call->processor))
 			BUG();
