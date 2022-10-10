@@ -160,11 +160,8 @@ struct page *__kmap_to_page(void *vaddr)
 
 	/* kmap() mappings */
 	if (WARN_ON_ONCE(addr >= PKMAP_ADDR(0) &&
-			 addr < PKMAP_ADDR(LAST_PKMAP))) {
-		int i = PKMAP_NR(addr);
-
-		return pte_page(pkmap_page_table[i]);
-	}
+			 addr < PKMAP_ADDR(LAST_PKMAP)))
+		return pte_page(pkmap_page_table[PKMAP_NR(addr)]);
 
 	/* kmap_local_page() mappings */
 	if (WARN_ON_ONCE(base >= __fix_to_virt(FIX_KMAP_END) &&
