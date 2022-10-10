@@ -368,7 +368,7 @@ static int __init test_rhltable(unsigned int entries)
 
 	pr_info("test %d random rhlist add/delete operations\n", entries);
 	for (j = 0; j < entries; j++) {
-		u32 i = prandom_u32_max(entries);
+		u32 i = get_random_u32_below(entries);
 		u32 prand = get_random_u32();
 
 		cond_resched();
@@ -411,7 +411,7 @@ static int __init test_rhltable(unsigned int entries)
 			continue;
 		}
 
-		i = prandom_u32_max(entries);
+		i = get_random_u32_below(entries);
 		if (test_bit(i, obj_in_table)) {
 			err = rhltable_remove(&rhlt, &rhl_test_objects[i].list_node, test_rht_params);
 			WARN(err, "cannot remove element at slot %d", i);
