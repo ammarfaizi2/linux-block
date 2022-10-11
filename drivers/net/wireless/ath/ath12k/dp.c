@@ -354,7 +354,7 @@ static int ath12k_dp_tx_get_bank_profile(struct ath12k_base *ab, struct ath12k_v
 {
 	int bank_id = DP_INVALID_BANK_ID;
 	int i;
-	u32 bank_config = 0;
+	u32 bank_config;
 	bool configure_register = false;
 
 	/* convert vdev params into hal_tx_bank_config */
