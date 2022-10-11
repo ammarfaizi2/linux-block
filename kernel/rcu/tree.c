@@ -67,6 +67,7 @@
 
 #include "tree.h"
 #include "rcu.h"
+#include "lazy-debug.h"
 
 #ifdef MODULE_PARAM_PREFIX
 #undef MODULE_PARAM_PREFIX
@@ -2267,7 +2268,10 @@ static void rcu_do_batch(struct rcu_data *rdp)
 
 		f = rhp->func;
 		WRITE_ONCE(rhp->func, (rcu_callback_t)0L);
+
+		rcu_set_lazy_context(f);
 		f(rhp);
+		rcu_reset_lazy_context();
 
 		rcu_lock_release(&rcu_callback_map);
 
@@ -2790,6 +2794,10 @@ __call_rcu_common(struct rcu_head *head, rcu_callback_t func, bool lazy)
 	}
 
 	check_cb_ovld(rdp);
+
+	if (lazy)
+		lazy_func_add(func);
+
 	if (rcu_nocb_try_bypass(rdp, head, &was_alldone, flags, lazy))
 		return; // Enqueued onto ->nocb_bypass, so just leave.
 	// If no-CBs CPU gets here, rcu_nocb_try_bypass() acquired ->nocb_lock.
@@ -4820,6 +4828,7 @@ void __init rcu_init(void)
 	rcu_early_boot_tests();
 
 	kfree_rcu_batch_init();
+	rcu_lazy_debug_init();
 	rcu_bootup_announce();
 	sanitize_kthread_prio();
 	rcu_init_geometry();

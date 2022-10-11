@@ -322,4 +322,11 @@ config RCU_LAZY
 	  To save power, batch RCU callbacks and flush after delay, memory
 	  pressure or callback list growing too big.
 
+config RCU_LAZY_DEBUG
+	bool "RCU callback lazy invocation debugging"
+	depends on RCU_LAZY
+	default n
+	help
+	  Debugging to catch issues caused by delayed RCU callbacks.
+
 endmenu # "RCU Subsystem"
