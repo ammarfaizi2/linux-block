@@ -135,6 +135,8 @@ bool rxrpc_abort_call(const char *why, struct rxrpc_call *call,
 	spin_lock(&call->state_lock);
 	ret = __rxrpc_abort_call(why, call, seq, abort_code, error);
 	spin_unlock(&call->state_lock);
+	if (ret)
+		rxrpc_send_abort_packet(call);
 	return ret;
 }
 
