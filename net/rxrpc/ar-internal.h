@@ -622,7 +622,7 @@ struct rxrpc_call {
 	unsigned long		flags;
 	unsigned long		events;
 	spinlock_t		notify_lock;	/* Kernel notification lock */
-	rwlock_t		state_lock;	/* lock for state transition */
+	spinlock_t		state_lock;	/* lock for state transition */
 	u32			abort_code;	/* Local/remote abort code */
 	int			error;		/* Local error incurred */
 	enum rxrpc_call_state	state;		/* current state of call */
