@@ -347,6 +347,13 @@ void rxrpc_input_call_event(struct rxrpc_call *call, struct sk_buff *skb)
 	if (call->state == RXRPC_CALL_COMPLETE)
 		goto out;
 
+	if (!call->conn) {
+		printk("\n");
+		printk("\n");
+		kdebug("no conn %u", call->state);
+		printk("\n");
+	}
+
 	abort_code = smp_load_acquire(&call->send_abort);
 	if (abort_code)
 		rxrpc_abort_call(call->send_abort_why, call, 0, call->send_abort,
@@ -479,8 +486,13 @@ void rxrpc_input_call_event(struct rxrpc_call *call, struct sk_buff *skb)
 	}
 
 out:
-	if (call->state == RXRPC_CALL_COMPLETE)
+	if (call->state == RXRPC_CALL_COMPLETE) {
 		del_timer_sync(&call->timer);
+		if (!test_bit(RXRPC_CALL_DISCONNECTED, &call->flags))
+			rxrpc_disconnect_call(call);
+		if (call->security)
+			call->security->free_call_crypto(call);
+	}
 	if (call->acks_hard_ack != call->tx_bottom)
 		rxrpc_shrink_call_tx_buffer(call);
 	_leave("");
