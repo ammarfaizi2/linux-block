@@ -336,6 +336,7 @@ void rxrpc_input_call_event(struct rxrpc_call *call, struct sk_buff *skb)
 	unsigned long now, next, t;
 	rxrpc_serial_t ackr_serial;
 	bool resend = false, expired = false;
+	s32 abort_code;
 
 	rxrpc_see_call(call, rxrpc_call_see_input);
 
@@ -345,6 +346,11 @@ void rxrpc_input_call_event(struct rxrpc_call *call, struct sk_buff *skb)
 
 	if (call->state == RXRPC_CALL_COMPLETE)
 		goto out;
+
+	abort_code = smp_load_acquire(&call->send_abort);
+	if (abort_code)
+		rxrpc_abort_call(call->send_abort_why, call, 0, call->send_abort,
+				 call->send_abort_err);
 
 	if (skb && skb->mark == RXRPC_SKB_MARK_ERROR)
 		goto out;
@@ -433,7 +439,6 @@ void rxrpc_input_call_event(struct rxrpc_call *call, struct sk_buff *skb)
 		} else {
 			rxrpc_abort_call("EXP", call, 0, RX_CALL_TIMEOUT, -ETIME);
 		}
-		rxrpc_send_abort_packet(call);
 		goto out;
 	}
 
