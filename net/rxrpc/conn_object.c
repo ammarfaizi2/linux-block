@@ -211,7 +211,7 @@ void rxrpc_disconnect_call(struct rxrpc_call *call)
 
 	if (!hlist_unhashed(&call->error_link)) {
 		spin_lock(&call->peer->lock);
-		hlist_del_rcu(&call->error_link);
+		hlist_del_init(&call->error_link);
 		spin_unlock(&call->peer->lock);
 	}
 
