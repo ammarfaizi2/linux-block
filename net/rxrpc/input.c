@@ -257,7 +257,7 @@ static bool rxrpc_end_tx_phase(struct rxrpc_call *call, bool reply_begun,
 
 	ASSERT(test_bit(RXRPC_CALL_TX_LAST, &call->flags));
 
-	write_lock(&call->state_lock);
+	spin_lock(&call->state_lock);
 
 	state = call->state;
 	switch (state) {
@@ -278,7 +278,7 @@ static bool rxrpc_end_tx_phase(struct rxrpc_call *call, bool reply_begun,
 		goto bad_state;
 	}
 
-	write_unlock(&call->state_lock);
+	spin_unlock(&call->state_lock);
 	if (state == RXRPC_CALL_CLIENT_AWAIT_REPLY)
 		trace_rxrpc_txqueue(call, rxrpc_txqueue_await_reply);
 	else
@@ -287,7 +287,7 @@ static bool rxrpc_end_tx_phase(struct rxrpc_call *call, bool reply_begun,
 	return true;
 
 bad_state:
-	write_unlock(&call->state_lock);
+	spin_unlock(&call->state_lock);
 	kdebug("end_tx %s", rxrpc_call_states[call->state]);
 	rxrpc_proto_abort(abort_why, call, call->tx_top);
 	return false;
