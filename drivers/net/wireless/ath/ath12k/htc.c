@@ -744,8 +744,8 @@ int ath12k_htc_start(struct ath12k_htc *htc)
 int ath12k_htc_init(struct ath12k_base *ab)
 {
 	struct ath12k_htc *htc = &ab->htc;
-	struct ath12k_htc_svc_conn_req conn_req;
-	struct ath12k_htc_svc_conn_resp conn_resp;
+	struct ath12k_htc_svc_conn_req conn_req = { };
+	struct ath12k_htc_svc_conn_resp conn_resp = { };
 	int ret;
 
 	spin_lock_init(&htc->tx_lock);
@@ -771,8 +771,6 @@ int ath12k_htc_init(struct ath12k_base *ab)
 	}
 
 	/* setup our pseudo HTC control endpoint connection */
-	memset(&conn_req, 0, sizeof(conn_req));
-	memset(&conn_resp, 0, sizeof(conn_resp));
 	conn_req.ep_ops.ep_tx_complete = ath12k_htc_control_tx_complete;
 	conn_req.ep_ops.ep_rx_complete = ath12k_htc_control_rx_complete;
 	conn_req.max_send_queue_depth = ATH12K_NUM_CONTROL_TX_BUFFERS;
