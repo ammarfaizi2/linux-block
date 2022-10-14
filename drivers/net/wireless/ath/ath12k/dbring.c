@@ -175,8 +175,8 @@ int ath12k_dbring_buf_setup(struct ath12k *ar,
 	ring->buf_sz = db_cap->min_buf_sz;
 	ring->buf_align = db_cap->min_buf_align;
 	ring->pdev_id = db_cap->pdev_id;
-	ring->hp_addr = ath12k_hal_srng_get_hp_addr(ar->ab, srng);
-	ring->tp_addr = ath12k_hal_srng_get_tp_addr(ar->ab, srng);
+	ring->hp_addr = ath12k_hal_srng_get_hp_addr(ab, srng);
+	ring->tp_addr = ath12k_hal_srng_get_tp_addr(ab, srng);
 
 	ret = ath12k_dbring_fill_bufs(ar, ring, GFP_KERNEL);
 
