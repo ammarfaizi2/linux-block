@@ -721,6 +721,15 @@ static void ath12k_dp_rx_tid_del_func(struct ath12k_dp *dp, void *ctx,
 			       msecs_to_jiffies(ATH12K_DP_RX_REO_DESC_FREE_TIMEOUT_MS))) {
 			list_del(&elem->list);
 			dp->reo_cmd_cache_flush_count--;
+
+			/* Unlock the reo_cmd_lock before using ath12k_dp_reo_cmd_send()
+			 * within ath12k_dp_reo_cache_flush. The reo_cmd_cache_flush_list
+			 * is used in only two contexts, one is in this function called
+			 * from napi and the other in ath12k_dp_free during core destroy.
+			 * Before dp_free, the irqs would be disabled and would wait to
+			 * synchronize. Hence there wouldn’t be any race against add or
+			 * delete to this list. Hence unlock-lock is safe here.
+			 */
 			spin_unlock_bh(&dp->reo_cmd_lock);
 
 			ath12k_dp_reo_cache_flush(ab, &elem->data);
