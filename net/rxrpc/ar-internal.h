@@ -288,7 +288,6 @@ struct rxrpc_local {
 	struct socket		*socket;	/* my UDP socket */
 	struct task_struct	*io_thread;
 	struct rxrpc_sock __rcu	*service;	/* Service(s) listening on this endpoint */
-	struct rw_semaphore	defrag_sem;	/* control re-enablement of IP DF bit */
 #ifdef CONFIG_AF_RXRPC_INJECT_RX_DELAY
 	struct sk_buff_head	rx_delay_queue;	/* Delay injection queue */
 #endif
