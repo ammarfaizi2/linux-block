@@ -96,7 +96,6 @@ static struct rxrpc_local *rxrpc_alloc_local(struct rxrpc_net *rxnet,
 		atomic_set(&local->active_users, 1);
 		local->rxnet = rxnet;
 		INIT_HLIST_NODE(&local->link);
-		init_rwsem(&local->defrag_sem);
 #ifdef CONFIG_AF_RXRPC_INJECT_RX_DELAY
 		skb_queue_head_init(&local->rx_delay_queue);
 #endif
