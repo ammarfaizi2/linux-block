@@ -97,6 +97,9 @@ static struct rxrpc_local *rxrpc_alloc_local(struct rxrpc_net *rxnet,
 		local->rxnet = rxnet;
 		INIT_HLIST_NODE(&local->link);
 		init_rwsem(&local->defrag_sem);
+#ifdef CONFIG_AF_RXRPC_INJECT_RX_DELAY
+		skb_queue_head_init(&local->rx_delay_queue);
+#endif
 		skb_queue_head_init(&local->rx_queue);
 		INIT_LIST_HEAD(&local->call_attend_q);
 		local->client_bundles = RB_ROOT;
@@ -403,6 +406,9 @@ void rxrpc_destroy_local(struct rxrpc_local *local)
 	/* At this point, there should be no more packets coming in to the
 	 * local endpoint.
 	 */
+#ifdef CONFIG_AF_RXRPC_INJECT_RX_DELAY
+	rxrpc_purge_queue(&local->rx_delay_queue);
+#endif
 	rxrpc_purge_queue(&local->rx_queue);
 }
 
