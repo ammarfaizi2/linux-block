@@ -158,6 +158,16 @@ union rcu_noqs {
 	u16 s; /* Set of bits, aggregate OR here. */
 };
 
+struct rcu_snap_record {
+	unsigned long	gp_seq;
+	u64		cputime_irq;
+	u64		cputime_softirq;
+	u64		cputime_system;
+	unsigned int	nr_hardirqs;
+	unsigned int	nr_softirqs;
+	unsigned long long nr_csw;
+};
+
 /* Per-CPU data for read-copy update. */
 struct rcu_data {
 	/* 1) quiescent-state and grace-period handling : */
@@ -262,6 +272,7 @@ struct rcu_data {
 	short rcu_onl_gp_flags;		/* ->gp_flags at last online. */
 	unsigned long last_fqs_resched;	/* Time of last rcu_resched(). */
 	unsigned long last_sched_clock;	/* Jiffies of last rcu_sched_clock_irq(). */
+	struct rcu_snap_record snap_record;
 
 	long lazy_len;			/* Length of buffered lazy callbacks. */
 	int cpu;
