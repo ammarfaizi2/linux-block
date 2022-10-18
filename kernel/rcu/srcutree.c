@@ -681,6 +681,8 @@ void __srcu_read_unlock(struct srcu_struct *ssp, int idx)
 }
 EXPORT_SYMBOL_GPL(__srcu_read_unlock);
 
+#ifdef CONFIG_NEED_SRCU_NMI_SAFE
+
 /*
  * Counts the new reader in the appropriate per-CPU element of the
  * srcu_struct, but in an NMI-safe manner using RMW atomics.
@@ -711,6 +713,8 @@ void __srcu_read_unlock_nmisafe(struct srcu_struct *ssp, int idx)
 	atomic_long_inc(&sdp->srcu_unlock_count[idx]);
 }
 EXPORT_SYMBOL_GPL(__srcu_read_unlock_nmisafe);
+
+#endif // CONFIG_NEED_SRCU_NMI_SAFE
 
 /*
  * Start an SRCU grace period.
