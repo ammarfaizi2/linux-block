@@ -376,10 +376,7 @@ static int rxrpc_input_packet_on_conn(struct rxrpc_connection *conn,
 		return just_discard;
 	}
 
-	rcu_read_lock();
-	call = rxrpc_try_get_call(rcu_dereference(chan->call),
-				  rxrpc_call_get_input);
-	rcu_read_unlock();
+	call = rxrpc_try_get_call(chan->call, rxrpc_call_get_input);
 
 	if (sp->hdr.callNumber > chan->call_id) {
 		if (rxrpc_to_client(sp))
@@ -442,6 +439,9 @@ int rxrpc_io_thread(void *data)
 		if (test_and_clear_bit(RXRPC_CLIENT_CONN_REAP_TIMER,
 				       &local->client_conn_flags))
 			rxrpc_discard_expired_client_conns(local);
+
+		if (!list_empty(&local->new_client_calls))
+			rxrpc_connect_client_calls(local);
 
 		/* Deal with calls that want immediate attention. */
 		if ((call = list_first_entry_or_null(&local->call_attend_q,
@@ -506,7 +506,10 @@ int rxrpc_io_thread(void *data)
 		set_current_state(TASK_INTERRUPTIBLE);
 		if (!skb_queue_empty(&local->rx_queue) ||
 		    !list_empty(&local->call_attend_q) ||
-		    !list_empty(&local->conn_attend_q)) {
+		    !list_empty(&local->conn_attend_q) ||
+		    !list_empty(&local->new_client_calls) ||
+		    test_bit(RXRPC_CLIENT_CONN_REAP_TIMER,
+			     &local->client_conn_flags)) {
 			__set_current_state(TASK_RUNNING);
 			continue;
 		}
