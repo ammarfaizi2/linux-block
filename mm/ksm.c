@@ -449,7 +449,7 @@ int break_ksm_pmd_entry(pmd_t *pmd, unsigned long addr, unsigned long next,
 	ptent = *pte;
 
 	if (pte_none(ptent))
-		return 1;
+		goto out_unlock;
 	if (!pte_present(ptent)) {
 		swp_entry_t entry = pte_to_swp_entry(ptent);
 
@@ -465,6 +465,7 @@ int break_ksm_pmd_entry(pmd_t *pmd, unsigned long addr, unsigned long next,
 	}
 	if (page && PageKsm(page))
 		*ksm_page = true;
+out_unlock:
 	pte_unmap_unlock(pte, ptl);
 	return 1;
 }
