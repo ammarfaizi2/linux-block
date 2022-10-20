@@ -137,8 +137,6 @@ struct ath12k_qmi {
 	struct ath12k_qmi_ce_cfg ce_cfg;
 	struct target_mem_chunk target_mem[ATH12K_QMI_WLANFW_MAX_NUM_MEM_SEG_V01];
 	u32 mem_seg_count;
-	struct target_mem_chunk qdss_mem[ATH12K_QMI_WLANFW_MAX_NUM_MEM_SEG_V01];
-	u32 qdss_mem_seg_len;
 	u32 target_mem_mode;
 	bool target_mem_delayed;
 	u8 cal_done;
@@ -148,51 +146,6 @@ struct ath12k_qmi {
 	struct dev_mem_info dev_mem[ATH12K_QMI_WLFW_MAX_DEV_MEM_NUM_V01];
 };
 
-#define QMI_WLANFW_QDSS_TRACE_CONFIG_DOWNLOAD_REQ_MSG_V01_MAX_LEN 6167
-#define QMI_WLANFW_QDSS_TRACE_CONFIG_DOWNLOAD_RESP_MSG_V01_MAX_LEN 7
-#define QMI_WLANFW_QDSS_TRACE_CONFIG_DOWNLOAD_REQ_V01 0x0044
-#define QMI_WLANFW_QDSS_TRACE_CONFIG_DOWNLOAD_RESP_V01 0x0044
-
-struct qmi_wlanfw_qdss_trace_config_download_req_msg_v01 {
-	u8 total_size_valid;
-	u32 total_size;
-	u8 seg_id_valid;
-	u32 seg_id;
-	u8 data_valid;
-	u32 data_len;
-	u8 data[QMI_WLANFW_MAX_DATA_SIZE_V01];
-	u8 end_valid;
-	u8 end;
-};
-
-struct qmi_wlanfw_qdss_trace_config_download_resp_msg_v01 {
-	struct qmi_response_type_v01 resp;
-};
-
-#define QMI_WLANFW_QDSS_TRACE_MODE_REQ_V01 0x0045
-#define QMI_WLANFW_QDSS_TRACE_MODE_REQ_MSG_V01_MAX_LEN 18
-#define QMI_WLANFW_QDSS_TRACE_MODE_RESP_MSG_V01_MAX_LEN 7
-#define QMI_WLANFW_QDSS_TRACE_MODE_RESP_V01 0x0045
-#define QMI_WLANFW_QDSS_STOP_ALL_TRACE 0x3f
-
-enum qmi_wlanfw_qdss_trace_mode_enum_v01 {
-	WLFW_QDSS_TRACE_MODE_ENUM_MIN_VAL_V01 = INT_MIN,
-	QMI_WLANFW_QDSS_TRACE_OFF_V01 = 0,
-	QMI_WLANFW_QDSS_TRACE_ON_V01 = 1,
-	WLFW_QDSS_TRACE_MODE_ENUM_MAX_VAL_V01 = INT_MAX,
-};
-
-struct qmi_wlanfw_qdss_trace_mode_req_msg_v01 {
-	u8 mode_valid;
-	enum qmi_wlanfw_qdss_trace_mode_enum_v01 mode;
-	u8 option_valid;
-	u64 option;
-};
-
-struct qmi_wlanfw_qdss_trace_mode_resp_msg_v01 {
-	struct qmi_response_type_v01 resp;
-};
-
 #define QMI_WLANFW_HOST_CAP_REQ_MSG_V01_MAX_LEN		261
 #define QMI_WLANFW_HOST_CAP_REQ_V01			0x0034
 #define QMI_WLANFW_HOST_CAP_RESP_MSG_V01_MAX_LEN	7
@@ -200,7 +153,6 @@ struct qmi_wlanfw_qdss_trace_mode_resp_msg_v01 {
 #define QMI_WLFW_MAX_NUM_GPIO_V01			32
 #define QMI_WLANFW_MAX_PLATFORM_NAME_LEN_V01		64
 #define QMI_WLANFW_MAX_HOST_DDR_RANGE_SIZE_V01		3
-#define QDSS_ETR_MEM_REGION_TYPE                        0x6
 
 struct qmi_wlanfw_host_ddr_range {
 	u64 start;
@@ -231,6 +183,13 @@ struct wlfw_host_mlo_chip_info_s_v01 {
 	u8 num_local_links;
 	u8 hw_link_id[QMI_WLFW_MAX_NUM_MLO_LINKS_PER_CHIP_V01];
 	u8 valid_mlo_link_id[QMI_WLFW_MAX_NUM_MLO_LINKS_PER_CHIP_V01];
+};
+
+enum ath12k_qmi_cnss_feature {
+	CNSS_FEATURE_MIN_ENUM_VAL_V01 = INT_MIN,
+	CNSS_QDSS_CFG_MISS_V01 = 3,
+	CNSS_MAX_FEATURE_V01 = 64,
+	CNSS_FEATURE_MAX_ENUM_VAL_V01 = INT_MAX,
 };
 
 struct qmi_wlanfw_host_cap_req_msg_v01 {
@@ -336,7 +295,6 @@ struct qmi_wlanfw_ind_register_resp_msg_v01 {
 #define QMI_WLANFW_RESPOND_MEM_REQ_V01			0x0036
 #define QMI_WLANFW_RESPOND_MEM_RESP_V01			0x0036
 #define QMI_WLANFW_MAX_NUM_MEM_CFG_V01			2
-#define QMI_WLFW_QDSS_TRACE_MEM_INFO_REQ_V01            0x0040
 #define QMI_WLANFW_MAX_STR_LEN_V01                      16
 
 struct qmi_wlanfw_mem_cfg_s_v01 {

@@ -185,9 +185,6 @@ struct ath12k_hw_params {
 			 struct ath12k_wmi_resource_config_arg *config);
 
 	const struct hal_ops *hal_ops;
-
-	const char *qdss_config;
-	unsigned int qdss_config_len;
 };
 
 struct ath12k_hw_ops {
