@@ -278,7 +278,7 @@ static inline int pin_longterm_test_start(unsigned long arg)
 		}
 		pin_longterm_test_nr_pages += cur_pages;
 		pages += cur_pages;
-	};
+	}
 
 	if (!fast)
 		mmap_read_unlock(current->mm);
