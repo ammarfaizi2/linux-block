@@ -420,7 +420,7 @@ static inline bool ksm_test_exit(struct mm_struct *mm)
 	return atomic_read(&mm->mm_users) == 0;
 }
 
-int break_ksm_pud_entry(pud_t *pud, unsigned long addr, unsigned long next,
+static int break_ksm_pud_entry(pud_t *pud, unsigned long addr, unsigned long next,
 			struct mm_walk *walk)
 {
 	/* We only care about page tables to walk to a single base page. */
@@ -429,7 +429,7 @@ int break_ksm_pud_entry(pud_t *pud, unsigned long addr, unsigned long next,
 	return 0;
 }
 
-int break_ksm_pmd_entry(pmd_t *pmd, unsigned long addr, unsigned long next,
+static int break_ksm_pmd_entry(pmd_t *pmd, unsigned long addr, unsigned long next,
 			struct mm_walk *walk)
 {
 	bool *ksm_page = walk->private;
