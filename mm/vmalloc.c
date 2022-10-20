@@ -1786,7 +1786,7 @@ static bool __purge_vmap_area_lazy(unsigned long start, unsigned long end)
 
 out:
 	trace_purge_vmap_area_lazy(start, end, num_purged_areas);
-	return num_purged_areas > 0 ? true:false;
+	return num_purged_areas > 0;
 }
 
 /*
