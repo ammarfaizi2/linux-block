@@ -556,8 +556,8 @@ static int ath12k_core_start_firmware(struct ath12k_base *ab,
 {
 	int ret;
 
-	ath12k_ce_get_shadow_config(ab, &ab->qmi.ce_cfg.shadow_reg_v2,
-				    &ab->qmi.ce_cfg.shadow_reg_v2_len);
+	ath12k_ce_get_shadow_config(ab, &ab->qmi.ce_cfg.shadow_reg_v3,
+				    &ab->qmi.ce_cfg.shadow_reg_v3_len);
 
 	ret = ath12k_qmi_firmware_start(ab, mode);
 	if (ret) {

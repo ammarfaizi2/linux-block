@@ -828,8 +828,8 @@ int ath12k_ce_init_pipes(struct ath12k_base *ab)
 	int i;
 	int ret;
 
-	ath12k_ce_get_shadow_config(ab, &ab->qmi.ce_cfg.shadow_reg_v2,
-				    &ab->qmi.ce_cfg.shadow_reg_v2_len);
+	ath12k_ce_get_shadow_config(ab, &ab->qmi.ce_cfg.shadow_reg_v3,
+				    &ab->qmi.ce_cfg.shadow_reg_v3_len);
 
 	for (i = 0; i < ab->hw_params->ce_count; i++) {
 		pipe = &ab->ce.ce_pipe[i];

@@ -1763,14 +1763,14 @@ static struct qmi_elem_info qmi_wlanfw_shadow_reg_cfg_s_v01_ei[] = {
 	},
 };
 
-static struct qmi_elem_info qmi_wlanfw_shadow_reg_v2_cfg_s_v01_ei[] = {
+static struct qmi_elem_info qmi_wlanfw_shadow_reg_v3_cfg_s_v01_ei[] = {
 	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
 		.elem_len	= 1,
 		.elem_size	= sizeof(u32),
 		.array_type	= NO_ARRAY,
 		.tlv_type	= 0,
-		.offset		= offsetof(struct qmi_wlanfw_shadow_reg_v2_cfg_s_v01,
+		.offset		= offsetof(struct qmi_wlanfw_shadow_reg_v3_cfg_s_v01,
 					   addr),
 	},
 	{
@@ -1940,31 +1940,30 @@ static struct qmi_elem_info qmi_wlanfw_wlan_cfg_req_msg_v01_ei[] = {
 		.data_type	= QMI_OPT_FLAG,
 		.elem_len	= 1,
 		.elem_size	= sizeof(u8),
-		.array_type = NO_ARRAY,
-		.tlv_type	= 0x14,
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x17,
 		.offset		= offsetof(struct qmi_wlanfw_wlan_cfg_req_msg_v01,
-					   shadow_reg_v2_valid),
+					   shadow_reg_v3_valid),
 	},
 	{
 		.data_type	= QMI_DATA_LEN,
 		.elem_len	= 1,
 		.elem_size	= sizeof(u8),
-		.array_type = NO_ARRAY,
-		.tlv_type	= 0x14,
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x17,
 		.offset		= offsetof(struct qmi_wlanfw_wlan_cfg_req_msg_v01,
-					   shadow_reg_v2_len),
+					   shadow_reg_v3_len),
 	},
 	{
 		.data_type	= QMI_STRUCT,
-		.elem_len	= QMI_WLANFW_MAX_NUM_SHADOW_REG_V2_V01,
-		.elem_size	= sizeof(struct qmi_wlanfw_shadow_reg_v2_cfg_s_v01),
-		.array_type = VAR_LEN_ARRAY,
-		.tlv_type	= 0x14,
+		.elem_len	= QMI_WLANFW_MAX_NUM_SHADOW_REG_V3_V01,
+		.elem_size	= sizeof(struct qmi_wlanfw_shadow_reg_v3_cfg_s_v01),
+		.array_type	= VAR_LEN_ARRAY,
+		.tlv_type	= 0x17,
 		.offset		= offsetof(struct qmi_wlanfw_wlan_cfg_req_msg_v01,
-					   shadow_reg_v2),
-		.ei_array	= qmi_wlanfw_shadow_reg_v2_cfg_s_v01_ei,
+					   shadow_reg_v3),
+		.ei_array	= qmi_wlanfw_shadow_reg_v3_cfg_s_v01_ei,
 	},
-
 	{
 		.data_type	= QMI_EOTI,
 		.array_type	= NO_ARRAY,
@@ -2897,16 +2896,16 @@ static int ath12k_qmi_wlanfw_wlan_cfg_send(struct ath12k_base *ab)
 		req->svc_cfg[pipe_num].pipe_num = svc_cfg[pipe_num].pipenum;
 	}
 
-	/* set shadow v2 configuration */
+	/* set shadow v3 configuration */
 	if (ab->hw_params->supports_shadow_regs) {
-		req->shadow_reg_v2_valid = 1;
-		req->shadow_reg_v2_len = min_t(u32,
-					       ab->qmi.ce_cfg.shadow_reg_v2_len,
-					       QMI_WLANFW_MAX_NUM_SHADOW_REG_V2_V01);
-		memcpy(&req->shadow_reg_v2, ab->qmi.ce_cfg.shadow_reg_v2,
-		       sizeof(u32) * req->shadow_reg_v2_len);
+		req->shadow_reg_v3_valid = 1;
+		req->shadow_reg_v3_len = min_t(u32,
+					       ab->qmi.ce_cfg.shadow_reg_v3_len,
+					       QMI_WLANFW_MAX_NUM_SHADOW_REG_V3_V01);
+		memcpy(&req->shadow_reg_v3, ab->qmi.ce_cfg.shadow_reg_v3,
+		       sizeof(u32) * req->shadow_reg_v3_len);
 	} else {
-		req->shadow_reg_v2_valid = 0;
+		req->shadow_reg_v3_valid = 0;
 	}
 
 	ret = qmi_txn_init(&ab->qmi.handle, &txn,

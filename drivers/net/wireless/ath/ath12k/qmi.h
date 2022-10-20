@@ -84,8 +84,8 @@ struct ath12k_qmi_ce_cfg {
 	int svc_to_ce_map_len;
 	const u8 *shadow_reg;
 	int shadow_reg_len;
-	u32 *shadow_reg_v2;
-	int shadow_reg_v2_len;
+	u32 *shadow_reg_v3;
+	int shadow_reg_v3_len;
 };
 
 struct ath12k_qmi_event_msg {
@@ -423,7 +423,7 @@ struct qmi_wlanfw_shadow_reg_cfg_s_v01 {
 	u16 offset;
 };
 
-struct qmi_wlanfw_shadow_reg_v2_cfg_s_v01 {
+struct qmi_wlanfw_shadow_reg_v3_cfg_s_v01 {
 	u32 addr;
 };
 
@@ -562,7 +562,7 @@ struct qmi_wlanfw_m3_info_resp_msg_v01 {
 #define QMI_WLANFW_MAX_NUM_CE_V01			12
 #define QMI_WLANFW_MAX_NUM_SVC_V01			24
 #define QMI_WLANFW_MAX_NUM_SHADOW_REG_V01		24
-#define QMI_WLANFW_MAX_NUM_SHADOW_REG_V2_V01		36
+#define QMI_WLANFW_MAX_NUM_SHADOW_REG_V3_V01		60
 
 struct qmi_wlanfw_wlan_mode_req_msg_v01 {
 	u32 mode;
@@ -589,10 +589,10 @@ struct qmi_wlanfw_wlan_cfg_req_msg_v01 {
 	u32 shadow_reg_len;
 	struct qmi_wlanfw_shadow_reg_cfg_s_v01
 		shadow_reg[QMI_WLANFW_MAX_NUM_SHADOW_REG_V01];
-	u8 shadow_reg_v2_valid;
-	u32 shadow_reg_v2_len;
-	struct qmi_wlanfw_shadow_reg_v2_cfg_s_v01
-		shadow_reg_v2[QMI_WLANFW_MAX_NUM_SHADOW_REG_V2_V01];
+	u8 shadow_reg_v3_valid;
+	u32 shadow_reg_v3_len;
+	struct qmi_wlanfw_shadow_reg_v3_cfg_s_v01
+		shadow_reg_v3[QMI_WLANFW_MAX_NUM_SHADOW_REG_V3_V01];
 };
 
 struct qmi_wlanfw_wlan_cfg_resp_msg_v01 {
