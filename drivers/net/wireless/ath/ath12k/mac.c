@@ -307,7 +307,7 @@ static const char *ath12k_mac_phymode_str(enum wmi_phy_mode mode)
 enum rate_info_bw
 ath12k_mac_bw_to_mac80211_bw(enum ath12k_supported_bw bw)
 {
-	u8 ret = ATH12K_BW_20;
+	u8 ret = RATE_INFO_BW_20;
 
 	switch (bw) {
 	case ATH12K_BW_20:
@@ -1161,8 +1161,6 @@ static void ath12k_control_beaconing(struct ath12k_vif *arvif,
 		return;
 	}
 
-	arvif->tx_seq_no = 0x1000;
-
 	arvif->aid = 0;
 
 	ether_addr_copy(arvif->bssid, info->bssid);
@@ -1564,8 +1562,8 @@ static void ath12k_peer_assoc_h_vht(struct ath12k *ar,
 	tx_mcs_map = __le16_to_cpu(vht_cap->vht_mcs.tx_mcs_map);
 	arg->tx_mcs_set = ath12k_peer_assoc_h_vht_limit(tx_mcs_map, vht_mcs_mask);
 
-	/* In QCN9274 platform, VHT mcs rate 10 and 11 is enabled by default.
-	 * VHT mcs rate 10 and 11 is not suppoerted in 11ac standard.
+	/* In QCN9274 platform, VHT MCS rate 10 and 11 is enabled by default.
+	 * VHT MCS rate 10 and 11 is not supported in 11ac standard.
 	 * so explicitly disable the VHT MCS rate 10 and 11 in 11ac mode.
 	 */
 	arg->tx_mcs_set &= ~IEEE80211_VHT_MCS_SUPPORT_0_11_MASK;
@@ -5239,7 +5237,7 @@ static void ath12k_mac_op_configure_filter(struct ieee80211_hw *hw,
 					   u64 multicast)
 {
 	struct ath12k *ar = hw->priv;
-	bool reset_flag = false;
+	bool reset_flag;
 	int ret;
 
 	mutex_lock(&ar->conf_mutex);
