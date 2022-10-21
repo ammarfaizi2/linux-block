@@ -361,7 +361,6 @@ struct rxrpc_conn_proto {
 
 struct rxrpc_conn_parameters {
 	struct rxrpc_local	*local;		/* Representation of local endpoint */
-	struct rxrpc_peer	*peer;		/* Remote endpoint */
 	struct key		*key;		/* Security details */
 	bool			exclusive;	/* T if conn is exclusive */
 	bool			upgrade;	/* T if service ID can be upgraded */
@@ -429,6 +428,7 @@ struct rxrpc_bundle {
 	struct rxrpc_local	*local;		/* Representation of local endpoint */
 	struct rxrpc_peer	*peer;		/* Remote endpoint */
 	struct key		*key;		/* Security details */
+	const struct rxrpc_security *security;	/* applied security module */
 	refcount_t		ref;
 	atomic_t		active;		/* Number of active users */
 	unsigned int		debug_id;
@@ -594,6 +594,7 @@ enum rxrpc_congest_mode {
 struct rxrpc_call {
 	struct rcu_head		rcu;
 	struct rxrpc_connection	*conn;		/* connection carrying call */
+	struct rxrpc_bundle	*bundle;	/* Connection bundle to use */
 	struct rxrpc_peer	*peer;		/* Peer record for remote address */
 	struct rxrpc_local	*local;		/* Representation of local endpoint */
 	struct rxrpc_sock __rcu	*socket;	/* socket responsible */
@@ -895,15 +896,15 @@ extern unsigned long rxrpc_conn_idle_client_fast_expiry;
 void rxrpc_destroy_client_conn_ids(struct rxrpc_local *);
 struct rxrpc_bundle *rxrpc_get_bundle(struct rxrpc_bundle *, enum rxrpc_bundle_trace);
 void rxrpc_put_bundle(struct rxrpc_bundle *, enum rxrpc_bundle_trace);
-int rxrpc_connect_call(struct rxrpc_sock *, struct rxrpc_call *,
-		       struct rxrpc_conn_parameters *, struct sockaddr_rxrpc *,
-		       gfp_t);
+int rxrpc_connect_call(struct rxrpc_call *, gfp_t);
 void rxrpc_expose_client_call(struct rxrpc_call *);
 void rxrpc_disconnect_client_call(struct rxrpc_bundle *, struct rxrpc_call *);
+void rxrpc_deactivate_bundle(struct rxrpc_bundle *);
 void rxrpc_put_client_conn(struct rxrpc_connection *, enum rxrpc_conn_trace);
 void rxrpc_discard_expired_client_conns(struct work_struct *);
 void rxrpc_destroy_all_client_connections(struct rxrpc_net *);
 void rxrpc_clean_up_local_conns(struct rxrpc_local *);
+
 
 /*
  * conn_event.c
