@@ -10,27 +10,18 @@
 static inline int arch_spin_is_locked(arch_spinlock_t *x)
 {
 	volatile unsigned int *a = __ldcw_align(x);
-	return *a == 0;
+	return READ_ONCE(*a) == 0;
 }
 
-#define arch_spin_lock(lock) arch_spin_lock_flags(lock, 0)
-
-static inline void arch_spin_lock_flags(arch_spinlock_t *x,
-					 unsigned long flags)
+static inline void arch_spin_lock(arch_spinlock_t *x)
 {
 	volatile unsigned int *a;
 
 	a = __ldcw_align(x);
 	while (__ldcw(a) == 0)
 		while (*a == 0)
-			if (flags & PSW_SM_I) {
-				local_irq_enable();
-				cpu_relax();
-				local_irq_disable();
-			} else
-				cpu_relax();
+			continue;
 }
-#define arch_spin_lock_flags arch_spin_lock_flags
 
 static inline void arch_spin_unlock(arch_spinlock_t *x)
 {
@@ -44,12 +35,9 @@ static inline void arch_spin_unlock(arch_spinlock_t *x)
 static inline int arch_spin_trylock(arch_spinlock_t *x)
 {
 	volatile unsigned int *a;
-	int ret;
 
 	a = __ldcw_align(x);
-        ret = __ldcw(a) != 0;
-
-	return ret;
+	return __ldcw(a) != 0;
 }
 
 /*

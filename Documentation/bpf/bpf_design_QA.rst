@@ -208,6 +208,18 @@ data structures and compile with kernel internal headers. Both of these
 kernel internals are subject to change and can break with newer kernels
 such that the program needs to be adapted accordingly.
 
+Q: Are tracepoints part of the stable ABI?
+------------------------------------------
+A: NO. Tracepoints are tied to internal implementation details hence they are
+subject to change and can break with newer kernels. BPF programs need to change
+accordingly when this happens.
+
+Q: Are places where kprobes can attach part of the stable ABI?
+--------------------------------------------------------------
+A: NO. The places to which kprobes can attach are internal implementation
+details, which means that they are subject to change and can break with
+newer kernels. BPF programs need to change accordingly when this happens.
+
 Q: How much stack space a BPF program uses?
 -------------------------------------------
 A: Currently all program types are limited to 512 bytes of stack
@@ -246,20 +258,43 @@ program is loaded the kernel will print warning message, so
 this helper is only useful for experiments and prototypes.
 Tracing BPF programs are root only.
 
-Q: bpf_trace_printk() helper warning
-------------------------------------
-Q: When bpf_trace_printk() helper is used the kernel prints nasty
-warning message. Why is that?
-
-A: This is done to nudge program authors into better interfaces when
-programs need to pass data to user space. Like bpf_perf_event_output()
-can be used to efficiently stream data via perf ring buffer.
-BPF maps can be used for asynchronous data sharing between kernel
-and user space. bpf_trace_printk() should only be used for debugging.
-
 Q: New functionality via kernel modules?
 ----------------------------------------
 Q: Can BPF functionality such as new program or map types, new
 helpers, etc be added out of kernel module code?
 
 A: NO.
+
+Q: Directly calling kernel function is an ABI?
+----------------------------------------------
+Q: Some kernel functions (e.g. tcp_slow_start) can be called
+by BPF programs.  Do these kernel functions become an ABI?
+
+A: NO.
+
+The kernel function protos will change and the bpf programs will be
+rejected by the verifier.  Also, for example, some of the bpf-callable
+kernel functions have already been used by other kernel tcp
+cc (congestion-control) implementations.  If any of these kernel
+functions has changed, both the in-tree and out-of-tree kernel tcp cc
+implementations have to be changed.  The same goes for the bpf
+programs and they have to be adjusted accordingly.
+
+Q: Attaching to arbitrary kernel functions is an ABI?
+-----------------------------------------------------
+Q: BPF programs can be attached to many kernel functions.  Do these
+kernel functions become part of the ABI?
+
+A: NO.
+
+The kernel function prototypes will change, and BPF programs attaching to
+them will need to change.  The BPF compile-once-run-everywhere (CO-RE)
+should be used in order to make it easier to adapt your BPF programs to
+different versions of the kernel.
+
+Q: Marking a function with BTF_ID makes that function an ABI?
+-------------------------------------------------------------
+A: NO.
+
+The BTF_ID macro does not cause a function to become part of the ABI
+any more than does the EXPORT_SYMBOL_GPL macro.

@@ -9,7 +9,6 @@
 
 #include <linux/types.h>
 #include <linux/module.h>
-#include <linux/ip.h>
 #include <linux/in.h>
 #include <net/ip.h>
 #include <net/sock.h>
@@ -43,12 +42,13 @@ int __ip4_datagram_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len
 			oif = inet->mc_index;
 		if (!saddr)
 			saddr = inet->mc_addr;
+	} else if (!oif) {
+		oif = inet->uc_index;
 	}
 	fl4 = &inet->cork.fl.u.ip4;
-	rt = ip_route_connect(fl4, usin->sin_addr.s_addr, saddr,
-			      RT_CONN_FLAGS(sk), oif,
-			      sk->sk_protocol,
-			      inet->inet_sport, usin->sin_port, sk);
+	rt = ip_route_connect(fl4, usin->sin_addr.s_addr, saddr, oif,
+			      sk->sk_protocol, inet->inet_sport,
+			      usin->sin_port, sk);
 	if (IS_ERR(rt)) {
 		err = PTR_ERR(rt);
 		if (err == -ENETUNREACH)

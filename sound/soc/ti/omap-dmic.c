@@ -203,10 +203,10 @@ static int omap_dmic_dai_hw_params(struct snd_pcm_substream *substream,
 	switch (channels) {
 	case 6:
 		dmic->ch_enabled |= OMAP_DMIC_UP3_ENABLE;
-		/* fall through */
+		fallthrough;
 	case 4:
 		dmic->ch_enabled |= OMAP_DMIC_UP2_ENABLE;
-		/* fall through */
+		fallthrough;
 	case 2:
 		dmic->ch_enabled |= OMAP_DMIC_UP1_ENABLE;
 		break;
@@ -453,7 +453,8 @@ static struct snd_soc_dai_driver omap_dmic_dai = {
 };
 
 static const struct snd_soc_component_driver omap_dmic_component = {
-	.name		= "omap-dmic",
+	.name			= "omap-dmic",
+	.legacy_dai_naming	= 1,
 };
 
 static int asoc_dmic_probe(struct platform_device *pdev)
@@ -474,7 +475,7 @@ static int asoc_dmic_probe(struct platform_device *pdev)
 
 	dmic->fclk = devm_clk_get(dmic->dev, "fck");
 	if (IS_ERR(dmic->fclk)) {
-		dev_err(dmic->dev, "cant get fck\n");
+		dev_err(dmic->dev, "can't get fck\n");
 		return -ENODEV;
 	}
 

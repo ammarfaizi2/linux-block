@@ -167,7 +167,7 @@
 struct fxos8700_data {
 	struct regmap *regmap;
 	struct iio_trigger *trig;
-	__be16 buf[FXOS8700_DATA_BUF_SIZE] ____cacheline_aligned;
+	__be16 buf[FXOS8700_DATA_BUF_SIZE] __aligned(IIO_DMA_MINALIGN);
 };
 
 /* Regmap info */
@@ -633,7 +633,6 @@ int fxos8700_core_probe(struct device *dev, struct regmap *regmap,
 	if (ret)
 		return ret;
 
-	indio_dev->dev.parent = dev;
 	indio_dev->channels = fxos8700_channels;
 	indio_dev->num_channels = ARRAY_SIZE(fxos8700_channels);
 	indio_dev->name = name ? name : "fxos8700";

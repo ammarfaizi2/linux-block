@@ -256,6 +256,7 @@ enum rdma_ch_state {
  * @rdma_cm:	   See below.
  * @rdma_cm.cm_id: RDMA CM ID associated with the channel.
  * @cq:            IB completion queue for this channel.
+ * @cq_size:	   Number of CQEs in @cq.
  * @zw_cqe:	   Zero-length write CQE.
  * @rcu:           RCU head.
  * @kref:	   kref for this channel.
@@ -300,6 +301,7 @@ struct srpt_rdma_ch {
 		} rdma_cm;
 	};
 	struct ib_cq		*cq;
+	u32			cq_size;
 	struct ib_cqe		zw_cqe;
 	struct rcu_head		rcu;
 	struct kref		kref;
@@ -345,7 +347,7 @@ struct srpt_nexus {
 };
 
 /**
- * struct srpt_port_attib - attributes for SRPT port
+ * struct srpt_port_attrib - attributes for SRPT port
  * @srp_max_rdma_size: Maximum size of SRP RDMA transfers for new connections.
  * @srp_max_rsp_size: Maximum size of SRP response messages in bytes.
  * @srp_sq_size: Shared receive queue (SRQ) size.
@@ -374,7 +376,7 @@ struct srpt_tpg {
 };
 
 /**
- * struct srpt_port_id - information about an RDMA port name
+ * struct srpt_port_id - LIO RDMA port information
  * @mutex:	Protects @tpg_list changes.
  * @tpg_list:	TPGs associated with the RDMA port name.
  * @wwn:	WWN associated with the RDMA port name.
@@ -391,7 +393,7 @@ struct srpt_port_id {
 };
 
 /**
- * struct srpt_port - information associated by SRPT with a single IB port
+ * struct srpt_port - SRPT RDMA port information
  * @sdev:      backpointer to the HCA information.
  * @mad_agent: per-port management datagram processing information.
  * @enabled:   Whether or not this target port is enabled.
@@ -400,8 +402,10 @@ struct srpt_port_id {
  * @lid:       cached value of the port's lid.
  * @gid:       cached value of the port's gid.
  * @work:      work structure for refreshing the aforementioned cached values.
- * @port_guid_id: target port GUID
- * @port_gid_id: target port GID
+ * @guid_name: port name in GUID format.
+ * @guid_id:   LIO target port information for the port name in GUID format.
+ * @gid_name:  port name in GID format.
+ * @gid_id:    LIO target port information for the port name in GID format.
  * @port_attrib:   Port attributes that can be accessed through configfs.
  * @refcount:	   Number of objects associated with this port.
  * @freed_channels: Completion that will be signaled once @refcount becomes 0.
@@ -417,8 +421,10 @@ struct srpt_port {
 	u32			lid;
 	union ib_gid		gid;
 	struct work_struct	work;
-	struct srpt_port_id	port_guid_id;
-	struct srpt_port_id	port_gid_id;
+	char			guid_name[64];
+	struct srpt_port_id	*guid_id;
+	char			gid_name[64];
+	struct srpt_port_id	*gid_id;
 	struct srpt_port_attrib port_attrib;
 	atomic_t		refcount;
 	struct completion	*freed_channels;
@@ -428,6 +434,7 @@ struct srpt_port {
 
 /**
  * struct srpt_device - information associated by SRPT with a single HCA
+ * @refcnt:	   Reference count for this device.
  * @device:        Backpointer to the struct ib_device managed by the IB core.
  * @pd:            IB protection domain.
  * @lkey:          L_Key (local key) with write access to all local memory.
@@ -443,6 +450,7 @@ struct srpt_port {
  * @port:          Information about the ports owned by this HCA.
  */
 struct srpt_device {
+	struct kref		refcnt;
 	struct ib_device	*device;
 	struct ib_pd		*pd;
 	u32			lkey;

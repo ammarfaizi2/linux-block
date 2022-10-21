@@ -2218,7 +2218,8 @@ static int rt73usb_probe_hw(struct rt2x00_dev *rt2x00dev)
  * IEEE80211 stack callback functions.
  */
 static int rt73usb_conf_tx(struct ieee80211_hw *hw,
-			   struct ieee80211_vif *vif, u16 queue_idx,
+			   struct ieee80211_vif *vif,
+			   unsigned int link_id, u16 queue_idx,
 			   const struct ieee80211_tx_queue_params *params)
 {
 	struct rt2x00_dev *rt2x00dev = hw->priv;
@@ -2234,7 +2235,7 @@ static int rt73usb_conf_tx(struct ieee80211_hw *hw,
 	 * we are free to update the registers based on the value
 	 * in the queue parameter.
 	 */
-	retval = rt2x00mac_conf_tx(hw, vif, queue_idx, params);
+	retval = rt2x00mac_conf_tx(hw, vif, link_id, queue_idx, params);
 	if (retval)
 		return retval;
 
@@ -2373,7 +2374,6 @@ static void rt73usb_queue_init(struct data_queue *queue)
 		break;
 
 	case QID_ATIM:
-		/* fallthrough */
 	default:
 		BUG();
 		break;
@@ -2514,7 +2514,6 @@ static const struct usb_device_id rt73usb_device_table[] = {
 MODULE_AUTHOR(DRV_PROJECT);
 MODULE_VERSION(DRV_VERSION);
 MODULE_DESCRIPTION("Ralink RT73 USB Wireless LAN driver.");
-MODULE_SUPPORTED_DEVICE("Ralink RT2571W & RT2671 USB chipset based cards");
 MODULE_DEVICE_TABLE(usb, rt73usb_device_table);
 MODULE_FIRMWARE(FIRMWARE_RT2571);
 MODULE_LICENSE("GPL");

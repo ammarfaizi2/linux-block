@@ -315,12 +315,12 @@ that these callbacks operate on::
 					   configuration space */
 	unsigned int	pme_support:5;	/* Bitmask of states from which PME#
 					   can be generated */
-	unsigned int	pme_interrupt:1;/* Is native PCIe PME signaling used? */
+	unsigned int	pme_poll:1;	/* Poll device's PME status bit */
 	unsigned int	d1_support:1;	/* Low power state D1 is supported */
 	unsigned int	d2_support:1;	/* Low power state D2 is supported */
 	unsigned int	no_d1d2:1;	/* D1 and D2 are forbidden */
 	unsigned int	wakeup_prepared:1;  /* Device prepared for wake up */
-	unsigned int	d3_delay;	/* D3->D0 transition time in ms */
+	unsigned int	d3hot_delay;	/* D3hot->D0 transition time in ms */
 	...
   };
 

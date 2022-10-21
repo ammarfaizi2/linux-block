@@ -22,6 +22,7 @@
 #include <linux/device.h>
 #include <linux/uaccess.h>
 #include <linux/ctype.h>
+#include <linux/panic_notifier.h>
 #include <linux/reboot.h>
 #include <linux/olpc-ec.h>
 #include <asm/tsc.h>
@@ -382,7 +383,7 @@ static void dcon_set_source(struct dcon_priv *dcon, int arg)
 static void dcon_set_source_sync(struct dcon_priv *dcon, int arg)
 {
 	dcon_set_source(dcon, arg);
-	flush_scheduled_work();
+	flush_work(&dcon->switch_source);
 }
 
 static ssize_t dcon_mode_show(struct device *dev,
@@ -516,10 +517,7 @@ static struct device_attribute dcon_device_files[] = {
 static int dcon_bl_update(struct backlight_device *dev)
 {
 	struct dcon_priv *dcon = bl_get_data(dev);
-	u8 level = dev->props.brightness & 0x0F;
-
-	if (dev->props.power != FB_BLANK_UNBLANK)
-		level = 0;
+	u8 level = backlight_get_brightness(dev) & 0x0F;
 
 	if (level != dcon->bl_val)
 		dcon_set_backlight(dcon, level);
@@ -576,7 +574,7 @@ static struct notifier_block dcon_panic_nb = {
 
 static int dcon_detect(struct i2c_client *client, struct i2c_board_info *info)
 {
-	strlcpy(info->type, "olpc_dcon", I2C_NAME_SIZE);
+	strscpy(info->type, "olpc_dcon", I2C_NAME_SIZE);
 
 	return 0;
 }
@@ -659,8 +657,9 @@ static int dcon_probe(struct i2c_client *client, const struct i2c_device_id *id)
  ecreate:
 	for (j = 0; j < i; j++)
 		device_remove_file(&dcon_device->dev, &dcon_device_files[j]);
+	platform_device_del(dcon_device);
  edev:
-	platform_device_unregister(dcon_device);
+	platform_device_put(dcon_device);
 	dcon_device = NULL;
  eirq:
 	free_irq(DCON_IRQ, dcon);

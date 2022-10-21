@@ -1134,7 +1134,7 @@ int cyber2000fb_attach(struct cyberpro_info *info, int idx)
 		info->fb_size	      = int_cfb_info->fb.fix.smem_len;
 		info->info	      = int_cfb_info;
 
-		strlcpy(info->dev_name, int_cfb_info->fb.fix.id,
+		strscpy(info->dev_name, int_cfb_info->fb.fix.id,
 			sizeof(info->dev_name));
 	}
 
@@ -1229,7 +1229,7 @@ static int cyber2000fb_ddc_getsda(void *data)
 
 static int cyber2000fb_setup_ddc_bus(struct cfb_info *cfb)
 {
-	strlcpy(cfb->ddc_adapter.name, cfb->fb.fix.id,
+	strscpy(cfb->ddc_adapter.name, cfb->fb.fix.id,
 		sizeof(cfb->ddc_adapter.name));
 	cfb->ddc_adapter.owner		= THIS_MODULE;
 	cfb->ddc_adapter.class		= I2C_CLASS_DDC;
@@ -1304,7 +1304,7 @@ static int cyber2000fb_i2c_getscl(void *data)
 
 static int cyber2000fb_i2c_register(struct cfb_info *cfb)
 {
-	strlcpy(cfb->i2c_adapter.name, cfb->fb.fix.id,
+	strscpy(cfb->i2c_adapter.name, cfb->fb.fix.id,
 		sizeof(cfb->i2c_adapter.name));
 	cfb->i2c_adapter.owner = THIS_MODULE;
 	cfb->i2c_adapter.algo_data = &cfb->i2c_algo;
@@ -1500,7 +1500,7 @@ static int cyber2000fb_setup(char *options)
 		if (strncmp(opt, "font:", 5) == 0) {
 			static char default_font_storage[40];
 
-			strlcpy(default_font_storage, opt + 5,
+			strscpy(default_font_storage, opt + 5,
 				sizeof(default_font_storage));
 			default_font = default_font_storage;
 			continue;
@@ -1810,7 +1810,7 @@ static void cyberpro_pci_remove(struct pci_dev *dev)
 	}
 }
 
-static int cyberpro_pci_suspend(struct pci_dev *dev, pm_message_t state)
+static int __maybe_unused cyberpro_pci_suspend(struct device *dev)
 {
 	return 0;
 }
@@ -1818,9 +1818,9 @@ static int cyberpro_pci_suspend(struct pci_dev *dev, pm_message_t state)
 /*
  * Re-initialise the CyberPro hardware
  */
-static int cyberpro_pci_resume(struct pci_dev *dev)
+static int __maybe_unused cyberpro_pci_resume(struct device *dev)
 {
-	struct cfb_info *cfb = pci_get_drvdata(dev);
+	struct cfb_info *cfb = dev_get_drvdata(dev);
 
 	if (cfb) {
 		cyberpro_pci_enable_mmio(cfb);
@@ -1846,12 +1846,15 @@ static struct pci_device_id cyberpro_pci_table[] = {
 
 MODULE_DEVICE_TABLE(pci, cyberpro_pci_table);
 
+static SIMPLE_DEV_PM_OPS(cyberpro_pci_pm_ops,
+			 cyberpro_pci_suspend,
+			 cyberpro_pci_resume);
+
 static struct pci_driver cyberpro_driver = {
 	.name		= "CyberPro",
 	.probe		= cyberpro_pci_probe,
 	.remove		= cyberpro_pci_remove,
-	.suspend	= cyberpro_pci_suspend,
-	.resume		= cyberpro_pci_resume,
+	.driver.pm	= &cyberpro_pci_pm_ops,
 	.id_table	= cyberpro_pci_table
 };
 

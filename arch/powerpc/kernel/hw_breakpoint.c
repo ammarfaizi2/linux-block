@@ -22,7 +22,6 @@
 #include <asm/processor.h>
 #include <asm/sstep.h>
 #include <asm/debug.h>
-#include <asm/debugfs.h>
 #include <asm/hvcall.h>
 #include <asm/inst.h>
 #include <linux/uaccess.h>
@@ -418,8 +417,9 @@ static int hw_breakpoint_validate_len(struct arch_hw_breakpoint *hw)
 
 	if (dawr_enabled()) {
 		max_len = DAWR_MAX_LEN;
-		/* DAWR region can't cross 512 bytes boundary */
-		if (ALIGN_DOWN(start_addr, SZ_512) != ALIGN_DOWN(end_addr - 1, SZ_512))
+		/* DAWR region can't cross 512 bytes boundary on p10 predecessors */
+		if (!cpu_has_feature(CPU_FTR_ARCH_31) &&
+		    (ALIGN_DOWN(start_addr, SZ_512) != ALIGN_DOWN(end_addr - 1, SZ_512)))
 			return -EINVAL;
 	} else if (IS_ENABLED(CONFIG_PPC_8xx)) {
 		/* 8xx can setup a range without limitation */
@@ -485,7 +485,7 @@ void thread_change_pc(struct task_struct *tsk, struct pt_regs *regs)
 	return;
 
 reset:
-	regs->msr &= ~MSR_SE;
+	regs_set_return_msr(regs, regs->msr & ~MSR_SE);
 	for (i = 0; i < nr_wp_slots(); i++) {
 		info = counter_arch_bp(__this_cpu_read(bp_per_reg[i]));
 		__set_breakpoint(i, info);
@@ -493,154 +493,14 @@ reset:
 	}
 }
 
-static bool dar_in_user_range(unsigned long dar, struct arch_hw_breakpoint *info)
-{
-	return ((info->address <= dar) && (dar - info->address < info->len));
-}
-
-static bool ea_user_range_overlaps(unsigned long ea, int size,
-				   struct arch_hw_breakpoint *info)
-{
-	return ((ea < info->address + info->len) &&
-		(ea + size > info->address));
-}
-
-static bool dar_in_hw_range(unsigned long dar, struct arch_hw_breakpoint *info)
-{
-	unsigned long hw_start_addr, hw_end_addr;
-
-	hw_start_addr = ALIGN_DOWN(info->address, HW_BREAKPOINT_SIZE);
-	hw_end_addr = ALIGN(info->address + info->len, HW_BREAKPOINT_SIZE);
-
-	return ((hw_start_addr <= dar) && (hw_end_addr > dar));
-}
-
-static bool ea_hw_range_overlaps(unsigned long ea, int size,
-				 struct arch_hw_breakpoint *info)
-{
-	unsigned long hw_start_addr, hw_end_addr;
-
-	hw_start_addr = ALIGN_DOWN(info->address, HW_BREAKPOINT_SIZE);
-	hw_end_addr = ALIGN(info->address + info->len, HW_BREAKPOINT_SIZE);
-
-	return ((ea < hw_end_addr) && (ea + size > hw_start_addr));
-}
-
-/*
- * If hw has multiple DAWR registers, we also need to check all
- * dawrx constraint bits to confirm this is _really_ a valid event.
- * If type is UNKNOWN, but privilege level matches, consider it as
- * a positive match.
- */
-static bool check_dawrx_constraints(struct pt_regs *regs, int type,
-				    struct arch_hw_breakpoint *info)
-{
-	if (OP_IS_LOAD(type) && !(info->type & HW_BRK_TYPE_READ))
-		return false;
-
-	/*
-	 * The Cache Management instructions other than dcbz never
-	 * cause a match. i.e. if type is CACHEOP, the instruction
-	 * is dcbz, and dcbz is treated as Store.
-	 */
-	if ((OP_IS_STORE(type) || type == CACHEOP) && !(info->type & HW_BRK_TYPE_WRITE))
-		return false;
-
-	if (is_kernel_addr(regs->nip) && !(info->type & HW_BRK_TYPE_KERNEL))
-		return false;
-
-	if (user_mode(regs) && !(info->type & HW_BRK_TYPE_USER))
-		return false;
-
-	return true;
-}
-
-/*
- * Return true if the event is valid wrt dawr configuration,
- * including extraneous exception. Otherwise return false.
- */
-static bool check_constraints(struct pt_regs *regs, struct ppc_inst instr,
-			      unsigned long ea, int type, int size,
-			      struct arch_hw_breakpoint *info)
-{
-	bool in_user_range = dar_in_user_range(regs->dar, info);
-	bool dawrx_constraints;
-
-	/*
-	 * 8xx supports only one breakpoint and thus we can
-	 * unconditionally return true.
-	 */
-	if (IS_ENABLED(CONFIG_PPC_8xx)) {
-		if (!in_user_range)
-			info->type |= HW_BRK_TYPE_EXTRANEOUS_IRQ;
-		return true;
-	}
-
-	if (unlikely(ppc_inst_equal(instr, ppc_inst(0)))) {
-		if (cpu_has_feature(CPU_FTR_ARCH_31) &&
-		    !dar_in_hw_range(regs->dar, info))
-			return false;
-
-		return true;
-	}
-
-	dawrx_constraints = check_dawrx_constraints(regs, type, info);
-
-	if (type == UNKNOWN) {
-		if (cpu_has_feature(CPU_FTR_ARCH_31) &&
-		    !dar_in_hw_range(regs->dar, info))
-			return false;
-
-		return dawrx_constraints;
-	}
-
-	if (ea_user_range_overlaps(ea, size, info))
-		return dawrx_constraints;
-
-	if (ea_hw_range_overlaps(ea, size, info)) {
-		if (dawrx_constraints) {
-			info->type |= HW_BRK_TYPE_EXTRANEOUS_IRQ;
-			return true;
-		}
-	}
-	return false;
-}
-
-static int cache_op_size(void)
-{
-#ifdef __powerpc64__
-	return ppc64_caches.l1d.block_size;
-#else
-	return L1_CACHE_BYTES;
-#endif
-}
-
-static void get_instr_detail(struct pt_regs *regs, struct ppc_inst *instr,
-			     int *type, int *size, unsigned long *ea)
-{
-	struct instruction_op op;
-
-	if (__get_user_instr_inatomic(*instr, (void __user *)regs->nip))
-		return;
-
-	analyse_instr(&op, regs, *instr);
-	*type = GETTYPE(op.type);
-	*ea = op.ea;
-#ifdef __powerpc64__
-	if (!(regs->msr & MSR_64BIT))
-		*ea &= 0xffffffffUL;
-#endif
-
-	*size = GETSIZE(op.type);
-	if (*type == CACHEOP) {
-		*size = cache_op_size();
-		*ea &= ~(*size - 1);
-	}
-}
-
 static bool is_larx_stcx_instr(int type)
 {
 	return type == LARX || type == STCX;
+}
+
+static bool is_octword_vsx_instr(int type, int size)
+{
+	return ((type == LOAD_VSX || type == STORE_VSX) && size == 32);
 }
 
 /*
@@ -663,7 +523,7 @@ static void larx_stcx_err(struct perf_event *bp, struct arch_hw_breakpoint *info
 
 static bool stepping_handler(struct pt_regs *regs, struct perf_event **bp,
 			     struct arch_hw_breakpoint **info, int *hit,
-			     struct ppc_inst instr)
+			     ppc_inst_t instr)
 {
 	int i;
 	int stepped;
@@ -676,7 +536,7 @@ static bool stepping_handler(struct pt_regs *regs, struct perf_event **bp,
 			current->thread.last_hit_ubp[i] = bp[i];
 			info[i] = NULL;
 		}
-		regs->msr |= MSR_SE;
+		regs_set_return_msr(regs, regs->msr | MSR_SE);
 		return false;
 	}
 
@@ -693,6 +553,58 @@ static bool stepping_handler(struct pt_regs *regs, struct perf_event **bp,
 	return true;
 }
 
+static void handle_p10dd1_spurious_exception(struct arch_hw_breakpoint **info,
+					     int *hit, unsigned long ea)
+{
+	int i;
+	unsigned long hw_end_addr;
+
+	/*
+	 * Handle spurious exception only when any bp_per_reg is set.
+	 * Otherwise this might be created by xmon and not actually a
+	 * spurious exception.
+	 */
+	for (i = 0; i < nr_wp_slots(); i++) {
+		if (!info[i])
+			continue;
+
+		hw_end_addr = ALIGN(info[i]->address + info[i]->len, HW_BREAKPOINT_SIZE);
+
+		/*
+		 * Ending address of DAWR range is less than starting
+		 * address of op.
+		 */
+		if ((hw_end_addr - 1) >= ea)
+			continue;
+
+		/*
+		 * Those addresses need to be in the same or in two
+		 * consecutive 512B blocks;
+		 */
+		if (((hw_end_addr - 1) >> 10) != (ea >> 10))
+			continue;
+
+		/*
+		 * 'op address + 64B' generates an address that has a
+		 * carry into bit 52 (crosses 2K boundary).
+		 */
+		if ((ea & 0x800) == ((ea + 64) & 0x800))
+			continue;
+
+		break;
+	}
+
+	if (i == nr_wp_slots())
+		return;
+
+	for (i = 0; i < nr_wp_slots(); i++) {
+		if (info[i]) {
+			hit[i] = 1;
+			info[i]->type |= HW_BRK_TYPE_EXTRANEOUS_IRQ;
+		}
+	}
+}
+
 int hw_breakpoint_handler(struct die_args *args)
 {
 	bool err = false;
@@ -704,7 +616,7 @@ int hw_breakpoint_handler(struct die_args *args)
 	int hit[HBP_NUM_MAX] = {0};
 	int nr_hit = 0;
 	bool ptrace_bp = false;
-	struct ppc_inst instr = ppc_inst(0);
+	ppc_inst_t instr = ppc_inst(0);
 	int type = 0;
 	int size = 0;
 	unsigned long ea;
@@ -721,7 +633,7 @@ int hw_breakpoint_handler(struct die_args *args)
 	rcu_read_lock();
 
 	if (!IS_ENABLED(CONFIG_PPC_8xx))
-		get_instr_detail(regs, &instr, &type, &size, &ea);
+		wp_get_instr_detail(regs, &instr, &type, &size, &ea);
 
 	for (i = 0; i < nr_wp_slots(); i++) {
 		bp[i] = __this_cpu_read(bp_per_reg[i]);
@@ -731,7 +643,7 @@ int hw_breakpoint_handler(struct die_args *args)
 		info[i] = counter_arch_bp(bp[i]);
 		info[i]->type &= ~HW_BRK_TYPE_EXTRANEOUS_IRQ;
 
-		if (check_constraints(regs, instr, ea, type, size, info[i])) {
+		if (wp_check_constraints(regs, instr, ea, type, size, info[i])) {
 			if (!IS_ENABLED(CONFIG_PPC_8xx) &&
 			    ppc_inst_equal(instr, ppc_inst(0))) {
 				handler_error(bp[i], info[i]);
@@ -751,8 +663,14 @@ int hw_breakpoint_handler(struct die_args *args)
 		goto reset;
 
 	if (!nr_hit) {
-		rc = NOTIFY_DONE;
-		goto out;
+		/* Workaround for Power10 DD1 */
+		if (!IS_ENABLED(CONFIG_PPC_8xx) && mfspr(SPRN_PVR) == 0x800100 &&
+		    is_octword_vsx_instr(type, size)) {
+			handle_p10dd1_spurious_exception(info, hit, ea);
+		} else {
+			rc = NOTIFY_DONE;
+			goto out;
+		}
 	}
 
 	/*

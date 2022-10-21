@@ -41,13 +41,15 @@ static int cc_pm_resume(struct device *dev)
 	/* wait for Cryptocell reset completion */
 	if (!cc_wait_for_reset_completion(drvdata)) {
 		dev_err(dev, "Cryptocell reset not completed");
+		clk_disable_unprepare(drvdata->clk);
 		return -EBUSY;
 	}
 
 	cc_iowrite(drvdata, CC_REG(HOST_POWER_DOWN_EN), POWER_DOWN_DISABLE);
-	rc = init_cc_regs(drvdata, false);
+	rc = init_cc_regs(drvdata);
 	if (rc) {
 		dev_err(dev, "init_cc_regs (%x)\n", rc);
+		clk_disable_unprepare(drvdata->clk);
 		return rc;
 	}
 	/* check if tee fips error occurred during power down */
@@ -65,8 +67,12 @@ const struct dev_pm_ops ccree_pm = {
 int cc_pm_get(struct device *dev)
 {
 	int rc = pm_runtime_get_sync(dev);
+	if (rc < 0) {
+		pm_runtime_put_noidle(dev);
+		return rc;
+	}
 
-	return (rc == 1 ? 0 : rc);
+	return 0;
 }
 
 void cc_pm_put_suspend(struct device *dev)

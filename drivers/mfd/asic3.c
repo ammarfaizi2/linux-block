@@ -596,12 +596,11 @@ static __init int asic3_gpio_probe(struct platform_device *pdev,
 	return gpiochip_add_data(&asic->gpio, asic);
 }
 
-static int asic3_gpio_remove(struct platform_device *pdev)
+static void asic3_gpio_remove(struct platform_device *pdev)
 {
 	struct asic3 *asic = platform_get_drvdata(pdev);
 
 	gpiochip_remove(&asic->gpio);
-	return 0;
 }
 
 static void asic3_clk_enable(struct asic3 *asic, struct asic3_clk *clk)
@@ -723,16 +722,8 @@ static struct tmio_mmc_data asic3_mmc_data = {
 };
 
 static struct resource asic3_mmc_resources[] = {
-	{
-		.start = ASIC3_SD_CTRL_BASE,
-		.end   = ASIC3_SD_CTRL_BASE + 0x3ff,
-		.flags = IORESOURCE_MEM,
-	},
-	{
-		.start = 0,
-		.end   = 0,
-		.flags = IORESOURCE_IRQ,
-	},
+	DEFINE_RES_MEM(ASIC3_SD_CTRL_BASE, 0x400),
+	DEFINE_RES_IRQ(0)
 };
 
 static int asic3_mmc_enable(struct platform_device *pdev)
@@ -914,14 +905,14 @@ static int __init asic3_mfd_probe(struct platform_device *pdev,
 		ret = mfd_add_devices(&pdev->dev, pdev->id,
 			&asic3_cell_ds1wm, 1, mem, asic->irq_base, NULL);
 		if (ret < 0)
-			goto out;
+			goto out_unmap;
 	}
 
 	if (mem_sdio && (irq >= 0)) {
 		ret = mfd_add_devices(&pdev->dev, pdev->id,
 			&asic3_cell_mmc, 1, mem_sdio, irq, NULL);
 		if (ret < 0)
-			goto out;
+			goto out_unmap;
 	}
 
 	ret = 0;
@@ -935,8 +926,12 @@ static int __init asic3_mfd_probe(struct platform_device *pdev,
 		ret = mfd_add_devices(&pdev->dev, 0,
 			asic3_cell_leds, ASIC3_NUM_LEDS, NULL, 0, NULL);
 	}
+	return ret;
 
- out:
+out_unmap:
+	if (asic->tmio_cnf)
+		iounmap(asic->tmio_cnf);
+out:
 	return ret;
 }
 
@@ -1034,7 +1029,6 @@ static int __init asic3_probe(struct platform_device *pdev)
 
 static int asic3_remove(struct platform_device *pdev)
 {
-	int ret;
 	struct asic3 *asic = platform_get_drvdata(pdev);
 
 	asic3_set_register(asic, ASIC3_OFFSET(EXTCF, SELECT),
@@ -1042,9 +1036,8 @@ static int asic3_remove(struct platform_device *pdev)
 
 	asic3_mfd_remove(pdev);
 
-	ret = asic3_gpio_remove(pdev);
-	if (ret < 0)
-		return ret;
+	asic3_gpio_remove(pdev);
+
 	asic3_irq_remove(pdev);
 
 	asic3_write_register(asic, ASIC3_OFFSET(CLOCK, SEL), 0);

@@ -11,6 +11,13 @@
 #ifndef _SMC_H
 #define _SMC_H
 
+#include <linux/device.h>
+#include <linux/spinlock.h>
+#include <linux/types.h>
+#include <linux/wait.h>
+
+struct sock;
+
 #define SMC_MAX_PNETID_LEN	16	/* Max. length of PNET id */
 
 struct smc_hashinfo {
@@ -36,6 +43,8 @@ struct smcd_dmb {
 #define ISM_EVENT_DMB	0
 #define ISM_EVENT_GID	1
 #define ISM_EVENT_SWR	2
+
+#define ISM_RESERVED_VLANID	0x1FFF
 
 #define ISM_ERROR	0xFFFF
 
@@ -63,6 +72,8 @@ struct smcd_ops {
 	int (*move_data)(struct smcd_dev *dev, u64 dmb_tok, unsigned int idx,
 			 bool sf, unsigned int offset, void *data,
 			 unsigned int size);
+	u8* (*get_system_eid)(void);
+	u16 (*get_chid)(struct smcd_dev *dev);
 };
 
 struct smcd_dev {
@@ -90,5 +101,5 @@ int smcd_register_dev(struct smcd_dev *smcd);
 void smcd_unregister_dev(struct smcd_dev *smcd);
 void smcd_free_dev(struct smcd_dev *smcd);
 void smcd_handle_event(struct smcd_dev *dev, struct smcd_event *event);
-void smcd_handle_irq(struct smcd_dev *dev, unsigned int bit);
+void smcd_handle_irq(struct smcd_dev *dev, unsigned int bit, u16 dmbemask);
 #endif	/* _SMC_H */

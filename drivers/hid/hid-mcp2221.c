@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2020, Rishi Gupta <gupt21@gmail.com>
  *
- * Datasheet: http://ww1.microchip.com/downloads/en/DeviceDoc/20005565B.pdf
+ * Datasheet: https://ww1.microchip.com/downloads/en/DeviceDoc/20005565B.pdf
  */
 
 #include <linux/module.h>
@@ -48,6 +48,36 @@ enum {
 	MCP2221_ALT_F_NOT_GPIOV = 0xEE,
 	MCP2221_ALT_F_NOT_GPIOD = 0xEF,
 };
+
+/* MCP GPIO direction encoding */
+enum {
+	MCP2221_DIR_OUT = 0x00,
+	MCP2221_DIR_IN = 0x01,
+};
+
+#define MCP_NGPIO	4
+
+/* MCP GPIO set command layout */
+struct mcp_set_gpio {
+	u8 cmd;
+	u8 dummy;
+	struct {
+		u8 change_value;
+		u8 value;
+		u8 change_direction;
+		u8 direction;
+	} gpio[MCP_NGPIO];
+} __packed;
+
+/* MCP GPIO get command layout */
+struct mcp_get_gpio {
+	u8 cmd;
+	u8 dummy;
+	struct {
+		u8 direction;
+		u8 value;
+	} gpio[MCP_NGPIO];
+} __packed;
 
 /*
  * There is no way to distinguish responses. Therefore next command
@@ -355,6 +385,9 @@ static int mcp_smbus_write(struct mcp2221 *mcp, u16 addr,
 		data_len = 7;
 		break;
 	default:
+		if (len > I2C_SMBUS_BLOCK_MAX)
+			return -EINVAL;
+
 		memcpy(&mcp->txbuf[5], buf, len);
 		data_len = len + 5;
 	}
@@ -542,7 +575,7 @@ static int mcp_gpio_get(struct gpio_chip *gc,
 
 	mcp->txbuf[0] = MCP2221_GPIO_GET;
 
-	mcp->gp_idx = (offset + 1) * 2;
+	mcp->gp_idx = offsetof(struct mcp_get_gpio, gpio[offset].value);
 
 	mutex_lock(&mcp->lock);
 	ret = mcp_send_data_req_status(mcp, mcp->txbuf, 1);
@@ -559,7 +592,7 @@ static void mcp_gpio_set(struct gpio_chip *gc,
 	memset(mcp->txbuf, 0, 18);
 	mcp->txbuf[0] = MCP2221_GPIO_SET;
 
-	mcp->gp_idx = ((offset + 1) * 4) - 1;
+	mcp->gp_idx = offsetof(struct mcp_set_gpio, gpio[offset].value);
 
 	mcp->txbuf[mcp->gp_idx - 1] = 1;
 	mcp->txbuf[mcp->gp_idx] = !!value;
@@ -575,7 +608,7 @@ static int mcp_gpio_dir_set(struct mcp2221 *mcp,
 	memset(mcp->txbuf, 0, 18);
 	mcp->txbuf[0] = MCP2221_GPIO_SET;
 
-	mcp->gp_idx = (offset + 1) * 5;
+	mcp->gp_idx = offsetof(struct mcp_set_gpio, gpio[offset].direction);
 
 	mcp->txbuf[mcp->gp_idx - 1] = 1;
 	mcp->txbuf[mcp->gp_idx] = val;
@@ -590,7 +623,7 @@ static int mcp_gpio_direction_input(struct gpio_chip *gc,
 	struct mcp2221 *mcp = gpiochip_get_data(gc);
 
 	mutex_lock(&mcp->lock);
-	ret = mcp_gpio_dir_set(mcp, offset, 0);
+	ret = mcp_gpio_dir_set(mcp, offset, MCP2221_DIR_IN);
 	mutex_unlock(&mcp->lock);
 
 	return ret;
@@ -603,7 +636,7 @@ static int mcp_gpio_direction_output(struct gpio_chip *gc,
 	struct mcp2221 *mcp = gpiochip_get_data(gc);
 
 	mutex_lock(&mcp->lock);
-	ret = mcp_gpio_dir_set(mcp, offset, 1);
+	ret = mcp_gpio_dir_set(mcp, offset, MCP2221_DIR_OUT);
 	mutex_unlock(&mcp->lock);
 
 	/* Can't configure as output, bailout early */
@@ -623,7 +656,7 @@ static int mcp_gpio_get_direction(struct gpio_chip *gc,
 
 	mcp->txbuf[0] = MCP2221_GPIO_GET;
 
-	mcp->gp_idx = (offset + 1) * 2;
+	mcp->gp_idx = offsetof(struct mcp_get_gpio, gpio[offset].direction);
 
 	mutex_lock(&mcp->lock);
 	ret = mcp_send_data_req_status(mcp, mcp->txbuf, 1);
@@ -632,7 +665,7 @@ static int mcp_gpio_get_direction(struct gpio_chip *gc,
 	if (ret)
 		return ret;
 
-	if (mcp->gpio_dir)
+	if (mcp->gpio_dir == MCP2221_DIR_IN)
 		return GPIO_LINE_DIRECTION_IN;
 
 	return GPIO_LINE_DIRECTION_OUT;
@@ -758,7 +791,7 @@ static int mcp2221_raw_event(struct hid_device *hdev,
 				mcp->status = -ENOENT;
 			} else {
 				mcp->status = !!data[mcp->gp_idx];
-				mcp->gpio_dir = !!data[mcp->gp_idx + 1];
+				mcp->gpio_dir = data[mcp->gp_idx + 1];
 			}
 			break;
 		default:
@@ -860,7 +893,7 @@ static int mcp2221_probe(struct hid_device *hdev,
 	mcp->gc->get_direction = mcp_gpio_get_direction;
 	mcp->gc->set = mcp_gpio_set;
 	mcp->gc->get = mcp_gpio_get;
-	mcp->gc->ngpio = 4;
+	mcp->gc->ngpio = MCP_NGPIO;
 	mcp->gc->base = -1;
 	mcp->gc->can_sleep = 1;
 	mcp->gc->parent = &hdev->dev;

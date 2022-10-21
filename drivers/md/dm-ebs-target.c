@@ -28,7 +28,7 @@ struct ebs_c {
 	spinlock_t lock;		/* Guard bios input list above. */
 	sector_t start;			/* <start> table line argument, see ebs_ctr below. */
 	unsigned int e_bs;		/* Emulated block size in sectors exposed to upper layer. */
-	unsigned int u_bs;		/* Underlying block size in sectors retrievd from/set on lower layer device. */
+	unsigned int u_bs;		/* Underlying block size in sectors retrieved from/set on lower layer device. */
 	unsigned char block_shift;	/* bitshift sectors -> blocks used in dm-bufio API. */
 	bool u_bs_set:1;		/* Flag to indicate underlying block size is set on table line. */
 };
@@ -43,7 +43,7 @@ static inline sector_t __block_mod(sector_t sector, unsigned int bs)
 	return sector & (bs - 1);
 }
 
-/* Return number of blocks for a bio, accounting for misalignement of start and end sectors. */
+/* Return number of blocks for a bio, accounting for misalignment of start and end sectors. */
 static inline unsigned int __nr_blocks(struct ebs_c *ec, struct bio *bio)
 {
 	sector_t end_sector = __block_mod(bio->bi_iter.bi_sector, ec->u_bs) + bio_sectors(bio);
@@ -61,7 +61,8 @@ static inline bool __ebs_check_bs(unsigned int bs)
  *
  * copy blocks between bufio blocks and bio vector's (partial/overlapping) pages.
  */
-static int __ebs_rw_bvec(struct ebs_c *ec, int rw, struct bio_vec *bv, struct bvec_iter *iter)
+static int __ebs_rw_bvec(struct ebs_c *ec, enum req_op op, struct bio_vec *bv,
+			 struct bvec_iter *iter)
 {
 	int r = 0;
 	unsigned char *ba, *pa;
@@ -74,19 +75,19 @@ static int __ebs_rw_bvec(struct ebs_c *ec, int rw, struct bio_vec *bv, struct bv
 	if (unlikely(!bv->bv_page || !bv_len))
 		return -EIO;
 
-	pa = page_address(bv->bv_page) + bv->bv_offset;
+	pa = bvec_virt(bv);
 
 	/* Handle overlapping page <-> blocks */
 	while (bv_len) {
 		cur_len = min(dm_bufio_get_block_size(ec->bufio) - buf_off, bv_len);
 
 		/* Avoid reading for writes in case bio vector's page overwrites block completely. */
-		if (rw == READ || buf_off || bv_len < dm_bufio_get_block_size(ec->bufio))
+		if (op == REQ_OP_READ || buf_off || bv_len < dm_bufio_get_block_size(ec->bufio))
 			ba = dm_bufio_read(ec->bufio, block, &b);
 		else
 			ba = dm_bufio_new(ec->bufio, block, &b);
 
-		if (unlikely(IS_ERR(ba))) {
+		if (IS_ERR(ba)) {
 			/*
 			 * Carry on with next buffer, if any, to issue all possible
 			 * data but return error.
@@ -95,7 +96,7 @@ static int __ebs_rw_bvec(struct ebs_c *ec, int rw, struct bio_vec *bv, struct bv
 		} else {
 			/* Copy data to/from bio to buffer if read/new was successful above. */
 			ba += buf_off;
-			if (rw == READ) {
+			if (op == REQ_OP_READ) {
 				memcpy(pa, ba, cur_len);
 				flush_dcache_page(bv->bv_page);
 			} else {
@@ -117,14 +118,14 @@ static int __ebs_rw_bvec(struct ebs_c *ec, int rw, struct bio_vec *bv, struct bv
 }
 
 /* READ/WRITE: iterate bio vector's copying between (partial) pages and bufio blocks. */
-static int __ebs_rw_bio(struct ebs_c *ec, int rw, struct bio *bio)
+static int __ebs_rw_bio(struct ebs_c *ec, enum req_op op, struct bio *bio)
 {
 	int r = 0, rr;
 	struct bio_vec bv;
 	struct bvec_iter iter;
 
 	bio_for_each_bvec(bv, bio, iter) {
-		rr = __ebs_rw_bvec(ec, rw, &bv, &iter);
+		rr = __ebs_rw_bvec(ec, op, &bv, &iter);
 		if (rr)
 			r = rr;
 	}
@@ -171,7 +172,7 @@ static void __ebs_forget_bio(struct ebs_c *ec, struct bio *bio)
 	dm_bufio_forget_buffers(ec->bufio, __sector_to_block(ec, sector), blocks);
 }
 
-/* Worker funtion to process incoming bios. */
+/* Worker function to process incoming bios. */
 static void __ebs_process_bios(struct work_struct *ws)
 {
 	int r;
@@ -205,10 +206,10 @@ static void __ebs_process_bios(struct work_struct *ws)
 	bio_list_for_each(bio, &bios) {
 		r = -EIO;
 		if (bio_op(bio) == REQ_OP_READ)
-			r = __ebs_rw_bio(ec, READ, bio);
+			r = __ebs_rw_bio(ec, REQ_OP_READ, bio);
 		else if (bio_op(bio) == REQ_OP_WRITE) {
 			write = true;
-			r = __ebs_rw_bio(ec, WRITE, bio);
+			r = __ebs_rw_bio(ec, REQ_OP_WRITE, bio);
 		} else if (bio_op(bio) == REQ_OP_DISCARD) {
 			__ebs_forget_bio(ec, bio);
 			r = __ebs_discard_bio(ec, bio);
@@ -312,7 +313,8 @@ static int ebs_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 		goto bad;
 	}
 
-	ec->bufio = dm_bufio_client_create(ec->dev->bdev, to_bytes(ec->u_bs), 1, 0, NULL, NULL);
+	ec->bufio = dm_bufio_client_create(ec->dev->bdev, to_bytes(ec->u_bs), 1,
+					   0, NULL, NULL, 0);
 	if (IS_ERR(ec->bufio)) {
 		ti->error = "Cannot create dm bufio client";
 		r = PTR_ERR(ec->bufio);
@@ -335,7 +337,6 @@ static int ebs_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 	ti->num_flush_bios = 1;
 	ti->num_discard_bios = 1;
 	ti->num_secure_erase_bios = 0;
-	ti->num_write_same_bios = 0;
 	ti->num_write_zeroes_bios = 0;
 	return 0;
 bad:
@@ -401,6 +402,9 @@ static void ebs_status(struct dm_target *ti, status_type_t type,
 		snprintf(result, maxlen, ec->u_bs_set ? "%s %llu %u %u" : "%s %llu %u",
 			 ec->dev->name, (unsigned long long) ec->start, ec->e_bs, ec->u_bs);
 		break;
+	case STATUSTYPE_IMA:
+		*result = '\0';
+		break;
 	}
 }
 
@@ -413,7 +417,7 @@ static int ebs_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
 	 * Only pass ioctls through if the device sizes match exactly.
 	 */
 	*bdev = dev->bdev;
-	return !!(ec->start || ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT);
+	return !!(ec->start || ti->len != bdev_nr_sectors(dev->bdev));
 }
 
 static void ebs_io_hints(struct dm_target *ti, struct queue_limits *limits)

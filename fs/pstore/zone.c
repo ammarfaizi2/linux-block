@@ -23,7 +23,7 @@
 #include "internal.h"
 
 /**
- * struct psz_head - header of zone to flush to storage
+ * struct psz_buffer - header of zone to flush to storage
  *
  * @sig: signature to indicate header (PSZ_SIG xor PSZONE-type value)
  * @datalen: length of data in @data
@@ -363,7 +363,7 @@ static int psz_kmsg_recover_data(struct psz_context *cxt)
 		rcnt = info->read((char *)buf, zone->buffer_size + sizeof(*buf),
 				zone->off);
 		if (rcnt != zone->buffer_size + sizeof(*buf))
-			return (int)rcnt < 0 ? (int)rcnt : -EIO;
+			return rcnt < 0 ? rcnt : -EIO;
 	}
 	return 0;
 }
@@ -372,7 +372,7 @@ static int psz_kmsg_recover_meta(struct psz_context *cxt)
 {
 	struct pstore_zone_info *info = cxt->pstore_zone_info;
 	struct pstore_zone *zone;
-	size_t rcnt, len;
+	ssize_t rcnt, len;
 	struct psz_buffer *buf;
 	struct psz_kmsg_header *hdr;
 	struct timespec64 time = { };
@@ -400,7 +400,7 @@ static int psz_kmsg_recover_meta(struct psz_context *cxt)
 			continue;
 		} else if (rcnt != len) {
 			pr_err("read %s with id %lu failed\n", zone->name, i);
-			return (int)rcnt < 0 ? (int)rcnt : -EIO;
+			return rcnt < 0 ? rcnt : -EIO;
 		}
 
 		if (buf->sig != zone->buffer->sig) {
@@ -502,7 +502,7 @@ static int psz_recover_zone(struct psz_context *cxt, struct pstore_zone *zone)
 	rcnt = info->read((char *)&tmpbuf, len, zone->off);
 	if (rcnt != len) {
 		pr_debug("read zone %s failed\n", zone->name);
-		return (int)rcnt < 0 ? (int)rcnt : -EIO;
+		return rcnt < 0 ? rcnt : -EIO;
 	}
 
 	if (tmpbuf.sig != zone->buffer->sig) {
@@ -544,7 +544,7 @@ static int psz_recover_zone(struct psz_context *cxt, struct pstore_zone *zone)
 	rcnt = info->read(buf, len - start, off + start);
 	if (rcnt != len - start) {
 		pr_err("read zone %s failed\n", zone->name);
-		ret = (int)rcnt < 0 ? (int)rcnt : -EIO;
+		ret = rcnt < 0 ? rcnt : -EIO;
 		goto free_oldbuf;
 	}
 
@@ -552,7 +552,7 @@ static int psz_recover_zone(struct psz_context *cxt, struct pstore_zone *zone)
 	rcnt = info->read(buf + len - start, start, off);
 	if (rcnt != start) {
 		pr_err("read zone %s failed\n", zone->name);
-		ret = (int)rcnt < 0 ? (int)rcnt : -EIO;
+		ret = rcnt < 0 ? rcnt : -EIO;
 		goto free_oldbuf;
 	}
 
@@ -1081,7 +1081,6 @@ next_zone:
 		readop = psz_ftrace_read;
 		break;
 	case PSTORE_TYPE_CONSOLE:
-		fallthrough;
 	case PSTORE_TYPE_PMSG:
 		readop = psz_record_read;
 		break;
@@ -1299,6 +1298,10 @@ int register_pstore_zone(struct pstore_zone_info *info)
 	if (info->total_size < 4096) {
 		pr_warn("total_size must be >= 4096\n");
 		return -EINVAL;
+	}
+	if (info->total_size > SZ_128M) {
+		pr_warn("capping size to 128MiB\n");
+		info->total_size = SZ_128M;
 	}
 
 	if (!info->kmsg_size && !info->pmsg_size && !info->console_size &&

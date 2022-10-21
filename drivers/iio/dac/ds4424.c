@@ -171,7 +171,7 @@ static int ds4424_verify_chip(struct iio_dev *indio_dev)
 	return ret;
 }
 
-static int __maybe_unused ds4424_suspend(struct device *dev)
+static int ds4424_suspend(struct device *dev)
 {
 	struct i2c_client *client = to_i2c_client(dev);
 	struct iio_dev *indio_dev = i2c_get_clientdata(client);
@@ -189,7 +189,7 @@ static int __maybe_unused ds4424_suspend(struct device *dev)
 	return ret;
 }
 
-static int __maybe_unused ds4424_resume(struct device *dev)
+static int ds4424_resume(struct device *dev)
 {
 	struct i2c_client *client = to_i2c_client(dev);
 	struct iio_dev *indio_dev = i2c_get_clientdata(client);
@@ -206,7 +206,7 @@ static int __maybe_unused ds4424_resume(struct device *dev)
 	return ret;
 }
 
-static SIMPLE_DEV_PM_OPS(ds4424_pm_ops, ds4424_suspend, ds4424_resume);
+static DEFINE_SIMPLE_DEV_PM_OPS(ds4424_pm_ops, ds4424_suspend, ds4424_resume);
 
 static const struct iio_info ds4424_info = {
 	.read_raw = ds4424_read_raw,
@@ -230,16 +230,11 @@ static int ds4424_probe(struct i2c_client *client,
 	i2c_set_clientdata(client, indio_dev);
 	data->client = client;
 	indio_dev->name = id->name;
-	indio_dev->dev.of_node = client->dev.of_node;
-	indio_dev->dev.parent = &client->dev;
 
 	data->vcc_reg = devm_regulator_get(&client->dev, "vcc");
-	if (IS_ERR(data->vcc_reg)) {
-		dev_err(&client->dev,
-			"Failed to get vcc-supply regulator. err: %ld\n",
-				PTR_ERR(data->vcc_reg));
-		return PTR_ERR(data->vcc_reg);
-	}
+	if (IS_ERR(data->vcc_reg))
+		return dev_err_probe(&client->dev, PTR_ERR(data->vcc_reg),
+				     "Failed to get vcc-supply regulator.\n");
 
 	mutex_init(&data->lock);
 	ret = regulator_enable(data->vcc_reg);
@@ -317,7 +312,7 @@ static struct i2c_driver ds4424_driver = {
 	.driver = {
 		.name	= "ds4424",
 		.of_match_table = ds4424_of_match,
-		.pm     = &ds4424_pm_ops,
+		.pm     = pm_sleep_ptr(&ds4424_pm_ops),
 	},
 	.probe		= ds4424_probe,
 	.remove		= ds4424_remove,

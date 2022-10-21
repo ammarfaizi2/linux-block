@@ -6,19 +6,17 @@
  * Copyright 2009-2010 Analog Devices Inc.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/i2c.h>
 #include <linux/gpio/driver.h>
+#include <linux/i2c.h>
+#include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
-#include <linux/of_device.h>
+#include <linux/kernel.h>
+#include <linux/mod_devicetable.h>
+#include <linux/module.h>
+#include <linux/slab.h>
 
 #include <linux/platform_data/adp5588.h>
-
-#define DRV_NAME	"adp5588-gpio"
 
 /*
  * Early pre 4.0 Silicon required to delay readout by at least 25ms,
@@ -272,13 +270,24 @@ static irqreturn_t adp5588_irq_handler(int irq, void *devid)
 	return IRQ_HANDLED;
 }
 
+
+static int adp5588_irq_init_hw(struct gpio_chip *gc)
+{
+	struct adp5588_gpio *dev = gpiochip_get_data(gc);
+	/* Enable IRQs after registering chip */
+	adp5588_gpio_write(dev->client, CFG,
+			   ADP5588_AUTO_INC | ADP5588_INT_CFG | ADP5588_KE_IEN);
+
+	return 0;
+}
+
 static int adp5588_irq_setup(struct adp5588_gpio *dev)
 {
 	struct i2c_client *client = dev->client;
 	int ret;
 	struct adp5588_gpio_platform_data *pdata =
 			dev_get_platdata(&client->dev);
-	int irq_base = pdata ? pdata->irq_base : 0;
+	struct gpio_irq_chip *girq;
 
 	adp5588_gpio_write(client, CFG, ADP5588_AUTO_INC);
 	adp5588_gpio_write(client, INT_STAT, -1); /* status is W1C */
@@ -294,21 +303,19 @@ static int adp5588_irq_setup(struct adp5588_gpio *dev)
 			client->irq);
 		return ret;
 	}
-	ret = gpiochip_irqchip_add_nested(&dev->gpio_chip,
-					  &adp5588_irq_chip, irq_base,
-					  handle_simple_irq,
-					  IRQ_TYPE_NONE);
-	if (ret) {
-		dev_err(&client->dev,
-			"could not connect irqchip to gpiochip\n");
-		return ret;
-	}
-	gpiochip_set_nested_irqchip(&dev->gpio_chip,
-				    &adp5588_irq_chip,
-				    client->irq);
 
-	adp5588_gpio_write(client, CFG,
-		ADP5588_AUTO_INC | ADP5588_INT_CFG | ADP5588_KE_IEN);
+	/* This will be registered in the call to devm_gpiochip_add_data() */
+	girq = &dev->gpio_chip.irq;
+	girq->chip = &adp5588_irq_chip;
+	/* This will let us handle the parent IRQ in the driver */
+	girq->parent_handler = NULL;
+	girq->num_parents = 0;
+	girq->parents = NULL;
+	girq->first = pdata ? pdata->irq_base : 0;
+	girq->default_type = IRQ_TYPE_NONE;
+	girq->handler = handle_simple_irq;
+	girq->init_hw = adp5588_irq_init_hw;
+	girq->threaded = true;
 
 	return 0;
 }
@@ -397,12 +404,6 @@ static int adp5588_gpio_probe(struct i2c_client *client)
 	if (ret)
 		return ret;
 
-	if (pdata && pdata->setup) {
-		ret = pdata->setup(client, gc->base, gc->ngpio, pdata->context);
-		if (ret < 0)
-			dev_warn(&client->dev, "setup failed, %d\n", ret);
-	}
-
 	i2c_set_clientdata(client, dev);
 
 	return 0;
@@ -410,20 +411,7 @@ static int adp5588_gpio_probe(struct i2c_client *client)
 
 static int adp5588_gpio_remove(struct i2c_client *client)
 {
-	struct adp5588_gpio_platform_data *pdata =
-			dev_get_platdata(&client->dev);
 	struct adp5588_gpio *dev = i2c_get_clientdata(client);
-	int ret;
-
-	if (pdata && pdata->teardown) {
-		ret = pdata->teardown(client,
-				      dev->gpio_chip.base, dev->gpio_chip.ngpio,
-				      pdata->context);
-		if (ret < 0) {
-			dev_err(&client->dev, "teardown failed %d\n", ret);
-			return ret;
-		}
-	}
 
 	if (dev->client->irq)
 		free_irq(dev->client->irq, dev);
@@ -432,23 +420,21 @@ static int adp5588_gpio_remove(struct i2c_client *client)
 }
 
 static const struct i2c_device_id adp5588_gpio_id[] = {
-	{DRV_NAME, 0},
+	{ "adp5588-gpio" },
 	{}
 };
 MODULE_DEVICE_TABLE(i2c, adp5588_gpio_id);
 
-#ifdef CONFIG_OF
 static const struct of_device_id adp5588_gpio_of_id[] = {
-	{ .compatible = "adi," DRV_NAME, },
-	{},
+	{ .compatible = "adi,adp5588-gpio" },
+	{}
 };
 MODULE_DEVICE_TABLE(of, adp5588_gpio_of_id);
-#endif
 
 static struct i2c_driver adp5588_gpio_driver = {
 	.driver = {
-		.name = DRV_NAME,
-		.of_match_table = of_match_ptr(adp5588_gpio_of_id),
+		.name = "adp5588-gpio",
+		.of_match_table = adp5588_gpio_of_id,
 	},
 	.probe_new = adp5588_gpio_probe,
 	.remove = adp5588_gpio_remove,

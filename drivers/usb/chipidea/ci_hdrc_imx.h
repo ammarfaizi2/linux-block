@@ -21,10 +21,13 @@ struct imx_usbmisc_data {
 	unsigned int pwr_pol:1; /* power polarity */
 	unsigned int evdo:1; /* set external vbus divider option */
 	unsigned int ulpi:1; /* connected to an ULPI phy */
-	unsigned int hsic:1; /* HSIC controlller */
+	unsigned int hsic:1; /* HSIC controller */
 	unsigned int ext_id:1; /* ID from exteranl event */
 	unsigned int ext_vbus:1; /* Vbus from exteranl event */
 	struct usb_phy *usb_phy;
+	enum usb_dr_mode available_role; /* runtime usb dr mode */
+	int emp_curr_control;
+	int dc_vol_level_adjust;
 };
 
 int imx_usbmisc_init(struct imx_usbmisc_data *data);

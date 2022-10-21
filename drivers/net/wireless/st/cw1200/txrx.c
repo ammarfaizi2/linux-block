@@ -650,7 +650,7 @@ cw1200_tx_h_rate_policy(struct cw1200_common *priv,
 	wsm->flags |= t->txpriv.rate_id << 4;
 
 	t->rate = cw1200_get_tx_rate(priv,
-		&t->tx_info->control.rates[0]),
+		&t->tx_info->control.rates[0]);
 	wsm->max_tx_rate = t->rate->hw_value;
 	if (t->rate->flags & IEEE80211_TX_RC_MCS) {
 		if (cw1200_ht_greenfield(&priv->ht_info))
@@ -1183,8 +1183,8 @@ void cw1200_rx_cb(struct cw1200_common *priv,
 
 		/* Disable beacon filter once we're associated... */
 		if (priv->disable_beacon_filter &&
-		    (priv->vif->bss_conf.assoc ||
-		     priv->vif->bss_conf.ibss_joined)) {
+		    (priv->vif->cfg.assoc ||
+		     priv->vif->cfg.ibss_joined)) {
 			priv->disable_beacon_filter = false;
 			queue_work(priv->workqueue,
 				   &priv->update_filtering_work);

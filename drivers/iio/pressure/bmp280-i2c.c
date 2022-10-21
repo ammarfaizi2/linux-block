@@ -58,7 +58,7 @@ static struct i2c_driver bmp280_i2c_driver = {
 	.driver = {
 		.name	= "bmp280",
 		.of_match_table = bmp280_of_i2c_match,
-		.pm = &bmp280_dev_pm_ops,
+		.pm = pm_ptr(&bmp280_dev_pm_ops),
 	},
 	.probe		= bmp280_i2c_probe,
 	.id_table	= bmp280_i2c_id,
@@ -68,3 +68,4 @@ module_i2c_driver(bmp280_i2c_driver);
 MODULE_AUTHOR("Vlad Dogaru <vlad.dogaru@intel.com>");
 MODULE_DESCRIPTION("Driver for Bosch Sensortec BMP180/BMP280 pressure and temperature sensor");
 MODULE_LICENSE("GPL v2");
+MODULE_IMPORT_NS(IIO_BMP280);

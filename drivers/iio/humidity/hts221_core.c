@@ -547,6 +547,35 @@ static const struct iio_info hts221_info = {
 
 static const unsigned long hts221_scan_masks[] = {0x3, 0x0};
 
+static int hts221_init_regulators(struct device *dev)
+{
+	struct iio_dev *iio_dev = dev_get_drvdata(dev);
+	struct hts221_hw *hw = iio_priv(iio_dev);
+	int err;
+
+	hw->vdd = devm_regulator_get(dev, "vdd");
+	if (IS_ERR(hw->vdd))
+		return dev_err_probe(dev, PTR_ERR(hw->vdd),
+				     "failed to get vdd regulator\n");
+
+	err = regulator_enable(hw->vdd);
+	if (err) {
+		dev_err(dev, "failed to enable vdd regulator: %d\n", err);
+		return err;
+	}
+
+	msleep(50);
+
+	return 0;
+}
+
+static void hts221_chip_uninit(void *data)
+{
+	struct hts221_hw *hw = data;
+
+	regulator_disable(hw->vdd);
+}
+
 int hts221_probe(struct device *dev, int irq, const char *name,
 		 struct regmap *regmap)
 {
@@ -567,12 +596,19 @@ int hts221_probe(struct device *dev, int irq, const char *name,
 	hw->irq = irq;
 	hw->regmap = regmap;
 
+	err = hts221_init_regulators(dev);
+	if (err)
+		return err;
+
+	err = devm_add_action_or_reset(dev, hts221_chip_uninit, hw);
+	if (err)
+		return err;
+
 	err = hts221_check_whoami(hw);
 	if (err < 0)
 		return err;
 
 	iio_dev->modes = INDIO_DIRECT_MODE;
-	iio_dev->dev.parent = hw->dev;
 	iio_dev->available_scan_masks = hts221_scan_masks;
 	iio_dev->channels = hts221_channels;
 	iio_dev->num_channels = ARRAY_SIZE(hts221_channels);
@@ -621,20 +657,20 @@ int hts221_probe(struct device *dev, int irq, const char *name,
 	}
 
 	if (hw->irq > 0) {
-		err = hts221_allocate_buffers(hw);
+		err = hts221_allocate_buffers(iio_dev);
 		if (err < 0)
 			return err;
 
-		err = hts221_allocate_trigger(hw);
+		err = hts221_allocate_trigger(iio_dev);
 		if (err)
 			return err;
 	}
 
 	return devm_iio_device_register(hw->dev, iio_dev);
 }
-EXPORT_SYMBOL(hts221_probe);
+EXPORT_SYMBOL_NS(hts221_probe, IIO_HTS221);
 
-static int __maybe_unused hts221_suspend(struct device *dev)
+static int hts221_suspend(struct device *dev)
 {
 	struct iio_dev *iio_dev = dev_get_drvdata(dev);
 	struct hts221_hw *hw = iio_priv(iio_dev);
@@ -644,7 +680,7 @@ static int __maybe_unused hts221_suspend(struct device *dev)
 				  FIELD_PREP(HTS221_ENABLE_MASK, false));
 }
 
-static int __maybe_unused hts221_resume(struct device *dev)
+static int hts221_resume(struct device *dev)
 {
 	struct iio_dev *iio_dev = dev_get_drvdata(dev);
 	struct hts221_hw *hw = iio_priv(iio_dev);
@@ -658,10 +694,8 @@ static int __maybe_unused hts221_resume(struct device *dev)
 	return err;
 }
 
-const struct dev_pm_ops hts221_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(hts221_suspend, hts221_resume)
-};
-EXPORT_SYMBOL(hts221_pm_ops);
+EXPORT_NS_SIMPLE_DEV_PM_OPS(hts221_pm_ops, hts221_suspend, hts221_resume,
+			    IIO_HTS221);
 
 MODULE_AUTHOR("Lorenzo Bianconi <lorenzo.bianconi@st.com>");
 MODULE_DESCRIPTION("STMicroelectronics hts221 sensor driver");

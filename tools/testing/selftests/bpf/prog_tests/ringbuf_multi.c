@@ -41,12 +41,40 @@ static int process_sample(void *ctx, void *data, size_t len)
 void test_ringbuf_multi(void)
 {
 	struct test_ringbuf_multi *skel;
-	struct ring_buffer *ringbuf;
+	struct ring_buffer *ringbuf = NULL;
 	int err;
+	int page_size = getpagesize();
+	int proto_fd = -1;
 
-	skel = test_ringbuf_multi__open_and_load();
-	if (CHECK(!skel, "skel_open_load", "skeleton open&load failed\n"))
+	skel = test_ringbuf_multi__open();
+	if (CHECK(!skel, "skel_open", "skeleton open failed\n"))
 		return;
+
+	/* validate ringbuf size adjustment logic */
+	ASSERT_EQ(bpf_map__max_entries(skel->maps.ringbuf1), page_size, "rb1_size_before");
+	ASSERT_OK(bpf_map__set_max_entries(skel->maps.ringbuf1, page_size + 1), "rb1_resize");
+	ASSERT_EQ(bpf_map__max_entries(skel->maps.ringbuf1), 2 * page_size, "rb1_size_after");
+	ASSERT_OK(bpf_map__set_max_entries(skel->maps.ringbuf1, page_size), "rb1_reset");
+	ASSERT_EQ(bpf_map__max_entries(skel->maps.ringbuf1), page_size, "rb1_size_final");
+
+	proto_fd = bpf_map_create(BPF_MAP_TYPE_RINGBUF, NULL, 0, 0, page_size, NULL);
+	if (CHECK(proto_fd < 0, "bpf_map_create", "bpf_map_create failed\n"))
+		goto cleanup;
+
+	err = bpf_map__set_inner_map_fd(skel->maps.ringbuf_hash, proto_fd);
+	if (CHECK(err != 0, "bpf_map__set_inner_map_fd", "bpf_map__set_inner_map_fd failed\n"))
+		goto cleanup;
+
+	err = test_ringbuf_multi__load(skel);
+	if (CHECK(err != 0, "skel_load", "skeleton load failed\n"))
+		goto cleanup;
+
+	close(proto_fd);
+	proto_fd = -1;
+
+	/* make sure we can't resize ringbuf after object load */
+	if (!ASSERT_ERR(bpf_map__set_max_entries(skel->maps.ringbuf1, 3 * page_size), "rb1_resize_after_load"))
+		goto cleanup;
 
 	/* only trigger BPF program for current process */
 	skel->bss->pid = getpid();
@@ -81,7 +109,7 @@ void test_ringbuf_multi(void)
 
 	/* poll for samples, should get 2 ringbufs back */
 	err = ring_buffer__poll(ringbuf, -1);
-	if (CHECK(err != 4, "poll_res", "expected 4 records, got %d\n", err))
+	if (CHECK(err != 2, "poll_res", "expected 2 records, got %d\n", err))
 		goto cleanup;
 
 	/* expect extra polling to return nothing */
@@ -97,6 +125,8 @@ void test_ringbuf_multi(void)
 	      2L, skel->bss->total);
 
 cleanup:
+	if (proto_fd >= 0)
+		close(proto_fd);
 	ring_buffer__free(ringbuf);
 	test_ringbuf_multi__destroy(skel);
 }

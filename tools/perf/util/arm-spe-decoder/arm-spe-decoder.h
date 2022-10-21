@@ -13,23 +13,6 @@
 
 #include "arm-spe-pkt-decoder.h"
 
-enum arm_spe_events {
-	EV_EXCEPTION_GEN	= 0,
-	EV_RETIRED		= 1,
-	EV_L1D_ACCESS		= 2,
-	EV_L1D_REFILL		= 3,
-	EV_TLB_ACCESS		= 4,
-	EV_TLB_WALK		= 5,
-	EV_NOT_TAKEN		= 6,
-	EV_MISPRED		= 7,
-	EV_LLC_ACCESS		= 8,
-	EV_LLC_MISS		= 9,
-	EV_REMOTE_ACCESS	= 10,
-	EV_ALIGNMENT		= 11,
-	EV_PARTIAL_PREDICATE	= 17,
-	EV_EMPTY_PREDICATE	= 18,
-};
-
 enum arm_spe_sample_type {
 	ARM_SPE_L1D_ACCESS	= 1 << 0,
 	ARM_SPE_L1D_MISS	= 1 << 1,
@@ -41,12 +24,34 @@ enum arm_spe_sample_type {
 	ARM_SPE_REMOTE_ACCESS	= 1 << 7,
 };
 
+enum arm_spe_op_type {
+	ARM_SPE_LD		= 1 << 0,
+	ARM_SPE_ST		= 1 << 1,
+};
+
+enum arm_spe_neoverse_data_source {
+	ARM_SPE_NV_L1D		 = 0x0,
+	ARM_SPE_NV_L2		 = 0x8,
+	ARM_SPE_NV_PEER_CORE	 = 0x9,
+	ARM_SPE_NV_LOCAL_CLUSTER = 0xa,
+	ARM_SPE_NV_SYS_CACHE	 = 0xb,
+	ARM_SPE_NV_PEER_CLUSTER	 = 0xc,
+	ARM_SPE_NV_REMOTE	 = 0xd,
+	ARM_SPE_NV_DRAM		 = 0xe,
+};
+
 struct arm_spe_record {
 	enum arm_spe_sample_type type;
 	int err;
+	u32 op;
+	u32 latency;
 	u64 from_ip;
 	u64 to_ip;
 	u64 timestamp;
+	u64 virt_addr;
+	u64 phys_addr;
+	u64 context_id;
+	u16 source;
 };
 
 struct arm_spe_insn;

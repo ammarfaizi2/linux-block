@@ -49,6 +49,7 @@ enum ci_hw_regs {
 	OP_USBCMD,
 	OP_USBSTS,
 	OP_USBINTR,
+	OP_FRINDEX,
 	OP_DEVICEADDR,
 	OP_ENDPTLISTADDR,
 	OP_TTCTRL,
@@ -195,7 +196,6 @@ struct hw_bank {
  * @phy: pointer to PHY, if any
  * @usb_phy: pointer to USB PHY, if any and if using the USB PHY framework
  * @hcd: pointer to usb_hcd for ehci host driver
- * @debugfs: root dentry for this controller in debugfs
  * @id_event: indicates there is an id event, and handled at ci_otg_work
  * @b_sess_valid_event: indicates there is a vbus event, and handled
  * at ci_otg_work
@@ -249,7 +249,6 @@ struct ci_hdrc {
 	/* old usb_phy interface */
 	struct usb_phy			*usb_phy;
 	struct usb_hcd			*hcd;
-	struct dentry			*debugfs;
 	bool				id_event;
 	bool				b_sess_valid_event;
 	bool				imx28_write_fix;

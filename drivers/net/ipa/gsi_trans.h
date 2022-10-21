@@ -13,6 +13,7 @@
 
 #include "ipa_cmd.h"
 
+struct page;
 struct scatterlist;
 struct device;
 struct sk_buff;
@@ -20,6 +21,9 @@ struct sk_buff;
 struct gsi;
 struct gsi_trans;
 struct gsi_trans_pool;
+
+/* Maximum number of TREs in an IPA immediate command transaction */
+#define IPA_COMMAND_TRANS_TRE_MAX	8
 
 /**
  * struct gsi_trans - a GSI transaction
@@ -29,20 +33,21 @@ struct gsi_trans_pool;
  * @gsi:	GSI pointer
  * @channel_id: Channel number transaction is associated with
  * @cancelled:	If set by the core code, transaction was cancelled
- * @tre_count:	Number of TREs reserved for this transaction
- * @used:	Number of TREs *used* (could be less than tre_count)
- * @len:	Total # of transfer bytes represented in sgl[] (set by core)
+ * @rsvd_count:	Number of TREs reserved for this transaction
+ * @used_count:	Number of TREs *used* (could be less than rsvd_count)
+ * @len:	Number of bytes sent or received by the transaction
  * @data:	Preserved but not touched by the core transaction code
+ * @cmd_opcode:	Array of command opcodes (command channel only)
  * @sgl:	An array of scatter/gather entries managed by core code
- * @info:	Array of command information structures (command channel)
  * @direction:	DMA transfer direction (DMA_NONE for commands)
  * @refcount:	Reference count used for destruction
  * @completion:	Completed when the transaction completes
  * @byte_count:	TX channel byte count recorded when transaction committed
  * @trans_count: Channel transaction count when committed (for BQL accounting)
  *
- * The size used for some fields in this structure were chosen to ensure
- * the full structure size is no larger than 128 bytes.
+ * The @len field is set when the transaction is committed.  For RX
+ * transactions it is updated later to reflect the actual number of bytes
+ * received.
  */
 struct gsi_trans {
 	struct list_head links;		/* gsi_channel lists */
@@ -52,13 +57,15 @@ struct gsi_trans {
 
 	bool cancelled;			/* true if transaction was cancelled */
 
-	u8 tre_count;			/* # TREs requested */
-	u8 used;			/* # entries used in sgl[] */
+	u8 rsvd_count;			/* # TREs requested */
+	u8 used_count;			/* # entries used in sgl[] */
 	u32 len;			/* total # bytes across sgl[] */
 
-	void *data;
+	union {
+		void *data;
+		u8 cmd_opcode[IPA_COMMAND_TRANS_TRE_MAX];
+	};
 	struct scatterlist *sgl;
-	struct ipa_cmd_info *info;	/* array of entries, or null */
 	enum dma_data_direction direction;
 
 	refcount_t refcount;
@@ -70,12 +77,12 @@ struct gsi_trans {
 
 /**
  * gsi_trans_pool_init() - Initialize a pool of structures for transactions
- * @gsi:	GSI pointer
+ * @pool:	GSI transaction poll pointer
  * @size:	Size of elements in the pool
  * @count:	Minimum number of elements in the pool
  * @max_alloc:	Maximum number of elements allocated at a time from pool
  *
- * @Return:	0 if successful, or a negative error code
+ * Return:	0 if successful, or a negative error code
  */
 int gsi_trans_pool_init(struct gsi_trans_pool *pool, size_t size, u32 count,
 			u32 max_alloc);
@@ -85,7 +92,7 @@ int gsi_trans_pool_init(struct gsi_trans_pool *pool, size_t size, u32 count,
  * @pool:	Pool pointer
  * @count:	Number of elements to allocate from the pool
  *
- * @Return:	Virtual address of element(s) allocated from the pool
+ * Return:	Virtual address of element(s) allocated from the pool
  */
 void *gsi_trans_pool_alloc(struct gsi_trans_pool *pool, u32 count);
 
@@ -103,7 +110,7 @@ void gsi_trans_pool_exit(struct gsi_trans_pool *pool);
  * @count:	Minimum number of elements in the pool
  * @max_alloc:	Maximum number of elements allocated at a time from pool
  *
- * @Return:	0 if successful, or a negative error code
+ * Return:	0 if successful, or a negative error code
  *
  * Structures in this pool reside in DMA-coherent memory.
  */
@@ -115,17 +122,28 @@ int gsi_trans_pool_init_dma(struct device *dev, struct gsi_trans_pool *pool,
  * @pool:	DMA pool pointer
  * @addr:	DMA address "handle" associated with the allocation
  *
- * @Return:	Virtual address of element allocated from the pool
+ * Return:	Virtual address of element allocated from the pool
  *
  * Only one element at a time may be allocated from a DMA pool.
  */
 void *gsi_trans_pool_alloc_dma(struct gsi_trans_pool *pool, dma_addr_t *addr);
 
 /**
- * gsi_trans_pool_exit() - Inverse of gsi_trans_pool_init()
+ * gsi_trans_pool_exit_dma() - Inverse of gsi_trans_pool_init_dma()
+ * @dev:	Device used for DMA
  * @pool:	Pool pointer
  */
 void gsi_trans_pool_exit_dma(struct device *dev, struct gsi_trans_pool *pool);
+
+/**
+ * gsi_channel_trans_idle() - Return whether no transactions are allocated
+ * @gsi:	GSI pointer
+ * @channel_id:	Channel the transaction is associated with
+ *
+ * Return:	True if no transactions are allocated, false otherwise
+ *
+ */
+bool gsi_channel_trans_idle(struct gsi *gsi, u32 channel_id);
 
 /**
  * gsi_channel_trans_alloc() - Allocate a GSI transaction on a channel
@@ -134,7 +152,7 @@ void gsi_trans_pool_exit_dma(struct device *dev, struct gsi_trans_pool *pool);
  * @tre_count:	Number of elements in the transaction
  * @direction:	DMA direction for entire SGL (or DMA_NONE)
  *
- * @Return:	A GSI transaction structure, or a null pointer if all
+ * Return:	A GSI transaction structure, or a null pointer if all
  *		available transactions are in use
  */
 struct gsi_trans *gsi_channel_trans_alloc(struct gsi *gsi, u32 channel_id,
@@ -153,12 +171,10 @@ void gsi_trans_free(struct gsi_trans *trans);
  * @buf:	Buffer pointer for command payload
  * @size:	Number of bytes in buffer
  * @addr:	DMA address for payload
- * @direction:	Direction of DMA transfer (or DMA_NONE if none required)
  * @opcode:	IPA immediate command opcode
  */
 void gsi_trans_cmd_add(struct gsi_trans *trans, void *buf, u32 size,
-		       dma_addr_t addr, enum dma_data_direction direction,
-		       enum ipa_cmd_opcode opcode);
+		       dma_addr_t addr, enum ipa_cmd_opcode opcode);
 
 /**
  * gsi_trans_page_add() - Add a page transfer to a transaction
@@ -175,7 +191,7 @@ int gsi_trans_page_add(struct gsi_trans *trans, struct page *page, u32 size,
  * @trans:	Transaction
  * @skb:	Socket buffer for transfer (outbound)
  *
- * @Return:	0, or -EMSGSIZE if socket data won't fit in transaction.
+ * Return:	0, or -EMSGSIZE if socket data won't fit in transaction.
  */
 int gsi_trans_skb_add(struct gsi_trans *trans, struct sk_buff *skb);
 
@@ -192,15 +208,6 @@ void gsi_trans_commit(struct gsi_trans *trans, bool ring_db);
  * @trans:	Transaction to commit
  */
 void gsi_trans_commit_wait(struct gsi_trans *trans);
-
-/**
- * gsi_trans_commit_wait_timeout() - Commit a GSI transaction and wait for
- *				     it to complete, with timeout
- * @trans:	Transaction to commit
- * @timeout:	Timeout period (in milliseconds)
- */
-int gsi_trans_commit_wait_timeout(struct gsi_trans *trans,
-				  unsigned long timeout);
 
 /**
  * gsi_trans_read_byte() - Issue a single byte read TRE on a channel

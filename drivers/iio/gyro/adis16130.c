@@ -41,7 +41,7 @@
 struct adis16130_state {
 	struct spi_device		*us;
 	struct mutex			buf_lock;
-	u8				buf[4] ____cacheline_aligned;
+	u8				buf[4] __aligned(IIO_DMA_MINALIGN);
 };
 
 static int adis16130_spi_read(struct iio_dev *indio_dev, u8 reg_addr, u32 *val)
@@ -155,7 +155,6 @@ static int adis16130_probe(struct spi_device *spi)
 	indio_dev->name = spi->dev.driver->name;
 	indio_dev->channels = adis16130_channels;
 	indio_dev->num_channels = ARRAY_SIZE(adis16130_channels);
-	indio_dev->dev.parent = &spi->dev;
 	indio_dev->info = &adis16130_info;
 	indio_dev->modes = INDIO_DIRECT_MODE;
 

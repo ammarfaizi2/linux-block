@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-/* Copyright (c) 2016-2017 Hisilicon Limited. */
+/* Copyright (c) 2016-2017 HiSilicon Limited. */
 #include <linux/crypto.h>
 #include <linux/dma-mapping.h>
 #include <linux/dmapool.h>
@@ -449,7 +449,7 @@ static void sec_skcipher_alg_callback(struct sec_bd_info *sec_resp,
 		 */
 	}
 
-	mutex_lock(&ctx->queue->queuelock);
+	spin_lock_bh(&ctx->queue->queuelock);
 	/* Put the IV in place for chained cases */
 	switch (ctx->cipher_alg) {
 	case SEC_C_AES_CBC_128:
@@ -509,7 +509,7 @@ static void sec_skcipher_alg_callback(struct sec_bd_info *sec_resp,
 			list_del(&backlog_req->backlog_head);
 		}
 	}
-	mutex_unlock(&ctx->queue->queuelock);
+	spin_unlock_bh(&ctx->queue->queuelock);
 
 	mutex_lock(&sec_req->lock);
 	list_del(&sec_req_el->head);
@@ -798,7 +798,7 @@ static int sec_alg_skcipher_crypto(struct skcipher_request *skreq,
 	 */
 
 	/* Grab a big lock for a long time to avoid concurrency issues */
-	mutex_lock(&queue->queuelock);
+	spin_lock_bh(&queue->queuelock);
 
 	/*
 	 * Can go on to queue if we have space in either:
@@ -814,15 +814,15 @@ static int sec_alg_skcipher_crypto(struct skcipher_request *skreq,
 		ret = -EBUSY;
 		if ((skreq->base.flags & CRYPTO_TFM_REQ_MAY_BACKLOG)) {
 			list_add_tail(&sec_req->backlog_head, &ctx->backlog);
-			mutex_unlock(&queue->queuelock);
+			spin_unlock_bh(&queue->queuelock);
 			goto out;
 		}
 
-		mutex_unlock(&queue->queuelock);
+		spin_unlock_bh(&queue->queuelock);
 		goto err_free_elements;
 	}
 	ret = sec_send_request(sec_req, queue);
-	mutex_unlock(&queue->queuelock);
+	spin_unlock_bh(&queue->queuelock);
 	if (ret)
 		goto err_free_elements;
 
@@ -881,7 +881,7 @@ static int sec_alg_skcipher_init(struct crypto_skcipher *tfm)
 	if (IS_ERR(ctx->queue))
 		return PTR_ERR(ctx->queue);
 
-	mutex_init(&ctx->queue->queuelock);
+	spin_lock_init(&ctx->queue->queuelock);
 	ctx->queue->havesoftqueue = false;
 
 	return 0;
@@ -934,7 +934,8 @@ static struct skcipher_alg sec_algs[] = {
 			.cra_name = "ecb(aes)",
 			.cra_driver_name = "hisi_sec_aes_ecb",
 			.cra_priority = 4001,
-			.cra_flags = CRYPTO_ALG_ASYNC,
+			.cra_flags = CRYPTO_ALG_ASYNC |
+				     CRYPTO_ALG_ALLOCATES_MEMORY,
 			.cra_blocksize = AES_BLOCK_SIZE,
 			.cra_ctxsize = sizeof(struct sec_alg_tfm_ctx),
 			.cra_alignmask = 0,
@@ -953,7 +954,8 @@ static struct skcipher_alg sec_algs[] = {
 			.cra_name = "cbc(aes)",
 			.cra_driver_name = "hisi_sec_aes_cbc",
 			.cra_priority = 4001,
-			.cra_flags = CRYPTO_ALG_ASYNC,
+			.cra_flags = CRYPTO_ALG_ASYNC |
+				     CRYPTO_ALG_ALLOCATES_MEMORY,
 			.cra_blocksize = AES_BLOCK_SIZE,
 			.cra_ctxsize = sizeof(struct sec_alg_tfm_ctx),
 			.cra_alignmask = 0,
@@ -972,7 +974,8 @@ static struct skcipher_alg sec_algs[] = {
 			.cra_name = "ctr(aes)",
 			.cra_driver_name = "hisi_sec_aes_ctr",
 			.cra_priority = 4001,
-			.cra_flags = CRYPTO_ALG_ASYNC,
+			.cra_flags = CRYPTO_ALG_ASYNC |
+				     CRYPTO_ALG_ALLOCATES_MEMORY,
 			.cra_blocksize = AES_BLOCK_SIZE,
 			.cra_ctxsize = sizeof(struct sec_alg_tfm_ctx),
 			.cra_alignmask = 0,
@@ -991,7 +994,8 @@ static struct skcipher_alg sec_algs[] = {
 			.cra_name = "xts(aes)",
 			.cra_driver_name = "hisi_sec_aes_xts",
 			.cra_priority = 4001,
-			.cra_flags = CRYPTO_ALG_ASYNC,
+			.cra_flags = CRYPTO_ALG_ASYNC |
+				     CRYPTO_ALG_ALLOCATES_MEMORY,
 			.cra_blocksize = AES_BLOCK_SIZE,
 			.cra_ctxsize = sizeof(struct sec_alg_tfm_ctx),
 			.cra_alignmask = 0,
@@ -1011,7 +1015,8 @@ static struct skcipher_alg sec_algs[] = {
 			.cra_name = "ecb(des)",
 			.cra_driver_name = "hisi_sec_des_ecb",
 			.cra_priority = 4001,
-			.cra_flags = CRYPTO_ALG_ASYNC,
+			.cra_flags = CRYPTO_ALG_ASYNC |
+				     CRYPTO_ALG_ALLOCATES_MEMORY,
 			.cra_blocksize = DES_BLOCK_SIZE,
 			.cra_ctxsize = sizeof(struct sec_alg_tfm_ctx),
 			.cra_alignmask = 0,
@@ -1030,7 +1035,8 @@ static struct skcipher_alg sec_algs[] = {
 			.cra_name = "cbc(des)",
 			.cra_driver_name = "hisi_sec_des_cbc",
 			.cra_priority = 4001,
-			.cra_flags = CRYPTO_ALG_ASYNC,
+			.cra_flags = CRYPTO_ALG_ASYNC |
+				     CRYPTO_ALG_ALLOCATES_MEMORY,
 			.cra_blocksize = DES_BLOCK_SIZE,
 			.cra_ctxsize = sizeof(struct sec_alg_tfm_ctx),
 			.cra_alignmask = 0,
@@ -1049,7 +1055,8 @@ static struct skcipher_alg sec_algs[] = {
 			.cra_name = "cbc(des3_ede)",
 			.cra_driver_name = "hisi_sec_3des_cbc",
 			.cra_priority = 4001,
-			.cra_flags = CRYPTO_ALG_ASYNC,
+			.cra_flags = CRYPTO_ALG_ASYNC |
+				     CRYPTO_ALG_ALLOCATES_MEMORY,
 			.cra_blocksize = DES3_EDE_BLOCK_SIZE,
 			.cra_ctxsize = sizeof(struct sec_alg_tfm_ctx),
 			.cra_alignmask = 0,
@@ -1068,7 +1075,8 @@ static struct skcipher_alg sec_algs[] = {
 			.cra_name = "ecb(des3_ede)",
 			.cra_driver_name = "hisi_sec_3des_ecb",
 			.cra_priority = 4001,
-			.cra_flags = CRYPTO_ALG_ASYNC,
+			.cra_flags = CRYPTO_ALG_ASYNC |
+				     CRYPTO_ALG_ALLOCATES_MEMORY,
 			.cra_blocksize = DES3_EDE_BLOCK_SIZE,
 			.cra_ctxsize = sizeof(struct sec_alg_tfm_ctx),
 			.cra_alignmask = 0,

@@ -21,7 +21,7 @@ EXPORT_SYMBOL_GPL(dmi_kobj);
 /*
  * DMI stands for "Desktop Management Interface".  It is part
  * of and an antecedent to, SMBIOS, which stands for System
- * Management BIOS.  See further: http://www.dmtf.org/standards
+ * Management BIOS.  See further: https://www.dmtf.org/standards
  */
 static const char dmi_empty_string[] = "";
 
@@ -166,6 +166,7 @@ static int __init dmi_checksum(const u8 *buf, u8 len)
 static const char *dmi_ident[DMI_STRING_MAX];
 static LIST_HEAD(dmi_devices);
 int dmi_available;
+EXPORT_SYMBOL_GPL(dmi_available);
 
 /*
  *	Save a DMI string
@@ -629,7 +630,7 @@ static int __init dmi_smbios3_present(const u8 *buf)
 {
 	if (memcmp(buf, "_SM3_", 5) == 0 &&
 	    buf[6] < 32 && dmi_checksum(buf, buf[6])) {
-		dmi_ver = get_unaligned_be32(buf + 6) & 0xFFFFFF;
+		dmi_ver = get_unaligned_be24(buf + 7);
 		dmi_num = 0;			/* No longer specified */
 		dmi_len = get_unaligned_le32(buf + 12);
 		dmi_base = get_unaligned_le64(buf + 16);

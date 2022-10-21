@@ -10,7 +10,7 @@
 
 #include "net_driver.h"
 #include "efx.h"
-#include "nic.h"
+#include "nic_common.h"
 #include "tx_common.h"
 
 static unsigned int efx_tx_cb_page_count(struct efx_tx_queue *tx_queue)
@@ -47,11 +47,12 @@ int efx_probe_tx_queue(struct efx_tx_queue *tx_queue)
 		goto fail1;
 	}
 
-	/* Allocate hardware ring */
+	/* Allocate hardware ring, determine TXQ type */
 	rc = efx_nic_probe_tx(tx_queue);
 	if (rc)
 		goto fail2;
 
+	tx_queue->channel->tx_queue_by_type[tx_queue->type] = tx_queue;
 	return 0;
 
 fail2:
@@ -71,24 +72,21 @@ void efx_init_tx_queue(struct efx_tx_queue *tx_queue)
 		  "initialising TX queue %d\n", tx_queue->queue);
 
 	tx_queue->insert_count = 0;
+	tx_queue->notify_count = 0;
 	tx_queue->write_count = 0;
 	tx_queue->packet_write_count = 0;
 	tx_queue->old_write_count = 0;
 	tx_queue->read_count = 0;
 	tx_queue->old_read_count = 0;
 	tx_queue->empty_read_count = 0 | EFX_EMPTY_COUNT_VALID;
-	tx_queue->xmit_more_available = false;
+	tx_queue->xmit_pending = false;
 	tx_queue->timestamping = (efx_ptp_use_mac_tx_timestamps(efx) &&
 				  tx_queue->channel == efx_ptp_channel(efx));
 	tx_queue->completed_timestamp_major = 0;
 	tx_queue->completed_timestamp_minor = 0;
 
 	tx_queue->xdp_tx = efx_channel_is_xdp_tx(tx_queue->channel);
-
-	/* Set up default function pointers. These may get replaced by
-	 * efx_nic_init_tx() based off NIC/queue capabilities.
-	 */
-	tx_queue->handle_tso = efx_enqueue_skb_tso;
+	tx_queue->tso_version = 0;
 
 	/* Set up TX descriptor ring */
 	efx_nic_init_tx(tx_queue);
@@ -103,19 +101,23 @@ void efx_fini_tx_queue(struct efx_tx_queue *tx_queue)
 	netif_dbg(tx_queue->efx, drv, tx_queue->efx->net_dev,
 		  "shutting down TX queue %d\n", tx_queue->queue);
 
+	tx_queue->initialised = false;
+
 	if (!tx_queue->buffer)
 		return;
 
 	/* Free any buffers left in the ring */
 	while (tx_queue->read_count != tx_queue->write_count) {
 		unsigned int pkts_compl = 0, bytes_compl = 0;
+		unsigned int efv_pkts_compl = 0;
 
 		buffer = &tx_queue->buffer[tx_queue->read_count & tx_queue->ptr_mask];
-		efx_dequeue_buffer(tx_queue, buffer, &pkts_compl, &bytes_compl);
+		efx_dequeue_buffer(tx_queue, buffer, &pkts_compl, &bytes_compl,
+				   &efv_pkts_compl);
 
 		++tx_queue->read_count;
 	}
-	tx_queue->xmit_more_available = false;
+	tx_queue->xmit_pending = false;
 	netdev_tx_reset_queue(tx_queue->core_txq);
 }
 
@@ -140,12 +142,14 @@ void efx_remove_tx_queue(struct efx_tx_queue *tx_queue)
 
 	kfree(tx_queue->buffer);
 	tx_queue->buffer = NULL;
+	tx_queue->channel->tx_queue_by_type[tx_queue->type] = NULL;
 }
 
 void efx_dequeue_buffer(struct efx_tx_queue *tx_queue,
 			struct efx_tx_buffer *buffer,
 			unsigned int *pkts_compl,
-			unsigned int *bytes_compl)
+			unsigned int *bytes_compl,
+			unsigned int *efv_pkts_compl)
 {
 	if (buffer->unmap_len) {
 		struct device *dma_dev = &tx_queue->efx->pci_dev->dev;
@@ -163,9 +167,15 @@ void efx_dequeue_buffer(struct efx_tx_queue *tx_queue,
 	if (buffer->flags & EFX_TX_BUF_SKB) {
 		struct sk_buff *skb = (struct sk_buff *)buffer->skb;
 
-		EFX_WARN_ON_PARANOID(!pkts_compl || !bytes_compl);
-		(*pkts_compl)++;
-		(*bytes_compl) += skb->len;
+		if (unlikely(buffer->flags & EFX_TX_BUF_EFV)) {
+			EFX_WARN_ON_PARANOID(!efv_pkts_compl);
+			(*efv_pkts_compl)++;
+		} else {
+			EFX_WARN_ON_PARANOID(!pkts_compl || !bytes_compl);
+			(*pkts_compl)++;
+			(*bytes_compl) += skb->len;
+		}
+
 		if (tx_queue->timestamping &&
 		    (tx_queue->completed_timestamp_major ||
 		     tx_queue->completed_timestamp_minor)) {
@@ -198,7 +208,8 @@ void efx_dequeue_buffer(struct efx_tx_queue *tx_queue,
 static void efx_dequeue_buffers(struct efx_tx_queue *tx_queue,
 				unsigned int index,
 				unsigned int *pkts_compl,
-				unsigned int *bytes_compl)
+				unsigned int *bytes_compl,
+				unsigned int *efv_pkts_compl)
 {
 	struct efx_nic *efx = tx_queue->efx;
 	unsigned int stop_index, read_ptr;
@@ -217,7 +228,8 @@ static void efx_dequeue_buffers(struct efx_tx_queue *tx_queue,
 			return;
 		}
 
-		efx_dequeue_buffer(tx_queue, buffer, pkts_compl, bytes_compl);
+		efx_dequeue_buffer(tx_queue, buffer, pkts_compl, bytes_compl,
+				   efv_pkts_compl);
 
 		++tx_queue->read_count;
 		read_ptr = tx_queue->read_count & tx_queue->ptr_mask;
@@ -240,16 +252,17 @@ void efx_xmit_done_check_empty(struct efx_tx_queue *tx_queue)
 void efx_xmit_done(struct efx_tx_queue *tx_queue, unsigned int index)
 {
 	unsigned int fill_level, pkts_compl = 0, bytes_compl = 0;
+	unsigned int efv_pkts_compl = 0;
 	struct efx_nic *efx = tx_queue->efx;
-	struct efx_tx_queue *txq2;
 
 	EFX_WARN_ON_ONCE_PARANOID(index > tx_queue->ptr_mask);
 
-	efx_dequeue_buffers(tx_queue, index, &pkts_compl, &bytes_compl);
+	efx_dequeue_buffers(tx_queue, index, &pkts_compl, &bytes_compl,
+			    &efv_pkts_compl);
 	tx_queue->pkts_compl += pkts_compl;
 	tx_queue->bytes_compl += bytes_compl;
 
-	if (pkts_compl > 1)
+	if (pkts_compl + efv_pkts_compl > 1)
 		++tx_queue->merge_events;
 
 	/* See if we need to restart the netif queue.  This memory
@@ -260,9 +273,7 @@ void efx_xmit_done(struct efx_tx_queue *tx_queue, unsigned int index)
 	if (unlikely(netif_tx_queue_stopped(tx_queue->core_txq)) &&
 	    likely(efx->port_enabled) &&
 	    likely(netif_device_present(efx->net_dev))) {
-		txq2 = efx_tx_queue_partner(tx_queue);
-		fill_level = max(tx_queue->insert_count - tx_queue->read_count,
-				 txq2->insert_count - txq2->read_count);
+		fill_level = efx_channel_tx_fill_level(tx_queue->channel);
 		if (fill_level <= efx->txq_wake_thresh)
 			netif_tx_wake_queue(tx_queue->core_txq);
 	}
@@ -276,6 +287,7 @@ void efx_xmit_done(struct efx_tx_queue *tx_queue, unsigned int index)
 void efx_enqueue_unwind(struct efx_tx_queue *tx_queue,
 			unsigned int insert_count)
 {
+	unsigned int efv_pkts_compl = 0;
 	struct efx_tx_buffer *buffer;
 	unsigned int bytes_compl = 0;
 	unsigned int pkts_compl = 0;
@@ -284,7 +296,8 @@ void efx_enqueue_unwind(struct efx_tx_queue *tx_queue,
 	while (tx_queue->insert_count != insert_count) {
 		--tx_queue->insert_count;
 		buffer = __efx_tx_queue_get_insert_buffer(tx_queue);
-		efx_dequeue_buffer(tx_queue, buffer, &pkts_compl, &bytes_compl);
+		efx_dequeue_buffer(tx_queue, buffer, &pkts_compl, &bytes_compl,
+				   &efv_pkts_compl);
 	}
 }
 
@@ -298,7 +311,11 @@ struct efx_tx_buffer *efx_tx_map_chunk(struct efx_tx_queue *tx_queue,
 	/* Map the fragment taking account of NIC-dependent DMA limits. */
 	do {
 		buffer = efx_tx_queue_get_insert_buffer(tx_queue);
-		dma_len = nic_type->tx_limit_len(tx_queue, dma_addr, len);
+
+		if (nic_type->tx_limit_len)
+			dma_len = nic_type->tx_limit_len(tx_queue, dma_addr, len);
+		else
+			dma_len = len;
 
 		buffer->len = dma_len;
 		buffer->dma_addr = dma_addr;
@@ -309,6 +326,20 @@ struct efx_tx_buffer *efx_tx_map_chunk(struct efx_tx_queue *tx_queue,
 	} while (len);
 
 	return buffer;
+}
+
+int efx_tx_tso_header_length(struct sk_buff *skb)
+{
+	size_t header_len;
+
+	if (skb->encapsulation)
+		header_len = skb_inner_transport_header(skb) -
+				skb->data +
+				(inner_tcp_hdr(skb)->doff << 2u);
+	else
+		header_len = skb_transport_header(skb) - skb->data +
+				(tcp_hdr(skb)->doff << 2u);
+	return header_len;
 }
 
 /* Map all data from an SKB for DMA and create descriptors on the queue. */
@@ -339,8 +370,7 @@ int efx_tx_map_data(struct efx_tx_queue *tx_queue, struct sk_buff *skb,
 		/* For TSO we need to put the header in to a separate
 		 * descriptor. Map this separately if necessary.
 		 */
-		size_t header_len = skb_transport_header(skb) - skb->data +
-				(tcp_hdr(skb)->doff << 2u);
+		size_t header_len = efx_tx_tso_header_length(skb);
 
 		if (header_len != len) {
 			tx_queue->tso_long_headers++;
@@ -401,7 +431,35 @@ unsigned int efx_tx_max_skb_descs(struct efx_nic *efx)
 	/* Possibly more for PCIe page boundaries within input fragments */
 	if (PAGE_SIZE > EFX_PAGE_SIZE)
 		max_descs += max_t(unsigned int, MAX_SKB_FRAGS,
-				   DIV_ROUND_UP(GSO_MAX_SIZE, EFX_PAGE_SIZE));
+				   DIV_ROUND_UP(GSO_LEGACY_MAX_SIZE,
+						EFX_PAGE_SIZE));
 
 	return max_descs;
+}
+
+/*
+ * Fallback to software TSO.
+ *
+ * This is used if we are unable to send a GSO packet through hardware TSO.
+ * This should only ever happen due to per-queue restrictions - unsupported
+ * packets should first be filtered by the feature flags.
+ *
+ * Returns 0 on success, error code otherwise.
+ */
+int efx_tx_tso_fallback(struct efx_tx_queue *tx_queue, struct sk_buff *skb)
+{
+	struct sk_buff *segments, *next;
+
+	segments = skb_gso_segment(skb, 0);
+	if (IS_ERR(segments))
+		return PTR_ERR(segments);
+
+	dev_consume_skb_any(skb);
+
+	skb_list_walk_safe(segments, skb, next) {
+		skb_mark_not_on_list(skb);
+		efx_enqueue_skb(tx_queue, skb);
+	}
+
+	return 0;
 }

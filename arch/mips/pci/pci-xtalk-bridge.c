@@ -13,6 +13,7 @@
 #include <linux/platform_data/xtalk-bridge.h>
 #include <linux/nvmem-consumer.h>
 #include <linux/crc16.h>
+#include <linux/irqdomain.h>
 
 #include <asm/pci/bridge.h>
 #include <asm/paccess.h>
@@ -25,7 +26,7 @@
 /*
  * Common phys<->dma mapping for platforms using pci xtalk bridge
  */
-dma_addr_t __phys_to_dma(struct device *dev, phys_addr_t paddr)
+dma_addr_t phys_to_dma(struct device *dev, phys_addr_t paddr)
 {
 	struct pci_dev *pdev = to_pci_dev(dev);
 	struct bridge_controller *bc = BRIDGE_CONTROLLER(pdev->bus);
@@ -33,7 +34,7 @@ dma_addr_t __phys_to_dma(struct device *dev, phys_addr_t paddr)
 	return bc->baddr + paddr;
 }
 
-phys_addr_t __dma_to_phys(struct device *dev, dma_addr_t dma_addr)
+phys_addr_t dma_to_phys(struct device *dev, dma_addr_t dma_addr)
 {
 	return dma_addr & ~(0xffUL << 56);
 }
@@ -385,7 +386,7 @@ static int bridge_domain_activate(struct irq_domain *domain,
 	bridge_set(bc, b_int_enable, 0x7ffffe00); /* more stuff in int_enable */
 
 	/*
-	 * Enable sending of an interrupt clear packt to the hub on a high to
+	 * Enable sending of an interrupt clear packet to the hub on a high to
 	 * low transition of the interrupt pin.
 	 *
 	 * IRIX sets additional bits in the address which are documented as

@@ -93,10 +93,10 @@ static int cm32181_read_als_it(struct cm32181_chip *cm32181, int *val2);
 #ifdef CONFIG_ACPI
 /**
  * cm32181_acpi_get_cpm() - Get CPM object from ACPI
- * @client	pointer of struct i2c_client.
- * @obj_name	pointer of ACPI object name.
- * @count	maximum size of return array.
- * @vals	pointer of array for return elements.
+ * @dev:	pointer of struct device.
+ * @obj_name:	pointer of ACPI object name.
+ * @values:	pointer of array for return elements.
+ * @count:	maximum size of return array.
  *
  * Convert ACPI CPM table to array.
  *
@@ -460,12 +460,13 @@ static int cm32181_probe(struct i2c_client *client)
 			return PTR_ERR(client);
 	}
 
+	i2c_set_clientdata(client, indio_dev);
+
 	cm32181 = iio_priv(indio_dev);
 	cm32181->client = client;
 	cm32181->dev = dev;
 
 	mutex_init(&cm32181->lock);
-	indio_dev->dev.parent = dev;
 	indio_dev->channels = cm32181_channels;
 	indio_dev->num_channels = ARRAY_SIZE(cm32181_channels);
 	indio_dev->info = &cm32181_info;
@@ -487,6 +488,25 @@ static int cm32181_probe(struct i2c_client *client)
 	return 0;
 }
 
+static int cm32181_suspend(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+
+	return i2c_smbus_write_word_data(client, CM32181_REG_ADDR_CMD,
+					 CM32181_CMD_ALS_DISABLE);
+}
+
+static int cm32181_resume(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct cm32181_chip *cm32181 = iio_priv(dev_get_drvdata(dev));
+
+	return i2c_smbus_write_word_data(client, CM32181_REG_ADDR_CMD,
+					 cm32181->conf_regs[CM32181_REG_ADDR_CMD]);
+}
+
+static DEFINE_SIMPLE_DEV_PM_OPS(cm32181_pm_ops, cm32181_suspend, cm32181_resume);
+
 static const struct of_device_id cm32181_of_match[] = {
 	{ .compatible = "capella,cm3218" },
 	{ .compatible = "capella,cm32181" },
@@ -507,6 +527,7 @@ static struct i2c_driver cm32181_driver = {
 		.name	= "cm32181",
 		.acpi_match_table = ACPI_PTR(cm32181_acpi_match),
 		.of_match_table = cm32181_of_match,
+		.pm = pm_sleep_ptr(&cm32181_pm_ops),
 	},
 	.probe_new	= cm32181_probe,
 };

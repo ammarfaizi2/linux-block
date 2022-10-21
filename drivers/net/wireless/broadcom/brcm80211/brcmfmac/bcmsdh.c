@@ -45,6 +45,7 @@
 #define SDIO_FUNC2_BLOCKSIZE		512
 #define SDIO_4373_FUNC2_BLOCKSIZE	256
 #define SDIO_435X_FUNC2_BLOCKSIZE	256
+#define SDIO_4329_FUNC2_BLOCKSIZE	128
 /* Maximum milliseconds to wait for F2 to come up */
 #define SDIO_WAIT_F2RDY	3000
 
@@ -73,7 +74,7 @@ static irqreturn_t brcmf_sdiod_oob_irqhandler(int irq, void *dev_id)
 		sdiodev->irq_en = false;
 	}
 
-	brcmf_sdio_isr(sdiodev->bus);
+	brcmf_sdio_isr(sdiodev->bus, true);
 
 	return IRQ_HANDLED;
 }
@@ -85,7 +86,7 @@ static void brcmf_sdiod_ib_irqhandler(struct sdio_func *func)
 
 	brcmf_dbg(INTR, "IB intr triggered\n");
 
-	brcmf_sdio_isr(sdiodev->bus);
+	brcmf_sdio_isr(sdiodev->bus, false);
 }
 
 /* dummy handler for SDIO function 2 interrupt */
@@ -127,7 +128,8 @@ int brcmf_sdiod_intr_register(struct brcmf_sdio_dev *sdiodev)
 
 		if (sdiodev->bus_if->chip == BRCM_CC_43362_CHIP_ID) {
 			/* assign GPIO to SDIO core */
-			addr = CORE_CC_REG(SI_ENUM_BASE, gpiocontrol);
+			addr = brcmf_chip_enum_base(sdiodev->func1->device);
+			addr = CORE_CC_REG(addr, gpiocontrol);
 			gpiocontrol = brcmf_sdiod_readl(sdiodev, addr, &ret);
 			gpiocontrol |= 0x2;
 			brcmf_sdiod_writel(sdiodev, addr, gpiocontrol, &ret);
@@ -366,7 +368,7 @@ static int mmc_submit_one(struct mmc_data *md, struct mmc_request *mr,
  * @func: SDIO function
  * @write: direction flag
  * @addr: dongle memory address as source/destination
- * @pkt: skb pointer
+ * @pktlist: skb buffer head pointer
  *
  * This function takes the respbonsibility as the interface function to MMC
  * stack for block data access. It assumes that the skb passed down by the
@@ -782,9 +784,11 @@ void brcmf_sdiod_sgtable_alloc(struct brcmf_sdio_dev *sdiodev)
 	sdiodev->txglomsz = sdiodev->settings->bus.sdio.txglomsz;
 }
 
-#ifdef CONFIG_PM_SLEEP
 static int brcmf_sdiod_freezer_attach(struct brcmf_sdio_dev *sdiodev)
 {
+	if (!IS_ENABLED(CONFIG_PM_SLEEP))
+		return 0;
+
 	sdiodev->freezer = kzalloc(sizeof(*sdiodev->freezer), GFP_KERNEL);
 	if (!sdiodev->freezer)
 		return -ENOMEM;
@@ -800,6 +804,7 @@ static void brcmf_sdiod_freezer_detach(struct brcmf_sdio_dev *sdiodev)
 	if (sdiodev->freezer) {
 		WARN_ON(atomic_read(&sdiodev->freezer->freezing));
 		kfree(sdiodev->freezer);
+		sdiodev->freezer = NULL;
 	}
 }
 
@@ -831,7 +836,8 @@ static void brcmf_sdiod_freezer_off(struct brcmf_sdio_dev *sdiodev)
 
 bool brcmf_sdiod_freezing(struct brcmf_sdio_dev *sdiodev)
 {
-	return atomic_read(&sdiodev->freezer->freezing);
+	return IS_ENABLED(CONFIG_PM_SLEEP) &&
+		atomic_read(&sdiodev->freezer->freezing);
 }
 
 void brcmf_sdiod_try_freeze(struct brcmf_sdio_dev *sdiodev)
@@ -845,25 +851,17 @@ void brcmf_sdiod_try_freeze(struct brcmf_sdio_dev *sdiodev)
 
 void brcmf_sdiod_freezer_count(struct brcmf_sdio_dev *sdiodev)
 {
-	atomic_inc(&sdiodev->freezer->thread_count);
+	if (IS_ENABLED(CONFIG_PM_SLEEP))
+		atomic_inc(&sdiodev->freezer->thread_count);
 }
 
 void brcmf_sdiod_freezer_uncount(struct brcmf_sdio_dev *sdiodev)
 {
-	atomic_dec(&sdiodev->freezer->thread_count);
-}
-#else
-static int brcmf_sdiod_freezer_attach(struct brcmf_sdio_dev *sdiodev)
-{
-	return 0;
+	if (IS_ENABLED(CONFIG_PM_SLEEP))
+		atomic_dec(&sdiodev->freezer->thread_count);
 }
 
-static void brcmf_sdiod_freezer_detach(struct brcmf_sdio_dev *sdiodev)
-{
-}
-#endif /* CONFIG_PM_SLEEP */
-
-static int brcmf_sdiod_remove(struct brcmf_sdio_dev *sdiodev)
+int brcmf_sdiod_remove(struct brcmf_sdio_dev *sdiodev)
 {
 	sdiodev->state = BRCMF_SDIOD_DOWN;
 	if (sdiodev->bus) {
@@ -873,13 +871,9 @@ static int brcmf_sdiod_remove(struct brcmf_sdio_dev *sdiodev)
 
 	brcmf_sdiod_freezer_detach(sdiodev);
 
-	/* Disable Function 2 */
-	sdio_claim_host(sdiodev->func2);
-	sdio_disable_func(sdiodev->func2);
-	sdio_release_host(sdiodev->func2);
-
-	/* Disable Function 1 */
+	/* Disable functions 2 then 1. */
 	sdio_claim_host(sdiodev->func1);
+	sdio_disable_func(sdiodev->func2);
 	sdio_disable_func(sdiodev->func1);
 	sdio_release_host(sdiodev->func1);
 
@@ -898,7 +892,7 @@ static void brcmf_sdiod_host_fixup(struct mmc_host *host)
 	host->caps |= MMC_CAP_NONREMOVABLE;
 }
 
-static int brcmf_sdiod_probe(struct brcmf_sdio_dev *sdiodev)
+int brcmf_sdiod_probe(struct brcmf_sdio_dev *sdiodev)
 {
 	int ret = 0;
 	unsigned int f2_blksz = SDIO_FUNC2_BLOCKSIZE;
@@ -909,18 +903,19 @@ static int brcmf_sdiod_probe(struct brcmf_sdio_dev *sdiodev)
 	if (ret) {
 		brcmf_err("Failed to set F1 blocksize\n");
 		sdio_release_host(sdiodev->func1);
-		goto out;
+		return ret;
 	}
 	switch (sdiodev->func2->device) {
 	case SDIO_DEVICE_ID_BROADCOM_CYPRESS_4373:
 		f2_blksz = SDIO_4373_FUNC2_BLOCKSIZE;
 		break;
 	case SDIO_DEVICE_ID_BROADCOM_4359:
-		/* fallthrough */
 	case SDIO_DEVICE_ID_BROADCOM_4354:
-		/* fallthrough */
 	case SDIO_DEVICE_ID_BROADCOM_4356:
 		f2_blksz = SDIO_435X_FUNC2_BLOCKSIZE;
+		break;
+	case SDIO_DEVICE_ID_BROADCOM_4329:
+		f2_blksz = SDIO_4329_FUNC2_BLOCKSIZE;
 		break;
 	default:
 		break;
@@ -930,7 +925,7 @@ static int brcmf_sdiod_probe(struct brcmf_sdio_dev *sdiodev)
 	if (ret) {
 		brcmf_err("Failed to set F2 blocksize\n");
 		sdio_release_host(sdiodev->func1);
-		goto out;
+		return ret;
 	} else {
 		brcmf_dbg(SDIO, "set F2 blocksize to %d\n", f2_blksz);
 	}
@@ -988,6 +983,7 @@ static const struct sdio_device_id brcmf_sdmmc_ids[] = {
 	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_4359),
 	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_CYPRESS_4373),
 	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_CYPRESS_43012),
+	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_CYPRESS_43752),
 	BRCMF_SDIO_DEVICE(SDIO_DEVICE_ID_BROADCOM_CYPRESS_89359),
 	{ /* end: all zeroes */ }
 };
@@ -1115,18 +1111,29 @@ void brcmf_sdio_wowl_config(struct device *dev, bool enabled)
 {
 	struct brcmf_bus *bus_if = dev_get_drvdata(dev);
 	struct brcmf_sdio_dev *sdiodev = bus_if->bus_priv.sdio;
+	mmc_pm_flag_t pm_caps = sdio_get_host_pm_caps(sdiodev->func1);
 
-	brcmf_dbg(SDIO, "Configuring WOWL, enabled=%d\n", enabled);
-	sdiodev->wowl_enabled = enabled;
+	/* Power must be preserved to be able to support WOWL. */
+	if (!(pm_caps & MMC_PM_KEEP_POWER))
+		goto notsup;
+
+	if (sdiodev->settings->bus.sdio.oob_irq_supported ||
+	    pm_caps & MMC_PM_WAKE_SDIO_IRQ) {
+		sdiodev->wowl_enabled = enabled;
+		brcmf_dbg(SDIO, "Configuring WOWL, enabled=%d\n", enabled);
+		return;
+	}
+
+notsup:
+	brcmf_dbg(SDIO, "WOWL not supported\n");
 }
 
-#ifdef CONFIG_PM_SLEEP
 static int brcmf_ops_sdio_suspend(struct device *dev)
 {
 	struct sdio_func *func;
 	struct brcmf_bus *bus_if;
 	struct brcmf_sdio_dev *sdiodev;
-	mmc_pm_flag_t pm_caps, sdio_flags;
+	mmc_pm_flag_t sdio_flags;
 	int ret = 0;
 
 	func = container_of(dev, struct sdio_func, dev);
@@ -1138,20 +1145,15 @@ static int brcmf_ops_sdio_suspend(struct device *dev)
 	bus_if = dev_get_drvdata(dev);
 	sdiodev = bus_if->bus_priv.sdio;
 
-	pm_caps = sdio_get_host_pm_caps(func);
-
-	if (pm_caps & MMC_PM_KEEP_POWER) {
-		/* preserve card power during suspend */
+	if (sdiodev->wowl_enabled) {
 		brcmf_sdiod_freezer_on(sdiodev);
 		brcmf_sdio_wd_timer(sdiodev->bus, 0);
 
 		sdio_flags = MMC_PM_KEEP_POWER;
-		if (sdiodev->wowl_enabled) {
-			if (sdiodev->settings->bus.sdio.oob_irq_supported)
-				enable_irq_wake(sdiodev->settings->bus.sdio.oob_irq_nr);
-			else
-				sdio_flags |= MMC_PM_WAKE_SDIO_IRQ;
-		}
+		if (sdiodev->settings->bus.sdio.oob_irq_supported)
+			enable_irq_wake(sdiodev->settings->bus.sdio.oob_irq_nr);
+		else
+			sdio_flags |= MMC_PM_WAKE_SDIO_IRQ;
 
 		if (sdio_set_host_pm_flags(sdiodev->func1, sdio_flags))
 			brcmf_err("Failed to set pm_flags %x\n", sdio_flags);
@@ -1172,21 +1174,19 @@ static int brcmf_ops_sdio_resume(struct device *dev)
 	struct brcmf_bus *bus_if = dev_get_drvdata(dev);
 	struct brcmf_sdio_dev *sdiodev = bus_if->bus_priv.sdio;
 	struct sdio_func *func = container_of(dev, struct sdio_func, dev);
-	mmc_pm_flag_t pm_caps = sdio_get_host_pm_caps(func);
 	int ret = 0;
 
 	brcmf_dbg(SDIO, "Enter: F%d\n", func->num);
 	if (func->num != 2)
 		return 0;
 
-	if (!(pm_caps & MMC_PM_KEEP_POWER)) {
+	if (!sdiodev->wowl_enabled) {
 		/* bus was powered off and device removed, probe again */
 		ret = brcmf_sdiod_probe(sdiodev);
 		if (ret)
 			brcmf_err("Failed to probe device on resume\n");
 	} else {
-		if (sdiodev->wowl_enabled &&
-		    sdiodev->settings->bus.sdio.oob_irq_supported)
+		if (sdiodev->settings->bus.sdio.oob_irq_supported)
 			disable_irq_wake(sdiodev->settings->bus.sdio.oob_irq_nr);
 
 		brcmf_sdiod_freezer_off(sdiodev);
@@ -1195,11 +1195,9 @@ static int brcmf_ops_sdio_resume(struct device *dev)
 	return ret;
 }
 
-static const struct dev_pm_ops brcmf_sdio_pm_ops = {
-	.suspend	= brcmf_ops_sdio_suspend,
-	.resume		= brcmf_ops_sdio_resume,
-};
-#endif	/* CONFIG_PM_SLEEP */
+static DEFINE_SIMPLE_DEV_PM_OPS(brcmf_sdio_pm_ops,
+				brcmf_ops_sdio_suspend,
+				brcmf_ops_sdio_resume);
 
 static struct sdio_driver brcmf_sdmmc_driver = {
 	.probe = brcmf_ops_sdio_probe,
@@ -1208,20 +1206,14 @@ static struct sdio_driver brcmf_sdmmc_driver = {
 	.id_table = brcmf_sdmmc_ids,
 	.drv = {
 		.owner = THIS_MODULE,
-#ifdef CONFIG_PM_SLEEP
-		.pm = &brcmf_sdio_pm_ops,
-#endif	/* CONFIG_PM_SLEEP */
+		.pm = pm_sleep_ptr(&brcmf_sdio_pm_ops),
 		.coredump = brcmf_dev_coredump,
 	},
 };
 
-void brcmf_sdio_register(void)
+int brcmf_sdio_register(void)
 {
-	int ret;
-
-	ret = sdio_register_driver(&brcmf_sdmmc_driver);
-	if (ret)
-		brcmf_err("sdio_register_driver failed: %d\n", ret);
+	return sdio_register_driver(&brcmf_sdmmc_driver);
 }
 
 void brcmf_sdio_exit(void)

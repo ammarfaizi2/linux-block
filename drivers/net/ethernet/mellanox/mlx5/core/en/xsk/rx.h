@@ -7,6 +7,8 @@
 #include "en.h"
 #include <net/xdp_sock_drv.h>
 
+#define MLX5E_MTT_PTAG_MASK 0xfffffffffffffff8ULL
+
 /* RX data path */
 
 struct sk_buff *mlx5e_xsk_skb_from_cqe_mpwrq_linear(struct mlx5e_rq *rq,
@@ -15,14 +17,14 @@ struct sk_buff *mlx5e_xsk_skb_from_cqe_mpwrq_linear(struct mlx5e_rq *rq,
 						    u32 head_offset,
 						    u32 page_idx);
 struct sk_buff *mlx5e_xsk_skb_from_cqe_linear(struct mlx5e_rq *rq,
-					      struct mlx5_cqe64 *cqe,
 					      struct mlx5e_wqe_frag_info *wi,
 					      u32 cqe_bcnt);
 
-static inline int mlx5e_xsk_page_alloc_umem(struct mlx5e_rq *rq,
+static inline int mlx5e_xsk_page_alloc_pool(struct mlx5e_rq *rq,
 					    struct mlx5e_dma_info *dma_info)
 {
-	dma_info->xsk = xsk_buff_alloc(rq->umem);
+retry:
+	dma_info->xsk = xsk_buff_alloc(rq->xsk_pool);
 	if (!dma_info->xsk)
 		return -ENOMEM;
 
@@ -33,18 +35,29 @@ static inline int mlx5e_xsk_page_alloc_umem(struct mlx5e_rq *rq,
 	 */
 	dma_info->addr = xsk_buff_xdp_get_frame_dma(dma_info->xsk);
 
+	/* MTT page mapping has alignment requirements. If they are not
+	 * satisfied, leak the descriptor so that it won't come again, and try
+	 * to allocate a new one.
+	 */
+	if (rq->wq_type == MLX5_WQ_TYPE_LINKED_LIST_STRIDING_RQ) {
+		if (unlikely(dma_info->addr & ~MLX5E_MTT_PTAG_MASK)) {
+			xsk_buff_discard(dma_info->xsk);
+			goto retry;
+		}
+	}
+
 	return 0;
 }
 
 static inline bool mlx5e_xsk_update_rx_wakeup(struct mlx5e_rq *rq, bool alloc_err)
 {
-	if (!xsk_umem_uses_need_wakeup(rq->umem))
+	if (!xsk_uses_need_wakeup(rq->xsk_pool))
 		return alloc_err;
 
 	if (unlikely(alloc_err))
-		xsk_set_rx_need_wakeup(rq->umem);
+		xsk_set_rx_need_wakeup(rq->xsk_pool);
 	else
-		xsk_clear_rx_need_wakeup(rq->umem);
+		xsk_clear_rx_need_wakeup(rq->xsk_pool);
 
 	return false;
 }

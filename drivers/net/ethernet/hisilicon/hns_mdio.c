@@ -174,7 +174,7 @@ static int hns_mdio_wait_ready(struct mii_bus *bus)
 	u32 cmd_reg_value;
 	int i;
 
-	/* waitting for MDIO_COMMAND_REG 's mdio_start==0 */
+	/* waiting for MDIO_COMMAND_REG's mdio_start==0 */
 	/* after that can do read or write*/
 	for (i = 0; i < MDIO_TIMEOUT; i++) {
 		cmd_reg_value = MDIO_GET_REG_BIT(mdio_dev,
@@ -210,7 +210,7 @@ static void hns_mdio_cmd_write(struct hns_mdio_device *mdio_dev,
  * @bus: mdio bus
  * @phy_id: phy id
  * @regnum: register num
- * @value: register value
+ * @data: register value
  *
  * Return 0 on success, negative on failure
  */
@@ -273,14 +273,13 @@ static int hns_mdio_write(struct mii_bus *bus,
  * @bus: mdio bus
  * @phy_id: phy id
  * @regnum: register num
- * @value: register value
  *
  * Return phy register value
  */
 static int hns_mdio_read(struct mii_bus *bus, int phy_id, int regnum)
 {
 	int ret;
-	u16 reg_val = 0;
+	u16 reg_val;
 	u8 devad = ((regnum >> 16) & 0x1f);
 	u8 is_c45 = !!(regnum & MII_ADDR_C45);
 	u16 reg = (u16)(regnum & 0xffff);
@@ -320,7 +319,7 @@ static int hns_mdio_read(struct mii_bus *bus, int phy_id, int regnum)
 				   MDIO_C45_READ, phy_id, devad);
 	}
 
-	/* Step 5: waitting for MDIO_COMMAND_REG 's mdio_start==0,*/
+	/* Step 5: waiting for MDIO_COMMAND_REG's mdio_start==0,*/
 	/* check for read or write opt is finished */
 	ret = hns_mdio_wait_ready(bus);
 	if (ret) {
@@ -355,7 +354,7 @@ static int hns_mdio_reset(struct mii_bus *bus)
 
 	if (dev_of_node(bus->parent)) {
 		if (!mdio_dev->subctrl_vbase) {
-			dev_err(&bus->dev, "mdio sys ctl reg has not maped\n");
+			dev_err(&bus->dev, "mdio sys ctl reg has not mapped\n");
 			return -ENODEV;
 		}
 
@@ -421,7 +420,7 @@ static int hns_mdio_probe(struct platform_device *pdev)
 {
 	struct hns_mdio_device *mdio_dev;
 	struct mii_bus *new_bus;
-	int ret = -ENODEV;
+	int ret;
 
 	if (!pdev) {
 		dev_err(NULL, "pdev is NULL!\r\n");

@@ -1,6 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
-#include <linux/amba/clcd-regs.h>
+/*
+ * Versatile family (ARM reference designs) handling for the PL11x.
+ * This is based on code and know-how in the previous frame buffer
+ * driver in drivers/video/fbdev/amba-clcd.c:
+ * Copyright (C) 2001 ARM Limited, by David A Rusling
+ * Updated to 2.5 by Deep Blue Solutions Ltd.
+ * Major contributions and discoveries by Russell King.
+ */
+
 #include <linux/bitops.h>
 #include <linux/device.h>
 #include <linux/mfd/syscon.h>
@@ -9,6 +17,8 @@
 #include <linux/of_platform.h>
 #include <linux/regmap.h>
 #include <linux/vexpress.h>
+
+#include <drm/drm_fourcc.h>
 
 #include "pl111_versatile.h"
 #include "pl111_drm.h"
@@ -394,6 +404,7 @@ static int pl111_vexpress_clcd_init(struct device *dev, struct device_node *np,
 		if (of_device_is_compatible(child, "arm,pl111")) {
 			has_coretile_clcd = true;
 			ct_clcd = child;
+			of_node_put(child);
 			break;
 		}
 		if (of_device_is_compatible(child, "arm,hdlcd")) {

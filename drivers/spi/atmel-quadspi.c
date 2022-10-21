@@ -21,6 +21,7 @@
 #include <linux/of.h>
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
 #include <linux/spi/spi-mem.h>
 
 /* QSPI register offsets */
@@ -277,12 +278,15 @@ static int atmel_qspi_find_mode(const struct spi_mem_op *op)
 static bool atmel_qspi_supports_op(struct spi_mem *mem,
 				   const struct spi_mem_op *op)
 {
+	if (!spi_mem_default_supports_op(mem, op))
+		return false;
+
 	if (atmel_qspi_find_mode(op) < 0)
 		return false;
 
 	/* special case not supported by hardware */
 	if (op->addr.nbytes == 2 && op->cmd.buswidth != op->addr.buswidth &&
-		op->dummy.nbytes == 0)
+	    op->dummy.nbytes == 0)
 		return false;
 
 	return true;
@@ -304,7 +308,7 @@ static int atmel_qspi_set_cfg(struct atmel_qspi *aq,
 		return mode;
 	ifr |= atmel_qspi_modes[mode].config;
 
-	if (op->dummy.buswidth && op->dummy.nbytes)
+	if (op->dummy.nbytes)
 		dummy_cycles = op->dummy.nbytes * 8 / op->dummy.buswidth;
 
 	/*
@@ -359,9 +363,13 @@ static int atmel_qspi_set_cfg(struct atmel_qspi *aq,
 	if (dummy_cycles)
 		ifr |= QSPI_IFR_NBDUM(dummy_cycles);
 
-	/* Set data enable */
-	if (op->data.nbytes)
+	/* Set data enable and data transfer type. */
+	if (op->data.nbytes) {
 		ifr |= QSPI_IFR_DATAEN;
+
+		if (op->addr.nbytes)
+			ifr |= QSPI_IFR_TFRTYP_MEM;
+	}
 
 	/*
 	 * If the QSPI controller is set in regular SPI mode, set it in
@@ -375,26 +383,23 @@ static int atmel_qspi_set_cfg(struct atmel_qspi *aq,
 	/* Clear pending interrupts */
 	(void)atmel_qspi_read(aq, QSPI_SR);
 
-	if (aq->caps->has_ricr) {
-		if (!op->addr.nbytes && op->data.dir == SPI_MEM_DATA_IN)
-			ifr |= QSPI_IFR_APBTFRTYP_READ;
-
-		/* Set QSPI Instruction Frame registers */
+	/* Set QSPI Instruction Frame registers. */
+	if (op->addr.nbytes && !op->data.nbytes)
 		atmel_qspi_write(iar, aq, QSPI_IAR);
+
+	if (aq->caps->has_ricr) {
 		if (op->data.dir == SPI_MEM_DATA_IN)
 			atmel_qspi_write(icr, aq, QSPI_RICR);
 		else
 			atmel_qspi_write(icr, aq, QSPI_WICR);
-		atmel_qspi_write(ifr, aq, QSPI_IFR);
 	} else {
-		if (op->data.dir == SPI_MEM_DATA_OUT)
+		if (op->data.nbytes && op->data.dir == SPI_MEM_DATA_OUT)
 			ifr |= QSPI_IFR_SAMA5D2_WRITE_TRSFR;
 
-		/* Set QSPI Instruction Frame registers */
-		atmel_qspi_write(iar, aq, QSPI_IAR);
 		atmel_qspi_write(icr, aq, QSPI_ICR);
-		atmel_qspi_write(ifr, aq, QSPI_IFR);
 	}
+
+	atmel_qspi_write(ifr, aq, QSPI_IFR);
 
 	return 0;
 }
@@ -413,9 +418,13 @@ static int atmel_qspi_exec_op(struct spi_mem *mem, const struct spi_mem_op *op)
 	if (op->addr.val + op->data.nbytes > aq->mmap_size)
 		return -ENOTSUPP;
 
+	err = pm_runtime_resume_and_get(&aq->pdev->dev);
+	if (err < 0)
+		return err;
+
 	err = atmel_qspi_set_cfg(aq, op, &offset);
 	if (err)
-		return err;
+		goto pm_runtime_put;
 
 	/* Skip to the final steps if there is no data */
 	if (op->data.nbytes) {
@@ -424,11 +433,11 @@ static int atmel_qspi_exec_op(struct spi_mem *mem, const struct spi_mem_op *op)
 
 		/* Send/Receive data */
 		if (op->data.dir == SPI_MEM_DATA_IN)
-			_memcpy_fromio(op->data.buf.in, aq->mem + offset,
-				       op->data.nbytes);
+			memcpy_fromio(op->data.buf.in, aq->mem + offset,
+				      op->data.nbytes);
 		else
-			_memcpy_toio(aq->mem + offset, op->data.buf.out,
-				     op->data.nbytes);
+			memcpy_toio(aq->mem + offset, op->data.buf.out,
+				    op->data.nbytes);
 
 		/* Release the chip-select */
 		atmel_qspi_write(QSPI_CR_LASTXFER, aq, QSPI_CR);
@@ -437,7 +446,7 @@ static int atmel_qspi_exec_op(struct spi_mem *mem, const struct spi_mem_op *op)
 	/* Poll INSTRuction End status */
 	sr = atmel_qspi_read(aq, QSPI_SR);
 	if ((sr & QSPI_SR_CMD_COMPLETED) == QSPI_SR_CMD_COMPLETED)
-		return err;
+		goto pm_runtime_put;
 
 	/* Wait for INSTRuction End interrupt */
 	reinit_completion(&aq->cmd_completion);
@@ -448,6 +457,9 @@ static int atmel_qspi_exec_op(struct spi_mem *mem, const struct spi_mem_op *op)
 		err = -ETIMEDOUT;
 	atmel_qspi_write(QSPI_SR_CMD_COMPLETED, aq, QSPI_IDR);
 
+pm_runtime_put:
+	pm_runtime_mark_last_busy(&aq->pdev->dev);
+	pm_runtime_put_autosuspend(&aq->pdev->dev);
 	return err;
 }
 
@@ -468,6 +480,7 @@ static int atmel_qspi_setup(struct spi_device *spi)
 	struct atmel_qspi *aq = spi_controller_get_devdata(ctrl);
 	unsigned long src_rate;
 	u32 scbr;
+	int ret;
 
 	if (ctrl->busy)
 		return -EBUSY;
@@ -484,8 +497,15 @@ static int atmel_qspi_setup(struct spi_device *spi)
 	if (scbr > 0)
 		scbr--;
 
+	ret = pm_runtime_resume_and_get(ctrl->dev.parent);
+	if (ret < 0)
+		return ret;
+
 	aq->scr = QSPI_SCR_SCBR(scbr);
 	atmel_qspi_write(aq->scr, aq, QSPI_SCR);
+
+	pm_runtime_mark_last_busy(ctrl->dev.parent);
+	pm_runtime_put_autosuspend(ctrl->dev.parent);
 
 	return 0;
 }
@@ -529,7 +549,7 @@ static int atmel_qspi_probe(struct platform_device *pdev)
 	struct resource *res;
 	int irq, err = 0;
 
-	ctrl = spi_alloc_master(&pdev->dev, sizeof(*aq));
+	ctrl = devm_spi_alloc_master(&pdev->dev, sizeof(*aq));
 	if (!ctrl)
 		return -ENOMEM;
 
@@ -551,8 +571,7 @@ static int atmel_qspi_probe(struct platform_device *pdev)
 	aq->regs = devm_ioremap_resource(&pdev->dev, res);
 	if (IS_ERR(aq->regs)) {
 		dev_err(&pdev->dev, "missing registers\n");
-		err = PTR_ERR(aq->regs);
-		goto exit;
+		return PTR_ERR(aq->regs);
 	}
 
 	/* Map the AHB memory */
@@ -560,8 +579,7 @@ static int atmel_qspi_probe(struct platform_device *pdev)
 	aq->mem = devm_ioremap_resource(&pdev->dev, res);
 	if (IS_ERR(aq->mem)) {
 		dev_err(&pdev->dev, "missing AHB memory\n");
-		err = PTR_ERR(aq->mem);
-		goto exit;
+		return PTR_ERR(aq->mem);
 	}
 
 	aq->mmap_size = resource_size(res);
@@ -573,22 +591,21 @@ static int atmel_qspi_probe(struct platform_device *pdev)
 
 	if (IS_ERR(aq->pclk)) {
 		dev_err(&pdev->dev, "missing peripheral clock\n");
-		err = PTR_ERR(aq->pclk);
-		goto exit;
+		return PTR_ERR(aq->pclk);
 	}
 
 	/* Enable the peripheral clock */
 	err = clk_prepare_enable(aq->pclk);
 	if (err) {
 		dev_err(&pdev->dev, "failed to enable the peripheral clock\n");
-		goto exit;
+		return err;
 	}
 
 	aq->caps = of_device_get_match_data(&pdev->dev);
 	if (!aq->caps) {
 		dev_err(&pdev->dev, "Could not retrieve QSPI caps\n");
 		err = -EINVAL;
-		goto exit;
+		goto disable_pclk;
 	}
 
 	if (aq->caps->has_qspick) {
@@ -620,11 +637,24 @@ static int atmel_qspi_probe(struct platform_device *pdev)
 	if (err)
 		goto disable_qspick;
 
+	pm_runtime_set_autosuspend_delay(&pdev->dev, 500);
+	pm_runtime_use_autosuspend(&pdev->dev);
+	pm_runtime_set_active(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
+	pm_runtime_get_noresume(&pdev->dev);
+
 	atmel_qspi_init(aq);
 
 	err = spi_register_controller(ctrl);
-	if (err)
+	if (err) {
+		pm_runtime_put_noidle(&pdev->dev);
+		pm_runtime_disable(&pdev->dev);
+		pm_runtime_set_suspended(&pdev->dev);
+		pm_runtime_dont_use_autosuspend(&pdev->dev);
 		goto disable_qspick;
+	}
+	pm_runtime_mark_last_busy(&pdev->dev);
+	pm_runtime_put_autosuspend(&pdev->dev);
 
 	return 0;
 
@@ -632,8 +662,6 @@ disable_qspick:
 	clk_disable_unprepare(aq->qspick);
 disable_pclk:
 	clk_disable_unprepare(aq->pclk);
-exit:
-	spi_controller_put(ctrl);
 
 	return err;
 }
@@ -642,9 +670,18 @@ static int atmel_qspi_remove(struct platform_device *pdev)
 {
 	struct spi_controller *ctrl = platform_get_drvdata(pdev);
 	struct atmel_qspi *aq = spi_controller_get_devdata(ctrl);
+	int ret;
+
+	ret = pm_runtime_resume_and_get(&pdev->dev);
+	if (ret < 0)
+		return ret;
 
 	spi_unregister_controller(ctrl);
 	atmel_qspi_write(QSPI_CR_QSPIDIS, aq, QSPI_CR);
+
+	pm_runtime_disable(&pdev->dev);
+	pm_runtime_put_noidle(&pdev->dev);
+
 	clk_disable_unprepare(aq->qspick);
 	clk_disable_unprepare(aq->pclk);
 	return 0;
@@ -654,9 +691,19 @@ static int __maybe_unused atmel_qspi_suspend(struct device *dev)
 {
 	struct spi_controller *ctrl = dev_get_drvdata(dev);
 	struct atmel_qspi *aq = spi_controller_get_devdata(ctrl);
+	int ret;
 
-	clk_disable_unprepare(aq->qspick);
-	clk_disable_unprepare(aq->pclk);
+	ret = pm_runtime_resume_and_get(dev);
+	if (ret < 0)
+		return ret;
+
+	atmel_qspi_write(QSPI_CR_QSPIDIS, aq, QSPI_CR);
+
+	pm_runtime_mark_last_busy(dev);
+	pm_runtime_force_suspend(dev);
+
+	clk_unprepare(aq->qspick);
+	clk_unprepare(aq->pclk);
 
 	return 0;
 }
@@ -665,19 +712,54 @@ static int __maybe_unused atmel_qspi_resume(struct device *dev)
 {
 	struct spi_controller *ctrl = dev_get_drvdata(dev);
 	struct atmel_qspi *aq = spi_controller_get_devdata(ctrl);
+	int ret;
 
-	clk_prepare_enable(aq->pclk);
-	clk_prepare_enable(aq->qspick);
+	clk_prepare(aq->pclk);
+	clk_prepare(aq->qspick);
+
+	ret = pm_runtime_force_resume(dev);
+	if (ret < 0)
+		return ret;
 
 	atmel_qspi_init(aq);
 
 	atmel_qspi_write(aq->scr, aq, QSPI_SCR);
 
+	pm_runtime_mark_last_busy(dev);
+	pm_runtime_put_autosuspend(dev);
+
 	return 0;
 }
 
-static SIMPLE_DEV_PM_OPS(atmel_qspi_pm_ops, atmel_qspi_suspend,
-			 atmel_qspi_resume);
+static int __maybe_unused atmel_qspi_runtime_suspend(struct device *dev)
+{
+	struct spi_controller *ctrl = dev_get_drvdata(dev);
+	struct atmel_qspi *aq = spi_controller_get_devdata(ctrl);
+
+	clk_disable(aq->qspick);
+	clk_disable(aq->pclk);
+
+	return 0;
+}
+
+static int __maybe_unused atmel_qspi_runtime_resume(struct device *dev)
+{
+	struct spi_controller *ctrl = dev_get_drvdata(dev);
+	struct atmel_qspi *aq = spi_controller_get_devdata(ctrl);
+	int ret;
+
+	ret = clk_enable(aq->pclk);
+	if (ret)
+		return ret;
+
+	return clk_enable(aq->qspick);
+}
+
+static const struct dev_pm_ops __maybe_unused atmel_qspi_pm_ops = {
+	SET_SYSTEM_SLEEP_PM_OPS(atmel_qspi_suspend, atmel_qspi_resume)
+	SET_RUNTIME_PM_OPS(atmel_qspi_runtime_suspend,
+			   atmel_qspi_runtime_resume, NULL)
+};
 
 static const struct atmel_qspi_caps atmel_sama5d2_qspi_caps = {};
 
@@ -704,7 +786,7 @@ static struct platform_driver atmel_qspi_driver = {
 	.driver = {
 		.name	= "atmel_qspi",
 		.of_match_table	= atmel_qspi_dt_ids,
-		.pm	= &atmel_qspi_pm_ops,
+		.pm	= pm_ptr(&atmel_qspi_pm_ops),
 	},
 	.probe		= atmel_qspi_probe,
 	.remove		= atmel_qspi_remove,

@@ -350,7 +350,7 @@ static int cros_ec_rtc_probe(struct platform_device *pdev)
 	cros_ec_rtc->rtc->ops = &cros_ec_rtc_ops;
 	cros_ec_rtc->rtc->range_max = U32_MAX;
 
-	ret = rtc_register_device(cros_ec_rtc->rtc);
+	ret = devm_rtc_register_device(cros_ec_rtc->rtc);
 	if (ret)
 		return ret;
 
@@ -375,10 +375,8 @@ static int cros_ec_rtc_remove(struct platform_device *pdev)
 	ret = blocking_notifier_chain_unregister(
 				&cros_ec_rtc->cros_ec->event_notifier,
 				&cros_ec_rtc->notifier);
-	if (ret) {
+	if (ret)
 		dev_err(dev, "failed to unregister notifier\n");
-		return ret;
-	}
 
 	return 0;
 }

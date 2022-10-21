@@ -33,6 +33,7 @@
  * SOFTWARE.
  */
 
+#include <linux/ethtool.h>
 #include <linux/pci.h>
 
 #include "t4vf_common.h"
@@ -876,7 +877,7 @@ int t4vf_get_sge_params(struct adapter *adapter)
 
 	/* T4 uses a single control field to specify both the PCIe Padding and
 	 * Packing Boundary.  T5 introduced the ability to specify these
-	 * separately with the Padding Boundary in SGE_CONTROL and and Packing
+	 * separately with the Padding Boundary in SGE_CONTROL and Packing
 	 * Boundary in SGE_CONTROL2.  So for T5 and later we need to grab
 	 * SGE_CONTROL in order to determine how ingress packet data will be
 	 * laid out in Packed Buffer Mode.  Unfortunately, older versions of
@@ -2187,14 +2188,14 @@ int t4vf_prep_adapter(struct adapter *adapter)
  *	t4vf_get_vf_mac_acl - Get the MAC address to be set to
  *			      the VI of this VF.
  *	@adapter: The adapter
- *	@pf: The pf associated with vf
+ *	@port: The port associated with vf
  *	@naddr: the number of ACL MAC addresses returned in addr
  *	@addr: Placeholder for MAC addresses
  *
  *	Find the MAC address to be set to the VF's VI. The requested MAC address
  *	is from the host OS via callback in the PF driver.
  */
-int t4vf_get_vf_mac_acl(struct adapter *adapter, unsigned int pf,
+int t4vf_get_vf_mac_acl(struct adapter *adapter, unsigned int port,
 			unsigned int *naddr, u8 *addr)
 {
 	struct fw_acl_mac_cmd cmd;
@@ -2212,7 +2213,7 @@ int t4vf_get_vf_mac_acl(struct adapter *adapter, unsigned int pf,
 	if (cmd.nmac < *naddr)
 		*naddr = cmd.nmac;
 
-	switch (pf) {
+	switch (port) {
 	case 3:
 		memcpy(addr, cmd.macaddr3, sizeof(cmd.macaddr3));
 		break;

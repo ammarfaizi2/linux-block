@@ -125,9 +125,9 @@ static int tegra186_emc_debug_min_rate_set(void *data, u64 rate)
 	return 0;
 }
 
-DEFINE_SIMPLE_ATTRIBUTE(tegra186_emc_debug_min_rate_fops,
-			tegra186_emc_debug_min_rate_get,
-			tegra186_emc_debug_min_rate_set, "%llu\n");
+DEFINE_DEBUGFS_ATTRIBUTE(tegra186_emc_debug_min_rate_fops,
+			  tegra186_emc_debug_min_rate_get,
+			  tegra186_emc_debug_min_rate_set, "%llu\n");
 
 static int tegra186_emc_debug_max_rate_get(void *data, u64 *rate)
 {
@@ -155,9 +155,9 @@ static int tegra186_emc_debug_max_rate_set(void *data, u64 rate)
 	return 0;
 }
 
-DEFINE_SIMPLE_ATTRIBUTE(tegra186_emc_debug_max_rate_fops,
-			tegra186_emc_debug_max_rate_get,
-			tegra186_emc_debug_max_rate_set, "%llu\n");
+DEFINE_DEBUGFS_ATTRIBUTE(tegra186_emc_debug_max_rate_fops,
+			  tegra186_emc_debug_max_rate_get,
+			  tegra186_emc_debug_max_rate_set, "%llu\n");
 
 static int tegra186_emc_probe(struct platform_device *pdev)
 {
@@ -172,14 +172,8 @@ static int tegra186_emc_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	emc->bpmp = tegra_bpmp_get(&pdev->dev);
-	if (IS_ERR(emc->bpmp)) {
-		err = PTR_ERR(emc->bpmp);
-
-		if (err != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "failed to get BPMP: %d\n", err);
-
-		return err;
-	}
+	if (IS_ERR(emc->bpmp))
+		return dev_err_probe(&pdev->dev, PTR_ERR(emc->bpmp), "failed to get BPMP\n");
 
 	emc->clk = devm_clk_get(&pdev->dev, "emc");
 	if (IS_ERR(emc->clk)) {
@@ -201,6 +195,11 @@ static int tegra186_emc_probe(struct platform_device *pdev)
 	err = tegra_bpmp_transfer(emc->bpmp, &msg);
 	if (err < 0) {
 		dev_err(&pdev->dev, "failed to EMC DVFS pairs: %d\n", err);
+		goto put_bpmp;
+	}
+	if (msg.rx.ret < 0) {
+		err = -EINVAL;
+		dev_err(&pdev->dev, "EMC DVFS MRQ failed: %d (BPMP error code)\n", msg.rx.ret);
 		goto put_bpmp;
 	}
 
@@ -243,11 +242,6 @@ static int tegra186_emc_probe(struct platform_device *pdev)
 	}
 
 	emc->debugfs.root = debugfs_create_dir("emc", NULL);
-	if (!emc->debugfs.root) {
-		dev_err(&pdev->dev, "failed to create debugfs directory\n");
-		return 0;
-	}
-
 	debugfs_create_file("available_rates", S_IRUGO, emc->debugfs.root,
 			    emc, &tegra186_emc_debug_available_rates_fops);
 	debugfs_create_file("min_rate", S_IRUGO | S_IWUSR, emc->debugfs.root,
@@ -273,11 +267,14 @@ static int tegra186_emc_remove(struct platform_device *pdev)
 }
 
 static const struct of_device_id tegra186_emc_of_match[] = {
-#if defined(CONFIG_ARCH_TEGRA186_SOC)
+#if defined(CONFIG_ARCH_TEGRA_186_SOC)
 	{ .compatible = "nvidia,tegra186-emc" },
 #endif
-#if defined(CONFIG_ARCH_TEGRA194_SOC)
+#if defined(CONFIG_ARCH_TEGRA_194_SOC)
 	{ .compatible = "nvidia,tegra194-emc" },
+#endif
+#if defined(CONFIG_ARCH_TEGRA_234_SOC)
+	{ .compatible = "nvidia,tegra234-emc" },
 #endif
 	{ /* sentinel */ }
 };

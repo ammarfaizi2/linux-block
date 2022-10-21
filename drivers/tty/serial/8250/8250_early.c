@@ -84,9 +84,7 @@ static void serial8250_early_out(struct uart_port *port, int offset, int value)
 	}
 }
 
-#define BOTH_EMPTY (UART_LSR_TEMT | UART_LSR_THRE)
-
-static void serial_putc(struct uart_port *port, int c)
+static void serial_putc(struct uart_port *port, unsigned char c)
 {
 	unsigned int status;
 
@@ -94,7 +92,7 @@ static void serial_putc(struct uart_port *port, int c)
 
 	for (;;) {
 		status = serial8250_early_in(port, UART_LSR);
-		if ((status & BOTH_EMPTY) == BOTH_EMPTY)
+		if (uart_lsr_tx_empty(status))
 			break;
 		cpu_relax();
 	}
@@ -203,9 +201,6 @@ OF_EARLYCON_DECLARE(omap8250, "ti,omap4-uart", early_omap8250_setup);
 #endif
 
 #ifdef CONFIG_SERIAL_8250_RT288X
-
-unsigned int au_serial_in(struct uart_port *p, int offset);
-void au_serial_out(struct uart_port *p, int offset, int value);
 
 static int __init early_au_setup(struct earlycon_device *dev, const char *opt)
 {

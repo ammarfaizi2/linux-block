@@ -7,8 +7,8 @@
 #include <sys/prctl.h>
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
-#include <sys/resource.h>
 #include "trace_helpers.h"
+#include "bpf_util.h"
 
 #ifdef __mips__
 #define	MAX_ENTRIES  6000 /* MIPS n64 syscalls start at 5000 */
@@ -25,7 +25,7 @@ static void install_accept_all_seccomp(void)
 		BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
 	};
 	struct sock_fprog prog = {
-		.len = (unsigned short)(sizeof(filter)/sizeof(filter[0])),
+		.len = (unsigned short)ARRAY_SIZE(filter),
 		.filter = filter,
 	};
 	if (prctl(PR_SET_SECCOMP, 2, &prog))
@@ -34,16 +34,13 @@ static void install_accept_all_seccomp(void)
 
 int main(int ac, char **argv)
 {
-	struct rlimit r = {RLIM_INFINITY, RLIM_INFINITY};
 	struct bpf_link *link = NULL;
 	struct bpf_program *prog;
 	struct bpf_object *obj;
 	int key, fd, progs_fd;
+	const char *section;
 	char filename[256];
-	const char *title;
 	FILE *f;
-
-	setrlimit(RLIMIT_MEMLOCK, &r);
 
 	snprintf(filename, sizeof(filename), "%s_kern.o", argv[0]);
 	obj = bpf_object__open_file(filename, NULL);
@@ -78,9 +75,9 @@ int main(int ac, char **argv)
 	}
 
 	bpf_object__for_each_program(prog, obj) {
-		title = bpf_program__title(prog, false);
+		section = bpf_program__section_name(prog);
 		/* register only syscalls to PROG_ARRAY */
-		if (sscanf(title, "kprobe/%d", &key) != 1)
+		if (sscanf(section, "kprobe/%d", &key) != 1)
 			continue;
 
 		fd = bpf_program__fd(prog);

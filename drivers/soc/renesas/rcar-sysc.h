@@ -31,8 +31,8 @@ struct rcar_sysc_area {
 	u16 chan_offs;		/* Offset of PWRSR register for this area */
 	u8 chan_bit;		/* Bit in PWR* (except for PWRUP in PWRSR) */
 	u8 isr_bit;		/* Bit in SYSCI*R */
-	int parent;		/* -1 if none */
-	unsigned int flags;	/* See PD_* */
+	s8 parent;		/* -1 if none */
+	u8 flags;		/* See PD_* */
 };
 
 
@@ -56,6 +56,7 @@ extern const struct rcar_sysc_info r8a77470_sysc_info;
 extern const struct rcar_sysc_info r8a774a1_sysc_info;
 extern const struct rcar_sysc_info r8a774b1_sysc_info;
 extern const struct rcar_sysc_info r8a774c0_sysc_info;
+extern const struct rcar_sysc_info r8a774e1_sysc_info;
 extern const struct rcar_sysc_info r8a7779_sysc_info;
 extern const struct rcar_sysc_info r8a7790_sysc_info;
 extern const struct rcar_sysc_info r8a7791_sysc_info;

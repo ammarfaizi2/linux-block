@@ -454,7 +454,7 @@ static int meson_nfc_ecc_correct(struct nand_chip *nand, u32 *bitflips,
 		if (ECC_ERR_CNT(*info) != ECC_UNCORRECTABLE) {
 			mtd->ecc_stats.corrected += ECC_ERR_CNT(*info);
 			*bitflips = max_t(u32, *bitflips, ECC_ERR_CNT(*info));
-			*correct_bitmap |= 1 >> i;
+			*correct_bitmap |= BIT_ULL(i);
 			continue;
 		}
 		if ((nand->options & NAND_NEED_SCRAMBLING) &&
@@ -510,7 +510,7 @@ static int meson_nfc_dma_buffer_setup(struct nand_chip *nand, void *databuf,
 }
 
 static void meson_nfc_dma_buffer_release(struct nand_chip *nand,
-					 int infolen, int datalen,
+					 int datalen, int infolen,
 					 enum dma_data_direction dir)
 {
 	struct meson_nfc *nfc = nand_get_controller_data(nand);
@@ -573,14 +573,14 @@ static int meson_nfc_write_buf(struct nand_chip *nand, u8 *buf, int len)
 static int meson_nfc_rw_cmd_prepare_and_execute(struct nand_chip *nand,
 						int page, bool in)
 {
+	const struct nand_sdr_timings *sdr =
+		nand_get_sdr_timings(nand_get_interface_config(nand));
 	struct mtd_info *mtd = nand_to_mtd(nand);
 	struct meson_nfc *nfc = nand_get_controller_data(nand);
-	const struct nand_sdr_timings *sdr =
-		nand_get_sdr_timings(&nand->data_interface);
 	u32 *addrs = nfc->cmdfifo.rw.addrs;
 	u32 cs = nfc->param.chip_select;
 	u32 cmd0, cmd_num, row_start;
-	int ret = 0, i;
+	int i;
 
 	cmd_num = sizeof(struct nand_rw_cmd) / sizeof(int);
 
@@ -620,15 +620,15 @@ static int meson_nfc_rw_cmd_prepare_and_execute(struct nand_chip *nand,
 		meson_nfc_cmd_idle(nfc, nfc->timing.tadl);
 	}
 
-	return ret;
+	return 0;
 }
 
 static int meson_nfc_write_page_sub(struct nand_chip *nand,
 				    int page, int raw)
 {
-	struct mtd_info *mtd = nand_to_mtd(nand);
 	const struct nand_sdr_timings *sdr =
-		nand_get_sdr_timings(&nand->data_interface);
+		nand_get_sdr_timings(nand_get_interface_config(nand));
+	struct mtd_info *mtd = nand_to_mtd(nand);
 	struct meson_nfc_nand_chip *meson_chip = to_meson_nand(nand);
 	struct meson_nfc *nfc = nand_get_controller_data(nand);
 	int data_len, info_len;
@@ -800,7 +800,7 @@ static int meson_nfc_read_page_hwecc(struct nand_chip *nand, u8 *buf,
 			u8 *data = buf + i * ecc->size;
 			u8 *oob = nand->oob_poi + i * (ecc->bytes + 2);
 
-			if (correct_bitmap & (1 << i))
+			if (correct_bitmap & BIT_ULL(i))
 				continue;
 			ret = nand_check_erased_ecc_chunk(data,	ecc->size,
 							  oob, ecc->bytes + 2,
@@ -1044,9 +1044,12 @@ static int meson_nfc_clk_init(struct meson_nfc *nfc)
 
 	ret = clk_set_rate(nfc->device_clk, 24000000);
 	if (ret)
-		goto err_phase_rx;
+		goto err_disable_rx;
 
 	return 0;
+
+err_disable_rx:
+	clk_disable_unprepare(nfc->phase_rx);
 err_phase_rx:
 	clk_disable_unprepare(nfc->phase_tx);
 err_phase_tx:
@@ -1097,8 +1100,8 @@ static int meson_chip_buffer_init(struct nand_chip *nand)
 }
 
 static
-int meson_nfc_setup_data_interface(struct nand_chip *nand, int csline,
-				   const struct nand_data_interface *conf)
+int meson_nfc_setup_interface(struct nand_chip *nand, int csline,
+			      const struct nand_interface_config *conf)
 {
 	struct meson_nfc_nand_chip *meson_chip = to_meson_nand(nand);
 	const struct nand_sdr_timings *timings;
@@ -1197,7 +1200,7 @@ static int meson_nand_attach_chip(struct nand_chip *nand)
 	if (ret)
 		return -EINVAL;
 
-	nand->ecc.mode = NAND_ECC_HW;
+	nand->ecc.engine_type = NAND_ECC_ENGINE_TYPE_ON_HOST;
 	nand->ecc.write_page_raw = meson_nfc_write_page_raw;
 	nand->ecc.write_page = meson_nfc_write_page_hwecc;
 	nand->ecc.write_oob_raw = nand_write_oob_std;
@@ -1222,7 +1225,7 @@ static int meson_nand_attach_chip(struct nand_chip *nand)
 static const struct nand_controller_ops meson_nand_controller_ops = {
 	.attach_chip = meson_nand_attach_chip,
 	.detach_chip = meson_nand_detach_chip,
-	.setup_data_interface = meson_nfc_setup_data_interface,
+	.setup_interface = meson_nfc_setup_interface,
 	.exec_op = meson_nfc_exec_op,
 };
 
@@ -1290,26 +1293,20 @@ meson_nfc_nand_chip_init(struct device *dev,
 	return 0;
 }
 
-static int meson_nfc_nand_chip_cleanup(struct meson_nfc *nfc)
+static void meson_nfc_nand_chip_cleanup(struct meson_nfc *nfc)
 {
 	struct meson_nfc_nand_chip *meson_chip;
 	struct mtd_info *mtd;
-	int ret;
 
 	while (!list_empty(&nfc->chips)) {
 		meson_chip = list_first_entry(&nfc->chips,
 					      struct meson_nfc_nand_chip, node);
 		mtd = nand_to_mtd(&meson_chip->nand);
-		ret = mtd_device_unregister(mtd);
-		if (ret)
-			return ret;
+		WARN_ON(mtd_device_unregister(mtd));
 
-		meson_nfc_free_buffer(&meson_chip->nand);
 		nand_cleanup(&meson_chip->nand);
 		list_del(&meson_chip->node);
 	}
-
-	return 0;
 }
 
 static int meson_nfc_nand_chips_init(struct device *dev,
@@ -1442,15 +1439,10 @@ err_clk:
 static int meson_nfc_remove(struct platform_device *pdev)
 {
 	struct meson_nfc *nfc = platform_get_drvdata(pdev);
-	int ret;
 
-	ret = meson_nfc_nand_chip_cleanup(nfc);
-	if (ret)
-		return ret;
+	meson_nfc_nand_chip_cleanup(nfc);
 
 	meson_nfc_disable_clk(nfc);
-
-	platform_set_drvdata(pdev, NULL);
 
 	return 0;
 }

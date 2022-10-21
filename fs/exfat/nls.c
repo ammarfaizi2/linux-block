@@ -11,7 +11,7 @@
 #include "exfat_raw.h"
 #include "exfat_fs.h"
 
-/* Upcase tabel macro */
+/* Upcase table macro */
 #define EXFAT_NUM_UPCASE	(2918)
 #define UTBL_COUNT		(0x10000)
 
@@ -509,7 +509,7 @@ static int exfat_utf8_to_utf16(struct super_block *sb,
 	}
 
 	if (unilen > MAX_NAME_LENGTH) {
-		exfat_err(sb, "failed to %s (estr:ENAMETOOLONG) nls len : %d, unilen : %d > %d",
+		exfat_debug(sb, "failed to %s (estr:ENAMETOOLONG) nls len : %d, unilen : %d > %d",
 			  __func__, len, unilen, MAX_NAME_LENGTH);
 		return -ENAMETOOLONG;
 	}
@@ -659,7 +659,7 @@ static int exfat_load_upcase_table(struct super_block *sb,
 	unsigned char skip = false;
 	unsigned short *upcase_table;
 
-	upcase_table = kcalloc(UTBL_COUNT, sizeof(unsigned short), GFP_KERNEL);
+	upcase_table = kvcalloc(UTBL_COUNT, sizeof(unsigned short), GFP_KERNEL);
 	if (!upcase_table)
 		return -ENOMEM;
 
@@ -671,7 +671,7 @@ static int exfat_load_upcase_table(struct super_block *sb,
 
 		bh = sb_bread(sb, sector);
 		if (!bh) {
-			exfat_err(sb, "failed to read sector(0x%llx)\n",
+			exfat_err(sb, "failed to read sector(0x%llx)",
 				  (unsigned long long)sector);
 			ret = -EIO;
 			goto free_table;
@@ -715,7 +715,7 @@ static int exfat_load_default_upcase_table(struct super_block *sb)
 	unsigned short uni = 0, *upcase_table;
 	unsigned int index = 0;
 
-	upcase_table = kcalloc(UTBL_COUNT, sizeof(unsigned short), GFP_KERNEL);
+	upcase_table = kvcalloc(UTBL_COUNT, sizeof(unsigned short), GFP_KERNEL);
 	if (!upcase_table)
 		return -ENOMEM;
 
@@ -761,7 +761,7 @@ int exfat_create_upcase_table(struct super_block *sb)
 
 	while (clu.dir != EXFAT_EOF_CLUSTER) {
 		for (i = 0; i < sbi->dentries_per_clu; i++) {
-			ep = exfat_get_dentry(sb, &clu, i, &bh, NULL);
+			ep = exfat_get_dentry(sb, &clu, i, &bh);
 			if (!ep)
 				return -EIO;
 
@@ -803,5 +803,5 @@ load_default:
 
 void exfat_free_upcase_table(struct exfat_sb_info *sbi)
 {
-	kfree(sbi->vol_utbl);
+	kvfree(sbi->vol_utbl);
 }

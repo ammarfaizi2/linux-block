@@ -499,8 +499,7 @@ static void cpm_uart_set_termios(struct uart_port *port,
 	pr_debug("CPM uart[%d]:set_termios\n", port->line);
 
 	baud = uart_get_baud_rate(port, termios, old, 0, port->uartclk / 16);
-	if (baud < HW_BUF_SPD_THRESHOLD ||
-	    (pinfo->port.state && pinfo->port.state->port.low_latency))
+	if (baud < HW_BUF_SPD_THRESHOLD || port->flags & UPF_LOW_LATENCY)
 		pinfo->rx_fifosize = 1;
 	else
 		pinfo->rx_fifosize = RX_BUF_SIZE;
@@ -525,24 +524,7 @@ static void cpm_uart_set_termios(struct uart_port *port,
 	scval = 0;
 
 	/* byte size */
-	switch (termios->c_cflag & CSIZE) {
-	case CS5:
-		bits = 5;
-		break;
-	case CS6:
-		bits = 6;
-		break;
-	case CS7:
-		bits = 7;
-		break;
-	case CS8:
-		bits = 8;
-		break;
-		/* Never happens, but GCC is too dumb to figure it out */
-	default:
-		bits = 8;
-		break;
-	}
+	bits = tty_get_char_size(termios->c_cflag);
 	sbits = bits - 5;
 
 	if (termios->c_cflag & CSTOPB) {
@@ -1107,6 +1089,34 @@ static void cpm_put_poll_char(struct uart_port *port,
 	ch[0] = (char)c;
 	cpm_uart_early_write(pinfo, ch, 1, false);
 }
+
+#ifdef CONFIG_SERIAL_CPM_CONSOLE
+static struct uart_port *udbg_port;
+
+static void udbg_cpm_putc(char c)
+{
+	if (c == '\n')
+		cpm_put_poll_char(udbg_port, '\r');
+	cpm_put_poll_char(udbg_port, c);
+}
+
+static int udbg_cpm_getc_poll(void)
+{
+	int c = cpm_get_poll_char(udbg_port);
+
+	return c == NO_POLL_CHAR ? -1 : c;
+}
+
+static int udbg_cpm_getc(void)
+{
+	int c;
+
+	while ((c = udbg_cpm_getc_poll()) == -1)
+		cpu_relax();
+	return c;
+}
+#endif /* CONFIG_SERIAL_CPM_CONSOLE */
+
 #endif /* CONFIG_CONSOLE_POLL */
 
 static const struct uart_ops cpm_uart_pops = {
@@ -1204,12 +1214,6 @@ static int cpm_uart_init_port(struct device_node *np,
 	pinfo->port.fifosize = pinfo->tx_nrfifos * pinfo->tx_fifosize;
 	spin_lock_init(&pinfo->port.lock);
 
-	pinfo->port.irq = irq_of_parse_and_map(np, 0);
-	if (pinfo->port.irq == NO_IRQ) {
-		ret = -EINVAL;
-		goto out_pram;
-	}
-
 	for (i = 0; i < NUM_GPIOS; i++) {
 		struct gpio_desc *gpiod;
 
@@ -1219,7 +1223,7 @@ static int cpm_uart_init_port(struct device_node *np,
 
 		if (IS_ERR(gpiod)) {
 			ret = PTR_ERR(gpiod);
-			goto out_irq;
+			goto out_pram;
 		}
 
 		if (gpiod) {
@@ -1237,13 +1241,14 @@ static int cpm_uart_init_port(struct device_node *np,
 	}
 
 #ifdef CONFIG_PPC_EARLY_DEBUG_CPM
-	udbg_putc = NULL;
+#if defined(CONFIG_CONSOLE_POLL) && defined(CONFIG_SERIAL_CPM_CONSOLE)
+	if (!udbg_port)
+#endif
+		udbg_putc = NULL;
 #endif
 
 	return cpm_uart_request_port(&pinfo->port);
 
-out_irq:
-	irq_dispose_mapping(pinfo->port.irq);
 out_pram:
 	cpm_uart_unmap_pram(pinfo, pram);
 out_mem:
@@ -1358,6 +1363,15 @@ static int __init cpm_uart_console_setup(struct console *co, char *options)
 	uart_set_options(port, co, baud, parity, bits, flow);
 	cpm_line_cr_cmd(pinfo, CPM_CR_RESTART_TX);
 
+#ifdef CONFIG_CONSOLE_POLL
+	if (!udbg_port) {
+		udbg_port = &pinfo->port;
+		udbg_putc = udbg_cpm_putc;
+		udbg_getc = udbg_cpm_getc;
+		udbg_getc_poll = udbg_cpm_getc_poll;
+	}
+#endif
+
 	return 0;
 }
 
@@ -1414,11 +1428,17 @@ static int cpm_uart_probe(struct platform_device *ofdev)
 	/* initialize the device pointer for the port */
 	pinfo->port.dev = &ofdev->dev;
 
-	ret = cpm_uart_init_port(ofdev->dev.of_node, pinfo);
-	if (ret)
-		return ret;
+	pinfo->port.irq = irq_of_parse_and_map(ofdev->dev.of_node, 0);
+	if (!pinfo->port.irq)
+		return -EINVAL;
 
-	return uart_add_one_port(&cpm_reg, &pinfo->port);
+	ret = cpm_uart_init_port(ofdev->dev.of_node, pinfo);
+	if (!ret)
+		return uart_add_one_port(&cpm_reg, &pinfo->port);
+
+	irq_dispose_mapping(pinfo->port.irq);
+
+	return ret;
 }
 
 static int cpm_uart_remove(struct platform_device *ofdev)

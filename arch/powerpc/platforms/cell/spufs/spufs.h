@@ -76,7 +76,7 @@ struct spu_context {
 	struct address_space *mss;	   /* 'mss' area mappings. */
 	struct address_space *psmap;	   /* 'psmap' area mappings. */
 	struct mutex mapping_lock;
-	u64 object_id;		   /* user space pointer for oprofile */
+	u64 object_id;		   /* user space pointer for GNU Debugger */
 
 	enum { SPU_STATE_RUNNABLE, SPU_STATE_SAVED } state;
 	struct mutex state_mutex;
@@ -281,7 +281,6 @@ void spu_del_from_rq(struct spu_context *ctx);
 int spu_activate(struct spu_context *ctx, unsigned long flags);
 void spu_deactivate(struct spu_context *ctx);
 void spu_yield(struct spu_context *ctx);
-void spu_switch_notify(struct spu *spu, struct spu_context *ctx);
 void spu_switch_log_notify(struct spu *spu, struct spu_context *ctx,
 		u32 type, u32 val);
 void spu_set_timeslice(struct spu_context *ctx);

@@ -9,7 +9,7 @@
  * Brian Swetland <swetland@google.com>
  */
 
-#include <linux/dma-mapping.h>
+#include <linux/dma-map-ops.h>
 #include <linux/export.h>
 #include <linux/of_reserved_mem.h>
 #include <linux/remoteproc.h>
@@ -22,6 +22,18 @@
 #include <linux/slab.h>
 
 #include "remoteproc_internal.h"
+
+static struct rproc_vdev *vdev_to_rvdev(struct virtio_device *vdev)
+{
+	return container_of(vdev->dev.parent, struct rproc_vdev, dev);
+}
+
+static  struct rproc *vdev_to_rproc(struct virtio_device *vdev)
+{
+	struct rproc_vdev *rvdev = vdev_to_rvdev(vdev);
+
+	return rvdev->rproc;
+}
 
 /* kick the remote processor, and let it know which virtqueue to poke at */
 static bool rproc_virtio_notify(struct virtqueue *vq)
@@ -45,7 +57,7 @@ static bool rproc_virtio_notify(struct virtqueue *vq)
  * when the remote processor signals that a specific virtqueue has pending
  * messages available.
  *
- * Returns IRQ_NONE if no message was found in the @notifyid virtqueue,
+ * Return: IRQ_NONE if no message was found in the @notifyid virtqueue,
  * and otherwise returns IRQ_HANDLED.
  */
 irqreturn_t rproc_vq_interrupt(struct rproc *rproc, int notifyid)
@@ -75,7 +87,7 @@ static struct virtqueue *rp_find_vq(struct virtio_device *vdev,
 	struct fw_rsc_vdev *rsc;
 	struct virtqueue *vq;
 	void *addr;
-	int len, size;
+	int num, size;
 
 	/* we're temporarily limited to two virtqueues per rvdev */
 	if (id >= ARRAY_SIZE(rvdev->vring))
@@ -92,26 +104,28 @@ static struct virtqueue *rp_find_vq(struct virtio_device *vdev,
 
 	rvring = &rvdev->vring[id];
 	addr = mem->va;
-	len = rvring->len;
+	num = rvring->num;
 
 	/* zero vring */
-	size = vring_size(len, rvring->align);
+	size = vring_size(num, rvring->align);
 	memset(addr, 0, size);
 
 	dev_dbg(dev, "vring%d: va %pK qsz %d notifyid %d\n",
-		id, addr, len, rvring->notifyid);
+		id, addr, num, rvring->notifyid);
 
 	/*
 	 * Create the new vq, and tell virtio we're not interested in
 	 * the 'weak' smp barriers, since we're talking with a real device.
 	 */
-	vq = vring_new_virtqueue(id, len, rvring->align, vdev, false, ctx,
+	vq = vring_new_virtqueue(id, num, rvring->align, vdev, false, ctx,
 				 addr, rproc_virtio_notify, callback, name);
 	if (!vq) {
 		dev_err(dev, "vring_new_virtqueue %s failed\n", name);
 		rproc_free_vring(rvring);
 		return ERR_PTR(-ENOMEM);
 	}
+
+	vq->num_max = num;
 
 	rvring->vq = vq;
 	vq->priv = rvring;
@@ -325,7 +339,7 @@ static void rproc_virtio_dev_release(struct device *dev)
  * This function registers a virtio device. This vdev's partent is
  * the rproc device.
  *
- * Returns 0 on success or an appropriate error value otherwise.
+ * Return: 0 on success or an appropriate error value otherwise
  */
 int rproc_add_virtio_dev(struct rproc_vdev *rvdev, int id)
 {
@@ -432,6 +446,8 @@ out:
  * @data: must be null
  *
  * This function unregisters an existing virtio device.
+ *
+ * Return: 0
  */
 int rproc_remove_virtio_dev(struct device *dev, void *data)
 {

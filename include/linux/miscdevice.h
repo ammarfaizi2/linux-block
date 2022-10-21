@@ -7,9 +7,9 @@
 #include <linux/device.h>
 
 /*
- *	These allocations are managed by device@lanana.org. If you use an
- *	entry that is not in assigned your entry may well be moved and
- *	reassigned, or set dynamic if a fixed value is not justified.
+ *	These allocations are managed by device@lanana.org. If you need
+ *	an entry that is not assigned here, it can be moved and
+ *	reassigned or dynamically set if a fixed value is not justified.
  */
 
 #define PSMOUSE_MINOR		1
@@ -44,7 +44,7 @@
 #define AGPGART_MINOR		175
 #define TOSH_MINOR_DEV		181
 #define HWRNG_MINOR		183
-#define MICROCODE_MINOR		184
+/*#define MICROCODE_MINOR	184	unused */
 #define KEYPAD_MINOR		185
 #define IRNET_MINOR		187
 #define D7S_MINOR		193
@@ -93,14 +93,14 @@ extern void misc_deregister(struct miscdevice *misc);
 
 /*
  * Helper macro for drivers that don't do anything special in the initcall.
- * This helps in eleminating of boilerplate code.
+ * This helps to eliminate boilerplate code.
  */
 #define builtin_misc_device(__misc_device) \
 	builtin_driver(__misc_device, misc_register)
 
 /*
  * Helper macro for drivers that don't do anything special in module init / exit
- * call. This helps in eleminating of boilerplate code.
+ * call. This helps to eliminate boilerplate code.
  */
 #define module_misc_device(__misc_device) \
 	module_driver(__misc_device, misc_register, misc_deregister)

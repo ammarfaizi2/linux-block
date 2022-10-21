@@ -59,6 +59,8 @@ struct flow_dissector_key_vlan {
 		__be16	vlan_tci;
 	};
 	__be16	vlan_tpid;
+	__be16	vlan_eth_type;
+	u16	padding;
 };
 
 struct flow_dissector_mpls_lse {
@@ -177,6 +179,22 @@ struct flow_dissector_key_ports {
 };
 
 /**
+ * struct flow_dissector_key_ports_range
+ * @tp: port number from packet
+ * @tp_min: min port number in range
+ * @tp_max: max port number in range
+ */
+struct flow_dissector_key_ports_range {
+	union {
+		struct flow_dissector_key_ports tp;
+		struct {
+			struct flow_dissector_key_ports tp_min;
+			struct flow_dissector_key_ports tp_max;
+		};
+	};
+};
+
+/**
  * flow_dissector_key_icmp:
  *		type: ICMP type
  *		code: ICMP code
@@ -243,6 +261,34 @@ struct flow_dissector_key_ct {
 	u32	ct_labels[4];
 };
 
+/**
+ * struct flow_dissector_key_hash:
+ * @hash: hash value
+ */
+struct flow_dissector_key_hash {
+	u32 hash;
+};
+
+/**
+ * struct flow_dissector_key_num_of_vlans:
+ * @num_of_vlans: num_of_vlans value
+ */
+struct flow_dissector_key_num_of_vlans {
+	u8 num_of_vlans;
+};
+
+/**
+ * struct flow_dissector_key_pppoe:
+ * @session_id: pppoe session id
+ * @ppp_proto: ppp protocol
+ * @type: pppoe eth type
+ */
+struct flow_dissector_key_pppoe {
+	__be16 session_id;
+	__be16 ppp_proto;
+	__be16 type;
+};
+
 enum flow_dissector_key_id {
 	FLOW_DISSECTOR_KEY_CONTROL, /* struct flow_dissector_key_control */
 	FLOW_DISSECTOR_KEY_BASIC, /* struct flow_dissector_key_basic */
@@ -271,6 +317,9 @@ enum flow_dissector_key_id {
 	FLOW_DISSECTOR_KEY_ENC_OPTS, /* struct flow_dissector_key_enc_opts */
 	FLOW_DISSECTOR_KEY_META, /* struct flow_dissector_key_meta */
 	FLOW_DISSECTOR_KEY_CT, /* struct flow_dissector_key_ct */
+	FLOW_DISSECTOR_KEY_HASH, /* struct flow_dissector_key_hash */
+	FLOW_DISSECTOR_KEY_NUM_OF_VLANS, /* struct flow_dissector_key_num_of_vlans */
+	FLOW_DISSECTOR_KEY_PPPOE, /* struct flow_dissector_key_pppoe */
 
 	FLOW_DISSECTOR_KEY_MAX,
 };
@@ -278,6 +327,7 @@ enum flow_dissector_key_id {
 #define FLOW_DISSECTOR_F_PARSE_1ST_FRAG		BIT(0)
 #define FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL	BIT(1)
 #define FLOW_DISSECTOR_F_STOP_AT_ENCAP		BIT(2)
+#define FLOW_DISSECTOR_F_STOP_BEFORE_ENCAP	BIT(3)
 
 struct flow_dissector_key {
 	enum flow_dissector_key_id key_id;
@@ -341,7 +391,7 @@ static inline bool flow_keys_have_l4(const struct flow_keys *keys)
 u32 flow_hash_from_keys(struct flow_keys *keys);
 void skb_flow_get_icmp_tci(const struct sk_buff *skb,
 			   struct flow_dissector_key_icmp *key_icmp,
-			   void *data, int thoff, int hlen);
+			   const void *data, int thoff, int hlen);
 
 static inline bool dissector_uses_key(const struct flow_dissector *flow_dissector,
 				      enum flow_dissector_key_id key_id)
@@ -359,8 +409,8 @@ static inline void *skb_flow_dissector_target(struct flow_dissector *flow_dissec
 struct bpf_flow_dissector {
 	struct bpf_flow_keys	*flow_keys;
 	const struct sk_buff	*skb;
-	void			*data;
-	void			*data_end;
+	const void		*data;
+	const void		*data_end;
 };
 
 static inline void

@@ -7,30 +7,15 @@
 
 #include "ctree.h"
 
-static inline u8 get_unaligned_le8(const void *p)
-{
-       return *(u8 *)p;
-}
-
-static inline void put_unaligned_le8(u8 val, void *p)
-{
-       *(u8 *)p = val;
-}
-
 static bool check_setget_bounds(const struct extent_buffer *eb,
 				const void *ptr, unsigned off, int size)
 {
 	const unsigned long member_offset = (unsigned long)ptr + off;
 
-	if (member_offset > eb->len) {
+	if (unlikely(member_offset + size > eb->len)) {
 		btrfs_warn(eb->fs_info,
-	"bad eb member start: ptr 0x%lx start %llu member offset %lu size %d",
-			(unsigned long)ptr, eb->start, member_offset, size);
-		return false;
-	}
-	if (member_offset + size > eb->len) {
-		btrfs_warn(eb->fs_info,
-	"bad eb member end: ptr 0x%lx start %llu member offset %lu size %d",
+		"bad eb member %s: ptr 0x%lx start %llu member offset %lu size %d",
+			(member_offset > eb->len ? "start" : "end"),
 			(unsigned long)ptr, eb->start, member_offset, size);
 		return false;
 	}
@@ -67,8 +52,9 @@ u##bits btrfs_get_token_##bits(struct btrfs_map_token *token,		\
 			       const void *ptr, unsigned long off)	\
 {									\
 	const unsigned long member_offset = (unsigned long)ptr + off;	\
-	const unsigned long idx = member_offset >> PAGE_SHIFT;		\
-	const unsigned long oip = offset_in_page(member_offset);	\
+	const unsigned long idx = get_eb_page_index(member_offset);	\
+	const unsigned long oip = get_eb_offset_in_page(token->eb,	\
+							member_offset);	\
 	const int size = sizeof(u##bits);				\
 	u8 lebytes[sizeof(u##bits)];					\
 	const int part = PAGE_SIZE - oip;				\
@@ -82,7 +68,7 @@ u##bits btrfs_get_token_##bits(struct btrfs_map_token *token,		\
 	}								\
 	token->kaddr = page_address(token->eb->pages[idx]);		\
 	token->offset = idx << PAGE_SHIFT;				\
-	if (oip + size <= PAGE_SIZE)					\
+	if (INLINE_EXTENT_BUFFER_PAGES == 1 || oip + size <= PAGE_SIZE ) \
 		return get_unaligned_le##bits(token->kaddr + oip);	\
 									\
 	memcpy(lebytes, token->kaddr + oip, part);			\
@@ -95,15 +81,15 @@ u##bits btrfs_get_##bits(const struct extent_buffer *eb,		\
 			 const void *ptr, unsigned long off)		\
 {									\
 	const unsigned long member_offset = (unsigned long)ptr + off;	\
-	const unsigned long oip = offset_in_page(member_offset);	\
-	const unsigned long idx = member_offset >> PAGE_SHIFT;		\
+	const unsigned long oip = get_eb_offset_in_page(eb, member_offset); \
+	const unsigned long idx = get_eb_page_index(member_offset);	\
 	char *kaddr = page_address(eb->pages[idx]);			\
 	const int size = sizeof(u##bits);				\
 	const int part = PAGE_SIZE - oip;				\
 	u8 lebytes[sizeof(u##bits)];					\
 									\
 	ASSERT(check_setget_bounds(eb, ptr, off, size));		\
-	if (oip + size <= PAGE_SIZE)					\
+	if (INLINE_EXTENT_BUFFER_PAGES == 1 || oip + size <= PAGE_SIZE)	\
 		return get_unaligned_le##bits(kaddr + oip);		\
 									\
 	memcpy(lebytes, kaddr + oip, part);				\
@@ -116,8 +102,9 @@ void btrfs_set_token_##bits(struct btrfs_map_token *token,		\
 			    u##bits val)				\
 {									\
 	const unsigned long member_offset = (unsigned long)ptr + off;	\
-	const unsigned long idx = member_offset >> PAGE_SHIFT;		\
-	const unsigned long oip = offset_in_page(member_offset);	\
+	const unsigned long idx = get_eb_page_index(member_offset);	\
+	const unsigned long oip = get_eb_offset_in_page(token->eb,	\
+							member_offset);	\
 	const int size = sizeof(u##bits);				\
 	u8 lebytes[sizeof(u##bits)];					\
 	const int part = PAGE_SIZE - oip;				\
@@ -132,7 +119,7 @@ void btrfs_set_token_##bits(struct btrfs_map_token *token,		\
 	}								\
 	token->kaddr = page_address(token->eb->pages[idx]);		\
 	token->offset = idx << PAGE_SHIFT;				\
-	if (oip + size <= PAGE_SIZE) {					\
+	if (INLINE_EXTENT_BUFFER_PAGES == 1 || oip + size <= PAGE_SIZE) { \
 		put_unaligned_le##bits(val, token->kaddr + oip);	\
 		return;							\
 	}								\
@@ -146,15 +133,15 @@ void btrfs_set_##bits(const struct extent_buffer *eb, void *ptr,	\
 		      unsigned long off, u##bits val)			\
 {									\
 	const unsigned long member_offset = (unsigned long)ptr + off;	\
-	const unsigned long oip = offset_in_page(member_offset);	\
-	const unsigned long idx = member_offset >> PAGE_SHIFT;		\
+	const unsigned long oip = get_eb_offset_in_page(eb, member_offset); \
+	const unsigned long idx = get_eb_page_index(member_offset);	\
 	char *kaddr = page_address(eb->pages[idx]);			\
 	const int size = sizeof(u##bits);				\
 	const int part = PAGE_SIZE - oip;				\
 	u8 lebytes[sizeof(u##bits)];					\
 									\
 	ASSERT(check_setget_bounds(eb, ptr, off, size));		\
-	if (oip + size <= PAGE_SIZE) {					\
+	if (INLINE_EXTENT_BUFFER_PAGES == 1 || oip + size <= PAGE_SIZE) { \
 		put_unaligned_le##bits(val, kaddr + oip);		\
 		return;							\
 	}								\

@@ -11,6 +11,7 @@
 #include <linux/iio/iio.h>
 #include <linux/iio/machine.h>
 #include <linux/mfd/mp2629.h>
+#include <linux/mod_devicetable.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
 #include <linux/platform_device.h>
@@ -144,7 +145,6 @@ static int mp2629_adc_probe(struct platform_device *pdev)
 	}
 
 	indio_dev->name = "mp2629-adc";
-	indio_dev->dev.parent = dev;
 	indio_dev->channels = mp2629_channels;
 	indio_dev->num_channels = ARRAY_SIZE(mp2629_channels);
 	indio_dev->modes = INDIO_DIRECT_MODE;

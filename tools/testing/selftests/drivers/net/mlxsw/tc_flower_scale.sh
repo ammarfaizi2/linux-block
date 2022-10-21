@@ -77,6 +77,7 @@ tc_flower_rules_create()
 			filter add dev $h2 ingress \
 				prot ipv6 \
 				pref 1000 \
+				handle 42$i \
 				flower $tcflags dst_ip $(tc_flower_addr $i) \
 				action drop
 		EOF
@@ -98,11 +99,7 @@ __tc_flower_test()
 			jq -r '[ .[] | select(.kind == "flower") |
 			.options | .in_hw ]' | jq .[] | wc -l)
 	[[ $((offload_count - 1)) -eq $count ]]
-	if [[ $should_fail -eq 0 ]]; then
-		check_err $? "Offload mismatch"
-	else
-		check_err_fail $should_fail $? "Offload more than expacted"
-	fi
+	check_err_fail $should_fail $? "Attempt to offload $count rules (actual result $((offload_count - 1)))"
 }
 
 tc_flower_test()
@@ -124,4 +121,20 @@ tc_flower_test()
 
 	tcflags="skip_sw"
 	__tc_flower_test $count $should_fail
+}
+
+tc_flower_traffic_test()
+{
+	local count=$1; shift
+	local i;
+
+	for ((i = count - 1; i > 0; i /= 2)); do
+		$MZ -6 $h1 -c 1 -d 20msec -p 100 -a own -b $(mac_get $h2) \
+		    -A $(tc_flower_addr 0) -B $(tc_flower_addr $i) \
+		    -q -t udp sp=54321,dp=12345
+	done
+	for ((i = count - 1; i > 0; i /= 2)); do
+		tc_check_packets "dev $h2 ingress" 42$i 1
+		check_err $? "Traffic not seen at rule #$i"
+	done
 }

@@ -450,8 +450,8 @@ static int enforce_temp_range(struct device *dev, int trip_temp)
 
 	temp = clamp_val(trip_temp, min_low_temp, max_high_temp);
 	if (temp != trip_temp)
-		dev_info(dev, "soctherm: trip temperature %d forced to %d\n",
-			 trip_temp, temp);
+		dev_dbg(dev, "soctherm: trip temperature %d forced to %d\n",
+			trip_temp, temp);
 	return temp;
 }
 
@@ -633,37 +633,6 @@ static int tegra_thermctl_set_trip_temp(void *data, int trip, int temp)
 	return 0;
 }
 
-static int tegra_thermctl_get_trend(void *data, int trip,
-				    enum thermal_trend *trend)
-{
-	struct tegra_thermctl_zone *zone = data;
-	struct thermal_zone_device *tz = zone->tz;
-	int trip_temp, temp, last_temp, ret;
-
-	if (!tz)
-		return -EINVAL;
-
-	ret = tz->ops->get_trip_temp(zone->tz, trip, &trip_temp);
-	if (ret)
-		return ret;
-
-	temp = READ_ONCE(tz->temperature);
-	last_temp = READ_ONCE(tz->last_temperature);
-
-	if (temp > trip_temp) {
-		if (temp >= last_temp)
-			*trend = THERMAL_TREND_RAISING;
-		else
-			*trend = THERMAL_TREND_STABLE;
-	} else if (temp < trip_temp) {
-		*trend = THERMAL_TREND_DROPPING;
-	} else {
-		*trend = THERMAL_TREND_STABLE;
-	}
-
-	return 0;
-}
-
 static void thermal_irq_enable(struct tegra_thermctl_zone *zn)
 {
 	u32 r;
@@ -716,7 +685,6 @@ static int tegra_thermctl_set_trips(void *data, int lo, int hi)
 static const struct thermal_zone_of_device_ops tegra_of_thermal_ops = {
 	.get_temp = tegra_thermctl_get_temp,
 	.set_trip_temp = tegra_thermctl_set_trip_temp,
-	.get_trend = tegra_thermctl_get_trend,
 	.set_trips = tegra_thermctl_set_trips,
 };
 
@@ -2118,7 +2086,6 @@ static int tegra_soctherm_probe(struct platform_device *pdev)
 	struct tegra_soctherm *tegra;
 	struct thermal_zone_device *z;
 	struct tsensor_shared_calib shared_calib;
-	struct resource *res;
 	struct tegra_soctherm_soc *soc;
 	unsigned int i;
 	int err;
@@ -2140,26 +2107,20 @@ static int tegra_soctherm_probe(struct platform_device *pdev)
 
 	tegra->soc = soc;
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
-					   "soctherm-reg");
-	tegra->regs = devm_ioremap_resource(&pdev->dev, res);
+	tegra->regs = devm_platform_ioremap_resource_byname(pdev, "soctherm-reg");
 	if (IS_ERR(tegra->regs)) {
 		dev_err(&pdev->dev, "can't get soctherm registers");
 		return PTR_ERR(tegra->regs);
 	}
 
 	if (!tegra->soc->use_ccroc) {
-		res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
-						   "car-reg");
-		tegra->clk_regs = devm_ioremap_resource(&pdev->dev, res);
+		tegra->clk_regs = devm_platform_ioremap_resource_byname(pdev, "car-reg");
 		if (IS_ERR(tegra->clk_regs)) {
 			dev_err(&pdev->dev, "can't get car clk registers");
 			return PTR_ERR(tegra->clk_regs);
 		}
 	} else {
-		res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
-						   "ccroc-reg");
-		tegra->ccroc_regs = devm_ioremap_resource(&pdev->dev, res);
+		tegra->ccroc_regs = devm_platform_ioremap_resource_byname(pdev, "ccroc-reg");
 		if (IS_ERR(tegra->ccroc_regs)) {
 			dev_err(&pdev->dev, "can't get ccroc registers");
 			return PTR_ERR(tegra->ccroc_regs);
@@ -2195,7 +2156,7 @@ static int tegra_soctherm_probe(struct platform_device *pdev)
 	if (err)
 		return err;
 
-	/* calculate tsensor calibaration data */
+	/* calculate tsensor calibration data */
 	for (i = 0; i < soc->num_tsensors; ++i) {
 		err = tegra_calc_tsensor_calib(&soc->tsensors[i],
 					       &shared_calib,

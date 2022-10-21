@@ -16,6 +16,8 @@
 #include <linux/wait.h>
 #include <linux/reboot.h>
 #include <linux/mutex.h>
+#include <linux/list.h>
+#include <linux/smc.h>
 #include <net/tcp.h>
 #include <net/sock.h>
 #include <rdma/ib_verbs.h>
@@ -30,13 +32,15 @@
 #include "smc_cdc.h"
 #include "smc_close.h"
 #include "smc_ism.h"
+#include "smc_netlink.h"
+#include "smc_stats.h"
+#include "smc_tracepoint.h"
 
 #define SMC_LGR_NUM_INCR		256
 #define SMC_LGR_FREE_DELAY_SERV		(600 * HZ)
 #define SMC_LGR_FREE_DELAY_CLNT		(SMC_LGR_FREE_DELAY_SERV + 10 * HZ)
-#define SMC_LGR_FREE_DELAY_FAST		(8 * HZ)
 
-static struct smc_lgr_list smc_lgr_list = {	/* established link groups */
+struct smc_lgr_list smc_lgr_list = {	/* established link groups */
 	.lock = __SPIN_LOCK_UNLOCKED(smc_lgr_list.lock),
 	.list = LIST_HEAD_INIT(smc_lgr_list.list),
 	.num = 0,
@@ -64,26 +68,27 @@ static inline struct list_head *smc_lgr_list_head(struct smc_link_group *lgr,
 	return &smc_lgr_list.list;
 }
 
+static void smc_ibdev_cnt_inc(struct smc_link *lnk)
+{
+	atomic_inc(&lnk->smcibdev->lnk_cnt_by_port[lnk->ibport - 1]);
+}
+
+static void smc_ibdev_cnt_dec(struct smc_link *lnk)
+{
+	atomic_dec(&lnk->smcibdev->lnk_cnt_by_port[lnk->ibport - 1]);
+}
+
 static void smc_lgr_schedule_free_work(struct smc_link_group *lgr)
 {
 	/* client link group creation always follows the server link group
 	 * creation. For client use a somewhat higher removal delay time,
 	 * otherwise there is a risk of out-of-sync link groups.
 	 */
-	if (!lgr->freeing && !lgr->freefast) {
+	if (!lgr->freeing) {
 		mod_delayed_work(system_wq, &lgr->free_work,
 				 (!lgr->is_smcd && lgr->role == SMC_CLNT) ?
 						SMC_LGR_FREE_DELAY_CLNT :
 						SMC_LGR_FREE_DELAY_SERV);
-	}
-}
-
-void smc_lgr_schedule_free_work_fast(struct smc_link_group *lgr)
-{
-	if (!lgr->freeing && !lgr->freefast) {
-		lgr->freefast = 1;
-		mod_delayed_work(system_wq, &lgr->free_work,
-				 SMC_LGR_FREE_DELAY_FAST);
 	}
 }
 
@@ -149,6 +154,7 @@ static int smcr_lgr_conn_assign_link(struct smc_connection *conn, bool first)
 	}
 	if (!conn->lnk)
 		return SMC_CLC_DECL_NOACTLINK;
+	atomic_inc(&conn->lnk->conn_cnt);
 	return 0;
 }
 
@@ -165,8 +171,10 @@ static int smc_lgr_register_conn(struct smc_connection *conn, bool first)
 
 	if (!conn->lgr->is_smcd) {
 		rc = smcr_lgr_conn_assign_link(conn, first);
-		if (rc)
+		if (rc) {
+			conn->lgr = NULL;
 			return rc;
+		}
 	}
 	/* find a new alert_token_local value not yet used by some connection
 	 * in this link group
@@ -190,6 +198,8 @@ static void __smc_lgr_unregister_conn(struct smc_connection *conn)
 	struct smc_link_group *lgr = conn->lgr;
 
 	rb_erase(&conn->alert_node, &lgr->conns_all);
+	if (conn->lnk)
+		atomic_dec(&conn->lnk->conn_cnt);
 	lgr->conns_num--;
 	conn->alert_token_local = 0;
 	sock_put(&smc->sk); /* sock_hold in smc_lgr_register_conn() */
@@ -201,33 +211,437 @@ static void smc_lgr_unregister_conn(struct smc_connection *conn)
 {
 	struct smc_link_group *lgr = conn->lgr;
 
-	if (!lgr)
+	if (!smc_conn_lgr_valid(conn))
 		return;
 	write_lock_bh(&lgr->conns_lock);
 	if (conn->alert_token_local) {
 		__smc_lgr_unregister_conn(conn);
 	}
 	write_unlock_bh(&lgr->conns_lock);
-	conn->lgr = NULL;
 }
 
-void smc_lgr_cleanup_early(struct smc_connection *conn)
+int smc_nl_get_sys_info(struct sk_buff *skb, struct netlink_callback *cb)
 {
-	struct smc_link_group *lgr = conn->lgr;
-	struct list_head *lgr_list;
+	struct smc_nl_dmp_ctx *cb_ctx = smc_nl_dmp_ctx(cb);
+	char hostname[SMC_MAX_HOSTNAME_LEN + 1];
+	char smc_seid[SMC_MAX_EID_LEN + 1];
+	struct nlattr *attrs;
+	u8 *seid = NULL;
+	u8 *host = NULL;
+	void *nlh;
+
+	nlh = genlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
+			  &smc_gen_nl_family, NLM_F_MULTI,
+			  SMC_NETLINK_GET_SYS_INFO);
+	if (!nlh)
+		goto errmsg;
+	if (cb_ctx->pos[0])
+		goto errout;
+	attrs = nla_nest_start(skb, SMC_GEN_SYS_INFO);
+	if (!attrs)
+		goto errout;
+	if (nla_put_u8(skb, SMC_NLA_SYS_VER, SMC_V2))
+		goto errattr;
+	if (nla_put_u8(skb, SMC_NLA_SYS_REL, SMC_RELEASE))
+		goto errattr;
+	if (nla_put_u8(skb, SMC_NLA_SYS_IS_ISM_V2, smc_ism_is_v2_capable()))
+		goto errattr;
+	if (nla_put_u8(skb, SMC_NLA_SYS_IS_SMCR_V2, true))
+		goto errattr;
+	smc_clc_get_hostname(&host);
+	if (host) {
+		memcpy(hostname, host, SMC_MAX_HOSTNAME_LEN);
+		hostname[SMC_MAX_HOSTNAME_LEN] = 0;
+		if (nla_put_string(skb, SMC_NLA_SYS_LOCAL_HOST, hostname))
+			goto errattr;
+	}
+	if (smc_ism_is_v2_capable()) {
+		smc_ism_get_system_eid(&seid);
+		memcpy(smc_seid, seid, SMC_MAX_EID_LEN);
+		smc_seid[SMC_MAX_EID_LEN] = 0;
+		if (nla_put_string(skb, SMC_NLA_SYS_SEID, smc_seid))
+			goto errattr;
+	}
+	nla_nest_end(skb, attrs);
+	genlmsg_end(skb, nlh);
+	cb_ctx->pos[0] = 1;
+	return skb->len;
+
+errattr:
+	nla_nest_cancel(skb, attrs);
+errout:
+	genlmsg_cancel(skb, nlh);
+errmsg:
+	return skb->len;
+}
+
+/* Fill SMC_NLA_LGR_D_V2_COMMON/SMC_NLA_LGR_R_V2_COMMON nested attributes */
+static int smc_nl_fill_lgr_v2_common(struct smc_link_group *lgr,
+				     struct sk_buff *skb,
+				     struct netlink_callback *cb,
+				     struct nlattr *v2_attrs)
+{
+	char smc_host[SMC_MAX_HOSTNAME_LEN + 1];
+	char smc_eid[SMC_MAX_EID_LEN + 1];
+
+	if (nla_put_u8(skb, SMC_NLA_LGR_V2_VER, lgr->smc_version))
+		goto errv2attr;
+	if (nla_put_u8(skb, SMC_NLA_LGR_V2_REL, lgr->peer_smc_release))
+		goto errv2attr;
+	if (nla_put_u8(skb, SMC_NLA_LGR_V2_OS, lgr->peer_os))
+		goto errv2attr;
+	memcpy(smc_host, lgr->peer_hostname, SMC_MAX_HOSTNAME_LEN);
+	smc_host[SMC_MAX_HOSTNAME_LEN] = 0;
+	if (nla_put_string(skb, SMC_NLA_LGR_V2_PEER_HOST, smc_host))
+		goto errv2attr;
+	memcpy(smc_eid, lgr->negotiated_eid, SMC_MAX_EID_LEN);
+	smc_eid[SMC_MAX_EID_LEN] = 0;
+	if (nla_put_string(skb, SMC_NLA_LGR_V2_NEG_EID, smc_eid))
+		goto errv2attr;
+
+	nla_nest_end(skb, v2_attrs);
+	return 0;
+
+errv2attr:
+	nla_nest_cancel(skb, v2_attrs);
+	return -EMSGSIZE;
+}
+
+static int smc_nl_fill_smcr_lgr_v2(struct smc_link_group *lgr,
+				   struct sk_buff *skb,
+				   struct netlink_callback *cb)
+{
+	struct nlattr *v2_attrs;
+
+	v2_attrs = nla_nest_start(skb, SMC_NLA_LGR_R_V2);
+	if (!v2_attrs)
+		goto errattr;
+	if (nla_put_u8(skb, SMC_NLA_LGR_R_V2_DIRECT, !lgr->uses_gateway))
+		goto errv2attr;
+
+	nla_nest_end(skb, v2_attrs);
+	return 0;
+
+errv2attr:
+	nla_nest_cancel(skb, v2_attrs);
+errattr:
+	return -EMSGSIZE;
+}
+
+static int smc_nl_fill_lgr(struct smc_link_group *lgr,
+			   struct sk_buff *skb,
+			   struct netlink_callback *cb)
+{
+	char smc_target[SMC_MAX_PNETID_LEN + 1];
+	struct nlattr *attrs, *v2_attrs;
+
+	attrs = nla_nest_start(skb, SMC_GEN_LGR_SMCR);
+	if (!attrs)
+		goto errout;
+
+	if (nla_put_u32(skb, SMC_NLA_LGR_R_ID, *((u32 *)&lgr->id)))
+		goto errattr;
+	if (nla_put_u32(skb, SMC_NLA_LGR_R_CONNS_NUM, lgr->conns_num))
+		goto errattr;
+	if (nla_put_u8(skb, SMC_NLA_LGR_R_ROLE, lgr->role))
+		goto errattr;
+	if (nla_put_u8(skb, SMC_NLA_LGR_R_TYPE, lgr->type))
+		goto errattr;
+	if (nla_put_u8(skb, SMC_NLA_LGR_R_BUF_TYPE, lgr->buf_type))
+		goto errattr;
+	if (nla_put_u8(skb, SMC_NLA_LGR_R_VLAN_ID, lgr->vlan_id))
+		goto errattr;
+	if (nla_put_u64_64bit(skb, SMC_NLA_LGR_R_NET_COOKIE,
+			      lgr->net->net_cookie, SMC_NLA_LGR_R_PAD))
+		goto errattr;
+	memcpy(smc_target, lgr->pnet_id, SMC_MAX_PNETID_LEN);
+	smc_target[SMC_MAX_PNETID_LEN] = 0;
+	if (nla_put_string(skb, SMC_NLA_LGR_R_PNETID, smc_target))
+		goto errattr;
+	if (lgr->smc_version > SMC_V1) {
+		v2_attrs = nla_nest_start(skb, SMC_NLA_LGR_R_V2_COMMON);
+		if (!v2_attrs)
+			goto errattr;
+		if (smc_nl_fill_lgr_v2_common(lgr, skb, cb, v2_attrs))
+			goto errattr;
+		if (smc_nl_fill_smcr_lgr_v2(lgr, skb, cb))
+			goto errattr;
+	}
+
+	nla_nest_end(skb, attrs);
+	return 0;
+errattr:
+	nla_nest_cancel(skb, attrs);
+errout:
+	return -EMSGSIZE;
+}
+
+static int smc_nl_fill_lgr_link(struct smc_link_group *lgr,
+				struct smc_link *link,
+				struct sk_buff *skb,
+				struct netlink_callback *cb)
+{
+	char smc_ibname[IB_DEVICE_NAME_MAX];
+	u8 smc_gid_target[41];
+	struct nlattr *attrs;
+	u32 link_uid = 0;
+	void *nlh;
+
+	nlh = genlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
+			  &smc_gen_nl_family, NLM_F_MULTI,
+			  SMC_NETLINK_GET_LINK_SMCR);
+	if (!nlh)
+		goto errmsg;
+
+	attrs = nla_nest_start(skb, SMC_GEN_LINK_SMCR);
+	if (!attrs)
+		goto errout;
+
+	if (nla_put_u8(skb, SMC_NLA_LINK_ID, link->link_id))
+		goto errattr;
+	if (nla_put_u32(skb, SMC_NLA_LINK_STATE, link->state))
+		goto errattr;
+	if (nla_put_u32(skb, SMC_NLA_LINK_CONN_CNT,
+			atomic_read(&link->conn_cnt)))
+		goto errattr;
+	if (nla_put_u8(skb, SMC_NLA_LINK_IB_PORT, link->ibport))
+		goto errattr;
+	if (nla_put_u32(skb, SMC_NLA_LINK_NET_DEV, link->ndev_ifidx))
+		goto errattr;
+	snprintf(smc_ibname, sizeof(smc_ibname), "%s", link->ibname);
+	if (nla_put_string(skb, SMC_NLA_LINK_IB_DEV, smc_ibname))
+		goto errattr;
+	memcpy(&link_uid, link->link_uid, sizeof(link_uid));
+	if (nla_put_u32(skb, SMC_NLA_LINK_UID, link_uid))
+		goto errattr;
+	memcpy(&link_uid, link->peer_link_uid, sizeof(link_uid));
+	if (nla_put_u32(skb, SMC_NLA_LINK_PEER_UID, link_uid))
+		goto errattr;
+	memset(smc_gid_target, 0, sizeof(smc_gid_target));
+	smc_gid_be16_convert(smc_gid_target, link->gid);
+	if (nla_put_string(skb, SMC_NLA_LINK_GID, smc_gid_target))
+		goto errattr;
+	memset(smc_gid_target, 0, sizeof(smc_gid_target));
+	smc_gid_be16_convert(smc_gid_target, link->peer_gid);
+	if (nla_put_string(skb, SMC_NLA_LINK_PEER_GID, smc_gid_target))
+		goto errattr;
+
+	nla_nest_end(skb, attrs);
+	genlmsg_end(skb, nlh);
+	return 0;
+errattr:
+	nla_nest_cancel(skb, attrs);
+errout:
+	genlmsg_cancel(skb, nlh);
+errmsg:
+	return -EMSGSIZE;
+}
+
+static int smc_nl_handle_lgr(struct smc_link_group *lgr,
+			     struct sk_buff *skb,
+			     struct netlink_callback *cb,
+			     bool list_links)
+{
+	void *nlh;
+	int i;
+
+	nlh = genlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
+			  &smc_gen_nl_family, NLM_F_MULTI,
+			  SMC_NETLINK_GET_LGR_SMCR);
+	if (!nlh)
+		goto errmsg;
+	if (smc_nl_fill_lgr(lgr, skb, cb))
+		goto errout;
+
+	genlmsg_end(skb, nlh);
+	if (!list_links)
+		goto out;
+	for (i = 0; i < SMC_LINKS_PER_LGR_MAX; i++) {
+		if (!smc_link_usable(&lgr->lnk[i]))
+			continue;
+		if (smc_nl_fill_lgr_link(lgr, &lgr->lnk[i], skb, cb))
+			goto errout;
+	}
+out:
+	return 0;
+
+errout:
+	genlmsg_cancel(skb, nlh);
+errmsg:
+	return -EMSGSIZE;
+}
+
+static void smc_nl_fill_lgr_list(struct smc_lgr_list *smc_lgr,
+				 struct sk_buff *skb,
+				 struct netlink_callback *cb,
+				 bool list_links)
+{
+	struct smc_nl_dmp_ctx *cb_ctx = smc_nl_dmp_ctx(cb);
+	struct smc_link_group *lgr;
+	int snum = cb_ctx->pos[0];
+	int num = 0;
+
+	spin_lock_bh(&smc_lgr->lock);
+	list_for_each_entry(lgr, &smc_lgr->list, list) {
+		if (num < snum)
+			goto next;
+		if (smc_nl_handle_lgr(lgr, skb, cb, list_links))
+			goto errout;
+next:
+		num++;
+	}
+errout:
+	spin_unlock_bh(&smc_lgr->lock);
+	cb_ctx->pos[0] = num;
+}
+
+static int smc_nl_fill_smcd_lgr(struct smc_link_group *lgr,
+				struct sk_buff *skb,
+				struct netlink_callback *cb)
+{
+	char smc_pnet[SMC_MAX_PNETID_LEN + 1];
+	struct nlattr *attrs;
+	void *nlh;
+
+	nlh = genlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
+			  &smc_gen_nl_family, NLM_F_MULTI,
+			  SMC_NETLINK_GET_LGR_SMCD);
+	if (!nlh)
+		goto errmsg;
+
+	attrs = nla_nest_start(skb, SMC_GEN_LGR_SMCD);
+	if (!attrs)
+		goto errout;
+
+	if (nla_put_u32(skb, SMC_NLA_LGR_D_ID, *((u32 *)&lgr->id)))
+		goto errattr;
+	if (nla_put_u64_64bit(skb, SMC_NLA_LGR_D_GID, lgr->smcd->local_gid,
+			      SMC_NLA_LGR_D_PAD))
+		goto errattr;
+	if (nla_put_u64_64bit(skb, SMC_NLA_LGR_D_PEER_GID, lgr->peer_gid,
+			      SMC_NLA_LGR_D_PAD))
+		goto errattr;
+	if (nla_put_u8(skb, SMC_NLA_LGR_D_VLAN_ID, lgr->vlan_id))
+		goto errattr;
+	if (nla_put_u32(skb, SMC_NLA_LGR_D_CONNS_NUM, lgr->conns_num))
+		goto errattr;
+	if (nla_put_u32(skb, SMC_NLA_LGR_D_CHID, smc_ism_get_chid(lgr->smcd)))
+		goto errattr;
+	memcpy(smc_pnet, lgr->smcd->pnetid, SMC_MAX_PNETID_LEN);
+	smc_pnet[SMC_MAX_PNETID_LEN] = 0;
+	if (nla_put_string(skb, SMC_NLA_LGR_D_PNETID, smc_pnet))
+		goto errattr;
+	if (lgr->smc_version > SMC_V1) {
+		struct nlattr *v2_attrs;
+
+		v2_attrs = nla_nest_start(skb, SMC_NLA_LGR_D_V2_COMMON);
+		if (!v2_attrs)
+			goto errattr;
+		if (smc_nl_fill_lgr_v2_common(lgr, skb, cb, v2_attrs))
+			goto errattr;
+	}
+	nla_nest_end(skb, attrs);
+	genlmsg_end(skb, nlh);
+	return 0;
+
+errattr:
+	nla_nest_cancel(skb, attrs);
+errout:
+	genlmsg_cancel(skb, nlh);
+errmsg:
+	return -EMSGSIZE;
+}
+
+static int smc_nl_handle_smcd_lgr(struct smcd_dev *dev,
+				  struct sk_buff *skb,
+				  struct netlink_callback *cb)
+{
+	struct smc_nl_dmp_ctx *cb_ctx = smc_nl_dmp_ctx(cb);
+	struct smc_link_group *lgr;
+	int snum = cb_ctx->pos[1];
+	int rc = 0, num = 0;
+
+	spin_lock_bh(&dev->lgr_lock);
+	list_for_each_entry(lgr, &dev->lgr_list, list) {
+		if (!lgr->is_smcd)
+			continue;
+		if (num < snum)
+			goto next;
+		rc = smc_nl_fill_smcd_lgr(lgr, skb, cb);
+		if (rc)
+			goto errout;
+next:
+		num++;
+	}
+errout:
+	spin_unlock_bh(&dev->lgr_lock);
+	cb_ctx->pos[1] = num;
+	return rc;
+}
+
+static int smc_nl_fill_smcd_dev(struct smcd_dev_list *dev_list,
+				struct sk_buff *skb,
+				struct netlink_callback *cb)
+{
+	struct smc_nl_dmp_ctx *cb_ctx = smc_nl_dmp_ctx(cb);
+	struct smcd_dev *smcd_dev;
+	int snum = cb_ctx->pos[0];
+	int rc = 0, num = 0;
+
+	mutex_lock(&dev_list->mutex);
+	list_for_each_entry(smcd_dev, &dev_list->list, list) {
+		if (list_empty(&smcd_dev->lgr_list))
+			continue;
+		if (num < snum)
+			goto next;
+		rc = smc_nl_handle_smcd_lgr(smcd_dev, skb, cb);
+		if (rc)
+			goto errout;
+next:
+		num++;
+	}
+errout:
+	mutex_unlock(&dev_list->mutex);
+	cb_ctx->pos[0] = num;
+	return rc;
+}
+
+int smcr_nl_get_lgr(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	bool list_links = false;
+
+	smc_nl_fill_lgr_list(&smc_lgr_list, skb, cb, list_links);
+	return skb->len;
+}
+
+int smcr_nl_get_link(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	bool list_links = true;
+
+	smc_nl_fill_lgr_list(&smc_lgr_list, skb, cb, list_links);
+	return skb->len;
+}
+
+int smcd_nl_get_lgr(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	smc_nl_fill_smcd_dev(&smcd_dev_list, skb, cb);
+	return skb->len;
+}
+
+void smc_lgr_cleanup_early(struct smc_link_group *lgr)
+{
 	spinlock_t *lgr_lock;
 
 	if (!lgr)
 		return;
 
-	smc_conn_free(conn);
-	lgr_list = smc_lgr_list_head(lgr, &lgr_lock);
+	smc_lgr_list_head(lgr, &lgr_lock);
 	spin_lock_bh(lgr_lock);
 	/* do not use this link group for new connections */
-	if (!list_empty(lgr_list))
-		list_del_init(lgr_list);
+	if (!list_empty(&lgr->list))
+		list_del_init(&lgr->list);
 	spin_unlock_bh(lgr_lock);
-	smc_lgr_schedule_free_work_fast(lgr);
+	__smc_lgr_terminate(lgr, true);
 }
 
 static void smcr_lgr_link_deactivate_all(struct smc_link_group *lgr)
@@ -237,7 +651,7 @@ static void smcr_lgr_link_deactivate_all(struct smc_link_group *lgr)
 	for (i = 0; i < SMC_LINKS_PER_LGR_MAX; i++) {
 		struct smc_link *lnk = &lgr->lnk[i];
 
-		if (smc_link_usable(lnk))
+		if (smc_link_sendable(lnk))
 			lnk->state = SMC_LNK_INACTIVE;
 	}
 	wake_up_all(&lgr->llc_msg_waiter);
@@ -297,37 +711,60 @@ static u8 smcr_next_link_id(struct smc_link_group *lgr)
 	int i;
 
 	while (1) {
+again:
 		link_id = ++lgr->next_link_id;
 		if (!link_id)	/* skip zero as link_id */
 			link_id = ++lgr->next_link_id;
 		for (i = 0; i < SMC_LINKS_PER_LGR_MAX; i++) {
 			if (smc_link_usable(&lgr->lnk[i]) &&
 			    lgr->lnk[i].link_id == link_id)
-				continue;
+				goto again;
 		}
 		break;
 	}
 	return link_id;
 }
 
+static void smcr_copy_dev_info_to_link(struct smc_link *link)
+{
+	struct smc_ib_device *smcibdev = link->smcibdev;
+
+	snprintf(link->ibname, sizeof(link->ibname), "%s",
+		 smcibdev->ibdev->name);
+	link->ndev_ifidx = smcibdev->ndev_ifidx[link->ibport - 1];
+}
+
 int smcr_link_init(struct smc_link_group *lgr, struct smc_link *lnk,
 		   u8 link_idx, struct smc_init_info *ini)
 {
+	struct smc_ib_device *smcibdev;
 	u8 rndvec[3];
 	int rc;
 
-	get_device(&ini->ib_dev->ibdev->dev);
-	atomic_inc(&ini->ib_dev->lnk_cnt);
+	if (lgr->smc_version == SMC_V2) {
+		lnk->smcibdev = ini->smcrv2.ib_dev_v2;
+		lnk->ibport = ini->smcrv2.ib_port_v2;
+	} else {
+		lnk->smcibdev = ini->ib_dev;
+		lnk->ibport = ini->ib_port;
+	}
+	get_device(&lnk->smcibdev->ibdev->dev);
+	atomic_inc(&lnk->smcibdev->lnk_cnt);
+	refcount_set(&lnk->refcnt, 1); /* link refcnt is set to 1 */
+	lnk->clearing = 0;
+	lnk->path_mtu = lnk->smcibdev->pattr[lnk->ibport - 1].active_mtu;
 	lnk->link_id = smcr_next_link_id(lgr);
 	lnk->lgr = lgr;
+	smc_lgr_hold(lgr); /* lgr_put in smcr_link_clear() */
 	lnk->link_idx = link_idx;
-	lnk->smcibdev = ini->ib_dev;
-	lnk->ibport = ini->ib_port;
-	lnk->path_mtu = ini->ib_dev->pattr[ini->ib_port - 1].active_mtu;
+	lnk->wr_rx_id_compl = 0;
+	smc_ibdev_cnt_inc(lnk);
+	smcr_copy_dev_info_to_link(lnk);
+	atomic_set(&lnk->conn_cnt, 0);
 	smc_llc_link_set_uid(lnk);
 	INIT_WORK(&lnk->link_down_wrk, smc_link_down_work);
-	if (!ini->ib_dev->initialized) {
-		rc = (int)smc_ib_setup_per_ibdev(ini->ib_dev);
+	if (!lnk->smcibdev->initialized) {
+		rc = (int)smc_ib_setup_per_ibdev(lnk->smcibdev);
 		if (rc)
 			goto out;
 	}
@@ -335,7 +772,9 @@ int smcr_link_init(struct smc_link_group *lgr, struct smc_link *lnk,
 	lnk->psn_initial = rndvec[0] + (rndvec[1] << 8) +
 		(rndvec[2] << 16);
 	rc = smc_ib_determine_gid(lnk->smcibdev, lnk->ibport,
-				  ini->vlan_id, lnk->gid, &lnk->sgid_index);
+				  ini->vlan_id, lnk->gid, &lnk->sgid_index,
+				  lgr->smc_version == SMC_V2 ?
+						  &ini->smcrv2 : NULL);
 	if (rc)
 		goto out;
 	rc = smc_llc_link_init(lnk);
@@ -365,11 +804,14 @@ free_link_mem:
 clear_llc_lnk:
 	smc_llc_link_clear(lnk, false);
 out:
-	put_device(&ini->ib_dev->ibdev->dev);
+	smc_ibdev_cnt_dec(lnk);
+	put_device(&lnk->smcibdev->ibdev->dev);
+	smcibdev = lnk->smcibdev;
 	memset(lnk, 0, sizeof(struct smc_link));
 	lnk->state = SMC_LNK_UNUSED;
-	if (!atomic_dec_return(&ini->ib_dev->lnk_cnt))
-		wake_up(&ini->ib_dev->lnks_deleted);
+	if (!atomic_dec_return(&smcibdev->lnk_cnt))
+		wake_up(&smcibdev->lnks_deleted);
+	smc_lgr_put(lgr); /* lgr_hold above */
 	return rc;
 }
 
@@ -385,7 +827,8 @@ static int smc_lgr_create(struct smc_sock *smc, struct smc_init_info *ini)
 	int i;
 
 	if (ini->is_smcd && ini->vlan_id) {
-		if (smc_ism_get_vlan(ini->ism_dev, ini->vlan_id)) {
+		if (smc_ism_get_vlan(ini->ism_dev[ini->ism_selected],
+				     ini->vlan_id)) {
 			rc = SMC_CLC_DECL_ISMVLANERR;
 			goto out;
 		}
@@ -396,12 +839,18 @@ static int smc_lgr_create(struct smc_sock *smc, struct smc_init_info *ini)
 		rc = SMC_CLC_DECL_MEM;
 		goto ism_put_vlan;
 	}
+	lgr->tx_wq = alloc_workqueue("smc_tx_wq-%*phN", 0, 0,
+				     SMC_LGR_ID_SIZE, &lgr->id);
+	if (!lgr->tx_wq) {
+		rc = -ENOMEM;
+		goto free_lgr;
+	}
 	lgr->is_smcd = ini->is_smcd;
 	lgr->sync_err = 0;
 	lgr->terminating = 0;
-	lgr->freefast = 0;
 	lgr->freeing = 0;
 	lgr->vlan_id = ini->vlan_id;
+	refcount_set(&lgr->refcnt, 1); /* set lgr refcnt to 1 */
 	mutex_init(&lgr->sndbufs_lock);
 	mutex_init(&lgr->rmbs_lock);
 	rwlock_init(&lgr->conns_lock);
@@ -417,29 +866,51 @@ static int smc_lgr_create(struct smc_sock *smc, struct smc_init_info *ini)
 	lgr->conns_all = RB_ROOT;
 	if (ini->is_smcd) {
 		/* SMC-D specific settings */
-		get_device(&ini->ism_dev->dev);
-		lgr->peer_gid = ini->ism_gid;
-		lgr->smcd = ini->ism_dev;
-		lgr_list = &ini->ism_dev->lgr_list;
+		get_device(&ini->ism_dev[ini->ism_selected]->dev);
+		lgr->peer_gid = ini->ism_peer_gid[ini->ism_selected];
+		lgr->smcd = ini->ism_dev[ini->ism_selected];
+		lgr_list = &ini->ism_dev[ini->ism_selected]->lgr_list;
 		lgr_lock = &lgr->smcd->lgr_lock;
+		lgr->smc_version = ini->smcd_version;
 		lgr->peer_shutdown = 0;
-		atomic_inc(&ini->ism_dev->lgr_cnt);
+		atomic_inc(&ini->ism_dev[ini->ism_selected]->lgr_cnt);
 	} else {
 		/* SMC-R specific settings */
+		struct smc_ib_device *ibdev;
+		int ibport;
+
 		lgr->role = smc->listen_smc ? SMC_SERV : SMC_CLNT;
-		memcpy(lgr->peer_systemid, ini->ib_lcl->id_for_peer,
+		lgr->smc_version = ini->smcr_version;
+		memcpy(lgr->peer_systemid, ini->peer_systemid,
 		       SMC_SYSTEMID_LEN);
-		memcpy(lgr->pnet_id, ini->ib_dev->pnetid[ini->ib_port - 1],
+		if (lgr->smc_version == SMC_V2) {
+			ibdev = ini->smcrv2.ib_dev_v2;
+			ibport = ini->smcrv2.ib_port_v2;
+			lgr->saddr = ini->smcrv2.saddr;
+			lgr->uses_gateway = ini->smcrv2.uses_gateway;
+			memcpy(lgr->nexthop_mac, ini->smcrv2.nexthop_mac,
+			       ETH_ALEN);
+		} else {
+			ibdev = ini->ib_dev;
+			ibport = ini->ib_port;
+		}
+		memcpy(lgr->pnet_id, ibdev->pnetid[ibport - 1],
 		       SMC_MAX_PNETID_LEN);
+		if (smc_wr_alloc_lgr_mem(lgr))
+			goto free_wq;
 		smc_llc_lgr_init(lgr, smc);
 
 		link_idx = SMC_SINGLE_LINK;
 		lnk = &lgr->lnk[link_idx];
 		rc = smcr_link_init(lgr, lnk, link_idx, ini);
-		if (rc)
-			goto free_lgr;
+		if (rc) {
+			smc_wr_free_lgr_mem(lgr);
+			goto free_wq;
+		}
+		lgr->net = smc_ib_net(lnk->smcibdev);
 		lgr_list = &smc_lgr_list.list;
 		lgr_lock = &smc_lgr_list.lock;
+		lgr->buf_type = lgr->net->smc.sysctl_smcr_buf_type;
 		atomic_inc(&lgr_cnt);
 	}
 	smc->conn.lgr = lgr;
@@ -448,11 +919,13 @@ static int smc_lgr_create(struct smc_sock *smc, struct smc_init_info *ini)
 	spin_unlock_bh(lgr_lock);
 	return 0;
 
+free_wq:
+	destroy_workqueue(lgr->tx_wq);
 free_lgr:
 	kfree(lgr);
 ism_put_vlan:
 	if (ini->is_smcd && ini->vlan_id)
-		smc_ism_put_vlan(ini->ism_dev, ini->vlan_id);
+		smc_ism_put_vlan(ini->ism_dev[ini->ism_selected], ini->vlan_id);
 out:
 	if (rc < 0) {
 		if (rc == -ENOMEM)
@@ -517,7 +990,7 @@ static int smc_switch_cursor(struct smc_sock *smc, struct smc_cdc_tx_pend *pend,
 	    smc->sk.sk_state != SMC_CLOSED) {
 		rc = smcr_cdc_msg_send_validation(conn, pend, wr_buf);
 		if (!rc) {
-			schedule_delayed_work(&conn->tx_work, 0);
+			queue_delayed_work(conn->lgr->tx_wq, &conn->tx_work, 0);
 			smc->sk.sk_data_ready(&smc->sk);
 		}
 	} else {
@@ -525,6 +998,18 @@ static int smc_switch_cursor(struct smc_sock *smc, struct smc_cdc_tx_pend *pend,
 				   (struct smc_wr_tx_pend_priv *)pend);
 	}
 	return rc;
+}
+
+void smc_switch_link_and_count(struct smc_connection *conn,
+			       struct smc_link *to_lnk)
+{
+	atomic_dec(&conn->lnk->conn_cnt);
+	/* link_hold in smc_conn_create() */
+	smcr_link_put(conn->lnk);
+	conn->lnk = to_lnk;
+	atomic_inc(&conn->lnk->conn_cnt);
+	/* link_put in smc_conn_free() */
+	smcr_link_hold(conn->lnk);
 }
 
 struct smc_link *smc_switch_conns(struct smc_link_group *lgr,
@@ -551,7 +1036,7 @@ struct smc_link *smc_switch_conns(struct smc_link_group *lgr,
 		to_lnk = &lgr->lnk[i];
 		break;
 	}
-	if (!to_lnk) {
+	if (!to_lnk || !smc_wr_tx_link_hold(to_lnk)) {
 		smc_lgr_terminate_sched(lgr);
 		return NULL;
 	}
@@ -575,7 +1060,7 @@ again:
 		    smc->sk.sk_state == SMC_PEERABORTWAIT ||
 		    smc->sk.sk_state == SMC_PROCESSABORT) {
 			spin_lock_bh(&conn->send_lock);
-			conn->lnk = to_lnk;
+			smc_switch_link_and_count(conn, to_lnk);
 			spin_unlock_bh(&conn->send_lock);
 			continue;
 		}
@@ -583,65 +1068,84 @@ again:
 		read_unlock_bh(&lgr->conns_lock);
 		/* pre-fetch buffer outside of send_lock, might sleep */
 		rc = smc_cdc_get_free_slot(conn, to_lnk, &wr_buf, NULL, &pend);
-		if (rc) {
-			smcr_link_down_cond_sched(to_lnk);
-			return NULL;
-		}
+		if (rc)
+			goto err_out;
 		/* avoid race with smcr_tx_sndbuf_nonempty() */
 		spin_lock_bh(&conn->send_lock);
-		conn->lnk = to_lnk;
+		smc_switch_link_and_count(conn, to_lnk);
 		rc = smc_switch_cursor(smc, pend, wr_buf);
 		spin_unlock_bh(&conn->send_lock);
 		sock_put(&smc->sk);
-		if (rc) {
-			smcr_link_down_cond_sched(to_lnk);
-			return NULL;
-		}
+		if (rc)
+			goto err_out;
 		goto again;
 	}
 	read_unlock_bh(&lgr->conns_lock);
+	smc_wr_tx_link_put(to_lnk);
 	return to_lnk;
+
+err_out:
+	smcr_link_down_cond_sched(to_lnk);
+	smc_wr_tx_link_put(to_lnk);
+	return NULL;
 }
 
-static void smcr_buf_unuse(struct smc_buf_desc *rmb_desc,
+static void smcr_buf_unuse(struct smc_buf_desc *buf_desc, bool is_rmb,
 			   struct smc_link_group *lgr)
 {
+	struct mutex *lock;	/* lock buffer list */
 	int rc;
 
-	if (rmb_desc->is_conf_rkey && !list_empty(&lgr->list)) {
+	if (is_rmb && buf_desc->is_conf_rkey && !list_empty(&lgr->list)) {
 		/* unregister rmb with peer */
 		rc = smc_llc_flow_initiate(lgr, SMC_LLC_FLOW_RKEY);
 		if (!rc) {
 			/* protect against smc_llc_cli_rkey_exchange() */
 			mutex_lock(&lgr->llc_conf_mutex);
-			smc_llc_do_delete_rkey(lgr, rmb_desc);
-			rmb_desc->is_conf_rkey = false;
+			smc_llc_do_delete_rkey(lgr, buf_desc);
+			buf_desc->is_conf_rkey = false;
 			mutex_unlock(&lgr->llc_conf_mutex);
 			smc_llc_flow_stop(lgr, &lgr->llc_flow_lcl);
 		}
 	}
 
-	if (rmb_desc->is_reg_err) {
+	if (buf_desc->is_reg_err) {
 		/* buf registration failed, reuse not possible */
-		mutex_lock(&lgr->rmbs_lock);
-		list_del(&rmb_desc->list);
-		mutex_unlock(&lgr->rmbs_lock);
+		lock = is_rmb ? &lgr->rmbs_lock :
+				&lgr->sndbufs_lock;
+		mutex_lock(lock);
+		list_del(&buf_desc->list);
+		mutex_unlock(lock);
 
-		smc_buf_free(lgr, true, rmb_desc);
+		smc_buf_free(lgr, is_rmb, buf_desc);
 	} else {
-		rmb_desc->used = 0;
+		buf_desc->used = 0;
+		memset(buf_desc->cpu_addr, 0, buf_desc->len);
 	}
 }
 
 static void smc_buf_unuse(struct smc_connection *conn,
 			  struct smc_link_group *lgr)
 {
-	if (conn->sndbuf_desc)
-		conn->sndbuf_desc->used = 0;
-	if (conn->rmb_desc && lgr->is_smcd)
-		conn->rmb_desc->used = 0;
-	else if (conn->rmb_desc)
-		smcr_buf_unuse(conn->rmb_desc, lgr);
+	if (conn->sndbuf_desc) {
+		if (!lgr->is_smcd && conn->sndbuf_desc->is_vm) {
+			smcr_buf_unuse(conn->sndbuf_desc, false, lgr);
+		} else {
+			conn->sndbuf_desc->used = 0;
+			memset(conn->sndbuf_desc->cpu_addr, 0,
+			       conn->sndbuf_desc->len);
+		}
+	}
+	if (conn->rmb_desc) {
+		if (!lgr->is_smcd) {
+			smcr_buf_unuse(conn->rmb_desc, true, lgr);
+		} else {
+			conn->rmb_desc->used = 0;
+			memset(conn->rmb_desc->cpu_addr, 0,
+			       conn->rmb_desc->len +
+			       sizeof(struct smcd_cdc_msg));
+		}
+	}
 }
 
 /* remove a finished connection from its link group */
@@ -649,44 +1153,60 @@ void smc_conn_free(struct smc_connection *conn)
 {
 	struct smc_link_group *lgr = conn->lgr;
 
-	if (!lgr)
+	if (!lgr || conn->freed)
+		/* Connection has never been registered in a
+		 * link group, or has already been freed.
+		 */
 		return;
+
+	conn->freed = 1;
+	if (!smc_conn_lgr_valid(conn))
+		/* Connection has already unregistered from
+		 * link group.
+		 */
+		goto lgr_put;
+
 	if (lgr->is_smcd) {
 		if (!list_empty(&lgr->list))
 			smc_ism_unset_conn(conn);
 		tasklet_kill(&conn->rx_tsklet);
 	} else {
-		smc_cdc_tx_dismiss_slots(conn);
+		smc_cdc_wait_pend_tx_wr(conn);
 		if (current_work() != &conn->abort_work)
 			cancel_work_sync(&conn->abort_work);
 	}
 	if (!list_empty(&lgr->list)) {
-		smc_lgr_unregister_conn(conn);
 		smc_buf_unuse(conn, lgr); /* allow buffer reuse */
+		smc_lgr_unregister_conn(conn);
 	}
 
 	if (!lgr->conns_num)
 		smc_lgr_schedule_free_work(lgr);
+lgr_put:
+	if (!lgr->is_smcd)
+		smcr_link_put(conn->lnk); /* link_hold in smc_conn_create() */
+	smc_lgr_put(lgr); /* lgr_hold in smc_conn_create() */
 }
 
 /* unregister a link from a buf_desc */
 static void smcr_buf_unmap_link(struct smc_buf_desc *buf_desc, bool is_rmb,
 				struct smc_link *lnk)
 {
-	if (is_rmb)
+	if (is_rmb || buf_desc->is_vm)
 		buf_desc->is_reg_mr[lnk->link_idx] = false;
 	if (!buf_desc->is_map_ib[lnk->link_idx])
 		return;
-	if (is_rmb) {
-		if (buf_desc->mr_rx[lnk->link_idx]) {
-			smc_ib_put_memory_region(
-					buf_desc->mr_rx[lnk->link_idx]);
-			buf_desc->mr_rx[lnk->link_idx] = NULL;
-		}
-		smc_ib_buf_unmap_sg(lnk, buf_desc, DMA_FROM_DEVICE);
-	} else {
-		smc_ib_buf_unmap_sg(lnk, buf_desc, DMA_TO_DEVICE);
+
+	if ((is_rmb || buf_desc->is_vm) &&
+	    buf_desc->mr[lnk->link_idx]) {
+		smc_ib_put_memory_region(buf_desc->mr[lnk->link_idx]);
+		buf_desc->mr[lnk->link_idx] = NULL;
 	}
+	if (is_rmb)
+		smc_ib_buf_unmap_sg(lnk, buf_desc, DMA_FROM_DEVICE);
+	else
+		smc_ib_buf_unmap_sg(lnk, buf_desc, DMA_TO_DEVICE);
+
 	sg_free_table(&buf_desc->sgt[lnk->link_idx]);
 	buf_desc->is_map_ib[lnk->link_idx] = false;
 }
@@ -722,28 +1242,49 @@ static void smcr_rtoken_clear_link(struct smc_link *lnk)
 	}
 }
 
-/* must be called under lgr->llc_conf_mutex lock */
-void smcr_link_clear(struct smc_link *lnk, bool log)
+static void __smcr_link_clear(struct smc_link *lnk)
 {
+	struct smc_link_group *lgr = lnk->lgr;
 	struct smc_ib_device *smcibdev;
 
-	if (!lnk->lgr || lnk->state == SMC_LNK_UNUSED)
-		return;
-	lnk->peer_qpn = 0;
-	smc_llc_link_clear(lnk, log);
-	smcr_buf_unmap_lgr(lnk);
-	smcr_rtoken_clear_link(lnk);
-	smc_ib_modify_qp_reset(lnk);
-	smc_wr_free_link(lnk);
-	smc_ib_destroy_queue_pair(lnk);
-	smc_ib_dealloc_protection_domain(lnk);
 	smc_wr_free_link_mem(lnk);
+	smc_ibdev_cnt_dec(lnk);
 	put_device(&lnk->smcibdev->ibdev->dev);
 	smcibdev = lnk->smcibdev;
 	memset(lnk, 0, sizeof(struct smc_link));
 	lnk->state = SMC_LNK_UNUSED;
 	if (!atomic_dec_return(&smcibdev->lnk_cnt))
 		wake_up(&smcibdev->lnks_deleted);
+	smc_lgr_put(lgr); /* lgr_hold in smcr_link_init() */
+}
+
+/* must be called under lgr->llc_conf_mutex lock */
+void smcr_link_clear(struct smc_link *lnk, bool log)
+{
+	if (!lnk->lgr || lnk->clearing ||
+	    lnk->state == SMC_LNK_UNUSED)
+		return;
+	lnk->clearing = 1;
+	lnk->peer_qpn = 0;
+	smc_llc_link_clear(lnk, log);
+	smcr_buf_unmap_lgr(lnk);
+	smcr_rtoken_clear_link(lnk);
+	smc_ib_modify_qp_error(lnk);
+	smc_wr_free_link(lnk);
+	smc_ib_destroy_queue_pair(lnk);
+	smc_ib_dealloc_protection_domain(lnk);
+	smcr_link_put(lnk); /* theoretically last link_put */
+}
+
+void smcr_link_hold(struct smc_link *lnk)
+{
+	refcount_inc(&lnk->refcnt);
+}
+
+void smcr_link_put(struct smc_link *lnk)
+{
+	if (refcount_dec_and_test(&lnk->refcnt))
+		__smcr_link_clear(lnk);
 }
 
 static void smcr_buf_free(struct smc_link_group *lgr, bool is_rmb,
@@ -754,8 +1295,10 @@ static void smcr_buf_free(struct smc_link_group *lgr, bool is_rmb,
 	for (i = 0; i < SMC_LINKS_PER_LGR_MAX; i++)
 		smcr_buf_unmap_link(buf_desc, is_rmb, &lgr->lnk[i]);
 
-	if (buf_desc->pages)
+	if (!buf_desc->is_vm && buf_desc->pages)
 		__free_pages(buf_desc->pages, buf_desc->order);
+	else if (buf_desc->is_vm && buf_desc->cpu_addr)
+		vfree(buf_desc->cpu_addr);
 	kfree(buf_desc);
 }
 
@@ -808,6 +1351,21 @@ static void smc_lgr_free_bufs(struct smc_link_group *lgr)
 	__smc_lgr_free_bufs(lgr, true);
 }
 
+/* won't be freed until no one accesses to lgr anymore */
+static void __smc_lgr_free(struct smc_link_group *lgr)
+{
+	smc_lgr_free_bufs(lgr);
+	if (lgr->is_smcd) {
+		if (!atomic_dec_return(&lgr->smcd->lgr_cnt))
+			wake_up(&lgr->smcd->lgrs_deleted);
+	} else {
+		smc_wr_free_lgr_mem(lgr);
+		if (!atomic_dec_return(&lgr_cnt))
+			wake_up(&lgrs_deleted);
+	}
+	kfree(lgr);
+}
+
 /* remove a link group */
 static void smc_lgr_free(struct smc_link_group *lgr)
 {
@@ -823,33 +1381,23 @@ static void smc_lgr_free(struct smc_link_group *lgr)
 		smc_llc_lgr_clear(lgr);
 	}
 
-	smc_lgr_free_bufs(lgr);
+	destroy_workqueue(lgr->tx_wq);
 	if (lgr->is_smcd) {
-		if (!lgr->terminating) {
-			smc_ism_put_vlan(lgr->smcd, lgr->vlan_id);
-			put_device(&lgr->smcd->dev);
-		}
-		if (!atomic_dec_return(&lgr->smcd->lgr_cnt))
-			wake_up(&lgr->smcd->lgrs_deleted);
-	} else {
-		if (!atomic_dec_return(&lgr_cnt))
-			wake_up(&lgrs_deleted);
+		smc_ism_put_vlan(lgr->smcd, lgr->vlan_id);
+		put_device(&lgr->smcd->dev);
 	}
-	kfree(lgr);
+	smc_lgr_put(lgr); /* theoretically last lgr_put */
 }
 
-static void smcd_unregister_all_dmbs(struct smc_link_group *lgr)
+void smc_lgr_hold(struct smc_link_group *lgr)
 {
-	int i;
+	refcount_inc(&lgr->refcnt);
+}
 
-	for (i = 0; i < SMC_RMBE_SIZES; i++) {
-		struct smc_buf_desc *buf_desc;
-
-		list_for_each_entry(buf_desc, &lgr->rmbs[i], list) {
-			buf_desc->len += sizeof(struct smcd_cdc_msg);
-			smc_ism_unregister_dmb(lgr->smcd, buf_desc);
-		}
-	}
+void smc_lgr_put(struct smc_link_group *lgr)
+{
+	if (refcount_dec_and_test(&lgr->refcnt))
+		__smc_lgr_free(lgr);
 }
 
 static void smc_sk_wake_ups(struct smc_sock *smc)
@@ -878,7 +1426,7 @@ static void smc_conn_kill(struct smc_connection *conn, bool soft)
 		else
 			tasklet_unlock_wait(&conn->rx_tsklet);
 	} else {
-		smc_cdc_tx_dismiss_slots(conn);
+		smc_cdc_wait_pend_tx_wr(conn);
 	}
 	smc_lgr_unregister_conn(conn);
 	smc_close_active_abort(smc);
@@ -888,9 +1436,6 @@ static void smc_lgr_cleanup(struct smc_link_group *lgr)
 {
 	if (lgr->is_smcd) {
 		smc_ism_signal_shutdown(lgr);
-		smcd_unregister_all_dmbs(lgr);
-		smc_ism_put_vlan(lgr->smcd, lgr->vlan_id);
-		put_device(&lgr->smcd->dev);
 	} else {
 		u32 rsn = lgr->llc_termination_rsn;
 
@@ -1072,9 +1617,9 @@ void smcr_lgr_set_type(struct smc_link_group *lgr, enum smc_lgr_type new_type)
 		lgr_type = "ASYMMETRIC_LOCAL";
 		break;
 	}
-	pr_warn_ratelimited("smc: SMC-R lg %*phN state changed: "
+	pr_warn_ratelimited("smc: SMC-R lg %*phN net %llu state changed: "
 			    "%s, pnetid %.16s\n", SMC_LGR_ID_SIZE, &lgr->id,
-			    lgr_type, lgr->pnet_id);
+			    lgr->net->net_cookie, lgr_type, lgr->pnet_id);
 }
 
 /* set new lgr type and tag a link as asymmetric */
@@ -1093,7 +1638,9 @@ static void smc_conn_abort_work(struct work_struct *work)
 						   abort_work);
 	struct smc_sock *smc = container_of(conn, struct smc_sock, conn);
 
+	lock_sock(&smc->sk);
 	smc_conn_kill(conn, true);
+	release_sock(&smc->sk);
 	sock_put(&smc->sk); /* sock_hold done by schedulers of abort_work */
 }
 
@@ -1107,7 +1654,8 @@ void smcr_port_add(struct smc_ib_device *smcibdev, u8 ibport)
 		if (strncmp(smcibdev->pnetid[ibport - 1], lgr->pnet_id,
 			    SMC_MAX_PNETID_LEN) ||
 		    lgr->type == SMC_LGR_SYMMETRIC ||
-		    lgr->type == SMC_LGR_ASYMMETRIC_PEER)
+		    lgr->type == SMC_LGR_ASYMMETRIC_PEER ||
+		    !rdma_dev_access_netns(smcibdev->ibdev, lgr->net))
 			continue;
 
 		/* trigger local add link processing */
@@ -1129,7 +1677,6 @@ static void smcr_link_down(struct smc_link *lnk)
 	if (!lgr || lnk->state == SMC_LNK_UNUSED || list_empty(&lgr->list))
 		return;
 
-	smc_ib_modify_qp_reset(lnk);
 	to_lnk = smc_switch_conns(lgr, lnk, true);
 	if (!to_lnk) { /* no backup link available */
 		smcr_link_clear(lnk, true);
@@ -1164,15 +1711,19 @@ static void smcr_link_down(struct smc_link *lnk)
 /* must be called under lgr->llc_conf_mutex lock */
 void smcr_link_down_cond(struct smc_link *lnk)
 {
-	if (smc_link_downing(&lnk->state))
+	if (smc_link_downing(&lnk->state)) {
+		trace_smcr_link_down(lnk, __builtin_return_address(0));
 		smcr_link_down(lnk);
+	}
 }
 
 /* will get the lgr->llc_conf_mutex lock */
 void smcr_link_down_cond_sched(struct smc_link *lnk)
 {
-	if (smc_link_downing(&lnk->state))
+	if (smc_link_downing(&lnk->state)) {
+		trace_smcr_link_down(lnk, __builtin_return_address(0));
 		schedule_work(&lnk->link_down_wrk);
+	}
 }
 
 void smcr_port_err(struct smc_ib_device *smcibdev, u8 ibport)
@@ -1210,14 +1761,26 @@ static void smc_link_down_work(struct work_struct *work)
 	mutex_unlock(&lgr->llc_conf_mutex);
 }
 
-/* Determine vlan of internal TCP socket.
- * @vlan_id: address to store the determined vlan id into
- */
+static int smc_vlan_by_tcpsk_walk(struct net_device *lower_dev,
+				  struct netdev_nested_priv *priv)
+{
+	unsigned short *vlan_id = (unsigned short *)priv->data;
+
+	if (is_vlan_dev(lower_dev)) {
+		*vlan_id = vlan_dev_vlan_id(lower_dev);
+		return 1;
+	}
+
+	return 0;
+}
+
+/* Determine vlan of internal TCP socket. */
 int smc_vlan_by_tcpsk(struct socket *clcsock, struct smc_init_info *ini)
 {
 	struct dst_entry *dst = sk_dst_get(clcsock->sk);
+	struct netdev_nested_priv priv;
 	struct net_device *ndev;
-	int i, nest_lvl, rc = 0;
+	int rc = 0;
 
 	ini->vlan_id = 0;
 	if (!dst) {
@@ -1235,20 +1798,9 @@ int smc_vlan_by_tcpsk(struct socket *clcsock, struct smc_init_info *ini)
 		goto out_rel;
 	}
 
+	priv.data = (void *)&ini->vlan_id;
 	rtnl_lock();
-	nest_lvl = ndev->lower_level;
-	for (i = 0; i < nest_lvl; i++) {
-		struct list_head *lower = &ndev->adj_list.lower;
-
-		if (list_empty(lower))
-			break;
-		lower = lower->next;
-		ndev = (struct net_device *)netdev_lower_get_next(ndev, &lower);
-		if (is_vlan_dev(ndev)) {
-			ini->vlan_id = vlan_dev_vlan_id(ndev);
-			break;
-		}
-	}
+	netdev_walk_all_lower_dev(ndev, smc_vlan_by_tcpsk_walk, &priv);
 	rtnl_unlock();
 
 out_rel:
@@ -1257,22 +1809,32 @@ out:
 	return rc;
 }
 
-static bool smcr_lgr_match(struct smc_link_group *lgr,
-			   struct smc_clc_msg_local *lcl,
-			   enum smc_lgr_role role, u32 clcqpn)
+static bool smcr_lgr_match(struct smc_link_group *lgr, u8 smcr_version,
+			   u8 peer_systemid[],
+			   u8 peer_gid[],
+			   u8 peer_mac_v1[],
+			   enum smc_lgr_role role, u32 clcqpn,
+			   struct net *net)
 {
+	struct smc_link *lnk;
 	int i;
 
-	if (memcmp(lgr->peer_systemid, lcl->id_for_peer, SMC_SYSTEMID_LEN) ||
+	if (memcmp(lgr->peer_systemid, peer_systemid, SMC_SYSTEMID_LEN) ||
 	    lgr->role != role)
 		return false;
 
 	for (i = 0; i < SMC_LINKS_PER_LGR_MAX; i++) {
-		if (!smc_link_active(&lgr->lnk[i]))
+		lnk = &lgr->lnk[i];
+
+		if (!smc_link_active(lnk))
 			continue;
-		if ((lgr->role == SMC_SERV || lgr->lnk[i].peer_qpn == clcqpn) &&
-		    !memcmp(lgr->lnk[i].peer_gid, &lcl->gid, SMC_GID_SIZE) &&
-		    !memcmp(lgr->lnk[i].peer_mac, lcl->mac, sizeof(lcl->mac)))
+		/* use verbs API to check netns, instead of lgr->net */
+		if (!rdma_dev_access_netns(lnk->smcibdev->ibdev, net))
+			return false;
+		if ((lgr->role == SMC_SERV || lnk->peer_qpn == clcqpn) &&
+		    !memcmp(lnk->peer_gid, peer_gid, SMC_GID_SIZE) &&
+		    (smcr_version == SMC_V2 ||
+		     !memcmp(lnk->peer_mac, peer_mac_v1, ETH_ALEN)))
 			return true;
 	}
 	return false;
@@ -1288,17 +1850,20 @@ static bool smcd_lgr_match(struct smc_link_group *lgr,
 int smc_conn_create(struct smc_sock *smc, struct smc_init_info *ini)
 {
 	struct smc_connection *conn = &smc->conn;
+	struct net *net = sock_net(&smc->sk);
 	struct list_head *lgr_list;
 	struct smc_link_group *lgr;
 	enum smc_lgr_role role;
 	spinlock_t *lgr_lock;
 	int rc = 0;
 
-	lgr_list = ini->is_smcd ? &ini->ism_dev->lgr_list : &smc_lgr_list.list;
-	lgr_lock = ini->is_smcd ? &ini->ism_dev->lgr_lock : &smc_lgr_list.lock;
-	ini->cln_first_contact = SMC_FIRST_CONTACT;
+	lgr_list = ini->is_smcd ? &ini->ism_dev[ini->ism_selected]->lgr_list :
+				  &smc_lgr_list.list;
+	lgr_lock = ini->is_smcd ? &ini->ism_dev[ini->ism_selected]->lgr_lock :
+				  &smc_lgr_list.lock;
+	ini->first_contact_local = 1;
 	role = smc->listen_smc ? SMC_SERV : SMC_CLNT;
-	if (role == SMC_CLNT && ini->srv_first_contact)
+	if (role == SMC_CLNT && ini->first_contact_peer)
 		/* create new link group as well */
 		goto create;
 
@@ -1307,14 +1872,20 @@ int smc_conn_create(struct smc_sock *smc, struct smc_init_info *ini)
 	list_for_each_entry(lgr, lgr_list, list) {
 		write_lock_bh(&lgr->conns_lock);
 		if ((ini->is_smcd ?
-		     smcd_lgr_match(lgr, ini->ism_dev, ini->ism_gid) :
-		     smcr_lgr_match(lgr, ini->ib_lcl, role, ini->ib_clcqpn)) &&
+		     smcd_lgr_match(lgr, ini->ism_dev[ini->ism_selected],
+				    ini->ism_peer_gid[ini->ism_selected]) :
+		     smcr_lgr_match(lgr, ini->smcr_version,
+				    ini->peer_systemid,
+				    ini->peer_gid, ini->peer_mac, role,
+				    ini->ib_clcqpn, net)) &&
 		    !lgr->sync_err &&
-		    lgr->vlan_id == ini->vlan_id &&
+		    (ini->smcd_version == SMC_V2 ||
+		     lgr->vlan_id == ini->vlan_id) &&
 		    (role == SMC_CLNT || ini->is_smcd ||
-		     lgr->conns_num < SMC_RMBS_PER_LGR_MAX)) {
+		    (lgr->conns_num < SMC_RMBS_PER_LGR_MAX &&
+		      !bitmap_full(lgr->rtokens_used_mask, SMC_RMBS_PER_LGR_MAX)))) {
 			/* link group found */
-			ini->cln_first_contact = SMC_REUSE_CONTACT;
+			ini->first_contact_local = 0;
 			conn->lgr = lgr;
 			rc = smc_lgr_register_conn(conn, false);
 			write_unlock_bh(&lgr->conns_lock);
@@ -1328,8 +1899,8 @@ int smc_conn_create(struct smc_sock *smc, struct smc_init_info *ini)
 	if (rc)
 		return rc;
 
-	if (role == SMC_CLNT && !ini->srv_first_contact &&
-	    ini->cln_first_contact == SMC_FIRST_CONTACT) {
+	if (role == SMC_CLNT && !ini->first_contact_peer &&
+	    ini->first_contact_local) {
 		/* Server reuses a link group, but Client wants to start
 		 * a new one
 		 * send out_of_sync decline, reason synchr. error
@@ -1338,7 +1909,7 @@ int smc_conn_create(struct smc_sock *smc, struct smc_init_info *ini)
 	}
 
 create:
-	if (ini->cln_first_contact == SMC_FIRST_CONTACT) {
+	if (ini->first_contact_local) {
 		rc = smc_lgr_create(smc, ini);
 		if (rc)
 			goto out;
@@ -1346,16 +1917,25 @@ create:
 		write_lock_bh(&lgr->conns_lock);
 		rc = smc_lgr_register_conn(conn, true);
 		write_unlock_bh(&lgr->conns_lock);
-		if (rc)
+		if (rc) {
+			smc_lgr_cleanup_early(lgr);
 			goto out;
+		}
 	}
+	smc_lgr_hold(conn->lgr); /* lgr_put in smc_conn_free() */
+	if (!conn->lgr->is_smcd)
+		smcr_link_hold(conn->lnk); /* link_put in smc_conn_free() */
+	conn->freed = 0;
 	conn->local_tx_ctrl.common.type = SMC_CDC_MSG_TYPE;
 	conn->local_tx_ctrl.len = SMC_WR_TX_SIZE;
 	conn->urg_state = SMC_URG_READ;
+	init_waitqueue_head(&conn->cdc_pend_tx_wq);
 	INIT_WORK(&smc->conn.abort_work, smc_conn_abort_work);
 	if (ini->is_smcd) {
 		conn->rx_off = sizeof(struct smcd_cdc_msg);
 		smcd_cdc_rx_init(conn); /* init tasklet for this conn */
+	} else {
+		conn->rx_off = 0;
 	}
 #ifndef KERNEL_HAS_ATOMIC64
 	spin_lock_init(&conn->acurs_lock);
@@ -1365,21 +1945,30 @@ out:
 	return rc;
 }
 
-/* convert the RMB size into the compressed notation - minimum 16K.
+#define SMCD_DMBE_SIZES		6 /* 0 -> 16KB, 1 -> 32KB, .. 6 -> 1MB */
+#define SMCR_RMBE_SIZES		5 /* 0 -> 16KB, 1 -> 32KB, .. 5 -> 512KB */
+
+/* convert the RMB size into the compressed notation (minimum 16K, see
+ * SMCD/R_DMBE_SIZES.
  * In contrast to plain ilog2, this rounds towards the next power of 2,
  * so the socket application gets at least its desired sndbuf / rcvbuf size.
  */
-static u8 smc_compress_bufsize(int size)
+static u8 smc_compress_bufsize(int size, bool is_smcd, bool is_rmb)
 {
+	const unsigned int max_scat = SG_MAX_SINGLE_ALLOC * PAGE_SIZE;
 	u8 compressed;
 
 	if (size <= SMC_BUF_MIN_SIZE)
 		return 0;
 
-	size = (size - 1) >> 14;
-	compressed = ilog2(size) + 1;
-	if (compressed >= SMC_RMBE_SIZES)
-		compressed = SMC_RMBE_SIZES - 1;
+	size = (size - 1) >> 14;  /* convert to 16K multiple */
+	compressed = min_t(u8, ilog2(size) + 1,
+			   is_smcd ? SMCD_DMBE_SIZES : SMCR_RMBE_SIZES);
+
+	if (!is_smcd && is_rmb)
+		/* RMBs are backed by & limited to max size of scatterlists */
+		compressed = min_t(u8, compressed, ilog2(max_scat >> 14));
+
 	return compressed;
 }
 
@@ -1418,42 +2007,72 @@ static struct smc_buf_desc *smc_buf_get_slot(int compressed_bufsize,
  */
 static inline int smc_rmb_wnd_update_limit(int rmbe_size)
 {
-	return min_t(int, rmbe_size / 10, SOCK_MIN_SNDBUF / 2);
+	return max_t(int, rmbe_size / 10, SOCK_MIN_SNDBUF / 2);
 }
 
-/* map an rmb buf to a link */
+/* map an buf to a link */
 static int smcr_buf_map_link(struct smc_buf_desc *buf_desc, bool is_rmb,
 			     struct smc_link *lnk)
 {
-	int rc;
+	int rc, i, nents, offset, buf_size, size, access_flags;
+	struct scatterlist *sg;
+	void *buf;
 
 	if (buf_desc->is_map_ib[lnk->link_idx])
 		return 0;
 
-	rc = sg_alloc_table(&buf_desc->sgt[lnk->link_idx], 1, GFP_KERNEL);
+	if (buf_desc->is_vm) {
+		buf = buf_desc->cpu_addr;
+		buf_size = buf_desc->len;
+		offset = offset_in_page(buf_desc->cpu_addr);
+		nents = PAGE_ALIGN(buf_size + offset) / PAGE_SIZE;
+	} else {
+		nents = 1;
+	}
+
+	rc = sg_alloc_table(&buf_desc->sgt[lnk->link_idx], nents, GFP_KERNEL);
 	if (rc)
 		return rc;
-	sg_set_buf(buf_desc->sgt[lnk->link_idx].sgl,
-		   buf_desc->cpu_addr, buf_desc->len);
+
+	if (buf_desc->is_vm) {
+		/* virtually contiguous buffer */
+		for_each_sg(buf_desc->sgt[lnk->link_idx].sgl, sg, nents, i) {
+			size = min_t(int, PAGE_SIZE - offset, buf_size);
+			sg_set_page(sg, vmalloc_to_page(buf), size, offset);
+			buf += size / sizeof(*buf);
+			buf_size -= size;
+			offset = 0;
+		}
+	} else {
+		/* physically contiguous buffer */
+		sg_set_buf(buf_desc->sgt[lnk->link_idx].sgl,
+			   buf_desc->cpu_addr, buf_desc->len);
+	}
 
 	/* map sg table to DMA address */
 	rc = smc_ib_buf_map_sg(lnk, buf_desc,
 			       is_rmb ? DMA_FROM_DEVICE : DMA_TO_DEVICE);
 	/* SMC protocol depends on mapping to one DMA address only */
-	if (rc != 1) {
+	if (rc != nents) {
 		rc = -EAGAIN;
 		goto free_table;
 	}
 
-	/* create a new memory region for the RMB */
-	if (is_rmb) {
-		rc = smc_ib_get_memory_region(lnk->roce_pd,
-					      IB_ACCESS_REMOTE_WRITE |
-					      IB_ACCESS_LOCAL_WRITE,
+	buf_desc->is_dma_need_sync |=
+		smc_ib_is_sg_need_sync(lnk, buf_desc) << lnk->link_idx;
+
+	if (is_rmb || buf_desc->is_vm) {
+		/* create a new memory region for the RMB or vzalloced sndbuf */
+		access_flags = is_rmb ?
+			       IB_ACCESS_REMOTE_WRITE | IB_ACCESS_LOCAL_WRITE :
+			       IB_ACCESS_LOCAL_WRITE;
+
+		rc = smc_ib_get_memory_region(lnk->roce_pd, access_flags,
 					      buf_desc, lnk->link_idx);
 		if (rc)
 			goto buf_unmap;
-		smc_ib_sync_sg_for_device(lnk, buf_desc, DMA_FROM_DEVICE);
+		smc_ib_sync_sg_for_device(lnk, buf_desc,
+					  is_rmb ? DMA_FROM_DEVICE : DMA_TO_DEVICE);
 	}
 	buf_desc->is_map_ib[lnk->link_idx] = true;
 	return 0;
@@ -1466,20 +2085,23 @@ free_table:
 	return rc;
 }
 
-/* register a new rmb on IB device,
+/* register a new buf on IB device, rmb or vzalloced sndbuf
  * must be called under lgr->llc_conf_mutex lock
  */
-int smcr_link_reg_rmb(struct smc_link *link, struct smc_buf_desc *rmb_desc)
+int smcr_link_reg_buf(struct smc_link *link, struct smc_buf_desc *buf_desc)
 {
 	if (list_empty(&link->lgr->list))
 		return -ENOLINK;
-	if (!rmb_desc->is_reg_mr[link->link_idx]) {
-		/* register memory region for new rmb */
-		if (smc_wr_reg_send(link, rmb_desc->mr_rx[link->link_idx])) {
-			rmb_desc->is_reg_err = true;
+	if (!buf_desc->is_reg_mr[link->link_idx]) {
+		/* register memory region for new buf */
+		if (buf_desc->is_vm)
+			buf_desc->mr[link->link_idx]->iova =
+				(uintptr_t)buf_desc->cpu_addr;
+		if (smc_wr_reg_send(link, buf_desc->mr[link->link_idx])) {
+			buf_desc->is_reg_err = true;
 			return -EFAULT;
 		}
-		rmb_desc->is_reg_mr[link->link_idx] = true;
+		buf_desc->is_reg_mr[link->link_idx] = true;
 	}
 	return 0;
 }
@@ -1531,18 +2153,38 @@ int smcr_buf_reg_lgr(struct smc_link *lnk)
 	struct smc_buf_desc *buf_desc, *bf;
 	int i, rc = 0;
 
+	/* reg all RMBs for a new link */
 	mutex_lock(&lgr->rmbs_lock);
 	for (i = 0; i < SMC_RMBE_SIZES; i++) {
 		list_for_each_entry_safe(buf_desc, bf, &lgr->rmbs[i], list) {
 			if (!buf_desc->used)
 				continue;
-			rc = smcr_link_reg_rmb(lnk, buf_desc);
-			if (rc)
-				goto out;
+			rc = smcr_link_reg_buf(lnk, buf_desc);
+			if (rc) {
+				mutex_unlock(&lgr->rmbs_lock);
+				return rc;
+			}
 		}
 	}
-out:
 	mutex_unlock(&lgr->rmbs_lock);
+
+	if (lgr->buf_type == SMCR_PHYS_CONT_BUFS)
+		return rc;
+
+	/* reg all vzalloced sndbufs for a new link */
+	mutex_lock(&lgr->sndbufs_lock);
+	for (i = 0; i < SMC_RMBE_SIZES; i++) {
+		list_for_each_entry_safe(buf_desc, bf, &lgr->sndbufs[i], list) {
+			if (!buf_desc->used || !buf_desc->is_vm)
+				continue;
+			rc = smcr_link_reg_buf(lnk, buf_desc);
+			if (rc) {
+				mutex_unlock(&lgr->sndbufs_lock);
+				return rc;
+			}
+		}
+	}
+	mutex_unlock(&lgr->sndbufs_lock);
 	return rc;
 }
 
@@ -1556,18 +2198,39 @@ static struct smc_buf_desc *smcr_new_buf_create(struct smc_link_group *lgr,
 	if (!buf_desc)
 		return ERR_PTR(-ENOMEM);
 
-	buf_desc->order = get_order(bufsize);
-	buf_desc->pages = alloc_pages(GFP_KERNEL | __GFP_NOWARN |
-				      __GFP_NOMEMALLOC | __GFP_COMP |
-				      __GFP_NORETRY | __GFP_ZERO,
-				      buf_desc->order);
-	if (!buf_desc->pages) {
-		kfree(buf_desc);
-		return ERR_PTR(-EAGAIN);
+	switch (lgr->buf_type) {
+	case SMCR_PHYS_CONT_BUFS:
+	case SMCR_MIXED_BUFS:
+		buf_desc->order = get_order(bufsize);
+		buf_desc->pages = alloc_pages(GFP_KERNEL | __GFP_NOWARN |
+					      __GFP_NOMEMALLOC | __GFP_COMP |
+					      __GFP_NORETRY | __GFP_ZERO,
+					      buf_desc->order);
+		if (buf_desc->pages) {
+			buf_desc->cpu_addr =
+				(void *)page_address(buf_desc->pages);
+			buf_desc->len = bufsize;
+			buf_desc->is_vm = false;
+			break;
+		}
+		if (lgr->buf_type == SMCR_PHYS_CONT_BUFS)
+			goto out;
+		fallthrough;	// try virtually continguous buf
+	case SMCR_VIRT_CONT_BUFS:
+		buf_desc->order = get_order(bufsize);
+		buf_desc->cpu_addr = vzalloc(PAGE_SIZE << buf_desc->order);
+		if (!buf_desc->cpu_addr)
+			goto out;
+		buf_desc->pages = NULL;
+		buf_desc->len = bufsize;
+		buf_desc->is_vm = true;
+		break;
 	}
-	buf_desc->cpu_addr = (void *)page_address(buf_desc->pages);
-	buf_desc->len = bufsize;
 	return buf_desc;
+
+out:
+	kfree(buf_desc);
+	return ERR_PTR(-EAGAIN);
 }
 
 /* map buf_desc on all usable links,
@@ -1576,7 +2239,7 @@ static struct smc_buf_desc *smcr_new_buf_create(struct smc_link_group *lgr,
 static int smcr_buf_map_usable_links(struct smc_link_group *lgr,
 				     struct smc_buf_desc *buf_desc, bool is_rmb)
 {
-	int i, rc = 0;
+	int i, rc = 0, cnt = 0;
 
 	/* protect against parallel link reconfiguration */
 	mutex_lock(&lgr->llc_conf_mutex);
@@ -1589,22 +2252,20 @@ static int smcr_buf_map_usable_links(struct smc_link_group *lgr,
 			rc = -ENOMEM;
 			goto out;
 		}
+		cnt++;
 	}
 out:
 	mutex_unlock(&lgr->llc_conf_mutex);
+	if (!rc && !cnt)
+		rc = -EINVAL;
 	return rc;
 }
-
-#define SMCD_DMBE_SIZES		7 /* 0 -> 16KB, 1 -> 32KB, .. 6 -> 1MB */
 
 static struct smc_buf_desc *smcd_new_buf_create(struct smc_link_group *lgr,
 						bool is_dmb, int bufsize)
 {
 	struct smc_buf_desc *buf_desc;
 	int rc;
-
-	if (smc_compress_bufsize(bufsize) > SMCD_DMBE_SIZES)
-		return ERR_PTR(-EAGAIN);
 
 	/* try to alloc a new DMB */
 	buf_desc = kzalloc(sizeof(*buf_desc), GFP_KERNEL);
@@ -1614,7 +2275,11 @@ static struct smc_buf_desc *smcd_new_buf_create(struct smc_link_group *lgr,
 		rc = smc_ism_register_dmb(lgr, bufsize, buf_desc);
 		if (rc) {
 			kfree(buf_desc);
-			return ERR_PTR(-EAGAIN);
+			if (rc == -ENOMEM)
+				return ERR_PTR(-EAGAIN);
+			if (rc == -ENOSPC)
+				return ERR_PTR(-ENOSPC);
+			return ERR_PTR(-EIO);
 		}
 		buf_desc->pages = virt_to_page(buf_desc->cpu_addr);
 		/* CDC header stored in buf. So, pretend it was smaller */
@@ -1639,6 +2304,7 @@ static int __smc_buf_create(struct smc_sock *smc, bool is_smcd, bool is_rmb)
 	struct smc_link_group *lgr = conn->lgr;
 	struct list_head *buf_list;
 	int bufsize, bufsize_short;
+	bool is_dgraded = false;
 	struct mutex *lock;	/* lock buffer list */
 	int sk_buf_size;
 
@@ -1649,9 +2315,8 @@ static int __smc_buf_create(struct smc_sock *smc, bool is_smcd, bool is_rmb)
 		/* use socket send buffer size (w/o overhead) as start value */
 		sk_buf_size = smc->sk.sk_sndbuf / 2;
 
-	for (bufsize_short = smc_compress_bufsize(sk_buf_size);
+	for (bufsize_short = smc_compress_bufsize(sk_buf_size, is_smcd, is_rmb);
 	     bufsize_short >= 0; bufsize_short--) {
-
 		if (is_rmb) {
 			lock = &lgr->rmbs_lock;
 			buf_list = &lgr->rmbs[bufsize_short];
@@ -1660,13 +2325,13 @@ static int __smc_buf_create(struct smc_sock *smc, bool is_smcd, bool is_rmb)
 			buf_list = &lgr->sndbufs[bufsize_short];
 		}
 		bufsize = smc_uncompress_bufsize(bufsize_short);
-		if ((1 << get_order(bufsize)) > SG_MAX_SINGLE_ALLOC)
-			continue;
 
 		/* check for reusable slot in the link group */
 		buf_desc = smc_buf_get_slot(bufsize_short, lock, buf_list);
 		if (buf_desc) {
-			memset(buf_desc->cpu_addr, 0, bufsize);
+			buf_desc->is_dma_need_sync = 0;
+			SMC_STAT_RMB_SIZE(smc, is_smcd, is_rmb, bufsize);
+			SMC_STAT_BUF_REUSE(smc, is_smcd, is_rmb);
 			break; /* found reusable slot */
 		}
 
@@ -1677,9 +2342,16 @@ static int __smc_buf_create(struct smc_sock *smc, bool is_smcd, bool is_rmb)
 
 		if (PTR_ERR(buf_desc) == -ENOMEM)
 			break;
-		if (IS_ERR(buf_desc))
+		if (IS_ERR(buf_desc)) {
+			if (!is_dgraded) {
+				is_dgraded = true;
+				SMC_STAT_RMB_DOWNGRADED(smc, is_smcd, is_rmb);
+			}
 			continue;
+		}
 
+		SMC_STAT_RMB_ALLOC(smc, is_smcd, is_rmb);
+		SMC_STAT_RMB_SIZE(smc, is_smcd, is_rmb, bufsize);
 		buf_desc->used = 1;
 		mutex_lock(lock);
 		list_add(&buf_desc->list, buf_list);
@@ -1688,11 +2360,11 @@ static int __smc_buf_create(struct smc_sock *smc, bool is_smcd, bool is_rmb)
 	}
 
 	if (IS_ERR(buf_desc))
-		return -ENOMEM;
+		return PTR_ERR(buf_desc);
 
 	if (!is_smcd) {
 		if (smcr_buf_map_usable_links(lgr, buf_desc, is_rmb)) {
-			smcr_buf_unuse(buf_desc, lgr);
+			smcr_buf_unuse(buf_desc, is_rmb, lgr);
 			return -ENOMEM;
 		}
 	}
@@ -1714,16 +2386,12 @@ static int __smc_buf_create(struct smc_sock *smc, bool is_smcd, bool is_rmb)
 	return 0;
 }
 
-void smc_sndbuf_sync_sg_for_cpu(struct smc_connection *conn)
-{
-	if (!conn->lgr || conn->lgr->is_smcd || !smc_link_active(conn->lnk))
-		return;
-	smc_ib_sync_sg_for_cpu(conn->lnk, conn->sndbuf_desc, DMA_TO_DEVICE);
-}
-
 void smc_sndbuf_sync_sg_for_device(struct smc_connection *conn)
 {
-	if (!conn->lgr || conn->lgr->is_smcd || !smc_link_active(conn->lnk))
+	if (!conn->sndbuf_desc->is_dma_need_sync)
+		return;
+	if (!smc_conn_lgr_valid(conn) || conn->lgr->is_smcd ||
+	    !smc_link_active(conn->lnk))
 		return;
 	smc_ib_sync_sg_for_device(conn->lnk, conn->sndbuf_desc, DMA_TO_DEVICE);
 }
@@ -1732,27 +2400,15 @@ void smc_rmb_sync_sg_for_cpu(struct smc_connection *conn)
 {
 	int i;
 
-	if (!conn->lgr || conn->lgr->is_smcd)
+	if (!conn->rmb_desc->is_dma_need_sync)
+		return;
+	if (!smc_conn_lgr_valid(conn) || conn->lgr->is_smcd)
 		return;
 	for (i = 0; i < SMC_LINKS_PER_LGR_MAX; i++) {
 		if (!smc_link_active(&conn->lgr->lnk[i]))
 			continue;
 		smc_ib_sync_sg_for_cpu(&conn->lgr->lnk[i], conn->rmb_desc,
 				       DMA_FROM_DEVICE);
-	}
-}
-
-void smc_rmb_sync_sg_for_device(struct smc_connection *conn)
-{
-	int i;
-
-	if (!conn->lgr || conn->lgr->is_smcd)
-		return;
-	for (i = 0; i < SMC_LINKS_PER_LGR_MAX; i++) {
-		if (!smc_link_active(&conn->lgr->lnk[i]))
-			continue;
-		smc_ib_sync_sg_for_device(&conn->lgr->lnk[i], conn->rmb_desc,
-					  DMA_FROM_DEVICE);
 	}
 }
 
@@ -1777,6 +2433,7 @@ int smc_buf_create(struct smc_sock *smc, bool is_smcd)
 		list_del(&smc->conn.sndbuf_desc->list);
 		mutex_unlock(&smc->conn.lgr->sndbufs_lock);
 		smc_buf_free(smc->conn.lgr, false, smc->conn.sndbuf_desc);
+		smc->conn.sndbuf_desc = NULL;
 	}
 	return rc;
 }
@@ -1889,8 +2546,8 @@ int smc_rmb_rtoken_handling(struct smc_connection *conn,
 			    struct smc_link *lnk,
 			    struct smc_clc_msg_accept_confirm *clc)
 {
-	conn->rtoken_idx = smc_rtoken_add(lnk, clc->rmb_dma_addr,
-					  clc->rmb_rkey);
+	conn->rtoken_idx = smc_rtoken_add(lnk, clc->r0.rmb_dma_addr,
+					  clc->r0.rmb_rkey);
 	if (conn->rtoken_idx < 0)
 		return conn->rtoken_idx;
 	return 0;

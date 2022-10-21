@@ -99,7 +99,7 @@ static const struct i2c_device_id isl1208_id[] = {
 };
 MODULE_DEVICE_TABLE(i2c, isl1208_id);
 
-static const struct of_device_id isl1208_of_match[] = {
+static const __maybe_unused struct of_device_id isl1208_of_match[] = {
 	{ .compatible = "isil,isl1208", .data = &isl1208_configs[TYPE_ISL1208] },
 	{ .compatible = "isil,isl1209", .data = &isl1208_configs[TYPE_ISL1209] },
 	{ .compatible = "isil,isl1218", .data = &isl1208_configs[TYPE_ISL1218] },
@@ -880,21 +880,25 @@ isl1208_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	if (rc)
 		return rc;
 
-	if (client->irq > 0)
+	if (client->irq > 0) {
 		rc = isl1208_setup_irq(client, client->irq);
-	if (rc)
-		return rc;
+		if (rc)
+			return rc;
+
+	} else {
+		clear_bit(RTC_FEATURE_UPDATE_INTERRUPT, isl1208->rtc->features);
+	}
 
 	if (evdet_irq > 0 && evdet_irq != client->irq)
 		rc = isl1208_setup_irq(client, evdet_irq);
 	if (rc)
 		return rc;
 
-	rc = rtc_nvmem_register(isl1208->rtc, &isl1208->nvmem_config);
+	rc = devm_rtc_nvmem_register(isl1208->rtc, &isl1208->nvmem_config);
 	if (rc)
 		return rc;
 
-	return rtc_register_device(isl1208->rtc);
+	return devm_rtc_register_device(isl1208->rtc);
 }
 
 static struct i2c_driver isl1208_driver = {

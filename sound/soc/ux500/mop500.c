@@ -4,8 +4,6 @@
  *
  * Author: Ola Lilja (ola.o.lilja@stericsson.com)
  *         for ST-Ericsson.
- *
- * License terms:
  */
 
 #include <asm/mach-types.h>
@@ -140,12 +138,12 @@ static int mop500_probe(struct platform_device *pdev)
 
 static int mop500_remove(struct platform_device *pdev)
 {
-	struct snd_soc_card *mop500_card = platform_get_drvdata(pdev);
+	struct snd_soc_card *card = platform_get_drvdata(pdev);
 
 	pr_debug("%s: Enter.\n", __func__);
 
-	snd_soc_unregister_card(mop500_card);
-	mop500_ab8500_remove(mop500_card);
+	snd_soc_unregister_card(card);
+	mop500_ab8500_remove(card);
 	mop500_of_node_put();
 
 	return 0;

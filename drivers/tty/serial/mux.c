@@ -21,7 +21,7 @@
 #include <linux/console.h>
 #include <linux/delay.h> /* for udelay */
 #include <linux/device.h>
-#include <asm/io.h>
+#include <linux/io.h>
 #include <asm/irq.h>
 #include <asm/parisc-device.h>
 
@@ -481,12 +481,6 @@ static int __init mux_probe(struct parisc_device *dev)
 		port->line	= port_cnt;
 		port->has_sysrq = IS_ENABLED(CONFIG_SERIAL_MUX_CONSOLE);
 
-		/* The port->timeout needs to match what is present in
-		 * uart_wait_until_sent in serial_core.c.  Otherwise
-		 * the time spent in msleep_interruptable will be very
-		 * long, causing the appearance of a console hang.
-		 */
-		port->timeout   = HZ / 50;
 		spin_lock_init(&port->lock);
 
 		status = uart_add_one_port(&mux_driver, port);
@@ -496,7 +490,7 @@ static int __init mux_probe(struct parisc_device *dev)
 	return 0;
 }
 
-static int __exit mux_remove(struct parisc_device *dev)
+static void __exit mux_remove(struct parisc_device *dev)
 {
 	int i, j;
 	int port_count = (long)dev_get_drvdata(&dev->dev);
@@ -518,7 +512,6 @@ static int __exit mux_remove(struct parisc_device *dev)
 	}
 
 	release_mem_region(dev->hpa.start + MUX_OFFSET, port_count * MUX_LINE_OFFSET);
-	return 0;
 }
 
 /* Hack.  This idea was taken from the 8250_gsc.c on how to properly order

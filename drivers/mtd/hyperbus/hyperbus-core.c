@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 //
-// Copyright (C) 2019 Texas Instruments Incorporated - http://www.ti.com/
+// Copyright (C) 2019 Texas Instruments Incorporated - https://www.ti.com/
 // Author: Vignesh Raghavendra <vigneshr@ti.com>
 
 #include <linux/err.h>
@@ -126,16 +126,12 @@ int hyperbus_register_device(struct hyperbus_device *hbdev)
 }
 EXPORT_SYMBOL_GPL(hyperbus_register_device);
 
-int hyperbus_unregister_device(struct hyperbus_device *hbdev)
+void hyperbus_unregister_device(struct hyperbus_device *hbdev)
 {
-	int ret = 0;
-
 	if (hbdev && hbdev->mtd) {
-		ret = mtd_device_unregister(hbdev->mtd);
+		WARN_ON(mtd_device_unregister(hbdev->mtd));
 		map_destroy(hbdev->mtd);
 	}
-
-	return ret;
 }
 EXPORT_SYMBOL_GPL(hyperbus_unregister_device);
 

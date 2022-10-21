@@ -35,26 +35,18 @@
 #include <asm/syscalls.h>
 #include <asm/time.h>
 #include <asm/unistd.h>
-#include <asm/asm-prototypes.h>
 
 static inline long do_mmap2(unsigned long addr, size_t len,
 			unsigned long prot, unsigned long flags,
 			unsigned long fd, unsigned long off, int shift)
 {
-	long ret = -EINVAL;
-
 	if (!arch_validate_prot(prot, addr))
-		goto out;
+		return -EINVAL;
 
-	if (shift) {
-		if (off & ((1 << shift) - 1))
-			goto out;
-		off >>= shift;
-	}
+	if (!IS_ALIGNED(off, 1 << shift))
+		return -EINVAL;
 
-	ret = ksys_mmap_pgoff(addr, len, prot, flags, fd, off);
-out:
-	return ret;
+	return ksys_mmap_pgoff(addr, len, prot, flags, fd, off >> shift);
 }
 
 SYSCALL_DEFINE6(mmap2, unsigned long, addr, size_t, len,
@@ -81,17 +73,9 @@ SYSCALL_DEFINE6(mmap, unsigned long, addr, size_t, len,
 int
 ppc_select(int n, fd_set __user *inp, fd_set __user *outp, fd_set __user *exp, struct __kernel_old_timeval __user *tvp)
 {
-	if ( (unsigned long)n >= 4096 )
-	{
-		unsigned long __user *buffer = (unsigned long __user *)n;
-		if (!access_ok(buffer, 5*sizeof(unsigned long))
-		    || __get_user(n, buffer)
-		    || __get_user(inp, ((fd_set __user * __user *)(buffer+1)))
-		    || __get_user(outp, ((fd_set  __user * __user *)(buffer+2)))
-		    || __get_user(exp, ((fd_set  __user * __user *)(buffer+3)))
-		    || __get_user(tvp, ((struct __kernel_old_timeval  __user * __user *)(buffer+4))))
-			return -EFAULT;
-	}
+	if ((unsigned long)n >= 4096)
+		return sys_old_select((void __user *)n);
+
 	return sys_select(n, inp, outp, exp, tvp);
 }
 #endif
@@ -114,15 +98,16 @@ long ppc64_personality(unsigned long personality)
 long ppc_fadvise64_64(int fd, int advice, u32 offset_high, u32 offset_low,
 		      u32 len_high, u32 len_low)
 {
-	return ksys_fadvise64_64(fd, (u64)offset_high << 32 | offset_low,
-				 (u64)len_high << 32 | len_low, advice);
+	return ksys_fadvise64_64(fd, merge_64(offset_high, offset_low),
+				 merge_64(len_high, len_low), advice);
 }
 
 SYSCALL_DEFINE0(switch_endian)
 {
 	struct thread_info *ti;
 
-	current->thread.regs->msr ^= MSR_LE;
+	regs_set_return_msr(current->thread.regs,
+				current->thread.regs->msr ^ MSR_LE);
 
 	/*
 	 * Set TIF_RESTOREALL so that r3 isn't clobbered on return to

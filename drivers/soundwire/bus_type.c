@@ -20,14 +20,16 @@
 static const struct sdw_device_id *
 sdw_get_device_id(struct sdw_slave *slave, struct sdw_driver *drv)
 {
-	const struct sdw_device_id *id = drv->id_table;
+	const struct sdw_device_id *id;
 
-	while (id && id->mfg_id) {
+	for (id = drv->id_table; id && id->mfg_id; id++)
 		if (slave->id.mfg_id == id->mfg_id &&
-		    slave->id.part_id == id->part_id)
+		    slave->id.part_id == id->part_id  &&
+		    (!id->sdw_version ||
+		     slave->id.sdw_version == id->sdw_version) &&
+		    (!id->class_id ||
+		     slave->id.class_id == id->class_id))
 			return id;
-		id++;
-	}
 
 	return NULL;
 }
@@ -49,10 +51,11 @@ static int sdw_bus_match(struct device *dev, struct device_driver *ddrv)
 
 int sdw_slave_modalias(const struct sdw_slave *slave, char *buf, size_t size)
 {
-	/* modalias is sdw:m<mfg_id>p<part_id> */
+	/* modalias is sdw:m<mfg_id>p<part_id>v<version>c<class_id> */
 
-	return snprintf(buf, size, "sdw:m%04Xp%04X\n",
-			slave->id.mfg_id, slave->id.part_id);
+	return snprintf(buf, size, "sdw:m%04Xp%04Xv%02Xc%02X\n",
+			slave->id.mfg_id, slave->id.part_id,
+			slave->id.sdw_version, slave->id.class_id);
 }
 
 int sdw_slave_uevent(struct device *dev, struct kobj_uevent_env *env)
@@ -79,13 +82,21 @@ static int sdw_drv_probe(struct device *dev)
 	struct sdw_slave *slave = dev_to_sdw_dev(dev);
 	struct sdw_driver *drv = drv_to_sdw_driver(dev->driver);
 	const struct sdw_device_id *id;
+	const char *name;
 	int ret;
+
+	/*
+	 * fw description is mandatory to bind
+	 */
+	if (!dev->fwnode)
+		return -ENODEV;
+
+	if (!IS_ENABLED(CONFIG_ACPI) && !dev->of_node)
+		return -ENODEV;
 
 	id = sdw_get_device_id(slave, drv);
 	if (!id)
 		return -ENODEV;
-
-	slave->ops = drv->ops;
 
 	/*
 	 * attach to power domain but don't turn on (last arg)
@@ -94,16 +105,23 @@ static int sdw_drv_probe(struct device *dev)
 	if (ret)
 		return ret;
 
+	mutex_lock(&slave->sdw_dev_lock);
+
 	ret = drv->probe(slave, id);
 	if (ret) {
-		dev_err(dev, "Probe of %s failed: %d\n", drv->name, ret);
+		name = drv->name;
+		if (!name)
+			name = drv->driver.name;
+		mutex_unlock(&slave->sdw_dev_lock);
+
+		dev_err(dev, "Probe of %s failed: %d\n", name, ret);
 		dev_pm_domain_detach(dev, false);
 		return ret;
 	}
 
 	/* device is probed so let's read the properties now */
-	if (slave->ops && slave->ops->read_prop)
-		slave->ops->read_prop(slave);
+	if (drv->ops && drv->ops->read_prop)
+		drv->ops->read_prop(slave);
 
 	/* init the sysfs as we have properties now */
 	ret = sdw_slave_sysfs_init(slave);
@@ -123,7 +141,19 @@ static int sdw_drv_probe(struct device *dev)
 					     slave->prop.clk_stop_timeout);
 
 	slave->probed = true;
-	complete(&slave->probe_complete);
+
+	/*
+	 * if the probe happened after the bus was started, notify the codec driver
+	 * of the current hardware status to e.g. start the initialization.
+	 * Errors are only logged as warnings to avoid failing the probe.
+	 */
+	if (drv->ops && drv->ops->update_status) {
+		ret = drv->ops->update_status(slave, slave->status);
+		if (ret < 0)
+			dev_warn(dev, "%s: update_status failed with status %d\n", __func__, ret);
+	}
+
+	mutex_unlock(&slave->sdw_dev_lock);
 
 	dev_dbg(dev, "probe complete\n");
 
@@ -136,8 +166,14 @@ static int sdw_drv_remove(struct device *dev)
 	struct sdw_driver *drv = drv_to_sdw_driver(dev->driver);
 	int ret = 0;
 
+	mutex_lock(&slave->sdw_dev_lock);
+
+	slave->probed = false;
+
 	if (drv->remove)
 		ret = drv->remove(slave);
+
+	mutex_unlock(&slave->sdw_dev_lock);
 
 	dev_pm_domain_detach(dev, false);
 
@@ -162,22 +198,23 @@ static void sdw_drv_shutdown(struct device *dev)
  */
 int __sdw_register_driver(struct sdw_driver *drv, struct module *owner)
 {
+	const char *name;
+
 	drv->driver.bus = &sdw_bus_type;
 
 	if (!drv->probe) {
-		pr_err("driver %s didn't provide SDW probe routine\n",
-		       drv->name);
+		name = drv->name;
+		if (!name)
+			name = drv->driver.name;
+
+		pr_err("driver %s didn't provide SDW probe routine\n", name);
 		return -EINVAL;
 	}
 
 	drv->driver.owner = owner;
 	drv->driver.probe = sdw_drv_probe;
-
-	if (drv->remove)
-		drv->driver.remove = sdw_drv_remove;
-
-	if (drv->shutdown)
-		drv->driver.shutdown = sdw_drv_shutdown;
+	drv->driver.remove = sdw_drv_remove;
+	drv->driver.shutdown = sdw_drv_shutdown;
 
 	return driver_register(&drv->driver);
 }

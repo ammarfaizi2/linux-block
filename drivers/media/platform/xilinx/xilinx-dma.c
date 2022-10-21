@@ -26,7 +26,6 @@
 #include "xilinx-vip.h"
 #include "xilinx-vipp.h"
 
-#define XVIP_DMA_DEF_FORMAT		V4L2_PIX_FMT_YUYV
 #define XVIP_DMA_DEF_WIDTH		1920
 #define XVIP_DMA_DEF_HEIGHT		1080
 
@@ -45,7 +44,7 @@ xvip_dma_remote_subdev(struct media_pad *local, u32 *pad)
 {
 	struct media_pad *remote;
 
-	remote = media_entity_remote_pad(local);
+	remote = media_pad_remote_pad_first(local);
 	if (!remote || !is_media_entity_v4l2_subdev(remote->entity))
 		return NULL;
 
@@ -108,7 +107,7 @@ static int xvip_pipeline_start_stop(struct xvip_pipeline *pipe, bool start)
 		if (!(pad->flags & MEDIA_PAD_FL_SINK))
 			break;
 
-		pad = media_entity_remote_pad(pad);
+		pad = media_pad_remote_pad_first(pad);
 		if (!pad || !is_media_entity_v4l2_subdev(pad->entity))
 			break;
 
@@ -549,8 +548,6 @@ __xvip_dma_try_format(struct xvip_dma *dma, struct v4l2_pix_format *pix,
 	 * requested format isn't supported.
 	 */
 	info = xvip_get_format_by_fourcc(pix->pixelformat);
-	if (IS_ERR(info))
-		info = xvip_get_format_by_fourcc(XVIP_DMA_DEF_FORMAT);
 
 	pix->pixelformat = info->fourcc;
 	pix->field = V4L2_FIELD_NONE;
@@ -660,7 +657,7 @@ int xvip_dma_init(struct xvip_composite_device *xdev, struct xvip_dma *dma,
 	INIT_LIST_HEAD(&dma->queued_bufs);
 	spin_lock_init(&dma->queued_lock);
 
-	dma->fmtinfo = xvip_get_format_by_fourcc(XVIP_DMA_DEF_FORMAT);
+	dma->fmtinfo = xvip_get_format_by_fourcc(V4L2_PIX_FMT_YUYV);
 	dma->format.pixelformat = dma->fmtinfo->fourcc;
 	dma->format.colorspace = V4L2_COLORSPACE_SRGB;
 	dma->format.field = V4L2_FIELD_NONE;

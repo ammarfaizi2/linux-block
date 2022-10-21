@@ -6,6 +6,7 @@
  */
 
 #include <linux/gpio/consumer.h>
+#include <linux/i2c.h>
 #include <linux/module.h>
 #include <linux/regmap.h>
 
@@ -317,6 +318,7 @@ static void ch7033_bridge_detach(struct drm_bridge *bridge)
 }
 
 static enum drm_mode_status ch7033_bridge_mode_valid(struct drm_bridge *bridge,
+				     const struct drm_display_info *info,
 				     const struct drm_display_mode *mode)
 {
 	if (mode->clock > 165000)

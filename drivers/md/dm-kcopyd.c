@@ -219,7 +219,7 @@ static struct page_list *alloc_pl(gfp_t gfp)
 	if (!pl)
 		return NULL;
 
-	pl->page = alloc_page(gfp);
+	pl->page = alloc_page(gfp | __GFP_HIGHMEM);
 	if (!pl->page) {
 		kfree(pl);
 		return NULL;
@@ -341,7 +341,7 @@ static void client_free_pages(struct dm_kcopyd_client *kc)
 struct kcopyd_job {
 	struct dm_kcopyd_client *kc;
 	struct list_head list;
-	unsigned long flags;
+	unsigned flags;
 
 	/*
 	 * Error state of the job.
@@ -350,9 +350,9 @@ struct kcopyd_job {
 	unsigned long write_err;
 
 	/*
-	 * Either READ or WRITE
+	 * REQ_OP_READ, REQ_OP_WRITE or REQ_OP_WRITE_ZEROES.
 	 */
-	int rw;
+	enum req_op op;
 	struct dm_io_region source;
 
 	/*
@@ -418,7 +418,8 @@ static struct kcopyd_job *pop_io_job(struct list_head *jobs,
 	 * constraint and sequential writes that are at the right position.
 	 */
 	list_for_each_entry(job, jobs, list) {
-		if (job->rw == READ || !test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags)) {
+		if (job->op == REQ_OP_READ ||
+		    !(job->flags & BIT(DM_KCOPYD_WRITE_SEQ))) {
 			list_del(&job->list);
 			return job;
 		}
@@ -437,9 +438,8 @@ static struct kcopyd_job *pop(struct list_head *jobs,
 			      struct dm_kcopyd_client *kc)
 {
 	struct kcopyd_job *job = NULL;
-	unsigned long flags;
 
-	spin_lock_irqsave(&kc->job_lock, flags);
+	spin_lock_irq(&kc->job_lock);
 
 	if (!list_empty(jobs)) {
 		if (jobs == &kc->io_jobs)
@@ -449,7 +449,7 @@ static struct kcopyd_job *pop(struct list_head *jobs,
 			list_del(&job->list);
 		}
 	}
-	spin_unlock_irqrestore(&kc->job_lock, flags);
+	spin_unlock_irq(&kc->job_lock);
 
 	return job;
 }
@@ -467,12 +467,11 @@ static void push(struct list_head *jobs, struct kcopyd_job *job)
 
 static void push_head(struct list_head *jobs, struct kcopyd_job *job)
 {
-	unsigned long flags;
 	struct dm_kcopyd_client *kc = job->kc;
 
-	spin_lock_irqsave(&kc->job_lock, flags);
+	spin_lock_irq(&kc->job_lock);
 	list_add(&job->list, jobs);
-	spin_unlock_irqrestore(&kc->job_lock, flags);
+	spin_unlock_irq(&kc->job_lock);
 }
 
 /*
@@ -520,23 +519,23 @@ static void complete_io(unsigned long error, void *context)
 	io_job_finish(kc->throttle);
 
 	if (error) {
-		if (op_is_write(job->rw))
+		if (op_is_write(job->op))
 			job->write_err |= error;
 		else
 			job->read_err = 1;
 
-		if (!test_bit(DM_KCOPYD_IGNORE_ERROR, &job->flags)) {
+		if (!(job->flags & BIT(DM_KCOPYD_IGNORE_ERROR))) {
 			push(&kc->complete_jobs, job);
 			wake(kc);
 			return;
 		}
 	}
 
-	if (op_is_write(job->rw))
+	if (op_is_write(job->op))
 		push(&kc->complete_jobs, job);
 
 	else {
-		job->rw = WRITE;
+		job->op = REQ_OP_WRITE;
 		push(&kc->io_jobs, job);
 	}
 
@@ -551,8 +550,7 @@ static int run_io_job(struct kcopyd_job *job)
 {
 	int r;
 	struct dm_io_request io_req = {
-		.bi_op = job->rw,
-		.bi_op_flags = 0,
+		.bi_opf = job->op,
 		.mem.type = DM_IO_PAGE_LIST,
 		.mem.ptr.pl = job->pages,
 		.mem.offset = 0,
@@ -565,7 +563,7 @@ static int run_io_job(struct kcopyd_job *job)
 	 * If we need to write sequentially and some reads or writes failed,
 	 * no point in continuing.
 	 */
-	if (test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags) &&
+	if (job->flags & BIT(DM_KCOPYD_WRITE_SEQ) &&
 	    job->master_job->write_err) {
 		job->write_err = job->master_job->write_err;
 		return -EIO;
@@ -573,7 +571,7 @@ static int run_io_job(struct kcopyd_job *job)
 
 	io_job_start(job->kc->throttle);
 
-	if (job->rw == READ)
+	if (job->op == REQ_OP_READ)
 		r = dm_io(&io_req, 1, &job->source, NULL);
 	else
 		r = dm_io(&io_req, job->num_dests, job->dests, NULL);
@@ -616,7 +614,7 @@ static int process_jobs(struct list_head *jobs, struct dm_kcopyd_client *kc,
 
 		if (r < 0) {
 			/* error this rogue job */
-			if (op_is_write(job->rw))
+			if (op_is_write(job->op))
 				job->write_err = (unsigned long) -1L;
 			else
 				job->read_err = 1;
@@ -648,7 +646,6 @@ static void do_work(struct work_struct *work)
 	struct dm_kcopyd_client *kc = container_of(work,
 					struct dm_kcopyd_client, kcopyd_work);
 	struct blk_plug plug;
-	unsigned long flags;
 
 	/*
 	 * The order that these are called is *very* important.
@@ -657,9 +654,9 @@ static void do_work(struct work_struct *work)
 	 * list.  io jobs call wake when they complete and it all
 	 * starts again.
 	 */
-	spin_lock_irqsave(&kc->job_lock, flags);
+	spin_lock_irq(&kc->job_lock);
 	list_splice_tail_init(&kc->callback_jobs, &kc->complete_jobs);
-	spin_unlock_irqrestore(&kc->job_lock, flags);
+	spin_unlock_irq(&kc->job_lock);
 
 	blk_start_plug(&plug);
 	process_jobs(&kc->complete_jobs, kc, run_complete_job);
@@ -709,7 +706,7 @@ static void segment_complete(int read_err, unsigned long write_err,
 	 * Only dispatch more work if there hasn't been an error.
 	 */
 	if ((!job->read_err && !job->write_err) ||
-	    test_bit(DM_KCOPYD_IGNORE_ERROR, &job->flags)) {
+	    job->flags & BIT(DM_KCOPYD_IGNORE_ERROR)) {
 		/* get the next chunk of work */
 		progress = job->progress;
 		count = job->source.count - progress;
@@ -801,10 +798,10 @@ void dm_kcopyd_copy(struct dm_kcopyd_client *kc, struct dm_io_region *from,
 	 * we need to write sequentially. If one of the destination is a
 	 * host-aware device, then leave it to the caller to choose what to do.
 	 */
-	if (!test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags)) {
+	if (!(job->flags & BIT(DM_KCOPYD_WRITE_SEQ))) {
 		for (i = 0; i < job->num_dests; i++) {
 			if (bdev_zoned_model(dests[i].bdev) == BLK_ZONED_HM) {
-				set_bit(DM_KCOPYD_WRITE_SEQ, &job->flags);
+				job->flags |= BIT(DM_KCOPYD_WRITE_SEQ);
 				break;
 			}
 		}
@@ -813,14 +810,14 @@ void dm_kcopyd_copy(struct dm_kcopyd_client *kc, struct dm_io_region *from,
 	/*
 	 * If we need to write sequentially, errors cannot be ignored.
 	 */
-	if (test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags) &&
-	    test_bit(DM_KCOPYD_IGNORE_ERROR, &job->flags))
-		clear_bit(DM_KCOPYD_IGNORE_ERROR, &job->flags);
+	if (job->flags & BIT(DM_KCOPYD_WRITE_SEQ) &&
+	    job->flags & BIT(DM_KCOPYD_IGNORE_ERROR))
+		job->flags &= ~BIT(DM_KCOPYD_IGNORE_ERROR);
 
 	if (from) {
 		job->source = *from;
 		job->pages = NULL;
-		job->rw = READ;
+		job->op = REQ_OP_READ;
 	} else {
 		memset(&job->source, 0, sizeof job->source);
 		job->source.count = job->dests[0].count;
@@ -829,10 +826,10 @@ void dm_kcopyd_copy(struct dm_kcopyd_client *kc, struct dm_io_region *from,
 		/*
 		 * Use WRITE ZEROES to optimize zeroing if all dests support it.
 		 */
-		job->rw = REQ_OP_WRITE_ZEROES;
+		job->op = REQ_OP_WRITE_ZEROES;
 		for (i = 0; i < job->num_dests; i++)
 			if (!bdev_write_zeroes_sectors(job->dests[i].bdev)) {
-				job->rw = WRITE;
+				job->op = REQ_OP_WRITE;
 				break;
 			}
 	}
@@ -983,3 +980,9 @@ void dm_kcopyd_client_destroy(struct dm_kcopyd_client *kc)
 	kfree(kc);
 }
 EXPORT_SYMBOL(dm_kcopyd_client_destroy);
+
+void dm_kcopyd_client_flush(struct dm_kcopyd_client *kc)
+{
+	flush_workqueue(kc->kcopyd_wq);
+}
+EXPORT_SYMBOL(dm_kcopyd_client_flush);

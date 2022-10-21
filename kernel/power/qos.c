@@ -119,7 +119,7 @@ int pm_qos_update_target(struct pm_qos_constraints *c, struct plist_node *node,
 		 * and add, then see if the aggregate has changed.
 		 */
 		plist_del(node, &c->list);
-		/* fall through */
+		fallthrough;
 	case PM_QOS_ADD_REQ:
 		plist_node_init(node, new_value);
 		plist_add(node, &c->list);
@@ -188,7 +188,7 @@ bool pm_qos_update_flags(struct pm_qos_flags *pqf,
 		break;
 	case PM_QOS_UPDATE_REQ:
 		pm_qos_flags_remove_req(pqf, req);
-		/* fall through */
+		fallthrough;
 	case PM_QOS_ADD_REQ:
 		req->flags = val;
 		INIT_LIST_HEAD(&req->node);
@@ -531,7 +531,7 @@ int freq_qos_add_request(struct freq_constraints *qos,
 {
 	int ret;
 
-	if (IS_ERR_OR_NULL(qos) || !req)
+	if (IS_ERR_OR_NULL(qos) || !req || value < 0)
 		return -EINVAL;
 
 	if (WARN(freq_qos_request_active(req),
@@ -563,7 +563,7 @@ EXPORT_SYMBOL_GPL(freq_qos_add_request);
  */
 int freq_qos_update_request(struct freq_qos_request *req, s32 new_value)
 {
-	if (!req)
+	if (!req || new_value < 0)
 		return -EINVAL;
 
 	if (WARN(!freq_qos_request_active(req),

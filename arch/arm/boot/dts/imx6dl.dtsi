@@ -80,18 +80,17 @@
 		};
 	};
 
-	soc {
+	soc: soc {
 		ocram: sram@900000 {
 			compatible = "mmio-sram";
 			reg = <0x00900000 0x20000>;
+			ranges = <0 0x00900000 0x20000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
 			clocks = <&clks IMX6QDL_CLK_OCRAM>;
 		};
 
 		aips1: bus@2000000 {
-			iomuxc: pinctrl@20e0000 {
-				compatible = "fsl,imx6dl-iomuxc";
-			};
-
 			pxp: pxp@20f0000 {
 				reg = <0x020f0000 0x4000>;
 				interrupts = <0 98 IRQ_TYPE_LEVEL_HIGH>;
@@ -296,6 +295,10 @@
 
 &hdmi {
 	compatible = "fsl,imx6dl-hdmi";
+};
+
+&iomuxc {
+	compatible = "fsl,imx6dl-iomuxc";
 };
 
 &ipu1_csi1 {

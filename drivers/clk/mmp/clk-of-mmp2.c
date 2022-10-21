@@ -1,13 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * mmp2 clock framework source file
  *
  * Copyright (C) 2012 Marvell
  * Chao Xie <xiechao.mail@gmail.com>
  * Copyright (C) 2020 Lubomir Rintel <lkundrak@v3.sk>
- *
- * This file is licensed under the terms of the GNU General Public
- * License version 2. This program is licensed "as is" without any
- * warranty of any kind, whether express or implied.
  */
 
 #include <linux/module.h>
@@ -317,9 +314,9 @@ static const char * const ccic_parent_names[] = {"pll1_2", "pll1_16", "vctcxo"};
 
 static DEFINE_SPINLOCK(gpu_lock);
 static const char * const mmp2_gpu_gc_parent_names[] =  {"pll1_2", "pll1_3", "pll2_2", "pll2_3", "pll2", "usb_pll"};
-static u32 mmp2_gpu_gc_parent_table[] =          { 0x0000,   0x0040,   0x0080,   0x00c0,   0x1000, 0x1040   };
+static const u32 mmp2_gpu_gc_parent_table[] = { 0x0000,   0x0040,   0x0080,   0x00c0,   0x1000, 0x1040   };
 static const char * const mmp2_gpu_bus_parent_names[] = {"pll1_4", "pll2",   "pll2_2", "usb_pll"};
-static u32 mmp2_gpu_bus_parent_table[] =         { 0x0000,   0x0020,   0x0030,   0x4020   };
+static const u32 mmp2_gpu_bus_parent_table[] = { 0x0000,   0x0020,   0x0030,   0x4020   };
 static const char * const mmp3_gpu_bus_parent_names[] = {"pll1_4", "pll1_6", "pll1_2", "pll2_2"};
 static const char * const mmp3_gpu_gc_parent_names[] =  {"pll1",   "pll2",   "pll1_p", "pll2_p"};
 
@@ -347,9 +344,9 @@ static struct mmp_param_mux_clk mmp3_apmu_mux_clks[] = {
 };
 
 static struct mmp_param_div_clk apmu_div_clks[] = {
-	{0, "disp0_div", "disp0_mux", CLK_SET_RATE_PARENT, APMU_DISP0, 8, 4, 0, &disp0_lock},
+	{0, "disp0_div", "disp0_mux", CLK_SET_RATE_PARENT, APMU_DISP0, 8, 4, CLK_DIVIDER_ONE_BASED, &disp0_lock},
 	{0, "disp0_sphy_div", "disp0_mux", CLK_SET_RATE_PARENT, APMU_DISP0, 15, 5, 0, &disp0_lock},
-	{0, "disp1_div", "disp1_mux", CLK_SET_RATE_PARENT, APMU_DISP1, 8, 4, 0, &disp1_lock},
+	{0, "disp1_div", "disp1_mux", CLK_SET_RATE_PARENT, APMU_DISP1, 8, 4, CLK_DIVIDER_ONE_BASED, &disp1_lock},
 	{0, "ccic0_sphy_div", "ccic0_mix_clk", CLK_SET_RATE_PARENT, APMU_CCIC0, 10, 5, 0, &ccic0_lock},
 	{0, "ccic1_sphy_div", "ccic1_mix_clk", CLK_SET_RATE_PARENT, APMU_CCIC1, 10, 5, 0, &ccic1_lock},
 };

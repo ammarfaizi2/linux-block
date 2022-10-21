@@ -16,6 +16,7 @@
 #include "cpuid.h"
 #include "lapic.h"
 #include "pmu.h"
+#include "svm.h"
 
 enum pmu_type {
 	PMU_TYPE_COUNTER = 0,
@@ -30,18 +31,6 @@ enum index {
 	INDEX_FOUR,
 	INDEX_FIVE,
 	INDEX_ERROR,
-};
-
-/* duplicated from amd_perfmon_event_map, K7 and above should work. */
-static struct kvm_event_hw_type_mapping amd_event_mapping[] = {
-	[0] = { 0x76, 0x00, PERF_COUNT_HW_CPU_CYCLES },
-	[1] = { 0xc0, 0x00, PERF_COUNT_HW_INSTRUCTIONS },
-	[2] = { 0x7d, 0x07, PERF_COUNT_HW_CACHE_REFERENCES },
-	[3] = { 0x7e, 0x07, PERF_COUNT_HW_CACHE_MISSES },
-	[4] = { 0xc2, 0x00, PERF_COUNT_HW_BRANCH_INSTRUCTIONS },
-	[5] = { 0xc3, 0x00, PERF_COUNT_HW_BRANCH_MISSES },
-	[6] = { 0xd0, 0x00, PERF_COUNT_HW_STALLED_CYCLES_FRONTEND },
-	[7] = { 0xd1, 0x00, PERF_COUNT_HW_STALLED_CYCLES_BACKEND },
 };
 
 static unsigned int get_msr_base(struct kvm_pmu *pmu, enum pmu_type type)
@@ -98,6 +87,11 @@ static enum index msr_to_index(u32 msr)
 static inline struct kvm_pmc *get_gp_pmc_amd(struct kvm_pmu *pmu, u32 msr,
 					     enum pmu_type type)
 {
+	struct kvm_vcpu *vcpu = pmu_to_vcpu(pmu);
+
+	if (!vcpu->kvm->arch.enable_pmu)
+		return NULL;
+
 	switch (msr) {
 	case MSR_F15H_PERF_CTL0:
 	case MSR_F15H_PERF_CTL1:
@@ -105,6 +99,9 @@ static inline struct kvm_pmc *get_gp_pmc_amd(struct kvm_pmu *pmu, u32 msr,
 	case MSR_F15H_PERF_CTL3:
 	case MSR_F15H_PERF_CTL4:
 	case MSR_F15H_PERF_CTL5:
+		if (!guest_cpuid_has(vcpu, X86_FEATURE_PERFCTR_CORE))
+			return NULL;
+		fallthrough;
 	case MSR_K7_EVNTSEL0 ... MSR_K7_EVNTSEL3:
 		if (type != PMU_TYPE_EVNTSEL)
 			return NULL;
@@ -115,6 +112,9 @@ static inline struct kvm_pmc *get_gp_pmc_amd(struct kvm_pmu *pmu, u32 msr,
 	case MSR_F15H_PERF_CTR3:
 	case MSR_F15H_PERF_CTR4:
 	case MSR_F15H_PERF_CTR5:
+		if (!guest_cpuid_has(vcpu, X86_FEATURE_PERFCTR_CORE))
+			return NULL;
+		fallthrough;
 	case MSR_K7_PERFCTR0 ... MSR_K7_PERFCTR3:
 		if (type != PMU_TYPE_COUNTER)
 			return NULL;
@@ -126,27 +126,9 @@ static inline struct kvm_pmc *get_gp_pmc_amd(struct kvm_pmu *pmu, u32 msr,
 	return &pmu->gp_counters[msr_to_index(msr)];
 }
 
-static unsigned amd_find_arch_event(struct kvm_pmu *pmu,
-				    u8 event_select,
-				    u8 unit_mask)
+static bool amd_hw_event_available(struct kvm_pmc *pmc)
 {
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(amd_event_mapping); i++)
-		if (amd_event_mapping[i].eventsel == event_select
-		    && amd_event_mapping[i].unit_mask == unit_mask)
-			break;
-
-	if (i == ARRAY_SIZE(amd_event_mapping))
-		return PERF_COUNT_HW_MAX;
-
-	return amd_event_mapping[i].event_type;
-}
-
-/* return PERF_COUNT_HW_MAX as AMD doesn't have fixed events */
-static unsigned amd_find_fixed_event(int idx)
-{
-	return PERF_COUNT_HW_MAX;
+	return true;
 }
 
 /* check if a PMC is enabled by comparing it against global_ctrl bits. Because
@@ -173,14 +155,13 @@ static struct kvm_pmc *amd_pmc_idx_to_pmc(struct kvm_pmu *pmu, int pmc_idx)
 	return get_gp_pmc_amd(pmu, base + pmc_idx, PMU_TYPE_COUNTER);
 }
 
-/* returns 0 if idx's corresponding MSR exists; otherwise returns 1. */
-static int amd_is_valid_rdpmc_ecx(struct kvm_vcpu *vcpu, unsigned int idx)
+static bool amd_is_valid_rdpmc_ecx(struct kvm_vcpu *vcpu, unsigned int idx)
 {
 	struct kvm_pmu *pmu = vcpu_to_pmu(vcpu);
 
 	idx &= ~(3u << 30);
 
-	return (idx >= pmu->nr_arch_gp_counters);
+	return idx < pmu->nr_arch_gp_counters;
 }
 
 /* idx is the ECX register of RDPMC instruction */
@@ -248,17 +229,18 @@ static int amd_pmu_set_msr(struct kvm_vcpu *vcpu, struct msr_data *msr_info)
 	pmc = get_gp_pmc_amd(pmu, msr, PMU_TYPE_COUNTER);
 	if (pmc) {
 		pmc->counter += data - pmc_read_counter(pmc);
+		pmc_update_sample_period(pmc);
 		return 0;
 	}
 	/* MSR_EVNTSELn */
 	pmc = get_gp_pmc_amd(pmu, msr, PMU_TYPE_EVNTSEL);
 	if (pmc) {
-		if (data == pmc->eventsel)
-			return 0;
-		if (!(data & pmu->reserved_bits)) {
-			reprogram_gp_counter(pmc, data);
-			return 0;
+		data &= ~pmu->reserved_bits;
+		if (data != pmc->eventsel) {
+			pmc->eventsel = data;
+			reprogram_counter(pmc);
 		}
+		return 0;
 	}
 
 	return 1;
@@ -274,7 +256,8 @@ static void amd_pmu_refresh(struct kvm_vcpu *vcpu)
 		pmu->nr_arch_gp_counters = AMD64_NUM_COUNTERS;
 
 	pmu->counter_bitmask[KVM_PMC_GP] = ((u64)1 << 48) - 1;
-	pmu->reserved_bits = 0xffffffff00200000ull;
+	pmu->reserved_bits = 0xfffffff000280000ull;
+	pmu->raw_event_mask = AMD64_RAW_EVENT_MASK;
 	pmu->version = 1;
 	/* not applicable to AMD; but clean them to prevent any fall out */
 	pmu->counter_bitmask[KVM_PMC_FIXED] = 0;
@@ -311,9 +294,8 @@ static void amd_pmu_reset(struct kvm_vcpu *vcpu)
 	}
 }
 
-struct kvm_pmu_ops amd_pmu_ops = {
-	.find_arch_event = amd_find_arch_event,
-	.find_fixed_event = amd_find_fixed_event,
+struct kvm_pmu_ops amd_pmu_ops __initdata = {
+	.hw_event_available = amd_hw_event_available,
 	.pmc_is_enabled = amd_pmc_is_enabled,
 	.pmc_idx_to_pmc = amd_pmc_idx_to_pmc,
 	.rdpmc_ecx_to_pmc = amd_rdpmc_ecx_to_pmc,

@@ -286,6 +286,7 @@ static int process_tar_file(struct device *dev,
 	struct tar_ucode_info_t *tar_info;
 	struct otx_cpt_ucode_hdr *ucode_hdr;
 	int ucode_type, ucode_size;
+	unsigned int code_length;
 
 	/*
 	 * If size is less than microcode header size then don't report
@@ -303,7 +304,13 @@ static int process_tar_file(struct device *dev,
 	if (get_ucode_type(ucode_hdr, &ucode_type))
 		return 0;
 
-	ucode_size = ntohl(ucode_hdr->code_length) * 2;
+	code_length = ntohl(ucode_hdr->code_length);
+	if (code_length >= INT_MAX / 2) {
+		dev_err(dev, "Invalid code_length %u\n", code_length);
+		return -EINVAL;
+	}
+
+	ucode_size = code_length * 2;
 	if (!ucode_size || (size < round_up(ucode_size, 16) +
 	    sizeof(struct otx_cpt_ucode_hdr) + OTX_CPT_UCODE_SIGN_LEN)) {
 		dev_err(dev, "Ucode %s invalid size\n", filename);
@@ -824,18 +831,12 @@ static ssize_t eng_grp_info_show(struct device *dev,
 static int create_sysfs_eng_grps_info(struct device *dev,
 				      struct otx_cpt_eng_grp_info *eng_grp)
 {
-	int ret;
-
 	eng_grp->info_attr.show = eng_grp_info_show;
 	eng_grp->info_attr.store = NULL;
 	eng_grp->info_attr.attr.name = eng_grp->sysfs_info_name;
 	eng_grp->info_attr.attr.mode = 0440;
 	sysfs_attr_init(&eng_grp->info_attr.attr);
-	ret = device_create_file(dev, &eng_grp->info_attr);
-	if (ret)
-		return ret;
-
-	return 0;
+	return device_create_file(dev, &eng_grp->info_attr);
 }
 
 static void ucode_unload(struct device *dev, struct otx_cpt_ucode *ucode)
@@ -878,11 +879,11 @@ static int copy_ucode_to_dma_mem(struct device *dev,
 
 	/* Byte swap 64-bit */
 	for (i = 0; i < (ucode->size / 8); i++)
-		((u64 *)ucode->align_va)[i] =
+		((__be64 *)ucode->align_va)[i] =
 				cpu_to_be64(((u64 *)ucode->align_va)[i]);
 	/*  Ucode needs 16-bit swap */
 	for (i = 0; i < (ucode->size / 2); i++)
-		((u16 *)ucode->align_va)[i] =
+		((__be16 *)ucode->align_va)[i] =
 				cpu_to_be16(((u16 *)ucode->align_va)[i]);
 	return 0;
 }
@@ -892,6 +893,7 @@ static int ucode_load(struct device *dev, struct otx_cpt_ucode *ucode,
 {
 	struct otx_cpt_ucode_hdr *ucode_hdr;
 	const struct firmware *fw;
+	unsigned int code_length;
 	int ret;
 
 	set_ucode_filename(ucode, ucode_filename);
@@ -902,7 +904,13 @@ static int ucode_load(struct device *dev, struct otx_cpt_ucode *ucode,
 	ucode_hdr = (struct otx_cpt_ucode_hdr *) fw->data;
 	memcpy(ucode->ver_str, ucode_hdr->ver_str, OTX_CPT_UCODE_VER_STR_SZ);
 	ucode->ver_num = ucode_hdr->ver_num;
-	ucode->size = ntohl(ucode_hdr->code_length) * 2;
+	code_length = ntohl(ucode_hdr->code_length);
+	if (code_length >= INT_MAX / 2) {
+		dev_err(dev, "Ucode invalid code_length %u\n", code_length);
+		ret = -EINVAL;
+		goto release_fw;
+	}
+	ucode->size = code_length * 2;
 	if (!ucode->size || (fw->size < round_up(ucode->size, 16)
 	    + sizeof(struct otx_cpt_ucode_hdr) + OTX_CPT_UCODE_SIGN_LEN)) {
 		dev_err(dev, "Ucode %s invalid size\n", ucode_filename);
@@ -1463,8 +1471,8 @@ int otx_cpt_try_create_default_eng_grps(struct pci_dev *pdev,
 					struct otx_cpt_eng_grps *eng_grps,
 					int pf_type)
 {
-	struct tar_ucode_info_t *tar_info[OTX_CPT_MAX_ETYPES_PER_GRP] = { 0 };
-	struct otx_cpt_engines engs[OTX_CPT_MAX_ETYPES_PER_GRP] = { {0} };
+	struct tar_ucode_info_t *tar_info[OTX_CPT_MAX_ETYPES_PER_GRP] = {};
+	struct otx_cpt_engines engs[OTX_CPT_MAX_ETYPES_PER_GRP] = {};
 	struct tar_arch_info_t *tar_arch = NULL;
 	char *tar_filename;
 	int i, ret = 0;

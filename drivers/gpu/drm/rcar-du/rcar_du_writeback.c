@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * rcar_du_writeback.c  --  R-Car Display Unit Writeback Support
+ * R-Car Display Unit Writeback Support
  *
  * Copyright (C) 2019 Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  */
 
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_device.h>
+#include <drm/drm_edid.h>
 #include <drm/drm_fourcc.h>
+#include <drm/drm_framebuffer.h>
 #include <drm/drm_probe_helper.h>
 #include <drm/drm_writeback.h>
 
@@ -200,15 +202,15 @@ int rcar_du_writeback_init(struct rcar_du_device *rcdu,
 {
 	struct drm_writeback_connector *wb_conn = &rcrtc->writeback;
 
-	wb_conn->encoder.possible_crtcs = 1 << drm_crtc_index(&rcrtc->crtc);
 	drm_connector_helper_add(&wb_conn->base,
 				 &rcar_du_wb_conn_helper_funcs);
 
-	return drm_writeback_connector_init(rcdu->ddev, wb_conn,
+	return drm_writeback_connector_init(&rcdu->ddev, wb_conn,
 					    &rcar_du_wb_conn_funcs,
 					    &rcar_du_wb_enc_helper_funcs,
 					    writeback_formats,
-					    ARRAY_SIZE(writeback_formats));
+					    ARRAY_SIZE(writeback_formats),
+					    1 << drm_crtc_index(&rcrtc->crtc));
 }
 
 void rcar_du_writeback_setup(struct rcar_du_crtc *rcrtc,

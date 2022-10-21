@@ -17,8 +17,6 @@
 #include <kvm_util.h>
 #include <processor.h>
 
-#define VCPU_ID 0
-
 /*
  * s390x needs at least 1MB alignment, and the x86_64 MOVE/DELETE tests need a
  * 2MB sized and aligned region so that the initial region corresponds to
@@ -54,8 +52,8 @@ static inline uint64_t guest_spin_on_val(uint64_t spin_val)
 
 static void *vcpu_worker(void *data)
 {
-	struct kvm_vm *vm = data;
-	struct kvm_run *run;
+	struct kvm_vcpu *vcpu = data;
+	struct kvm_run *run = vcpu->run;
 	struct ucall uc;
 	uint64_t cmd;
 
@@ -64,13 +62,11 @@ static void *vcpu_worker(void *data)
 	 * which will occur if the guest attempts to access a memslot after it
 	 * has been deleted or while it is being moved .
 	 */
-	run = vcpu_state(vm, VCPU_ID);
-
 	while (1) {
-		vcpu_run(vm, VCPU_ID);
+		vcpu_run(vcpu);
 
 		if (run->exit_reason == KVM_EXIT_IO) {
-			cmd = get_ucall(vm, VCPU_ID, &uc);
+			cmd = get_ucall(vcpu, &uc);
 			if (cmd != UCALL_SYNC)
 				break;
 
@@ -92,8 +88,7 @@ static void *vcpu_worker(void *data)
 	}
 
 	if (run->exit_reason == KVM_EXIT_IO && cmd == UCALL_ABORT)
-		TEST_FAIL("%s at %s:%ld, val = %lu", (const char *)uc.args[0],
-			  __FILE__, uc.args[1], uc.args[2]);
+		REPORT_GUEST_ASSERT_1(uc, "val = %lu");
 
 	return NULL;
 }
@@ -113,15 +108,14 @@ static void wait_for_vcpu(void)
 	usleep(100000);
 }
 
-static struct kvm_vm *spawn_vm(pthread_t *vcpu_thread, void *guest_code)
+static struct kvm_vm *spawn_vm(struct kvm_vcpu **vcpu, pthread_t *vcpu_thread,
+			       void *guest_code)
 {
 	struct kvm_vm *vm;
 	uint64_t *hva;
 	uint64_t gpa;
 
-	vm = vm_create_default(VCPU_ID, 0, guest_code);
-
-	vcpu_set_cpuid(vm, VCPU_ID, kvm_get_supported_cpuid());
+	vm = vm_create_with_one_vcpu(vcpu, guest_code);
 
 	vm_userspace_mem_region_add(vm, VM_MEM_SRC_ANONYMOUS_THP,
 				    MEM_REGION_GPA, MEM_REGION_SLOT,
@@ -134,13 +128,13 @@ static struct kvm_vm *spawn_vm(pthread_t *vcpu_thread, void *guest_code)
 	gpa = vm_phy_pages_alloc(vm, 2, MEM_REGION_GPA, MEM_REGION_SLOT);
 	TEST_ASSERT(gpa == MEM_REGION_GPA, "Failed vm_phy_pages_alloc\n");
 
-	virt_map(vm, MEM_REGION_GPA, MEM_REGION_GPA, 2, 0);
+	virt_map(vm, MEM_REGION_GPA, MEM_REGION_GPA, 2);
 
 	/* Ditto for the host mapping so that both pages can be zeroed. */
 	hva = addr_gpa2hva(vm, MEM_REGION_GPA);
 	memset(hva, 0, 2 * 4096);
 
-	pthread_create(vcpu_thread, NULL, vcpu_worker, vm);
+	pthread_create(vcpu_thread, NULL, vcpu_worker, *vcpu);
 
 	/* Ensure the guest thread is spun up. */
 	wait_for_vcpu();
@@ -156,14 +150,23 @@ static void guest_code_move_memory_region(void)
 	GUEST_SYNC(0);
 
 	/*
-	 * Spin until the memory region is moved to a misaligned address.  This
-	 * may or may not trigger MMIO, as the window where the memslot is
-	 * invalid is quite small.
+	 * Spin until the memory region starts getting moved to a
+	 * misaligned address.
+	 * Every region move may or may not trigger MMIO, as the
+	 * window where the memslot is invalid is usually quite small.
 	 */
 	val = guest_spin_on_val(0);
 	GUEST_ASSERT_1(val == 1 || val == MMIO_VAL, val);
 
-	/* Spin until the memory region is realigned. */
+	/* Spin until the misaligning memory region move completes. */
+	val = guest_spin_on_val(MMIO_VAL);
+	GUEST_ASSERT_1(val == 1 || val == 0, val);
+
+	/* Spin until the memory region starts to get re-aligned. */
+	val = guest_spin_on_val(0);
+	GUEST_ASSERT_1(val == 1 || val == MMIO_VAL, val);
+
+	/* Spin until the re-aligning memory region move completes. */
 	val = guest_spin_on_val(MMIO_VAL);
 	GUEST_ASSERT_1(val == 1, val);
 
@@ -173,10 +176,11 @@ static void guest_code_move_memory_region(void)
 static void test_move_memory_region(void)
 {
 	pthread_t vcpu_thread;
+	struct kvm_vcpu *vcpu;
 	struct kvm_vm *vm;
 	uint64_t *hva;
 
-	vm = spawn_vm(&vcpu_thread, guest_code_move_memory_region);
+	vm = spawn_vm(&vcpu, &vcpu_thread, guest_code_move_memory_region);
 
 	hva = addr_gpa2hva(vm, MEM_REGION_GPA);
 
@@ -251,11 +255,12 @@ static void guest_code_delete_memory_region(void)
 static void test_delete_memory_region(void)
 {
 	pthread_t vcpu_thread;
+	struct kvm_vcpu *vcpu;
 	struct kvm_regs regs;
 	struct kvm_run *run;
 	struct kvm_vm *vm;
 
-	vm = spawn_vm(&vcpu_thread, guest_code_delete_memory_region);
+	vm = spawn_vm(&vcpu, &vcpu_thread, guest_code_delete_memory_region);
 
 	/* Delete the memory region, the guest should not die. */
 	vm_mem_region_delete(vm, MEM_REGION_SLOT);
@@ -279,13 +284,13 @@ static void test_delete_memory_region(void)
 
 	pthread_join(vcpu_thread, NULL);
 
-	run = vcpu_state(vm, VCPU_ID);
+	run = vcpu->run;
 
 	TEST_ASSERT(run->exit_reason == KVM_EXIT_SHUTDOWN ||
 		    run->exit_reason == KVM_EXIT_INTERNAL_ERROR,
 		    "Unexpected exit reason = %d", run->exit_reason);
 
-	vcpu_regs_get(vm, VCPU_ID, &regs);
+	vcpu_regs_get(vcpu, &regs);
 
 	/*
 	 * On AMD, after KVM_EXIT_SHUTDOWN the VMCB has been reinitialized already,
@@ -302,19 +307,19 @@ static void test_delete_memory_region(void)
 
 static void test_zero_memory_regions(void)
 {
+	struct kvm_vcpu *vcpu;
 	struct kvm_run *run;
 	struct kvm_vm *vm;
 
 	pr_info("Testing KVM_RUN with zero added memory regions\n");
 
-	vm = vm_create(VM_MODE_DEFAULT, 0, O_RDWR);
-	vm_vcpu_add(vm, VCPU_ID);
+	vm = vm_create_barebones();
+	vcpu = __vm_vcpu_add(vm, 0);
 
-	TEST_ASSERT(!ioctl(vm_get_fd(vm), KVM_SET_NR_MMU_PAGES, 64),
-		    "KVM_SET_NR_MMU_PAGES failed, errno = %d\n", errno);
-	vcpu_run(vm, VCPU_ID);
+	vm_ioctl(vm, KVM_SET_NR_MMU_PAGES, (void *)64ul);
+	vcpu_run(vcpu);
 
-	run = vcpu_state(vm, VCPU_ID);
+	run = vcpu->run;
 	TEST_ASSERT(run->exit_reason == KVM_EXIT_INTERNAL_ERROR,
 		    "Unexpected exit_reason = %u\n", run->exit_reason);
 
@@ -332,41 +337,52 @@ static void test_add_max_memory_regions(void)
 	struct kvm_vm *vm;
 	uint32_t max_mem_slots;
 	uint32_t slot;
-	uint64_t guest_addr = 0x0;
-	uint64_t mem_reg_npages;
-	void *mem;
+	void *mem, *mem_aligned, *mem_extra;
+	size_t alignment;
+
+#ifdef __s390x__
+	/* On s390x, the host address must be aligned to 1M (due to PGSTEs) */
+	alignment = 0x100000;
+#else
+	alignment = 1;
+#endif
 
 	max_mem_slots = kvm_check_cap(KVM_CAP_NR_MEMSLOTS);
 	TEST_ASSERT(max_mem_slots > 0,
 		    "KVM_CAP_NR_MEMSLOTS should be greater than 0");
 	pr_info("Allowed number of memory slots: %i\n", max_mem_slots);
 
-	vm = vm_create(VM_MODE_DEFAULT, 0, O_RDWR);
-
-	mem_reg_npages = vm_calc_num_guest_pages(VM_MODE_DEFAULT, MEM_REGION_SIZE);
+	vm = vm_create_barebones();
 
 	/* Check it can be added memory slots up to the maximum allowed */
 	pr_info("Adding slots 0..%i, each memory region with %dK size\n",
 		(max_mem_slots - 1), MEM_REGION_SIZE >> 10);
-	for (slot = 0; slot < max_mem_slots; slot++) {
-		vm_userspace_mem_region_add(vm, VM_MEM_SRC_ANONYMOUS,
-					    guest_addr, slot, mem_reg_npages,
-					    0);
-		guest_addr += MEM_REGION_SIZE;
-	}
+
+	mem = mmap(NULL, (size_t)max_mem_slots * MEM_REGION_SIZE + alignment,
+		   PROT_READ | PROT_WRITE,
+		   MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
+	TEST_ASSERT(mem != MAP_FAILED, "Failed to mmap() host");
+	mem_aligned = (void *)(((size_t) mem + alignment - 1) & ~(alignment - 1));
+
+	for (slot = 0; slot < max_mem_slots; slot++)
+		vm_set_user_memory_region(vm, slot, 0,
+					  ((uint64_t)slot * MEM_REGION_SIZE),
+					  MEM_REGION_SIZE,
+					  mem_aligned + (uint64_t)slot * MEM_REGION_SIZE);
 
 	/* Check it cannot be added memory slots beyond the limit */
-	mem = mmap(NULL, MEM_REGION_SIZE, PROT_READ | PROT_WRITE,
-		   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-	TEST_ASSERT(mem != MAP_FAILED, "Failed to mmap() host");
+	mem_extra = mmap(NULL, MEM_REGION_SIZE, PROT_READ | PROT_WRITE,
+			 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	TEST_ASSERT(mem_extra != MAP_FAILED, "Failed to mmap() host");
 
-	ret = ioctl(vm_get_fd(vm), KVM_SET_USER_MEMORY_REGION,
-		    &(struct kvm_userspace_memory_region) {slot, 0, guest_addr,
-		    MEM_REGION_SIZE, (uint64_t) mem});
+	ret = __vm_set_user_memory_region(vm, max_mem_slots, 0,
+					  (uint64_t)max_mem_slots * MEM_REGION_SIZE,
+					  MEM_REGION_SIZE, mem_extra);
 	TEST_ASSERT(ret == -1 && errno == EINVAL,
 		    "Adding one more memory slot should fail with EINVAL");
 
-	munmap(mem, MEM_REGION_SIZE);
+	munmap(mem, (size_t)max_mem_slots * MEM_REGION_SIZE + alignment);
+	munmap(mem_extra, MEM_REGION_SIZE);
 	kvm_vm_free(vm);
 }
 

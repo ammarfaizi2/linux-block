@@ -5,10 +5,9 @@
 
 #include <linux/init.h>
 #include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/mod_devicetable.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 
@@ -25,9 +24,6 @@
 #include <sound/dmaengine_pcm.h>
 
 #include "jz4740-i2s.h"
-
-#define JZ4740_DMA_TYPE_AIC_TRANSMIT 24
-#define JZ4740_DMA_TYPE_AIC_RECEIVE 25
 
 #define JZ_REG_AIC_CONF		0x00
 #define JZ_REG_AIC_CTRL		0x04
@@ -97,9 +93,7 @@ struct i2s_soc_info {
 };
 
 struct jz4740_i2s {
-	struct resource *mem;
 	void __iomem *base;
-	dma_addr_t phys_base;
 
 	struct clk *clk_aic;
 	struct clk *clk_i2s;
@@ -209,18 +203,18 @@ static int jz4740_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 
 	conf &= ~(JZ_AIC_CONF_BIT_CLK_MASTER | JZ_AIC_CONF_SYNC_CLK_MASTER);
 
-	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBS_CFS:
+	switch (fmt & SND_SOC_DAIFMT_CLOCK_PROVIDER_MASK) {
+	case SND_SOC_DAIFMT_BP_FP:
 		conf |= JZ_AIC_CONF_BIT_CLK_MASTER | JZ_AIC_CONF_SYNC_CLK_MASTER;
 		format |= JZ_AIC_I2S_FMT_ENABLE_SYS_CLK;
 		break;
-	case SND_SOC_DAIFMT_CBM_CFS:
+	case SND_SOC_DAIFMT_BC_FP:
 		conf |= JZ_AIC_CONF_SYNC_CLK_MASTER;
 		break;
-	case SND_SOC_DAIFMT_CBS_CFM:
+	case SND_SOC_DAIFMT_BP_FC:
 		conf |= JZ_AIC_CONF_BIT_CLK_MASTER;
 		break;
-	case SND_SOC_DAIFMT_CBM_CFM:
+	case SND_SOC_DAIFMT_BC_FC:
 		break;
 	default:
 		return -EINVAL;
@@ -312,10 +306,14 @@ static int jz4740_i2s_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 	switch (clk_id) {
 	case JZ4740_I2S_CLKSRC_EXT:
 		parent = clk_get(NULL, "ext");
+		if (IS_ERR(parent))
+			return PTR_ERR(parent);
 		clk_set_parent(i2s->clk_i2s, parent);
 		break;
 	case JZ4740_I2S_CLKSRC_PLL:
 		parent = clk_get(NULL, "pll half");
+		if (IS_ERR(parent))
+			return PTR_ERR(parent);
 		clk_set_parent(i2s->clk_i2s, parent);
 		ret = clk_set_rate(i2s->clk_i2s, freq);
 		break;
@@ -370,23 +368,6 @@ static int jz4740_i2s_resume(struct snd_soc_component *component)
 	return 0;
 }
 
-static void jz4740_i2c_init_pcm_config(struct jz4740_i2s *i2s)
-{
-	struct snd_dmaengine_dai_dma_data *dma_data;
-
-	/* Playback */
-	dma_data = &i2s->playback_dma_data;
-	dma_data->maxburst = 16;
-	dma_data->slave_id = JZ4740_DMA_TYPE_AIC_TRANSMIT;
-	dma_data->addr = i2s->phys_base + JZ_REG_AIC_FIFO;
-
-	/* Capture */
-	dma_data = &i2s->capture_dma_data;
-	dma_data->maxburst = 16;
-	dma_data->slave_id = JZ4740_DMA_TYPE_AIC_RECEIVE;
-	dma_data->addr = i2s->phys_base + JZ_REG_AIC_FIFO;
-}
-
 static int jz4740_i2s_dai_probe(struct snd_soc_dai *dai)
 {
 	struct jz4740_i2s *i2s = snd_soc_dai_get_drvdata(dai);
@@ -397,7 +378,6 @@ static int jz4740_i2s_dai_probe(struct snd_soc_dai *dai)
 	if (ret)
 		return ret;
 
-	jz4740_i2c_init_pcm_config(i2s);
 	snd_soc_dai_init_dma_data(dai, &i2s->playback_dma_data,
 		&i2s->capture_dma_data);
 
@@ -456,7 +436,7 @@ static struct snd_soc_dai_driver jz4740_i2s_dai = {
 		.rates = SNDRV_PCM_RATE_8000_48000,
 		.formats = JZ4740_I2S_FMTS,
 	},
-	.symmetric_rates = 1,
+	.symmetric_rate = 1,
 	.ops = &jz4740_i2s_dai_ops,
 };
 
@@ -499,9 +479,10 @@ static const struct i2s_soc_info jz4780_i2s_soc_info = {
 };
 
 static const struct snd_soc_component_driver jz4740_i2s_component = {
-	.name		= "jz4740-i2s",
-	.suspend	= jz4740_i2s_suspend,
-	.resume		= jz4740_i2s_resume,
+	.name			= "jz4740-i2s",
+	.suspend		= jz4740_i2s_suspend,
+	.resume			= jz4740_i2s_resume,
+	.legacy_dai_naming	= 1,
 };
 
 static const struct of_device_id jz4740_of_matches[] = {
@@ -526,12 +507,15 @@ static int jz4740_i2s_dev_probe(struct platform_device *pdev)
 
 	i2s->soc_info = device_get_match_data(dev);
 
-	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	i2s->base = devm_ioremap_resource(dev, mem);
+	i2s->base = devm_platform_get_and_ioremap_resource(pdev, 0, &mem);
 	if (IS_ERR(i2s->base))
 		return PTR_ERR(i2s->base);
 
-	i2s->phys_base = mem->start;
+	i2s->playback_dma_data.maxburst = 16;
+	i2s->playback_dma_data.addr = mem->start + JZ_REG_AIC_FIFO;
+
+	i2s->capture_dma_data.maxburst = 16;
+	i2s->capture_dma_data.addr = mem->start + JZ_REG_AIC_FIFO;
 
 	i2s->clk_aic = devm_clk_get(dev, "aic");
 	if (IS_ERR(i2s->clk_aic))

@@ -6,9 +6,6 @@
  *
  *  proc root directory handling functions
  */
-
-#include <linux/uaccess.h>
-
 #include <linux/errno.h>
 #include <linux/time.h>
 #include <linux/proc_fs.h>
@@ -305,13 +302,19 @@ void __init proc_root_init(void)
 	proc_mkdir("bus", NULL);
 	proc_sys_init();
 
+	/*
+	 * Last things last. It is not like userspace processes eager
+	 * to open /proc files exist at this point but register last
+	 * anyway.
+	 */
 	register_filesystem(&proc_fs_type);
 }
 
-static int proc_root_getattr(const struct path *path, struct kstat *stat,
+static int proc_root_getattr(struct user_namespace *mnt_userns,
+			     const struct path *path, struct kstat *stat,
 			     u32 request_mask, unsigned int query_flags)
 {
-	generic_fillattr(d_inode(path->dentry), stat);
+	generic_fillattr(&init_user_ns, d_inode(path->dentry), stat);
 	stat->nlink = proc_root.nlink + nr_processes();
 	return 0;
 }

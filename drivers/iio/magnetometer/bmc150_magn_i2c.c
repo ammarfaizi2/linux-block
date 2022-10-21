@@ -36,7 +36,9 @@ static int bmc150_magn_i2c_probe(struct i2c_client *client,
 
 static int bmc150_magn_i2c_remove(struct i2c_client *client)
 {
-	return bmc150_magn_remove(&client->dev);
+	bmc150_magn_remove(&client->dev);
+
+	return 0;
 }
 
 static const struct acpi_device_id bmc150_magn_acpi_match[] = {
@@ -58,7 +60,8 @@ MODULE_DEVICE_TABLE(i2c, bmc150_magn_i2c_id);
 static const struct of_device_id bmc150_magn_of_match[] = {
 	{ .compatible = "bosch,bmc150_magn" },
 	{ .compatible = "bosch,bmc156_magn" },
-	{ .compatible = "bosch,bmm150_magn" },
+	{ .compatible = "bosch,bmm150_magn" }, /* deprecated compatible */
+	{ .compatible = "bosch,bmm150" },
 	{ }
 };
 MODULE_DEVICE_TABLE(of, bmc150_magn_of_match);
@@ -79,3 +82,4 @@ module_i2c_driver(bmc150_magn_driver);
 MODULE_AUTHOR("Daniel Baluta <daniel.baluta@intel.com");
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("BMC150 I2C magnetometer driver");
+MODULE_IMPORT_NS(IIO_BMC150_MAGN);

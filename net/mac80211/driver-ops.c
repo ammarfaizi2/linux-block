@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright 2015 Intel Deutschland GmbH
+ * Copyright (C) 2022 Intel Corporation
  */
 #include <net/mac80211.h>
 #include "ieee80211_i.h"
@@ -125,8 +126,11 @@ int drv_sta_state(struct ieee80211_local *local,
 	} else if (old_state == IEEE80211_STA_AUTH &&
 		   new_state == IEEE80211_STA_ASSOC) {
 		ret = drv_sta_add(local, sdata, &sta->sta);
-		if (ret == 0)
+		if (ret == 0) {
 			sta->uploaded = true;
+			if (rcu_access_pointer(sta->sta.rates))
+				drv_sta_rate_tbl_update(local, sdata, &sta->sta);
+		}
 	} else if (old_state == IEEE80211_STA_ASSOC &&
 		   new_state == IEEE80211_STA_AUTH) {
 		drv_sta_remove(local, sdata, &sta->sta);
@@ -177,9 +181,10 @@ void drv_sta_rc_update(struct ieee80211_local *local,
 }
 
 int drv_conf_tx(struct ieee80211_local *local,
-		struct ieee80211_sub_if_data *sdata, u16 ac,
+		struct ieee80211_link_data *link, u16 ac,
 		const struct ieee80211_tx_queue_params *params)
 {
+	struct ieee80211_sub_if_data *sdata = link->sdata;
 	int ret = -EOPNOTSUPP;
 
 	might_sleep();
@@ -198,10 +203,10 @@ int drv_conf_tx(struct ieee80211_local *local,
 		return -EINVAL;
 	}
 
-	trace_drv_conf_tx(local, sdata, ac, params);
+	trace_drv_conf_tx(local, sdata, link->link_id, ac, params);
 	if (local->ops->conf_tx)
 		ret = local->ops->conf_tx(&local->hw, &sdata->vif,
-					  ac, params);
+					  link->link_id, ac, params);
 	trace_drv_return_int(local, ret);
 	return ret;
 }

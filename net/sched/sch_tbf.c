@@ -184,6 +184,20 @@ static int tbf_offload_dump(struct Qdisc *sch)
 	return qdisc_offload_dump_helper(sch, TC_SETUP_QDISC_TBF, &qopt);
 }
 
+static void tbf_offload_graft(struct Qdisc *sch, struct Qdisc *new,
+			      struct Qdisc *old, struct netlink_ext_ack *extack)
+{
+	struct tc_tbf_qopt_offload graft_offload = {
+		.handle		= sch->handle,
+		.parent		= sch->parent,
+		.child_handle	= new->handle,
+		.command	= TC_TBF_GRAFT,
+	};
+
+	qdisc_offload_graft_helper(qdisc_dev(sch), sch, new, old,
+				   TC_SETUP_QDISC_TBF, &graft_offload, extack);
+}
+
 /* GSO packet is too big, segment it so that tbf can transmit
  * each segment in time
  */
@@ -342,6 +356,7 @@ static int tbf_change(struct Qdisc *sch, struct nlattr *opt,
 	struct nlattr *tb[TCA_TBF_MAX + 1];
 	struct tc_tbf_qopt *qopt;
 	struct Qdisc *child = NULL;
+	struct Qdisc *old = NULL;
 	struct psched_ratecfg rate;
 	struct psched_ratecfg peak;
 	u64 max_size;
@@ -433,7 +448,7 @@ static int tbf_change(struct Qdisc *sch, struct nlattr *opt,
 	sch_tree_lock(sch);
 	if (child) {
 		qdisc_tree_flush_backlog(q->qdisc);
-		qdisc_put(q->qdisc);
+		old = q->qdisc;
 		q->qdisc = child;
 	}
 	q->limit = qopt->limit;
@@ -453,6 +468,7 @@ static int tbf_change(struct Qdisc *sch, struct nlattr *opt,
 	memcpy(&q->peak, &peak, sizeof(struct psched_ratecfg));
 
 	sch_tree_unlock(sch);
+	qdisc_put(old);
 	err = 0;
 
 	tbf_offload_change(sch);
@@ -547,6 +563,8 @@ static int tbf_graft(struct Qdisc *sch, unsigned long arg, struct Qdisc *new,
 		new = &noop_qdisc;
 
 	*old = qdisc_replace(sch, new, &q->qdisc);
+
+	tbf_offload_graft(sch, new, *old, extack);
 	return 0;
 }
 

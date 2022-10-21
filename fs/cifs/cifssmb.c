@@ -1,24 +1,11 @@
+// SPDX-License-Identifier: LGPL-2.1
 /*
- *   fs/cifs/cifssmb.c
  *
  *   Copyright (C) International Business Machines  Corp., 2002,2010
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
  *   Contains the routines for constructing the SMB PDUs themselves
  *
- *   This library is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU Lesser General Public License as published
- *   by the Free Software Foundation; either version 2.1 of the License, or
- *   (at your option) any later version.
- *
- *   This library is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License for more details.
- *
- *   You should have received a copy of the GNU Lesser General Public License
- *   along with this library; if not, write to the Free Software
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
  /* SMB/CIFS PDU handling routines here - except for leftovers in connect.c   */
@@ -42,7 +29,6 @@
 #include "cifsproto.h"
 #include "cifs_unicode.h"
 #include "cifs_debug.h"
-#include "smb2proto.h"
 #include "fscache.h"
 #include "smbdirect.h"
 #ifdef CONFIG_CIFS_DFS_UPCALL
@@ -54,10 +40,6 @@ static struct {
 	int index;
 	char *name;
 } protocols[] = {
-#ifdef CONFIG_CIFS_WEAK_PW_HASH
-	{LANMAN_PROT, "\2LM1.2X002"},
-	{LANMAN2_PROT, "\2LANMAN2.1"},
-#endif /* weak password hashing for legacy clients */
 	{CIFS_PROT, "\2NT LM 0.12"},
 	{POSIX_PROT, "\2POSIX 2"},
 	{BAD_PROT, "\2"}
@@ -67,10 +49,6 @@ static struct {
 	int index;
 	char *name;
 } protocols[] = {
-#ifdef CONFIG_CIFS_WEAK_PW_HASH
-	{LANMAN_PROT, "\2LM1.2X002"},
-	{LANMAN2_PROT, "\2LANMAN2.1"},
-#endif /* weak password hashing for legacy clients */
 	{CIFS_PROT, "\2NT LM 0.12"},
 	{BAD_PROT, "\2"}
 };
@@ -78,161 +56,11 @@ static struct {
 
 /* define the number of elements in the cifs dialect array */
 #ifdef CONFIG_CIFS_POSIX
-#ifdef CONFIG_CIFS_WEAK_PW_HASH
-#define CIFS_NUM_PROT 4
-#else
 #define CIFS_NUM_PROT 2
-#endif /* CIFS_WEAK_PW_HASH */
 #else /* not posix */
-#ifdef CONFIG_CIFS_WEAK_PW_HASH
-#define CIFS_NUM_PROT 3
-#else
 #define CIFS_NUM_PROT 1
-#endif /* CONFIG_CIFS_WEAK_PW_HASH */
 #endif /* CIFS_POSIX */
 
-/*
- * Mark as invalid, all open files on tree connections since they
- * were closed when session to server was lost.
- */
-void
-cifs_mark_open_files_invalid(struct cifs_tcon *tcon)
-{
-	struct cifsFileInfo *open_file = NULL;
-	struct list_head *tmp;
-	struct list_head *tmp1;
-
-	/* list all files open on tree connection and mark them invalid */
-	spin_lock(&tcon->open_file_lock);
-	list_for_each_safe(tmp, tmp1, &tcon->openFileList) {
-		open_file = list_entry(tmp, struct cifsFileInfo, tlist);
-		open_file->invalidHandle = true;
-		open_file->oplock_break_cancelled = true;
-	}
-	spin_unlock(&tcon->open_file_lock);
-
-	mutex_lock(&tcon->crfid.fid_mutex);
-	tcon->crfid.is_valid = false;
-	/* cached handle is not valid, so SMB2_CLOSE won't be sent below */
-	close_shroot_lease_locked(&tcon->crfid);
-	memset(tcon->crfid.fid, 0, sizeof(struct cifs_fid));
-	mutex_unlock(&tcon->crfid.fid_mutex);
-
-	/*
-	 * BB Add call to invalidate_inodes(sb) for all superblocks mounted
-	 * to this tcon.
-	 */
-}
-
-#ifdef CONFIG_CIFS_DFS_UPCALL
-static int __cifs_reconnect_tcon(const struct nls_table *nlsc,
-				 struct cifs_tcon *tcon)
-{
-	int rc;
-	struct TCP_Server_Info *server = tcon->ses->server;
-	struct dfs_cache_tgt_list tl;
-	struct dfs_cache_tgt_iterator *it = NULL;
-	char *tree;
-	const char *tcp_host;
-	size_t tcp_host_len;
-	const char *dfs_host;
-	size_t dfs_host_len;
-
-	tree = kzalloc(MAX_TREE_SIZE, GFP_KERNEL);
-	if (!tree)
-		return -ENOMEM;
-
-	if (!tcon->dfs_path) {
-		if (tcon->ipc) {
-			scnprintf(tree, MAX_TREE_SIZE, "\\\\%s\\IPC$",
-				  server->hostname);
-			rc = CIFSTCon(0, tcon->ses, tree, tcon, nlsc);
-		} else {
-			rc = CIFSTCon(0, tcon->ses, tcon->treeName, tcon, nlsc);
-		}
-		goto out;
-	}
-
-	rc = dfs_cache_noreq_find(tcon->dfs_path + 1, NULL, &tl);
-	if (rc)
-		goto out;
-
-	extract_unc_hostname(server->hostname, &tcp_host, &tcp_host_len);
-
-	for (it = dfs_cache_get_tgt_iterator(&tl); it;
-	     it = dfs_cache_get_next_tgt(&tl, it)) {
-		const char *share, *prefix;
-		size_t share_len, prefix_len;
-		bool target_match;
-
-		rc = dfs_cache_get_tgt_share(it, &share, &share_len, &prefix,
-					     &prefix_len);
-		if (rc) {
-			cifs_dbg(VFS, "%s: failed to parse target share %d\n",
-				 __func__, rc);
-			continue;
-		}
-
-		extract_unc_hostname(share, &dfs_host, &dfs_host_len);
-
-		if (dfs_host_len != tcp_host_len
-		    || strncasecmp(dfs_host, tcp_host, dfs_host_len) != 0) {
-			cifs_dbg(FYI, "%s: %.*s doesn't match %.*s\n",
-				 __func__,
-				 (int)dfs_host_len, dfs_host,
-				 (int)tcp_host_len, tcp_host);
-
-			rc = match_target_ip(server, dfs_host, dfs_host_len,
-					     &target_match);
-			if (rc) {
-				cifs_dbg(VFS, "%s: failed to match target ip: %d\n",
-					 __func__, rc);
-				break;
-			}
-
-			if (!target_match) {
-				cifs_dbg(FYI, "%s: skipping target\n", __func__);
-				continue;
-			}
-		}
-
-		if (tcon->ipc) {
-			scnprintf(tree, MAX_TREE_SIZE, "\\\\%.*s\\IPC$",
-				  (int)share_len, share);
-			rc = CIFSTCon(0, tcon->ses, tree, tcon, nlsc);
-		} else {
-			scnprintf(tree, MAX_TREE_SIZE, "\\%.*s", (int)share_len,
-				  share);
-			rc = CIFSTCon(0, tcon->ses, tree, tcon, nlsc);
-			if (!rc) {
-				rc = update_super_prepath(tcon, prefix,
-							  prefix_len);
-				break;
-			}
-		}
-		if (rc == -EREMOTE)
-			break;
-	}
-
-	if (!rc) {
-		if (it)
-			rc = dfs_cache_noreq_update_tgthint(tcon->dfs_path + 1,
-							    it);
-		else
-			rc = -ENOENT;
-	}
-	dfs_cache_free_tgts(&tl);
-out:
-	kfree(tree);
-	return rc;
-}
-#else
-static inline int __cifs_reconnect_tcon(const struct nls_table *nlsc,
-					struct cifs_tcon *tcon)
-{
-	return CIFSTCon(0, tcon->ses, tcon->treeName, tcon, nlsc);
-}
-#endif
 
 /* reconnect the socket, tcon, and smb session if needed */
 static int
@@ -259,15 +87,18 @@ cifs_reconnect_tcon(struct cifs_tcon *tcon, int smb_command)
 	 * only tree disconnect, open, and write, (and ulogoff which does not
 	 * have tcon) are allowed as we start force umount
 	 */
-	if (tcon->tidStatus == CifsExiting) {
+	spin_lock(&tcon->tc_lock);
+	if (tcon->status == TID_EXITING) {
 		if (smb_command != SMB_COM_WRITE_ANDX &&
 		    smb_command != SMB_COM_OPEN_ANDX &&
 		    smb_command != SMB_COM_TREE_DISCONNECT) {
+			spin_unlock(&tcon->tc_lock);
 			cifs_dbg(FYI, "can not send cmd %d while umounting\n",
 				 smb_command);
 			return -ENODEV;
 		}
 	}
+	spin_unlock(&tcon->tc_lock);
 
 	retries = server->nr_targets;
 
@@ -287,8 +118,12 @@ cifs_reconnect_tcon(struct cifs_tcon *tcon, int smb_command)
 		}
 
 		/* are we still trying to reconnect? */
-		if (server->tcpStatus != CifsNeedReconnect)
+		spin_lock(&server->srv_lock);
+		if (server->tcpStatus != CifsNeedReconnect) {
+			spin_unlock(&server->srv_lock);
 			break;
+		}
+		spin_unlock(&server->srv_lock);
 
 		if (retries && --retries)
 			continue;
@@ -305,31 +140,49 @@ cifs_reconnect_tcon(struct cifs_tcon *tcon, int smb_command)
 		retries = server->nr_targets;
 	}
 
-	if (!ses->need_reconnect && !tcon->need_reconnect)
+	spin_lock(&ses->chan_lock);
+	if (!cifs_chan_needs_reconnect(ses, server) && !tcon->need_reconnect) {
+		spin_unlock(&ses->chan_lock);
 		return 0;
+	}
+	spin_unlock(&ses->chan_lock);
 
 	nls_codepage = load_nls_default();
-
-	/*
-	 * need to prevent multiple threads trying to simultaneously
-	 * reconnect the same SMB session
-	 */
-	mutex_lock(&ses->session_mutex);
 
 	/*
 	 * Recheck after acquire mutex. If another thread is negotiating
 	 * and the server never sends an answer the socket will be closed
 	 * and tcpStatus set to reconnect.
 	 */
+	spin_lock(&server->srv_lock);
 	if (server->tcpStatus == CifsNeedReconnect) {
+		spin_unlock(&server->srv_lock);
 		rc = -EHOSTDOWN;
-		mutex_unlock(&ses->session_mutex);
 		goto out;
 	}
+	spin_unlock(&server->srv_lock);
 
-	rc = cifs_negotiate_protocol(0, ses);
-	if (rc == 0 && ses->need_reconnect)
-		rc = cifs_setup_session(0, ses, nls_codepage);
+	/*
+	 * need to prevent multiple threads trying to simultaneously
+	 * reconnect the same SMB session
+	 */
+	spin_lock(&ses->chan_lock);
+	if (!cifs_chan_needs_reconnect(ses, server)) {
+		spin_unlock(&ses->chan_lock);
+
+		/* this means that we only need to tree connect */
+		if (tcon->need_reconnect)
+			goto skip_sess_setup;
+
+		rc = -EHOSTDOWN;
+		goto out;
+	}
+	spin_unlock(&ses->chan_lock);
+
+	mutex_lock(&ses->session_mutex);
+	rc = cifs_negotiate_protocol(0, ses, server);
+	if (!rc)
+		rc = cifs_setup_session(0, ses, server, nls_codepage);
 
 	/* do we need to reconnect tcon? */
 	if (rc || !tcon->need_reconnect) {
@@ -337,8 +190,9 @@ cifs_reconnect_tcon(struct cifs_tcon *tcon, int smb_command)
 		goto out;
 	}
 
+skip_sess_setup:
 	cifs_mark_open_files_invalid(tcon);
-	rc = __cifs_reconnect_tcon(nls_codepage, tcon);
+	rc = cifs_tree_connect(0, tcon, nls_codepage);
 	mutex_unlock(&ses->session_mutex);
 	cifs_dbg(FYI, "reconnect tcon rc = %d\n", rc);
 
@@ -476,8 +330,13 @@ static int
 smb_init_no_reconnect(int smb_command, int wct, struct cifs_tcon *tcon,
 			void **request_buf, void **response_buf)
 {
-	if (tcon->ses->need_reconnect || tcon->need_reconnect)
+	spin_lock(&tcon->ses->chan_lock);
+	if (cifs_chan_needs_reconnect(tcon->ses, tcon->ses->server) ||
+	    tcon->need_reconnect) {
+		spin_unlock(&tcon->ses->chan_lock);
 		return -EHOSTDOWN;
+	}
+	spin_unlock(&tcon->ses->chan_lock);
 
 	return __smb_init(smb_command, wct, tcon, request_buf, response_buf);
 }
@@ -551,135 +410,6 @@ decode_ext_sec_blob(struct cifs_ses *ses, NEGOTIATE_RSP *pSMBr)
 	return 0;
 }
 
-int
-cifs_enable_signing(struct TCP_Server_Info *server, bool mnt_sign_required)
-{
-	bool srv_sign_required = server->sec_mode & server->vals->signing_required;
-	bool srv_sign_enabled = server->sec_mode & server->vals->signing_enabled;
-	bool mnt_sign_enabled = global_secflags & CIFSSEC_MAY_SIGN;
-
-	/*
-	 * Is signing required by mnt options? If not then check
-	 * global_secflags to see if it is there.
-	 */
-	if (!mnt_sign_required)
-		mnt_sign_required = ((global_secflags & CIFSSEC_MUST_SIGN) ==
-						CIFSSEC_MUST_SIGN);
-
-	/*
-	 * If signing is required then it's automatically enabled too,
-	 * otherwise, check to see if the secflags allow it.
-	 */
-	mnt_sign_enabled = mnt_sign_required ? mnt_sign_required :
-				(global_secflags & CIFSSEC_MAY_SIGN);
-
-	/* If server requires signing, does client allow it? */
-	if (srv_sign_required) {
-		if (!mnt_sign_enabled) {
-			cifs_dbg(VFS, "Server requires signing, but it's disabled in SecurityFlags!\n");
-			return -ENOTSUPP;
-		}
-		server->sign = true;
-	}
-
-	/* If client requires signing, does server allow it? */
-	if (mnt_sign_required) {
-		if (!srv_sign_enabled) {
-			cifs_dbg(VFS, "Server does not support signing!\n");
-			return -ENOTSUPP;
-		}
-		server->sign = true;
-	}
-
-	if (cifs_rdma_enabled(server) && server->sign)
-		cifs_dbg(VFS, "Signing is enabled, and RDMA read/write will be disabled\n");
-
-	return 0;
-}
-
-#ifdef CONFIG_CIFS_WEAK_PW_HASH
-static int
-decode_lanman_negprot_rsp(struct TCP_Server_Info *server, NEGOTIATE_RSP *pSMBr)
-{
-	__s16 tmp;
-	struct lanman_neg_rsp *rsp = (struct lanman_neg_rsp *)pSMBr;
-
-	if (server->dialect != LANMAN_PROT && server->dialect != LANMAN2_PROT)
-		return -EOPNOTSUPP;
-
-	server->sec_mode = le16_to_cpu(rsp->SecurityMode);
-	server->maxReq = min_t(unsigned int,
-			       le16_to_cpu(rsp->MaxMpxCount),
-			       cifs_max_pending);
-	set_credits(server, server->maxReq);
-	server->maxBuf = le16_to_cpu(rsp->MaxBufSize);
-	/* set up max_read for readpages check */
-	server->max_read = server->maxBuf;
-	/* even though we do not use raw we might as well set this
-	accurately, in case we ever find a need for it */
-	if ((le16_to_cpu(rsp->RawMode) & RAW_ENABLE) == RAW_ENABLE) {
-		server->max_rw = 0xFF00;
-		server->capabilities = CAP_MPX_MODE | CAP_RAW_MODE;
-	} else {
-		server->max_rw = 0;/* do not need to use raw anyway */
-		server->capabilities = CAP_MPX_MODE;
-	}
-	tmp = (__s16)le16_to_cpu(rsp->ServerTimeZone);
-	if (tmp == -1) {
-		/* OS/2 often does not set timezone therefore
-		 * we must use server time to calc time zone.
-		 * Could deviate slightly from the right zone.
-		 * Smallest defined timezone difference is 15 minutes
-		 * (i.e. Nepal).  Rounding up/down is done to match
-		 * this requirement.
-		 */
-		int val, seconds, remain, result;
-		struct timespec64 ts;
-		time64_t utc = ktime_get_real_seconds();
-		ts = cnvrtDosUnixTm(rsp->SrvTime.Date,
-				    rsp->SrvTime.Time, 0);
-		cifs_dbg(FYI, "SrvTime %lld sec since 1970 (utc: %lld) diff: %lld\n",
-			 ts.tv_sec, utc,
-			 utc - ts.tv_sec);
-		val = (int)(utc - ts.tv_sec);
-		seconds = abs(val);
-		result = (seconds / MIN_TZ_ADJ) * MIN_TZ_ADJ;
-		remain = seconds % MIN_TZ_ADJ;
-		if (remain >= (MIN_TZ_ADJ / 2))
-			result += MIN_TZ_ADJ;
-		if (val < 0)
-			result = -result;
-		server->timeAdj = result;
-	} else {
-		server->timeAdj = (int)tmp;
-		server->timeAdj *= 60; /* also in seconds */
-	}
-	cifs_dbg(FYI, "server->timeAdj: %d seconds\n", server->timeAdj);
-
-
-	/* BB get server time for time conversions and add
-	code to use it and timezone since this is not UTC */
-
-	if (rsp->EncryptionKeyLength ==
-			cpu_to_le16(CIFS_CRYPTO_KEY_SIZE)) {
-		memcpy(server->cryptkey, rsp->EncryptionKey,
-			CIFS_CRYPTO_KEY_SIZE);
-	} else if (server->sec_mode & SECMODE_PW_ENCRYPT) {
-		return -EIO; /* need cryptkey unless plain text */
-	}
-
-	cifs_dbg(FYI, "LANMAN negotiated\n");
-	return 0;
-}
-#else
-static inline int
-decode_lanman_negprot_rsp(struct TCP_Server_Info *server, NEGOTIATE_RSP *pSMBr)
-{
-	cifs_dbg(VFS, "mount failed, cifs module not built with CIFS_WEAK_PW_HASH support\n");
-	return -EOPNOTSUPP;
-}
-#endif
-
 static bool
 should_set_ext_sec_flag(enum securityEnum sectype)
 {
@@ -691,21 +421,22 @@ should_set_ext_sec_flag(enum securityEnum sectype)
 		if (global_secflags &
 		    (CIFSSEC_MAY_KRB5 | CIFSSEC_MAY_NTLMSSP))
 			return true;
-		/* Fallthrough */
+		fallthrough;
 	default:
 		return false;
 	}
 }
 
 int
-CIFSSMBNegotiate(const unsigned int xid, struct cifs_ses *ses)
+CIFSSMBNegotiate(const unsigned int xid,
+		 struct cifs_ses *ses,
+		 struct TCP_Server_Info *server)
 {
 	NEGOTIATE_REQ *pSMB;
 	NEGOTIATE_RSP *pSMBr;
 	int rc = 0;
 	int bytes_returned;
 	int i;
-	struct TCP_Server_Info *server = ses->server;
 	u16 count;
 
 	if (!server) {
@@ -748,16 +479,12 @@ CIFSSMBNegotiate(const unsigned int xid, struct cifs_ses *ses)
 	server->dialect = le16_to_cpu(pSMBr->DialectIndex);
 	cifs_dbg(FYI, "Dialect: %d\n", server->dialect);
 	/* Check wct = 1 error case */
-	if ((pSMBr->hdr.WordCount < 13) || (server->dialect == BAD_PROT)) {
+	if ((pSMBr->hdr.WordCount <= 13) || (server->dialect == BAD_PROT)) {
 		/* core returns wct = 1, but we do not ask for core - otherwise
 		small wct just comes when dialect index is -1 indicating we
 		could not negotiate a common dialect */
 		rc = -EOPNOTSUPP;
 		goto neg_err_exit;
-	} else if (pSMBr->hdr.WordCount == 13) {
-		server->negflavor = CIFS_NEGFLAVOR_LANMAN;
-		rc = decode_lanman_negprot_rsp(server, pSMBr);
-		goto signing_check;
 	} else if (pSMBr->hdr.WordCount != 17) {
 		/* unknown wct */
 		rc = -EOPNOTSUPP;
@@ -776,7 +503,7 @@ CIFSSMBNegotiate(const unsigned int xid, struct cifs_ses *ses)
 	set_credits(server, server->maxReq);
 	/* probably no need to store and check maxvcs */
 	server->maxBuf = le32_to_cpu(pSMBr->MaxBufferSize);
-	/* set up max_read for readpages check */
+	/* set up max_read for readahead check */
 	server->max_read = server->maxBuf;
 	server->max_rw = le32_to_cpu(pSMBr->MaxRawSize);
 	cifs_dbg(NOISY, "Max buf = %d\n", ses->server->maxBuf);
@@ -799,7 +526,6 @@ CIFSSMBNegotiate(const unsigned int xid, struct cifs_ses *ses)
 		server->capabilities &= ~CAP_EXTENDED_SECURITY;
 	}
 
-signing_check:
 	if (!rc)
 		rc = cifs_enable_signing(server, ses->sign);
 neg_err_exit:
@@ -827,8 +553,12 @@ CIFSSMBTDis(const unsigned int xid, struct cifs_tcon *tcon)
 	 * the tcon is no longer on the list, so no need to take lock before
 	 * checking this.
 	 */
-	if ((tcon->need_reconnect) || (tcon->ses->need_reconnect))
-		return 0;
+	spin_lock(&tcon->ses->chan_lock);
+	if ((tcon->need_reconnect) || CIFS_ALL_CHANS_NEED_RECONNECT(tcon->ses)) {
+		spin_unlock(&tcon->ses->chan_lock);
+		return -EIO;
+	}
+	spin_unlock(&tcon->ses->chan_lock);
 
 	rc = small_smb_init(SMB_COM_TREE_DISCONNECT, 0, tcon,
 			    (void **)&smb_buffer);
@@ -861,7 +591,7 @@ cifs_echo_callback(struct mid_q_entry *mid)
 	struct TCP_Server_Info *server = mid->callback_data;
 	struct cifs_credits credits = { .value = 1, .instance = 0 };
 
-	DeleteMidQEntry(mid);
+	release_mid(mid);
 	add_credits(server, &credits, CIFS_ECHO_OP);
 }
 
@@ -923,9 +653,14 @@ CIFSSMBLogoff(const unsigned int xid, struct cifs_ses *ses)
 		return -EIO;
 
 	mutex_lock(&ses->session_mutex);
-	if (ses->need_reconnect)
+	spin_lock(&ses->chan_lock);
+	if (CIFS_ALL_CHANS_NEED_RECONNECT(ses)) {
+		spin_unlock(&ses->chan_lock);
 		goto session_already_dead; /* no need to send SMBlogoff if uid
 					      already closed due to reconnect */
+	}
+	spin_unlock(&ses->chan_lock);
+
 	rc = small_smb_init(SMB_COM_LOGOFF_ANDX, 2, NULL, (void **)&pSMB);
 	if (rc) {
 		mutex_unlock(&ses->session_mutex);
@@ -995,8 +730,11 @@ PsxDelete:
 				InformationLevel) - 4;
 	offset = param_offset + params;
 
-	/* Setup pointer to Request Data (inode type) */
-	pRqD = (struct unlink_psx_rq *)(((char *)&pSMB->hdr.Protocol) + offset);
+	/* Setup pointer to Request Data (inode type).
+	 * Note that SMB offsets are from the beginning of SMB which is 4 bytes
+	 * in, after RFC1001 field
+	 */
+	pRqD = (struct unlink_psx_rq *)((char *)(pSMB) + offset + 4);
 	pRqD->type = cpu_to_le16(type);
 	pSMB->ParameterOffset = cpu_to_le16(param_offset);
 	pSMB->DataOffset = cpu_to_le16(offset);
@@ -1203,7 +941,8 @@ PsxCreat:
 	param_offset = offsetof(struct smb_com_transaction2_spi_req,
 				InformationLevel) - 4;
 	offset = param_offset + params;
-	pdata = (OPEN_PSX_REQ *)(((char *)&pSMB->hdr.Protocol) + offset);
+	/* SMB offsets are from the beginning of SMB which is 4 bytes in, after RFC1001 field */
+	pdata = (OPEN_PSX_REQ *)((char *)(pSMB) + offset + 4);
 	pdata->Level = cpu_to_le16(SMB_QUERY_FILE_UNIX_BASIC);
 	pdata->Permissions = cpu_to_le64(mode);
 	pdata->PosixOpenFlags = cpu_to_le32(posix_flags);
@@ -1330,7 +1069,7 @@ SMBLegacyOpen(const unsigned int xid, struct cifs_tcon *tcon,
 	    int *pOplock, FILE_ALL_INFO *pfile_info,
 	    const struct nls_table *nls_codepage, int remap)
 {
-	int rc = -EACCES;
+	int rc;
 	OPENX_REQ *pSMB = NULL;
 	OPENX_RSP *pSMBr = NULL;
 	int bytes_returned;
@@ -1547,184 +1286,6 @@ openRetry:
 	return rc;
 }
 
-/*
- * Discard any remaining data in the current SMB. To do this, we borrow the
- * current bigbuf.
- */
-int
-cifs_discard_remaining_data(struct TCP_Server_Info *server)
-{
-	unsigned int rfclen = server->pdu_size;
-	int remaining = rfclen + server->vals->header_preamble_size -
-		server->total_read;
-
-	while (remaining > 0) {
-		int length;
-
-		length = cifs_read_from_socket(server, server->bigbuf,
-				min_t(unsigned int, remaining,
-				    CIFSMaxBufSize + MAX_HEADER_SIZE(server)));
-		if (length < 0)
-			return length;
-		server->total_read += length;
-		remaining -= length;
-	}
-
-	return 0;
-}
-
-static int
-__cifs_readv_discard(struct TCP_Server_Info *server, struct mid_q_entry *mid,
-		     bool malformed)
-{
-	int length;
-
-	length = cifs_discard_remaining_data(server);
-	dequeue_mid(mid, malformed);
-	mid->resp_buf = server->smallbuf;
-	server->smallbuf = NULL;
-	return length;
-}
-
-static int
-cifs_readv_discard(struct TCP_Server_Info *server, struct mid_q_entry *mid)
-{
-	struct cifs_readdata *rdata = mid->callback_data;
-
-	return  __cifs_readv_discard(server, mid, rdata->result);
-}
-
-int
-cifs_readv_receive(struct TCP_Server_Info *server, struct mid_q_entry *mid)
-{
-	int length, len;
-	unsigned int data_offset, data_len;
-	struct cifs_readdata *rdata = mid->callback_data;
-	char *buf = server->smallbuf;
-	unsigned int buflen = server->pdu_size +
-		server->vals->header_preamble_size;
-	bool use_rdma_mr = false;
-
-	cifs_dbg(FYI, "%s: mid=%llu offset=%llu bytes=%u\n",
-		 __func__, mid->mid, rdata->offset, rdata->bytes);
-
-	/*
-	 * read the rest of READ_RSP header (sans Data array), or whatever we
-	 * can if there's not enough data. At this point, we've read down to
-	 * the Mid.
-	 */
-	len = min_t(unsigned int, buflen, server->vals->read_rsp_size) -
-							HEADER_SIZE(server) + 1;
-
-	length = cifs_read_from_socket(server,
-				       buf + HEADER_SIZE(server) - 1, len);
-	if (length < 0)
-		return length;
-	server->total_read += length;
-
-	if (server->ops->is_session_expired &&
-	    server->ops->is_session_expired(buf)) {
-		cifs_reconnect(server);
-		return -1;
-	}
-
-	if (server->ops->is_status_pending &&
-	    server->ops->is_status_pending(buf, server)) {
-		cifs_discard_remaining_data(server);
-		return -1;
-	}
-
-	/* set up first two iov for signature check and to get credits */
-	rdata->iov[0].iov_base = buf;
-	rdata->iov[0].iov_len = server->vals->header_preamble_size;
-	rdata->iov[1].iov_base = buf + server->vals->header_preamble_size;
-	rdata->iov[1].iov_len =
-		server->total_read - server->vals->header_preamble_size;
-	cifs_dbg(FYI, "0: iov_base=%p iov_len=%zu\n",
-		 rdata->iov[0].iov_base, rdata->iov[0].iov_len);
-	cifs_dbg(FYI, "1: iov_base=%p iov_len=%zu\n",
-		 rdata->iov[1].iov_base, rdata->iov[1].iov_len);
-
-	/* Was the SMB read successful? */
-	rdata->result = server->ops->map_error(buf, false);
-	if (rdata->result != 0) {
-		cifs_dbg(FYI, "%s: server returned error %d\n",
-			 __func__, rdata->result);
-		/* normal error on read response */
-		return __cifs_readv_discard(server, mid, false);
-	}
-
-	/* Is there enough to get to the rest of the READ_RSP header? */
-	if (server->total_read < server->vals->read_rsp_size) {
-		cifs_dbg(FYI, "%s: server returned short header. got=%u expected=%zu\n",
-			 __func__, server->total_read,
-			 server->vals->read_rsp_size);
-		rdata->result = -EIO;
-		return cifs_readv_discard(server, mid);
-	}
-
-	data_offset = server->ops->read_data_offset(buf) +
-		server->vals->header_preamble_size;
-	if (data_offset < server->total_read) {
-		/*
-		 * win2k8 sometimes sends an offset of 0 when the read
-		 * is beyond the EOF. Treat it as if the data starts just after
-		 * the header.
-		 */
-		cifs_dbg(FYI, "%s: data offset (%u) inside read response header\n",
-			 __func__, data_offset);
-		data_offset = server->total_read;
-	} else if (data_offset > MAX_CIFS_SMALL_BUFFER_SIZE) {
-		/* data_offset is beyond the end of smallbuf */
-		cifs_dbg(FYI, "%s: data offset (%u) beyond end of smallbuf\n",
-			 __func__, data_offset);
-		rdata->result = -EIO;
-		return cifs_readv_discard(server, mid);
-	}
-
-	cifs_dbg(FYI, "%s: total_read=%u data_offset=%u\n",
-		 __func__, server->total_read, data_offset);
-
-	len = data_offset - server->total_read;
-	if (len > 0) {
-		/* read any junk before data into the rest of smallbuf */
-		length = cifs_read_from_socket(server,
-					       buf + server->total_read, len);
-		if (length < 0)
-			return length;
-		server->total_read += length;
-	}
-
-	/* how much data is in the response? */
-#ifdef CONFIG_CIFS_SMB_DIRECT
-	use_rdma_mr = rdata->mr;
-#endif
-	data_len = server->ops->read_data_length(buf, use_rdma_mr);
-	if (!use_rdma_mr && (data_offset + data_len > buflen)) {
-		/* data_len is corrupt -- discard frame */
-		rdata->result = -EIO;
-		return cifs_readv_discard(server, mid);
-	}
-
-	length = rdata->read_into_pages(server, rdata, data_len);
-	if (length < 0)
-		return length;
-
-	server->total_read += length;
-
-	cifs_dbg(FYI, "total_read=%u buflen=%u remaining=%u\n",
-		 server->total_read, buflen, data_len);
-
-	/* discard anything left over */
-	if (server->total_read < buflen)
-		return cifs_readv_discard(server, mid);
-
-	dequeue_mid(mid, false);
-	mid->resp_buf = server->smallbuf;
-	server->smallbuf = NULL;
-	return length;
-}
-
 static void
 cifs_readv_callback(struct mid_q_entry *mid)
 {
@@ -1775,7 +1336,7 @@ cifs_readv_callback(struct mid_q_entry *mid)
 	}
 
 	queue_work(cifsiod_wq, &rdata->work);
-	DeleteMidQEntry(mid);
+	release_mid(mid);
 	add_credits(server, &credits, 0);
 }
 
@@ -2077,182 +1638,6 @@ CIFSSMBWrite(const unsigned int xid, struct cifs_io_parms *io_parms,
 	return rc;
 }
 
-void
-cifs_writedata_release(struct kref *refcount)
-{
-	struct cifs_writedata *wdata = container_of(refcount,
-					struct cifs_writedata, refcount);
-#ifdef CONFIG_CIFS_SMB_DIRECT
-	if (wdata->mr) {
-		smbd_deregister_mr(wdata->mr);
-		wdata->mr = NULL;
-	}
-#endif
-
-	if (wdata->cfile)
-		cifsFileInfo_put(wdata->cfile);
-
-	kvfree(wdata->pages);
-	kfree(wdata);
-}
-
-/*
- * Write failed with a retryable error. Resend the write request. It's also
- * possible that the page was redirtied so re-clean the page.
- */
-static void
-cifs_writev_requeue(struct cifs_writedata *wdata)
-{
-	int i, rc = 0;
-	struct inode *inode = d_inode(wdata->cfile->dentry);
-	struct TCP_Server_Info *server;
-	unsigned int rest_len;
-
-	server = tlink_tcon(wdata->cfile->tlink)->ses->server;
-	i = 0;
-	rest_len = wdata->bytes;
-	do {
-		struct cifs_writedata *wdata2;
-		unsigned int j, nr_pages, wsize, tailsz, cur_len;
-
-		wsize = server->ops->wp_retry_size(inode);
-		if (wsize < rest_len) {
-			nr_pages = wsize / PAGE_SIZE;
-			if (!nr_pages) {
-				rc = -ENOTSUPP;
-				break;
-			}
-			cur_len = nr_pages * PAGE_SIZE;
-			tailsz = PAGE_SIZE;
-		} else {
-			nr_pages = DIV_ROUND_UP(rest_len, PAGE_SIZE);
-			cur_len = rest_len;
-			tailsz = rest_len - (nr_pages - 1) * PAGE_SIZE;
-		}
-
-		wdata2 = cifs_writedata_alloc(nr_pages, cifs_writev_complete);
-		if (!wdata2) {
-			rc = -ENOMEM;
-			break;
-		}
-
-		for (j = 0; j < nr_pages; j++) {
-			wdata2->pages[j] = wdata->pages[i + j];
-			lock_page(wdata2->pages[j]);
-			clear_page_dirty_for_io(wdata2->pages[j]);
-		}
-
-		wdata2->sync_mode = wdata->sync_mode;
-		wdata2->nr_pages = nr_pages;
-		wdata2->offset = page_offset(wdata2->pages[0]);
-		wdata2->pagesz = PAGE_SIZE;
-		wdata2->tailsz = tailsz;
-		wdata2->bytes = cur_len;
-
-		rc = cifs_get_writable_file(CIFS_I(inode), FIND_WR_ANY,
-					    &wdata2->cfile);
-		if (!wdata2->cfile) {
-			cifs_dbg(VFS, "No writable handle to retry writepages rc=%d\n",
-				 rc);
-			if (!is_retryable_error(rc))
-				rc = -EBADF;
-		} else {
-			wdata2->pid = wdata2->cfile->pid;
-			rc = server->ops->async_writev(wdata2,
-						       cifs_writedata_release);
-		}
-
-		for (j = 0; j < nr_pages; j++) {
-			unlock_page(wdata2->pages[j]);
-			if (rc != 0 && !is_retryable_error(rc)) {
-				SetPageError(wdata2->pages[j]);
-				end_page_writeback(wdata2->pages[j]);
-				put_page(wdata2->pages[j]);
-			}
-		}
-
-		kref_put(&wdata2->refcount, cifs_writedata_release);
-		if (rc) {
-			if (is_retryable_error(rc))
-				continue;
-			i += nr_pages;
-			break;
-		}
-
-		rest_len -= cur_len;
-		i += nr_pages;
-	} while (i < wdata->nr_pages);
-
-	/* cleanup remaining pages from the original wdata */
-	for (; i < wdata->nr_pages; i++) {
-		SetPageError(wdata->pages[i]);
-		end_page_writeback(wdata->pages[i]);
-		put_page(wdata->pages[i]);
-	}
-
-	if (rc != 0 && !is_retryable_error(rc))
-		mapping_set_error(inode->i_mapping, rc);
-	kref_put(&wdata->refcount, cifs_writedata_release);
-}
-
-void
-cifs_writev_complete(struct work_struct *work)
-{
-	struct cifs_writedata *wdata = container_of(work,
-						struct cifs_writedata, work);
-	struct inode *inode = d_inode(wdata->cfile->dentry);
-	int i = 0;
-
-	if (wdata->result == 0) {
-		spin_lock(&inode->i_lock);
-		cifs_update_eof(CIFS_I(inode), wdata->offset, wdata->bytes);
-		spin_unlock(&inode->i_lock);
-		cifs_stats_bytes_written(tlink_tcon(wdata->cfile->tlink),
-					 wdata->bytes);
-	} else if (wdata->sync_mode == WB_SYNC_ALL && wdata->result == -EAGAIN)
-		return cifs_writev_requeue(wdata);
-
-	for (i = 0; i < wdata->nr_pages; i++) {
-		struct page *page = wdata->pages[i];
-		if (wdata->result == -EAGAIN)
-			__set_page_dirty_nobuffers(page);
-		else if (wdata->result < 0)
-			SetPageError(page);
-		end_page_writeback(page);
-		put_page(page);
-	}
-	if (wdata->result != -EAGAIN)
-		mapping_set_error(inode->i_mapping, wdata->result);
-	kref_put(&wdata->refcount, cifs_writedata_release);
-}
-
-struct cifs_writedata *
-cifs_writedata_alloc(unsigned int nr_pages, work_func_t complete)
-{
-	struct page **pages =
-		kcalloc(nr_pages, sizeof(struct page *), GFP_NOFS);
-	if (pages)
-		return cifs_writedata_direct_alloc(pages, complete);
-
-	return NULL;
-}
-
-struct cifs_writedata *
-cifs_writedata_direct_alloc(struct page **pages, work_func_t complete)
-{
-	struct cifs_writedata *wdata;
-
-	wdata = kzalloc(sizeof(*wdata), GFP_NOFS);
-	if (wdata != NULL) {
-		wdata->pages = pages;
-		kref_init(&wdata->refcount);
-		INIT_LIST_HEAD(&wdata->list);
-		init_completion(&wdata->done);
-		INIT_WORK(&wdata->work, complete);
-	}
-	return wdata;
-}
-
 /*
  * Check the mid_state and signature on received buffer (if any), and queue the
  * workqueue completion task.
@@ -2299,7 +1684,7 @@ cifs_writev_callback(struct mid_q_entry *mid)
 	}
 
 	queue_work(cifsiod_wq, &wdata->work);
-	DeleteMidQEntry(mid);
+	release_mid(mid);
 	add_credits(tcon->ses->server, &credits, 0);
 }
 
@@ -2659,8 +2044,9 @@ CIFSSMBPosixLock(const unsigned int xid, struct cifs_tcon *tcon,
 	pSMB->TotalDataCount = pSMB->DataCount;
 	pSMB->TotalParameterCount = pSMB->ParameterCount;
 	pSMB->ParameterOffset = cpu_to_le16(param_offset);
+	/* SMB offsets are from the beginning of SMB which is 4 bytes in, after RFC1001 field */
 	parm_data = (struct cifs_posix_lock *)
-			(((char *) &pSMB->hdr.Protocol) + offset);
+			(((char *)pSMB) + offset + 4);
 
 	parm_data->lock_type = cpu_to_le16(lock_type);
 	if (waitFlag) {
@@ -2724,7 +2110,8 @@ CIFSSMBPosixLock(const unsigned int xid, struct cifs_tcon *tcon,
 
 			pLockData->fl_start = le64_to_cpu(parm_data->start);
 			pLockData->fl_end = pLockData->fl_start +
-					le64_to_cpu(parm_data->length) - 1;
+				(le64_to_cpu(parm_data->length) ?
+				 le64_to_cpu(parm_data->length) - 1 : 0);
 			pLockData->fl_pid = -le32_to_cpu(parm_data->pid);
 		}
 	}
@@ -2889,7 +2276,8 @@ int CIFSSMBRenameOpenFile(const unsigned int xid, struct cifs_tcon *pTcon,
 	param_offset = offsetof(struct smb_com_transaction2_sfi_req, Fid) - 4;
 	offset = param_offset + params;
 
-	data_offset = (char *) (&pSMB->hdr.Protocol) + offset;
+	/* SMB offsets are from the beginning of SMB which is 4 bytes in, after RFC1001 field */
+	data_offset = (char *)(pSMB) + offset + 4;
 	rename_info = (struct set_file_rename *) data_offset;
 	pSMB->MaxParameterCount = cpu_to_le16(2);
 	pSMB->MaxDataCount = cpu_to_le16(1000); /* BB find max SMB from sess */
@@ -3047,7 +2435,8 @@ createSymLinkRetry:
 				InformationLevel) - 4;
 	offset = param_offset + params;
 
-	data_offset = (char *) (&pSMB->hdr.Protocol) + offset;
+	/* SMB offsets are from the beginning of SMB which is 4 bytes in, after RFC1001 field */
+	data_offset = (char *)pSMB + offset + 4;
 	if (pSMB->hdr.Flags2 & SMBFLG2_UNICODE) {
 		name_len_target =
 		    cifsConvertToUTF16((__le16 *) data_offset, toName,
@@ -3131,7 +2520,8 @@ createHardLinkRetry:
 				InformationLevel) - 4;
 	offset = param_offset + params;
 
-	data_offset = (char *) (&pSMB->hdr.Protocol) + offset;
+	/* SMB offsets are from the beginning of SMB which is 4 bytes in, after RFC1001 field */
+	data_offset = (char *)pSMB + offset + 4;
 	if (pSMB->hdr.Flags2 & SMBFLG2_UNICODE) {
 		name_len_target =
 		    cifsConvertToUTF16((__le16 *) data_offset, fromName,
@@ -3822,7 +3212,6 @@ setACLerrorExit:
 	return rc;
 }
 
-/* BB fix tabs in this function FIXME BB */
 int
 CIFSGetExtAttr(const unsigned int xid, struct cifs_tcon *tcon,
 	       const int netfid, __u64 *pExtAttrBits, __u64 *pMask)
@@ -3839,7 +3228,7 @@ CIFSGetExtAttr(const unsigned int xid, struct cifs_tcon *tcon,
 
 GetExtAttrRetry:
 	rc = smb_init(SMB_COM_TRANSACTION2, 15, tcon, (void **) &pSMB,
-			(void **) &pSMBr);
+		      (void **) &pSMBr);
 	if (rc)
 		return rc;
 
@@ -3885,7 +3274,7 @@ GetExtAttrRetry:
 			__u16 data_offset = le16_to_cpu(pSMBr->t2.DataOffset);
 			__u16 count = le16_to_cpu(pSMBr->t2.DataCount);
 			struct file_chattr_info *pfinfo;
-			/* BB Do we need a cast or hash here ? */
+
 			if (count != 16) {
 				cifs_dbg(FYI, "Invalid size ret in GetExtAttr\n");
 				rc = -EIO;
@@ -5748,9 +5137,9 @@ CIFSSMBSetFileSize(const unsigned int xid, struct cifs_tcon *tcon,
 	pSMB->TotalDataCount = pSMB->DataCount;
 	pSMB->TotalParameterCount = pSMB->ParameterCount;
 	pSMB->ParameterOffset = cpu_to_le16(param_offset);
+	/* SMB offsets are from the beginning of SMB which is 4 bytes in, after RFC1001 field */
 	parm_data =
-		(struct file_end_of_file_info *) (((char *) &pSMB->hdr.Protocol)
-				+ offset);
+		(struct file_end_of_file_info *)(((char *)pSMB) + offset + 4);
 	pSMB->DataOffset = cpu_to_le16(offset);
 	parm_data->FileSize = cpu_to_le64(size);
 	pSMB->Fid = cfile->fid.netfid;
@@ -5883,7 +5272,8 @@ CIFSSMBSetFileDisposition(const unsigned int xid, struct cifs_tcon *tcon,
 	param_offset = offsetof(struct smb_com_transaction2_sfi_req, Fid) - 4;
 	offset = param_offset + params;
 
-	data_offset = (char *) (&pSMB->hdr.Protocol) + offset;
+	/* SMB offsets are from the beginning of SMB which is 4 bytes in, after RFC1001 field */
+	data_offset = (char *)(pSMB) + offset + 4;
 
 	count = 1;
 	pSMB->MaxParameterCount = cpu_to_le16(2);
@@ -5913,10 +5303,42 @@ CIFSSMBSetFileDisposition(const unsigned int xid, struct cifs_tcon *tcon,
 	return rc;
 }
 
+static int
+CIFSSMBSetPathInfoFB(const unsigned int xid, struct cifs_tcon *tcon,
+		     const char *fileName, const FILE_BASIC_INFO *data,
+		     const struct nls_table *nls_codepage,
+		     struct cifs_sb_info *cifs_sb)
+{
+	int oplock = 0;
+	struct cifs_open_parms oparms;
+	struct cifs_fid fid;
+	int rc;
+
+	oparms.tcon = tcon;
+	oparms.cifs_sb = cifs_sb;
+	oparms.desired_access = GENERIC_WRITE;
+	oparms.create_options = cifs_create_options(cifs_sb, 0);
+	oparms.disposition = FILE_OPEN;
+	oparms.path = fileName;
+	oparms.fid = &fid;
+	oparms.reconnect = false;
+
+	rc = CIFS_open(xid, &oparms, &oplock, NULL);
+	if (rc)
+		goto out;
+
+	rc = CIFSSMBSetFileInfo(xid, tcon, data, fid.netfid, current->tgid);
+	CIFSSMBClose(xid, tcon, fid.netfid);
+out:
+
+	return rc;
+}
+
 int
 CIFSSMBSetPathInfo(const unsigned int xid, struct cifs_tcon *tcon,
 		   const char *fileName, const FILE_BASIC_INFO *data,
-		   const struct nls_table *nls_codepage, int remap)
+		   const struct nls_table *nls_codepage,
+		     struct cifs_sb_info *cifs_sb)
 {
 	TRANSACTION2_SPI_REQ *pSMB = NULL;
 	TRANSACTION2_SPI_RSP *pSMBr = NULL;
@@ -5925,6 +5347,7 @@ CIFSSMBSetPathInfo(const unsigned int xid, struct cifs_tcon *tcon,
 	int bytes_returned = 0;
 	char *data_offset;
 	__u16 params, param_offset, offset, byte_count, count;
+	int remap = cifs_remap(cifs_sb);
 
 	cifs_dbg(FYI, "In SetTimes\n");
 
@@ -5987,58 +5410,12 @@ SetTimesRetry:
 	if (rc == -EAGAIN)
 		goto SetTimesRetry;
 
-	return rc;
-}
-
-/* Can not be used to set time stamps yet (due to old DOS time format) */
-/* Can be used to set attributes */
-#if 0  /* Possibly not needed - since it turns out that strangely NT4 has a bug
-	  handling it anyway and NT4 was what we thought it would be needed for
-	  Do not delete it until we prove whether needed for Win9x though */
-int
-CIFSSMBSetAttrLegacy(unsigned int xid, struct cifs_tcon *tcon, char *fileName,
-		__u16 dos_attrs, const struct nls_table *nls_codepage)
-{
-	SETATTR_REQ *pSMB = NULL;
-	SETATTR_RSP *pSMBr = NULL;
-	int rc = 0;
-	int bytes_returned;
-	int name_len;
-
-	cifs_dbg(FYI, "In SetAttrLegacy\n");
-
-SetAttrLgcyRetry:
-	rc = smb_init(SMB_COM_SETATTR, 8, tcon, (void **) &pSMB,
-		      (void **) &pSMBr);
-	if (rc)
-		return rc;
-
-	if (pSMB->hdr.Flags2 & SMBFLG2_UNICODE) {
-		name_len =
-			ConvertToUTF16((__le16 *) pSMB->fileName, fileName,
-				       PATH_MAX, nls_codepage);
-		name_len++;     /* trailing null */
-		name_len *= 2;
-	} else {
-		name_len = copy_path_name(pSMB->fileName, fileName);
-	}
-	pSMB->attr = cpu_to_le16(dos_attrs);
-	pSMB->BufferFormat = 0x04;
-	inc_rfc1001_len(pSMB, name_len + 1);
-	pSMB->ByteCount = cpu_to_le16(name_len + 1);
-	rc = SendReceive(xid, tcon->ses, (struct smb_hdr *) pSMB,
-			 (struct smb_hdr *) pSMBr, &bytes_returned, 0);
-	if (rc)
-		cifs_dbg(FYI, "Error in LegacySetAttr = %d\n", rc);
-
-	cifs_buf_release(pSMB);
-
-	if (rc == -EAGAIN)
-		goto SetAttrLgcyRetry;
+	if (rc == -EOPNOTSUPP)
+		return CIFSSMBSetPathInfoFB(xid, tcon, fileName, data,
+					    nls_codepage, cifs_sb);
 
 	return rc;
 }
-#endif /* temporarily unneeded SetAttr legacy function */
 
 static void
 cifs_fill_unix_set_info(FILE_UNIX_BASIC_INFO *data_offset,
@@ -6197,9 +5574,8 @@ setPermsRetry:
 	param_offset = offsetof(struct smb_com_transaction2_spi_req,
 				InformationLevel) - 4;
 	offset = param_offset + params;
-	data_offset =
-	    (FILE_UNIX_BASIC_INFO *) ((char *) &pSMB->hdr.Protocol +
-				      offset);
+	/* SMB offsets are from the beginning of SMB which is 4 bytes in, after RFC1001 field */
+	data_offset = (FILE_UNIX_BASIC_INFO *)((char *) pSMB + offset + 4);
 	memset(data_offset, 0, count);
 	pSMB->DataOffset = cpu_to_le16(offset);
 	pSMB->ParameterOffset = cpu_to_le16(param_offset);

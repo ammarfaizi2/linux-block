@@ -183,7 +183,6 @@ static const struct drm_display_mode tm5p5_nt35596_mode = {
 	.vsync_start = 1920 + 4,
 	.vsync_end = 1920 + 4 + 2,
 	.vtotal = 1920 + 4 + 2 + 4,
-	.vrefresh = 60,
 	.width_mm = 68,
 	.height_mm = 121,
 };
@@ -216,13 +215,8 @@ static const struct drm_panel_funcs tm5p5_nt35596_panel_funcs = {
 static int tm5p5_nt35596_bl_update_status(struct backlight_device *bl)
 {
 	struct mipi_dsi_device *dsi = bl_get_data(bl);
-	u16 brightness = bl->props.brightness;
+	u16 brightness = backlight_get_brightness(bl);
 	int ret;
-
-	if (bl->props.power != FB_BLANK_UNBLANK ||
-	    bl->props.fb_blank != FB_BLANK_UNBLANK ||
-	    bl->props.state & (BL_CORE_SUSPENDED | BL_CORE_FBBLANK))
-		brightness = 0;
 
 	dsi->mode_flags &= ~MIPI_DSI_MODE_LPM;
 
@@ -303,7 +297,7 @@ static int tm5p5_nt35596_probe(struct mipi_dsi_device *dsi)
 	dsi->lanes = 4;
 	dsi->format = MIPI_DSI_FMT_RGB888;
 	dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST |
-			  MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_EOT_PACKET |
+			  MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_NO_EOT_PACKET |
 			  MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_LPM;
 
 	drm_panel_init(&ctx->panel, dev, &tm5p5_nt35596_panel_funcs,
@@ -316,11 +310,7 @@ static int tm5p5_nt35596_probe(struct mipi_dsi_device *dsi)
 		return ret;
 	}
 
-	ret = drm_panel_add(&ctx->panel);
-	if (ret < 0) {
-		dev_err(dev, "Failed to add panel: %d\n", ret);
-		return ret;
-	}
+	drm_panel_add(&ctx->panel);
 
 	ret = mipi_dsi_attach(dsi);
 	if (ret < 0) {

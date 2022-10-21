@@ -1004,7 +1004,6 @@ int bmp280_common_probe(struct device *dev,
 	mutex_init(&data->lock);
 	data->dev = dev;
 
-	indio_dev->dev.parent = dev;
 	indio_dev->name = name;
 	indio_dev->channels = bmp280_channels;
 	indio_dev->info = &bmp280_info;
@@ -1137,9 +1136,8 @@ int bmp280_common_probe(struct device *dev,
 
 	return devm_iio_device_register(dev, indio_dev);
 }
-EXPORT_SYMBOL(bmp280_common_probe);
+EXPORT_SYMBOL_NS(bmp280_common_probe, IIO_BMP280);
 
-#ifdef CONFIG_PM
 static int bmp280_runtime_suspend(struct device *dev)
 {
 	struct iio_dev *indio_dev = dev_get_drvdata(dev);
@@ -1160,15 +1158,9 @@ static int bmp280_runtime_resume(struct device *dev)
 	usleep_range(data->start_up_time, data->start_up_time + 100);
 	return data->chip_info->chip_config(data);
 }
-#endif /* CONFIG_PM */
 
-const struct dev_pm_ops bmp280_dev_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
-				pm_runtime_force_resume)
-	SET_RUNTIME_PM_OPS(bmp280_runtime_suspend,
-			   bmp280_runtime_resume, NULL)
-};
-EXPORT_SYMBOL(bmp280_dev_pm_ops);
+EXPORT_RUNTIME_DEV_PM_OPS(bmp280_dev_pm_ops, bmp280_runtime_suspend,
+			  bmp280_runtime_resume, NULL);
 
 MODULE_AUTHOR("Vlad Dogaru <vlad.dogaru@intel.com>");
 MODULE_DESCRIPTION("Driver for Bosch Sensortec BMP180/BMP280 pressure and temperature sensor");

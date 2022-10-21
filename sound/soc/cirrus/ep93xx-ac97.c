@@ -285,7 +285,7 @@ static int ep93xx_ac97_trigger(struct snd_pcm_substream *substream,
 			/*
 			 * As per Cirrus EP93xx errata described below:
 			 *
-			 * http://www.cirrus.com/en/pubs/errata/ER667E2B.pdf
+			 * https://www.cirrus.com/en/pubs/errata/ER667E2B.pdf
 			 *
 			 * we will wait for the TX FIFO to be empty before
 			 * clearing the TEN bit.
@@ -355,7 +355,8 @@ static struct snd_soc_dai_driver ep93xx_ac97_dai = {
 };
 
 static const struct snd_soc_component_driver ep93xx_ac97_component = {
-	.name		= "ep93xx-ac97",
+	.name			= "ep93xx-ac97",
+	.legacy_dai_naming	= 1,
 };
 
 static int ep93xx_ac97_probe(struct platform_device *pdev)
