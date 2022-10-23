@@ -156,6 +156,8 @@ long follow_hugetlb_page(struct mm_struct *, struct vm_area_struct *,
 void unmap_hugepage_range(struct vm_area_struct *,
 			  unsigned long, unsigned long, struct page *,
 			  zap_flags_t);
+void clear_hugetlb_page_range(struct vm_area_struct *vma,
+			unsigned long start, unsigned long end);
 void __unmap_hugepage_range_final(struct mmu_gather *tlb,
 			  struct vm_area_struct *vma,
 			  unsigned long start, unsigned long end,
@@ -458,6 +460,11 @@ static inline void __unmap_hugepage_range_final(struct mmu_gather *tlb,
 			zap_flags_t zap_flags)
 {
 	BUG();
+}
+
+static void __maybe_unused clear_hugetlb_page_range(struct vm_area_struct *vma,
+			unsigned long start, unsigned long end)
+{
 }
 
 static inline vm_fault_t hugetlb_fault(struct mm_struct *mm,
