@@ -369,7 +369,7 @@ static void *zs_zpool_create(const char *name, gfp_t gfp,
 	 * different contexts and its caller must provide a valid
 	 * gfp mask.
 	 */
-	return zs_create_pool(name);
+	return zs_create_pool(name, ZS_DEFAULT_PAGE_ORDER);
 }
 
 static void zs_zpool_destroy(void *pool)
@@ -2177,6 +2177,7 @@ static int zs_register_shrinker(struct zs_pool *pool)
 /**
  * zs_create_pool - Creates an allocation pool to work from.
  * @name: pool name to be created
+ * @zspage_order: maximum order of zspage
  *
  * This function must be called before anything when using
  * the zsmalloc allocator.
@@ -2184,17 +2185,21 @@ static int zs_register_shrinker(struct zs_pool *pool)
  * On success, a pointer to the newly created pool is returned,
  * otherwise NULL.
  */
-struct zs_pool *zs_create_pool(const char *name)
+struct zs_pool *zs_create_pool(const char *name, u32 zspage_order)
 {
 	int i;
 	struct zs_pool *pool;
 	struct size_class *prev_class = NULL;
 
+	if (WARN_ON(zspage_order < ZS_MIN_PAGE_ORDER ||
+		    zspage_order > ZS_MAX_PAGE_ORDER))
+		return NULL;
+
 	pool = kzalloc(sizeof(*pool), GFP_KERNEL);
 	if (!pool)
 		return NULL;
 
-	pool->max_pages_per_zspage = 1U << ZS_MIN_PAGE_ORDER;
+	pool->max_pages_per_zspage = 1U << zspage_order;
 	/* min_alloc_size must be multiple of ZS_ALIGN */
 	pool->min_alloc_size = (pool->max_pages_per_zspage << PAGE_SHIFT) >>
 		OBJ_INDEX_BITS;
