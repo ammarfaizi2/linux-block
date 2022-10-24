@@ -1223,7 +1223,9 @@ static bool zspage_full(struct size_class *class, struct zspage *zspage)
  */
 unsigned int zs_get_class_size(struct zs_pool *pool, unsigned int size)
 {
-	struct size_class *class = pool->size_class[get_size_class_index(size)];
+	struct size_class *class;
+
+	class = pool->size_class[get_size_class_index(pool, size)];
 
 	return class->size;
 }
