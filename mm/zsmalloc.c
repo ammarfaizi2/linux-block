@@ -775,8 +775,9 @@ out:
 static int get_pages_per_zspage(struct zs_pool *pool, int class_size)
 {
 	int i, max_usedpc = 0;
-	/* zspage order which gives maximum used size per KB */
-	int max_usedpc_order = 1;
+	/* zspage size which gives maximum used size per KB */
+	int pages_per_zspage = 1;
+	int min_waste = INT_MAX;
 
 	for (i = 1; i <= pool->max_pages_per_zspage; i++) {
 		int zspage_size;
@@ -788,14 +789,19 @@ static int get_pages_per_zspage(struct zs_pool *pool, int class_size)
 
 		if (usedpc > max_usedpc) {
 			max_usedpc = usedpc;
-			max_usedpc_order = i;
+			pages_per_zspage = i;
 		}
 
 		if (usedpc == 100)
 			break;
+
+		if (waste < min_waste) {
+			min_waste = waste;
+			pages_per_zspage = i;
+		}
 	}
 
-	return max_usedpc_order;
+	return pages_per_zspage;
 }
 
 static struct zspage *get_zspage(struct page *page)
