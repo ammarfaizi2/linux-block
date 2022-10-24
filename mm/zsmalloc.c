@@ -790,6 +790,9 @@ static int get_pages_per_zspage(struct zs_pool *pool, int class_size)
 			max_usedpc = usedpc;
 			max_usedpc_order = i;
 		}
+
+		if (usedpc == 100)
+			break;
 	}
 
 	return max_usedpc_order;
