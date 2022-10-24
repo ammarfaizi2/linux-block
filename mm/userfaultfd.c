@@ -157,11 +157,18 @@ static int mcopy_atomic_pte(struct mm_struct *dst_mm,
 		if (!page)
 			goto out;
 
-		page_kaddr = kmap_atomic(page);
+		page_kaddr = kmap_local_page(page);
+		/*
+		 * The mmap_lock is held here.  Disable page faults to
+		 * prevent deadlock should copy_from_user() fault.  The
+		 * copy will be retried outside the mmap_lock.
+		 */
+		pagefault_disable();
 		ret = copy_from_user(page_kaddr,
 				     (const void __user *) src_addr,
 				     PAGE_SIZE);
-		kunmap_atomic(page_kaddr);
+		pagefault_enable();
+		kunmap_local(page_kaddr);
 
 		/* fallback to copy_from_user outside mmap_lock */
 		if (unlikely(ret)) {
@@ -646,11 +653,11 @@ retry:
 			mmap_read_unlock(dst_mm);
 			BUG_ON(!page);
 
-			page_kaddr = kmap(page);
+			page_kaddr = kmap_local_page(page);
 			err = copy_from_user(page_kaddr,
 					     (const void __user *) src_addr,
 					     PAGE_SIZE);
-			kunmap(page);
+			kunmap_local(page_kaddr);
 			if (unlikely(err)) {
 				err = -EFAULT;
 				goto out;
