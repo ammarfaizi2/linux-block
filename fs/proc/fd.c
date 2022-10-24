@@ -280,11 +280,10 @@ out:
 	return 0;
 }
 
-static int proc_readfd_count(struct inode *inode)
+static int proc_readfd_count(struct inode *inode, loff_t *count)
 {
 	struct task_struct *p = get_proc_task(inode);
 	struct fdtable *fdt;
-	unsigned int open_fds = 0;
 
 	if (!p)
 		return -ENOENT;
@@ -294,7 +293,7 @@ static int proc_readfd_count(struct inode *inode)
 		rcu_read_lock();
 
 		fdt = files_fdtable(p->files);
-		open_fds = bitmap_weight(fdt->open_fds, fdt->max_fds);
+		*count = bitmap_weight(fdt->open_fds, fdt->max_fds);
 
 		rcu_read_unlock();
 	}
@@ -302,7 +301,7 @@ static int proc_readfd_count(struct inode *inode)
 
 	put_task_struct(p);
 
-	return open_fds;
+	return 0;
 }
 
 static int proc_readfd(struct file *file, struct dir_context *ctx)
@@ -350,14 +349,18 @@ static int proc_fd_getattr(struct user_namespace *mnt_userns,
 			u32 request_mask, unsigned int query_flags)
 {
 	struct inode *inode = d_inode(path->dentry);
+	int rv = 0;
 
 	generic_fillattr(&init_user_ns, inode, stat);
 
 	/* If it's a directory, put the number of open fds there */
-	if (S_ISDIR(inode->i_mode))
-		stat->size = proc_readfd_count(inode);
+	if (S_ISDIR(inode->i_mode)) {
+		rv = proc_readfd_count(inode, &stat->size);
+		if (rv < 0)
+			return rv;
+	}
 
-	return 0;
+	return rv;
 }
 
 const struct inode_operations proc_fd_inode_operations = {
