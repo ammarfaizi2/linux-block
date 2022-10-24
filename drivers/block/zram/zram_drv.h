@@ -120,6 +120,8 @@ struct zram {
 	 */
 	u64 disksize;	/* bytes */
 	const char *comp_algs[ZRAM_MAX_ZCOMPS];
+
+	u32 pool_page_order;
 	/*
 	 * zram is claimed so open request will be failed
 	 */
