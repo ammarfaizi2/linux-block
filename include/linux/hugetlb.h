@@ -623,10 +623,6 @@ void folio_clear_hugetlb_##flname(struct folio *folio)		\
 	}							\
 static inline void ClearHPage##uname(struct page *page)		\
 	{ clear_bit(HPG_##flname, &(page->private)); }
-
-#define TESTCLEARHPAGEFLAG(uname, flname)			\
-static inline int TestClearHPage##uname(struct page *page)	\
-	{ return test_and_clear_bit(HPG_##flname, &(page->private)); }
 #else
 #define TESTHPAGEFLAG(uname, flname)				\
 static inline bool						\
@@ -648,10 +644,6 @@ folio_clear_hugetlb_##flname(struct folio *folio)		\
 	{ }							\
 static inline void ClearHPage##uname(struct page *page)		\
 	{ }
-
-#define TESTCLEARHPAGEFLAG(uname, flname)			\
-static inline int TestClearHPage##uname(struct page *page)	\
-	{ return 0; }
 #endif
 
 #define HPAGEFLAG(uname, flname)				\
@@ -664,7 +656,6 @@ static inline int TestClearHPage##uname(struct page *page)	\
  */
 HPAGEFLAG(RestoreReserve, restore_reserve)
 HPAGEFLAG(Migratable, migratable)
-	TESTCLEARHPAGEFLAG(Migratable, migratable)
 HPAGEFLAG(Temporary, temporary)
 HPAGEFLAG(Freed, freed)
 HPAGEFLAG(VmemmapOptimized, vmemmap_optimized)
