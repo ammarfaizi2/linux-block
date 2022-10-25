@@ -2348,10 +2348,10 @@ void rcu_sched_clock_irq(int user)
 {
 	unsigned long j;
 
+	trace_rcu_utilization(TPS("Start scheduler-tick"));
 	j = jiffies;
 	WARN_ON_ONCE(time_before(j, __this_cpu_read(rcu_data.last_sched_clock)));
 	__this_cpu_write(rcu_data.last_sched_clock, j);
-	trace_rcu_utilization(TPS("Start scheduler-tick"));
 	lockdep_assert_irqs_disabled();
 	raw_cpu_inc(rcu_data.ticks_this_gp);
 	/* The load-acquire pairs with the store-release setting to true. */

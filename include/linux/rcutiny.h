@@ -135,6 +135,7 @@ static inline void rcu_softirq_qs(void)
 
 static inline int rcu_needs_cpu(u64 basemono, u64 *nextevt)
 {
+	*nextevt = KTIME_MAX;
 	return 0;
 }
 
