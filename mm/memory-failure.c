@@ -1823,8 +1823,10 @@ int __get_huge_page_for_hwpoison(unsigned long pfn, int flags,
 	 * Clearing HPageMigratable for hwpoisoned hugepages to prevent them
 	 * from being migrated by memory hotremove.
 	 */
-	if (count_increased)
-		*migratable_cleared = TestClearHPageMigratable(head);
+	if (count_increased && HPageMigratable(head)) {
+		ClearHPageMigratable(head);
+		*migratable_cleared = true;
+	}
 
 	return ret;
 out:
