@@ -76,7 +76,7 @@ static int child_vmsplice_memcmp_fn(char *mem, size_t size,
 		.iov_base = mem,
 		.iov_len = size,
 	};
-	size_t cur, total, transferred;
+	ssize_t cur, total, transferred;
 	char *old, *new;
 	int fds[2];
 	char buf;
@@ -172,7 +172,7 @@ static void do_test_vmsplice_in_parent(char *mem, size_t size,
 		.iov_base = mem,
 		.iov_len = size,
 	};
-	size_t cur, total, transferred;
+	ssize_t cur, total, transferred;
 	struct comm_pipes comm_pipes;
 	char *old, *new;
 	int ret, fds[2];
