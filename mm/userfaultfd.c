@@ -159,9 +159,19 @@ static int mcopy_atomic_pte(struct mm_struct *dst_mm,
 
 		page_kaddr = kmap_local_page(page);
 		/*
-		 * The mmap_lock is held here.  Disable page faults to
-		 * prevent deadlock should copy_from_user() fault.  The
-		 * copy will be retried outside the mmap_lock.
+		 * The read mmap_lock is held here.  Despite the
+		 * mmap_lock being read recursive a deadlock is still
+		 * possible if a writer has taken a lock.  For example:
+		 *
+		 * process A thread 1 takes read lock on own mmap_lock
+		 * process A thread 2 calls mmap, blocks taking write lock
+		 * process B thread 1 takes page fault, read lock on own mmap lock
+		 * process B thread 2 calls mmap, blocks taking write lock
+		 * process A thread 1 blocks taking read lock on process B
+		 * process B thread 1 blocks taking read lock on process A
+		 *
+		 * Disable page faults to prevent potential deadlock
+		 * and retry the copy outside the mmap_lock.
 		 */
 		pagefault_disable();
 		ret = copy_from_user(page_kaddr,
