@@ -2552,7 +2552,12 @@ static void rcu_do_batch(struct rcu_data *rdp)
  */
 void rcu_sched_clock_irq(int user)
 {
+	unsigned long j;
+
 	trace_rcu_utilization(TPS("Start scheduler-tick"));
+	j = jiffies;
+	WARN_ON_ONCE(time_before(j, __this_cpu_read(rcu_data.last_sched_clock)));
+	__this_cpu_write(rcu_data.last_sched_clock, j);
 	raw_cpu_inc(rcu_data.ticks_this_gp);
 	/* The load-acquire pairs with the store-release setting to true. */
 	if (smp_load_acquire(this_cpu_ptr(&rcu_data.rcu_urgent_qs))) {
@@ -3919,6 +3924,7 @@ rcu_boot_init_percpu_data(int cpu)
 	rdp->rcu_ofl_gp_flags = RCU_GP_CLEANED;
 	rdp->rcu_onl_gp_seq = rcu_state.gp_seq;
 	rdp->rcu_onl_gp_flags = RCU_GP_CLEANED;
+	rdp->last_sched_clock = jiffies;
 	rdp->cpu = cpu;
 	rcu_boot_init_nocb_percpu_data(rdp);
 }

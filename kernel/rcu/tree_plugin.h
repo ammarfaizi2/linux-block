@@ -1250,13 +1250,40 @@ static void rcu_prepare_kthreads(int cpu)
  * it is -not- an exported member of the RCU API.
  *
  * Because we not have RCU_FAST_NO_HZ, just check whether or not this
- * CPU has RCU callbacks queued.
+ * CPU has RCU callbacks queued that need immediate attention.
  */
 int rcu_needs_cpu(u64 basemono, u64 *nextevt)
 {
-	*nextevt = KTIME_MAX;
-	return !rcu_segcblist_empty(&this_cpu_ptr(&rcu_data)->cblist) &&
-	       !rcu_segcblist_is_offloaded(&this_cpu_ptr(&rcu_data)->cblist);
+	unsigned long j;
+	unsigned long jlast;
+	unsigned long jwait;
+	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
+	struct rcu_segcblist *rsclp = &rdp->cblist;
+
+	// Disabled, empty, or offloaded means nothing to do.
+	if (!rcu_segcblist_is_enabled(rsclp) ||
+	    rcu_segcblist_empty(rsclp) || rcu_segcblist_is_offloaded(&rdp->cblist)) {
+		*nextevt = KTIME_MAX;
+		return 0;
+	}
+
+	// Callbacks ready to invoke or that have not already been
+	// assigned a grace period need immediate attention.
+	if (!rcu_segcblist_ready_cbs(rsclp) ||
+	    rsclp->tails[RCU_NEXT_READY_TAIL] != rsclp->tails[RCU_NEXT_TAIL])
+		return 1;
+
+	// There are callbacks waiting for some later grace period.
+	// Wait for about a grace period or two since the last tick, at which
+	// point there is high probability that this CPU will need to do some
+	// work for RCU.
+	j = jiffies;
+	jlast = __this_cpu_read(rcu_data.last_sched_clock);
+	jwait = READ_ONCE(jiffies_till_first_fqs) + READ_ONCE(jiffies_till_next_fqs) + 1;
+	if (time_after(j, jlast + jwait))
+		return 1;
+	*nextevt = basemono + TICK_NSEC * (jlast + jwait - j);
+	return 0;
 }
 
 /*
