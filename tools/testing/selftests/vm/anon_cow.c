@@ -346,7 +346,7 @@ static void do_test_iouring(char *mem, size_t size, bool use_fork)
 	struct io_uring_cqe *cqe;
 	struct io_uring_sqe *sqe;
 	struct io_uring ring;
-	size_t cur, total;
+	ssize_t cur, total;
 	struct iovec iov;
 	char *buf, *tmp;
 	int ret, fd;
