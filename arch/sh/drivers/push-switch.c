@@ -102,7 +102,7 @@ static int switch_drv_remove(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, NULL);
 	flush_work(&psw->work);
-	del_timer_sync(&psw->debounce);
+	del_timer_shutdown(&psw->debounce);
 	free_irq(irq, pdev);
 
 	kfree(psw);
