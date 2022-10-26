@@ -697,8 +697,8 @@ static int qca_close(struct hci_uart *hu)
 	skb_queue_purge(&qca->txq);
 	skb_queue_purge(&qca->rx_memdump_q);
 	destroy_workqueue(qca->workqueue);
-	del_timer_sync(&qca->tx_idle_timer);
-	del_timer_sync(&qca->wake_retrans_timer);
+	del_timer_shutdown(&qca->tx_idle_timer);
+	del_timer_shutdown(&qca->wake_retrans_timer);
 	qca->hu = NULL;
 
 	kfree_skb(qca->rx_skb);

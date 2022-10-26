@@ -737,7 +737,7 @@ static int bcsp_close(struct hci_uart *hu)
 {
 	struct bcsp_struct *bcsp = hu->priv;
 
-	del_timer_sync(&bcsp->tbcsp);
+	del_timer_shutdown(&bcsp->tbcsp);
 
 	hu->priv = NULL;
 
