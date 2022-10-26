@@ -2365,10 +2365,7 @@ struct ath12k_wmi_pdev_set_hw_mode_cmd {
 
 struct ath12k_wmi_ppe_threshold_params {
 	__le32 numss_m1; /** NSS - 1*/
-	union {
-		__le32 ru_count;
-		__le32 ru_mask;
-	} __packed;
+	__le32 ru_info;
 	__le32 ppet16_ppet8_ru3_ru0[WMI_MAX_NUM_SS];
 } __packed;
 

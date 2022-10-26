@@ -407,6 +407,7 @@ static int ath12k_pull_svc_ready_ext(struct ath12k_wmi_pdev *wmi_handle,
 				     struct ath12k_wmi_service_ext_arg *arg)
 {
 	const struct wmi_service_ready_ext_event *ev = ptr;
+	int i;
 
 	if (!ev)
 		return -EINVAL;
@@ -418,7 +419,12 @@ static int ath12k_pull_svc_ready_ext(struct ath12k_wmi_pdev *wmi_handle,
 	arg->he_cap_info = le32_to_cpu(ev->he_cap_info);
 	arg->mpdu_density = le32_to_cpu(ev->mpdu_density);
 	arg->max_bssid_rx_filters = le32_to_cpu(ev->max_bssid_rx_filters);
-	memcpy(&arg->ppet, &ev->ppet, sizeof(arg->ppet));
+	arg->ppet.numss_m1 = le32_to_cpu(ev->ppet.numss_m1);
+	arg->ppet.ru_bit_mask = le32_to_cpu(ev->ppet.ru_info);
+
+	for (i = 0; i < PSOC_HOST_MAX_NUM_SS; i++)
+		arg->ppet.ppet16_ppet8_ru3_ru0[i] =
+			le32_to_cpu(ev->ppet.ppet16_ppet8_ru3_ru0[i]);
 
 	return 0;
 }
@@ -437,6 +443,7 @@ ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_wmi_pdev *wmi_handle,
 	struct ath12k_pdev_cap *pdev_cap = &pdev->cap;
 	u32 phy_map;
 	u32 hw_idx, phy_idx = 0;
+	int i;
 
 	if (!hw_caps || !wmi_hw_mode_caps || !svc->soc_hal_reg_caps)
 		return -EINVAL;
@@ -446,10 +453,7 @@ ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_wmi_pdev *wmi_handle,
 			break;
 
 		phy_map = le32_to_cpu(wmi_hw_mode_caps[hw_idx].phy_id_map);
-		while (phy_map) {
-			phy_map >>= 1;
-			phy_idx++;
-		}
+		phy_idx = fls(phy_map);
 	}
 
 	if (hw_idx == le32_to_cpu(hw_caps->num_hw_modes))
@@ -504,10 +508,15 @@ ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_wmi_pdev *wmi_handle,
 		cap_band->he_cap_info[0] = le32_to_cpu(mac_phy_caps->he_cap_info_2g);
 		cap_band->he_cap_info[1] = le32_to_cpu(mac_phy_caps->he_cap_info_2g_ext);
 		cap_band->he_mcs = le32_to_cpu(mac_phy_caps->he_supp_mcs_2g);
-		memcpy(cap_band->he_cap_phy_info, &mac_phy_caps->he_cap_phy_info_2g,
-		       sizeof(u32) * PSOC_HOST_MAX_PHY_SIZE);
-		memcpy(&cap_band->he_ppet, &mac_phy_caps->he_ppet2g,
-		       sizeof(struct ath12k_wmi_ppe_threshold_arg));
+		for (i = 0; i < WMI_MAX_HECAP_PHY_SIZE; i++)
+			cap_band->he_cap_phy_info[i] =
+				le32_to_cpu(mac_phy_caps->he_cap_phy_info_2g[i]);
+		cap_band->he_ppet.numss_m1 = le32_to_cpu(mac_phy_caps->he_ppet2g.numss_m1);
+		cap_band->he_ppet.ru_bit_mask = le32_to_cpu(mac_phy_caps->he_ppet2g.ru_info);
+		for (i = 0; i < PSOC_HOST_MAX_NUM_SS; i++)
+			cap_band->he_ppet.ppet16_ppet8_ru3_ru0[i] =
+				le32_to_cpu(mac_phy_caps->he_ppet2g.ppet16_ppet8_ru3_ru0[i]);
+
 	}
 
 	if (le32_to_cpu(mac_phy_caps->supported_bands) & WMI_HOST_WLAN_5G_CAP) {
@@ -519,10 +528,14 @@ ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_wmi_pdev *wmi_handle,
 		cap_band->he_cap_info[0] = le32_to_cpu(mac_phy_caps->he_cap_info_5g);
 		cap_band->he_cap_info[1] = le32_to_cpu(mac_phy_caps->he_cap_info_5g_ext);
 		cap_band->he_mcs = le32_to_cpu(mac_phy_caps->he_supp_mcs_5g);
-		memcpy(cap_band->he_cap_phy_info, &mac_phy_caps->he_cap_phy_info_5g,
-		       sizeof(u32) * PSOC_HOST_MAX_PHY_SIZE);
-		memcpy(&cap_band->he_ppet, &mac_phy_caps->he_ppet5g,
-		       sizeof(struct ath12k_wmi_ppe_threshold_arg));
+		for (i = 0; i < WMI_MAX_HECAP_PHY_SIZE; i++)
+			cap_band->he_cap_phy_info[i] =
+				le32_to_cpu(mac_phy_caps->he_cap_phy_info_5g[i]);
+		cap_band->he_ppet.numss_m1 = le32_to_cpu(mac_phy_caps->he_ppet5g.numss_m1);
+		cap_band->he_ppet.ru_bit_mask = le32_to_cpu(mac_phy_caps->he_ppet5g.ru_info);
+		for (i = 0; i < PSOC_HOST_MAX_NUM_SS; i++)
+			cap_band->he_ppet.ppet16_ppet8_ru3_ru0[i] =
+				le32_to_cpu(mac_phy_caps->he_ppet5g.ppet16_ppet8_ru3_ru0[i]);
 
 		cap_band = &pdev_cap->band[NL80211_BAND_6GHZ];
 		cap_band->max_bw_supported =
@@ -531,10 +544,14 @@ ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_wmi_pdev *wmi_handle,
 		cap_band->he_cap_info[0] = le32_to_cpu(mac_phy_caps->he_cap_info_5g);
 		cap_band->he_cap_info[1] = le32_to_cpu(mac_phy_caps->he_cap_info_5g_ext);
 		cap_band->he_mcs = le32_to_cpu(mac_phy_caps->he_supp_mcs_5g);
-		memcpy(cap_band->he_cap_phy_info, &mac_phy_caps->he_cap_phy_info_5g,
-		       sizeof(u32) * PSOC_HOST_MAX_PHY_SIZE);
-		memcpy(&cap_band->he_ppet, &mac_phy_caps->he_ppet5g,
-		       sizeof(struct ath12k_wmi_ppe_threshold_arg));
+		for (i = 0; i < WMI_MAX_HECAP_PHY_SIZE; i++)
+			cap_band->he_cap_phy_info[i] =
+				le32_to_cpu(mac_phy_caps->he_cap_phy_info_5g[i]);
+		cap_band->he_ppet.numss_m1 = le32_to_cpu(mac_phy_caps->he_ppet5g.numss_m1);
+		cap_band->he_ppet.ru_bit_mask = le32_to_cpu(mac_phy_caps->he_ppet5g.ru_info);
+		for (i = 0; i < PSOC_HOST_MAX_NUM_SS; i++)
+			cap_band->he_ppet.ppet16_ppet8_ru3_ru0[i] =
+				le32_to_cpu(mac_phy_caps->he_ppet5g.ppet16_ppet8_ru3_ru0[i]);
 	}
 
 	return 0;
@@ -702,8 +719,7 @@ int ath12k_wmi_mgmt_send(struct ath12k *ar, u32 vdev_id, u32 buf_id,
 	u32 buf_len;
 	int ret, len;
 
-	buf_len = frame->len < WMI_MGMT_SEND_DOWNLD_LEN ?
-		  frame->len : WMI_MGMT_SEND_DOWNLD_LEN;
+	buf_len = min_t(int, frame->len, WMI_MGMT_SEND_DOWNLD_LEN);
 
 	len = sizeof(*cmd) + sizeof(*frame_tlv) + roundup(buf_len, 4);
 
@@ -1715,7 +1731,7 @@ int ath12k_wmi_vdev_install_key(struct ath12k *ar,
 	struct wmi_tlv *tlv;
 	struct sk_buff *skb;
 	int ret, len;
-	int key_len_aligned = roundup(arg->key_len, sizeof(uint32_t));
+	int key_len_aligned = roundup(arg->key_len, 4);
 
 	len = sizeof(*cmd) + TLV_HDR_SIZE + key_len_aligned;
 
@@ -1900,10 +1916,14 @@ int ath12k_wmi_send_peer_assoc_cmd(struct ath12k *ar,
 	cmd->peer_he_cap_info_internal = cpu_to_le32(arg->peer_he_cap_macinfo_internal);
 	cmd->peer_he_caps_6ghz = cpu_to_le32(arg->peer_he_caps_6ghz);
 	cmd->peer_he_ops = cpu_to_le32(arg->peer_he_ops);
-	memcpy(&cmd->peer_he_cap_phy, &arg->peer_he_cap_phyinfo,
-	       sizeof(arg->peer_he_cap_phyinfo));
-	memcpy(&cmd->peer_ppet, &arg->peer_ppet,
-	       sizeof(arg->peer_ppet));
+	for (i = 0; i < WMI_MAX_HECAP_PHY_SIZE; i++)
+		cmd->peer_he_cap_phy[i] =
+			cpu_to_le32(arg->peer_he_cap_phyinfo[i]);
+	cmd->peer_ppet.numss_m1 = cpu_to_le32(arg->peer_ppet.numss_m1);
+	cmd->peer_ppet.ru_info = cpu_to_le32(arg->peer_ppet.ru_bit_mask);
+	for (i = 0; i < PSOC_HOST_MAX_NUM_SS; i++)
+		cmd->peer_ppet.ppet16_ppet8_ru3_ru0[i] =
+			cpu_to_le32(arg->peer_ppet.ppet16_ppet8_ru3_ru0[i]);
 
 	/* Update peer legacy rate information */
 	ptr += sizeof(*cmd);
@@ -2189,8 +2209,7 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 	ptr += TLV_HDR_SIZE;
 	tmp_ptr = (u32 *)ptr;
 
-	for (i = 0; i < arg->num_chan; ++i)
-		tmp_ptr[i] = arg->chan_list[i];
+	memcpy(tmp_ptr, arg->chan_list, arg->num_chan*4);
 
 	ptr += len;
 
@@ -2346,10 +2365,7 @@ int ath12k_wmi_send_scan_chan_list_cmd(struct ath12k *ar,
 		max_chan_limit = (wmi->wmi_ab->max_msg_len[ar->pdev_idx] - len) /
 			sizeof(*chan_info);
 
-		if (arg->nallchans > max_chan_limit)
-			num_send_chans = max_chan_limit;
-		else
-			num_send_chans = arg->nallchans;
+		num_send_chans = min(arg->nallchans, max_chan_limit);
 
 		arg->nallchans -= num_send_chans;
 		len += sizeof(*chan_info) * num_send_chans;
@@ -3148,7 +3164,7 @@ ath12k_wmi_copy_resource_config(struct ath12k_wmi_resource_config_params *wmi_cf
 	wmi_cfg->sched_params = cpu_to_le32(tg_cfg->sched_params);
 	wmi_cfg->twt_ap_pdev_count = cpu_to_le32(tg_cfg->twt_ap_pdev_count);
 	wmi_cfg->twt_ap_sta_count = cpu_to_le32(tg_cfg->twt_ap_sta_count);
-	wmi_cfg->host_service_flags |=
+	wmi_cfg->host_service_flags =
 		cpu_to_le32(1 << WMI_RSRC_CFG_HOST_SVC_FLAG_REG_CC_EXT_SUPPORT_BIT);
 }
 
@@ -3275,8 +3291,8 @@ int ath12k_wmi_pdev_lro_cfg(struct ath12k *ar,
 	cmd->tlv_header = ath12k_wmi_tlv_cmd_hdr(WMI_TAG_LRO_INFO_CMD,
 						 sizeof(*cmd));
 
-	get_random_bytes(cmd->th_4, sizeof(uint32_t) * ATH12K_IPV4_TH_SEED_SIZE);
-	get_random_bytes(cmd->th_6, sizeof(uint32_t) * ATH12K_IPV6_TH_SEED_SIZE);
+	get_random_bytes(cmd->th_4, sizeof(cmd->th_4));
+	get_random_bytes(cmd->th_6, sizeof(cmd->th_6));
 
 	cmd->pdev_id = cpu_to_le32(pdev_id);
 
@@ -3640,10 +3656,7 @@ static int ath12k_wmi_hw_mode_caps_parse(struct ath12k_base *soc,
 	svc_rdy_ext->n_hw_mode_caps++;
 
 	phy_map = le32_to_cpu(hw_mode_cap->phy_id_map);
-	while (phy_map) {
-		svc_rdy_ext->tot_phy_id++;
-		phy_map = phy_map >> 1;
-	}
+	svc_rdy_ext->tot_phy_id += fls(phy_map);
 
 	return 0;
 }
@@ -3668,8 +3681,7 @@ static int ath12k_wmi_hw_mode_caps(struct ath12k_base *soc,
 		return ret;
 	}
 
-	i = 0;
-	while (i < svc_rdy_ext->n_hw_mode_caps) {
+	for (i = 0 ; i < svc_rdy_ext->n_hw_mode_caps; i++) {
 		hw_mode_caps = &svc_rdy_ext->hw_mode_caps[i];
 		mode = le32_to_cpu(hw_mode_caps->hw_mode_id);
 		pref = soc->wmi_ab.preferred_hw_mode;
@@ -3678,7 +3690,6 @@ static int ath12k_wmi_hw_mode_caps(struct ath12k_base *soc,
 			svc_rdy_ext->pref_hw_mode_caps = *hw_mode_caps;
 			soc->wmi_ab.preferred_hw_mode = mode;
 		}
-		i++;
 	}
 
 	ath12k_dbg(soc, ATH12K_DBG_WMI, "preferred_hw_mode:%d\n",
@@ -3758,9 +3769,7 @@ static int ath12k_wmi_ext_hal_reg_caps(struct ath12k_base *soc,
 			ath12k_warn(soc, "failed to extract reg cap %d\n", i);
 			return ret;
 		}
-
-		memcpy(&soc->hal_reg_cap[reg_cap.phy_id],
-		       &reg_cap, sizeof(reg_cap));
+		soc->hal_reg_cap[reg_cap.phy_id] = reg_cap;
 	}
 	return 0;
 }
@@ -5134,8 +5143,8 @@ static int ath12k_reg_chan_list_event(struct ath12k_base *ab, struct sk_buff *sk
 	 * stop-start after mac registration.
 	 */
 	if (ab->default_regd[pdev_idx] && !ab->new_regd[pdev_idx] &&
-	    !memcmp((char *)ab->default_regd[pdev_idx]->alpha2,
-		    (char *)reg_info->alpha2, 2))
+	    !memcmp(ab->default_regd[pdev_idx]->alpha2,
+		    reg_info->alpha2, 2))
 		goto mem_free;
 
 	/* Intersect new rules with default regd if a new country setting was
@@ -5445,7 +5454,8 @@ static void ath12k_mgmt_rx_event(struct ath12k_base *ab, struct sk_buff *skb)
 
 	if ((test_bit(ATH12K_CAC_RUNNING, &ar->dev_flags)) ||
 	    (rx_ev.status & (WMI_RX_STATUS_ERR_DECRYPT |
-	    WMI_RX_STATUS_ERR_KEY_CACHE_MISS | WMI_RX_STATUS_ERR_CRC))) {
+			     WMI_RX_STATUS_ERR_KEY_CACHE_MISS |
+			     WMI_RX_STATUS_ERR_CRC))) {
 		dev_kfree_skb(skb);
 		goto exit;
 	}
@@ -6364,7 +6374,6 @@ static int ath12k_connect_pdev_htc_service(struct ath12k_base *ab,
 	u32 svc_id[] = { ATH12K_HTC_SVC_ID_WMI_CONTROL,
 			 ATH12K_HTC_SVC_ID_WMI_CONTROL_MAC1,
 			 ATH12K_HTC_SVC_ID_WMI_CONTROL_MAC2 };
-
 	struct ath12k_htc_svc_conn_req conn_req = {};
 	struct ath12k_htc_svc_conn_resp conn_resp = {};
 
