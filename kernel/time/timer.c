@@ -774,17 +774,22 @@ static const struct debug_obj_descr timer_debug_descr = {
 
 static inline void debug_timer_init(struct timer_list *timer)
 {
-	debug_object_init(timer, &timer_debug_descr);
+	if (!timer->enabled)
+		debug_object_init(timer, &timer_debug_descr);
 }
 
 static inline void debug_timer_activate(struct timer_list *timer)
 {
-	debug_object_activate(timer, &timer_debug_descr);
+	if (!timer->enabled) {
+		timer->enabled = 1;
+		debug_object_activate(timer, &timer_debug_descr);
+	}
 }
 
 static inline void debug_timer_deactivate(struct timer_list *timer)
 {
-	debug_object_deactivate(timer, &timer_debug_descr);
+	if (timer->enabled)
+		debug_object_deactivate(timer, &timer_debug_descr);
 }
 
 static inline void debug_timer_assert_init(struct timer_list *timer)
@@ -828,7 +833,6 @@ static inline void debug_init(struct timer_list *timer)
 
 static inline void debug_deactivate(struct timer_list *timer)
 {
-	debug_timer_deactivate(timer);
 	trace_timer_cancel(timer);
 }
 
@@ -1281,8 +1285,10 @@ static int __try_to_del_timer_sync(struct timer_list *timer, bool free)
 
 	if (base->running_timer != timer)
 		ret = detach_if_pending(timer, base, true);
-	if (free)
+	if (free) {
 		timer->function = NULL;
+		debug_timer_deactivate(timer);
+	}
 
 	raw_spin_unlock_irqrestore(&base->lock, flags);
 

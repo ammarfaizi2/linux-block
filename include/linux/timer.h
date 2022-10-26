@@ -18,6 +18,9 @@ struct timer_list {
 	void			(*function)(struct timer_list *);
 	u32			flags;
 
+#ifdef CONFIG_DEBUG_OBJECTS_TIMERS
+	u32			enabled;
+#endif
 #ifdef CONFIG_LOCKDEP
 	struct lockdep_map	lockdep_map;
 #endif
@@ -128,6 +131,19 @@ static inline void init_timer_on_stack_key(struct timer_list *timer,
 	init_timer_on_stack_key((_timer), (_fn), (_flags), NULL, NULL)
 #endif
 
+#ifdef CONFIG_DEBUG_OBJECTS_TIMERS
+#define __init_timer_debug(_timer, _fn, _flags)				\
+	do {								\
+		(_timer)->enabled = 0;					\
+		__init_timer((_timer), (_fn), (_flags));		\
+	} while (0)
+#else
+#define __init_timer_debug(_timer, _fn, _flags)				\
+	do {								\
+		__init_timer((_timer), (_fn), (_flags));		\
+	} while (0)
+#endif
+
 /**
  * timer_setup - prepare a timer for first use
  * @timer: the timer in question
@@ -139,7 +155,7 @@ static inline void init_timer_on_stack_key(struct timer_list *timer,
  * be used and must be balanced with a call to destroy_timer_on_stack().
  */
 #define timer_setup(timer, callback, flags)			\
-	__init_timer((timer), (callback), (flags))
+	__init_timer_debug((timer), (callback), (flags))
 
 #define timer_setup_on_stack(timer, callback, flags)		\
 	__init_timer_on_stack((timer), (callback), (flags))
@@ -207,7 +223,7 @@ static inline int del_timer_shutdown(struct timer_list *timer)
 	return __del_timer_sync(timer, true);
 }
 
-#define del_singleshot_timer_sync(t) del_timer_sync(t)
+#define del_singleshot_timer_sync(t) del_timer_shutdown(t)
 
 extern void init_timers(void);
 struct hrtimer;
