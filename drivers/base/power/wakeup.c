@@ -202,12 +202,7 @@ void wakeup_source_remove(struct wakeup_source *ws)
 	raw_spin_unlock_irqrestore(&events_lock, flags);
 	synchronize_srcu(&wakeup_srcu);
 
-	del_timer_sync(&ws->timer);
-	/*
-	 * Clear timer.function to make wakeup_source_not_registered() treat
-	 * this wakeup source as not registered.
-	 */
-	ws->timer.function = NULL;
+	del_timer_shutdown(&ws->timer);
 }
 EXPORT_SYMBOL_GPL(wakeup_source_remove);
 
