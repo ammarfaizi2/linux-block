@@ -887,6 +887,16 @@ static inline bool rxrpc_is_client_call(const struct rxrpc_call *call)
 }
 
 /*
+ * call_state.c
+ */
+bool __rxrpc_set_call_completion(struct rxrpc_call *, enum rxrpc_call_completion, u32, int);
+bool rxrpc_set_call_completion(struct rxrpc_call *, enum rxrpc_call_completion, u32, int);
+bool __rxrpc_call_completed(struct rxrpc_call *);
+bool rxrpc_call_completed(struct rxrpc_call *);
+bool __rxrpc_abort_call(struct rxrpc_call *, rxrpc_seq_t, u32, int, enum rxrpc_abort_reason);
+bool rxrpc_abort_call(struct rxrpc_call *, rxrpc_seq_t, u32, int, enum rxrpc_abort_reason);
+
+/*
  * conn_client.c
  */
 extern unsigned int rxrpc_reap_client_connections;
@@ -1115,12 +1125,6 @@ extern const struct seq_operations rxrpc_local_seq_ops;
  * recvmsg.c
  */
 void rxrpc_notify_socket(struct rxrpc_call *);
-bool __rxrpc_set_call_completion(struct rxrpc_call *, enum rxrpc_call_completion, u32, int);
-bool rxrpc_set_call_completion(struct rxrpc_call *, enum rxrpc_call_completion, u32, int);
-bool __rxrpc_call_completed(struct rxrpc_call *);
-bool rxrpc_call_completed(struct rxrpc_call *);
-bool __rxrpc_abort_call(struct rxrpc_call *, rxrpc_seq_t, u32, int, enum rxrpc_abort_reason);
-bool rxrpc_abort_call(struct rxrpc_call *, rxrpc_seq_t, u32, int, enum rxrpc_abort_reason);
 int rxrpc_recvmsg(struct socket *, struct msghdr *, size_t, int);
 
 /*
