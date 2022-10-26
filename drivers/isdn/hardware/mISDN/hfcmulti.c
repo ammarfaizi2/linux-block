@@ -4544,7 +4544,7 @@ release_port(struct hfc_multi *hc, struct dchannel *dch)
 	spin_lock_irqsave(&hc->lock, flags);
 
 	if (dch->timer.function) {
-		del_timer(&dch->timer);
+		del_timer_shutdown(&dch->timer);
 		dch->timer.function = NULL;
 	}
 

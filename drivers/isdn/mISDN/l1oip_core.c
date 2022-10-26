@@ -1236,8 +1236,8 @@ release_card(struct l1oip *hc)
 
 	hc->shutdown = true;
 
-	del_timer_sync(&hc->keep_tl);
-	del_timer_sync(&hc->timeout_tl);
+	del_timer_shutdown(&hc->keep_tl);
+	del_timer_shutdown(&hc->timeout_tl);
 
 	cancel_work_sync(&hc->workq);
 
