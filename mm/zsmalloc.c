@@ -231,6 +231,9 @@ struct zs_pool {
 	/* Compact classes */
 	struct shrinker shrinker;
 
+	/* List tracking the zspages in LRU order by most recently added object */
+	struct list_head lru;
+
 #ifdef CONFIG_ZSMALLOC_STAT
 	struct dentry *stat_dentry;
 #endif
@@ -252,6 +255,10 @@ struct zspage {
 	unsigned int freeobj;
 	struct page *first_page;
 	struct list_head list; /* fullness list */
+
+	/* links the zspage to the lru list in the pool */
+	struct list_head lru;
+
 	struct zs_pool *pool;
 #ifdef CONFIG_COMPACTION
 	rwlock_t lock;
@@ -342,6 +349,16 @@ static struct zspage *cache_alloc_zspage(struct zs_pool *pool, gfp_t flags)
 static void cache_free_zspage(struct zs_pool *pool, struct zspage *zspage)
 {
 	kmem_cache_free(pool->zspage_cachep, zspage);
+}
+
+/* Moves the zspage to the front of the zspool's LRU */
+static void move_to_front(struct zs_pool *pool, struct zspage *zspage)
+{
+	assert_spin_locked(&pool->lock);
+
+	if (!list_empty(&zspage->lru))
+		list_del(&zspage->lru);
+	list_add(&zspage->lru, &pool->lru);
 }
 
 /* pool->lock(which owns the handle) synchronizes races */
@@ -948,6 +965,7 @@ static void free_zspage(struct zs_pool *pool, struct size_class *class,
 	}
 
 	remove_zspage(class, zspage, ZS_EMPTY);
+	list_del(&zspage->lru);
 	__free_zspage(pool, class, zspage);
 }
 
@@ -992,6 +1010,8 @@ static void init_zspage(struct size_class *class, struct zspage *zspage)
 		page = next_page;
 		off %= PAGE_SIZE;
 	}
+
+	INIT_LIST_HEAD(&zspage->lru);
 
 	set_freeobj(zspage, 0);
 }
@@ -1434,6 +1454,8 @@ unsigned long zs_malloc(struct zs_pool *pool, size_t size, gfp_t gfp)
 		fix_fullness_group(class, zspage);
 		record_obj(handle, obj);
 		class_stat_inc(class, OBJ_USED, 1);
+		/* Move the zspage to front of pool's LRU */
+		move_to_front(pool, zspage);
 		spin_unlock(&pool->lock);
 
 		return handle;
@@ -1460,6 +1482,8 @@ unsigned long zs_malloc(struct zs_pool *pool, size_t size, gfp_t gfp)
 
 	/* We completely set up zspage so mark them as movable */
 	SetZsPageMovable(pool, zspage);
+	/* Move the zspage to front of pool's LRU */
+	move_to_front(pool, zspage);
 	spin_unlock(&pool->lock);
 
 	return handle;
@@ -1983,6 +2007,7 @@ static void async_free_zspage(struct work_struct *work)
 		VM_BUG_ON(fullness != ZS_EMPTY);
 		class = pool->size_class[class_idx];
 		spin_lock(&pool->lock);
+		list_del(&zspage->lru);
 		__free_zspage(pool, class, zspage);
 		spin_unlock(&pool->lock);
 	}
@@ -2314,6 +2339,8 @@ struct zs_pool *zs_create_pool(const char *name, u32 max_pages_per_zspage)
 	 * trigger compaction manually. Thus, ignore return code.
 	 */
 	zs_register_shrinker(pool);
+
+	INIT_LIST_HEAD(&pool->lru);
 
 	return pool;
 
