@@ -2051,14 +2051,24 @@ static void __mcheck_cpu_setup_timer(void)
 {
 	struct timer_list *t = this_cpu_ptr(&mce_timer);
 
-	timer_setup(t, mce_timer_fn, TIMER_PINNED);
+	/*
+	 * timer_setup() may only be used on a timer for the
+	 * first time it is initialized. This resets the
+	 * timer on CPU hotplug, so use __init_timer() instead.
+	 */
+	__init_timer(t, mce_timer_fn, TIMER_PINNED);
 }
 
 static void __mcheck_cpu_init_timer(void)
 {
 	struct timer_list *t = this_cpu_ptr(&mce_timer);
 
-	timer_setup(t, mce_timer_fn, TIMER_PINNED);
+	/*
+	 * timer_setup() may only be used on a timer for the
+	 * first time it is initialized. This resets the
+	 * timer on CPU hotplug, so use __init_timer() instead.
+	 */
+	__init_timer(t, mce_timer_fn, TIMER_PINNED);
 	mce_start_timer(t);
 }
 
