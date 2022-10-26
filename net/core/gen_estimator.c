@@ -208,7 +208,7 @@ void gen_kill_estimator(struct net_rate_estimator __rcu **rate_est)
 
 	est = xchg((__force struct net_rate_estimator **)rate_est, NULL);
 	if (est) {
-		del_timer_sync(&est->timer);
+		del_timer_shutdown(&est->timer);
 		kfree_rcu(est, rcu);
 	}
 }

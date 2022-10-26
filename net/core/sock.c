@@ -3352,7 +3352,7 @@ EXPORT_SYMBOL(sk_stop_timer);
 
 void sk_stop_timer_sync(struct sock *sk, struct timer_list *timer)
 {
-	if (del_timer_sync(timer))
+	if (del_timer_shutdown(timer))
 		__sock_put(sk);
 }
 EXPORT_SYMBOL(sk_stop_timer_sync);

@@ -385,7 +385,7 @@ int tipc_disc_create(struct net *net, struct tipc_bearer *b,
  */
 void tipc_disc_delete(struct tipc_discoverer *d)
 {
-	del_timer_sync(&d->timer);
+	del_timer_shutdown(&d->timer);
 	kfree_skb(d->skb);
 	kfree(d);
 }
