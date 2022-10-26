@@ -320,10 +320,11 @@ struct files_struct *dup_fd(struct files_struct *oldf, unsigned int max_fds, int
 	unsigned int open_files, i;
 	struct fdtable *old_fdt, *new_fdt;
 
-	*errorp = -ENOMEM;
 	newf = kmem_cache_alloc(files_cachep, GFP_KERNEL);
-	if (!newf)
-		goto out;
+	if (!newf) {
+		*errorp = -ENOMEM;
+		return NULL;
+	}
 
 	atomic_set(&newf->count, 1);
 
@@ -405,7 +406,6 @@ struct files_struct *dup_fd(struct files_struct *oldf, unsigned int max_fds, int
 
 out_release:
 	kmem_cache_free(files_cachep, newf);
-out:
 	return NULL;
 }
 
