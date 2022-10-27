@@ -291,6 +291,10 @@ void netfs_stats_show(struct seq_file *);
 ssize_t netfs_extract_user_iter(struct iov_iter *orig, size_t orig_len,
 				struct iov_iter *new,
 				unsigned int *cleanup_mode);
+struct sg_table;
+ssize_t netfs_extract_iter_to_sg(struct iov_iter *iter, size_t len,
+				 struct sg_table *sgtable, unsigned int sg_max,
+				 unsigned int *cleanup_mode);
 
 /**
  * netfs_inode - Get the netfs inode context from the inode
