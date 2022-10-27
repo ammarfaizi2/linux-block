@@ -828,16 +828,16 @@ static int smbd_post_send(struct smbd_connection *info,
 	return rc;
 }
 
-static int smbd_post_send_sgl(struct smbd_connection *info,
-	struct scatterlist *sgl, int data_length, int remaining_data_length)
+static int smbd_post_send_iter(struct smbd_connection *info,
+			       struct iov_iter *iter,
+			       int *_remaining_data_length)
 {
-	int num_sgs;
 	int i, rc;
 	int header_length;
+	int data_length;
 	struct smbd_request *request;
 	struct smbd_data_transfer *packet;
 	int new_credits;
-	struct scatterlist *sg;
 
 wait_credit:
 	/* Wait for send credits. A SMBD packet needs one credit */
@@ -881,6 +881,30 @@ wait_send_queue:
 	}
 
 	request->info = info;
+	memset(request->sge, 0, sizeof(request->sge));
+
+	/* Fill in the data payload to find out how much data we can add */
+	if (iter) {
+		struct smb_extract_to_rdma extract = {
+			.nr_sge		= 1,
+			.max_sge	= SMBDIRECT_MAX_SEND_SGE,
+			.sge		= request->sge,
+			.device		= info->id->device,
+			.local_dma_lkey	= info->pd->local_dma_lkey,
+			.direction	= DMA_TO_DEVICE,
+		};
+
+		rc = smb_extract_iter_to_rdma(iter, *_remaining_data_length,
+					      &extract);
+		if (rc < 0)
+			goto err_dma;
+		data_length = rc;
+		request->num_sge = extract.nr_sge;
+		*_remaining_data_length -= data_length;
+	} else {
+		data_length = 0;
+		request->num_sge = 1;
+	}
 
 	/* Fill in the packet header */
 	packet = smbd_request_payload(request);
@@ -902,7 +926,7 @@ wait_send_queue:
 	else
 		packet->data_offset = cpu_to_le32(24);
 	packet->data_length = cpu_to_le32(data_length);
-	packet->remaining_data_length = cpu_to_le32(remaining_data_length);
+	packet->remaining_data_length = cpu_to_le32(*_remaining_data_length);
 	packet->padding = 0;
 
 	log_outgoing(INFO, "credits_requested=%d credits_granted=%d data_offset=%d data_length=%d remaining_data_length=%d\n",
@@ -918,7 +942,6 @@ wait_send_queue:
 	if (!data_length)
 		header_length = offsetof(struct smbd_data_transfer, padding);
 
-	request->num_sge = 1;
 	request->sge[0].addr = ib_dma_map_single(info->id->device,
 						 (void *)packet,
 						 header_length,
@@ -931,23 +954,6 @@ wait_send_queue:
 
 	request->sge[0].length = header_length;
 	request->sge[0].lkey = info->pd->local_dma_lkey;
-
-	/* Fill in the packet data payload */
-	num_sgs = sgl ? sg_nents(sgl) : 0;
-	for_each_sg(sgl, sg, num_sgs, i) {
-		request->sge[i+1].addr =
-			ib_dma_map_page(info->id->device, sg_page(sg),
-			       sg->offset, sg->length, DMA_TO_DEVICE);
-		if (ib_dma_mapping_error(
-				info->id->device, request->sge[i+1].addr)) {
-			rc = -EIO;
-			request->sge[i+1].addr = 0;
-			goto err_dma;
-		}
-		request->sge[i+1].length = sg->length;
-		request->sge[i+1].lkey = info->pd->local_dma_lkey;
-		request->num_sge++;
-	}
 
 	rc = smbd_post_send(info, request);
 	if (!rc)
@@ -987,8 +993,10 @@ err_wait_credit:
  */
 static int smbd_post_send_empty(struct smbd_connection *info)
 {
+	int remaining_data_length = 0;
+
 	info->count_send_empty++;
-	return smbd_post_send_sgl(info, NULL, 0, 0);
+	return smbd_post_send_iter(info, NULL, &remaining_data_length);
 }
 
 /*
@@ -1933,42 +1941,6 @@ out:
 }
 
 /*
- * Send the contents of an iterator
- * @iter: The iterator to send
- * @_remaining_data_length: remaining data to send in this payload
- */
-static int smbd_post_send_iter(struct smbd_connection *info,
-			       struct iov_iter *iter,
-			       int *_remaining_data_length)
-{
-	struct scatterlist sgl[SMBDIRECT_MAX_SEND_SGE - 1];
-	unsigned int max_payload = info->max_send_size - sizeof(struct smbd_data_transfer);
-	unsigned int cleanup_mode;
-	ssize_t rc;
-
-	do {
-		struct sg_table sgtable = { .sgl = sgl };
-		size_t maxlen = min_t(size_t, *_remaining_data_length, max_payload);
-
-		sg_init_table(sgtable.sgl, ARRAY_SIZE(sgl));
-		rc = netfs_extract_iter_to_sg(iter, maxlen,
-					      &sgtable, ARRAY_SIZE(sgl),
-					      &cleanup_mode);
-		if (rc < 0)
-			break;
-		if (WARN_ON_ONCE(sgtable.nents == 0))
-			return -EIO;
-		WARN_ON(cleanup_mode != 0);
-
-		sg_mark_end(&sgl[sgtable.nents - 1]);
-		*_remaining_data_length -= rc;
-		rc = smbd_post_send_sgl(info, sgl, rc, *_remaining_data_length);
-	} while (rc == 0 && iov_iter_count(iter) > 0);
-
-	return rc;
-}
-
-/*
  * Send data to transport
  * Each rqst is transported as a SMBDirect payload
  * rqst: the data to write
@@ -2611,13 +2583,6 @@ static ssize_t smb_extract_iter_to_rdma(struct iov_iter *iter, size_t len,
 	ssize_t ret;
 	int before = rdma->nr_sge;
 
-	if (iov_iter_is_discard(iter) ||
-	    iov_iter_is_pipe(iter) ||
-	    user_backed_iter(iter)) {
-		WARN_ON_ONCE(1);
-		return -EIO;
-	}
-
 	switch (iov_iter_type(iter)) {
 	case ITER_BVEC:
 		ret = smb_extract_bvec_to_rdma(iter, rdma, len);
@@ -2629,7 +2594,8 @@ static ssize_t smb_extract_iter_to_rdma(struct iov_iter *iter, size_t len,
 		ret = smb_extract_xarray_to_rdma(iter, rdma, len);
 		break;
 	default:
-		BUG();
+		WARN_ON_ONCE(1);
+		return -EIO;
 	}
 
 	if (ret > 0) {
