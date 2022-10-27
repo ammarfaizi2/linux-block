@@ -1017,7 +1017,7 @@ static int __init hil_mlc_init(void)
 
 static void __exit hil_mlc_exit(void)
 {
-	del_timer_sync(&hil_mlcs_kicker);
+	timer_shutdown_sync(&hil_mlcs_kicker);
 	tasklet_kill(&hil_mlcs_tasklet);
 }
 
