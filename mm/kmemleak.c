@@ -617,14 +617,6 @@ static inline depot_stack_handle_t set_track_prepare(void)
 #endif
 
 /*
- * Save stack trace to the given array of MAX_TRACE size.
- */
-static int __save_stack_trace(unsigned long *trace)
-{
-	return stack_trace_save(trace, MAX_TRACE, 2);
-}
-
-/*
  * Create the metadata (struct kmemleak_object) corresponding to an allocated
  * memory block and add it to the object_list and object_tree_root (or
  * object_phys_tree_root).
