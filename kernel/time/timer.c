@@ -691,7 +691,10 @@ static bool timer_fixup_init(void *addr, enum debug_obj_state state)
 
 	switch (state) {
 	case ODEBUG_STATE_ACTIVE:
-		del_timer_sync(timer);
+		/* Force the debug deactivate code */
+		if (timer->enabled != TIMER_DEBUG_WORK)
+			timer->enabled = TIMER_DEBUG_ENABLED;
+		timer_shutdown_sync(timer);
 		debug_object_init(timer, &timer_debug_descr);
 		return true;
 	default:
@@ -737,7 +740,7 @@ static bool timer_fixup_free(void *addr, enum debug_obj_state state)
 
 	switch (state) {
 	case ODEBUG_STATE_ACTIVE:
-		del_timer_sync(timer);
+		timer_shutdown_sync(timer);
 		debug_object_free(timer, &timer_debug_descr);
 		return true;
 	default:
@@ -774,16 +777,40 @@ static const struct debug_obj_descr timer_debug_descr = {
 
 static inline void debug_timer_init(struct timer_list *timer)
 {
+	/* Only need to call debug_object_init once if not a work timer */
+	if (timer->enabled == TIMER_DEBUG_ENABLED)
+		return;
+
 	debug_object_init(timer, &timer_debug_descr);
 }
 
 static inline void debug_timer_activate(struct timer_list *timer)
 {
+	/* Only call debug_timer_activate once if not a work timer */
+	if (timer->enabled == TIMER_DEBUG_ENABLED)
+		return;
+
+	if (timer->enabled == TIMER_DEBUG_DISABLED)
+		timer->enabled = TIMER_DEBUG_ENABLED;
+
 	debug_object_activate(timer, &timer_debug_descr);
 }
 
-static inline void debug_timer_deactivate(struct timer_list *timer)
+static inline void debug_timer_deactivate(struct timer_list *timer, bool free)
 {
+	switch (timer->enabled) {
+	case TIMER_DEBUG_DISABLED:
+		/* Already disabled, nothing to do */
+		return;
+	case TIMER_DEBUG_ENABLED:
+		/* free is true when shutting down the timer */
+		if (!free)
+			return;
+		timer->enabled = TIMER_DEBUG_DISABLED;
+		break;
+	case TIMER_DEBUG_WORK:
+		break;
+	}
 	debug_object_deactivate(timer, &timer_debug_descr);
 }
 
@@ -816,7 +843,7 @@ EXPORT_SYMBOL_GPL(destroy_timer_on_stack);
 #else
 static inline void debug_timer_init(struct timer_list *timer) { }
 static inline void debug_timer_activate(struct timer_list *timer) { }
-static inline void debug_timer_deactivate(struct timer_list *timer) { }
+static inline void debug_timer_deactivate(struct timer_list *timer, bool free) { }
 static inline void debug_timer_assert_init(struct timer_list *timer) { }
 #endif
 
@@ -828,7 +855,7 @@ static inline void debug_init(struct timer_list *timer)
 
 static inline void debug_deactivate(struct timer_list *timer)
 {
-	debug_timer_deactivate(timer);
+	debug_timer_deactivate(timer, false);
 	trace_timer_cancel(timer);
 }
 
@@ -1251,12 +1278,15 @@ int __del_timer(struct timer_list *timer, bool free)
 	if (timer_pending(timer)) {
 		base = lock_timer_base(timer, &flags);
 		ret = detach_if_pending(timer, base, true);
-		if (free)
+		if (free) {
 			timer->function = NULL;
+			debug_timer_deactivate(timer, true);
+		}
 		raw_spin_unlock_irqrestore(&base->lock, flags);
 	} else if (free) {
 		base = lock_timer_base(timer, &flags);
 		timer->function = NULL;
+		debug_timer_deactivate(timer, true);
 		raw_spin_unlock_irqrestore(&base->lock, flags);
 	}
 
@@ -1276,8 +1306,10 @@ static int __try_to_del_timer_sync(struct timer_list *timer, bool free)
 
 	if (base->running_timer != timer)
 		ret = detach_if_pending(timer, base, true);
-	if (free)
+	if (free) {
 		timer->function = NULL;
+		debug_timer_deactivate(timer, true);
+	}
 
 	raw_spin_unlock_irqrestore(&base->lock, flags);
 
