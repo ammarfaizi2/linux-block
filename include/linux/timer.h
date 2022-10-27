@@ -168,11 +168,44 @@ static inline int timer_pending(const struct timer_list * timer)
 	return !hlist_unhashed_lockless(&timer->entry);
 }
 
+extern int __del_timer(struct timer_list * timer, bool free);
+
 extern void add_timer_on(struct timer_list *timer, int cpu);
-extern int del_timer(struct timer_list * timer);
 extern int mod_timer(struct timer_list *timer, unsigned long expires);
 extern int mod_timer_pending(struct timer_list *timer, unsigned long expires);
 extern int timer_reduce(struct timer_list *timer, unsigned long expires);
+
+/**
+ * del_timer - deactivate a timer.
+ * @timer: the timer to be deactivated
+ *
+ * del_timer() deactivates a timer - this works on both active and inactive
+ * timers.
+ *
+ * The function returns whether it has deactivated a pending timer or not.
+ * (ie. del_timer() of an inactive timer returns 0, del_timer() of an
+ * active timer returns 1.)
+ */
+static inline int del_timer(struct timer_list *timer)
+{
+	return __del_timer(timer, false);
+}
+
+/**
+ * timer_shutdown - deactivate a timer and shut it down
+ * @timer: the timer to be deactivated
+ *
+ * timer_shutdown() deactivates a timer - this works on both active
+ * and inactive timers, and will prevent it from being rearmed.
+ *
+ * The function returns whether it has deactivated a pending timer or not.
+ * (ie. timer_shutdown() of an inactive timer returns 0,
+ *   timer_shutdown() of an active timer returns 1.)
+ */
+static inline int timer_shutdown(struct timer_list *timer)
+{
+	return __del_timer(timer, true);
+}
 
 /*
  * The jiffies value which is added to now, when there is no timer
@@ -183,14 +216,31 @@ extern int timer_reduce(struct timer_list *timer, unsigned long expires);
 extern void add_timer(struct timer_list *timer);
 
 extern int try_to_del_timer_sync(struct timer_list *timer);
+extern int __del_timer_sync(struct timer_list *timer, bool free);
 
-#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT)
-  extern int del_timer_sync(struct timer_list *timer);
-#else
-# define del_timer_sync(t)		del_timer(t)
-#endif
+static inline int del_timer_sync(struct timer_list *timer)
+{
+	return __del_timer_sync(timer, false);
+}
 
-#define del_singleshot_timer_sync(t) del_timer_sync(t)
+/**
+ * timer_shutdown_sync - called before freeing the timer
+ * @timer: The timer to be freed
+ *
+ * Shutdown the timer before freeing. This will return when all pending timers
+ * have finished and it is safe to free the timer.
+ *
+ * Note, after calling this, if the timer is added back to the queue
+ * it will fail to be added and a WARNING will be triggered.
+ *
+ * Returns if it deactivated a pending timer or not.
+ */
+static inline int timer_shutdown_sync(struct timer_list *timer)
+{
+	return __del_timer_sync(timer, true);
+}
+
+#define del_singleshot_timer_sync(t) timer_shutdown_sync(t)
 
 extern void init_timers(void);
 struct hrtimer;

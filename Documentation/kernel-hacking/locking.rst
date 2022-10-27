@@ -1009,6 +1009,11 @@ use del_timer_sync() (``include/linux/timer.h``) to
 handle this case. It returns the number of times the timer had to be
 deleted before we finally stopped it from adding itself back in.
 
+Before freeing a timer, timer_shutdown() or timer_shutdown_sync() should be
+called which will keep it from being rearmed, although if it is rearmed, it
+will produce a warning.
+
+
 Locking Speed
 =============
 
