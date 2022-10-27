@@ -4543,10 +4543,8 @@ release_port(struct hfc_multi *hc, struct dchannel *dch)
 
 	spin_lock_irqsave(&hc->lock, flags);
 
-	if (dch->timer.function) {
-		del_timer(&dch->timer);
-		dch->timer.function = NULL;
-	}
+	if (dch->timer.function)
+		timer_shutdown(&dch->timer);
 
 	if (hc->ctype == HFC_TYPE_E1) { /* E1 */
 		/* remove sync */
