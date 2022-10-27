@@ -359,10 +359,10 @@ static void print_unreferenced(struct seq_file *seq,
 	hex_dump_object(seq, object);
 	warn_or_seq_printf(seq, "  backtrace:\n");
 
-       for (i = 0; i < nr_entries; i++) {
-               void *ptr = (void *)entries[i];
-               warn_or_seq_printf(seq, "    [<%p>] %pS\n", ptr, ptr);
-       }
+	for (i = 0; i < nr_entries; i++) {
+		void *ptr = (void *)entries[i];
+		warn_or_seq_printf(seq, "    [<%p>] %pS\n", ptr, ptr);
+	}
 }
 
 /*
@@ -381,7 +381,7 @@ static void dump_object_info(struct kmemleak_object *object)
 	pr_notice("  flags = 0x%x\n", object->flags);
 	pr_notice("  checksum = %u\n", object->checksum);
 	pr_notice("  backtrace:\n");
-	if(object->trace_handle)
+	if (object->trace_handle)
 		stack_depot_print(object->trace_handle);
 }
 
