@@ -443,10 +443,12 @@ static void clocksource_watchdog(struct timer_list *unused)
 		/* Check for bogus measurements. */
 		wdi = jiffies_to_nsecs(WATCHDOG_INTERVAL);
 		if (wd_nsec < (wdi >> 2)) {
+			/* This usually indicates broken timer code or hardware. */
 			pr_warn("timekeeping watchdog on CPU%d: Watchdog clocksource '%s' advanced only %lld ns during %d-jiffy time interval, skipping watchdog check.\n", smp_processor_id(), watchdog->name, wd_nsec, WATCHDOG_INTERVAL);
 			continue;
 		}
 		if (wd_nsec > (wdi << 2)) {
+			/* This can happen on busy systems, which can delay the watchdog. */
 			pr_warn("timekeeping watchdog on CPU%d: Watchdog clocksource '%s' advanced an excessive %lld ns during %d-jiffy time interval, probable CPU overutilization, skipping watchdog check.\n", smp_processor_id(), watchdog->name, wd_nsec, WATCHDOG_INTERVAL);
 			continue;
 		}
