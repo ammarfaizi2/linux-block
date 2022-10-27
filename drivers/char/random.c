@@ -1233,7 +1233,7 @@ static void __cold try_to_generate_entropy(void)
 		stack.entropy = random_get_entropy();
 	}
 
-	del_timer_sync(&stack.timer);
+	timer_shutdown_sync(&stack.timer);
 	destroy_timer_on_stack(&stack.timer);
 	mix_pool_bytes(&stack.entropy, sizeof(stack.entropy));
 }
