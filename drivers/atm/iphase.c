@@ -3280,7 +3280,7 @@ static void __exit ia_module_exit(void)
 {
 	pci_unregister_driver(&ia_driver);
 
-	del_timer_sync(&ia_timer);
+	timer_shutdown_sync(&ia_timer);
 }
 
 module_init(ia_module_init);
