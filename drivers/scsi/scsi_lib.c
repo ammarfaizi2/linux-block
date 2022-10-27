@@ -558,6 +558,7 @@ static bool scsi_end_request(struct request *req, blk_status_t error,
 	 */
 	destroy_rcu_head(&cmd->rcu);
 
+	timer_shutdown(&cmd->abort_work.timer);
 	/*
 	 * In the MQ case the command gets freed by __blk_mq_end_request,
 	 * so we have to do all cleanup that depends on it earlier.
