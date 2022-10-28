@@ -6236,17 +6236,9 @@ struct page *hugetlb_follow_page_mask(struct vm_area_struct *vma,
 		return NULL;
 
 retry:
-	/*
-	 * vma lock prevents racing with another thread doing a pmd unshare.
-	 * This keeps pte as returned by huge_pte_offset valid.
-	 */
-	hugetlb_vma_lock_read(vma);
-
 	pte = huge_pte_offset(mm, haddr, huge_page_size(h));
-	if (!pte) {
-		hugetlb_vma_unlock_read(vma);
+	if (!pte)
 		return NULL;
-	}
 
 	ptl = huge_pte_lock(h, mm, pte);
 	entry = huge_ptep_get(pte);
@@ -6280,7 +6272,6 @@ retry:
 	}
 out:
 	spin_unlock(ptl);
-	hugetlb_vma_unlock_read(vma);
 	return page;
 }
 
