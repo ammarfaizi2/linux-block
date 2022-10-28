@@ -125,6 +125,9 @@ struct clocksource {
 	struct list_head	wd_list;
 	u64			cs_last;
 	u64			wd_last;
+	u64			wd_last_bogus;
+	int			wd_bogus_shift;
+	unsigned long		wd_bogus_count;
 #endif
 	struct module		*owner;
 };
