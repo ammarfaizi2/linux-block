@@ -351,4 +351,33 @@ static inline void iov_iter_ubuf(struct iov_iter *i, unsigned int direction,
 	};
 }
 
+ssize_t iov_iter_extract_pages(struct iov_iter *i, struct page ***pages,
+			       size_t maxsize, unsigned int maxpages,
+			       size_t *offset0);
+
+/**
+ * iov_iter_extract_mode - Indicate how pages from the iterator will be retained
+ * @iter: The iterator
+ *
+ * Examine the indicator and indicate with FOLL_PIN, FOLL_GET or 0 as to how,
+ * if at all, pages extracted from the iterator will be retained by the
+ * extraction function.
+ *
+ * FOLL_GET indicates that the pages will have a reference taken on them that
+ * the caller must put.  This can be done for DMA/async DIO write from a page.
+ *
+ * FOLL_PIN indicates that the pages will have a pin placed in them that the
+ * caller must unpin.  This is must be done for DMA/async DIO read to a page to
+ * avoid CoW problems in fork.
+ *
+ * 0 indicates that no measures are taken and that it's up to the caller to
+ * retain the pages.
+ */
+static inline unsigned int iov_iter_extract_mode(struct iov_iter *iter)
+{
+	if (user_backed_iter(iter))
+		return iter->data_source ? FOLL_GET : FOLL_PIN;
+	return 0;
+}
+
 #endif
