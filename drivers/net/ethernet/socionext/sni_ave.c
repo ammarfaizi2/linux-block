@@ -1229,6 +1229,8 @@ static int ave_init(struct net_device *ndev)
 
 	phy_support_asym_pause(phydev);
 
+	phydev->mac_managed_pm = true;
+
 	phy_attached_info(phydev);
 
 	return 0;
@@ -1756,15 +1758,13 @@ static int ave_resume(struct device *dev)
 
 	ave_global_reset(ndev);
 
+	ret = phy_init_hw(ndev->phydev);
+	if (ret)
+		return ret;
+
 	ave_ethtool_get_wol(ndev, &wol);
 	wol.wolopts = priv->wolopts;
 	__ave_ethtool_set_wol(ndev, &wol);
-
-	if (ndev->phydev) {
-		ret = phy_resume(ndev->phydev);
-		if (ret)
-			return ret;
-	}
 
 	if (netif_running(ndev)) {
 		ret = ave_open(ndev);

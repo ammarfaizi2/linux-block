@@ -723,6 +723,8 @@ create_child:
 				goto dispose_child;
 			}
 
+			if (new_msk)
+				mptcp_copy_inaddrs(new_msk, child);
 			subflow_drop_ctx(child);
 			goto out;
 		}
@@ -749,6 +751,11 @@ create_child:
 			mptcp_token_accept(subflow_req, mptcp_sk(new_msk));
 			ctx->conn = new_msk;
 			new_msk = NULL;
+
+			/* set msk addresses early to ensure mptcp_pm_get_local_id()
+			 * uses the correct data
+			 */
+			mptcp_copy_inaddrs(ctx->conn, child);
 
 			/* with OoO packets we can reach here without ingress
 			 * mpc option
@@ -1595,7 +1602,9 @@ int mptcp_subflow_create_socket(struct sock *sk, struct socket **new_sock)
 
 	/* kernel sockets do not by default acquire net ref, but TCP timer
 	 * needs it.
+	 * Update ns_tracker to current stack trace and refcounted tracker.
 	 */
+	__netns_tracker_free(net, &sf->sk->ns_tracker, false);
 	sf->sk->sk_net_refcnt = 1;
 	get_net_track(net, &sf->sk->ns_tracker, GFP_KERNEL);
 	sock_inuse_add(net, 1);

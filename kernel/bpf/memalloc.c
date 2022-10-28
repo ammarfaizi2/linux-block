@@ -222,9 +222,13 @@ static void __free_rcu(struct rcu_head *head)
 
 static void __free_rcu_tasks_trace(struct rcu_head *head)
 {
-	struct bpf_mem_cache *c = container_of(head, struct bpf_mem_cache, rcu);
-
-	call_rcu(&c->rcu, __free_rcu);
+	/* If RCU Tasks Trace grace period implies RCU grace period,
+	 * there is no need to invoke call_rcu().
+	 */
+	if (rcu_trace_implies_rcu_gp())
+		__free_rcu(head);
+	else
+		call_rcu(head, __free_rcu);
 }
 
 static void enque_to_free(struct bpf_mem_cache *c, void *obj)
@@ -253,8 +257,9 @@ static void do_call_rcu(struct bpf_mem_cache *c)
 		 */
 		__llist_add(llnode, &c->waiting_for_gp);
 	/* Use call_rcu_tasks_trace() to wait for sleepable progs to finish.
-	 * Then use call_rcu() to wait for normal progs to finish
-	 * and finally do free_one() on each element.
+	 * If RCU Tasks Trace grace period implies RCU grace period, free
+	 * these elements directly, else use call_rcu() to wait for normal
+	 * progs to finish and finally do free_one() on each element.
 	 */
 	call_rcu_tasks_trace(&c->rcu, __free_rcu_tasks_trace);
 }
@@ -418,14 +423,17 @@ static void drain_mem_cache(struct bpf_mem_cache *c)
 	/* No progs are using this bpf_mem_cache, but htab_map_free() called
 	 * bpf_mem_cache_free() for all remaining elements and they can be in
 	 * free_by_rcu or in waiting_for_gp lists, so drain those lists now.
+	 *
+	 * Except for waiting_for_gp list, there are no concurrent operations
+	 * on these lists, so it is safe to use __llist_del_all().
 	 */
 	llist_for_each_safe(llnode, t, __llist_del_all(&c->free_by_rcu))
 		free_one(c, llnode);
 	llist_for_each_safe(llnode, t, llist_del_all(&c->waiting_for_gp))
 		free_one(c, llnode);
-	llist_for_each_safe(llnode, t, llist_del_all(&c->free_llist))
+	llist_for_each_safe(llnode, t, __llist_del_all(&c->free_llist))
 		free_one(c, llnode);
-	llist_for_each_safe(llnode, t, llist_del_all(&c->free_llist_extra))
+	llist_for_each_safe(llnode, t, __llist_del_all(&c->free_llist_extra))
 		free_one(c, llnode);
 }
 
@@ -493,6 +501,16 @@ void bpf_mem_alloc_destroy(struct bpf_mem_alloc *ma)
 		rcu_in_progress = 0;
 		for_each_possible_cpu(cpu) {
 			c = per_cpu_ptr(ma->cache, cpu);
+			/*
+			 * refill_work may be unfinished for PREEMPT_RT kernel
+			 * in which irq work is invoked in a per-CPU RT thread.
+			 * It is also possible for kernel with
+			 * arch_irq_work_has_interrupt() being false and irq
+			 * work is invoked in timer interrupt. So waiting for
+			 * the completion of irq work to ease the handling of
+			 * concurrency.
+			 */
+			irq_work_sync(&c->refill_work);
 			drain_mem_cache(c);
 			rcu_in_progress += atomic_read(&c->call_rcu_in_progress);
 		}
@@ -507,6 +525,7 @@ void bpf_mem_alloc_destroy(struct bpf_mem_alloc *ma)
 			cc = per_cpu_ptr(ma->caches, cpu);
 			for (i = 0; i < NUM_CACHES; i++) {
 				c = &cc->cache[i];
+				irq_work_sync(&c->refill_work);
 				drain_mem_cache(c);
 				rcu_in_progress += atomic_read(&c->call_rcu_in_progress);
 			}
