@@ -9,6 +9,7 @@
 #include <linux/rcupdate.h>
 #include <linux/smp.h>
 #include <linux/swap.h>
+#include <linux/rmap.h>
 
 #include <asm/pgalloc.h>
 #include <asm/tlb.h>
@@ -43,12 +44,44 @@ static bool tlb_next_batch(struct mmu_gather *tlb)
 	return true;
 }
 
+/*
+ * We get an 'encoded page' array, which has page pointers with
+ * encoded flags in the low bits of the array.
+ *
+ * The TLB has been flushed, now we need to react to the flag bits
+ * the 'struct page', clean the array in-place, and then free the
+ * pages and their swap cache.
+ */
+static void clean_and_free_pages_and_swap_cache(struct encoded_page **pages, unsigned int nr)
+{
+	for (unsigned int i = 0; i < nr; i++) {
+		struct encoded_page *encoded = pages[i];
+		unsigned int flags = encoded_page_flags(encoded);
+		if (flags) {
+			/* Clean the flagged pointer in-place */
+			struct page *page = encoded_page_ptr(encoded);
+			pages[i] = encode_page(page, 0);
+
+			/* The flag bit being set means that we should zap the rmap */
+			page_zap_pte_rmap(page);
+			VM_WARN_ON_ONCE_PAGE(page_mapcount(page) < 0, page);
+		}
+	}
+
+	/*
+	 * Now all entries have been un-encoded, and changed to plain
+	 * page pointers, so we can cast the 'encoded_page' array to
+	 * a plain page array and free them
+	 */
+	free_pages_and_swap_cache((struct page **)pages, nr);
+}
+
 static void tlb_batch_pages_flush(struct mmu_gather *tlb)
 {
 	struct mmu_gather_batch *batch;
 
 	for (batch = &tlb->local; batch && batch->nr; batch = batch->next) {
-		struct page **pages = batch->pages;
+		struct encoded_page **pages = batch->encoded_pages;
 
 		do {
 			/*
@@ -56,7 +89,7 @@ static void tlb_batch_pages_flush(struct mmu_gather *tlb)
 			 */
 			unsigned int nr = min(512U, batch->nr);
 
-			free_pages_and_swap_cache(pages, nr);
+			clean_and_free_pages_and_swap_cache(pages, nr);
 			pages += nr;
 			batch->nr -= nr;
 
@@ -77,11 +110,12 @@ static void tlb_batch_list_free(struct mmu_gather *tlb)
 	tlb->local.next = NULL;
 }
 
-bool __tlb_remove_page_size(struct mmu_gather *tlb, struct page *page, int page_size)
+bool __tlb_remove_page_size(struct mmu_gather *tlb, struct page *page, int page_size, unsigned int flags)
 {
 	struct mmu_gather_batch *batch;
 
 	VM_BUG_ON(!tlb->end);
+	VM_BUG_ON(flags & ~ENCODE_PAGE_BITS);
 
 #ifdef CONFIG_MMU_GATHER_PAGE_SIZE
 	VM_WARN_ON(tlb->page_size != page_size);
@@ -92,7 +126,7 @@ bool __tlb_remove_page_size(struct mmu_gather *tlb, struct page *page, int page_
 	 * Add the page and check if we are full. If so
 	 * force a flush.
 	 */
-	batch->pages[batch->nr++] = page;
+	batch->encoded_pages[batch->nr++] = encode_page(page, flags);
 	if (batch->nr == batch->max) {
 		if (!tlb_next_batch(tlb))
 			return true;

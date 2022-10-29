@@ -25,7 +25,8 @@
 void __tlb_remove_table(void *_table);
 static inline void tlb_flush(struct mmu_gather *tlb);
 static inline bool __tlb_remove_page_size(struct mmu_gather *tlb,
-					  struct page *page, int page_size);
+					  struct page *page, int page_size,
+					  unsigned int flags);
 
 #define tlb_flush tlb_flush
 #define pte_free_tlb pte_free_tlb
@@ -36,14 +37,19 @@ static inline bool __tlb_remove_page_size(struct mmu_gather *tlb,
 #include <asm/tlbflush.h>
 #include <asm-generic/tlb.h>
 
+void page_zap_pte_rmap(struct page *);
+
 /*
  * Release the page cache reference for a pte removed by
  * tlb_ptep_clear_flush. In both flush modes the tlb for a page cache page
  * has already been freed, so just do free_page_and_swap_cache.
  */
 static inline bool __tlb_remove_page_size(struct mmu_gather *tlb,
-					  struct page *page, int page_size)
+					  struct page *page, int page_size,
+					  unsigned int flags)
 {
+	if (flags & TLB_ZAP_RMAP)
+		page_zap_pte_rmap(page);
 	free_page_and_swap_cache(page);
 	return false;
 }

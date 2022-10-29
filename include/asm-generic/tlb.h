@@ -73,7 +73,8 @@
  *    __tlb_remove_page_size() is the basic primitive that queues a page for
  *    freeing. __tlb_remove_page() assumes PAGE_SIZE. Both will return a
  *    boolean indicating if the queue is (now) full and a call to
- *    tlb_flush_mmu() is required.
+ *    tlb_flush_mmu() is required. They take a 'flags' parameter that
+ *    states whether the rmap of the page should be removed after TLB flush.
  *
  *    tlb_remove_page() and tlb_remove_page_size() imply the call to
  *    tlb_flush_mmu() when required and has no return value.
@@ -187,6 +188,7 @@
  *  This is useful if your architecture already flushes TLB entries in the
  *  various ptep_get_and_clear() functions.
  */
+#define TLB_ZAP_RMAP 1ul
 
 #ifdef CONFIG_MMU_GATHER_TABLE_FREE
 
@@ -238,11 +240,36 @@ extern void tlb_remove_table(struct mmu_gather *tlb, void *table);
  */
 #define MMU_GATHER_BUNDLE	8
 
+/*
+ * Fake type for an encoded page with flag bits in the low bits.
+ *
+ * Right now just one bit, but we could have more depending on the
+ * alignment of 'struct page'.
+ */
+struct encoded_page;
+#define ENCODE_PAGE_BITS (TLB_ZAP_RMAP)
+
+static inline struct encoded_page *encode_page(struct page *page, unsigned long flags)
+{
+	flags &= ENCODE_PAGE_BITS;
+	return (struct encoded_page *)(flags | (unsigned long)page);
+}
+
+static inline bool encoded_page_flags(struct encoded_page *page)
+{
+	return ENCODE_PAGE_BITS & (unsigned long)page;
+}
+
+static inline struct page *encoded_page_ptr(struct encoded_page *page)
+{
+	return (struct page *)(~ENCODE_PAGE_BITS & (unsigned long)page);
+}
+
 struct mmu_gather_batch {
 	struct mmu_gather_batch	*next;
 	unsigned int		nr;
 	unsigned int		max;
-	struct page		*pages[];
+	struct encoded_page	*encoded_pages[];
 };
 
 #define MAX_GATHER_BATCH	\
@@ -257,7 +284,7 @@ struct mmu_gather_batch {
 #define MAX_GATHER_BATCH_COUNT	(10000UL/MAX_GATHER_BATCH)
 
 extern bool __tlb_remove_page_size(struct mmu_gather *tlb, struct page *page,
-				   int page_size);
+				   int page_size, unsigned int flags);
 #endif
 
 /*
@@ -431,13 +458,13 @@ static inline void tlb_flush_mmu_tlbonly(struct mmu_gather *tlb)
 static inline void tlb_remove_page_size(struct mmu_gather *tlb,
 					struct page *page, int page_size)
 {
-	if (__tlb_remove_page_size(tlb, page, page_size))
+	if (__tlb_remove_page_size(tlb, page, page_size, 0))
 		tlb_flush_mmu(tlb);
 }
 
-static inline bool __tlb_remove_page(struct mmu_gather *tlb, struct page *page)
+static inline bool __tlb_remove_page(struct mmu_gather *tlb, struct page *page, unsigned int flags)
 {
-	return __tlb_remove_page_size(tlb, page, PAGE_SIZE);
+	return __tlb_remove_page_size(tlb, page, PAGE_SIZE, flags);
 }
 
 /* tlb_remove_page
