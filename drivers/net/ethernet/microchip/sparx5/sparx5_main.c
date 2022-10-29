@@ -27,6 +27,7 @@
 #include "sparx5_main_regs.h"
 #include "sparx5_main.h"
 #include "sparx5_port.h"
+#include "sparx5_qos.h"
 
 #define QLIM_WM(fraction) \
 	((SPX5_BUFFER_MEMORY / SPX5_BUFFER_CELL_SZ - 100) * (fraction) / 100)
@@ -671,6 +672,14 @@ static int sparx5_start(struct sparx5 *sparx5)
 
 	sparx5_board_init(sparx5);
 	err = sparx5_register_notifier_blocks(sparx5);
+	if (err)
+		return err;
+
+	err = sparx5_vcap_init(sparx5);
+	if (err) {
+		sparx5_unregister_notifier_blocks(sparx5);
+		return err;
+	}
 
 	/* Start Frame DMA with fallback to register based INJ/XTR */
 	err = -ENXIO;
@@ -868,6 +877,12 @@ static int mchp_sparx5_probe(struct platform_device *pdev)
 		goto cleanup_ports;
 	}
 
+	err = sparx5_qos_init(sparx5);
+	if (err) {
+		dev_err(sparx5->dev, "Failed to initialize QoS\n");
+		goto cleanup_ports;
+	}
+
 	err = sparx5_ptp_init(sparx5);
 	if (err) {
 		dev_err(sparx5->dev, "PTP failed\n");
@@ -899,6 +914,7 @@ static int mchp_sparx5_remove(struct platform_device *pdev)
 	sparx5_ptp_deinit(sparx5);
 	sparx5_fdma_stop(sparx5);
 	sparx5_cleanup_ports(sparx5);
+	sparx5_vcap_destroy(sparx5);
 	/* Unregister netdevs */
 	sparx5_unregister_notifier_blocks(sparx5);
 

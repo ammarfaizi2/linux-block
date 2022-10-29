@@ -1319,8 +1319,7 @@ static int cpsw_probe_dt(struct cpsw_platform_data *data,
 			 */
 			ret = of_phy_register_fixed_link(slave_node);
 			if (ret) {
-				if (ret != -EPROBE_DEFER)
-					dev_err(&pdev->dev, "failed to register fixed-link phy: %d\n", ret);
+				dev_err_probe(&pdev->dev, ret, "failed to register fixed-link phy\n");
 				goto err_node_put;
 			}
 			slave_data->phy_node = of_node_get(slave_node);
@@ -1638,8 +1637,7 @@ static int cpsw_probe(struct platform_device *pdev)
 	ndev->netdev_ops = &cpsw_netdev_ops;
 	ndev->ethtool_ops = &cpsw_ethtool_ops;
 	netif_napi_add(ndev, &cpsw->napi_rx,
-		       cpsw->quirk_irq ? cpsw_rx_poll : cpsw_rx_mq_poll,
-		       NAPI_POLL_WEIGHT);
+		       cpsw->quirk_irq ? cpsw_rx_poll : cpsw_rx_mq_poll);
 	netif_napi_add_tx(ndev, &cpsw->napi_tx,
 			  cpsw->quirk_irq ? cpsw_tx_poll : cpsw_tx_mq_poll);
 

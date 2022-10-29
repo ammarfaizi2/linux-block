@@ -858,6 +858,15 @@ static void otx2_handle_link_event(struct otx2_nic *pf)
 	}
 }
 
+int otx2_mbox_up_handler_mcs_intr_notify(struct otx2_nic *pf,
+					 struct mcs_intr_info *event,
+					 struct msg_rsp *rsp)
+{
+	cn10k_handle_mcs_event(pf, event);
+
+	return 0;
+}
+
 int otx2_mbox_up_handler_cgx_link_event(struct otx2_nic *pf,
 					struct cgx_link_info_msg *msg,
 					struct msg_rsp *rsp)
@@ -917,6 +926,7 @@ static int otx2_process_mbox_msg_up(struct otx2_nic *pf,
 		return err;						\
 	}
 MBOX_UP_CGX_MESSAGES
+MBOX_UP_MCS_MESSAGES
 #undef M
 		break;
 	default:
@@ -1661,8 +1671,7 @@ int otx2_open(struct net_device *netdev)
 		cq_poll->dev = (void *)pf;
 		cq_poll->dim.mode = DIM_CQ_PERIOD_MODE_START_FROM_CQE;
 		INIT_WORK(&cq_poll->dim.work, otx2_dim_work);
-		netif_napi_add(netdev, &cq_poll->napi,
-			       otx2_napi_handler, NAPI_POLL_WEIGHT);
+		netif_napi_add(netdev, &cq_poll->napi, otx2_napi_handler);
 		napi_enable(&cq_poll->napi);
 	}
 
@@ -1883,8 +1892,8 @@ static netdev_tx_t otx2_xmit(struct sk_buff *skb, struct net_device *netdev)
 static u16 otx2_select_queue(struct net_device *netdev, struct sk_buff *skb,
 			     struct net_device *sb_dev)
 {
-	struct otx2_nic *pf = netdev_priv(netdev);
 #ifdef CONFIG_DCB
+	struct otx2_nic *pf = netdev_priv(netdev);
 	u8 vlan_prio;
 #endif
 
@@ -2038,8 +2047,19 @@ int otx2_config_hwtstamp(struct net_device *netdev, struct ifreq *ifr)
 
 	switch (config.tx_type) {
 	case HWTSTAMP_TX_OFF:
+		if (pfvf->flags & OTX2_FLAG_PTP_ONESTEP_SYNC)
+			pfvf->flags &= ~OTX2_FLAG_PTP_ONESTEP_SYNC;
+
+		cancel_delayed_work(&pfvf->ptp->synctstamp_work);
 		otx2_config_hw_tx_tstamp(pfvf, false);
 		break;
+	case HWTSTAMP_TX_ONESTEP_SYNC:
+		if (!test_bit(CN10K_PTP_ONESTEP, &pfvf->hw.cap_flag))
+			return -ERANGE;
+		pfvf->flags |= OTX2_FLAG_PTP_ONESTEP_SYNC;
+		schedule_delayed_work(&pfvf->ptp->synctstamp_work,
+				      msecs_to_jiffies(500));
+		fallthrough;
 	case HWTSTAMP_TX_ON:
 		otx2_config_hw_tx_tstamp(pfvf, true);
 		break;
@@ -2754,6 +2774,10 @@ static int otx2_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	if (err)
 		goto err_ptp_destroy;
 
+	err = cn10k_mcs_init(pf);
+	if (err)
+		goto err_del_mcam_entries;
+
 	if (pf->flags & OTX2_FLAG_NTUPLE_SUPPORT)
 		netdev->hw_features |= NETIF_F_NTUPLE;
 
@@ -2786,7 +2810,7 @@ static int otx2_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	err = register_netdev(netdev);
 	if (err) {
 		dev_err(dev, "Failed to register netdevice\n");
-		goto err_del_mcam_entries;
+		goto err_mcs_free;
 	}
 
 	err = otx2_wq_init(pf);
@@ -2825,6 +2849,8 @@ err_mcam_flow_del:
 	otx2_mcam_flow_del(pf);
 err_unreg_netdev:
 	unregister_netdev(netdev);
+err_mcs_free:
+	cn10k_mcs_free(pf);
 err_del_mcam_entries:
 	otx2_mcam_flow_del(pf);
 err_ptp_destroy:
@@ -2967,6 +2993,8 @@ static void otx2_remove(struct pci_dev *pdev)
 		pf->flags &= ~OTX2_FLAG_TX_PAUSE_ENABLED;
 		otx2_config_pause_frm(pf);
 	}
+
+	cn10k_mcs_free(pf);
 
 #ifdef CONFIG_DCB
 	/* Disable PFC config */

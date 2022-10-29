@@ -120,7 +120,7 @@ required delays, as defined per the RGMII standard, several options may be
 available:
 
 * Some SoCs may offer a pin pad/mux/controller capable of configuring a given
-  set of pins'strength, delays, and voltage; and it may be a suitable
+  set of pins' strength, delays, and voltage; and it may be a suitable
   option to insert the expected 2ns RGMII delay.
 
 * Modifying the PCB design to include a fixed delay (e.g: using a specifically
@@ -316,6 +316,12 @@ Some of the interface modes are described below:
     extension so-far in the specification is the inclusion of timestamps, for
     PTP-enabled PHYs. This mode isn't compatible with QSGMII, but offers the
     same capabilities in terms of link speed and negociation.
+
+``PHY_INTERFACE_MODE_1000BASEKX``
+    This is 1000BASE-X as defined by IEEE 802.3 Clause 36 with Clause 73
+    autonegotiation. Generally, it will be used with a Clause 70 PMD. To
+    contrast with the 1000BASE-X phy mode used for Clause 38 and 39 PMDs, this
+    interface mode has different autonegotiation and only supports full duplex.
 
 Pause frames / flow control
 ===========================

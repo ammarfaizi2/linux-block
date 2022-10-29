@@ -1599,9 +1599,6 @@ int ieee80211_txq_setup_flows(struct ieee80211_local *local)
 	bool supp_vht = false;
 	enum nl80211_band band;
 
-	if (!local->ops->wake_tx_queue)
-		return 0;
-
 	ret = fq_init(fq, 4096);
 	if (ret)
 		return ret;
@@ -1649,9 +1646,6 @@ void ieee80211_txq_teardown_flows(struct ieee80211_local *local)
 {
 	struct fq *fq = &local->fq;
 
-	if (!local->ops->wake_tx_queue)
-		return;
-
 	kfree(local->cvars);
 	local->cvars = NULL;
 
@@ -1668,8 +1662,7 @@ static bool ieee80211_queue_skb(struct ieee80211_local *local,
 	struct ieee80211_vif *vif;
 	struct txq_info *txqi;
 
-	if (!local->ops->wake_tx_queue ||
-	    sdata->vif.type == NL80211_IFTYPE_MONITOR)
+	if (sdata->vif.type == NL80211_IFTYPE_MONITOR)
 		return false;
 
 	if (sdata->vif.type == NL80211_IFTYPE_AP_VLAN)
@@ -2319,6 +2312,10 @@ netdev_tx_t ieee80211_monitor_start_xmit(struct sk_buff *skb,
 	u16 len_rthdr;
 	int hdrlen;
 
+	sdata = IEEE80211_DEV_TO_SUB_IF(dev);
+	if (unlikely(!ieee80211_sdata_running(sdata)))
+		goto fail;
+
 	memset(info, 0, sizeof(*info));
 	info->flags = IEEE80211_TX_CTL_REQ_TX_STATUS |
 		      IEEE80211_TX_CTL_INJECTED;
@@ -2378,8 +2375,6 @@ netdev_tx_t ieee80211_monitor_start_xmit(struct sk_buff *skb,
 	 * This is necessary, for example, for old hostapd versions that
 	 * don't use nl80211-based management TX/RX.
 	 */
-	sdata = IEEE80211_DEV_TO_SUB_IF(dev);
-
 	list_for_each_entry_rcu(tmp_sdata, &local->interfaces, list) {
 		if (!ieee80211_sdata_running(tmp_sdata))
 			continue;
@@ -2971,7 +2966,7 @@ static struct sk_buff *ieee80211_build_hdr(struct ieee80211_sub_if_data *sdata,
 
 		if (pre_conf_link_id != link_id &&
 		    link_id != IEEE80211_LINK_UNSPECIFIED) {
-#ifdef CPTCFG_MAC80211_VERBOSE_DEBUG
+#ifdef CONFIG_MAC80211_VERBOSE_DEBUG
 			net_info_ratelimited("%s: dropped frame to %pM with bad link ID request (%d vs. %d)\n",
 					     sdata->name, hdr.addr1,
 					     pre_conf_link_id, link_id);
@@ -4169,7 +4164,7 @@ void __ieee80211_subif_start_xmit(struct sk_buff *skb,
 	struct sk_buff *next;
 	int len = skb->len;
 
-	if (unlikely(skb->len < ETH_HLEN)) {
+	if (unlikely(!ieee80211_sdata_running(sdata) || skb->len < ETH_HLEN)) {
 		kfree_skb(skb);
 		return;
 	}
@@ -4182,12 +4177,7 @@ void __ieee80211_subif_start_xmit(struct sk_buff *skb,
 	if (IS_ERR(sta))
 		sta = NULL;
 
-	if (local->ops->wake_tx_queue) {
-		u16 queue = __ieee80211_select_queue(sdata, sta, skb);
-		skb_set_queue_mapping(skb, queue);
-		skb_get_hash(skb);
-	}
-
+	skb_set_queue_mapping(skb, ieee80211_select_queue(sdata, sta, skb));
 	ieee80211_aggr_check(sdata, sta, skb);
 
 	sk_pacing_shift_update(skb->sk, sdata->local->hw.tx_sk_pacing_shift);
@@ -4493,11 +4483,7 @@ static void ieee80211_8023_xmit(struct ieee80211_sub_if_data *sdata,
 	struct tid_ampdu_tx *tid_tx;
 	u8 tid;
 
-	if (local->ops->wake_tx_queue) {
-		u16 queue = __ieee80211_select_queue(sdata, sta, skb);
-		skb_set_queue_mapping(skb, queue);
-		skb_get_hash(skb);
-	}
+	skb_set_queue_mapping(skb, ieee80211_select_queue(sdata, sta, skb));
 
 	if (unlikely(test_bit(SCAN_SW_SCANNING, &local->scanning)) &&
 	    test_bit(SDATA_STATE_OFFCHANNEL, &sdata->state))
@@ -4566,7 +4552,7 @@ netdev_tx_t ieee80211_subif_start_xmit_8023(struct sk_buff *skb,
 	struct ieee80211_key *key;
 	struct sta_info *sta;
 
-	if (unlikely(skb->len < ETH_HLEN)) {
+	if (unlikely(!ieee80211_sdata_running(sdata) || skb->len < ETH_HLEN)) {
 		kfree_skb(skb);
 		return NETDEV_TX_OK;
 	}
@@ -4751,9 +4737,6 @@ void ieee80211_tx_pending(struct tasklet_struct *t)
 			if (!txok)
 				break;
 		}
-
-		if (skb_queue_empty(&local->pending[i]))
-			ieee80211_propagate_queue_wake(local, i);
 	}
 	spin_unlock_irqrestore(&local->queue_stop_reason_lock, flags);
 
@@ -5930,6 +5913,9 @@ int ieee80211_tx_control_port(struct wiphy *wiphy, struct net_device *dev,
 	skb_reset_network_header(skb);
 	skb_reset_mac_header(skb);
 
+	if (local->hw.queues < IEEE80211_NUM_ACS)
+		goto start_xmit;
+
 	/* update QoS header to prioritize control port frames if possible,
 	 * priorization also happens for control port frames send over
 	 * AF_PACKET
@@ -5943,10 +5929,9 @@ int ieee80211_tx_control_port(struct wiphy *wiphy, struct net_device *dev,
 	}
 
 	if (!IS_ERR(sta)) {
-		u16 queue = __ieee80211_select_queue(sdata, sta, skb);
+		u16 queue = ieee80211_select_queue(sdata, sta, skb);
 
 		skb_set_queue_mapping(skb, queue);
-		skb_get_hash(skb);
 
 		/*
 		 * for MLO STA, the SA should be the AP MLD address, but
@@ -5957,6 +5942,7 @@ int ieee80211_tx_control_port(struct wiphy *wiphy, struct net_device *dev,
 	}
 	rcu_read_unlock();
 
+start_xmit:
 	/* mutex lock is only needed for incrementing the cookie counter */
 	mutex_lock(&local->mtx);
 

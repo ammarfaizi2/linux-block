@@ -228,6 +228,37 @@ nfp_net_get_drvinfo(struct net_device *netdev, struct ethtool_drvinfo *drvinfo)
 	nfp_get_drvinfo(nn->app, nn->pdev, vnic_version, drvinfo);
 }
 
+static int
+nfp_net_nway_reset(struct net_device *netdev)
+{
+	struct nfp_eth_table_port *eth_port;
+	struct nfp_port *port;
+	int err;
+
+	port = nfp_port_from_netdev(netdev);
+	eth_port = nfp_port_get_eth_port(port);
+	if (!eth_port)
+		return -EOPNOTSUPP;
+
+	if (!netif_running(netdev))
+		return 0;
+
+	err = nfp_eth_set_configured(port->app->cpp, eth_port->index, false);
+	if (err) {
+		netdev_info(netdev, "Link down failed: %d\n", err);
+		return err;
+	}
+
+	err = nfp_eth_set_configured(port->app->cpp, eth_port->index, true);
+	if (err) {
+		netdev_info(netdev, "Link up failed: %d\n", err);
+		return err;
+	}
+
+	netdev_info(netdev, "Link reset succeeded\n");
+	return 0;
+}
+
 static void
 nfp_app_get_drvinfo(struct net_device *netdev, struct ethtool_drvinfo *drvinfo)
 {
@@ -290,8 +321,13 @@ nfp_net_get_link_ksettings(struct net_device *netdev,
 	if (eth_port) {
 		ethtool_link_ksettings_add_link_mode(cmd, supported, Pause);
 		ethtool_link_ksettings_add_link_mode(cmd, advertising, Pause);
-		cmd->base.autoneg = eth_port->aneg != NFP_ANEG_DISABLED ?
-			AUTONEG_ENABLE : AUTONEG_DISABLE;
+		if (eth_port->supp_aneg) {
+			ethtool_link_ksettings_add_link_mode(cmd, supported, Autoneg);
+			if (eth_port->aneg == NFP_ANEG_AUTO) {
+				ethtool_link_ksettings_add_link_mode(cmd, advertising, Autoneg);
+				cmd->base.autoneg = AUTONEG_ENABLE;
+			}
+		}
 		nfp_net_set_fec_link_mode(eth_port, cmd);
 	}
 
@@ -327,6 +363,7 @@ static int
 nfp_net_set_link_ksettings(struct net_device *netdev,
 			   const struct ethtool_link_ksettings *cmd)
 {
+	bool req_aneg = (cmd->base.autoneg == AUTONEG_ENABLE);
 	struct nfp_eth_table_port *eth_port;
 	struct nfp_port *port;
 	struct nfp_nsp *nsp;
@@ -346,12 +383,24 @@ nfp_net_set_link_ksettings(struct net_device *netdev,
 	if (IS_ERR(nsp))
 		return PTR_ERR(nsp);
 
-	err = __nfp_eth_set_aneg(nsp, cmd->base.autoneg == AUTONEG_ENABLE ?
-				 NFP_ANEG_AUTO : NFP_ANEG_DISABLED);
+	if (req_aneg && !eth_port->supp_aneg) {
+		netdev_warn(netdev, "Autoneg is not supported.\n");
+		err = -EOPNOTSUPP;
+		goto err_bad_set;
+	}
+
+	err = __nfp_eth_set_aneg(nsp, req_aneg ? NFP_ANEG_AUTO : NFP_ANEG_DISABLED);
 	if (err)
 		goto err_bad_set;
+
 	if (cmd->base.speed != SPEED_UNKNOWN) {
 		u32 speed = cmd->base.speed / eth_port->lanes;
+
+		if (req_aneg) {
+			netdev_err(netdev, "Speed changing is not allowed when working on autoneg mode.\n");
+			err = -EINVAL;
+			goto err_bad_set;
+		}
 
 		err = __nfp_eth_set_speed(nsp, speed);
 		if (err)
@@ -637,7 +686,7 @@ static u64 *nfp_vnic_get_sw_stats(struct net_device *netdev, u64 *data)
 		unsigned int start;
 
 		do {
-			start = u64_stats_fetch_begin_irq(&nn->r_vecs[i].rx_sync);
+			start = u64_stats_fetch_begin(&nn->r_vecs[i].rx_sync);
 			data[0] = nn->r_vecs[i].rx_pkts;
 			tmp[0] = nn->r_vecs[i].hw_csum_rx_ok;
 			tmp[1] = nn->r_vecs[i].hw_csum_rx_inner_ok;
@@ -645,10 +694,10 @@ static u64 *nfp_vnic_get_sw_stats(struct net_device *netdev, u64 *data)
 			tmp[3] = nn->r_vecs[i].hw_csum_rx_error;
 			tmp[4] = nn->r_vecs[i].rx_replace_buf_alloc_fail;
 			tmp[5] = nn->r_vecs[i].hw_tls_rx;
-		} while (u64_stats_fetch_retry_irq(&nn->r_vecs[i].rx_sync, start));
+		} while (u64_stats_fetch_retry(&nn->r_vecs[i].rx_sync, start));
 
 		do {
-			start = u64_stats_fetch_begin_irq(&nn->r_vecs[i].tx_sync);
+			start = u64_stats_fetch_begin(&nn->r_vecs[i].tx_sync);
 			data[1] = nn->r_vecs[i].tx_pkts;
 			data[2] = nn->r_vecs[i].tx_busy;
 			tmp[6] = nn->r_vecs[i].hw_csum_tx;
@@ -658,7 +707,7 @@ static u64 *nfp_vnic_get_sw_stats(struct net_device *netdev, u64 *data)
 			tmp[10] = nn->r_vecs[i].hw_tls_tx;
 			tmp[11] = nn->r_vecs[i].tls_tx_fallback;
 			tmp[12] = nn->r_vecs[i].tls_tx_no_fallback;
-		} while (u64_stats_fetch_retry_irq(&nn->r_vecs[i].tx_sync, start));
+		} while (u64_stats_fetch_retry(&nn->r_vecs[i].tx_sync, start));
 
 		data += NN_RVEC_PER_Q_STATS;
 
@@ -996,7 +1045,7 @@ nfp_port_get_fecparam(struct net_device *netdev,
 		return 0;
 
 	param->fec = nfp_port_fec_nsp_to_ethtool(eth_port->fec_modes_supported);
-	param->active_fec = nfp_port_fec_nsp_to_ethtool(eth_port->fec);
+	param->active_fec = nfp_port_fec_nsp_to_ethtool(BIT(eth_port->act_fec));
 
 	return 0;
 }
@@ -1823,6 +1872,7 @@ static const struct ethtool_ops nfp_net_ethtool_ops = {
 				     ETHTOOL_COALESCE_MAX_FRAMES |
 				     ETHTOOL_COALESCE_USE_ADAPTIVE,
 	.get_drvinfo		= nfp_net_get_drvinfo,
+	.nway_reset             = nfp_net_nway_reset,
 	.get_link		= ethtool_op_get_link,
 	.get_ringparam		= nfp_net_get_ringparam,
 	.set_ringparam		= nfp_net_set_ringparam,
@@ -1860,6 +1910,7 @@ static const struct ethtool_ops nfp_net_ethtool_ops = {
 
 const struct ethtool_ops nfp_port_ethtool_ops = {
 	.get_drvinfo		= nfp_app_get_drvinfo,
+	.nway_reset             = nfp_net_nway_reset,
 	.get_link		= ethtool_op_get_link,
 	.get_strings		= nfp_port_get_strings,
 	.get_ethtool_stats	= nfp_port_get_stats,

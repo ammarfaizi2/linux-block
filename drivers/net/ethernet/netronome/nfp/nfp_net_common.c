@@ -771,9 +771,7 @@ nfp_net_napi_add(struct nfp_net_dp *dp, struct nfp_net_r_vector *r_vec, int idx)
 {
 	if (dp->netdev)
 		netif_napi_add(dp->netdev, &r_vec->napi,
-			       nfp_net_has_xsk_pool_slow(dp, idx) ?
-			       dp->ops->xsk_poll : dp->ops->poll,
-			       NAPI_POLL_WEIGHT);
+			       nfp_net_has_xsk_pool_slow(dp, idx) ? dp->ops->xsk_poll : dp->ops->poll);
 	else
 		tasklet_enable(&r_vec->tasklet);
 }
@@ -1633,21 +1631,21 @@ static void nfp_net_stat64(struct net_device *netdev,
 		unsigned int start;
 
 		do {
-			start = u64_stats_fetch_begin_irq(&r_vec->rx_sync);
+			start = u64_stats_fetch_begin(&r_vec->rx_sync);
 			data[0] = r_vec->rx_pkts;
 			data[1] = r_vec->rx_bytes;
 			data[2] = r_vec->rx_drops;
-		} while (u64_stats_fetch_retry_irq(&r_vec->rx_sync, start));
+		} while (u64_stats_fetch_retry(&r_vec->rx_sync, start));
 		stats->rx_packets += data[0];
 		stats->rx_bytes += data[1];
 		stats->rx_dropped += data[2];
 
 		do {
-			start = u64_stats_fetch_begin_irq(&r_vec->tx_sync);
+			start = u64_stats_fetch_begin(&r_vec->tx_sync);
 			data[0] = r_vec->tx_pkts;
 			data[1] = r_vec->tx_bytes;
 			data[2] = r_vec->tx_errors;
-		} while (u64_stats_fetch_retry_irq(&r_vec->tx_sync, start));
+		} while (u64_stats_fetch_retry(&r_vec->tx_sync, start));
 		stats->tx_packets += data[0];
 		stats->tx_bytes += data[1];
 		stats->tx_errors += data[2];

@@ -1255,6 +1255,9 @@ static int rtw89_core_rx_parse_phy_sts(struct rtw89_dev *rtwdev,
 	if (phy_ppdu->ie < RTW89_CCK_PKT)
 		return -EINVAL;
 
+	if (!phy_ppdu->to_self)
+		return 0;
+
 	pos = (u8 *)phy_ppdu->buf + PHY_STS_HDR_LEN;
 	end = (u8 *)phy_ppdu->buf + phy_ppdu->len;
 	while (pos < end) {
@@ -1805,7 +1808,7 @@ void rtw89_core_napi_init(struct rtw89_dev *rtwdev)
 {
 	init_dummy_netdev(&rtwdev->netdev);
 	netif_napi_add(&rtwdev->netdev, &rtwdev->napi,
-		       rtwdev->hci.ops->napi_poll, NAPI_POLL_WEIGHT);
+		       rtwdev->hci.ops->napi_poll);
 }
 EXPORT_SYMBOL(rtw89_core_napi_init);
 
@@ -2949,7 +2952,9 @@ int rtw89_core_start(struct rtw89_dev *rtwdev)
 	/* efuse process */
 
 	/* pre-config BB/RF, BB reset/RFC reset */
-	rtw89_chip_disable_bb_rf(rtwdev);
+	ret = rtw89_chip_disable_bb_rf(rtwdev);
+	if (ret)
+		return ret;
 	ret = rtw89_chip_enable_bb_rf(rtwdev);
 	if (ret)
 		return ret;

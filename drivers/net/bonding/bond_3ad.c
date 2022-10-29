@@ -75,6 +75,7 @@ enum ad_link_speed_type {
 	AD_LINK_SPEED_100000MBPS,
 	AD_LINK_SPEED_200000MBPS,
 	AD_LINK_SPEED_400000MBPS,
+	AD_LINK_SPEED_800000MBPS,
 };
 
 /* compare MAC addresses */
@@ -88,8 +89,9 @@ static const u8 null_mac_addr[ETH_ALEN + 2] __long_aligned = {
 static const u16 ad_ticks_per_sec = 1000 / AD_TIMER_INTERVAL;
 static const int ad_delta_in_ticks = (AD_TIMER_INTERVAL * HZ) / 1000;
 
-static const u8 lacpdu_mcast_addr[ETH_ALEN + 2] __long_aligned =
-	MULTICAST_LACPDU_ADDR;
+const u8 lacpdu_mcast_addr[ETH_ALEN + 2] __long_aligned = {
+	0x01, 0x80, 0xC2, 0x00, 0x00, 0x02
+};
 
 /* ================= main 802.3ad protocol functions ================== */
 static int ad_lacpdu_send(struct port *port);
@@ -250,6 +252,7 @@ static inline int __check_agg_selection_timer(struct port *port)
  *     %AD_LINK_SPEED_100000MBPS
  *     %AD_LINK_SPEED_200000MBPS
  *     %AD_LINK_SPEED_400000MBPS
+ *     %AD_LINK_SPEED_800000MBPS
  */
 static u16 __get_link_speed(struct port *port)
 {
@@ -323,6 +326,10 @@ static u16 __get_link_speed(struct port *port)
 
 		case SPEED_400000:
 			speed = AD_LINK_SPEED_400000MBPS;
+			break;
+
+		case SPEED_800000:
+			speed = AD_LINK_SPEED_800000MBPS;
 			break;
 
 		default:
@@ -751,6 +758,9 @@ static u32 __get_agg_bandwidth(struct aggregator *aggregator)
 			break;
 		case AD_LINK_SPEED_400000MBPS:
 			bandwidth = nports * 400000;
+			break;
+		case AD_LINK_SPEED_800000MBPS:
+			bandwidth = nports * 800000;
 			break;
 		default:
 			bandwidth = 0; /* to silence the compiler */

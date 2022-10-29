@@ -1916,16 +1916,16 @@ netcp_get_stats(struct net_device *ndev, struct rtnl_link_stats64 *stats)
 	unsigned int start;
 
 	do {
-		start = u64_stats_fetch_begin_irq(&p->syncp_rx);
+		start = u64_stats_fetch_begin(&p->syncp_rx);
 		rxpackets       = p->rx_packets;
 		rxbytes         = p->rx_bytes;
-	} while (u64_stats_fetch_retry_irq(&p->syncp_rx, start));
+	} while (u64_stats_fetch_retry(&p->syncp_rx, start));
 
 	do {
-		start = u64_stats_fetch_begin_irq(&p->syncp_tx);
+		start = u64_stats_fetch_begin(&p->syncp_tx);
 		txpackets       = p->tx_packets;
 		txbytes         = p->tx_bytes;
-	} while (u64_stats_fetch_retry_irq(&p->syncp_tx, start));
+	} while (u64_stats_fetch_retry(&p->syncp_tx, start));
 
 	stats->rx_packets = rxpackets;
 	stats->rx_bytes = rxbytes;
@@ -2095,7 +2095,7 @@ static int netcp_create_interface(struct netcp_device *netcp_device,
 	}
 
 	/* NAPI register */
-	netif_napi_add(ndev, &netcp->rx_napi, netcp_rx_poll, NAPI_POLL_WEIGHT);
+	netif_napi_add(ndev, &netcp->rx_napi, netcp_rx_poll);
 	netif_napi_add_tx(ndev, &netcp->tx_napi, netcp_tx_poll);
 
 	/* Register the network device */

@@ -812,6 +812,17 @@ static int netlink_release(struct socket *sock)
 	}
 
 	sock_prot_inuse_add(sock_net(sk), &netlink_proto, -1);
+
+	/* Because struct net might disappear soon, do not keep a pointer. */
+	if (!sk->sk_net_refcnt && sock_net(sk) != &init_net) {
+		__netns_tracker_free(sock_net(sk), &sk->ns_tracker, false);
+		/* Because of deferred_put_nlk_sk and use of work queue,
+		 * it is possible  netns will be freed before this socket.
+		 */
+		sock_net_set(sk, &init_net);
+		__netns_tracker_alloc(&init_net, &sk->ns_tracker,
+				      false, GFP_KERNEL);
+	}
 	call_rcu(&nlk->rcu, deferred_put_nlk_sk);
 	return 0;
 }
@@ -2494,11 +2505,13 @@ void netlink_ack(struct sk_buff *in_skb, struct nlmsghdr *nlh, int err,
 		return;
 	}
 
-	rep = __nlmsg_put(skb, NETLINK_CB(in_skb).portid, nlh->nlmsg_seq,
-			  NLMSG_ERROR, payload, flags);
+	rep = nlmsg_put(skb, NETLINK_CB(in_skb).portid, nlh->nlmsg_seq,
+			NLMSG_ERROR, payload, flags);
 	errmsg = nlmsg_data(rep);
 	errmsg->error = err;
-	memcpy(&errmsg->msg, nlh, payload > sizeof(*errmsg) ? nlh->nlmsg_len : sizeof(*nlh));
+	unsafe_memcpy(&errmsg->msg, nlh, payload > sizeof(*errmsg)
+					 ? nlh->nlmsg_len : sizeof(*nlh),
+		      /* Bounds checked by the skb layer. */);
 
 	if (tlvlen)
 		netlink_ack_tlv_fill(in_skb, skb, nlh, err, extack);

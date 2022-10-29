@@ -3177,7 +3177,7 @@ static int hclgevf_get_status(struct hnae3_handle *handle)
 
 static void hclgevf_get_ksettings_an_result(struct hnae3_handle *handle,
 					    u8 *auto_neg, u32 *speed,
-					    u8 *duplex)
+					    u8 *duplex, u32 *lane_num)
 {
 	struct hclgevf_dev *hdev = hclgevf_ae_get_hdev(handle);
 
@@ -3429,7 +3429,7 @@ static struct hnae3_ae_algo ae_algovf = {
 	.pdev_id_table = ae_algovf_pci_tbl,
 };
 
-static int hclgevf_init(void)
+static int __init hclgevf_init(void)
 {
 	pr_info("%s is initializing\n", HCLGEVF_NAME);
 
@@ -3444,7 +3444,7 @@ static int hclgevf_init(void)
 	return 0;
 }
 
-static void hclgevf_exit(void)
+static void __exit hclgevf_exit(void)
 {
 	hnae3_unregister_ae_algo(&ae_algovf);
 	destroy_workqueue(hclgevf_wq);

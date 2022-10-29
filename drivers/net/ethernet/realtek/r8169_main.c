@@ -100,12 +100,9 @@ static const struct {
 	[RTL_GIGA_MAC_VER_07] = {"RTL8102e"				},
 	[RTL_GIGA_MAC_VER_08] = {"RTL8102e"				},
 	[RTL_GIGA_MAC_VER_09] = {"RTL8102e/RTL8103e"			},
-	[RTL_GIGA_MAC_VER_10] = {"RTL8101e"				},
+	[RTL_GIGA_MAC_VER_10] = {"RTL8101e/RTL8100e"			},
 	[RTL_GIGA_MAC_VER_11] = {"RTL8168b/8111b"			},
-	[RTL_GIGA_MAC_VER_12] = {"RTL8168b/8111b"			},
-	[RTL_GIGA_MAC_VER_13] = {"RTL8101e/RTL8100e"			},
 	[RTL_GIGA_MAC_VER_14] = {"RTL8401"				},
-	[RTL_GIGA_MAC_VER_16] = {"RTL8101e"				},
 	[RTL_GIGA_MAC_VER_17] = {"RTL8168b/8111b"			},
 	[RTL_GIGA_MAC_VER_18] = {"RTL8168cp/8111cp"			},
 	[RTL_GIGA_MAC_VER_19] = {"RTL8168c/8111c"			},
@@ -1999,7 +1996,10 @@ static enum mac_version rtl8169_get_mac_version(u16 xid, bool gmii)
 
 		/* 8168F family. */
 		{ 0x7c8, 0x488,	RTL_GIGA_MAC_VER_38 },
-		{ 0x7cf, 0x481,	RTL_GIGA_MAC_VER_36 },
+		/* It seems this chip version never made it to
+		 * the wild. Let's disable detection.
+		 * { 0x7cf, 0x481,	RTL_GIGA_MAC_VER_36 },
+		 */
 		{ 0x7cf, 0x480,	RTL_GIGA_MAC_VER_35 },
 
 		/* 8168E family. */
@@ -2029,7 +2029,6 @@ static enum mac_version rtl8169_get_mac_version(u16 xid, bool gmii)
 		{ 0x7c8, 0x3c0,	RTL_GIGA_MAC_VER_22 },
 
 		/* 8168B family. */
-		{ 0x7cf, 0x380,	RTL_GIGA_MAC_VER_12 },
 		{ 0x7c8, 0x380,	RTL_GIGA_MAC_VER_17 },
 		{ 0x7c8, 0x300,	RTL_GIGA_MAC_VER_11 },
 
@@ -2042,19 +2041,10 @@ static enum mac_version rtl8169_get_mac_version(u16 xid, bool gmii)
 		{ 0x7cf, 0x249,	RTL_GIGA_MAC_VER_08 },
 		{ 0x7cf, 0x348,	RTL_GIGA_MAC_VER_07 },
 		{ 0x7cf, 0x248,	RTL_GIGA_MAC_VER_07 },
-		{ 0x7cf, 0x340,	RTL_GIGA_MAC_VER_13 },
 		{ 0x7cf, 0x240,	RTL_GIGA_MAC_VER_14 },
-		{ 0x7cf, 0x343,	RTL_GIGA_MAC_VER_10 },
-		{ 0x7cf, 0x342,	RTL_GIGA_MAC_VER_16 },
 		{ 0x7c8, 0x348,	RTL_GIGA_MAC_VER_09 },
 		{ 0x7c8, 0x248,	RTL_GIGA_MAC_VER_09 },
-		{ 0x7c8, 0x340,	RTL_GIGA_MAC_VER_16 },
-		/* FIXME: where did these entries come from ? -- FR
-		 * Not even r8101 vendor driver knows these id's,
-		 * so let's disable detection for now. -- HK
-		 * { 0xfc8, 0x388,	RTL_GIGA_MAC_VER_13 },
-		 * { 0xfc8, 0x308,	RTL_GIGA_MAC_VER_13 },
-		 */
+		{ 0x7c8, 0x340,	RTL_GIGA_MAC_VER_10 },
 
 		/* 8110 family. */
 		{ 0xfc8, 0x980,	RTL_GIGA_MAC_VER_06 },
@@ -2324,7 +2314,6 @@ static void rtl_jumbo_config(struct rtl8169_private *tp)
 
 	rtl_unlock_config_regs(tp);
 	switch (tp->mac_version) {
-	case RTL_GIGA_MAC_VER_12:
 	case RTL_GIGA_MAC_VER_17:
 		if (jumbo) {
 			readrq = 512;
@@ -2452,6 +2441,11 @@ static void rtl_wait_txrx_fifo_empty(struct rtl8169_private *tp)
 	default:
 		break;
 	}
+}
+
+static void rtl_disable_rxdvgate(struct rtl8169_private *tp)
+{
+	RTL_W32(tp, MISC, RTL_R32(tp, MISC) & ~RXDV_GATED_EN);
 }
 
 static void rtl_enable_rxdvgate(struct rtl8169_private *tp)
@@ -2971,7 +2965,7 @@ static void rtl_hw_start_8168g(struct rtl8169_private *tp)
 	rtl_reset_packet_filter(tp);
 	rtl_eri_write(tp, 0x2f8, ERIAR_MASK_0011, 0x1d8f);
 
-	RTL_W32(tp, MISC, RTL_R32(tp, MISC) & ~RXDV_GATED_EN);
+	rtl_disable_rxdvgate(tp);
 
 	rtl_eri_write(tp, 0xc0, ERIAR_MASK_0011, 0x0000);
 	rtl_eri_write(tp, 0xb8, ERIAR_MASK_0011, 0x0000);
@@ -3209,7 +3203,7 @@ static void rtl_hw_start_8168h_1(struct rtl8169_private *tp)
 
 	rtl_eri_write(tp, 0x5f0, ERIAR_MASK_0011, 0x4f87);
 
-	RTL_W32(tp, MISC, RTL_R32(tp, MISC) & ~RXDV_GATED_EN);
+	rtl_disable_rxdvgate(tp);
 
 	rtl_eri_write(tp, 0xc0, ERIAR_MASK_0011, 0x0000);
 	rtl_eri_write(tp, 0xb8, ERIAR_MASK_0011, 0x0000);
@@ -3260,7 +3254,7 @@ static void rtl_hw_start_8168ep(struct rtl8169_private *tp)
 
 	rtl_eri_write(tp, 0x5f0, ERIAR_MASK_0011, 0x4f87);
 
-	RTL_W32(tp, MISC, RTL_R32(tp, MISC) & ~RXDV_GATED_EN);
+	rtl_disable_rxdvgate(tp);
 
 	rtl_eri_write(tp, 0xc0, ERIAR_MASK_0011, 0x0000);
 	rtl_eri_write(tp, 0xb8, ERIAR_MASK_0011, 0x0000);
@@ -3324,7 +3318,7 @@ static void rtl_hw_start_8117(struct rtl8169_private *tp)
 
 	rtl_eri_write(tp, 0x5f0, ERIAR_MASK_0011, 0x4f87);
 
-	RTL_W32(tp, MISC, RTL_R32(tp, MISC) & ~RXDV_GATED_EN);
+	rtl_disable_rxdvgate(tp);
 
 	rtl_eri_write(tp, 0xc0, ERIAR_MASK_0011, 0x0000);
 	rtl_eri_write(tp, 0xb8, ERIAR_MASK_0011, 0x0000);
@@ -3568,8 +3562,7 @@ static void rtl_hw_start_8125_common(struct rtl8169_private *tp)
 	else
 		rtl8125a_config_eee_mac(tp);
 
-	RTL_W32(tp, MISC, RTL_R32(tp, MISC) & ~RXDV_GATED_EN);
-	udelay(10);
+	rtl_disable_rxdvgate(tp);
 }
 
 static void rtl_hw_start_8125a_2(struct rtl8169_private *tp)
@@ -3628,10 +3621,7 @@ static void rtl_hw_config(struct rtl8169_private *tp)
 		[RTL_GIGA_MAC_VER_09] = rtl_hw_start_8102e_2,
 		[RTL_GIGA_MAC_VER_10] = NULL,
 		[RTL_GIGA_MAC_VER_11] = rtl_hw_start_8168b,
-		[RTL_GIGA_MAC_VER_12] = rtl_hw_start_8168b,
-		[RTL_GIGA_MAC_VER_13] = NULL,
 		[RTL_GIGA_MAC_VER_14] = rtl_hw_start_8401,
-		[RTL_GIGA_MAC_VER_16] = NULL,
 		[RTL_GIGA_MAC_VER_17] = rtl_hw_start_8168b,
 		[RTL_GIGA_MAC_VER_18] = rtl_hw_start_8168cp_1,
 		[RTL_GIGA_MAC_VER_19] = rtl_hw_start_8168c_1,
@@ -4577,8 +4567,7 @@ static void r8169_phylink_handler(struct net_device *ndev)
 		pm_runtime_idle(&tp->pci_dev->dev);
 	}
 
-	if (net_ratelimit())
-		phy_print_status(tp->phydev);
+	phy_print_status(tp->phydev);
 }
 
 static int r8169_phy_connect(struct rtl8169_private *tp)
@@ -4854,23 +4843,6 @@ static const struct dev_pm_ops rtl8169_pm_ops = {
 		       rtl8169_runtime_idle)
 };
 
-static void rtl_wol_shutdown_quirk(struct rtl8169_private *tp)
-{
-	/* WoL fails with 8168b when the receiver is disabled. */
-	switch (tp->mac_version) {
-	case RTL_GIGA_MAC_VER_11:
-	case RTL_GIGA_MAC_VER_12:
-	case RTL_GIGA_MAC_VER_17:
-		pci_clear_master(tp->pci_dev);
-
-		RTL_W8(tp, ChipCmd, CmdRxEnb);
-		rtl_pci_commit(tp);
-		break;
-	default:
-		break;
-	}
-}
-
 static void rtl_shutdown(struct pci_dev *pdev)
 {
 	struct rtl8169_private *tp = pci_get_drvdata(pdev);
@@ -4884,9 +4856,6 @@ static void rtl_shutdown(struct pci_dev *pdev)
 
 	if (system_state == SYSTEM_POWER_OFF &&
 	    tp->dash_type == RTL_DASH_NONE) {
-		if (tp->saved_wolopts)
-			rtl_wol_shutdown_quirk(tp);
-
 		pci_wake_from_d3(pdev, tp->saved_wolopts);
 		pci_set_power_state(pdev, PCI_D3hot);
 	}
@@ -5120,7 +5089,6 @@ static int rtl_jumbo_max(struct rtl8169_private *tp)
 		return JUMBO_7K;
 	/* RTL8168b */
 	case RTL_GIGA_MAC_VER_11:
-	case RTL_GIGA_MAC_VER_12:
 	case RTL_GIGA_MAC_VER_17:
 		return JUMBO_4K;
 	/* RTL8168c */
@@ -5129,37 +5097,6 @@ static int rtl_jumbo_max(struct rtl8169_private *tp)
 	default:
 		return JUMBO_9K;
 	}
-}
-
-static void rtl_disable_clk(void *data)
-{
-	clk_disable_unprepare(data);
-}
-
-static int rtl_get_ether_clk(struct rtl8169_private *tp)
-{
-	struct device *d = tp_to_dev(tp);
-	struct clk *clk;
-	int rc;
-
-	clk = devm_clk_get(d, "ether_clk");
-	if (IS_ERR(clk)) {
-		rc = PTR_ERR(clk);
-		if (rc == -ENOENT)
-			/* clk-core allows NULL (for suspend / resume) */
-			rc = 0;
-		else
-			dev_err_probe(d, rc, "failed to get clk\n");
-	} else {
-		tp->clk = clk;
-		rc = clk_prepare_enable(clk);
-		if (rc)
-			dev_err(d, "failed to enable clk: %d\n", rc);
-		else
-			rc = devm_add_action_or_reset(d, rtl_disable_clk, clk);
-	}
-
-	return rc;
 }
 
 static void rtl_init_mac_address(struct rtl8169_private *tp)
@@ -5225,9 +5162,9 @@ static int rtl_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 		return -ENOMEM;
 
 	/* Get the *optional* external "ether_clk" used on some boards */
-	rc = rtl_get_ether_clk(tp);
-	if (rc)
-		return rc;
+	tp->clk = devm_clk_get_optional_enabled(&pdev->dev, "ether_clk");
+	if (IS_ERR(tp->clk))
+		return dev_err_probe(&pdev->dev, PTR_ERR(tp->clk), "failed to get ether_clk\n");
 
 	/* enable device (incl. PCI PM wakeup and hotplug setup) */
 	rc = pcim_enable_device(pdev);
@@ -5243,12 +5180,6 @@ static int rtl_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 	region = ffs(pci_select_bars(pdev, IORESOURCE_MEM)) - 1;
 	if (region < 0) {
 		dev_err(&pdev->dev, "no MMIO resource found\n");
-		return -ENODEV;
-	}
-
-	/* check for weird/broken PCI region reporting */
-	if (pci_resource_len(pdev, region) < R8169_REGS_SIZE) {
-		dev_err(&pdev->dev, "Invalid PCI region size(s), aborting\n");
 		return -ENODEV;
 	}
 
@@ -5313,7 +5244,7 @@ static int rtl_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 
 	dev->ethtool_ops = &rtl8169_ethtool_ops;
 
-	netif_napi_add(dev, &tp->napi, rtl8169_poll, NAPI_POLL_WEIGHT);
+	netif_napi_add(dev, &tp->napi, rtl8169_poll);
 
 	dev->hw_features = NETIF_F_IP_CSUM | NETIF_F_RXCSUM |
 			   NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_HW_VLAN_CTAG_RX;

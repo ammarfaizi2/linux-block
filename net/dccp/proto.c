@@ -171,12 +171,18 @@ const char *dccp_packet_name(const int type)
 
 EXPORT_SYMBOL_GPL(dccp_packet_name);
 
-static void dccp_sk_destruct(struct sock *sk)
+void dccp_destruct_common(struct sock *sk)
 {
 	struct dccp_sock *dp = dccp_sk(sk);
 
 	ccid_hc_tx_delete(dp->dccps_hc_tx_ccid, sk);
 	dp->dccps_hc_tx_ccid = NULL;
+}
+EXPORT_SYMBOL_GPL(dccp_destruct_common);
+
+static void dccp_sk_destruct(struct sock *sk)
+{
+	dccp_destruct_common(sk);
 	inet_sock_destruct(sk);
 }
 
@@ -1196,6 +1202,8 @@ static int __init dccp_init(void)
 		spin_lock_init(&dccp_hashinfo.bhash2[i].lock);
 		INIT_HLIST_HEAD(&dccp_hashinfo.bhash2[i].chain);
 	}
+
+	dccp_hashinfo.pernet = false;
 
 	rc = dccp_mib_init();
 	if (rc)

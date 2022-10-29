@@ -1288,9 +1288,8 @@ static int cpsw_probe_dt(struct cpsw_common *cpsw)
 		if (of_phy_is_fixed_link(port_np)) {
 			ret = of_phy_register_fixed_link(port_np);
 			if (ret) {
-				if (ret != -EPROBE_DEFER)
-					dev_err(dev, "%pOF failed to register fixed-link phy: %d\n",
-						port_np, ret);
+				dev_err_probe(dev, ret, "%pOF failed to register fixed-link phy\n",
+					      port_np);
 				goto err_node_put;
 			}
 			slave_data->phy_node = of_node_get(port_np);
@@ -1417,9 +1416,7 @@ static int cpsw_create_ports(struct cpsw_common *cpsw)
 			 * accordingly.
 			 */
 			netif_napi_add(ndev, &cpsw->napi_rx,
-				       cpsw->quirk_irq ?
-				       cpsw_rx_poll : cpsw_rx_mq_poll,
-				       NAPI_POLL_WEIGHT);
+				       cpsw->quirk_irq ? cpsw_rx_poll : cpsw_rx_mq_poll);
 			netif_napi_add_tx(ndev, &cpsw->napi_tx,
 					  cpsw->quirk_irq ?
 					  cpsw_tx_poll : cpsw_tx_mq_poll);

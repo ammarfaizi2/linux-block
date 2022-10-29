@@ -36,6 +36,17 @@ void prestera_queue_work(struct work_struct *work)
 	queue_work(prestera_owq, work);
 }
 
+void prestera_queue_delayed_work(struct delayed_work *work, unsigned long delay)
+{
+	queue_delayed_work(prestera_wq, work, delay);
+}
+
+void prestera_queue_drain(void)
+{
+	drain_workqueue(prestera_wq);
+	drain_workqueue(prestera_owq);
+}
+
 int prestera_port_learning_set(struct prestera_port *port, bool learn)
 {
 	return prestera_hw_port_learning_set(port, learn);
@@ -373,6 +384,7 @@ static int prestera_port_sfp_bind(struct prestera_port *port)
 	if (!sw->np)
 		return 0;
 
+	of_node_get(sw->np);
 	ports = of_find_node_by_name(sw->np, "ports");
 
 	for_each_child_of_node(ports, node) {
@@ -422,6 +434,7 @@ static int prestera_port_sfp_bind(struct prestera_port *port)
 	}
 
 out:
+	of_node_put(node);
 	of_node_put(ports);
 	return err;
 }

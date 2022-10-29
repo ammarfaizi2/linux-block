@@ -245,6 +245,8 @@ enum rtw89_mac_dbg_port_sel {
 #define	BCN_IE_CAM1_BASE_ADDR		0x188A0000
 #define	TXD_FIFO_0_BASE_ADDR		0x18856200
 #define	TXD_FIFO_1_BASE_ADDR		0x188A1080
+#define	TXD_FIFO_0_BASE_ADDR_V1		0x18856400 /* for 8852C */
+#define	TXD_FIFO_1_BASE_ADDR_V1		0x188A1080 /* for 8852C */
 #define	TXDATA_FIFO_0_BASE_ADDR		0x18856000
 #define	TXDATA_FIFO_1_BASE_ADDR		0x188A1000
 #define	CPU_LOCAL_BASE_ADDR		0x18003000
@@ -271,6 +273,8 @@ enum rtw89_mac_mem_sel {
 	RTW89_MAC_MEM_TXDATA_FIFO_1,
 	RTW89_MAC_MEM_CPU_LOCAL,
 	RTW89_MAC_MEM_BSSID_CAM,
+	RTW89_MAC_MEM_TXD_FIFO_0_V1,
+	RTW89_MAC_MEM_TXD_FIFO_1_V1,
 
 	/* keep last */
 	RTW89_MAC_MEM_NUM,
@@ -691,23 +695,30 @@ struct rtw89_mac_size_set {
 	const struct rtw89_hfc_prec_cfg hfc_preccfg_pcie;
 	const struct rtw89_dle_size wde_size0;
 	const struct rtw89_dle_size wde_size4;
+	const struct rtw89_dle_size wde_size6;
+	const struct rtw89_dle_size wde_size9;
 	const struct rtw89_dle_size wde_size18;
 	const struct rtw89_dle_size wde_size19;
 	const struct rtw89_dle_size ple_size0;
 	const struct rtw89_dle_size ple_size4;
+	const struct rtw89_dle_size ple_size6;
+	const struct rtw89_dle_size ple_size8;
 	const struct rtw89_dle_size ple_size18;
 	const struct rtw89_dle_size ple_size19;
 	const struct rtw89_wde_quota wde_qt0;
 	const struct rtw89_wde_quota wde_qt4;
+	const struct rtw89_wde_quota wde_qt6;
 	const struct rtw89_wde_quota wde_qt17;
 	const struct rtw89_wde_quota wde_qt18;
 	const struct rtw89_ple_quota ple_qt4;
 	const struct rtw89_ple_quota ple_qt5;
 	const struct rtw89_ple_quota ple_qt13;
+	const struct rtw89_ple_quota ple_qt18;
 	const struct rtw89_ple_quota ple_qt44;
 	const struct rtw89_ple_quota ple_qt45;
 	const struct rtw89_ple_quota ple_qt46;
 	const struct rtw89_ple_quota ple_qt47;
+	const struct rtw89_ple_quota ple_qt58;
 };
 
 extern const struct rtw89_mac_size_set rtw89_mac_size;
@@ -805,7 +816,7 @@ void rtw89_mac_set_he_obss_narrow_bw_ru(struct rtw89_dev *rtwdev,
 					struct ieee80211_vif *vif);
 int rtw89_mac_remove_vif(struct rtw89_dev *rtwdev, struct rtw89_vif *vif);
 int rtw89_mac_enable_bb_rf(struct rtw89_dev *rtwdev);
-void rtw89_mac_disable_bb_rf(struct rtw89_dev *rtwdev);
+int rtw89_mac_disable_bb_rf(struct rtw89_dev *rtwdev);
 
 static inline int rtw89_chip_enable_bb_rf(struct rtw89_dev *rtwdev)
 {
@@ -814,11 +825,11 @@ static inline int rtw89_chip_enable_bb_rf(struct rtw89_dev *rtwdev)
 	return chip->ops->enable_bb_rf(rtwdev);
 }
 
-static inline void rtw89_chip_disable_bb_rf(struct rtw89_dev *rtwdev)
+static inline int rtw89_chip_disable_bb_rf(struct rtw89_dev *rtwdev)
 {
 	const struct rtw89_chip_info *chip = rtwdev->chip;
 
-	chip->ops->disable_bb_rf(rtwdev);
+	return chip->ops->disable_bb_rf(rtwdev);
 }
 
 u32 rtw89_mac_get_err_status(struct rtw89_dev *rtwdev);
@@ -988,8 +999,10 @@ enum rtw89_mac_xtal_si_offset {
 #define XTAL_SI_HIGH_ADDR_MASK	GENMASK(2, 0)
 	XTAL_SI_READ_VAL = 0x7A,
 	XTAL_SI_WL_RFC_S0 = 0x80,
+#define XTAL_SI_RF00S_EN	GENMASK(2, 0)
 #define XTAL_SI_RF00		BIT(0)
 	XTAL_SI_WL_RFC_S1 = 0x81,
+#define XTAL_SI_RF10S_EN	GENMASK(2, 0)
 #define XTAL_SI_RF10		BIT(0)
 	XTAL_SI_ANAPAR_WL = 0x90,
 #define XTAL_SI_SRAM2RFC	BIT(7)
@@ -1001,6 +1014,7 @@ enum rtw89_mac_xtal_si_offset {
 #define XTAL_SI_PON_EI		BIT(1)
 #define XTAL_SI_PON_WEI		BIT(0)
 	XTAL_SI_SRAM_CTRL = 0xA1,
+#define XTAL_SI_SRAM_DIS	BIT(1)
 #define FULL_BIT_MASK		GENMASK(7, 0)
 };
 

@@ -361,7 +361,7 @@ static void macvlan_broadcast_enqueue(struct macvlan_port *port,
 	}
 	spin_unlock(&port->bc_queue.lock);
 
-	schedule_work(&port->bc_work);
+	queue_work(system_unbound_wq, &port->bc_work);
 
 	if (err)
 		goto free_nskb;
@@ -948,13 +948,13 @@ static void macvlan_dev_get_stats64(struct net_device *dev,
 		for_each_possible_cpu(i) {
 			p = per_cpu_ptr(vlan->pcpu_stats, i);
 			do {
-				start = u64_stats_fetch_begin_irq(&p->syncp);
+				start = u64_stats_fetch_begin(&p->syncp);
 				rx_packets	= u64_stats_read(&p->rx_packets);
 				rx_bytes	= u64_stats_read(&p->rx_bytes);
 				rx_multicast	= u64_stats_read(&p->rx_multicast);
 				tx_packets	= u64_stats_read(&p->tx_packets);
 				tx_bytes	= u64_stats_read(&p->tx_bytes);
-			} while (u64_stats_fetch_retry_irq(&p->syncp, start));
+			} while (u64_stats_fetch_retry(&p->syncp, start));
 
 			stats->rx_packets	+= rx_packets;
 			stats->rx_bytes		+= rx_bytes;
@@ -1192,7 +1192,7 @@ void macvlan_common_setup(struct net_device *dev)
 {
 	ether_setup(dev);
 
-	dev->min_mtu		= 0;
+	/* ether_setup() has set dev->min_mtu to ETH_MIN_MTU. */
 	dev->max_mtu		= ETH_MAX_MTU;
 	dev->priv_flags	       &= ~IFF_TX_SKB_SHARING;
 	netif_keep_dst(dev);

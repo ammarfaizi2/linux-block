@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
 /* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
- * Copyright (C) 2018-2020 Linaro Ltd.
+ * Copyright (C) 2018-2022 Linaro Ltd.
  */
 #ifndef _IPA_H_
 #define _IPA_H_
@@ -39,11 +39,15 @@ struct ipa_interrupt;
  * @power:		IPA power information
  * @table_addr:		DMA address of filter/route table content
  * @table_virt:		Virtual address of filter/route table content
+ * @route_count:	Total number of entries in a routing table
+ * @modem_route_count:	Number of modem entries in a routing table
+ * @filter_count:	Maximum number of entries in a filter table
  * @interrupt:		IPA Interrupt information
  * @uc_powered:		true if power is active by proxy for microcontroller
  * @uc_loaded:		true after microcontroller has reported it's ready
  * @reg_addr:		DMA address used for IPA register access
  * @reg_virt:		Virtual address used for IPA register access
+ * @regs:		IPA register definitions
  * @mem_addr:		DMA address of IPA-local memory space
  * @mem_virt:		Virtual address of IPA-local memory space
  * @mem_offset:		Offset from @mem_virt used for access to IPA memory
@@ -83,6 +87,9 @@ struct ipa {
 
 	dma_addr_t table_addr;
 	__le64 *table_virt;
+	u32 route_count;
+	u32 modem_route_count;
+	u32 filter_count;
 
 	struct ipa_interrupt *interrupt;
 	bool uc_powered;
@@ -90,6 +97,7 @@ struct ipa {
 
 	dma_addr_t reg_addr;
 	void __iomem *reg_virt;
+	const struct ipa_regs *regs;
 
 	dma_addr_t mem_addr;
 	void *mem_virt;

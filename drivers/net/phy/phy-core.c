@@ -13,7 +13,7 @@
  */
 const char *phy_speed_to_str(int speed)
 {
-	BUILD_BUG_ON_MSG(__ETHTOOL_LINK_MODE_MASK_NBITS != 93,
+	BUILD_BUG_ON_MSG(__ETHTOOL_LINK_MODE_MASK_NBITS != 99,
 		"Enum ethtool_link_mode_bit_indices and phylib are out of sync. "
 		"If a speed or mode has been added please update phy_speed_to_str "
 		"and the PHY settings array.\n");
@@ -49,6 +49,8 @@ const char *phy_speed_to_str(int speed)
 		return "200Gbps";
 	case SPEED_400000:
 		return "400Gbps";
+	case SPEED_800000:
+		return "800Gbps";
 	case SPEED_UNKNOWN:
 		return "Unknown";
 	default:
@@ -73,6 +75,27 @@ const char *phy_duplex_to_str(unsigned int duplex)
 	return "Unsupported (update phy-core.c)";
 }
 EXPORT_SYMBOL_GPL(phy_duplex_to_str);
+
+/**
+ * phy_rate_matching_to_str - Return a string describing the rate matching
+ *
+ * @rate_matching: Type of rate matching to describe
+ */
+const char *phy_rate_matching_to_str(int rate_matching)
+{
+	switch (rate_matching) {
+	case RATE_MATCH_NONE:
+		return "none";
+	case RATE_MATCH_PAUSE:
+		return "pause";
+	case RATE_MATCH_CRS:
+		return "crs";
+	case RATE_MATCH_OPEN_LOOP:
+		return "open-loop";
+	}
+	return "Unsupported (update phy-core.c)";
+}
+EXPORT_SYMBOL_GPL(phy_rate_matching_to_str);
 
 /**
  * phy_interface_num_ports - Return the number of links that can be carried by
@@ -114,6 +137,7 @@ int phy_interface_num_ports(phy_interface_t interface)
 	case PHY_INTERFACE_MODE_100BASEX:
 	case PHY_INTERFACE_MODE_RXAUI:
 	case PHY_INTERFACE_MODE_XAUI:
+	case PHY_INTERFACE_MODE_1000BASEKX:
 		return 1;
 	case PHY_INTERFACE_MODE_QSGMII:
 	case PHY_INTERFACE_MODE_QUSGMII:
@@ -135,6 +159,13 @@ EXPORT_SYMBOL_GPL(phy_interface_num_ports);
 			       .bit = ETHTOOL_LINK_MODE_ ## b ## _BIT}
 
 static const struct phy_setting settings[] = {
+	/* 800G */
+	PHY_SETTING( 800000, FULL, 800000baseCR8_Full		),
+	PHY_SETTING( 800000, FULL, 800000baseKR8_Full		),
+	PHY_SETTING( 800000, FULL, 800000baseDR8_Full		),
+	PHY_SETTING( 800000, FULL, 800000baseDR8_2_Full		),
+	PHY_SETTING( 800000, FULL, 800000baseSR8_Full		),
+	PHY_SETTING( 800000, FULL, 800000baseVR8_Full		),
 	/* 400G */
 	PHY_SETTING( 400000, FULL, 400000baseCR8_Full		),
 	PHY_SETTING( 400000, FULL, 400000baseKR8_Full		),

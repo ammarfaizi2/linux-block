@@ -559,6 +559,8 @@ static bool mptcp_supported_sockopt(int level, int optname)
 		case TCP_NOTSENT_LOWAT:
 		case TCP_TX_DELAY:
 		case TCP_INQ:
+		case TCP_FASTOPEN_CONNECT:
+		case TCP_FASTOPEN_NO_COOKIE:
 			return true;
 		}
 
@@ -567,8 +569,8 @@ static bool mptcp_supported_sockopt(int level, int optname)
 		/* TCP_REPAIR, TCP_REPAIR_QUEUE, TCP_QUEUE_SEQ, TCP_REPAIR_OPTIONS,
 		 * TCP_REPAIR_WINDOW are not supported, better avoid this mess
 		 */
-		/* TCP_FASTOPEN_KEY, TCP_FASTOPEN TCP_FASTOPEN_CONNECT, TCP_FASTOPEN_NO_COOKIE,
-		 * are not supported fastopen is currently unsupported
+		/* TCP_FASTOPEN_KEY, TCP_FASTOPEN are not supported because
+		 * fastopen for the listener side is currently unsupported
 		 */
 	}
 	return false;
@@ -756,16 +758,17 @@ static int mptcp_setsockopt_v4(struct mptcp_sock *msk, int optname,
 	return -EOPNOTSUPP;
 }
 
-static int mptcp_setsockopt_sol_tcp_defer(struct mptcp_sock *msk, sockptr_t optval,
-					  unsigned int optlen)
+static int mptcp_setsockopt_first_sf_only(struct mptcp_sock *msk, int level, int optname,
+					  sockptr_t optval, unsigned int optlen)
 {
-	struct socket *listener;
+	struct socket *sock;
 
-	listener = __mptcp_nmpc_socket(msk);
-	if (!listener)
-		return 0; /* TCP_DEFER_ACCEPT does not fail */
+	/* Limit to first subflow, before the connection establishment */
+	sock = __mptcp_nmpc_socket(msk);
+	if (!sock)
+		return -EINVAL;
 
-	return tcp_setsockopt(listener->sk, SOL_TCP, TCP_DEFER_ACCEPT, optval, optlen);
+	return tcp_setsockopt(sock->sk, level, optname, optval, optlen);
 }
 
 static int mptcp_setsockopt_sol_tcp(struct mptcp_sock *msk, int optname,
@@ -795,7 +798,13 @@ static int mptcp_setsockopt_sol_tcp(struct mptcp_sock *msk, int optname,
 	case TCP_NODELAY:
 		return mptcp_setsockopt_sol_tcp_nodelay(msk, optval, optlen);
 	case TCP_DEFER_ACCEPT:
-		return mptcp_setsockopt_sol_tcp_defer(msk, optval, optlen);
+		/* See tcp.c: TCP_DEFER_ACCEPT does not fail */
+		mptcp_setsockopt_first_sf_only(msk, SOL_TCP, optname, optval, optlen);
+		return 0;
+	case TCP_FASTOPEN_CONNECT:
+	case TCP_FASTOPEN_NO_COOKIE:
+		return mptcp_setsockopt_first_sf_only(msk, SOL_TCP, optname,
+						      optval, optlen);
 	}
 
 	return -EOPNOTSUPP;
@@ -1157,6 +1166,8 @@ static int mptcp_getsockopt_sol_tcp(struct mptcp_sock *msk, int optname,
 	case TCP_INFO:
 	case TCP_CC_INFO:
 	case TCP_DEFER_ACCEPT:
+	case TCP_FASTOPEN_CONNECT:
+	case TCP_FASTOPEN_NO_COOKIE:
 		return mptcp_getsockopt_first_sf_only(msk, SOL_TCP, optname,
 						      optval, optlen);
 	case TCP_INQ:

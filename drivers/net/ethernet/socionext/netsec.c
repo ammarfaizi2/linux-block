@@ -1961,11 +1961,13 @@ static int netsec_register_mdio(struct netsec_priv *priv, u32 phy_addr)
 			ret = PTR_ERR(priv->phydev);
 			dev_err(priv->dev, "get_phy_device err(%d)\n", ret);
 			priv->phydev = NULL;
+			mdiobus_unregister(bus);
 			return -ENODEV;
 		}
 
 		ret = phy_device_register(priv->phydev);
 		if (ret) {
+			phy_device_free(priv->phydev);
 			mdiobus_unregister(bus);
 			dev_err(priv->dev,
 				"phy_device_register err(%d)\n", ret);
@@ -2093,7 +2095,7 @@ static int netsec_probe(struct platform_device *pdev)
 	dev_info(&pdev->dev, "hardware revision %d.%d\n",
 		 hw_ver >> 16, hw_ver & 0xffff);
 
-	netif_napi_add(ndev, &priv->napi, netsec_napi_poll, NAPI_POLL_WEIGHT);
+	netif_napi_add(ndev, &priv->napi, netsec_napi_poll);
 
 	ndev->netdev_ops = &netsec_netdev_ops;
 	ndev->ethtool_ops = &netsec_ethtool_ops;

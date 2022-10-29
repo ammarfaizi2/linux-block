@@ -1093,11 +1093,14 @@ static void __pci_flush_txch(struct rtw89_dev *rtwdev, u8 txch, bool drop)
 static void __rtw89_pci_ops_flush_txchs(struct rtw89_dev *rtwdev, u32 txchs,
 					bool drop)
 {
+	const struct rtw89_pci_info *info = rtwdev->pci_info;
 	u8 i;
 
 	for (i = 0; i < RTW89_TXCH_NUM; i++) {
 		/* It may be unnecessary to flush FWCMD queue. */
 		if (i == RTW89_TXCH_CH12)
+			continue;
+		if (info->tx_dma_ch_mask & BIT(i))
 			continue;
 
 		if (txchs & BIT(i))
@@ -1377,6 +1380,7 @@ static const struct rtw89_pci_bd_ram bd_ram_table[RTW89_TXCH_NUM] = {
 static void rtw89_pci_reset_trx_rings(struct rtw89_dev *rtwdev)
 {
 	struct rtw89_pci *rtwpci = (struct rtw89_pci *)rtwdev->priv;
+	const struct rtw89_pci_info *info = rtwdev->pci_info;
 	struct rtw89_pci_tx_ring *tx_ring;
 	struct rtw89_pci_rx_ring *rx_ring;
 	struct rtw89_pci_dma_ring *bd_ring;
@@ -1388,6 +1392,9 @@ static void rtw89_pci_reset_trx_rings(struct rtw89_dev *rtwdev)
 	int i;
 
 	for (i = 0; i < RTW89_TXCH_NUM; i++) {
+		if (info->tx_dma_ch_mask & BIT(i))
+			continue;
+
 		tx_ring = &rtwpci->tx_rings[i];
 		bd_ring = &tx_ring->bd_ring;
 		bd_ram = &bd_ram_table[i];
@@ -1431,12 +1438,15 @@ static void rtw89_pci_release_tx_ring(struct rtw89_dev *rtwdev,
 static void rtw89_pci_ops_reset(struct rtw89_dev *rtwdev)
 {
 	struct rtw89_pci *rtwpci = (struct rtw89_pci *)rtwdev->priv;
+	const struct rtw89_pci_info *info = rtwdev->pci_info;
 	int txch;
 
 	rtw89_pci_reset_trx_rings(rtwdev);
 
 	spin_lock_bh(&rtwpci->trx_lock);
 	for (txch = 0; txch < RTW89_TXCH_NUM; txch++) {
+		if (info->tx_dma_ch_mask & BIT(txch))
+			continue;
 		if (txch == RTW89_TXCH_CH12) {
 			rtw89_pci_release_fwcmd(rtwdev, rtwpci,
 						skb_queue_len(&rtwpci->h2c_queue), true);
@@ -1864,6 +1874,18 @@ __get_target(struct rtw89_dev *rtwdev, u16 *target, enum rtw89_pcie_phy phy_rate
 	return 0;
 }
 
+static int rtw89_pci_autok_x(struct rtw89_dev *rtwdev)
+{
+	int ret;
+
+	if (rtwdev->chip->chip_id != RTL8852B)
+		return 0;
+
+	ret = rtw89_write16_mdio_mask(rtwdev, RAC_REG_FLD_0, BAC_AUTOK_N_MASK,
+				      PCIE_AUTOK_4, PCIE_PHY_GEN1);
+	return ret;
+}
+
 static int rtw89_pci_auto_refclk_cal(struct rtw89_dev *rtwdev, bool autook_en)
 {
 	enum rtw89_pcie_phy phy_rate;
@@ -2077,7 +2099,7 @@ static u32 rtw89_pci_l2_rxen_lat(struct rtw89_dev *rtwdev)
 
 static void rtw89_pci_aphy_pwrcut(struct rtw89_dev *rtwdev)
 {
-	if (rtwdev->chip->chip_id != RTL8852A)
+	if (rtwdev->chip->chip_id != RTL8852A && rtwdev->chip->chip_id != RTL8852B)
 		return;
 
 	rtw89_write32_clr(rtwdev, R_AX_SYS_PW_CTRL, B_AX_PSUS_OFF_CAPC_EN);
@@ -2262,18 +2284,18 @@ static int rtw89_poll_txdma_ch_idle_pcie(struct rtw89_dev *rtwdev)
 {
 	const struct rtw89_pci_info *info = rtwdev->pci_info;
 	u32 ret, check, dma_busy;
-	u32 dma_busy1 = info->dma_busy1_reg;
+	u32 dma_busy1 = info->dma_busy1.addr;
 	u32 dma_busy2 = info->dma_busy2_reg;
 
-	check = B_AX_ACH0_BUSY | B_AX_ACH1_BUSY | B_AX_ACH2_BUSY |
-		B_AX_ACH3_BUSY | B_AX_ACH4_BUSY | B_AX_ACH5_BUSY |
-		B_AX_ACH6_BUSY | B_AX_ACH7_BUSY | B_AX_CH8_BUSY |
-		B_AX_CH9_BUSY | B_AX_CH12_BUSY;
+	check = info->dma_busy1.mask;
 
 	ret = read_poll_timeout(rtw89_read32, dma_busy, (dma_busy & check) == 0,
 				10, 100, false, rtwdev, dma_busy1);
 	if (ret)
 		return ret;
+
+	if (!dma_busy2)
+		return 0;
 
 	check = B_AX_CH10_BUSY | B_AX_CH11_BUSY;
 
@@ -2441,6 +2463,12 @@ static int rtw89_pci_ops_mac_pre_init(struct rtw89_dev *rtwdev)
 	rtw89_pci_aphy_pwrcut(rtwdev);
 	rtw89_pci_hci_ldo(rtwdev);
 	rtw89_pci_dphy_delay(rtwdev);
+
+	ret = rtw89_pci_autok_x(rtwdev);
+	if (ret) {
+		rtw89_err(rtwdev, "[ERR] pcie autok_x fail %d\n", ret);
+		return ret;
+	}
 
 	ret = rtw89_pci_auto_refclk_cal(rtwdev, false);
 	if (ret) {
@@ -2722,10 +2750,13 @@ static void rtw89_pci_free_tx_rings(struct rtw89_dev *rtwdev,
 				    struct pci_dev *pdev)
 {
 	struct rtw89_pci *rtwpci = (struct rtw89_pci *)rtwdev->priv;
+	const struct rtw89_pci_info *info = rtwdev->pci_info;
 	struct rtw89_pci_tx_ring *tx_ring;
 	int i;
 
 	for (i = 0; i < RTW89_TXCH_NUM; i++) {
+		if (info->tx_dma_ch_mask & BIT(i))
+			continue;
 		tx_ring = &rtwpci->tx_rings[i];
 		rtw89_pci_free_tx_wd_ring(rtwdev, pdev, tx_ring);
 		rtw89_pci_free_tx_ring(rtwdev, pdev, tx_ring);
@@ -2913,6 +2944,7 @@ static int rtw89_pci_alloc_tx_rings(struct rtw89_dev *rtwdev,
 				    struct pci_dev *pdev)
 {
 	struct rtw89_pci *rtwpci = (struct rtw89_pci *)rtwdev->priv;
+	const struct rtw89_pci_info *info = rtwdev->pci_info;
 	struct rtw89_pci_tx_ring *tx_ring;
 	u32 desc_size;
 	u32 len;
@@ -2920,6 +2952,8 @@ static int rtw89_pci_alloc_tx_rings(struct rtw89_dev *rtwdev,
 	int ret;
 
 	for (i = 0; i < RTW89_TXCH_NUM; i++) {
+		if (info->tx_dma_ch_mask & BIT(i))
+			continue;
 		tx_ring = &rtwpci->tx_rings[i];
 		desc_size = sizeof(struct rtw89_pci_tx_bd_32);
 		len = RTW89_PCI_TXBD_NUM_MAX;
