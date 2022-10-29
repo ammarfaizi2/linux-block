@@ -1452,12 +1452,9 @@ again:
 				    likely(!(vma->vm_flags & VM_SEQ_READ)))
 					mark_page_accessed(page);
 			}
-			page_zap_pte_rmap(page);
 			munlock_vma_page(page, vma, false);
 			rss[mm_counter(page)]--;
-			if (unlikely(page_mapcount(page) < 0))
-				print_bad_pte(vma, addr, ptent, page);
-			if (unlikely(__tlb_remove_page(tlb, page))) {
+			if (unlikely(__tlb_remove_page(tlb, page, TLB_ZAP_RMAP))) {
 				force_flush = 1;
 				addr += PAGE_SIZE;
 				break;

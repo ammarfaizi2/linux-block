@@ -1422,8 +1422,6 @@ static void page_remove_anon_compound_rmap(struct page *page)
  * separately.
  *
  * This allows for a much simpler calling convention and code.
- *
- * The caller holds the pte lock.
  */
 void page_zap_pte_rmap(struct page *page)
 {
@@ -1431,7 +1429,7 @@ void page_zap_pte_rmap(struct page *page)
 		return;
 
 	lock_page_memcg(page);
-	__dec_lruvec_page_state(page,
+	dec_lruvec_page_state(page,
 		PageAnon(page) ? NR_ANON_MAPPED : NR_FILE_MAPPED);
 	unlock_page_memcg(page);
 }
