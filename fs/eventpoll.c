@@ -396,12 +396,12 @@ static bool ep_busy_loop_end(void *p, unsigned long start_time)
  *
  * we must do our busy polling with irqs enabled
  */
-static bool ep_busy_loop(struct eventpoll *ep, int nonblock)
+static bool ep_busy_loop(struct eventpoll *ep)
 {
 	unsigned int napi_id = READ_ONCE(ep->napi_id);
 
 	if ((napi_id >= MIN_NAPI_ID) && net_busy_loop_on()) {
-		napi_busy_loop(napi_id, nonblock ? NULL : ep_busy_loop_end, ep, false,
+		napi_busy_loop(napi_id, ep_busy_loop_end, ep, false,
 			       BUSY_POLL_BUDGET);
 		if (ep_events_available(ep))
 			return true;
@@ -453,7 +453,7 @@ static inline void ep_set_busy_poll_napi_id(struct epitem *epi)
 
 #else
 
-static inline bool ep_busy_loop(struct eventpoll *ep, int nonblock)
+static inline bool ep_busy_loop(struct eventpoll *ep)
 {
 	return false;
 }
@@ -1828,7 +1828,7 @@ static int ep_poll(struct eventpoll *ep, struct epoll_event __user *events,
 		if (timed_out)
 			return 0;
 
-		eavail = ep_busy_loop(ep, timed_out);
+		eavail = ep_busy_loop(ep);
 		if (eavail)
 			continue;
 
