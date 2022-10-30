@@ -1413,47 +1413,26 @@ static void page_remove_anon_compound_rmap(struct page *page)
 }
 
 /**
- * page_zap_file_rmap - take down non-anon pte mapping from a page
+ * page_zap_pte_rmap - take down a pte mapping from a page
  * @page:	page to remove mapping from
  *
- * This is the simplified form of page_remove_rmap(), with:
- *  - we've already checked for '!PageAnon(page)'
- *  - 'compound' is always false
- *  - the caller does 'munlock_vma_page(page, vma, compound)' separately
- * which allows for a much simpler calling convention.
+ * This is the simplified form of page_remove_rmap(), that only
+ * deals with last-level pages, so 'compound' is always false,
+ * and the caller does 'munlock_vma_page(page, vma, compound)'
+ * separately.
+ *
+ * This allows for a much simpler calling convention and code.
  *
  * The caller holds the pte lock.
  */
-void page_zap_file_rmap(struct page *page)
+void page_zap_pte_rmap(struct page *page)
 {
 	if (!atomic_add_negative(-1, &page->_mapcount))
 		return;
 
 	lock_page_memcg(page);
-	__dec_lruvec_page_state(page, NR_FILE_MAPPED);
-	unlock_page_memcg(page);
-}
-
-/**
- * page_zap_anon_rmap(page) - take down non-anon pte mapping from a page
- * @page:	page to remove mapping from
- *
- * This is the simplified form of page_remove_rmap(), with:
- *  - we've already checked for 'PageAnon(page)'
- *  - 'compound' is always false
- *  - the caller does 'munlock_vma_page(page, vma, compound)' separately
- * which allows for a much simpler calling convention.
- *
- * The caller holds the pte lock.
- */
-void page_zap_anon_rmap(struct page *page)
-{
-	/* page still mapped by someone else? */
-	if (!atomic_add_negative(-1, &page->_mapcount))
-		return;
-
-	lock_page_memcg(page);
-	__dec_lruvec_page_state(page, NR_ANON_MAPPED);
+	__dec_lruvec_page_state(page,
+		PageAnon(page) ? NR_ANON_MAPPED : NR_FILE_MAPPED);
 	unlock_page_memcg(page);
 }
 

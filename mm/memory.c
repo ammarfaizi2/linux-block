@@ -1451,9 +1451,8 @@ again:
 				if (pte_young(ptent) &&
 				    likely(!(vma->vm_flags & VM_SEQ_READ)))
 					mark_page_accessed(page);
-				page_zap_file_rmap(page);
-			} else
-				page_zap_anon_rmap(page);
+			}
+			page_zap_pte_rmap(page);
 			munlock_vma_page(page, vma, false);
 			rss[mm_counter(page)]--;
 			if (unlikely(page_mapcount(page) < 0))
