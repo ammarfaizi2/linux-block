@@ -1458,8 +1458,11 @@ void page_add_file_rmap(struct page *page,
  */
 void page_zap_file_rmap(struct page *page)
 {
+	if (!atomic_add_negative(-1, &page->_mapcount))
+		return;
+
 	lock_page_memcg(page);
-	page_remove_file_rmap(page, false);
+	__dec_lruvec_page_state(page, NR_FILE_MAPPED);
 	unlock_page_memcg(page);
 }
 
