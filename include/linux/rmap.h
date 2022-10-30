@@ -196,8 +196,7 @@ void page_add_new_anon_rmap(struct page *, struct vm_area_struct *,
 		unsigned long address);
 void page_add_file_rmap(struct page *, struct vm_area_struct *,
 		bool compound);
-void page_zap_file_rmap(struct page *);
-void page_zap_anon_rmap(struct page *);
+void page_zap_pte_rmap(struct page *);
 void page_remove_rmap(struct page *, struct vm_area_struct *,
 		bool compound);
 
