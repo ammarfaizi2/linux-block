@@ -859,6 +859,9 @@ static int get_pages_per_zspage(u32 class_size, u32 num_pages)
 			max_usedpc = usedpc;
 			max_usedpc_order = i;
 		}
+
+		if (usedpc == 100)
+			break;
 	}
 
 	return max_usedpc_order;
