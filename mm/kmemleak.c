@@ -343,7 +343,7 @@ static bool unreferenced_object(struct kmemleak_object *object)
  * print_unreferenced function must be called with the object->lock held.
  */
 static void print_unreferenced(struct seq_file *seq,
-		struct kmemleak_object *object)
+			       struct kmemleak_object *object)
 {
 	int i;
 	unsigned long *entries;
@@ -352,10 +352,10 @@ static void print_unreferenced(struct seq_file *seq,
 
 	nr_entries = stack_depot_fetch(object->trace_handle, &entries);
 	warn_or_seq_printf(seq, "unreferenced object 0x%08lx (size %zu):\n",
-			object->pointer, object->size);
+			  object->pointer, object->size);
 	warn_or_seq_printf(seq, "  comm \"%s\", pid %d, jiffies %lu (age %d.%03ds)\n",
-			object->comm, object->pid, object->jiffies,
-			msecs_age / 1000, msecs_age % 1000);
+			   object->comm, object->pid, object->jiffies,
+			   msecs_age / 1000, msecs_age % 1000);
 	hex_dump_object(seq, object);
 	warn_or_seq_printf(seq, "  backtrace:\n");
 
