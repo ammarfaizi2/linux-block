@@ -330,6 +330,7 @@ const struct pipe_buf_operations default_pipe_buf_ops = {
 	.try_steal	= generic_pipe_buf_try_steal,
 	.get		= generic_pipe_buf_get,
 };
+EXPORT_SYMBOL(default_pipe_buf_ops);
 
 /* Pipe buffer operations for a socket and similar. */
 const struct pipe_buf_operations nosteal_pipe_buf_ops = {
