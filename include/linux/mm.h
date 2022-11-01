@@ -1448,14 +1448,14 @@ static inline void page_kasan_tag_reset(struct page *page) { }
 
 #endif /* CONFIG_KASAN_SW_TAGS || CONFIG_KASAN_HW_TAGS */
 
-static inline struct zone *page_zone(const struct page *page)
-{
-	return &NODE_DATA(page_to_nid(page))->node_zones[page_zonenum(page)];
-}
-
 static inline pg_data_t *page_pgdat(const struct page *page)
 {
 	return NODE_DATA(page_to_nid(page));
+}
+
+static inline struct zone *page_zone(const struct page *page)
+{
+	return &page_pgdat(page)->node_zones[page_zonenum(page)];
 }
 
 static inline struct zone *folio_zone(const struct folio *folio)

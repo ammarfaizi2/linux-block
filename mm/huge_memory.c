@@ -562,19 +562,16 @@ pmd_t maybe_pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma)
 static inline struct deferred_split *get_deferred_split_queue(struct page *page)
 {
 	struct mem_cgroup *memcg = page_memcg(compound_head(page));
-	struct pglist_data *pgdat = NODE_DATA(page_to_nid(page));
 
 	if (memcg)
 		return &memcg->deferred_split_queue;
 	else
-		return &pgdat->deferred_split_queue;
+		return &page_pgdat(page)->deferred_split_queue;
 }
 #else
 static inline struct deferred_split *get_deferred_split_queue(struct page *page)
 {
-	struct pglist_data *pgdat = NODE_DATA(page_to_nid(page));
-
-	return &pgdat->deferred_split_queue;
+	return &page_pgdat(page)->deferred_split_queue;
 }
 #endif
 
