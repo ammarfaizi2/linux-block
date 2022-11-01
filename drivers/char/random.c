@@ -1571,6 +1571,16 @@ static int proc_do_rointvec(struct ctl_table *table, int write, void *buf,
 	return write ? 0 : proc_dointvec(table, 0, buf, lenp, ppos);
 }
 
+static int proc_do_entropy_avail(struct ctl_table *table, int write, void *buf,
+				 size_t *lenp, loff_t *ppos)
+{
+	struct ctl_table fake_table = *table;
+	int bits = crng_ready() ? POOL_BITS : 0;
+
+	fake_table.data = &bits;
+	return proc_dointvec(&fake_table, write, buf, lenp, ppos);
+}
+
 static struct ctl_table random_table[] = {
 	{
 		.procname	= "poolsize",
@@ -1581,10 +1591,9 @@ static struct ctl_table random_table[] = {
 	},
 	{
 		.procname	= "entropy_avail",
-		.data		= &input_pool.init_bits,
 		.maxlen		= sizeof(int),
 		.mode		= 0444,
-		.proc_handler	= proc_dointvec,
+		.proc_handler	= proc_do_entropy_avail,
 	},
 	{
 		.procname	= "write_wakeup_threshold",
