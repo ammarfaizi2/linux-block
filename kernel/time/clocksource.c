@@ -442,12 +442,7 @@ static void clocksource_watchdog(struct timer_list *unused)
 
 		/* Check for bogus measurements. */
 		wdi = jiffies_to_nsecs(WATCHDOG_INTERVAL);
-		if (wd_nsec < (wdi >> 2)) {
-			/* This usually indicates broken timer code or hardware. */
-			pr_warn("timekeeping watchdog on CPU%d: Watchdog clocksource '%s' advanced only %lld ns during %d-jiffy time interval, skipping watchdog check.\n", smp_processor_id(), watchdog->name, wd_nsec, WATCHDOG_INTERVAL);
-			continue;
-		}
-		if (wd_nsec > (wdi << 2)) {
+		if (wd_nsec > (wdi << 2) || cs_nsec > (wdi << 2)) {
 			bool needwarn = false;
 			u64 wd_lb;
 
@@ -468,6 +463,12 @@ static void clocksource_watchdog(struct timer_list *unused)
 					cs->wd_bogus_shift++;
 				cs->wd_bogus_count_last = cs->wd_bogus_count;
 			}
+			continue;
+		}
+		/* Check too-short measurements second to handle wrap. */
+		if (wd_nsec < (wdi >> 2) || cs_nsec < (wdi >> 2)) {
+			/* This usually indicates broken timer code or hardware. */
+			pr_warn("timekeeping watchdog on CPU%d: Watchdog clocksource '%s' advanced only %lld ns during %d-jiffy time interval, skipping watchdog check.\n", smp_processor_id(), watchdog->name, wd_nsec, WATCHDOG_INTERVAL);
 			continue;
 		}
 
