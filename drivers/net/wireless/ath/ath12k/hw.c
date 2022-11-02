@@ -603,7 +603,7 @@ static const struct ath12k_hw_ring_mask ath12k_hw_ring_mask_wcn7850 = {
 	},
 };
 
-static const struct ath12k_hw_regs qcn9274_regs = {
+static const struct ath12k_hw_regs qcn9274_v1_regs = {
 	/* SW2TCL(x) R0 ring configuration address */
 	.hal_tcl1_ring_id = 0x00000908,
 	.hal_tcl1_ring_misc = 0x00000910,
@@ -868,7 +868,7 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 
 		.hw_ops = &qcn9274_ops,
 		.ring_mask = &ath12k_hw_ring_mask_qcn9274,
-		.regs = &qcn9274_regs,
+		.regs = &qcn9274_v1_regs,
 
 		.host_ce_config = ath12k_host_ce_config_qcn9274,
 		.ce_count = 16,
@@ -962,6 +962,60 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.wmi_init = ath12k_wmi_init_wcn7850,
 
 		.hal_ops = &hal_wcn7850_ops,
+	},
+	{
+		.name = "qcn9274 hw2.0",
+		.hw_rev = ATH12K_HW_QCN9274_HW20,
+		.fw = {
+			.dir = "QCN9274/hw2.0",
+			.board_size = 256 * 1024,
+			.cal_offset = 128 * 1024,
+		},
+		.max_radios = 1,
+		.single_pdev_only = false,
+		.qmi_service_ins_id = ATH12K_QMI_WLFW_SERVICE_INS_ID_V01_QCN9274,
+		.internal_sleep_clock = false,
+
+		.hw_ops = &qcn9274_ops,
+		.ring_mask = &ath12k_hw_ring_mask_qcn9274,
+		.regs = &qcn9274_v2_regs,
+
+		.host_ce_config = ath12k_host_ce_config_qcn9274,
+		.ce_count = 16,
+		.target_ce_config = ath12k_target_ce_config_wlan_qcn9274,
+		.target_ce_count = 12,
+		.svc_to_ce_map = ath12k_target_service_to_ce_map_wlan_qcn9274,
+		.svc_to_ce_map_len = 18,
+
+		.hal_params = &ath12k_hw_hal_params_qcn9274,
+
+		.rxdma1_enable = false,
+		.num_rxmda_per_pdev = 1,
+		.num_rxdma_dst_ring = 0,
+		.rx_mac_buf_ring = false,
+		.vdev_start_delay = false,
+
+		.interface_modes = BIT(NL80211_IFTYPE_STATION) |
+					BIT(NL80211_IFTYPE_AP),
+		.supports_monitor = false,
+
+		.idle_ps = false,
+		.download_calib = true,
+		.supports_suspend = false,
+		.tcl_ring_retry = true,
+		.reoq_lut_support = false,
+		.supports_shadow_regs = false,
+
+		.hal_desc_sz = sizeof(struct hal_rx_desc_qcn9274),
+		.num_tcl_banks = 48,
+		.max_tx_ring = 4,
+		.static_window_map = true,
+
+		.mhi_config = &ath12k_mhi_config_qcn9274,
+
+		.wmi_init = ath12k_wmi_init_qcn9274,
+
+		.hal_ops = &hal_qcn9274_ops,
 	},
 };
 
