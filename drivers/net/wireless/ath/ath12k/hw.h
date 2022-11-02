@@ -274,6 +274,38 @@ struct ath12k_hw_regs {
 
 	u32 pcie_qserdes_sysclk_en_sel;
 	u32 pcie_pcs_osc_dtct_config_base;
+
+	u32 hal_ppe_rel_ring_base;
+
+	u32 hal_reo2_ring_base;
+	u32 hal_reo1_misc_ctrl_addr;
+	u32 hal_reo1_sw_cookie_cfg0;
+	u32 hal_reo1_sw_cookie_cfg1;
+	u32 hal_reo1_qdesc_lut_base0;
+	u32 hal_reo1_qdesc_lut_base1;
+	u32 hal_reo1_ring_base_lsb;
+	u32 hal_reo1_ring_base_msb;
+	u32 hal_reo1_ring_id;
+	u32 hal_reo1_ring_misc;
+	u32 hal_reo1_ring_hp_addr_lsb;
+	u32 hal_reo1_ring_hp_addr_msb;
+	u32 hal_reo1_ring_producer_int_setup;
+	u32 hal_reo1_ring_msi1_base_lsb;
+	u32 hal_reo1_ring_msi1_base_msb;
+	u32 hal_reo1_ring_msi1_data;
+	u32 hal_reo1_aging_thres_ix0;
+	u32 hal_reo1_aging_thres_ix1;
+	u32 hal_reo1_aging_thres_ix2;
+	u32 hal_reo1_aging_thres_ix3;
+
+	u32 hal_reo2_sw0_ring_base;
+
+	u32 hal_sw2reo_ring_base;
+	u32 hal_sw2reo1_ring_base;
+
+	u32 hal_reo_cmd_ring_base;
+
+	u32 hal_reo_status_ring_base;
 };
 
 int ath12k_hw_init(struct ath12k_base *ab);
