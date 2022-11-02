@@ -734,6 +734,7 @@ struct ath12k_base {
 	struct completion htc_suspend;
 
 	u64 fw_soc_drop_count;
+	bool static_window_map;
 
 	/* must be last */
 	u8 drv_priv[0] __aligned(sizeof(void *));

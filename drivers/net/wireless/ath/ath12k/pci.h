@@ -65,6 +65,9 @@
 #define QRTR_PCI_DOMAIN_NR_MASK		GENMASK(7, 4)
 #define QRTR_PCI_BUS_NUMBER_MASK	GENMASK(3, 0)
 
+#define ATH12K_PCI_SOC_HW_VERSION_1	1
+#define ATH12K_PCI_SOC_HW_VERSION_2	2
+
 struct ath12k_msi_user {
 	const char *name;
 	int num_vectors;

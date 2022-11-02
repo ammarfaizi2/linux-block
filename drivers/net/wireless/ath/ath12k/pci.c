@@ -26,9 +26,9 @@
 #define WINDOW_RANGE_MASK		GENMASK(18, 0)
 #define WINDOW_STATIC_MASK		GENMASK(31, 6)
 
-#define TCSR_SOC_HW_VERSION		0x0224
-#define TCSR_SOC_HW_VERSION_MAJOR_MASK	GENMASK(16, 8)
-#define TCSR_SOC_HW_VERSION_MINOR_MASK	GENMASK(7, 0)
+#define TCSR_SOC_HW_VERSION		0x1B00000
+#define TCSR_SOC_HW_VERSION_MAJOR_MASK	GENMASK(11, 8)
+#define TCSR_SOC_HW_VERSION_MINOR_MASK	GENMASK(7, 4)
 
 /* BAR0 + 4k is always accessible, and no
  * need to force wakeup.
@@ -1000,7 +1000,7 @@ u32 ath12k_pci_read32(struct ath12k_base *ab, u32 offset)
 	if (offset < WINDOW_START) {
 		val = ioread32(ab->mem + offset);
 	} else {
-		if (ab->hw_params->static_window_map)
+		if (ab->static_window_map)
 			window_start = ath12k_pci_get_window_start(ab, offset);
 		else
 			window_start = WINDOW_START;
@@ -1044,7 +1044,7 @@ void ath12k_pci_write32(struct ath12k_base *ab, u32 offset, u32 value)
 	if (offset < WINDOW_START) {
 		iowrite32(value, ab->mem + offset);
 	} else {
-		if (ab->hw_params->static_window_map)
+		if (ab->static_window_map)
 			window_start = ath12k_pci_get_window_start(ab, offset);
 		else
 			window_start = WINDOW_START;
@@ -1093,7 +1093,7 @@ int ath12k_pci_power_up(struct ath12k_base *ab)
 		return ret;
 	}
 
-	if (ab->hw_params->static_window_map)
+	if (ab->static_window_map)
 		ath12k_pci_select_static_window(ab_pci);
 
 	return 0;
@@ -1132,11 +1132,28 @@ static const struct ath12k_hif_ops ath12k_pci_hif_ops = {
 	.get_ce_msi_idx = ath12k_pci_get_ce_msi_idx,
 };
 
+static
+void ath12k_pci_read_hw_version(struct ath12k_base *ab, u32 *major, u32 *minor)
+{
+	u32 soc_hw_version;
+
+	soc_hw_version = ath12k_pci_read32(ab, TCSR_SOC_HW_VERSION);
+	*major = FIELD_GET(TCSR_SOC_HW_VERSION_MAJOR_MASK,
+			   soc_hw_version);
+	*minor = FIELD_GET(TCSR_SOC_HW_VERSION_MINOR_MASK,
+			   soc_hw_version);
+
+	ath12k_dbg(ab, ATH12K_DBG_PCI,
+		   "pci tcsr_soc_hw_version major %d minor %d\n",
+		    *major, *minor);
+}
+
 static int ath12k_pci_probe(struct pci_dev *pdev,
 			    const struct pci_device_id *pci_dev)
 {
 	struct ath12k_base *ab;
 	struct ath12k_pci *ab_pci;
+	u32 soc_hw_version_major, soc_hw_version_minor;
 	int ret;
 
 	ab = ath12k_core_alloc(&pdev->dev, sizeof(*ab_pci), ATH12K_BUS_PCI);
@@ -1164,10 +1181,26 @@ static int ath12k_pci_probe(struct pci_dev *pdev,
 	switch (pci_dev->device) {
 	case QCN9274_DEVICE_ID:
 		ab_pci->msi_config = &ath12k_msi_config[0];
-		ab->hw_rev = ATH12K_HW_QCN9274_HW10;
+		ab->static_window_map = true;
+		ath12k_pci_read_hw_version(ab, &soc_hw_version_major,
+					   &soc_hw_version_minor);
+		switch (soc_hw_version_major) {
+		case ATH12K_PCI_SOC_HW_VERSION_2:
+			ab->hw_rev = ATH12K_HW_QCN9274_HW20;
+			break;
+		case ATH12K_PCI_SOC_HW_VERSION_1:
+			ab->hw_rev = ATH12K_HW_QCN9274_HW10;
+			break;
+		default:
+			dev_err(&pdev->dev,
+				"Unknown hardware version found for QCN9274: 0x%x\n",
+				soc_hw_version_major);
+			return -EOPNOTSUPP;
+		}
 		break;
 	case WCN7850_DEVICE_ID:
 		ab_pci->msi_config = &ath12k_msi_config[0];
+		ab->static_window_map = false;
 		ab->hw_rev = ATH12K_HW_WCN7850_HW20;
 		break;
 

@@ -177,7 +177,6 @@ struct ath12k_hw_params {
 	u32 hal_desc_sz;
 	u32 num_tcl_banks;
 	u32 max_tx_ring;
-	bool static_window_map:1;
 
 	const struct mhi_controller_config *mhi_config;
 

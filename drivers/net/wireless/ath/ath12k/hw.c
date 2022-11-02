@@ -899,7 +899,6 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.hal_desc_sz = sizeof(struct hal_rx_desc_qcn9274),
 		.num_tcl_banks = 48,
 		.max_tx_ring = 4,
-		.static_window_map = true,
 
 		.mhi_config = &ath12k_mhi_config_qcn9274,
 
@@ -955,7 +954,6 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.hal_desc_sz = sizeof(struct hal_rx_desc_wcn7850),
 		.num_tcl_banks = 7,
 		.max_tx_ring = 3,
-		.static_window_map = false,
 
 		.mhi_config = &ath12k_mhi_config_wcn7850,
 
@@ -1009,7 +1007,6 @@ static const struct ath12k_hw_params ath12k_hw_params[] = {
 		.hal_desc_sz = sizeof(struct hal_rx_desc_qcn9274),
 		.num_tcl_banks = 48,
 		.max_tx_ring = 4,
-		.static_window_map = true,
 
 		.mhi_config = &ath12k_mhi_config_qcn9274,
 
