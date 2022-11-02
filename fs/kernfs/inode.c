@@ -46,7 +46,12 @@ static struct kernfs_iattrs *__kernfs_iattrs(struct kernfs_node *kn, int alloc)
 	kn->iattr->ia_mtime = kn->iattr->ia_atime;
 	kn->iattr->ia_ctime = kn->iattr->ia_atime;
 
-	simple_xattrs_init(&kn->iattr->xattrs);
+	if (simple_xattrs_init(&kn->iattr->xattrs)) {
+		kmem_cache_free(kernfs_iattrs_cache, kn->iattr);
+		kn->iattr = NULL;
+		goto out_unlock;
+	}
+
 	atomic_set(&kn->iattr->nr_user_xattrs, 0);
 	atomic_set(&kn->iattr->user_xattr_size, 0);
 out_unlock:

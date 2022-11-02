@@ -2346,7 +2346,13 @@ static struct inode *shmem_get_inode(struct super_block *sb, struct inode *dir,
 			shmem_set_inode_flags(inode, info->fsflags);
 		INIT_LIST_HEAD(&info->shrinklist);
 		INIT_LIST_HEAD(&info->swaplist);
-		simple_xattrs_init(&info->xattrs);
+
+		if (simple_xattrs_init(&info->xattrs)) {
+			iput(inode);
+			shmem_free_inode(sb);
+			return NULL;
+		}
+
 		cache_no_acl(inode);
 		mapping_set_large_folios(inode->i_mapping);
 
@@ -3236,6 +3242,7 @@ static int shmem_initxattrs(struct inode *inode,
 	const struct xattr *xattr;
 	struct simple_xattr *new_xattr;
 	size_t len;
+	int err;
 
 	for (xattr = xattr_array; xattr->name != NULL; xattr++) {
 		new_xattr = simple_xattr_alloc(xattr->value, xattr->value_len);
@@ -3255,7 +3262,9 @@ static int shmem_initxattrs(struct inode *inode,
 		memcpy(new_xattr->name + XATTR_SECURITY_PREFIX_LEN,
 		       xattr->name, len);
 
-		simple_xattr_list_add(&info->xattrs, new_xattr);
+		err = simple_xattr_add(&info->xattrs, new_xattr);
+		if (err)
+			return err;
 	}
 
 	return 0;
