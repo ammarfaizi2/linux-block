@@ -718,8 +718,11 @@ int rxrpc_connect_call(struct rxrpc_call *call, gfp_t gfp)
 
 	rxrpc_discard_expired_client_conns(&rxnet->client_conn_reaper);
 
+	rxrpc_get_call(call, rxrpc_call_get_io_thread);
+
 	bundle = rxrpc_prep_call(call, gfp);
 	if (IS_ERR(bundle)) {
+		rxrpc_put_call(call, rxrpc_call_get_io_thread);
 		ret = PTR_ERR(bundle);
 		goto out;
 	}
@@ -902,6 +905,7 @@ void rxrpc_disconnect_client_call(struct rxrpc_bundle *bundle, struct rxrpc_call
 
 out:
 	spin_unlock(&bundle->channel_lock);
+	rxrpc_put_call(call, rxrpc_call_put_io_thread);
 	_leave("");
 	return;
 }
