@@ -506,10 +506,10 @@ struct {
 	struct ot_context * (*init)(void);
 	void (*fini)(struct ot_context *sop);
 } g_ot_sync_ops[4] = {
-	{ot_init_sync_m0, ot_fini_sync_m0},
-	{ot_init_sync_m1, ot_fini_sync_m1},
-	{ot_init_sync_m2, ot_fini_sync_m2},
-	{ot_init_sync_m3, ot_fini_sync_m3},
+	{.init = ot_init_sync_m0, .fini = ot_fini_sync_m0},
+	{.init = ot_init_sync_m1, .fini = ot_fini_sync_m1},
+	{.init = ot_init_sync_m2, .fini = ot_fini_sync_m2},
+	{.init = ot_init_sync_m3, .fini = ot_fini_sync_m3},
 };
 
 /*
@@ -810,10 +810,10 @@ struct {
 	struct ot_context * (*init)(void);
 	void (*fini)(struct ot_context *sop);
 } g_ot_async_ops[4] = {
-	{ot_init_async_m0, ot_fini_async},
-	{ot_init_async_m1, ot_fini_async},
-	{ot_init_async_m2, ot_fini_async},
-	{ot_init_async_m3, ot_fini_async},
+	{.init = ot_init_async_m0, .fini = ot_fini_async},
+	{.init = ot_init_async_m1, .fini = ot_fini_async},
+	{.init = ot_init_async_m2, .fini = ot_fini_async},
+	{.init = ot_init_async_m3, .fini = ot_fini_async},
 };
 
 static void ot_nod_recycle(struct ot_node *on, struct objpool_head *pool,
