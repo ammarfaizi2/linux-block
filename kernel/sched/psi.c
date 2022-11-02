@@ -1033,6 +1033,7 @@ void psi_cgroup_free(struct cgroup *cgroup)
 
 	cancel_delayed_work_sync(&cgroup->psi->avgs_work);
 	free_percpu(cgroup->psi->pcpu);
+	timer_shutdown_sync(&cgroup->psi->poll_timer);
 	/* All triggers must be removed by now */
 	WARN_ONCE(cgroup->psi->poll_states, "psi: trigger leak\n");
 	kfree(cgroup->psi);
