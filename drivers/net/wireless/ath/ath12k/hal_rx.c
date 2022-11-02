@@ -827,7 +827,7 @@ void ath12k_hal_reo_hw_setup(struct ath12k_base *ab, u32 ring_hash_map)
 	       u32_encode_bits(1, HAL_REO1_GEN_ENABLE_AGING_FLUSH_ENABLE);
 	ath12k_hif_write32(ab, reo_base + HAL_REO1_GEN_ENABLE, val);
 
-	val = ath12k_hif_read32(ab, reo_base + HAL_REO1_MISC_CTRL_ADDR);
+	val = ath12k_hif_read32(ab, reo_base + HAL_REO1_MISC_CTRL_ADDR(ab));
 
 	val &= ~(HAL_REO1_MISC_CTL_FRAG_DST_RING |
 		 HAL_REO1_MISC_CTL_BAR_DST_RING);
@@ -835,15 +835,15 @@ void ath12k_hal_reo_hw_setup(struct ath12k_base *ab, u32 ring_hash_map)
 			       HAL_REO1_MISC_CTL_FRAG_DST_RING);
 	val |= u32_encode_bits(HAL_SRNG_RING_ID_REO2SW0,
 			       HAL_REO1_MISC_CTL_BAR_DST_RING);
-	ath12k_hif_write32(ab, reo_base + HAL_REO1_MISC_CTRL_ADDR, val);
+	ath12k_hif_write32(ab, reo_base + HAL_REO1_MISC_CTRL_ADDR(ab), val);
 
-	ath12k_hif_write32(ab, reo_base + HAL_REO1_AGING_THRESH_IX_0,
+	ath12k_hif_write32(ab, reo_base + HAL_REO1_AGING_THRESH_IX_0(ab),
 			   HAL_DEFAULT_BE_BK_VI_REO_TIMEOUT_USEC);
-	ath12k_hif_write32(ab, reo_base + HAL_REO1_AGING_THRESH_IX_1,
+	ath12k_hif_write32(ab, reo_base + HAL_REO1_AGING_THRESH_IX_1(ab),
 			   HAL_DEFAULT_BE_BK_VI_REO_TIMEOUT_USEC);
-	ath12k_hif_write32(ab, reo_base + HAL_REO1_AGING_THRESH_IX_2,
+	ath12k_hif_write32(ab, reo_base + HAL_REO1_AGING_THRESH_IX_2(ab),
 			   HAL_DEFAULT_BE_BK_VI_REO_TIMEOUT_USEC);
-	ath12k_hif_write32(ab, reo_base + HAL_REO1_AGING_THRESH_IX_3,
+	ath12k_hif_write32(ab, reo_base + HAL_REO1_AGING_THRESH_IX_3(ab),
 			   HAL_DEFAULT_VO_REO_TIMEOUT_USEC);
 
 	ath12k_hif_write32(ab, reo_base + HAL_REO1_DEST_RING_CTRL_IX_2,

@@ -1197,7 +1197,8 @@ static void ath12k_dp_reoq_lut_cleanup(struct ath12k_base *ab)
 			  dp->reoq_lut.vaddr, dp->reoq_lut.paddr);
 	dp->reoq_lut.vaddr = NULL;
 
-	ath12k_hif_write32(ab, HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO1_QDESC_LUT_BASE0, 0);
+	ath12k_hif_write32(ab,
+			   HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO1_QDESC_LUT_BASE0(ab), 0);
 }
 
 void ath12k_dp_free(struct ath12k_base *ab)
@@ -1229,7 +1230,7 @@ void ath12k_dp_cc_config(struct ath12k_base *ab)
 	u32 wbm_base = HAL_SEQ_WCSS_UMAC_WBM_REG;
 	u32 val = 0;
 
-	ath12k_hif_write32(ab, reo_base + HAL_REO1_SW_COOKIE_CFG0, cmem_base);
+	ath12k_hif_write32(ab, reo_base + HAL_REO1_SW_COOKIE_CFG0(ab), cmem_base);
 
 	val |= u32_encode_bits(ATH12K_CMEM_ADDR_MSB,
 			       HAL_REO1_SW_COOKIE_CFG_CMEM_BASE_ADDR_MSB) |
@@ -1241,7 +1242,7 @@ void ath12k_dp_cc_config(struct ath12k_base *ab)
 		u32_encode_bits(1, HAL_REO1_SW_COOKIE_CFG_ENABLE) |
 		u32_encode_bits(1, HAL_REO1_SW_COOKIE_CFG_GLOBAL_ENABLE);
 
-	ath12k_hif_write32(ab, reo_base + HAL_REO1_SW_COOKIE_CFG1, val);
+	ath12k_hif_write32(ab, reo_base + HAL_REO1_SW_COOKIE_CFG1(ab), val);
 
 	/* Enable HW CC for WBM */
 	ath12k_hif_write32(ab, wbm_base + HAL_WBM_SW_COOKIE_CFG0, cmem_base);
@@ -1469,7 +1470,7 @@ static int ath12k_dp_reoq_lut_setup(struct ath12k_base *ab)
 
 	memset(dp->reoq_lut.vaddr, 0, DP_REOQ_LUT_SIZE);
 
-	ath12k_hif_write32(ab, HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO1_QDESC_LUT_BASE0,
+	ath12k_hif_write32(ab, HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO1_QDESC_LUT_BASE0(ab),
 			   dp->reoq_lut.paddr);
 	return 0;
 }

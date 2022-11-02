@@ -483,27 +483,27 @@ static int ath12k_hal_srng_create_config_qcn9274(struct ath12k_base *ab)
 		return -ENOMEM;
 
 	s = &hal->srng_config[HAL_REO_DST];
-	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO1_RING_BASE_LSB;
+	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO1_RING_BASE_LSB(ab);
 	s->reg_start[1] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO1_RING_HP;
-	s->reg_size[0] = HAL_REO2_RING_BASE_LSB - HAL_REO1_RING_BASE_LSB;
+	s->reg_size[0] = HAL_REO2_RING_BASE_LSB(ab) - HAL_REO1_RING_BASE_LSB(ab);
 	s->reg_size[1] = HAL_REO2_RING_HP - HAL_REO1_RING_HP;
 
 	s = &hal->srng_config[HAL_REO_EXCEPTION];
-	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO_SW0_RING_BASE_LSB;
+	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO_SW0_RING_BASE_LSB(ab);
 	s->reg_start[1] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO_SW0_RING_HP;
 
 	s = &hal->srng_config[HAL_REO_REINJECT];
-	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_SW2REO_RING_BASE_LSB;
+	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_SW2REO_RING_BASE_LSB(ab);
 	s->reg_start[1] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_SW2REO_RING_HP;
-	s->reg_size[0] = HAL_SW2REO1_RING_BASE_LSB - HAL_SW2REO_RING_BASE_LSB;
+	s->reg_size[0] = HAL_SW2REO1_RING_BASE_LSB(ab) - HAL_SW2REO_RING_BASE_LSB(ab);
 	s->reg_size[1] = HAL_SW2REO1_RING_HP - HAL_SW2REO_RING_HP;
 
 	s = &hal->srng_config[HAL_REO_CMD];
-	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO_CMD_RING_BASE_LSB;
+	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO_CMD_RING_BASE_LSB(ab);
 	s->reg_start[1] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO_CMD_HP;
 
 	s = &hal->srng_config[HAL_REO_STATUS];
-	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO_STATUS_RING_BASE_LSB;
+	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO_STATUS_RING_BASE_LSB(ab);
 	s->reg_start[1] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO_STATUS_HP;
 
 	s = &hal->srng_config[HAL_TCL_DATA];
@@ -574,7 +574,8 @@ static int ath12k_hal_srng_create_config_qcn9274(struct ath12k_base *ab)
 	s->reg_start[1] = HAL_SEQ_WCSS_UMAC_TCL_REG + HAL_TCL_PPE2TCL1_RING_HP;
 
 	s = &hal->srng_config[HAL_PPE_RELEASE];
-	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_WBM_REG + HAL_WBM_PPE_RELEASE_RING_BASE_LSB;
+	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_WBM_REG +
+				HAL_WBM_PPE_RELEASE_RING_BASE_LSB(ab);
 	s->reg_start[1] = HAL_SEQ_WCSS_UMAC_WBM_REG + HAL_WBM_PPE_RELEASE_RING_HP;
 
 	return 0;
@@ -922,26 +923,26 @@ static int ath12k_hal_srng_create_config_wcn7850(struct ath12k_base *ab)
 		return -ENOMEM;
 
 	s = &hal->srng_config[HAL_REO_DST];
-	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO1_RING_BASE_LSB;
+	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO1_RING_BASE_LSB(ab);
 	s->reg_start[1] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO1_RING_HP;
-	s->reg_size[0] = HAL_REO2_RING_BASE_LSB - HAL_REO1_RING_BASE_LSB;
+	s->reg_size[0] = HAL_REO2_RING_BASE_LSB(ab) - HAL_REO1_RING_BASE_LSB(ab);
 	s->reg_size[1] = HAL_REO2_RING_HP - HAL_REO1_RING_HP;
 
 	s = &hal->srng_config[HAL_REO_EXCEPTION];
-	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO_SW0_RING_BASE_LSB;
+	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO_SW0_RING_BASE_LSB(ab);
 	s->reg_start[1] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO_SW0_RING_HP;
 
 	s = &hal->srng_config[HAL_REO_REINJECT];
 	s->max_rings = 1;
-	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_SW2REO_RING_BASE_LSB;
+	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_SW2REO_RING_BASE_LSB(ab);
 	s->reg_start[1] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_SW2REO_RING_HP;
 
 	s = &hal->srng_config[HAL_REO_CMD];
-	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO_CMD_RING_BASE_LSB;
+	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO_CMD_RING_BASE_LSB(ab);
 	s->reg_start[1] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO_CMD_HP;
 
 	s = &hal->srng_config[HAL_REO_STATUS];
-	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO_STATUS_RING_BASE_LSB;
+	s->reg_start[0] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO_STATUS_RING_BASE_LSB(ab);
 	s->reg_start[1] = HAL_SEQ_WCSS_UMAC_REO_REG + HAL_REO_STATUS_HP;
 
 	s = &hal->srng_config[HAL_TCL_DATA];
