@@ -1965,7 +1965,6 @@ config FAIL_SUNRPC
 config FAULT_INJECTION_STACKTRACE_FILTER
 	bool "stacktrace filter for fault-injection capabilities"
 	depends on FAULT_INJECTION_DEBUG_FS && STACKTRACE_SUPPORT
-	depends on !X86_64
 	select STACKTRACE
 	depends on FRAME_POINTER || MIPS || PPC || S390 || MICROBLAZE || ARM || ARC || X86
 	help
@@ -2740,6 +2739,17 @@ config TEST_CLOCKSOURCE_WATCHDOG
 	  via modprobe or insmod in which case it will run upon being
 	  loaded, or it may be built in, in which case it will run
 	  shortly after boot.
+
+	  If unsure, say N.
+
+config TEST_OBJPOOL
+	tristate "Test module for correctness and stress of objpool"
+	default n
+       depends on m
+	help
+	  This builds the "test_objpool" module that should be used for
+	  correctness verification and concurrent testings of objects
+	  allocation and reclamation.
 
 	  If unsure, say N.
 
