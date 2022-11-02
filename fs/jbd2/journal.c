@@ -2157,6 +2157,8 @@ int jbd2_journal_destroy(journal_t *journal)
 	J_ASSERT(journal->j_checkpoint_transactions == NULL);
 	spin_unlock(&journal->j_list_lock);
 
+	timer_shutdown(&journal->j_commit_timer);
+
 	/*
 	 * OK, all checkpoint transactions have been checked, now check the
 	 * write out io error flag and abort the journal if some buffer failed
