@@ -1346,9 +1346,7 @@ static struct pci_driver ath12k_pci_driver = {
 	.probe = ath12k_pci_probe,
 	.remove = ath12k_pci_remove,
 	.shutdown = ath12k_pci_shutdown,
-#ifdef CONFIG_PM
 	.driver.pm = &ath12k_pci_pm_ops,
-#endif
 };
 
 static int ath12k_pci_init(void)
