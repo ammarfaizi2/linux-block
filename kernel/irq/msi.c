@@ -1529,6 +1529,36 @@ struct msi_map msi_domain_alloc_irq_at(struct device *dev, unsigned int domid, u
 	return map;
 }
 
+/**
+ * msi_device_domain_alloc_wired - Allocate a "wired" interrupt on @domain
+ * @domain:	The domain to allocate on
+ * @index:	The MSI index to allocate
+ * @type:	The interrupt type
+ *
+ * Returns: The Linux interrupt number (> 0) or an error code
+ *
+ * This weirdness supports wire to MSI controllers like MBIGEN.
+ */
+int msi_device_domain_alloc_wired(struct irq_domain *domain, unsigned int index,
+				  unsigned int type)
+{
+	union msi_dev_cookie cookie = { .value = type, };
+	struct device *dev = domain->dev;
+	struct msi_map map = { };
+
+	if (WARN_ON_ONCE(!dev || domain->bus_token != DOMAIN_BUS_WIRED_TO_MSI))
+		return -EINVAL;
+
+	msi_lock_descs(dev);
+	if (WARN_ON_ONCE(msi_get_device_domain(dev, MSI_DEFAULT_DOMAIN) != domain))
+		map.index = -EINVAL;
+	else
+		map = __msi_domain_alloc_irq_at(dev, MSI_DEFAULT_DOMAIN, index, NULL, &cookie);
+	msi_unlock_descs(dev);
+
+	return map.index == index ? map.virq : map.index;
+}
+
 static void __msi_domain_free_irqs(struct device *dev, struct irq_domain *domain,
 				   struct msi_ctrl *ctrl)
 {
@@ -1653,6 +1683,30 @@ void msi_domain_free_irqs_all(struct device *dev, unsigned int domid)
 {
 	msi_lock_descs(dev);
 	msi_domain_free_irqs_range_locked(dev, domid, 0, MSI_MAX_INDEX);
+	msi_unlock_descs(dev);
+}
+
+/**
+ * msi_device_domain_free_wired - Free a wired interrupt in @domain
+ * @domain:	The domain to free the interrupt on
+ * @virq:	The Linux interrupt number to free
+ *
+ * This is the counterpart of msi_device_domain_alloc_wired() for the
+ * weird wired to MSI converting domains.
+ */
+void msi_device_domain_free_wired(struct irq_domain *domain, unsigned int virq)
+{
+	struct irq_data *irqd = irq_get_irq_data(virq);
+	struct device *dev = domain->dev;
+
+	if (WARN_ON_ONCE(!dev || !irqd || domain->bus_token != DOMAIN_BUS_WIRED_TO_MSI))
+		return;
+
+	msi_lock_descs(dev);
+	if (!WARN_ON_ONCE(msi_get_device_domain(dev, MSI_DEFAULT_DOMAIN) != domain)) {
+		msi_domain_free_irqs_range_locked(dev, MSI_DEFAULT_DOMAIN, irqd->hwirq,
+						  irqd->hwirq);
+	}
 	msi_unlock_descs(dev);
 }
 
