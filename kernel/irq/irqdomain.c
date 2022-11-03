@@ -26,6 +26,7 @@ static DEFINE_MUTEX(irq_domain_mutex);
 static struct irq_domain *irq_default_domain;
 
 static void irq_domain_check_hierarchy(struct irq_domain *domain);
+static void irq_domain_free_one_irq(struct irq_domain *domain, unsigned int virq);
 
 struct irqchip_fwid {
 	struct fwnode_handle	fwnode;
@@ -822,7 +823,10 @@ unsigned int irq_create_fwspec_mapping(struct irq_fwspec *fwspec)
 	}
 
 	if (irq_domain_is_hierarchy(domain)) {
-		virq = irq_domain_alloc_irqs(domain, 1, NUMA_NO_NODE, fwspec);
+		if (irq_domain_is_msi_device(domain))
+			virq = msi_device_domain_alloc_wired(domain, hwirq, type);
+		else
+			virq = irq_domain_alloc_irqs(domain, 1, NUMA_NO_NODE, fwspec);
 		if (virq <= 0)
 			return 0;
 	} else {
@@ -835,7 +839,7 @@ unsigned int irq_create_fwspec_mapping(struct irq_fwspec *fwspec)
 	irq_data = irq_get_irq_data(virq);
 	if (!irq_data) {
 		if (irq_domain_is_hierarchy(domain))
-			irq_domain_free_irqs(virq, 1);
+			irq_domain_free_one_irq(domain, virq);
 		else
 			irq_dispose_mapping(virq);
 		return 0;
@@ -876,7 +880,7 @@ void irq_dispose_mapping(unsigned int virq)
 		return;
 
 	if (irq_domain_is_hierarchy(domain)) {
-		irq_domain_free_irqs(virq, 1);
+		irq_domain_free_one_irq(domain, virq);
 	} else {
 		irq_domain_disassociate(domain, virq);
 		irq_free_desc(virq);
@@ -1704,6 +1708,14 @@ void irq_domain_free_irqs(unsigned int virq, unsigned int nr_irqs)
 
 	irq_domain_free_irq_data(virq, nr_irqs);
 	irq_free_descs(virq, nr_irqs);
+}
+
+static void irq_domain_free_one_irq(struct irq_domain *domain, unsigned int virq)
+{
+	if (irq_domain_is_msi_device(domain))
+		msi_device_domain_free_wired(domain, virq);
+	else
+		irq_domain_free_irqs(virq, 1);
 }
 
 /**
