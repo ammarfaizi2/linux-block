@@ -441,7 +441,7 @@ ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_wmi_pdev *wmi_handle,
 				      u8 hw_mode_id, u8 phy_id,
 				      struct ath12k_pdev *pdev)
 {
-	const struct ath12k_wmi_mac_phy_caps_params *mac_phy_caps;
+	const struct ath12k_wmi_mac_phy_caps_params *mac_caps;
 	const struct ath12k_wmi_soc_mac_phy_hw_mode_caps_params *hw_caps = svc->hw_caps;
 	const struct ath12k_wmi_hw_mode_cap_params *wmi_hw_mode_caps = svc->hw_mode_caps;
 	const struct ath12k_wmi_mac_phy_caps_params *wmi_mac_phy_caps = svc->mac_phy_caps;
@@ -469,25 +469,25 @@ ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_wmi_pdev *wmi_handle,
 	if (phy_id >= le32_to_cpu(svc->soc_hal_reg_caps->num_phy))
 		return -EINVAL;
 
-	mac_phy_caps = wmi_mac_phy_caps + phy_idx;
+	mac_caps = wmi_mac_phy_caps + phy_idx;
 
-	pdev->pdev_id = le32_to_cpu(mac_phy_caps->pdev_id);
-	pdev_cap->supported_bands |= le32_to_cpu(mac_phy_caps->supported_bands);
-	pdev_cap->ampdu_density = le32_to_cpu(mac_phy_caps->ampdu_density);
+	pdev->pdev_id = le32_to_cpu(mac_caps->pdev_id);
+	pdev_cap->supported_bands |= le32_to_cpu(mac_caps->supported_bands);
+	pdev_cap->ampdu_density = le32_to_cpu(mac_caps->ampdu_density);
 
 	/* Take non-zero tx/rx chainmask. If tx/rx chainmask differs from
 	 * band to band for a single radio, need to see how this should be
 	 * handled.
 	 */
-	if (le32_to_cpu(mac_phy_caps->supported_bands) & WMI_HOST_WLAN_2G_CAP) {
-		pdev_cap->tx_chain_mask = le32_to_cpu(mac_phy_caps->tx_chain_mask_2g);
-		pdev_cap->rx_chain_mask = le32_to_cpu(mac_phy_caps->rx_chain_mask_2g);
-	} else if (le32_to_cpu(mac_phy_caps->supported_bands) & WMI_HOST_WLAN_5G_CAP) {
-		pdev_cap->vht_cap = le32_to_cpu(mac_phy_caps->vht_cap_info_5g);
-		pdev_cap->vht_mcs = le32_to_cpu(mac_phy_caps->vht_supp_mcs_5g);
-		pdev_cap->he_mcs = le32_to_cpu(mac_phy_caps->he_supp_mcs_5g);
-		pdev_cap->tx_chain_mask = le32_to_cpu(mac_phy_caps->tx_chain_mask_5g);
-		pdev_cap->rx_chain_mask = le32_to_cpu(mac_phy_caps->rx_chain_mask_5g);
+	if (le32_to_cpu(mac_caps->supported_bands) & WMI_HOST_WLAN_2G_CAP) {
+		pdev_cap->tx_chain_mask = le32_to_cpu(mac_caps->tx_chain_mask_2g);
+		pdev_cap->rx_chain_mask = le32_to_cpu(mac_caps->rx_chain_mask_2g);
+	} else if (le32_to_cpu(mac_caps->supported_bands) & WMI_HOST_WLAN_5G_CAP) {
+		pdev_cap->vht_cap = le32_to_cpu(mac_caps->vht_cap_info_5g);
+		pdev_cap->vht_mcs = le32_to_cpu(mac_caps->vht_supp_mcs_5g);
+		pdev_cap->he_mcs = le32_to_cpu(mac_caps->he_supp_mcs_5g);
+		pdev_cap->tx_chain_mask = le32_to_cpu(mac_caps->tx_chain_mask_5g);
+		pdev_cap->rx_chain_mask = le32_to_cpu(mac_caps->rx_chain_mask_5g);
 	} else {
 		return -EINVAL;
 	}
@@ -505,59 +505,63 @@ ath12k_pull_mac_phy_cap_svc_ready_ext(struct ath12k_wmi_pdev *wmi_handle,
 	pdev_cap->rx_chain_mask_shift =
 			find_first_bit((unsigned long *)&pdev_cap->rx_chain_mask, 32);
 
-	if (le32_to_cpu(mac_phy_caps->supported_bands) & WMI_HOST_WLAN_2G_CAP) {
+	if (le32_to_cpu(mac_caps->supported_bands) & WMI_HOST_WLAN_2G_CAP) {
 		cap_band = &pdev_cap->band[NL80211_BAND_2GHZ];
-		cap_band->phy_id = le32_to_cpu(mac_phy_caps->phy_id);
-		cap_band->max_bw_supported =
-			le32_to_cpu(mac_phy_caps->max_bw_supported_2g);
-		cap_band->ht_cap_info = le32_to_cpu(mac_phy_caps->ht_cap_info_2g);
-		cap_band->he_cap_info[0] = le32_to_cpu(mac_phy_caps->he_cap_info_2g);
-		cap_band->he_cap_info[1] = le32_to_cpu(mac_phy_caps->he_cap_info_2g_ext);
-		cap_band->he_mcs = le32_to_cpu(mac_phy_caps->he_supp_mcs_2g);
+		cap_band->phy_id = le32_to_cpu(mac_caps->phy_id);
+		cap_band->max_bw_supported = le32_to_cpu(mac_caps->max_bw_supported_2g);
+		cap_band->ht_cap_info = le32_to_cpu(mac_caps->ht_cap_info_2g);
+		cap_band->he_cap_info[0] = le32_to_cpu(mac_caps->he_cap_info_2g);
+		cap_band->he_cap_info[1] = le32_to_cpu(mac_caps->he_cap_info_2g_ext);
+		cap_band->he_mcs = le32_to_cpu(mac_caps->he_supp_mcs_2g);
 		for (i = 0; i < WMI_MAX_HECAP_PHY_SIZE; i++)
 			cap_band->he_cap_phy_info[i] =
-				le32_to_cpu(mac_phy_caps->he_cap_phy_info_2g[i]);
-		cap_band->he_ppet.numss_m1 = le32_to_cpu(mac_phy_caps->he_ppet2g.numss_m1);
-		cap_band->he_ppet.ru_bit_mask = le32_to_cpu(mac_phy_caps->he_ppet2g.ru_info);
+				le32_to_cpu(mac_caps->he_cap_phy_info_2g[i]);
+
+		cap_band->he_ppet.numss_m1 = le32_to_cpu(mac_caps->he_ppet2g.numss_m1);
+		cap_band->he_ppet.ru_bit_mask = le32_to_cpu(mac_caps->he_ppet2g.ru_info);
+
 		for (i = 0; i < PSOC_HOST_MAX_NUM_SS; i++)
 			cap_band->he_ppet.ppet16_ppet8_ru3_ru0[i] =
-				le32_to_cpu(mac_phy_caps->he_ppet2g.ppet16_ppet8_ru3_ru0[i]);
-
+				le32_to_cpu(mac_caps->he_ppet2g.ppet16_ppet8_ru3_ru0[i]);
 	}
 
-	if (le32_to_cpu(mac_phy_caps->supported_bands) & WMI_HOST_WLAN_5G_CAP) {
+	if (le32_to_cpu(mac_caps->supported_bands) & WMI_HOST_WLAN_5G_CAP) {
 		cap_band = &pdev_cap->band[NL80211_BAND_5GHZ];
-		cap_band->phy_id = le32_to_cpu(mac_phy_caps->phy_id);
+		cap_band->phy_id = le32_to_cpu(mac_caps->phy_id);
 		cap_band->max_bw_supported =
-			le32_to_cpu(mac_phy_caps->max_bw_supported_5g);
-		cap_band->ht_cap_info = le32_to_cpu(mac_phy_caps->ht_cap_info_5g);
-		cap_band->he_cap_info[0] = le32_to_cpu(mac_phy_caps->he_cap_info_5g);
-		cap_band->he_cap_info[1] = le32_to_cpu(mac_phy_caps->he_cap_info_5g_ext);
-		cap_band->he_mcs = le32_to_cpu(mac_phy_caps->he_supp_mcs_5g);
+			le32_to_cpu(mac_caps->max_bw_supported_5g);
+		cap_band->ht_cap_info = le32_to_cpu(mac_caps->ht_cap_info_5g);
+		cap_band->he_cap_info[0] = le32_to_cpu(mac_caps->he_cap_info_5g);
+		cap_band->he_cap_info[1] = le32_to_cpu(mac_caps->he_cap_info_5g_ext);
+		cap_band->he_mcs = le32_to_cpu(mac_caps->he_supp_mcs_5g);
 		for (i = 0; i < WMI_MAX_HECAP_PHY_SIZE; i++)
 			cap_band->he_cap_phy_info[i] =
-				le32_to_cpu(mac_phy_caps->he_cap_phy_info_5g[i]);
-		cap_band->he_ppet.numss_m1 = le32_to_cpu(mac_phy_caps->he_ppet5g.numss_m1);
-		cap_band->he_ppet.ru_bit_mask = le32_to_cpu(mac_phy_caps->he_ppet5g.ru_info);
+				le32_to_cpu(mac_caps->he_cap_phy_info_5g[i]);
+
+		cap_band->he_ppet.numss_m1 = le32_to_cpu(mac_caps->he_ppet5g.numss_m1);
+		cap_band->he_ppet.ru_bit_mask = le32_to_cpu(mac_caps->he_ppet5g.ru_info);
+
 		for (i = 0; i < PSOC_HOST_MAX_NUM_SS; i++)
 			cap_band->he_ppet.ppet16_ppet8_ru3_ru0[i] =
-				le32_to_cpu(mac_phy_caps->he_ppet5g.ppet16_ppet8_ru3_ru0[i]);
+				le32_to_cpu(mac_caps->he_ppet5g.ppet16_ppet8_ru3_ru0[i]);
 
 		cap_band = &pdev_cap->band[NL80211_BAND_6GHZ];
 		cap_band->max_bw_supported =
-			le32_to_cpu(mac_phy_caps->max_bw_supported_5g);
-		cap_band->ht_cap_info = le32_to_cpu(mac_phy_caps->ht_cap_info_5g);
-		cap_band->he_cap_info[0] = le32_to_cpu(mac_phy_caps->he_cap_info_5g);
-		cap_band->he_cap_info[1] = le32_to_cpu(mac_phy_caps->he_cap_info_5g_ext);
-		cap_band->he_mcs = le32_to_cpu(mac_phy_caps->he_supp_mcs_5g);
+			le32_to_cpu(mac_caps->max_bw_supported_5g);
+		cap_band->ht_cap_info = le32_to_cpu(mac_caps->ht_cap_info_5g);
+		cap_band->he_cap_info[0] = le32_to_cpu(mac_caps->he_cap_info_5g);
+		cap_band->he_cap_info[1] = le32_to_cpu(mac_caps->he_cap_info_5g_ext);
+		cap_band->he_mcs = le32_to_cpu(mac_caps->he_supp_mcs_5g);
 		for (i = 0; i < WMI_MAX_HECAP_PHY_SIZE; i++)
 			cap_band->he_cap_phy_info[i] =
-				le32_to_cpu(mac_phy_caps->he_cap_phy_info_5g[i]);
-		cap_band->he_ppet.numss_m1 = le32_to_cpu(mac_phy_caps->he_ppet5g.numss_m1);
-		cap_band->he_ppet.ru_bit_mask = le32_to_cpu(mac_phy_caps->he_ppet5g.ru_info);
+				le32_to_cpu(mac_caps->he_cap_phy_info_5g[i]);
+
+		cap_band->he_ppet.numss_m1 = le32_to_cpu(mac_caps->he_ppet5g.numss_m1);
+		cap_band->he_ppet.ru_bit_mask = le32_to_cpu(mac_caps->he_ppet5g.ru_info);
+
 		for (i = 0; i < PSOC_HOST_MAX_NUM_SS; i++)
 			cap_band->he_ppet.ppet16_ppet8_ru3_ru0[i] =
-				le32_to_cpu(mac_phy_caps->he_ppet5g.ppet16_ppet8_ru3_ru0[i]);
+				le32_to_cpu(mac_caps->he_ppet5g.ppet16_ppet8_ru3_ru0[i]);
 	}
 
 	return 0;
@@ -2215,7 +2219,7 @@ int ath12k_wmi_send_scan_start_cmd(struct ath12k *ar,
 	ptr += TLV_HDR_SIZE;
 	tmp_ptr = (u32 *)ptr;
 
-	memcpy(tmp_ptr, arg->chan_list, arg->num_chan*4);
+	memcpy(tmp_ptr, arg->chan_list, arg->num_chan * 4);
 
 	ptr += len;
 
