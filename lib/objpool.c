@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 
 #include <linux/objpool.h>
+#include <linux/prefetch.h>
 
 /*
  * objpool: ring-array based lockless MPMC/FIFO queues
