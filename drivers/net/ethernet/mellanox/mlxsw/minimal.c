@@ -103,14 +103,14 @@ static void mlxsw_m_module_get_drvinfo(struct net_device *dev,
 	struct mlxsw_m_port *mlxsw_m_port = netdev_priv(dev);
 	struct mlxsw_m *mlxsw_m = mlxsw_m_port->mlxsw_m;
 
-	strlcpy(drvinfo->driver, mlxsw_m->bus_info->device_kind,
+	strscpy(drvinfo->driver, mlxsw_m->bus_info->device_kind,
 		sizeof(drvinfo->driver));
 	snprintf(drvinfo->fw_version, sizeof(drvinfo->fw_version),
 		 "%d.%d.%d",
 		 mlxsw_m->bus_info->fw_rev.major,
 		 mlxsw_m->bus_info->fw_rev.minor,
 		 mlxsw_m->bus_info->fw_rev.subminor);
-	strlcpy(drvinfo->bus_info, mlxsw_m->bus_info->device_name,
+	strscpy(drvinfo->bus_info, mlxsw_m->bus_info->device_name,
 		sizeof(drvinfo->bus_info));
 }
 
@@ -404,8 +404,10 @@ static int mlxsw_m_linecards_init(struct mlxsw_m *mlxsw_m)
 	mlxsw_m->line_cards = kcalloc(mlxsw_m->num_of_slots,
 				      sizeof(*mlxsw_m->line_cards),
 				      GFP_KERNEL);
-	if (!mlxsw_m->line_cards)
+	if (!mlxsw_m->line_cards) {
+		err = -ENOMEM;
 		goto err_kcalloc;
+	}
 
 	for (i = 0; i < mlxsw_m->num_of_slots; i++) {
 		mlxsw_m->line_cards[i] =
@@ -413,8 +415,10 @@ static int mlxsw_m_linecards_init(struct mlxsw_m *mlxsw_m)
 					    module_to_port,
 					    mlxsw_m->max_modules_per_slot),
 				GFP_KERNEL);
-		if (!mlxsw_m->line_cards[i])
+		if (!mlxsw_m->line_cards[i]) {
+			err = -ENOMEM;
 			goto err_kmalloc_array;
+		}
 
 		/* Invalidate the entries of module to local port mapping array. */
 		for (j = 0; j < mlxsw_m->max_modules_per_slot; j++)

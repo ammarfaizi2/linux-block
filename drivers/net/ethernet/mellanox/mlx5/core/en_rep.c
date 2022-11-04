@@ -70,7 +70,7 @@ static void mlx5e_rep_get_drvinfo(struct net_device *dev,
 	struct mlx5e_priv *priv = netdev_priv(dev);
 	struct mlx5_core_dev *mdev = priv->mdev;
 
-	strlcpy(drvinfo->driver, mlx5e_rep_driver_name,
+	strscpy(drvinfo->driver, mlx5e_rep_driver_name,
 		sizeof(drvinfo->driver));
 	snprintf(drvinfo->fw_version, sizeof(drvinfo->fw_version),
 		 "%d.%d.%04d (%.16s)",
@@ -471,22 +471,18 @@ mlx5e_rep_add_meta_tunnel_rule(struct mlx5e_priv *priv)
 	struct mlx5_eswitch_rep *rep = rpriv->rep;
 	struct mlx5_flow_handle *flow_rule;
 	struct mlx5_flow_group *g;
-	int err;
 
 	g = esw->fdb_table.offloads.send_to_vport_meta_grp;
 	if (!g)
 		return 0;
 
 	flow_rule = mlx5_eswitch_add_send_to_vport_meta_rule(esw, rep->vport);
-	if (IS_ERR(flow_rule)) {
-		err = PTR_ERR(flow_rule);
-		goto out;
-	}
+	if (IS_ERR(flow_rule))
+		return PTR_ERR(flow_rule);
 
 	rpriv->send_to_vport_meta_rule = flow_rule;
 
-out:
-	return err;
+	return 0;
 }
 
 static void
@@ -1228,7 +1224,6 @@ static const struct mlx5e_profile mlx5e_rep_profile = {
 	.update_stats           = mlx5e_stats_update_ndo_stats,
 	.rx_handlers            = &mlx5e_rx_handlers_rep,
 	.max_tc			= 1,
-	.rq_groups		= MLX5E_NUM_RQ_GROUPS(REGULAR),
 	.stats_grps		= mlx5e_rep_stats_grps,
 	.stats_grps_num		= mlx5e_rep_stats_grps_num,
 	.max_nch_limit		= mlx5e_rep_max_nch_limit,
@@ -1248,8 +1243,6 @@ static const struct mlx5e_profile mlx5e_uplink_rep_profile = {
 	.update_carrier	        = mlx5e_update_carrier,
 	.rx_handlers            = &mlx5e_rx_handlers_rep,
 	.max_tc			= MLX5E_MAX_NUM_TC,
-	/* XSK is needed so we can replace profile with NIC netdev */
-	.rq_groups		= MLX5E_NUM_RQ_GROUPS(XSK),
 	.stats_grps		= mlx5e_ul_rep_stats_grps,
 	.stats_grps_num		= mlx5e_ul_rep_stats_grps_num,
 };

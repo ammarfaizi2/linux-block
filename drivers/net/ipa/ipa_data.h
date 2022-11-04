@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
 /* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
- * Copyright (C) 2019-2021 Linaro Ltd.
+ * Copyright (C) 2019-2022 Linaro Ltd.
  */
 #ifndef _IPA_DATA_H_
 #define _IPA_DATA_H_
@@ -31,7 +31,7 @@
  * communication path between the IPA and a particular execution environment
  * (EE), such as the AP or Modem.  Each EE has a set of channels associated
  * with it, and each channel has an ID unique for that EE.  For the most part
- * the only GSI channels of concern to this driver belong to the AP
+ * the only GSI channels of concern to this driver belong to the AP.
  *
  * An endpoint is an IPA construct representing a single channel anywhere
  * in the system.  An IPA endpoint ID maps directly to an (EE, channel_id)
@@ -222,6 +222,7 @@ struct ipa_power_data {
  * @backward_compat:	BCR register value (prior to IPA v4.5 only)
  * @qsb_count:		number of entries in the qsb_data array
  * @qsb_data:		Qualcomm System Bus configuration data
+ * @modem_route_count:	number of modem entries in a routing table
  * @endpoint_count:	number of entries in the endpoint_data array
  * @endpoint_data:	IPA endpoint/GSI channel data
  * @resource_data:	IPA resource configuration data
@@ -233,6 +234,7 @@ struct ipa_data {
 	u32 backward_compat;
 	u32 qsb_count;		/* number of entries in qsb_data[] */
 	const struct ipa_qsb_data *qsb_data;
+	u32 modem_route_count;
 	u32 endpoint_count;	/* number of entries in endpoint_data[] */
 	const struct ipa_gsi_endpoint_data *endpoint_data;
 	const struct ipa_resource_data *resource_data;

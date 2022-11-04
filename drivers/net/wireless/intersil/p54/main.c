@@ -635,7 +635,7 @@ static int p54_get_survey(struct ieee80211_hw *dev, int idx,
 				/*
 				 * hw/fw has not accumulated enough sample sets.
 				 * Wait for 100ms, this ought to be enough to
-				 * to get at least one non-null set of channel
+				 * get at least one non-null set of channel
 				 * usage statistics.
 				 */
 				msleep(100);
@@ -705,6 +705,7 @@ static void p54_set_coverage_class(struct ieee80211_hw *dev,
 
 static const struct ieee80211_ops p54_ops = {
 	.tx			= p54_tx_80211,
+	.wake_tx_queue		= ieee80211_handle_wake_tx_queue,
 	.start			= p54_start,
 	.stop			= p54_stop,
 	.add_interface		= p54_add_interface,

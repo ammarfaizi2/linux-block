@@ -68,7 +68,6 @@
 #define SKIP_INSNS()	BPF_RAW_INSN(0xde, 0xa, 0xd, 0xbeef, 0xdeadbeef)
 
 #define DEFAULT_LIBBPF_LOG_LEVEL	4
-#define VERBOSE_LIBBPF_LOG_LEVEL	1
 
 #define F_NEEDS_EFFICIENT_UNALIGNED_ACCESS	(1 << 0)
 #define F_LOAD_WITH_STRICT_ALIGNMENT		(1 << 1)
@@ -81,6 +80,7 @@
 static bool unpriv_disabled = false;
 static int skips;
 static bool verbose = false;
+static int verif_log_level = 0;
 
 struct kfunc_btf_id_pair {
 	const char *kfunc;
@@ -759,7 +759,7 @@ static int load_btf_spec(__u32 *types, int types_len,
 		    .log_buf = bpf_vlog,
 		    .log_size = sizeof(bpf_vlog),
 		    .log_level = (verbose
-				  ? VERBOSE_LIBBPF_LOG_LEVEL
+				  ? verif_log_level
 				  : DEFAULT_LIBBPF_LOG_LEVEL),
 	);
 
@@ -1491,14 +1491,15 @@ static void do_test_single(struct bpf_test *test, bool unpriv,
 
 	opts.expected_attach_type = test->expected_attach_type;
 	if (verbose)
-		opts.log_level = VERBOSE_LIBBPF_LOG_LEVEL;
+		opts.log_level = verif_log_level | 4; /* force stats */
 	else if (expected_ret == VERBOSE_ACCEPT)
 		opts.log_level = 2;
 	else
 		opts.log_level = DEFAULT_LIBBPF_LOG_LEVEL;
 	opts.prog_flags = pflags;
 
-	if (prog_type == BPF_PROG_TYPE_TRACING && test->kfunc) {
+	if ((prog_type == BPF_PROG_TYPE_TRACING ||
+	     prog_type == BPF_PROG_TYPE_LSM) && test->kfunc) {
 		int attach_btf_id;
 
 		attach_btf_id = libbpf_find_vmlinux_btf_id(test->kfunc,
@@ -1745,6 +1746,13 @@ int main(int argc, char **argv)
 	if (argc > 1 && strcmp(argv[1], "-v") == 0) {
 		arg++;
 		verbose = true;
+		verif_log_level = 1;
+		argc--;
+	}
+	if (argc > 1 && strcmp(argv[1], "-vv") == 0) {
+		arg++;
+		verbose = true;
+		verif_log_level = 2;
 		argc--;
 	}
 

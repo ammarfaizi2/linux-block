@@ -95,6 +95,9 @@ struct inet_bind2_bucket {
 	possible_net_t		ib_net;
 	int			l3mdev;
 	unsigned short		port;
+#if IS_ENABLED(CONFIG_IPV6)
+	unsigned short		family;
+#endif
 	union {
 #if IS_ENABLED(CONFIG_IPV6)
 		struct in6_addr		v6_rcv_saddr;
@@ -168,7 +171,19 @@ struct inet_hashinfo {
 	/* The 2nd listener table hashed by local port and address */
 	unsigned int			lhash2_mask;
 	struct inet_listen_hashbucket	*lhash2;
+
+	bool				pernet;
 };
+
+static inline struct inet_hashinfo *tcp_or_dccp_get_hashinfo(const struct sock *sk)
+{
+#if IS_ENABLED(CONFIG_IP_DCCP)
+	return sk->sk_prot->h.hashinfo ? :
+		sock_net(sk)->ipv4.tcp_death_row.hashinfo;
+#else
+	return sock_net(sk)->ipv4.tcp_death_row.hashinfo;
+#endif
+}
 
 static inline struct inet_listen_hashbucket *
 inet_lhash2_bucket(struct inet_hashinfo *h, u32 hash)
@@ -203,6 +218,10 @@ static inline void inet_ehash_locks_free(struct inet_hashinfo *hashinfo)
 	kvfree(hashinfo->ehash_locks);
 	hashinfo->ehash_locks = NULL;
 }
+
+struct inet_hashinfo *inet_pernet_hashinfo_alloc(struct inet_hashinfo *hashinfo,
+						 unsigned int ehash_entries);
+void inet_pernet_hashinfo_free(struct inet_hashinfo *hashinfo);
 
 struct inet_bind_bucket *
 inet_bind_bucket_create(struct kmem_cache *cachep, struct net *net,

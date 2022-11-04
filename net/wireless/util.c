@@ -559,7 +559,7 @@ int ieee80211_data_to_8023_exthdr(struct sk_buff *skb, struct ethhdr *ehdr,
 		return -1;
 
 	hdrlen = ieee80211_hdrlen(hdr->frame_control) + data_offset;
-	if (skb->len < hdrlen + 8)
+	if (skb->len < hdrlen)
 		return -1;
 
 	/* convert IEEE 802.11 header + possible LLC headers into Ethernet
@@ -574,8 +574,9 @@ int ieee80211_data_to_8023_exthdr(struct sk_buff *skb, struct ethhdr *ehdr,
 	memcpy(tmp.h_dest, ieee80211_get_DA(hdr), ETH_ALEN);
 	memcpy(tmp.h_source, ieee80211_get_SA(hdr), ETH_ALEN);
 
-	if (iftype == NL80211_IFTYPE_MESH_POINT)
-		skb_copy_bits(skb, hdrlen, &mesh_flags, 1);
+	if (iftype == NL80211_IFTYPE_MESH_POINT &&
+	    skb_copy_bits(skb, hdrlen, &mesh_flags, 1) < 0)
+		return -1;
 
 	mesh_flags &= MESH_FLAGS_AE;
 
@@ -595,11 +596,12 @@ int ieee80211_data_to_8023_exthdr(struct sk_buff *skb, struct ethhdr *ehdr,
 		if (iftype == NL80211_IFTYPE_MESH_POINT) {
 			if (mesh_flags == MESH_FLAGS_AE_A4)
 				return -1;
-			if (mesh_flags == MESH_FLAGS_AE_A5_A6) {
-				skb_copy_bits(skb, hdrlen +
-					offsetof(struct ieee80211s_hdr, eaddr1),
-					tmp.h_dest, 2 * ETH_ALEN);
-			}
+			if (mesh_flags == MESH_FLAGS_AE_A5_A6 &&
+			    skb_copy_bits(skb, hdrlen +
+					  offsetof(struct ieee80211s_hdr, eaddr1),
+					  tmp.h_dest, 2 * ETH_ALEN) < 0)
+				return -1;
+
 			hdrlen += __ieee80211_get_mesh_hdrlen(mesh_flags);
 		}
 		break;
@@ -613,10 +615,11 @@ int ieee80211_data_to_8023_exthdr(struct sk_buff *skb, struct ethhdr *ehdr,
 		if (iftype == NL80211_IFTYPE_MESH_POINT) {
 			if (mesh_flags == MESH_FLAGS_AE_A5_A6)
 				return -1;
-			if (mesh_flags == MESH_FLAGS_AE_A4)
-				skb_copy_bits(skb, hdrlen +
-					offsetof(struct ieee80211s_hdr, eaddr1),
-					tmp.h_source, ETH_ALEN);
+			if (mesh_flags == MESH_FLAGS_AE_A4 &&
+			    skb_copy_bits(skb, hdrlen +
+					  offsetof(struct ieee80211s_hdr, eaddr1),
+					  tmp.h_source, ETH_ALEN) < 0)
+				return -1;
 			hdrlen += __ieee80211_get_mesh_hdrlen(mesh_flags);
 		}
 		break;
@@ -628,16 +631,15 @@ int ieee80211_data_to_8023_exthdr(struct sk_buff *skb, struct ethhdr *ehdr,
 		break;
 	}
 
-	skb_copy_bits(skb, hdrlen, &payload, sizeof(payload));
-	tmp.h_proto = payload.proto;
-
-	if (likely((!is_amsdu && ether_addr_equal(payload.hdr, rfc1042_header) &&
-		    tmp.h_proto != htons(ETH_P_AARP) &&
-		    tmp.h_proto != htons(ETH_P_IPX)) ||
-		   ether_addr_equal(payload.hdr, bridge_tunnel_header))) {
+	if (likely(skb_copy_bits(skb, hdrlen, &payload, sizeof(payload)) == 0 &&
+	           ((!is_amsdu && ether_addr_equal(payload.hdr, rfc1042_header) &&
+		     payload.proto != htons(ETH_P_AARP) &&
+		     payload.proto != htons(ETH_P_IPX)) ||
+		    ether_addr_equal(payload.hdr, bridge_tunnel_header)))) {
 		/* remove RFC1042 or Bridge-Tunnel encapsulation and
 		 * replace EtherType */
 		hdrlen += ETH_ALEN + 2;
+		tmp.h_proto = payload.proto;
 		skb_postpull_rcsum(skb, &payload, ETH_ALEN + 2);
 	} else {
 		tmp.h_proto = htons(skb->len - hdrlen);
@@ -988,7 +990,9 @@ void cfg80211_process_wdev_events(struct wireless_dev *wdev)
 			__cfg80211_leave(wiphy_to_rdev(wdev->wiphy), wdev);
 			break;
 		case EVENT_PORT_AUTHORIZED:
-			__cfg80211_port_authorized(wdev, ev->pa.bssid);
+			__cfg80211_port_authorized(wdev, ev->pa.bssid,
+						   ev->pa.td_bitmap,
+						   ev->pa.td_bitmap_len);
 			break;
 		}
 		wdev_unlock(wdev);
@@ -1361,7 +1365,7 @@ static u32 cfg80211_calculate_bitrate_he(struct rate_info *rate)
 		 25599, /*  4.166666... */
 		 17067, /*  2.777777... */
 		 12801, /*  2.083333... */
-		 11769, /*  1.851851... */
+		 11377, /*  1.851725... */
 		 10239, /*  1.666666... */
 		  8532, /*  1.388888... */
 		  7680, /*  1.250000... */
@@ -1444,7 +1448,7 @@ static u32 cfg80211_calculate_bitrate_eht(struct rate_info *rate)
 		 25599, /*  4.166666... */
 		 17067, /*  2.777777... */
 		 12801, /*  2.083333... */
-		 11769, /*  1.851851... */
+		 11377, /*  1.851725... */
 		 10239, /*  1.666666... */
 		  8532, /*  1.388888... */
 		  7680, /*  1.250000... */

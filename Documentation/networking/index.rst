@@ -92,6 +92,7 @@ Contents:
    radiotap-headers
    rds
    regulatory
+   representors
    rxrpc
    sctp
    secid
@@ -103,6 +104,7 @@ Contents:
    switchdev
    sysfs-tagging
    tc-actions-env-rules
+   tc-queue-filters
    tcp-thin
    team
    timestamping

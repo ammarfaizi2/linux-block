@@ -570,6 +570,30 @@ static ssize_t ieee80211_if_parse_tsf(
 }
 IEEE80211_IF_FILE_RW(tsf);
 
+static ssize_t ieee80211_if_fmt_valid_links(const struct ieee80211_sub_if_data *sdata,
+					    char *buf, int buflen)
+{
+	return snprintf(buf, buflen, "0x%x\n", sdata->vif.valid_links);
+}
+IEEE80211_IF_FILE_R(valid_links);
+
+static ssize_t ieee80211_if_fmt_active_links(const struct ieee80211_sub_if_data *sdata,
+					     char *buf, int buflen)
+{
+	return snprintf(buf, buflen, "0x%x\n", sdata->vif.active_links);
+}
+
+static ssize_t ieee80211_if_parse_active_links(struct ieee80211_sub_if_data *sdata,
+					       const char *buf, int buflen)
+{
+	u16 active_links;
+
+	if (kstrtou16(buf, 0, &active_links))
+		return -EINVAL;
+
+	return ieee80211_set_active_links(&sdata->vif, active_links) ?: buflen;
+}
+IEEE80211_IF_FILE_RW(active_links);
 
 #ifdef CONFIG_MAC80211_MESH
 IEEE80211_IF_FILE(estab_plinks, u.mesh.estab_plinks, ATOMIC);
@@ -653,8 +677,7 @@ static void add_common_files(struct ieee80211_sub_if_data *sdata)
 	DEBUGFS_ADD(rc_rateidx_vht_mcs_mask_5ghz);
 	DEBUGFS_ADD(hw_queues);
 
-	if (sdata->local->ops->wake_tx_queue &&
-	    sdata->vif.type != NL80211_IFTYPE_P2P_DEVICE &&
+	if (sdata->vif.type != NL80211_IFTYPE_P2P_DEVICE &&
 	    sdata->vif.type != NL80211_IFTYPE_NAN)
 		DEBUGFS_ADD(aqm);
 }
@@ -670,6 +693,8 @@ static void add_sta_files(struct ieee80211_sub_if_data *sdata)
 	DEBUGFS_ADD_MODE(uapsd_queues, 0600);
 	DEBUGFS_ADD_MODE(uapsd_max_sp_len, 0600);
 	DEBUGFS_ADD_MODE(tdls_wider_bw, 0600);
+	DEBUGFS_ADD_MODE(valid_links, 0200);
+	DEBUGFS_ADD_MODE(active_links, 0600);
 }
 
 static void add_ap_files(struct ieee80211_sub_if_data *sdata)

@@ -147,6 +147,7 @@ static struct vport *internal_dev_create(const struct vport_parms *parms)
 	}
 
 	dev_net_set(vport->dev, ovs_dp_get_net(vport->dp));
+	dev->ifindex = parms->desired_ifindex;
 	internal_dev = internal_dev_priv(vport->dev);
 	internal_dev->vport = vport;
 
@@ -189,7 +190,7 @@ static void internal_dev_destroy(struct vport *vport)
 	rtnl_unlock();
 }
 
-static netdev_tx_t internal_dev_recv(struct sk_buff *skb)
+static int internal_dev_recv(struct sk_buff *skb)
 {
 	struct net_device *netdev = skb->dev;
 

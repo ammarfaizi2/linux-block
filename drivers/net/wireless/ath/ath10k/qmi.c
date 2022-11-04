@@ -618,7 +618,7 @@ static int ath10k_qmi_host_cap_send_sync(struct ath10k_qmi *qmi)
 {
 	struct wlfw_host_cap_resp_msg_v01 resp = {};
 	struct wlfw_host_cap_req_msg_v01 req = {};
-	struct qmi_elem_info *req_ei;
+	const struct qmi_elem_info *req_ei;
 	struct ath10k *ar = qmi->ar;
 	struct ath10k_snoc *ar_snoc = ath10k_snoc_priv(ar);
 	struct qmi_txn txn;
@@ -792,7 +792,7 @@ static void ath10k_qmi_event_server_arrive(struct ath10k_qmi *qmi)
 		return;
 
 	/*
-	 * HACK: sleep for a while inbetween receiving the msa info response
+	 * HACK: sleep for a while between receiving the msa info response
 	 * and the XPU update to prevent SDM845 from crashing due to a security
 	 * violation, when running MPSS.AT.4.0.c2-01184-SDM845_GEN_PACK-1.
 	 */

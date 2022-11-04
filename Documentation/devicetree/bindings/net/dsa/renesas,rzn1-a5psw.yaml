@@ -74,10 +74,10 @@ properties:
 
         properties:
           pcs-handle:
+            maxItems: 1
             description:
               phandle pointing to a PCS sub-node compatible with
               renesas,rzn1-miic.yaml#
-            $ref: /schemas/types.yaml#/definitions/phandle
 
 unevaluatedProperties: false
 
@@ -130,7 +130,6 @@ examples:
             port@4 {
                 reg = <4>;
                 ethernet = <&gmac2>;
-                label = "cpu";
                 phy-mode = "internal";
 
                 fixed-link {

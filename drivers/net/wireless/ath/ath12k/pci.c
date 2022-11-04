@@ -493,7 +493,7 @@ static int ath12k_pci_ext_irq_config(struct ath12k_base *ab)
 		irq_grp->grp_id = i;
 		init_dummy_netdev(&irq_grp->napi_ndev);
 		netif_napi_add(&irq_grp->napi_ndev, &irq_grp->napi,
-			       ath12k_pci_ext_grp_napi_poll, NAPI_POLL_WEIGHT);
+			       ath12k_pci_ext_grp_napi_poll);
 
 		if (ab->hw_params->ring_mask->tx[i] ||
 		    ab->hw_params->ring_mask->rx[i] ||
