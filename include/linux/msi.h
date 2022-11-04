@@ -626,6 +626,11 @@ void platform_msi_device_domain_free(struct irq_domain *domain, unsigned int vir
 				     unsigned int nvec);
 void *platform_msi_get_host_data(struct irq_domain *domain);
 
+/* Per device platform MSI */
+int platform_device_ims_init_and_alloc_irqs(struct device *dev, unsigned int nvec,
+					    irq_write_msi_msg_t write_msi_msg);
+void platform_device_ims_free_irqs_all(struct device *dev);
+
 /* PCI specific interfaces */
 struct pci_dev *msi_desc_to_pci_dev(struct msi_desc *desc);
 void pci_write_msi_msg(unsigned int irq, struct msi_msg *msg);
