@@ -89,6 +89,15 @@ config SWIOTLB
 	bool
 	select NEED_DMA_MAP_STATE
 
+config ARCH_WANT_KMALLOC_DMA_BOUNCE
+	bool
+
+config DMA_BOUNCE_UNALIGNED_KMALLOC
+	def_bool y
+	depends on ARCH_WANT_KMALLOC_DMA_BOUNCE
+	depends on SWIOTLB && !SLOB
+	select NEED_SG_DMA_FLAGS
+
 config DMA_RESTRICTED_POOL
 	bool "DMA Restricted Pool"
 	depends on OF && OF_RESERVED_MEM && SWIOTLB
