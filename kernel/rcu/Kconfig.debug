@@ -95,6 +95,16 @@ config RCU_EXP_CPU_STALL_TIMEOUT
 	  says to use the RCU_CPU_STALL_TIMEOUT value converted from
 	  seconds to milliseconds.
 
+config RCU_CPU_STALL_CPUTIME
+	bool "Provide additional rcu stall debug information"
+	depends on RCU_STALL_COMMON
+	default n
+	help
+	  Statistics during the period from RCU_CPU_STALL_TIMEOUT/2 to
+	  RCU_CPU_STALL_TIMEOUT, such as the number of (hard interrupts, soft
+	  interrupts, task switches) and the cputime of (hard interrupts, soft
+	  interrupts, kernel tasks) are added to the rcu stall report.
+
 config RCU_TRACE
 	bool "Enable tracing for RCU"
 	depends on DEBUG_KERNEL
