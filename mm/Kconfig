@@ -143,6 +143,12 @@ config ZSWAP_ZPOOL_DEFAULT_ZSMALLOC
 	select ZSMALLOC
 	help
 	  Use the zsmalloc allocator as the default allocator.
+
+config ZSWAP_ZPOOL_DEFAULT_ZBLOCK
+	bool "zblock"
+	select ZBLOCK
+	help
+	  Use the zblock allocator as the default allocator.
 endchoice
 
 config ZSWAP_ZPOOL_DEFAULT
@@ -151,6 +157,7 @@ config ZSWAP_ZPOOL_DEFAULT
        default "zbud" if ZSWAP_ZPOOL_DEFAULT_ZBUD
        default "z3fold" if ZSWAP_ZPOOL_DEFAULT_Z3FOLD
        default "zsmalloc" if ZSWAP_ZPOOL_DEFAULT_ZSMALLOC
+	default "zblock" if ZSWAP_ZPOOL_DEFAULT_ZBLOCK
        default ""
 
 config ZBUD
@@ -180,6 +187,16 @@ config ZSMALLOC
 	  zsmalloc is a slab-based memory allocator designed to store
 	  pages of various compression levels efficiently. It achieves
 	  the highest storage density with the least amount of fragmentation.
+
+config ZBLOCK
+	tristate "Simple block allocator (zblock)"
+	depends on ZPOOL
+	help
+	  A special purpose allocator for storing compressed pages.
+	  It stores integer number of compressed pages per block and
+	  each block consists of number of physical pages being a power of 2.
+	  zblock provides fast read/write, limited worst case time for
+	  operations and good compression ratio in most scenarios.
 
 config ZSMALLOC_STAT
 	bool "Export zsmalloc statistics"
