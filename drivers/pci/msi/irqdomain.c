@@ -148,17 +148,45 @@ static void pci_device_domain_set_desc(msi_alloc_info_t *arg, struct msi_desc *d
 	arg->hwirq = desc->msi_index;
 }
 
+static DEFINE_STATIC_KEY_FALSE(pci_msi_mask_unmask_parent);
+
+/**
+ * pci_device_msi_mask_unmask_parent_enable - Enable propagation of mask/unmask
+ *					      to the parent interrupt chip
+ *
+ * For MSI parent interrupt domains which want to mask at the parent interrupt
+ * chip too.
+ */
+void pci_device_msi_mask_unmask_parent_enable(void)
+{
+	static_branch_enable(&pci_msi_mask_unmask_parent);
+}
+
+static __always_inline void cond_mask_parent(struct irq_data *data)
+{
+	if (static_branch_unlikely(&pci_msi_mask_unmask_parent))
+		irq_chip_mask_parent(data);
+}
+
+static __always_inline void cond_unmask_parent(struct irq_data *data)
+{
+	if (static_branch_unlikely(&pci_msi_mask_unmask_parent))
+		irq_chip_unmask_parent(data);
+}
+
 static void pci_mask_msi(struct irq_data *data)
 {
 	struct msi_desc *desc = irq_data_get_msi_desc(data);
 
 	pci_msi_mask(desc, BIT(data->irq - desc->irq));
+	cond_mask_parent(data);
 }
 
 static void pci_unmask_msi(struct irq_data *data)
 {
 	struct msi_desc *desc = irq_data_get_msi_desc(data);
 
+	cond_unmask_parent(data);
 	pci_msi_unmask(desc, BIT(data->irq - desc->irq));
 }
 
@@ -195,10 +223,12 @@ static struct msi_domain_template pci_msi_template = {
 static void pci_mask_msix(struct irq_data *data)
 {
 	pci_msix_mask(irq_data_get_msi_desc(data));
+	cond_mask_parent(data);
 }
 
 static void pci_unmask_msix(struct irq_data *data)
 {
+	cond_unmask_parent(data);
 	pci_msix_unmask(irq_data_get_msi_desc(data));
 }
 
