@@ -634,4 +634,10 @@ static inline struct irq_domain *pci_msi_get_device_domain(struct pci_dev *pdev)
 }
 #endif /* CONFIG_GENERIC_MSI_IRQ */
 
+#ifdef CONFIG_PCI_MSI
+void pci_device_msi_mask_unmask_parent_enable(void);
+#else /* CONFIG_PCI_MSI */
+static inline void pci_device_msi_mask_unmask_parent_enable(void) { }
+#endif /* !CONFIG_PCI_MSI */
+
 #endif /* LINUX_MSI_H */
