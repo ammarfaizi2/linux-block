@@ -457,7 +457,7 @@ static void clocksource_watchdog(struct timer_list *unused)
 			}
 			if (needwarn) {
 				/* This can happen on busy systems, which can delay the watchdog. */
-				pr_warn("timekeeping watchdog on CPU%d: Watchdog clocksource '%s' advanced an excessive %lld ns during %d-jiffy time interval (%lu additional), probable CPU overutilization, skipping watchdog check.\n", smp_processor_id(), watchdog->name, wd_nsec, WATCHDOG_INTERVAL, cs->wd_bogus_count);
+				pr_warn("timekeeping watchdog on CPU%d: Watchdog clocksource '%s' advanced an excessive %lld ns during %d-jiffy time interval (%lu since last message), probable CPU overutilization, skipping watchdog check.\n", smp_processor_id(), watchdog->name, wd_nsec, WATCHDOG_INTERVAL, cs->wd_bogus_count);
 				cs->wd_last_bogus = wdnow;
 				if (cs->wd_bogus_shift < 10)
 					cs->wd_bogus_shift++;
