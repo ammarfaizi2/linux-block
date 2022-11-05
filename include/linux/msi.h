@@ -629,12 +629,14 @@ struct irq_domain *pci_msi_create_irq_domain(struct fwnode_handle *fwnode,
 					     struct irq_domain *parent);
 u32 pci_msi_domain_get_msi_rid(struct irq_domain *domain, struct pci_dev *pdev);
 struct irq_domain *pci_msi_get_device_domain(struct pci_dev *pdev);
+void pci_device_msi_mask_unmask_parent_enable(void);
 #else /* CONFIG_PCI_MSI */
 static inline struct irq_domain *pci_msi_get_device_domain(struct pci_dev *pdev)
 {
 	return NULL;
 }
 static inline void pci_write_msi_msg(unsigned int irq, struct msi_msg *msg) { }
+static inline void pci_device_msi_mask_unmask_parent_enable(void) { }
 #endif /* !CONFIG_PCI_MSI */
 
 #endif /* LINUX_MSI_H */
