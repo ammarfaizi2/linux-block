@@ -545,6 +545,8 @@ static inline int dma_set_min_align_mask(struct device *dev,
 
 static inline int dma_get_cache_alignment(void)
 {
+	if (IS_ENABLED(CONFIG_ARCH_HAS_DMA_CACHE_LINE_SIZE))
+		return cache_line_size();
 #ifdef ARCH_HAS_DMA_MINALIGN
 	return ARCH_DMA_MINALIGN;
 #endif

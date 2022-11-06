@@ -79,6 +79,12 @@ config ARCH_HAS_DMA_PREP_COHERENT
 config ARCH_HAS_FORCE_DMA_UNENCRYPTED
 	bool
 
+config ARCH_HAS_DMA_CACHE_LINE_SIZE
+	bool
+	help
+	  Select if the architecture has non-coherent DMA and
+	  cache_line_size() is a safe alignment for DMA buffers.
+
 config SWIOTLB
 	bool
 	select NEED_DMA_MAP_STATE
