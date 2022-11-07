@@ -1458,6 +1458,39 @@ int msi_domain_alloc_irqs_all_locked(struct device *dev, unsigned int domid, int
 	return msi_domain_alloc_locked(dev, &ctrl);
 }
 
+static struct msi_map __msi_domain_alloc_irq_at(struct device *dev, unsigned int domid,
+						unsigned int index,
+						const struct irq_affinity_desc *affdesc,
+						union msi_dev_cookie *cookie)
+{
+	struct msi_map map = { };
+	struct msi_desc *desc;
+	int ret;
+
+	desc = msi_alloc_desc(dev, 1, affdesc);
+	if (!desc) {
+		map.index = -ENOMEM;
+		return map;
+	}
+
+	if (cookie)
+		desc->data.cookie = *cookie;
+
+	ret = msi_insert_desc(dev, desc, domid, index);
+	if (ret) {
+		 map.index = ret;
+		 return map;
+	}
+
+	map.index = desc->msi_index;
+	ret = msi_domain_alloc_irqs_range_locked(dev, domid, map.index, map.index);
+	if (ret)
+		map.index = ret;
+	else
+		map.virq = desc->irq;
+	return map;
+}
+
 /**
  * msi_domain_alloc_irq_at - Allocate an interrupt from a MSI interrupt domain at
  *			     a given index - or at the next free index
@@ -1488,38 +1521,13 @@ struct msi_map msi_domain_alloc_irq_at(struct device *dev, unsigned int domid, u
 {
 	struct irq_domain *domain;
 	struct msi_map map = { };
-	struct msi_desc *desc;
-	int ret;
 
 	msi_lock_descs(dev);
 	domain = msi_get_device_domain(dev, domid);
-	if (!domain) {
-		map.index = -ENODEV;
-		goto unlock;
-	}
-
-	desc = msi_alloc_desc(dev, 1, affdesc);
-	if (!desc) {
-		map.index = -ENOMEM;
-		goto unlock;
-	}
-
-	if (cookie)
-		desc->data.cookie = *cookie;
-
-	ret = msi_insert_desc(dev, desc, domid, index);
-	if (ret) {
-		map.index = ret;
-		goto unlock;
-	}
-
-	map.index = desc->msi_index;
-	ret = msi_domain_alloc_irqs_range_locked(dev, domid, map.index, map.index);
-	if (ret)
-		map.index = ret;
+	if (domain)
+		map = __msi_domain_alloc_irq_at(dev, domid, index, affdesc, cookie);
 	else
-		map.virq = desc->irq;
-unlock:
+		map.index = -ENODEV;
 	msi_unlock_descs(dev);
 	return map;
 }
