@@ -193,19 +193,19 @@ which point, all earlier RCU callbacks are guaranteed to have completed.
 
 The original code for rcu_barrier() was roughly as follows::
 
- 1  void rcu_barrier(void)
- 2  {
- 3    BUG_ON(in_interrupt());
- 4    /* Take cpucontrol mutex to protect against CPU hotplug */
- 5    mutex_lock(&rcu_barrier_mutex);
- 6    init_completion(&rcu_barrier_completion);
- 7    atomic_set(&rcu_barrier_cpu_count, 1);
- 8    on_each_cpu(rcu_barrier_func, NULL, 0, 1);
- 9    if (atomic_dec_and_test(&rcu_barrier_cpu_count))
-10      complete(&rcu_barrier_completion);
-11    wait_for_completion(&rcu_barrier_completion);
-12    mutex_unlock(&rcu_barrier_mutex);
-13  }
+ 1   void rcu_barrier(void)
+ 2   {
+ 3     BUG_ON(in_interrupt());
+ 4     /* Take cpucontrol mutex to protect against CPU hotplug */
+ 5     mutex_lock(&rcu_barrier_mutex);
+ 6     init_completion(&rcu_barrier_completion);
+ 7     atomic_set(&rcu_barrier_cpu_count, 1);
+ 8     on_each_cpu(rcu_barrier_func, NULL, 0, 1);
+ 9     if (atomic_dec_and_test(&rcu_barrier_cpu_count))
+ 10       complete(&rcu_barrier_completion);
+ 11    wait_for_completion(&rcu_barrier_completion);
+ 12    mutex_unlock(&rcu_barrier_mutex);
+ 13  }
 
 Line 3 verifies that the caller is in process context, and lines 5 and 12
 use rcu_barrier_mutex to ensure that only one rcu_barrier() is using the
