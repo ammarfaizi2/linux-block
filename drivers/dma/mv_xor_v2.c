@@ -764,8 +764,8 @@ static int mv_xor_v2_probe(struct platform_device *pdev)
 			goto disable_reg_clk;
 	}
 
-	ret = platform_msi_domain_alloc_irqs(&pdev->dev, 1,
-					     mv_xor_v2_set_msi_msg);
+	ret = platform_device_ims_init_and_alloc_irqs(&pdev->dev, 1,
+						      mv_xor_v2_set_msi_msg);
 	if (ret)
 		goto disable_clk;
 
@@ -868,7 +868,7 @@ free_hw_desq:
 			  xor_dev->desc_size * MV_XOR_V2_DESC_NUM,
 			  xor_dev->hw_desq_virt, xor_dev->hw_desq);
 free_msi_irqs:
-	platform_msi_domain_free_irqs(&pdev->dev);
+	platform_device_ims_free_irqs_all(&pdev->dev);
 disable_clk:
 	clk_disable_unprepare(xor_dev->clk);
 disable_reg_clk:
@@ -888,7 +888,7 @@ static int mv_xor_v2_remove(struct platform_device *pdev)
 
 	devm_free_irq(&pdev->dev, xor_dev->irq, xor_dev);
 
-	platform_msi_domain_free_irqs(&pdev->dev);
+	platform_device_ims_free_irqs_all(&pdev->dev);
 
 	tasklet_kill(&xor_dev->irq_tasklet);
 
