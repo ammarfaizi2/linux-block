@@ -359,6 +359,7 @@ static noinline void check_find(struct maple_tree *mt)
 	unsigned long val = 0;
 	unsigned long count;
 	unsigned long max;
+	unsigned long top;
 	unsigned long last = 0, index = 0;
 	void *entry, *entry2;
 
@@ -367,10 +368,17 @@ static noinline void check_find(struct maple_tree *mt)
 	/* Insert 0. */
 	MT_BUG_ON(mt, mtree_insert_index(mt, val++, GFP_KERNEL));
 
-	if (MAPLE_32BIT)
+#if defined(CONFIG_64BIT)
+	top = 4398046511104UL;
+#else
+	top = ULONG_MAX;
+#endif
+
+	if (MAPLE_32BIT) {
 		count = 15;
-	else
+	} else {
 		count = 20;
+	}
 
 	for (int i = 0; i <= count; i++) {
 		if (val != 64)
@@ -450,9 +458,8 @@ static noinline void check_find(struct maple_tree *mt)
 	index = 0;
 	MT_BUG_ON(mt, mtree_insert_index(mt, ULONG_MAX, GFP_KERNEL));
 	mt_for_each(mt, entry, index, ULONG_MAX) {
-		if ((val == 4398046511104) || (val == ULONG_MAX))
-			MT_BUG_ON(mt, entry !=
-					xa_mk_value(ULONG_MAX & LONG_MAX));
+		if (val == top)
+			MT_BUG_ON(mt, entry != xa_mk_value(LONG_MAX));
 		else
 			MT_BUG_ON(mt, xa_mk_value(val) != entry);
 
@@ -493,8 +500,8 @@ static noinline void check_find(struct maple_tree *mt)
 	mas_for_each(&mas, entry, ULONG_MAX) {
 		if (val == 64)
 			MT_BUG_ON(mt, entry != XA_ZERO_ENTRY);
-		else if ((val == 4398046511104) || (val == ULONG_MAX))
-			MT_BUG_ON(mt, entry != xa_mk_value(ULONG_MAX & LONG_MAX));
+		else if (val == top)
+			MT_BUG_ON(mt, entry != xa_mk_value(LONG_MAX));
 		else
 			MT_BUG_ON(mt, xa_mk_value(val) != entry);
 
