@@ -1306,6 +1306,8 @@ const struct rtw89_mac_size_set rtw89_mac_size = {
 	.ple_qt47 = {525, 0, 32, 20, 1034, 13, 1199, 0, 1053, 62, 160, 1037,},
 	/* PCIE 64 */
 	.ple_qt58 = {147, 0, 16, 20, 157, 13, 229, 0, 172, 14, 24, 0,},
+	/* 8852A PCIE WOW */
+	.ple_qt_52a_wow = {264, 0, 32, 20, 64, 13, 1005, 0, 64, 128, 120,},
 };
 EXPORT_SYMBOL(rtw89_mac_size);
 
@@ -1331,6 +1333,60 @@ static const struct rtw89_dle_mem *get_dle_mem_cfg(struct rtw89_dev *rtwdev,
 	mac->dle_info.c1_rx_qta = cfg->ple_min_qt->cma1_dma;
 
 	return cfg;
+}
+
+static bool mac_is_txq_empty(struct rtw89_dev *rtwdev)
+{
+	struct rtw89_mac_dle_dfi_qempty qempty;
+	u32 qnum, qtmp, val32, msk32;
+	int i, j, ret;
+
+	qnum = rtwdev->chip->wde_qempty_acq_num;
+	qempty.dle_type = DLE_CTRL_TYPE_WDE;
+
+	for (i = 0; i < qnum; i++) {
+		qempty.grpsel = i;
+		ret = dle_dfi_qempty(rtwdev, &qempty);
+		if (ret) {
+			rtw89_warn(rtwdev, "dle dfi acq empty %d\n", ret);
+			return false;
+		}
+		qtmp = qempty.qempty;
+		for (j = 0 ; j < QEMP_ACQ_GRP_MACID_NUM; j++) {
+			val32 = FIELD_GET(QEMP_ACQ_GRP_QSEL_MASK, qtmp);
+			if (val32 != QEMP_ACQ_GRP_QSEL_MASK)
+				return false;
+			qtmp >>= QEMP_ACQ_GRP_QSEL_SH;
+		}
+	}
+
+	qempty.grpsel = rtwdev->chip->wde_qempty_mgq_sel;
+	ret = dle_dfi_qempty(rtwdev, &qempty);
+	if (ret) {
+		rtw89_warn(rtwdev, "dle dfi mgq empty %d\n", ret);
+		return false;
+	}
+	msk32 = B_CMAC0_MGQ_NORMAL | B_CMAC0_MGQ_NO_PWRSAV | B_CMAC0_CPUMGQ;
+	if ((qempty.qempty & msk32) != msk32)
+		return false;
+
+	if (rtwdev->dbcc_en) {
+		msk32 |= B_CMAC1_MGQ_NORMAL | B_CMAC1_MGQ_NO_PWRSAV | B_CMAC1_CPUMGQ;
+		if ((qempty.qempty & msk32) != msk32)
+			return false;
+	}
+
+	msk32 = B_AX_WDE_EMPTY_QTA_DMAC_WLAN_CPU | B_AX_WDE_EMPTY_QTA_DMAC_DATA_CPU |
+		B_AX_PLE_EMPTY_QTA_DMAC_WLAN_CPU | B_AX_PLE_EMPTY_QTA_DMAC_H2C |
+		B_AX_WDE_EMPTY_QUE_OTHERS | B_AX_PLE_EMPTY_QUE_DMAC_MPDU_TX |
+		B_AX_WDE_EMPTY_QTA_DMAC_CPUIO | B_AX_PLE_EMPTY_QTA_DMAC_CPUIO |
+		B_AX_WDE_EMPTY_QUE_DMAC_PKTIN | B_AX_WDE_EMPTY_QTA_DMAC_HIF |
+		B_AX_PLE_EMPTY_QUE_DMAC_SEC_TX | B_AX_WDE_EMPTY_QTA_DMAC_PKTIN |
+		B_AX_PLE_EMPTY_QTA_DMAC_B0_TXPL | B_AX_PLE_EMPTY_QTA_DMAC_B1_TXPL |
+		B_AX_PLE_EMPTY_QTA_DMAC_MPDU_TX;
+	val32 = rtw89_read32(rtwdev, R_AX_DLE_EMPTY0);
+
+	return (val32 & msk32) == msk32;
 }
 
 static inline u32 dle_used_size(const struct rtw89_dle_size *wde,
@@ -1478,7 +1534,47 @@ static void ple_quota_cfg(struct rtw89_dev *rtwdev,
 		SET_QUOTA(tx_rpt, PLE, 11);
 }
 
+int rtw89_mac_resize_ple_rx_quota(struct rtw89_dev *rtwdev, bool wow)
+{
+	const struct rtw89_ple_quota *min_cfg, *max_cfg;
+	const struct rtw89_dle_mem *cfg;
+	u32 val;
+
+	if (rtwdev->chip->chip_id == RTL8852C)
+		return 0;
+
+	if (rtwdev->mac.qta_mode != RTW89_QTA_SCC) {
+		rtw89_err(rtwdev, "[ERR]support SCC mode only\n");
+		return -EINVAL;
+	}
+
+	if (wow)
+		cfg = get_dle_mem_cfg(rtwdev, RTW89_QTA_WOW);
+	else
+		cfg = get_dle_mem_cfg(rtwdev, RTW89_QTA_SCC);
+	if (!cfg) {
+		rtw89_err(rtwdev, "[ERR]get_dle_mem_cfg\n");
+		return -EINVAL;
+	}
+
+	min_cfg = cfg->ple_min_qt;
+	max_cfg = cfg->ple_max_qt;
+	SET_QUOTA(cma0_dma, PLE, 6);
+	SET_QUOTA(cma1_dma, PLE, 7);
+
+	return 0;
+}
 #undef SET_QUOTA
+
+void rtw89_mac_hw_mgnt_sec(struct rtw89_dev *rtwdev, bool enable)
+{
+	u32 msk32 = B_AX_UC_MGNT_DEC | B_AX_BMC_MGNT_DEC;
+
+	if (enable)
+		rtw89_write32_set(rtwdev, R_AX_SEC_ENG_CTRL, msk32);
+	else
+		rtw89_write32_clr(rtwdev, R_AX_SEC_ENG_CTRL, msk32);
+}
 
 static void dle_quota_cfg(struct rtw89_dev *rtwdev,
 			  const struct rtw89_dle_mem *cfg,
@@ -1829,10 +1925,10 @@ static int scheduler_init(struct rtw89_dev *rtwdev, u8 mac_idx)
 	return 0;
 }
 
-static int rtw89_mac_typ_fltr_opt(struct rtw89_dev *rtwdev,
-				  enum rtw89_machdr_frame_type type,
-				  enum rtw89_mac_fwd_target fwd_target,
-				  u8 mac_idx)
+int rtw89_mac_typ_fltr_opt(struct rtw89_dev *rtwdev,
+			   enum rtw89_machdr_frame_type type,
+			   enum rtw89_mac_fwd_target fwd_target,
+			   u8 mac_idx)
 {
 	u32 reg;
 	u32 val;
@@ -3116,7 +3212,7 @@ static void rtw89_disable_fw_watchdog(struct rtw89_dev *rtwdev)
 	rtw89_mac_mem_write(rtwdev, R_AX_WDT_STATUS, val32, RTW89_MAC_MEM_CPU_LOCAL);
 }
 
-static void rtw89_mac_disable_cpu(struct rtw89_dev *rtwdev)
+void rtw89_mac_disable_cpu(struct rtw89_dev *rtwdev)
 {
 	clear_bit(RTW89_FLAG_FW_RDY, rtwdev->flags);
 
@@ -3131,8 +3227,7 @@ static void rtw89_mac_disable_cpu(struct rtw89_dev *rtwdev)
 	rtw89_write32_set(rtwdev, R_AX_PLATFORM_ENABLE, B_AX_PLATFORM_EN);
 }
 
-static int rtw89_mac_enable_cpu(struct rtw89_dev *rtwdev, u8 boot_reason,
-				bool dlfw)
+int rtw89_mac_enable_cpu(struct rtw89_dev *rtwdev, u8 boot_reason, bool dlfw)
 {
 	u32 val;
 	int ret;
@@ -3270,11 +3365,6 @@ int rtw89_mac_partial_init(struct rtw89_dev *rtwdev)
 		if (ret)
 			return ret;
 	}
-
-	rtw89_mac_disable_cpu(rtwdev);
-	ret = rtw89_mac_enable_cpu(rtwdev, 0, true);
-	if (ret)
-		return ret;
 
 	ret = rtw89_fw_download(rtwdev, RTW89_FW_NORMAL);
 	if (ret)
@@ -4866,4 +4956,25 @@ void rtw89_mac_pkt_drop_vif(struct rtw89_dev *rtwdev, struct rtw89_vif *rtwvif)
 	ieee80211_iterate_stations_atomic(rtwdev->hw,
 					  rtw89_mac_pkt_drop_vif_iter,
 					  rtwvif);
+}
+
+int rtw89_mac_ptk_drop_by_band_and_wait(struct rtw89_dev *rtwdev,
+					enum rtw89_mac_idx band)
+{
+	struct rtw89_pkt_drop_params params = {0};
+	bool empty;
+	int i, ret = 0, try_cnt = 3;
+
+	params.mac_band = band;
+	params.sel = RTW89_PKT_DROP_SEL_BAND_ONCE;
+
+	for (i = 0; i < try_cnt; i++) {
+		ret = read_poll_timeout(mac_is_txq_empty, empty, empty, 50,
+					50000, false, rtwdev);
+		if (ret)
+			rtw89_fw_h2c_pkt_drop(rtwdev, &params);
+		else
+			return 0;
+	}
+	return ret;
 }
