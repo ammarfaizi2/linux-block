@@ -55,6 +55,25 @@ bool gic_msi_lib_init_dev_msi_info(struct device *dev, struct irq_domain *domain
 
 		pci_device_msi_mask_unmask_parent_enable();
 		break;
+	case DOMAIN_BUS_DEVICE_IMS:
+		/*
+		 * Per device IMS should never have any MSI feature bits
+		 * set. It's sole purpose is to create a dumb interrupt
+		 * chip which has a device specific irq_write_msi_msg()
+		 * callback.
+		 */
+		if (WARN_ON_ONCE(info->flags))
+			return false;
+
+		/* Core managed MSI descriptors */
+		info->flags = MSI_FLAG_ALLOC_SIMPLE_MSI_DESCS | MSI_FLAG_FREE_MSI_DESCS;
+
+		/*
+		 * Per device platform IMS domain creation stores the
+		 * irq_write_msi_msg() callback in @info->data.
+		 */
+		info->chip->irq_write_msi_msg = info->data;
+		break;
 	default:
 		/*
 		 * This should never be reached. See
