@@ -199,31 +199,16 @@ static int mbi_allocate_pci_domain(struct irq_domain *nexus_domain,
 }
 #endif
 
-static void mbi_compose_mbi_msg(struct irq_data *data, struct msi_msg *msg)
-{
-	mbi_compose_msi_msg(data, msg);
-
-	msg[1].address_hi = upper_32_bits(mbi_phys_base + GICD_CLRSPI_NSR);
-	msg[1].address_lo = lower_32_bits(mbi_phys_base + GICD_CLRSPI_NSR);
-	msg[1].data = data->parent_data->hwirq;
-
-	iommu_dma_compose_msi_msg(irq_data_get_msi_desc(data), &msg[1]);
-}
-
 /* Platform-MSI specific irqchip */
 static struct irq_chip mbi_pmsi_irq_chip = {
 	.name			= "pMSI",
-	.irq_set_type		= irq_chip_set_type_parent,
-	.irq_compose_msi_msg	= mbi_compose_mbi_msg,
-	.flags			= IRQCHIP_SUPPORTS_LEVEL_MSI,
 };
 
 static struct msi_domain_ops mbi_pmsi_ops = {
 };
 
 static struct msi_domain_info mbi_pmsi_domain_info = {
-	.flags	= (MSI_FLAG_USE_DEF_DOM_OPS | MSI_FLAG_USE_DEF_CHIP_OPS |
-		   MSI_FLAG_LEVEL_CAPABLE),
+	.flags	= (MSI_FLAG_USE_DEF_DOM_OPS | MSI_FLAG_USE_DEF_CHIP_OPS),
 	.ops	= &mbi_pmsi_ops,
 	.chip	= &mbi_pmsi_irq_chip,
 };
