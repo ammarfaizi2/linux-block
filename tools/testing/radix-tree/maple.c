@@ -14,7 +14,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-
 #define module_init(x)
 #define module_exit(x)
 #define MODULE_AUTHOR(x)
