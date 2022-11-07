@@ -1366,10 +1366,6 @@ struct netdev_net_notifier {
  *	queue id bound to an AF_XDP socket. The flags field specifies if
  *	only RX, only Tx, or both should be woken up using the flags
  *	XDP_WAKEUP_RX and XDP_WAKEUP_TX.
- * struct devlink_port *(*ndo_get_devlink_port)(struct net_device *dev);
- *	Get devlink port instance associated with a given netdev.
- *	Called with a reference on the netdevice and devlink locks only,
- *	rtnl_lock is not held.
  * int (*ndo_tunnel_ctl)(struct net_device *dev, struct ip_tunnel_parm *p,
  *			 int cmd);
  *	Add, change, delete or get information on an IPv4 tunnel.
@@ -1600,7 +1596,6 @@ struct net_device_ops {
 							  struct xdp_buff *xdp);
 	int			(*ndo_xsk_wakeup)(struct net_device *dev,
 						  u32 queue_id, u32 flags);
-	struct devlink_port *	(*ndo_get_devlink_port)(struct net_device *dev);
 	int			(*ndo_tunnel_ctl)(struct net_device *dev,
 						  struct ip_tunnel_parm *p, int cmd);
 	struct net_device *	(*ndo_get_peer_dev)(struct net_device *dev);
@@ -1999,6 +1994,11 @@ enum netdev_ml_priv_type {
  *					registered
  *	@offload_xstats_l3:	L3 HW stats for this netdevice.
  *
+ *	@devlink_port:	Pointer to related devlink port structure.
+ *			Assigned by a driver before netdev registration using
+ *			SET_NETDEV_DEVLINK_PORT macro. This pointer is static
+ *			during the time netdevice is registered.
+ *
  *	FIXME: cleanup struct net_device such that network protocol info
  *	moves out.
  */
@@ -2349,8 +2349,21 @@ struct net_device {
 	netdevice_tracker	watchdog_dev_tracker;
 	netdevice_tracker	dev_registered_tracker;
 	struct rtnl_hw_stats64	*offload_xstats_l3;
+
+	struct devlink_port	*devlink_port;
 };
 #define to_net_dev(d) container_of(d, struct net_device, dev)
+
+/*
+ * Driver should use this to assign devlink port instance to a netdevice
+ * before it registers the netdevice. Therefore devlink_port is static
+ * during the netdev lifetime after it is registered.
+ */
+#define SET_NETDEV_DEVLINK_PORT(dev, port)			\
+({								\
+	WARN_ON((dev)->reg_state != NETREG_UNINITIALIZED);	\
+	((dev)->devlink_port = (port));				\
+})
 
 static inline bool netif_elide_gro(const struct net_device *dev)
 {
@@ -2785,6 +2798,7 @@ enum netdev_cmd {
 	NETDEV_PRE_TYPE_CHANGE,
 	NETDEV_POST_TYPE_CHANGE,
 	NETDEV_POST_INIT,
+	NETDEV_PRE_UNINIT,
 	NETDEV_RELEASE,
 	NETDEV_NOTIFY_PEERS,
 	NETDEV_JOIN,
@@ -3855,8 +3869,6 @@ int __dev_change_flags(struct net_device *dev, unsigned int flags,
 		       struct netlink_ext_ack *extack);
 int dev_change_flags(struct net_device *dev, unsigned int flags,
 		     struct netlink_ext_ack *extack);
-void __dev_notify_flags(struct net_device *, unsigned int old_flags,
-			unsigned int gchanges);
 int dev_set_alias(struct net_device *, const char *, size_t);
 int dev_get_alias(const struct net_device *, char *, size_t);
 int __dev_change_net_namespace(struct net_device *dev, struct net *net,
@@ -5099,11 +5111,6 @@ static inline const char *netdev_name(const struct net_device *dev)
 	if (!dev->name[0] || strchr(dev->name, '%'))
 		return "(unnamed net_device)";
 	return dev->name;
-}
-
-static inline bool netdev_unregistering(const struct net_device *dev)
-{
-	return dev->reg_state == NETREG_UNREGISTERING;
 }
 
 static inline const char *netdev_reg_state(const struct net_device *dev)

@@ -742,6 +742,11 @@ static int ipa_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
+	if (!data->modem_route_count) {
+		dev_err(dev, "modem_route_count cannot be zero\n");
+		return -EINVAL;
+	}
+
 	/* If we need Trust Zone, make sure it's available */
 	modem_init = of_property_read_bool(dev->of_node, "modem-init");
 	if (!modem_init)
@@ -766,6 +771,7 @@ static int ipa_probe(struct platform_device *pdev)
 	dev_set_drvdata(dev, ipa);
 	ipa->power = power;
 	ipa->version = data->version;
+	ipa->modem_route_count = data->modem_route_count;
 	init_completion(&ipa->completion);
 
 	ret = ipa_reg_init(ipa);
@@ -782,12 +788,9 @@ static int ipa_probe(struct platform_device *pdev)
 		goto err_mem_exit;
 
 	/* Result is a non-zero mask of endpoints that support filtering */
-	ipa->filter_map = ipa_endpoint_init(ipa, data->endpoint_count,
-					    data->endpoint_data);
-	if (!ipa->filter_map) {
-		ret = -EINVAL;
+	ret = ipa_endpoint_init(ipa, data->endpoint_count, data->endpoint_data);
+	if (ret)
 		goto err_gsi_exit;
-	}
 
 	ret = ipa_table_init(ipa);
 	if (ret)
