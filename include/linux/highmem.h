@@ -361,6 +361,25 @@ static inline void copy_highpage(struct page *to, struct page *from)
 
 #endif
 
+/*
+ * Machine check exception handled version of copy_highpage.
+ * Return true if copying page content failed; otherwise false.
+ * Note handling #MC requires arch opt-in.
+ */
+static inline bool copy_highpage_mc(struct page *to, struct page *from)
+{
+	char *vfrom, *vto;
+	unsigned long ret;
+
+	vfrom = kmap_local_page(from);
+	vto = kmap_local_page(to);
+	ret = copy_mc_to_kernel(vto, vfrom, PAGE_SIZE);
+	kunmap_local(vto);
+	kunmap_local(vfrom);
+
+	return ret > 0;
+}
+
 static inline void memcpy_page(struct page *dst_page, size_t dst_off,
 			       struct page *src_page, size_t src_off,
 			       size_t len)
