@@ -68,6 +68,8 @@ bool gic_msi_lib_init_dev_msi_info(struct device *dev, struct irq_domain *domain
 		/* Core managed MSI descriptors */
 		info->flags = MSI_FLAG_ALLOC_SIMPLE_MSI_DESCS | MSI_FLAG_FREE_MSI_DESCS;
 		break;
+	case DOMAIN_BUS_WIRED_TO_MSI:
+		break;
 	default:
 		/*
 		 * This should never be reached. See
