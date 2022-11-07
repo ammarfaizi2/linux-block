@@ -237,11 +237,17 @@ static const struct inode_operations shmem_inode_operations;
 static const struct inode_operations shmem_dir_inode_operations;
 static const struct inode_operations shmem_special_inode_operations;
 static const struct vm_operations_struct shmem_vm_ops;
+static const struct vm_operations_struct shmem_anon_vm_ops;
 static struct file_system_type shmem_fs_type;
+
+bool vma_is_anon_shmem(struct vm_area_struct *vma)
+{
+	return vma->vm_ops == &shmem_anon_vm_ops;
+}
 
 bool vma_is_shmem(struct vm_area_struct *vma)
 {
-	return vma->vm_ops == &shmem_vm_ops;
+	return vma_is_anon_shmem(vma) || vma->vm_ops == &shmem_vm_ops;
 }
 
 static LIST_HEAD(shmem_swaplist);
@@ -3988,6 +3994,15 @@ static const struct vm_operations_struct shmem_vm_ops = {
 #endif
 };
 
+static const struct vm_operations_struct shmem_anon_vm_ops = {
+	.fault		= shmem_fault,
+	.map_pages	= filemap_map_pages,
+#ifdef CONFIG_NUMA
+	.set_policy     = shmem_set_policy,
+	.get_policy     = shmem_get_policy,
+#endif
+};
+
 int shmem_init_fs_context(struct fs_context *fc)
 {
 	struct shmem_options *ctx;
@@ -4163,6 +4178,7 @@ void shmem_truncate_range(struct inode *inode, loff_t lstart, loff_t lend)
 EXPORT_SYMBOL_GPL(shmem_truncate_range);
 
 #define shmem_vm_ops				generic_file_vm_ops
+#define shmem_anon_vm_ops			generic_file_vm_ops
 #define shmem_file_operations			ramfs_file_operations
 #define shmem_get_inode(sb, dir, mode, dev, flags)	ramfs_get_inode(sb, dir, mode, dev)
 #define shmem_acct_size(flags, size)		0
@@ -4268,7 +4284,7 @@ int shmem_zero_setup(struct vm_area_struct *vma)
 	if (vma->vm_file)
 		fput(vma->vm_file);
 	vma->vm_file = file;
-	vma->vm_ops = &shmem_vm_ops;
+	vma->vm_ops = &shmem_anon_vm_ops;
 
 	return 0;
 }
