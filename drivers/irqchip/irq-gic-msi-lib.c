@@ -72,6 +72,8 @@ bool gic_msi_lib_init_dev_msi_info(struct device *dev, struct irq_domain *domain
 		 */
 		info->chip->irq_write_msi_msg = info->data;
 		break;
+	case DOMAIN_BUS_WIRED_TO_MSI:
+		break;
 	default:
 		/*
 		 * This should never be reached. See
