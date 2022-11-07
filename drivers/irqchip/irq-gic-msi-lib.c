@@ -48,6 +48,13 @@ bool gic_msi_lib_init_dev_msi_info(struct device *dev, struct irq_domain *domain
 
 	/* Is the target domain bus token supported ? */
 	switch(info->bus_token) {
+	case DOMAIN_BUS_PCI_DEVICE_MSI:
+	case DOMAIN_BUS_PCI_DEVICE_MSIX:
+		if (WARN_ON_ONCE(!IS_ENABLED(CONFIG_PCI_MSI)))
+			return false;
+
+		pci_device_msi_mask_unmask_parent_enable();
+		break;
 	default:
 		/*
 		 * This should never be reached. See
