@@ -308,6 +308,29 @@ static inline bool dma_kmalloc_needs_bounce(struct device *dev, size_t size,
 	return true;
 }
 
+/*
+ * Return true if any of the scatterlist elements needs bouncing due to
+ * potentially originating from a small kmalloc() cache.
+ */
+static inline bool dma_sg_kmalloc_needs_bounce(struct device *dev,
+					       struct scatterlist *sg, int nents,
+					       enum dma_data_direction dir)
+{
+	struct scatterlist *s;
+	int i;
+
+	if (!IS_ENABLED(CONFIG_DMA_BOUNCE_UNALIGNED_KMALLOC) ||
+	    dir == DMA_TO_DEVICE || dev_is_dma_coherent(dev))
+		return false;
+
+	for_each_sg(sg, s, nents, i) {
+		if (dma_kmalloc_needs_bounce(dev, s->length, dir))
+			return true;
+	}
+
+	return false;
+}
+
 void *arch_dma_alloc(struct device *dev, size_t size, dma_addr_t *dma_handle,
 		gfp_t gfp, unsigned long attrs);
 void arch_dma_free(struct device *dev, size_t size, void *cpu_addr,

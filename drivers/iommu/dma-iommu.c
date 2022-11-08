@@ -948,7 +948,7 @@ static void iommu_dma_sync_sg_for_cpu(struct device *dev,
 	struct scatterlist *sg;
 	int i;
 
-	if (dev_use_swiotlb(dev))
+	if (dev_use_swiotlb(dev) || sg_is_dma_bounced(sgl))
 		for_each_sg(sgl, sg, nelems, i)
 			iommu_dma_sync_single_for_cpu(dev, sg_dma_address(sg),
 						      sg->length, dir);
@@ -964,7 +964,7 @@ static void iommu_dma_sync_sg_for_device(struct device *dev,
 	struct scatterlist *sg;
 	int i;
 
-	if (dev_use_swiotlb(dev))
+	if (dev_use_swiotlb(dev) || sg_is_dma_bounced(sgl))
 		for_each_sg(sgl, sg, nelems, i)
 			iommu_dma_sync_single_for_device(dev,
 							 sg_dma_address(sg),
@@ -990,7 +990,8 @@ static dma_addr_t iommu_dma_map_page(struct device *dev, struct page *page,
 	 * If both the physical buffer start address and size are
 	 * page aligned, we don't need to use a bounce page.
 	 */
-	if (dev_use_swiotlb(dev) && iova_offset(iovad, phys | size)) {
+	if ((dev_use_swiotlb(dev) && iova_offset(iovad, phys | size)) ||
+	    dma_kmalloc_needs_bounce(dev, size, dir)) {
 		void *padding_start;
 		size_t padding_size, aligned_size;
 
@@ -1202,7 +1203,10 @@ static int iommu_dma_map_sg(struct device *dev, struct scatterlist *sg,
 			goto out;
 	}
 
-	if (dev_use_swiotlb(dev))
+	if (dma_sg_kmalloc_needs_bounce(dev, sg, nents, dir))
+		sg_dma_mark_bounced(sg);
+
+	if (dev_use_swiotlb(dev) || sg_is_dma_bounced(sg))
 		return iommu_dma_map_sg_swiotlb(dev, sg, nents, dir, attrs);
 
 	if (!(attrs & DMA_ATTR_SKIP_CPU_SYNC))
