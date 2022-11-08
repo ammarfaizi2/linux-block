@@ -883,6 +883,8 @@ static struct irq_domain *__msi_create_irq_domain(struct fwnode_handle *fwnode,
 		if (!domain->name && info->chip)
 			domain->name = info->chip->name;
 		irq_domain_update_bus_token(domain, info->bus_token);
+		if (info->flags & MSI_FLAG_PARENT_PM_DEV)
+			domain->pm_dev = parent->pm_dev;
 	}
 
 	return domain;
