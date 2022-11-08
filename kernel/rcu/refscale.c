@@ -646,7 +646,7 @@ static void typesafe_read_section(const int nloops)
 }
 
 // Allocate and initialize one refscale_typesafe structure.
-struct refscale_typesafe *typesafe_alloc_one(void)
+static struct refscale_typesafe *typesafe_alloc_one(void)
 {
 	struct refscale_typesafe *rtsp;
 
