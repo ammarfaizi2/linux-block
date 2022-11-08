@@ -381,6 +381,7 @@ config MVEBU_ICU
 
 config MVEBU_ODMI
 	bool
+	select ARM_GIC_MSI_LIB
 	select GENERIC_MSI_IRQ
 
 config MVEBU_PIC
