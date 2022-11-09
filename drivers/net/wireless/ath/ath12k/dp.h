@@ -1559,44 +1559,6 @@ struct htt_ppdu_stats_info {
 	struct list_head list;
 };
 
-/* @brief target -> host packet log message
- *
- * @details
- * The following field definitions describe the format of the packet log
- * message sent from the target to the host.
- * The message consists of a 4-octet header,followed by a variable number
- * of 32-bit character values.
- *
- * |31                         16|15  12|11   10|9    8|7            0|
- * |------------------------------------------------------------------|
- * |        payload_size         | rsvd |pdev_id|mac_id|   msg type   |
- * |------------------------------------------------------------------|
- * |                              payload                             |
- * |------------------------------------------------------------------|
- *   - MSG_TYPE
- *     Bits 7:0
- *     Purpose: identifies this as a pktlog message
- *     Value: HTT_T2H_MSG_TYPE_PKTLOG
- *   - mac_id
- *     Bits 9:8
- *     Purpose: identifies which MAC/PHY instance generated this pktlog info
- *     Value: 0-3
- *   - pdev_id
- *     Bits 11:10
- *     Purpose: pdev_id
- *     Value: 0-3
- *     0 (for rings at SOC level),
- *     1/2/3 PDEV -> 0/1/2
- *   - payload_size
- *     Bits 31:16
- *     Purpose: explicitly specify the payload size
- *     Value: payload size in bytes (payload size is a multiple of 4 bytes)
- */
-struct htt_pktlog_msg {
-	__le32 hdr;
-	u8 payload[];
-};
-
 /* @brief target -> host MLO offset indiciation message
  *
  * @details

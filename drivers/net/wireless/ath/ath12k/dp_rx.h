@@ -65,17 +65,6 @@ struct ath12k_dp_rx_rfc1042_hdr {
 	__be16 snap_type;
 } __packed;
 
-struct ath_pktlog_hdr {
-	u16 flags;
-	u16 missed_cnt;
-	u16 log_type;
-	u16 size;
-	u32 timestamp;
-	u32 type_specific_data;
-	struct mlo_timestamp m_timestamp;
-	u8 payload[];
-};
-
 static inline u32 ath12k_he_gi_to_nl80211_he_gi(u8 sgi)
 {
 	u32 ret = 0;

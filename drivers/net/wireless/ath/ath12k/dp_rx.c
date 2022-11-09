@@ -1622,25 +1622,6 @@ exit:
 	return ret;
 }
 
-static void ath12k_htt_pktlog(struct ath12k_base *ab, struct sk_buff *skb)
-{
-	struct htt_pktlog_msg *data = (struct htt_pktlog_msg *)skb->data;
-	struct ath_pktlog_hdr *hdr = (struct ath_pktlog_hdr *)data;
-	struct ath12k *ar;
-	u8 pdev_id;
-
-	pdev_id = le32_get_bits(data->hdr, HTT_T2H_PPDU_STATS_INFO_PDEV_ID);
-	ar = ath12k_mac_get_ar_by_pdev_id(ab, pdev_id);
-	if (!ar) {
-		ath12k_warn(ab, "invalid pdev id %d on htt pktlog\n", pdev_id);
-		return;
-	}
-	hdr->m_timestamp = ar->pdev->timestamp;
-
-	trace_ath12k_htt_pktlog(ar, data->payload, hdr->size,
-				ar->ab->pktlog_defs_checksum);
-}
-
 static void ath12k_htt_mlo_offset_event_handler(struct ath12k_base *ab,
 						struct sk_buff *skb)
 {
@@ -1749,9 +1730,6 @@ void ath12k_dp_htt_htc_t2h_msg_handler(struct ath12k_base *ab,
 		ath12k_htt_pull_ppdu_stats(ab, skb);
 		break;
 	case HTT_T2H_MSG_TYPE_EXT_STATS_CONF:
-		break;
-	case HTT_T2H_MSG_TYPE_PKTLOG:
-		ath12k_htt_pktlog(ab, skb);
 		break;
 	case HTT_T2H_MSG_TYPE_MLO_TIMESTAMP_OFFSET_IND:
 		ath12k_htt_mlo_offset_event_handler(ab, skb);
