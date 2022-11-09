@@ -205,7 +205,6 @@ struct ath12k_vif {
 	int bank_id;
 	u8 vdev_id_check_en;
 
-	u16 tx_seq_no;
 	struct wmi_wmm_params_all_arg wmm_params;
 	struct list_head list;
 	union {
