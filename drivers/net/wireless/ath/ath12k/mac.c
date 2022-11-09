@@ -3911,9 +3911,10 @@ static void ath12k_set_vht_txbf_cap(struct ath12k *ar, u32 *vht_cap)
 	if (!subfee)
 		*vht_cap &= ~(IEEE80211_VHT_CAP_MU_BEAMFORMEE_CAPABLE);
 
-	sound_dim = (*vht_cap & IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_MASK);
-	sound_dim >>= IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_SHIFT;
-	*vht_cap &= ~IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_MASK;
+	sound_dim = u32_get_bits(*vht_cap,
+				 IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_MASK);
+	*vht_cap = u32_replace_bits(*vht_cap, 0,
+				    IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_MASK);
 
 	/* TODO: Need to check invalid STS and Sound_dim values set by FW? */
 
@@ -3922,9 +3923,8 @@ static void ath12k_set_vht_txbf_cap(struct ath12k *ar, u32 *vht_cap)
 		if (sound_dim > (ar->num_tx_chains - 1))
 			sound_dim = ar->num_tx_chains - 1;
 
-		sound_dim <<= IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_SHIFT;
-		sound_dim &= IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_MASK;
-		*vht_cap |= sound_dim;
+		*vht_cap = u32_replace_bits(*vht_cap, sound_dim,
+					    IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_MASK);
 	}
 
 	/* Use the STS advertised by FW unless SU Beamformee is not supported*/
