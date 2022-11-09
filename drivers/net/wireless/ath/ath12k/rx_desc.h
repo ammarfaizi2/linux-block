@@ -1394,7 +1394,7 @@ struct rx_msdu_end_qcn9274 {
 struct hal_rx_desc_qcn9274 {
 	struct rx_msdu_end_qcn9274 msdu_end;
 	struct rx_mpdu_start_qcn9274 mpdu_start;
-	u8 msdu_payload[0];
+	u8 msdu_payload[];
 } __packed;
 
 #define RX_BE_PADDING0_BYTES 8
@@ -1415,7 +1415,7 @@ struct hal_rx_desc_wcn7850 {
 	__le64 mpdu_start_tag;
 	struct rx_mpdu_start_qcn9274 mpdu_start;
 	struct rx_pkt_hdr_tlv	 pkt_hdr_tlv;
-	u8 msdu_payload[0];
+	u8 msdu_payload[];
 };
 
 struct hal_rx_desc {

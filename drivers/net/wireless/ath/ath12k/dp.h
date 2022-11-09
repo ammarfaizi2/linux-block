@@ -1333,12 +1333,12 @@ struct ath12k_htt_ppdu_stats_msg {
 	__le32 ppdu_id;
 	__le32 timestamp;
 	__le32 rsvd;
-	u8 data[0];
+	u8 data[];
 } __packed;
 
 struct htt_tlv {
 	__le32 header;
-	u8 value[0];
+	u8 value[];
 } __packed;
 
 #define HTT_TLV_TAG			GENMASK(11, 0)
@@ -1594,7 +1594,7 @@ struct htt_ppdu_stats_info {
  */
 struct htt_pktlog_msg {
 	__le32 hdr;
-	u8 payload[0];
+	u8 payload[];
 };
 
 /* @brief target -> host MLO offset indiciation message

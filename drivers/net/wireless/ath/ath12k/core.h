@@ -737,7 +737,7 @@ struct ath12k_base {
 	bool static_window_map;
 
 	/* must be last */
-	u8 drv_priv[0] __aligned(sizeof(void *));
+	u8 drv_priv[] __aligned(sizeof(void *));
 };
 
 int ath12k_core_qmi_firmware_ready(struct ath12k_base *ab);
