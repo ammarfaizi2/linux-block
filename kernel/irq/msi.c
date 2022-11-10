@@ -73,6 +73,7 @@ static int msi_get_domain_base_index(struct device *dev, unsigned int domid)
 	return domid * MSI_XA_DOMAIN_SIZE;
 }
 
+static unsigned int msi_domain_get_hwsize(struct device *dev, unsigned int domid);
 
 /**
  * msi_alloc_desc - Allocate an initialized msi_desc
@@ -115,11 +116,18 @@ static int msi_insert_desc(struct device *dev, struct msi_desc *desc,
 			   unsigned int domid, unsigned int index)
 {
 	struct msi_device_data *md = dev->msi.data;
+	unsigned int hwsize;
 	int baseidx, ret;
 
 	baseidx = msi_get_domain_base_index(dev, domid);
 	if (baseidx < 0) {
 		ret = baseidx;
+		goto fail;
+	}
+
+	hwsize = msi_domain_get_hwsize(dev, domid);
+	if (index >= hwsize) {
+		ret = -ERANGE;
 		goto fail;
 	}
 
@@ -181,9 +189,11 @@ static bool msi_desc_match(struct msi_desc *desc, enum msi_desc_filter filter)
 
 static bool msi_ctrl_valid(struct device *dev, struct msi_ctrl *ctrl)
 {
+	unsigned int hwsize = msi_domain_get_hwsize(dev, ctrl->domid);
+
 	if (WARN_ON_ONCE(ctrl->first > ctrl->last ||
-			 ctrl->first >= MSI_MAX_INDEX ||
-			 ctrl->last >= MSI_MAX_INDEX))
+			 ctrl->first >= hwsize ||
+			 ctrl->last >= hwsize))
 		return false;
 	return true;
 }
@@ -611,6 +621,25 @@ static struct irq_domain *msi_get_device_domain(struct device *dev, unsigned int
 		return NULL;
 
 	return domain;
+}
+
+static unsigned int msi_domain_get_hwsize(struct device *dev, unsigned int domid)
+{
+	struct msi_domain_info *info;
+	struct irq_domain *domain;
+
+	/*
+	 * Retrieve the MSI domain for range checking. If there is no
+	 * domain or the domain is not a per device domain, then assume
+	 * full MSI range and pray that the calling subsystem knows what it
+	 * is doing.
+	 */
+	domain = msi_get_device_domain(dev, domid);
+	if (domain && irq_domain_is_msi_device(domain)) {
+		info = domain->host_data;
+		return info->hwsize;
+	}
+	return MSI_MAX_INDEX;
 }
 
 static inline void irq_chip_write_msi_msg(struct irq_data *data,
@@ -1380,7 +1409,7 @@ int msi_domain_alloc_irqs_all_locked(struct device *dev, unsigned int domid, int
 	struct msi_ctrl ctrl = {
 		.domid	= domid,
 		.first	= 0,
-		.last	= MSI_MAX_INDEX,
+		.last	= msi_domain_get_hwsize(dev, domid) - 1,
 		.nirqs	= nirqs,
 	};
 
@@ -1496,7 +1525,8 @@ void msi_domain_free_irqs_range(struct device *dev, unsigned int domid,
  */
 void msi_domain_free_irqs_all_locked(struct device *dev, unsigned int domid)
 {
-	msi_domain_free_irqs_range_locked(dev, domid, 0, MSI_MAX_INDEX);
+	msi_domain_free_irqs_range_locked(dev, domid, 0,
+					  msi_domain_get_hwsize(dev, domid) - 1);
 }
 
 /**
