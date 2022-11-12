@@ -356,6 +356,7 @@ static void elf_add_symbol(struct elf *elf, struct symbol *sym)
 	struct rb_node *pnode;
 	struct symbol *iter;
 
+	INIT_LIST_HEAD(&sym->reloc_list);
 	INIT_LIST_HEAD(&sym->pv_target);
 	sym->alias = sym;
 
@@ -557,6 +558,7 @@ int elf_add_reloc(struct elf *elf, struct section *sec, unsigned long offset,
 	reloc->sym = sym;
 	reloc->addend = addend;
 
+	list_add_tail(&reloc->sym_reloc_entry, &sym->reloc_list);
 	list_add_tail(&reloc->list, &sec->reloc->reloc_list);
 	elf_hash_add(reloc, &reloc->hash, reloc_hash(reloc));
 
@@ -573,21 +575,10 @@ int elf_add_reloc(struct elf *elf, struct section *sec, unsigned long offset,
  */
 static void elf_dirty_reloc_sym(struct elf *elf, struct symbol *sym)
 {
-	struct section *sec;
+	struct reloc *reloc;
 
-	list_for_each_entry(sec, &elf->sections, list) {
-		struct reloc *reloc;
-
-		if (sec->changed)
-			continue;
-
-		list_for_each_entry(reloc, &sec->reloc_list, list) {
-			if (reloc->sym == sym) {
-				sec->changed = true;
-				break;
-			}
-		}
-	}
+	list_for_each_entry(reloc, &sym->reloc_list, sym_reloc_entry)
+		reloc->sec->changed = true;
 }
 
 /*
@@ -634,6 +625,12 @@ static int elf_update_symbol(struct elf *elf, struct section *symtab,
 
 		/* end-of-list */
 		if (!symtab_data) {
+			/*
+			 * Over-allocate to avoid O(n^2) symbol creation
+			 * behaviour.  The down side is that libelf doesn't
+			 * like this; see elf_truncate_section() for the fixup.
+			 */
+			int num = max(1U, sym->idx/3);
 			void *buf;
 
 			if (idx) {
@@ -647,28 +644,34 @@ static int elf_update_symbol(struct elf *elf, struct section *symtab,
 			if (t)
 				shndx_data = elf_newdata(t);
 
-			buf = calloc(1, entsize);
+			buf = calloc(num, entsize);
 			if (!buf) {
 				WARN("malloc");
 				return -1;
 			}
 
 			symtab_data->d_buf = buf;
-			symtab_data->d_size = entsize;
+			symtab_data->d_size = num * entsize;
 			symtab_data->d_align = 1;
 			symtab_data->d_type = ELF_T_SYM;
 
-			symtab->sh.sh_size += entsize;
 			symtab->changed = true;
+			symtab->truncate = true;
 
 			if (t) {
-				shndx_data->d_buf = &sym->sec->idx;
-				shndx_data->d_size = sizeof(Elf32_Word);
+				buf = calloc(num, sizeof(Elf32_Word));
+				if (!buf) {
+					WARN("malloc");
+					return -1;
+				}
+
+				shndx_data->d_buf = buf;
+				shndx_data->d_size = num * sizeof(Elf32_Word);
 				shndx_data->d_align = sizeof(Elf32_Word);
 				shndx_data->d_type = ELF_T_WORD;
 
-				symtab_shndx->sh.sh_size += sizeof(Elf32_Word);
 				symtab_shndx->changed = true;
+				symtab_shndx->truncate = true;
 			}
 
 			break;
@@ -717,11 +720,11 @@ static int elf_update_symbol(struct elf *elf, struct section *symtab,
 }
 
 static struct symbol *
-elf_create_section_symbol(struct elf *elf, struct section *sec)
+__elf_create_symbol(struct elf *elf, struct symbol *sym)
 {
 	struct section *symtab, *symtab_shndx;
 	Elf32_Word first_non_local, new_idx;
-	struct symbol *sym, *old;
+	struct symbol *old;
 
 	symtab = find_section_by_name(elf, ".symtab");
 	if (symtab) {
@@ -731,27 +734,16 @@ elf_create_section_symbol(struct elf *elf, struct section *sec)
 		return NULL;
 	}
 
-	sym = calloc(1, sizeof(*sym));
-	if (!sym) {
-		perror("malloc");
-		return NULL;
-	}
+	new_idx = symtab->sh.sh_size / symtab->sh.sh_entsize;
 
-	sym->name = sec->name;
-	sym->sec = sec;
-
-	// st_name 0
-	sym->sym.st_info = GELF_ST_INFO(STB_LOCAL, STT_SECTION);
-	// st_other 0
-	// st_value 0
-	// st_size 0
+	if (GELF_ST_BIND(sym->sym.st_info) != STB_LOCAL)
+		goto non_local;
 
 	/*
 	 * Move the first global symbol, as per sh_info, into a new, higher
 	 * symbol index. This fees up a spot for a new local symbol.
 	 */
 	first_non_local = symtab->sh.sh_info;
-	new_idx = symtab->sh.sh_size / symtab->sh.sh_entsize;
 	old = find_symbol_by_index(elf, first_non_local);
 	if (old) {
 		old->idx = new_idx;
@@ -769,18 +761,82 @@ elf_create_section_symbol(struct elf *elf, struct section *sec)
 		new_idx = first_non_local;
 	}
 
+	/*
+	 * Either way, we will add a LOCAL symbol.
+	 */
+	symtab->sh.sh_info += 1;
+
+non_local:
 	sym->idx = new_idx;
 	if (elf_update_symbol(elf, symtab, symtab_shndx, sym)) {
 		WARN("elf_update_symbol");
 		return NULL;
 	}
 
-	/*
-	 * Either way, we added a LOCAL symbol.
-	 */
-	symtab->sh.sh_info += 1;
+	symtab->sh.sh_size += symtab->sh.sh_entsize;
+	symtab->changed = true;
 
-	elf_add_symbol(elf, sym);
+	if (symtab_shndx) {
+		symtab_shndx->sh.sh_size += sizeof(Elf32_Word);
+		symtab_shndx->changed = true;
+	}
+
+	return sym;
+}
+
+static struct symbol *
+elf_create_section_symbol(struct elf *elf, struct section *sec)
+{
+	struct symbol *sym = calloc(1, sizeof(*sym));
+
+	if (!sym) {
+		perror("malloc");
+		return NULL;
+	}
+
+	sym->name = sec->name;
+	sym->sec = sec;
+
+	// st_name 0
+	sym->sym.st_info = GELF_ST_INFO(STB_LOCAL, STT_SECTION);
+	// st_other 0
+	// st_value 0
+	// st_size 0
+
+	sym = __elf_create_symbol(elf, sym);
+	if (sym)
+		elf_add_symbol(elf, sym);
+
+	return sym;
+}
+
+static int elf_add_string(struct elf *elf, struct section *strtab, char *str);
+
+struct symbol *
+elf_create_prefix_symbol(struct elf *elf, struct symbol *orig, long size)
+{
+	struct symbol *sym = calloc(1, sizeof(*sym));
+	size_t namelen = strlen(orig->name) + sizeof("__pfx_");
+	char *name = malloc(namelen);
+
+	if (!sym || !name) {
+		perror("malloc");
+		return NULL;
+	}
+
+	snprintf(name, namelen, "__pfx_%s", orig->name);
+
+	sym->name = name;
+	sym->sec = orig->sec;
+
+	sym->sym.st_name = elf_add_string(elf, NULL, name);
+	sym->sym.st_info = orig->sym.st_info;
+	sym->sym.st_value = orig->sym.st_value - size;
+	sym->sym.st_size = size;
+
+	sym = __elf_create_symbol(elf, sym);
+	if (sym)
+		elf_add_symbol(elf, sym);
 
 	return sym;
 }
@@ -837,11 +893,12 @@ static int read_rela_reloc(struct section *sec, int i, struct reloc *reloc, unsi
 
 static int read_relocs(struct elf *elf)
 {
+	unsigned long nr_reloc, max_reloc = 0, tot_reloc = 0;
 	struct section *sec;
 	struct reloc *reloc;
-	int i;
 	unsigned int symndx;
-	unsigned long nr_reloc, max_reloc = 0, tot_reloc = 0;
+	struct symbol *sym;
+	int i;
 
 	if (!elf_alloc_hash(reloc, elf->text_size / 16))
 		return -1;
@@ -882,13 +939,14 @@ static int read_relocs(struct elf *elf)
 
 			reloc->sec = sec;
 			reloc->idx = i;
-			reloc->sym = find_symbol_by_index(elf, symndx);
+			reloc->sym = sym = find_symbol_by_index(elf, symndx);
 			if (!reloc->sym) {
 				WARN("can't find reloc entry symbol %d for %s",
 				     symndx, sec->name);
 				return -1;
 			}
 
+			list_add_tail(&reloc->sym_reloc_entry, &sym->reloc_list);
 			list_add_tail(&reloc->list, &sec->reloc_list);
 			elf_hash_add(reloc, &reloc->hash, reloc_hash(reloc));
 
@@ -1272,6 +1330,60 @@ int elf_write_reloc(struct elf *elf, struct reloc *reloc)
 	return 0;
 }
 
+/*
+ * When Elf_Scn::sh_size is smaller than the combined Elf_Data::d_size
+ * do you:
+ *
+ *   A) adhere to the section header and truncate the data, or
+ *   B) ignore the section header and write out all the data you've got?
+ *
+ * Yes, libelf sucks and we need to manually truncate if we over-allocate data.
+ */
+static int elf_truncate_section(struct elf *elf, struct section *sec)
+{
+	u64 size = sec->sh.sh_size;
+	bool truncated = false;
+	Elf_Data *data = NULL;
+	Elf_Scn *s;
+
+	s = elf_getscn(elf->elf, sec->idx);
+	if (!s) {
+		WARN_ELF("elf_getscn");
+		return -1;
+	}
+
+	for (;;) {
+		/* get next data descriptor for the relevant section */
+		data = elf_getdata(s, data);
+
+		if (!data) {
+			if (size) {
+				WARN("end of section data but non-zero size left\n");
+				return -1;
+			}
+			return 0;
+		}
+
+		if (truncated) {
+			/* when we remove symbols */
+			WARN("truncated; but more data\n");
+			return -1;
+		}
+
+		if (!data->d_size) {
+			WARN("zero size data");
+			return -1;
+		}
+
+		if (data->d_size > size) {
+			truncated = true;
+			data->d_size = size;
+		}
+
+		size -= data->d_size;
+	}
+}
+
 int elf_write(struct elf *elf)
 {
 	struct section *sec;
@@ -1282,6 +1394,9 @@ int elf_write(struct elf *elf)
 
 	/* Update changed relocation sections and section headers: */
 	list_for_each_entry(sec, &elf->sections, list) {
+		if (sec->truncate)
+			elf_truncate_section(elf, sec);
+
 		if (sec->changed) {
 			s = elf_getscn(elf->elf, sec->idx);
 			if (!s) {

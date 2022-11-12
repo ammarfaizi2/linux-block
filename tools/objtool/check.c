@@ -861,6 +861,68 @@ static int create_ibt_endbr_seal_sections(struct objtool_file *file)
 	return 0;
 }
 
+static int create_cfi_sections(struct objtool_file *file)
+{
+	struct section *sec, *s;
+	struct symbol *sym;
+	unsigned int *loc;
+	int idx;
+
+	sec = find_section_by_name(file->elf, ".cfi_sites");
+	if (sec) {
+		INIT_LIST_HEAD(&file->call_list);
+		WARN("file already has .cfi_sites section, skipping");
+		return 0;
+	}
+
+	idx = 0;
+	for_each_sec(file, s) {
+		if (!s->text)
+			continue;
+
+		list_for_each_entry(sym, &s->symbol_list, list) {
+			if (sym->type != STT_FUNC)
+				continue;
+
+			if (strncmp(sym->name, "__cfi_", 6))
+				continue;
+
+			idx++;
+		}
+	}
+
+	sec = elf_create_section(file->elf, ".cfi_sites", 0, sizeof(unsigned int), idx);
+	if (!sec)
+		return -1;
+
+	idx = 0;
+	for_each_sec(file, s) {
+		if (!s->text)
+			continue;
+
+		list_for_each_entry(sym, &s->symbol_list, list) {
+			if (sym->type != STT_FUNC)
+				continue;
+
+			if (strncmp(sym->name, "__cfi_", 6))
+				continue;
+
+			loc = (unsigned int *)sec->data->d_buf + idx;
+			memset(loc, 0, sizeof(unsigned int));
+
+			if (elf_add_reloc_to_insn(file->elf, sec,
+						  idx * sizeof(unsigned int),
+						  R_X86_64_PC32,
+						  s, sym->offset))
+				return -1;
+
+			idx++;
+		}
+	}
+
+	return 0;
+}
+
 static int create_mcount_loc_sections(struct objtool_file *file)
 {
 	struct section *sec;
@@ -3417,7 +3479,8 @@ static int validate_branch(struct objtool_file *file, struct symbol *func,
 
 		if (func && insn_func(insn) && func != insn_func(insn)->pfunc) {
 			/* Ignore KCFI type preambles, which always fall through */
-			if (!strncmp(func->name, "__cfi_", 6))
+			if (!strncmp(func->name, "__cfi_", 6) ||
+			    !strncmp(func->name, "__pfx_", 6))
 				return 0;
 
 			WARN("%s() falls through to next function %s()",
@@ -3972,6 +4035,54 @@ static bool ignore_unreachable_insn(struct objtool_file *file, struct instructio
 	return false;
 }
 
+static int add_prefix_symbol(struct objtool_file *file, struct symbol *func,
+			     struct instruction *insn)
+{
+	if (!opts.prefix)
+		return 0;
+
+	for (;;) {
+		struct instruction *prev = list_prev_entry(insn, list);
+		u64 offset;
+
+		if (&prev->list == &file->insn_list)
+			break;
+
+		if (prev->type != INSN_NOP)
+			break;
+
+		offset = func->offset - prev->offset;
+		if (offset >= opts.prefix) {
+			if (offset == opts.prefix) {
+				/*
+				 * Since the sec->symbol_list is ordered by
+				 * offset (see elf_add_symbol()) the added
+				 * symbol will not be seen by the iteration in
+				 * validate_section().
+				 *
+				 * Hence the lack of list_for_each_entry_safe()
+				 * there.
+				 *
+				 * The direct concequence is that prefix symbols
+				 * don't get visited (because pointless), except
+				 * for the logic in ignore_unreachable_insn()
+				 * that needs the terminating insn to be visited
+				 * otherwise it will report the hole.
+				 *
+				 * Hence mark the first instruction of the
+				 * prefix symbol as visisted.
+				 */
+				prev->visited |= VISITED_BRANCH;
+				elf_create_prefix_symbol(file->elf, func, opts.prefix);
+			}
+			break;
+		}
+		insn = prev;
+	}
+
+	return 0;
+}
+
 static int validate_symbol(struct objtool_file *file, struct section *sec,
 			   struct symbol *sym, struct insn_state *state)
 {
@@ -3989,6 +4100,8 @@ static int validate_symbol(struct objtool_file *file, struct section *sec,
 	insn = find_insn(file, sec, sym->offset);
 	if (!insn || insn->ignore || insn->visited)
 		return 0;
+
+	add_prefix_symbol(file, sym, insn);
 
 	state->uaccess = sym->uaccess_safe;
 
@@ -4394,6 +4507,13 @@ int check(struct objtool_file *file)
 
 	if (opts.retpoline) {
 		ret = create_retpoline_sites_sections(file);
+		if (ret < 0)
+			goto out;
+		warnings += ret;
+	}
+
+	if (opts.cfi) {
+		ret = create_cfi_sections(file);
 		if (ret < 0)
 			goto out;
 		warnings += ret;

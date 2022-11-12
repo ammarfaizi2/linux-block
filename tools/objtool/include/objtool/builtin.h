@@ -26,6 +26,8 @@ struct opts {
 	bool stackval;
 	bool static_call;
 	bool uaccess;
+	int prefix;
+	bool cfi;
 
 	/* options: */
 	bool backtrace;
