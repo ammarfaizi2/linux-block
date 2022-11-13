@@ -21,11 +21,7 @@
 #include <linux/irqdomain_defs.h>
 #include <linux/cpumask.h>
 #include <linux/msi_api.h>
-#include <linux/xarray.h>
-#include <linux/mutex.h>
-#include <linux/list.h>
 #include <linux/irq.h>
-#include <linux/bits.h>
 
 #include <asm/msi.h>
 
@@ -210,31 +206,6 @@ enum msi_desc_filter {
 	MSI_DESC_NOTASSOCIATED,
 	/* Descriptors which have an interrupt associated */
 	MSI_DESC_ASSOCIATED,
-};
-
-
-/**
- * struct msi_dev_domain - The internals of MSI domain info per device
- * @store:		Xarray for storing MSI descriptor pointers
- * @irqdomain:		Pointer to a per device interrupt domain
- */
-struct msi_dev_domain {
-	struct xarray		store;
-	struct irq_domain	*domain;
-};
-
-/**
- * msi_device_data - MSI per device data
- * @properties:		MSI properties which are interesting to drivers
- * @mutex:		Mutex protecting the MSI descriptor store
- * @__domains:		Internal data for per device MSI domains
- * @__iter_idx:		Index to search the next entry for iterators
- */
-struct msi_device_data {
-	unsigned long			properties;
-	struct mutex			mutex;
-	struct msi_dev_domain		__domains[MSI_MAX_DEVICE_IRQDOMAINS];
-	unsigned long			__iter_idx;
 };
 
 int msi_setup_device_data(struct device *dev);
