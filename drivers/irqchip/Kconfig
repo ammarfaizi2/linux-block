@@ -695,4 +695,11 @@ config SUNPLUS_SP7021_INTC
 	  chained controller, routing all interrupt source in P-Chip to
 	  the primary controller on C-Chip.
 
+config PCI_INTEL_IDXD_IMS
+	tristate "Intel IDXD Interrupt Message Store controller"
+	depends on PCI_MSI
+	help
+	  Support for Intel IDXD IMS Interrupt Message Store controller
+	  with IMS slot storage in a slot array in device memory
+
 endmenu
