@@ -154,39 +154,6 @@ int msi_domain_insert_msi_desc(struct device *dev, unsigned int domid,
 	return msi_insert_desc(dev, desc, domid, init_desc->msi_index);
 }
 
-/**
- * msi_add_simple_msi_descs - Allocate and initialize MSI descriptors
- * @dev:	Pointer to the device for which the descriptors are allocated
- * @index:	Index for the first MSI descriptor
- * @ndesc:	Number of descriptors to allocate
- *
- * Return: 0 on success or an appropriate failure code.
- */
-static int msi_add_simple_msi_descs(struct device *dev, unsigned int index, unsigned int ndesc)
-{
-	unsigned int idx, last = index + ndesc - 1;
-	struct msi_desc *desc;
-	int ret;
-
-	lockdep_assert_held(&dev->msi.data->mutex);
-
-	for (idx = index; idx <= last; idx++) {
-		desc = msi_alloc_desc(dev, 1, NULL);
-		if (!desc)
-			goto fail_mem;
-		ret = msi_insert_desc(dev, desc, MSI_DEFAULT_DOMAIN, idx);
-		if (ret)
-			goto fail;
-	}
-	return 0;
-
-fail_mem:
-	ret = -ENOMEM;
-fail:
-	msi_free_msi_descs_range(dev, index, last);
-	return ret;
-}
-
 static bool msi_desc_match(struct msi_desc *desc, enum msi_desc_filter filter)
 {
 	switch (filter) {
@@ -253,6 +220,45 @@ void msi_domain_free_msi_descs_range(struct device *dev, unsigned int domid,
 	};
 
 	msi_domain_free_descs(dev, &ctrl);
+}
+
+/**
+ * msi_domain_add_simple_msi_descs - Allocate and initialize MSI descriptors
+ * @dev:	Pointer to the device for which the descriptors are allocated
+ * @ctrl:	Allocation control struct
+ *
+ * Return: 0 on success or an appropriate failure code.
+ */
+static int msi_domain_add_simple_msi_descs(struct device *dev, struct msi_ctrl *ctrl)
+{
+	struct msi_desc *desc;
+	unsigned int idx;
+	int ret, baseidx;
+
+	lockdep_assert_held(&dev->msi.data->mutex);
+
+	if (!msi_ctrl_valid(dev, ctrl))
+		return -EINVAL;
+
+	baseidx = msi_get_domain_base_index(dev, ctrl->domid);
+	if (baseidx < 0)
+		return baseidx;
+
+	for (idx = ctrl->first; idx <= ctrl->last; idx++) {
+		desc = msi_alloc_desc(dev, 1, NULL);
+		if (!desc)
+			goto fail_mem;
+		ret = msi_insert_desc(dev, desc, ctrl->domid, idx);
+		if (ret)
+			goto fail;
+	}
+	return 0;
+
+fail_mem:
+	ret = -ENOMEM;
+fail:
+	msi_domain_free_descs(dev, ctrl);
+	return ret;
 }
 
 void __get_cached_msi_msg(struct msi_desc *entry, struct msi_msg *msg)
@@ -824,15 +830,19 @@ int msi_domain_populate_irqs(struct irq_domain *domain, struct device *dev,
 {
 	struct msi_domain_info *info = domain->host_data;
 	struct msi_domain_ops *ops = info->ops;
+	struct msi_ctrl ctrl = {
+		.domid	= MSI_DEFAULT_DOMAIN,
+		.first  = virq_base,
+		.last	= virq_base + nvec - 1,
+	};
 	struct msi_desc *desc;
 	int ret, virq;
 
-	if (WARN_ON_ONCE(virq_base >= MSI_MAX_INDEX ||
-			 (virq_base + nvec) >= MSI_MAX_INDEX))
+	if (!msi_ctrl_valid(dev, &ctrl))
 		return 0;
 
 	msi_lock_descs(dev);
-	ret = msi_add_simple_msi_descs(dev, virq_base, nvec);
+	ret = msi_domain_add_simple_msi_descs(dev, &ctrl);
 	if (ret)
 		goto unlock;
 
@@ -853,7 +863,7 @@ int msi_domain_populate_irqs(struct irq_domain *domain, struct device *dev,
 fail:
 	for (--virq; virq >= virq_base; virq--)
 		irq_domain_free_irqs_common(domain, virq, 1);
-	msi_free_msi_descs_range(dev, virq_base, virq_base + nvec - 1);
+	msi_domain_free_descs(dev, &ctrl);
 unlock:
 	msi_unlock_descs(dev);
 	return ret;
@@ -1027,14 +1037,19 @@ static int __msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev
 	return 0;
 }
 
-static int msi_domain_add_simple_msi_descs(struct msi_domain_info *info,
-					   struct device *dev,
-					   unsigned int num_descs)
+static int msi_domain_alloc_simple_msi_descs(struct device *dev,
+					     struct msi_domain_info *info,
+					     unsigned int num_descs)
 {
+	struct msi_ctrl ctrl = {
+		.domid	= MSI_DEFAULT_DOMAIN,
+		.last	= num_descs - 1,
+	};
+
 	if (!(info->flags & MSI_FLAG_ALLOC_SIMPLE_MSI_DESCS))
 		return 0;
 
-	return msi_add_simple_msi_descs(dev, 0, num_descs);
+	return msi_domain_add_simple_msi_descs(dev, &ctrl);
 }
 
 /**
@@ -1065,7 +1080,7 @@ int msi_domain_alloc_irqs_descs_locked(struct irq_domain *domain, struct device 
 	}
 
 	/* Frees allocated descriptors in case of failure. */
-	ret = msi_domain_add_simple_msi_descs(info, dev, nvec);
+	ret = msi_domain_alloc_simple_msi_descs(dev, info, nvec);
 	if (ret)
 		return ret;
 
