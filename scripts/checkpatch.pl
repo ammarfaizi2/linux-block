@@ -3336,7 +3336,7 @@ sub process {
 		}
 
 # Check for mailing list archives other than lore.kernel.org
-		if ($rawline =~ m{\b$obsolete_archives}) {
+		if ($rawline =~ m{http.*\b$obsolete_archives}) {
 			WARN("PREFER_LORE_ARCHIVE",
 			     "Use lore.kernel.org archive links when possible - see https://lore.kernel.org/lists.html\n" . $herecurr);
 		}
