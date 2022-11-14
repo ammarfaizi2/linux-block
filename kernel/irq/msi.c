@@ -39,6 +39,7 @@ static inline int msi_sysfs_create_group(struct device *dev);
 /* Invalid XA index which is outside of any searchable range */
 #define MSI_XA_MAX_INDEX	(ULONG_MAX - 1)
 #define MSI_XA_DOMAIN_SIZE	(MSI_MAX_INDEX + 1)
+#define MSI_ANY_INDEX		UINT_MAX
 
 static inline void msi_setup_default_irqdomain(struct device *dev, struct msi_device_data *md)
 {
@@ -126,18 +127,34 @@ static int msi_insert_desc(struct device *dev, struct msi_desc *desc,
 	}
 
 	hwsize = msi_domain_get_hwsize(dev, domid);
-	if (index >= hwsize) {
-		ret = -ERANGE;
-		goto fail;
+
+	if (index == MSI_ANY_INDEX) {
+		struct xa_limit limit;
+		unsigned int index;
+
+		limit.min = baseidx;
+		limit.max = baseidx + hwsize - 1;
+
+		/* Let the xarray allocate a free index within the limits */
+		ret = xa_alloc(&md->__store, &index, desc, limit, GFP_KERNEL);
+		if (ret)
+			goto fail;
+
+		desc->msi_index = index;
+		return 0;
+	} else {
+		if (index >= hwsize) {
+			ret = -ERANGE;
+			goto fail;
+		}
+
+		desc->msi_index = index;
+		index += baseidx;
+		ret = xa_insert(&md->__store, index, desc, GFP_KERNEL);
+		if (ret)
+			goto fail;
+		return 0;
 	}
-
-	desc->msi_index = index;
-	index += baseidx;
-	ret = xa_insert(&md->__store, index, desc, GFP_KERNEL);
-	if (ret)
-		goto fail;
-	return 0;
-
 fail:
 	msi_free_desc(desc);
 	return ret;
@@ -335,7 +352,7 @@ int msi_setup_device_data(struct device *dev)
 
 	msi_setup_default_irqdomain(dev, md);
 
-	xa_init(&md->__store);
+	xa_init_flags(&md->__store, XA_FLAGS_ALLOC);
 	mutex_init(&md->mutex);
 	md->__iter_idx = MSI_XA_MAX_INDEX;
 	dev->msi.data = md;
@@ -1424,6 +1441,72 @@ int msi_domain_alloc_irqs_all_locked(struct device *dev, unsigned int domid, int
 	};
 
 	return msi_domain_alloc_locked(dev, &ctrl);
+}
+
+/**
+ * msi_domain_alloc_irq_at - Allocate an interrupt from a MSI interrupt domain at
+ *			     a given index - or at the next free index
+ *
+ * @dev:	Pointer to device struct of the device for which the interrupts
+ *		are allocated
+ * @domid:	Id of the interrupt domain to operate on
+ * @index:	Index for allocation. If @index == %MSI_ANY_INDEX the allocation
+ *		uses the next free index.
+ * @affdesc:	Optional pointer to an interrupt affinity descriptor structure
+ * @cookie:	Optional pointer to a descriptor specific cookie to be stored
+ *		in msi_desc::data. Must be NULL for MSI-X allocations
+ *
+ * This requires a MSI interrupt domain which lets the core code manage the
+ * MSI descriptors.
+ *
+ * Return: struct msi_map
+ *
+ *	On success msi_map::index contains the allocated index number and
+ *	msi_map::virq the corresponding Linux interrupt number
+ *
+ *	On failure msi_map::index contains the error code and msi_map::virq
+ *	is %0.
+ */
+struct msi_map msi_domain_alloc_irq_at(struct device *dev, unsigned int domid, unsigned int index,
+				       const struct irq_affinity_desc *affdesc,
+				       union msi_dev_cookie *cookie)
+{
+	struct irq_domain *domain;
+	struct msi_map map = { };
+	struct msi_desc *desc;
+	int ret;
+
+	msi_lock_descs(dev);
+	domain = msi_get_device_domain(dev, domid);
+	if (!domain) {
+		map.index = -ENODEV;
+		goto unlock;
+	}
+
+	desc = msi_alloc_desc(dev, 1, affdesc);
+	if (!desc) {
+		map.index = -ENOMEM;
+		goto unlock;
+	}
+
+	if (cookie)
+		desc->data.cookie = *cookie;
+
+	ret = msi_insert_desc(dev, desc, domid, index);
+	if (ret) {
+		map.index = ret;
+		goto unlock;
+	}
+
+	map.index = desc->msi_index;
+	ret = msi_domain_alloc_irqs_range_locked(dev, domid, map.index, map.index);
+	if (ret)
+		map.index = ret;
+	else
+		map.virq = desc->irq;
+unlock:
+	msi_unlock_descs(dev);
+	return map;
 }
 
 static void __msi_domain_free_irqs(struct device *dev, struct irq_domain *domain,
