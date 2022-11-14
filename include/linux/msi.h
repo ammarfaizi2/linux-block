@@ -76,13 +76,7 @@ struct platform_msi_priv_data;
 struct device_attribute;
 
 void __get_cached_msi_msg(struct msi_desc *entry, struct msi_msg *msg);
-#ifdef CONFIG_GENERIC_MSI_IRQ
 void get_cached_msi_msg(unsigned int irq, struct msi_msg *msg);
-#else
-static inline void get_cached_msi_msg(unsigned int irq, struct msi_msg *msg)
-{
-}
-#endif
 
 typedef void (*irq_write_msi_msg_t)(struct msi_desc *desc,
 				    struct msi_msg *msg);
@@ -278,7 +272,7 @@ static inline void msi_device_destroy_sysfs(struct device *dev) { }
  */
 bool arch_restore_msi_irqs(struct pci_dev *dev);
 
-#ifdef CONFIG_GENERIC_MSI_IRQ_DOMAIN
+#ifdef CONFIG_GENERIC_MSI_IRQ
 
 #include <linux/irqhandler.h>
 
@@ -451,7 +445,7 @@ int platform_msi_device_domain_alloc(struct irq_domain *domain, unsigned int vir
 void platform_msi_device_domain_free(struct irq_domain *domain, unsigned int virq,
 				     unsigned int nvec);
 void *platform_msi_get_host_data(struct irq_domain *domain);
-#endif /* CONFIG_GENERIC_MSI_IRQ_DOMAIN */
+#endif /* CONFIG_GENERIC_MSI_IRQ */
 
 /* PCI specific interfaces */
 #ifdef CONFIG_PCI_MSI
