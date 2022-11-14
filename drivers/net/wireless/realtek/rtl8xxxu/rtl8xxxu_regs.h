@@ -960,6 +960,9 @@
 #define  CCK_PD_TYPE1_LV3_TH		0xdd
 #define  CCK_PD_TYPE1_LV4_TH		0xed
 
+#define REG_AGC_RPT			0xa80
+#define  AGC_RPT_CCK			BIT(7)
+
 #define REG_CONFIG_ANT_A		0x0b68
 #define REG_CONFIG_ANT_B		0x0b6c
 
@@ -1027,6 +1030,7 @@
 
 #define REG_OFDM1_TRX_PATH_ENABLE	0x0d04
 #define REG_OFDM1_CFO_TRACKING		0x0d2c
+#define  CFO_TRACKING_ATC_STATUS	BIT(11)
 #define REG_OFDM1_CSI_FIX_MASK1		0x0d40
 #define REG_OFDM1_CSI_FIX_MASK2		0x0d44
 
