@@ -1740,8 +1740,12 @@ int ath12k_wmi_vdev_install_key(struct ath12k *ar,
 	struct wmi_vdev_install_key_cmd *cmd;
 	struct wmi_tlv *tlv;
 	struct sk_buff *skb;
-	int ret, len;
-	int key_len_aligned = roundup(arg->key_len, 4);
+	int ret, len, key_len_aligned;
+
+	/* WMI_TAG_ARRAY_BYTE needs to be aligned with 4, the actual key
+	 * length is specifed in cmd->key_len.
+	 */
+	key_len_aligned = roundup(arg->key_len, 4);
 
 	len = sizeof(*cmd) + TLV_HDR_SIZE + key_len_aligned;
 
@@ -1766,7 +1770,7 @@ int ath12k_wmi_vdev_install_key(struct ath12k *ar,
 
 	tlv = (struct wmi_tlv *)(skb->data + sizeof(*cmd));
 	tlv->header = ath12k_wmi_tlv_hdr(WMI_TAG_ARRAY_BYTE, key_len_aligned);
-	memcpy(tlv->value, arg->key_data, key_len_aligned);
+	memcpy(tlv->value, arg->key_data, arg->key_len);
 
 	ath12k_dbg(ar->ab, ATH12K_DBG_WMI,
 		   "WMI vdev install key idx %d cipher %d len %d\n",
