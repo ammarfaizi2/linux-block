@@ -64,7 +64,7 @@ static void udpv6_destruct_sock(struct sock *sk)
 
 int udpv6_init_sock(struct sock *sk)
 {
-	skb_queue_head_init(&udp_sk(sk)->reader_queue);
+	udp_lib_init_sock(sk);
 	sk->sk_destruct = udpv6_destruct_sock;
 	set_bit(SOCK_SUPPORT_ZC, &sk->sk_socket->flags);
 	return 0;
@@ -632,7 +632,8 @@ int __udp6_lib_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
 	/* Tunnels don't have an application socket: don't pass errors back */
 	if (tunnel) {
 		if (udp_sk(sk)->encap_err_rcv)
-			udp_sk(sk)->encap_err_rcv(sk, skb, offset);
+			udp_sk(sk)->encap_err_rcv(sk, skb, err, uh->dest,
+						  ntohl(info), (u8 *)(uh+1));
 		goto out;
 	}
 
@@ -1639,6 +1640,7 @@ do_confirm:
 	err = 0;
 	goto out;
 }
+EXPORT_SYMBOL(udpv6_sendmsg);
 
 void udpv6_destroy_sock(struct sock *sk)
 {
@@ -1662,8 +1664,6 @@ void udpv6_destroy_sock(struct sock *sk)
 			udp_encap_disable();
 		}
 	}
-
-	inet6_destroy_sock(sk);
 }
 
 /*
@@ -1672,7 +1672,7 @@ void udpv6_destroy_sock(struct sock *sk)
 int udpv6_setsockopt(struct sock *sk, int level, int optname, sockptr_t optval,
 		     unsigned int optlen)
 {
-	if (level == SOL_UDP  ||  level == SOL_UDPLITE)
+	if (level == SOL_UDP  ||  level == SOL_UDPLITE || level == SOL_SOCKET)
 		return udp_lib_setsockopt(sk, level, optname,
 					  optval, optlen,
 					  udp_v6_push_pending_frames);

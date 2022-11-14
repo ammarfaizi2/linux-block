@@ -735,8 +735,9 @@ static unsigned int nfp_net_calc_fl_bufsz_xsk(struct nfp_net_dp *dp)
  */
 static void nfp_net_vecs_init(struct nfp_net *nn)
 {
+	int numa_node = dev_to_node(&nn->pdev->dev);
 	struct nfp_net_r_vector *r_vec;
-	int r;
+	unsigned int r;
 
 	nn->lsc_handler = nfp_net_irq_lsc;
 	nn->exn_handler = nfp_net_irq_exn;
@@ -762,7 +763,7 @@ static void nfp_net_vecs_init(struct nfp_net *nn)
 			tasklet_disable(&r_vec->tasklet);
 		}
 
-		cpumask_set_cpu(r, &r_vec->affinity_mask);
+		cpumask_set_cpu(cpumask_local_spread(r, numa_node), &r_vec->affinity_mask);
 	}
 }
 
@@ -1631,21 +1632,21 @@ static void nfp_net_stat64(struct net_device *netdev,
 		unsigned int start;
 
 		do {
-			start = u64_stats_fetch_begin_irq(&r_vec->rx_sync);
+			start = u64_stats_fetch_begin(&r_vec->rx_sync);
 			data[0] = r_vec->rx_pkts;
 			data[1] = r_vec->rx_bytes;
 			data[2] = r_vec->rx_drops;
-		} while (u64_stats_fetch_retry_irq(&r_vec->rx_sync, start));
+		} while (u64_stats_fetch_retry(&r_vec->rx_sync, start));
 		stats->rx_packets += data[0];
 		stats->rx_bytes += data[1];
 		stats->rx_dropped += data[2];
 
 		do {
-			start = u64_stats_fetch_begin_irq(&r_vec->tx_sync);
+			start = u64_stats_fetch_begin(&r_vec->tx_sync);
 			data[0] = r_vec->tx_pkts;
 			data[1] = r_vec->tx_bytes;
 			data[2] = r_vec->tx_errors;
-		} while (u64_stats_fetch_retry_irq(&r_vec->tx_sync, start));
+		} while (u64_stats_fetch_retry(&r_vec->tx_sync, start));
 		stats->tx_packets += data[0];
 		stats->tx_bytes += data[1];
 		stats->tx_errors += data[2];
@@ -2013,7 +2014,6 @@ const struct net_device_ops nfp_nfd3_netdev_ops = {
 	.ndo_get_phys_port_name	= nfp_net_get_phys_port_name,
 	.ndo_bpf		= nfp_net_xdp,
 	.ndo_xsk_wakeup		= nfp_net_xsk_wakeup,
-	.ndo_get_devlink_port	= nfp_devlink_get_devlink_port,
 	.ndo_bridge_getlink     = nfp_net_bridge_getlink,
 	.ndo_bridge_setlink     = nfp_net_bridge_setlink,
 };
@@ -2044,7 +2044,6 @@ const struct net_device_ops nfp_nfdk_netdev_ops = {
 	.ndo_features_check	= nfp_net_features_check,
 	.ndo_get_phys_port_name	= nfp_net_get_phys_port_name,
 	.ndo_bpf		= nfp_net_xdp,
-	.ndo_get_devlink_port	= nfp_devlink_get_devlink_port,
 	.ndo_bridge_getlink     = nfp_net_bridge_getlink,
 	.ndo_bridge_setlink     = nfp_net_bridge_setlink,
 };
