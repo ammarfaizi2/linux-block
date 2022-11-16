@@ -19,6 +19,36 @@ enum msi_domain_ids {
 };
 
 /**
+ * union msi_dev_cookie - MSI device cookie
+ * @value:	u64 value store
+ * @value_l	Lower u32 portion of @value
+ * @value_h:	Upper u32 portion of @value
+ * @ptr:	Pointer
+ *
+ * This data is handed to the IMS allocation function and stored
+ * in the MSI descriptor for the interrupt chip callbacks.
+ *
+ * The content of this data is implementation defined, e.g. PCI/IMS
+ * implementations will define the meaning of the data, e.g. PASID or a
+ * pointer to queue memory.
+ */
+union msi_dev_cookie {
+	union {
+		u64	value;
+		struct {
+#ifdef CONFIG_CPU_BIG_ENDIAN
+			u32	value_h;
+			u32	value_l;
+#else
+			u32	value_l;
+			u32	value_h;
+#endif
+		};
+	};
+	void	*ptr;
+};
+
+/**
  * msi_map - Mapping between MSI index and Linux interrupt number
  * @index:	The MSI index, e.g. slot in the MSI-X table or
  *		a software managed index if >= 0. If negative
