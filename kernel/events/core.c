@@ -4215,7 +4215,6 @@ static bool perf_rotate_context(struct perf_cpu_pmu_context *cpc)
 	struct perf_cpu_context *cpuctx = this_cpu_ptr(&perf_cpu_context);
 	struct perf_event_pmu_context *cpu_epc, *task_epc = NULL;
 	struct perf_event *cpu_event = NULL, *task_event = NULL;
-	struct perf_event_context *task_ctx = NULL;
 	int cpu_rotate, task_rotate;
 	struct pmu *pmu;
 
@@ -4229,7 +4228,6 @@ static bool perf_rotate_context(struct perf_cpu_pmu_context *cpc)
 	task_epc = cpc->task_epc;
 
 	cpu_rotate = cpu_epc->rotate_necessary;
-	task_ctx = cpuctx->task_ctx;
 	task_rotate = task_epc ? task_epc->rotate_necessary : 0;
 
 	if (!(cpu_rotate || task_rotate))
@@ -11324,13 +11322,15 @@ static int pmu_dev_alloc(struct pmu *pmu)
 
 	pmu->dev->groups = pmu->attr_groups;
 	device_initialize(pmu->dev);
-	ret = dev_set_name(pmu->dev, "%s", pmu->name);
-	if (ret)
-		goto free_dev;
 
 	dev_set_drvdata(pmu->dev, pmu);
 	pmu->dev->bus = &pmu_bus;
 	pmu->dev->release = pmu_dev_release;
+
+	ret = dev_set_name(pmu->dev, "%s", pmu->name);
+	if (ret)
+		goto free_dev;
+
 	ret = device_add(pmu->dev);
 	if (ret)
 		goto free_dev;
@@ -13187,7 +13187,7 @@ inherit_event(struct perf_event *parent_event,
 		return child_event;
 
 	pmu_ctx = find_get_pmu_context(child_event->pmu, child_ctx, child_event);
-	if (!pmu_ctx) {
+	if (IS_ERR(pmu_ctx)) {
 		free_event(child_event);
 		return NULL;
 	}
