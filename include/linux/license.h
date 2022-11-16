@@ -2,7 +2,7 @@
 #ifndef __LICENSE_H
 #define __LICENSE_H
 
-#include <string.h>
+#include <linux/string.h>
 
 static inline int license_is_gpl_compatible(const char *license)
 {
