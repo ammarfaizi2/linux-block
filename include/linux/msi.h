@@ -125,6 +125,19 @@ struct pci_msi_desc {
 	};
 };
 
+/**
+ * struct msi_desc_data - Generic MSI descriptor data
+ * @iobase:     Pointer to the IOMEM base adress for interrupt callbacks
+ * @cookie:	Device cookie provided at allocation time
+ *
+ * The content of this data is implementation defined, e.g. PCI/IMS
+ * implementations will define the meaning of the data.
+ */
+struct msi_desc_data {
+	void			__iomem *iobase;
+	union msi_dev_cookie	cookie;
+};
+
 #define MSI_MAX_INDEX		((unsigned int)USHRT_MAX)
 
 /**
@@ -142,6 +155,7 @@ struct pci_msi_desc {
  *
  * @msi_index:	Index of the msi descriptor
  * @pci:	PCI specific msi descriptor data
+ * @data:	Generic MSI descriptor data
  */
 struct msi_desc {
 	/* Shared device/bus type independent data */
@@ -161,7 +175,10 @@ struct msi_desc {
 	void *write_msi_msg_data;
 
 	u16				msi_index;
-	struct pci_msi_desc		pci;
+	union {
+		struct pci_msi_desc	pci;
+		struct msi_desc_data	data;
+	};
 };
 
 /*
