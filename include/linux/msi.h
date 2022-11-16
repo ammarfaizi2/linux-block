@@ -281,7 +281,8 @@ static inline void msi_desc_set_iommu_cookie(struct msi_desc *desc,
 int msi_domain_insert_msi_desc(struct device *dev, unsigned int domid,
 			       struct msi_desc *init_desc);
 /**
- * msi_insert_msi_desc - Allocate and initialize a MSI descriptor in the default domain
+ * msi_insert_msi_desc - Allocate and initialize a MSI descriptor in the default irqdomain
+ *
  * @dev:	Pointer to the device for which the descriptor is allocated
  * @init_desc:	Pointer to an MSI descriptor to initialize the new descriptor
  *
@@ -292,10 +293,25 @@ static inline int msi_insert_msi_desc(struct device *dev, struct msi_desc *init_
 	return msi_domain_insert_msi_desc(dev, MSI_DEFAULT_DOMAIN, init_desc);
 }
 
-void msi_free_msi_descs_range(struct device *dev, unsigned int first_index, unsigned int last_index);
+void msi_domain_free_msi_descs_range(struct device *dev, unsigned int domid,
+				     unsigned int first, unsigned int last);
 
 /**
- * msi_free_msi_descs - Free MSI descriptors of a device
+ * msi_free_msi_descs_range - Free a range of MSI descriptors of a device
+ *			      in the default irqdomain
+ *
+ * @dev:	Device for which to free the descriptors
+ * @first:	Index to start freeing from (inclusive)
+ * @last:	Last index to be freed (inclusive)
+ */
+static inline void msi_free_msi_descs_range(struct device *dev, unsigned int first,
+					    unsigned int last)
+{
+	msi_domain_free_msi_descs_range(dev, MSI_DEFAULT_DOMAIN, first, last);
+}
+
+/**
+ * msi_free_msi_descs - Free all MSI descriptors of a device in the default irqdomain
  * @dev:	Device to free the descriptors
  */
 static inline void msi_free_msi_descs(struct device *dev)
