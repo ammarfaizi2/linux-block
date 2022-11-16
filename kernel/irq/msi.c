@@ -21,6 +21,18 @@
 
 static inline int msi_sysfs_create_group(struct device *dev);
 
+static inline void msi_setup_default_irqdomain(struct device *dev, struct msi_device_data *md)
+{
+	if (!dev->msi.domain)
+		return;
+	/*
+	 * If @dev::msi::domain is a global MSI domain, copy the pointer
+	 * into the domain array to avoid conditionals all over the place.
+	 */
+	if (!irq_domain_is_msi_parent(dev->msi.domain))
+		md->__irqdomains[MSI_DEFAULT_DOMAIN] = dev->msi.domain;
+}
+
 /**
  * msi_alloc_desc - Allocate an initialized msi_desc
  * @dev:	Pointer to the device for which this is allocated
@@ -212,6 +224,8 @@ int msi_setup_device_data(struct device *dev)
 		devres_free(md);
 		return ret;
 	}
+
+	msi_setup_default_irqdomain(dev, md);
 
 	xa_init(&md->__store);
 	mutex_init(&md->mutex);

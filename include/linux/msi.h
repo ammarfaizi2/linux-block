@@ -77,6 +77,7 @@ struct msi_desc;
 struct pci_dev;
 struct platform_msi_priv_data;
 struct device_attribute;
+struct irq_domain;
 
 void __get_cached_msi_msg(struct msi_desc *entry, struct msi_msg *msg);
 #ifdef CONFIG_GENERIC_MSI_IRQ
@@ -180,6 +181,7 @@ enum msi_desc_filter {
  * @mutex:		Mutex protecting the MSI descriptor store
  * @__store:		Xarray for storing MSI descriptor pointers
  * @__iter_idx:		Index to search the next entry for iterators
+ * @__irqdomains:	Per device interrupt domains
  */
 struct msi_device_data {
 	unsigned long			properties;
@@ -187,6 +189,7 @@ struct msi_device_data {
 	struct mutex			mutex;
 	struct xarray			__store;
 	unsigned long			__iter_idx;
+	struct irq_domain		*__irqdomains[MSI_MAX_DEVICE_IRQDOMAINS];
 };
 
 int msi_setup_device_data(struct device *dev);
