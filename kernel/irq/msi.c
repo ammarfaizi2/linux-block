@@ -829,6 +829,42 @@ struct irq_domain *msi_create_irq_domain(struct fwnode_handle *fwnode,
 	return domain;
 }
 
+/**
+ * msi_parent_init_dev_msi_info - Delegate initialization of device MSI info to parent domain
+ * @dev:		The device for which the domain should be created
+ * @domain:		The domain which delegates
+ * @real_parent:	The real parent domain of the to be initialized MSI domain
+ * @info:		The MSI domain info to initialize
+ *
+ * Return: true on success, false otherwise
+ *
+ * This is the most complex problem of per device MSI domains and the
+ * underlying interrupt domain hierarchy:
+ *
+ * The device domain to be initialized requests the broadest feature set
+ * possible and the underlying domain hierarchy puts restrictions on it.
+ *
+ * That's working perfectly fine for a strict parent->device model, but it
+ * falls apart with a root_parent->real_parent->device chain because the
+ * intermediate 'real parent' can expand the capabilities which the
+ * 'root_parent' domain is providing. So that creates a classic hen and egg
+ * problem: Which entity is doing the restrictions/expansions?
+ *
+ * One solution is to let the root parent domain handle the initialization
+ * that's why there is the @domain and the @real_parent pointer.
+ */
+bool msi_parent_init_dev_msi_info(struct device *dev, struct irq_domain *domain,
+				  struct irq_domain *real_parent, struct msi_domain_info *info)
+{
+	struct irq_domain *parent = domain->parent;
+
+	if (WARN_ON_ONCE(!parent || !parent->msi_parent_ops ||
+			 !parent->msi_parent_ops->init_dev_msi_info))
+		return false;
+
+	return parent->msi_parent_ops->init_dev_msi_info(dev, parent, real_parent, info);
+}
+
 int msi_domain_prepare_irqs(struct irq_domain *domain, struct device *dev,
 			    int nvec, msi_alloc_info_t *arg)
 {
