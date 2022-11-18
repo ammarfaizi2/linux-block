@@ -151,7 +151,6 @@ fail:
 
 	return true;
 }
-EXPORT_SYMBOL_GPL(should_fail_ex);
 
 bool should_fail(struct fault_attr *attr, ssize_t size)
 {
