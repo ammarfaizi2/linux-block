@@ -31,3 +31,9 @@ config GENERIC_VDSO_TIME_NS
 	  VDSO
 
 endif
+
+config VDSO_GETRANDOM
+	bool
+	select NEED_VM_DROPPABLE
+	help
+	  Selected by architectures that support vDSO getrandom().
