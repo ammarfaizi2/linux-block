@@ -6,11 +6,39 @@
 #ifndef _VDSO_GETRANDOM_H
 #define _VDSO_GETRANDOM_H
 
+#include <crypto/chacha.h>
+#include <vdso/types.h>
+
 /**
  * struct vgetrandom_state - State used by vDSO getrandom() and allocated by vgetrandom_alloc().
  *
- * Currently empty, as the vDSO getrandom() function has not yet been implemented.
+ * @batch:	One and a half ChaCha20 blocks of buffered RNG output.
+ *
+ * @key:	Key to be used for generating next batch.
+ *
+ * @batch_key:	Union of the prior two members, which is exactly two full
+ * 		ChaCha20 blocks in size, so that @batch and @key can be filled
+ * 		together.
+ *
+ * @generation:	Snapshot of @rng_info->generation in the vDSO data page at
+ *		the time @key was generated.
+ *
+ * @pos:	Offset into @batch of the next available random byte.
+ *
+ * @in_use:	Reentrancy guard for reusing a state within the same thread
+ *		due to signal handlers.
  */
-struct vgetrandom_state { int placeholder; };
+struct vgetrandom_state {
+	union {
+		struct {
+			u8	batch[CHACHA_BLOCK_SIZE * 3 / 2];
+			u32	key[CHACHA_KEY_SIZE / sizeof(u32)];
+		};
+		u8		batch_key[CHACHA_BLOCK_SIZE * 2];
+	};
+	vdso_kernel_ulong	generation;
+	u8			pos;
+	bool 			in_use;
+};
 
 #endif /* _VDSO_GETRANDOM_H */

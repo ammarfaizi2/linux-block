@@ -60,6 +60,7 @@
 #include <crypto/blake2s.h>
 #ifdef CONFIG_VDSO_GETRANDOM
 #include <vdso/getrandom.h>
+#include <vdso/datapage.h>
 #endif
 #include <asm/archrandom.h>
 #include <asm/processor.h>
@@ -407,6 +408,13 @@ static void crng_reseed(struct work_struct *work)
 	if (next_gen == ULONG_MAX)
 		++next_gen;
 	WRITE_ONCE(base_crng.generation, next_gen);
+#ifdef CONFIG_VDSO_GETRANDOM
+	/* base_crng.generation's invalid value is ULONG_MAX, while
+	 * _vdso_rng_data.generation's invalid value is 0, so add one to the
+	 * former to arrive at the latter.
+	 */
+	smp_store_release(&_vdso_rng_data.generation, next_gen + 1);
+#endif
 	if (!static_branch_likely(&crng_is_ready))
 		crng_init = CRNG_READY;
 	spin_unlock_irqrestore(&base_crng.lock, flags);
@@ -857,6 +865,9 @@ static void __cold _credit_init_bits(size_t bits)
 		if (static_key_initialized)
 			execute_in_process_context(crng_set_ready, &set_ready);
 		atomic_notifier_call_chain(&random_ready_notifier, 0, NULL);
+#ifdef CONFIG_VDSO_GETRANDOM
+		smp_store_release(&_vdso_rng_data.is_ready, true);
+#endif
 		wake_up_interruptible(&crng_init_wait);
 		kill_fasync(&fasync, SIGIO, POLL_IN);
 		pr_notice("crng init done\n");

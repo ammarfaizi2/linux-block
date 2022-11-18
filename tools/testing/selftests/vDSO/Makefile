@@ -11,6 +11,7 @@ ifeq ($(ARCH),$(filter $(ARCH),x86 x86_64))
 TEST_GEN_PROGS += $(OUTPUT)/vdso_standalone_test_x86
 endif
 TEST_GEN_PROGS += $(OUTPUT)/vdso_test_correctness
+TEST_GEN_PROGS += $(OUTPUT)/vdso_test_getrandom
 
 CFLAGS := -std=gnu99
 CFLAGS_vdso_standalone_test_x86 := -nostdlib -fno-asynchronous-unwind-tables -fno-stack-protector
@@ -33,3 +34,4 @@ $(OUTPUT)/vdso_test_correctness: vdso_test_correctness.c
 		vdso_test_correctness.c \
 		-o $@ \
 		$(LDFLAGS_vdso_test_correctness)
+$(OUTPUT)/vdso_test_getrandom: parse_vdso.c
