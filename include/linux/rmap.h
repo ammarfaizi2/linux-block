@@ -204,14 +204,14 @@ void hugepage_add_anon_rmap(struct page *, struct vm_area_struct *,
 void hugepage_add_new_anon_rmap(struct page *, struct vm_area_struct *,
 		unsigned long address);
 
-void page_dup_compound_rmap(struct page *page);
+static inline void __page_dup_rmap(struct page *page, bool compound)
+{
+	atomic_inc(compound ? compound_mapcount_ptr(page) : &page->_mapcount);
+}
 
 static inline void page_dup_file_rmap(struct page *page, bool compound)
 {
-	if (likely(!compound /* page is mapped by PTE */))
-		atomic_inc(&page->_mapcount);
-	else
-		page_dup_compound_rmap(page);
+	__page_dup_rmap(page, compound);
 }
 
 /**
@@ -260,7 +260,7 @@ static inline int page_try_dup_anon_rmap(struct page *page, bool compound,
 	 * the page R/O into both processes.
 	 */
 dup:
-	page_dup_file_rmap(page, compound);
+	__page_dup_rmap(page, compound);
 	return 0;
 }
 
