@@ -97,7 +97,7 @@ static void __dump_page(struct page *page)
 		pr_warn("head:%p order:%u compound_mapcount:%d subpages_mapcount:%d compound_pincount:%d\n",
 				head, compound_order(head),
 				head_compound_mapcount(head),
-				head_subpages_mapcount(head),
+				head_subpages_mapcount(head) & SUBPAGES_MAPPED,
 				head_compound_pincount(head));
 	}
 
