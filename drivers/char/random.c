@@ -8,6 +8,7 @@
  * into roughly six sections, each with a section header:
  *
  *   - Initialization and readiness waiting.
+ *   - VDSO support helpers.
  *   - Fast key erasure RNG, the "crng".
  *   - Entropy accumulation and extraction routines.
  *   - Entropy collection routines.
@@ -39,6 +40,7 @@
 #include <linux/blkdev.h>
 #include <linux/interrupt.h>
 #include <linux/mm.h>
+#include <linux/mman.h>
 #include <linux/nodemask.h>
 #include <linux/spinlock.h>
 #include <linux/kthread.h>
@@ -59,6 +61,7 @@
 #include <asm/irq.h>
 #include <asm/irq_regs.h>
 #include <asm/io.h>
+#include "../../lib/vdso/getrandom.h"
 
 /*********************************************************************
  *
@@ -145,6 +148,60 @@ EXPORT_SYMBOL(wait_for_random_bytes);
 		printk_deferred(KERN_NOTICE "random: %s called from %pS with crng_init=%d\n", \
 				__func__, (void *)_RET_IP_, crng_init)
 
+
+
+/********************************************************************
+ *
+ * VDSO support helpers.
+ *
+ * The actual vDSO function is defined over in lib/vdso/getrandom.c,
+ * but this section contains the kernel-mode helpers to support that.
+ *
+ ********************************************************************/
+
+/*
+ * The vgetrandom() function in userspace requires an opaque state, which this
+ * function provides to userspace. The result is that it maps a certain
+ * number of special pages into the calling process and returns the address.
+ */
+SYSCALL_DEFINE3(vgetrandom_alloc, unsigned long __user *, num,
+		unsigned long __user *, size_per_each, unsigned int, flags)
+{
+	unsigned long alloc_size;
+	unsigned long num_states;
+	unsigned long pages_addr;
+	int ret;
+
+	if (flags)
+		return -EINVAL;
+
+	if (get_user(num_states, num))
+		return -EFAULT;
+
+	alloc_size = size_mul(num_states, sizeof(struct vgetrandom_state));
+	if (alloc_size == SIZE_MAX)
+		return -EOVERFLOW;
+	alloc_size = roundup(alloc_size, PAGE_SIZE);
+
+	if (put_user(alloc_size / sizeof(struct vgetrandom_state), num) ||
+	    put_user(sizeof(struct vgetrandom_state), size_per_each))
+		return -EFAULT;
+
+	pages_addr = vm_mmap(NULL, 0, alloc_size, PROT_READ | PROT_WRITE,
+			     MAP_PRIVATE | MAP_ANONYMOUS | MAP_LOCKED, 0);
+	if (IS_ERR_VALUE(pages_addr))
+		return pages_addr;
+
+	ret = do_madvise(current->mm, pages_addr, alloc_size, MADV_WIPEONFORK);
+	if (ret < 0)
+		goto err_unmap;
+
+	return pages_addr;
+
+err_unmap:
+	vm_munmap(pages_addr, alloc_size);
+	return ret;
+}
 
 /*********************************************************************
  *
