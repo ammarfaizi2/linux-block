@@ -30,4 +30,9 @@ config GENERIC_VDSO_TIME_NS
 	  Selected by architectures which support time namespaces in the
 	  VDSO
 
+config HAVE_VDSO_GETRANDOM
+	bool
+	help
+	  Selected by architectures that support vDSO getrandom().
+
 endif
