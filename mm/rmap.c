@@ -1281,7 +1281,7 @@ void page_add_anon_rmap(struct page *page,
 	struct compound_mapcounts mapcounts;
 	int nr = 0, nr_pmdmapped = 0;
 	bool compound = flags & RMAP_COMPOUND;
-	bool first;
+	bool first = true;
 
 	if (unlikely(PageKsm(page)))
 		lock_page_memcg(page);
