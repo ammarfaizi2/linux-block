@@ -63,7 +63,7 @@ static int msi_get_domain_base_index(struct device *dev, unsigned int domid)
  * Return: pointer to allocated &msi_desc on success or %NULL on failure
  */
 static struct msi_desc *msi_alloc_desc(struct device *dev, int nvec,
-					const struct irq_affinity_desc *affinity)
+				       const struct irq_affinity_desc *affinity)
 {
 	struct msi_desc *desc = kzalloc(sizeof(*desc), GFP_KERNEL);
 
@@ -88,27 +88,42 @@ static void msi_free_desc(struct msi_desc *desc)
 	kfree(desc);
 }
 
-static int msi_insert_desc(struct msi_device_data *md, struct msi_desc *desc, unsigned int index)
+static int msi_insert_desc(struct device *dev, struct msi_desc *desc,
+			   unsigned int domid, unsigned int index)
 {
-	int ret;
+	struct msi_device_data *md = dev->msi.data;
+	int baseidx, ret;
+
+	baseidx = msi_get_domain_base_index(dev, domid);
+	if (baseidx < 0) {
+		ret = baseidx;
+		goto fail;
+	}
 
 	desc->msi_index = index;
+	index += baseidx;
 	ret = xa_insert(&md->__store, index, desc, GFP_KERNEL);
 	if (ret)
-		msi_free_desc(desc);
+		goto fail;
+	return 0;
+
+fail:
+	msi_free_desc(desc);
 	return ret;
 }
 
 /**
- * msi_insert_msi_desc - Allocate and initialize a MSI descriptor and
- *			 insert it at @init_desc->msi_index
+ * msi_domain_insert_msi_desc - Allocate and initialize a MSI descriptor and
+ *				insert it at @init_desc->msi_index
  *
  * @dev:	Pointer to the device for which the descriptor is allocated
+ * @domid:	The id of the interrupt domain to which the desriptor is added
  * @init_desc:	Pointer to an MSI descriptor to initialize the new descriptor
  *
  * Return: 0 on success or an appropriate failure code.
  */
-int msi_insert_msi_desc(struct device *dev, struct msi_desc *init_desc)
+int msi_domain_insert_msi_desc(struct device *dev, unsigned int domid,
+			       struct msi_desc *init_desc)
 {
 	struct msi_desc *desc;
 
@@ -120,7 +135,8 @@ int msi_insert_msi_desc(struct device *dev, struct msi_desc *init_desc)
 
 	/* Copy type specific data to the new descriptor. */
 	desc->pci = init_desc->pci;
-	return msi_insert_desc(dev->msi.data, desc, init_desc->msi_index);
+
+	return msi_insert_desc(dev, desc, domid, init_desc->msi_index);
 }
 
 /**
@@ -143,7 +159,7 @@ static int msi_add_simple_msi_descs(struct device *dev, unsigned int index, unsi
 		desc = msi_alloc_desc(dev, 1, NULL);
 		if (!desc)
 			goto fail_mem;
-		ret = msi_insert_desc(dev->msi.data, desc, idx);
+		ret = msi_insert_desc(dev, desc, MSI_DEFAULT_DOMAIN, idx);
 		if (ret)
 			goto fail;
 	}
