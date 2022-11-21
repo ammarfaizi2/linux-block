@@ -56,17 +56,17 @@ def __func__():
 def err(s):
     global args
 
-    sys.stderr.write(f"{ __func__() }: Error: {s}\n")
+    sys.stderr.write(f"{ __func__() }: ERROR: {s}\n")
 
     if not args.force:
         sys.exit(1)
 
 def warn_on(cond, s):
     if cond:
-        print(f"{ __func__() }: Warning: {s}")
+        print(f"{ __func__() }: WARNING: {s}")
 
 def warn(s):
-    print(f"{ __func__() }: Warning: {s}")
+    print(f"{ __func__() }: WARNING: {s}")
 
 def __verbose_helper(s, v, v_lvl):
     if v < v_lvl:
@@ -205,7 +205,7 @@ dc_words = [ "3rd", "accessor", "ACPI", "AER", "allocator", "AMD", "AMD64",
          "kallsyms", "KASAN", "Kbuild", "Kconfig", "kdump", "kexec", "kmemleak", "kobject", "kPTI", "KVM",
          "LFENCE", "libc", "linux", "livepatch", "LSB", "lvalue", "LVT",
          "maintainership", "Makefile",
-         "MCE", "MDS", "memfd", "mmap", "MMIO", "MMU", "modpost", "ModRM", "MSR", "MTRR",
+         "MCE", "MDS", "memfd", "mmap", "MMIO", "MMU", "modpost", "ModRM", "MTRR",
          "NIST", "NOHZ", "NOP", "NX",
          "objtool", "OEM", "ok", "oneliner", "ORL", "OVMF", "pahole", "passthrough", "pdf", "percpu",
          "perf", "PKRU", "PPIN",
@@ -244,7 +244,7 @@ regexes_pats = [ r'^(32|64)-?bit$',
             r'^AVX(512)?(-FP16)?$',
             r'BIOS(e[sn])?', r'boot(loader|up)', r'boot_params([\.\w_]+)?$', r'BS[FPS]$',
             r'^B[HT]B$',
-            r'^C[1-6]$', r'^C[BS]M$', r'^CPU\d+$', r'^cpuinfo(_x86)?$', r'^CR[1-4]$',
+            r'^C[1-6]$', r'^C[BS]M$', r'^CPU(\d+|s)?$', r'^cpuinfo(_x86)?$', r'^CR[1-4]$',
             r'default_(attrs|groups)', r'^DDR([1-5])?$',
             r'^S?DRAM$',
             r'^[Ee].g.$', r'^[eE]?IBRS$', r'^E?VEX$',
@@ -257,7 +257,7 @@ regexes_pats = [ r'^(32|64)-?bit$',
             r'^[ku]probes?$', r'^L[0-3]$', r'^LL(C|VM)$',
             r'S?MCA$', r'^[Mm]em(block|cpy|move|remap|set|type)$',
             r'^microarchitectur(al|e)$', r'^mispredict(ed)?$',
-            r'MOV([SB]|DIR64B)?', r'^[NS]MI$',
+            r'MOV([SB]|DIR64B)?', r'^MSRs?$', r'^[NS]MI$',
             r'^param(s)?$',
             r'^([Pp]ara)?virt(ualiz(ed|ing|ation))?$',
             # embedded modifier which goes at the beginning of the regex
