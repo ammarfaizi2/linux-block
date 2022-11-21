@@ -499,6 +499,7 @@ int nilfs_sufile_mark_dirty(struct inode *sufile, __u64 segnum)
 	struct nilfs_segment_usage *su;
 	int ret;
 
+	down_write(&NILFS_MDT(sufile)->mi_sem);
 	ret = nilfs_sufile_get_segment_usage_block(sufile, segnum, 0, &bh);
 	if (!ret) {
 		mark_buffer_dirty(bh);
@@ -509,6 +510,7 @@ int nilfs_sufile_mark_dirty(struct inode *sufile, __u64 segnum)
 		kunmap_atomic(kaddr);
 		brelse(bh);
 	}
+	up_write(&NILFS_MDT(sufile)->mi_sem);
 	return ret;
 }
 
