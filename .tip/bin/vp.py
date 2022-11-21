@@ -13,6 +13,7 @@ vp.py - Patch verifier and massager tool
 #
 # - a8: switch to logging module maybe:
 #   https://docs.python.org/3/howto/logging.html#logging-basic-tutorial
+#
 
 import re
 import sys
@@ -188,97 +189,99 @@ def verify_commit_ref(sha1, name):
 dc = None
 
 # my words
-dc_words = [ "3rd", "ACPI", "AER", "allocator", "AMD", "AMD64",
+dc_words = [ "3rd", "accessor", "ACPI", "AER", "allocator", "AMD", "AMD64",
          # that's some stupid dictionary
-         "amongst", "AMX", "APEI", "arm64", "asm",
-         "binutils", "bitmask", "bitfield", "bool", "breakpoint", "brk", "btree",
-         "C1E", "cacheline", "callee", "CLAC", "clocksource", "CMCI", "cmdline", "CMOV", "CMPXCHG",
-         "Coccinelle", "codename", "config", "CPER", "CPPC", "CPUID", "CSM", "Cyrix",
-         "DCT", "devicetree",
-         "DF", "distro", "DIMM", "DMA", "dmesg", "e820", "EAX", "EBDA", "ECC", "EDAC", "EHCI", "enablement",
-         "ENDBR", "ENQCMD", "EPT", "ERMS",
-         "fixup", "gcc", "GHES", "goto", "GPR", "GUID", "HEST", "hotplug", "hugepage", "Hygon",
-         "hypercall", "HyperV", "HV", "hwpoison", "i387", "i915", "I/O", "IBPB", "IBS", "IMA", "init", "inlined",
+         "amongst", "AMX", "APEI", "arm64", "ASID", "asm",
+         "binutils", "bitmask", "bitfield", "bool", "breakpoint", "brk", "BTF", "btree",
+         "C1E", "cacheline", "callee", "CET", "CLAC", "clocksource", "CMCI", "cmdline", "CMOV", "CMPXCHG",
+         "Coccinelle", "codename", "config", "CPER", "CPPC", "CPUID", "CRIU", "Cyrix",
+         "DCT", "debugfs", "devicetree",
+         "DF", "distro", "DIMM", "DMA", "dmesg", "DOSEMU", "DPL",
+         "e820", "EAX", "EBDA", "ECC", "EDAC", "EHCI", "enablement",
+         "ENDBR", "ENQCMD", "EPT", "ERMS", "extern", "filesystem", 
+         "fixup", "gcc", "GCM", "GDT", "GHES", "goto", "GPR", "GSBASE", "GUID", "HEST", "hotplug", "hugepage", "Hygon",
+         "hypercall", "HyperV", "HV", "hwpoison", "i915", "I/O", "IBPB", "IBS", "IMA", "init", "inlined",
          "INT3", "IPI", "IRET", "IOMMU", "IRQ",
-         "kallsyms", "KASAN", "KASLR", "Kbuild", "Kconfig", "kdump", "kexec", "kmemleak", "kobject", "kPTI", "KVM",
+         "kallsyms", "KASAN", "Kbuild", "Kconfig", "kdump", "kexec", "kmemleak", "kobject", "kPTI", "KVM",
          "LFENCE", "libc", "linux", "livepatch", "LSB", "lvalue", "LVT",
          "maintainership", "Makefile",
-         "MCE", "MDS", "MMIO", "modpost", "ModRM", "MOVDIR64B", "MSR", "MTRR",
-         "NOHZ", "noinstr", "NOP", "NX",
-         "objtool", "OEM", "ok", "oneliner", "OVMF", "pahole", "passthrough", "pdf", "percpu", "perf", "PPIN",
+         "MCE", "MDS", "memfd", "mmap", "MMIO", "MMU", "modpost", "ModRM", "MSR", "MTRR",
+         "NIST", "NOHZ", "NOP", "NX",
+         "objtool", "OEM", "ok", "oneliner", "ORL", "OVMF", "pahole", "passthrough", "pdf", "percpu",
+         "perf", "PKRU", "PPIN",
          "preemptible",
          "prepend", # derived from append, not in the dictionaries
-         "printk", "PTE",
-         "PV", "PVALIDATE", "QEMU", "QOS", "refcount", "repurposing", "RCU", "RET", "retpoline", "rFLAGS",
-         "RMPUPDATE", "RNG", "RSB", "RTM",
-         "runtime", "Ryzen", "s390",
-         "scalable", "SDM", "selftest", "SETcc",
-         "SGX", "sideband", "Skylake", "Smatch", "SMN", "SNP", "SPDX", "SRAR", "SRBDS", "SLS", "STAC",
-         "STLF", "stringify", "struct", "SWAPGS", "swiotlb",
+         "printk", "PTE", "pthread",
+         "PV", "PVALIDATE", "QEMU", "QOS",
+         "RAS", "refcount", "resctrl", "repurposing", "RCU", "RDT", "RDTSC", "RET",
+         "retpoline", "rFLAGS", "RMPUPDATE", "RNG", "RSB", "RTM", "runtime", "Ryzen",
+         "s390", "scalable", "SDM", "selftest", "SETcc",
+         "SGX", "sideband", "sigreturn", "Skylake", "SLS", "Smatch", "SMN", "SNP", "SoC", "SPDX", "SRAR", "SRBDS",
+         "SSP", "STAC", "STLF", "stringify", "struct", "SWAPGS", "swiotlb",
          "symtab", "Synopsys", "SYSENTER", "sysfs", "TAA", "TCC", "TDCALL", "TDGETVEINFO",
-         "TDVMCALL", "tl;dr", "TLB", "TODO",
-         "TPM", "tracepoint", "TSC", "TZCNT", "UC", "uarch", "udev", "uncacheable", "uncore",
-         "uncorrectable",
-         # too late for that one to enforce even as the dictionary says it is wrong
-         "untrusted", "unwinder", "userspace", "vCPU", "VERW", "VLA",
+         "TDVMCALL", "tl;dr", "TLB", "tmpfs", "TODO",
+         "TPM", "tracepoint", "TSC", "TZCNT", "UC", "uarch", "udev", "uncore",
+         "unmount", "unwinder", "userspace", "vCPU", "vDSO", "VERW", "VLA",
          "VMSA", "VMware", "vsyscall", "vTOM",
          "WBINVD", "WRMSR",
-         "XCR0", "Xeon",
-         "XSS", "XSTATE" ]
+         "XCR0", "Xeon", "Xilinx", "XSS", "XSTATE" ]
 
 dc_non_words = [ "E820", "X86" ]
 
 # prominent kernel vars, etc which get mentioned often in commit messages and comments
-known_vars = [ '__BOOT_DS', 'cpumask', 'earlyprintk',
+known_vars = [ '__BOOT_DS', 'clearcpuid', 'cpumask', 'earlyprintk',
            'fpstate', 'idtentry', 'kobj_type',
-           'kptr_restrict', 'libvirt', 'pt_regs',
-           'ptr', 'pvops', 'set_lvt_off', 'setup_data',
+           'kptr_restrict', 'libvirt', 'mmap', 'noinstr', 'pt_regs',
+           'ptr', 'pvops', 'set_lvt_off', 'setup_data', 'shstk',
            'sme_me_mask', 'sysctl_perf_event_paranoid', 'threshold_banks', 'vfio', 'virtio_gpu',
            'vmlinux', 'xfeatures' ]
 
 # known words as regexes to avoid duplication in the list above
-regexes_pats = [ r'^U?ABI$',
+regexes_pats = [ r'^(32|64)-?bit$',
+            r'^U?ABI$', r'^AES-GCM$',
             r'^all(mod|yes)config$',
-            r'^AP[IMU]$',
+            r'^AP[IMU]$', r'^[kK]?ASLR$',
             r'^AVX(512)?(-FP16)?$',
             r'BIOS(e[sn])?', r'boot(loader|up)', r'boot_params([\.\w_]+)?$', r'BS[FPS]$',
             r'^B[HT]B$',
-            r'^C[1-6]$', r'^CPU\d+$', r'^cpuinfo(_x86)?$', r'^CR[1-4]$',
+            r'^C[1-6]$', r'^C[BS]M$', r'^CPU\d+$', r'^cpuinfo(_x86)?$', r'^CR[1-4]$',
             r'default_(attrs|groups)', r'^DDR([1-5])?$',
             r'^S?DRAM$',
             r'^[Ee].g.$', r'^[eE]?IBRS$', r'^E?VEX$',
             r'^F[PR]U$', r'^[pf]trace$',
             r'^GHC(B|I)$',
-            r'^HL[ET]$',
+            r'^HL[ET]$', r'^i38[67]$',
             r'^Icelake(-D)?$', r'I[BDS]T', r'init(ializer|rd|ramfs)?',
             r'^(in|off)lining$',
             r'(?i)^jmp$', r'^(k[cm]|vm)alloc$',
-            r'^[ku]probes?$', r'^L[0-3]$',
+            r'^[ku]probes?$', r'^L[0-3]$', r'^LL(C|VM)$',
             r'S?MCA$', r'^[Mm]em(block|cpy|move|remap|set|type)$',
             r'^microarchitectur(al|e)$', r'^mispredict(ed)?$',
-            r'MOVSB?', r'^[NS]MI$',
+            r'MOV([SB]|DIR64B)?', r'^[NS]MI$',
             r'^param(s)?$',
             r'^([Pp]ara)?virt(ualiz(ed|ing|ation))?$',
             # embedded modifier which goes at the beginning of the regex
             r'(?i)^pasid$', r'^PCIe?$', r'PS[CP]', r'^P[MU]D$',
             r'RD(MSR|RAND|SEED)$', r'^RMP(ADJUST)?$',
             r'sev_(features|status)', r'^SEV(-(ES|SNP))?$', r'(?i)^SHA(1|256|512|384)$',
-            r'^SIG(BUS|SEGV)$',
+            r'^SH[LR]$', r'^SIG(BUS|SEGV)$',
             r'^SM[ET]$',
-            r'^SM[AE]P$', r'^[Ss]pectre(_v2)*$', r'^STI(BP)?$',
-            r'^str(lcat|tab)$', r'^SV[AM]$',
+            r'^SM[AE]P$', r'^[Ss]pectre(_v2)*$', r'^steppings?$', r'^STI(BP)?$',
+            r'^str(lcat|[lns]cpy|tab)$', r'^SV[AM]$',
             r'T[DS]X', r'^u(16|32|64)$',
             r'^U?EFI$', r'^UM[CL]$', r'^unmap(ping)?$',
+            r'^un(cache(e?able|d)|correctable|initialized|trusted)$',
             r'^v?syscall$', r'^VMC[BS]$', r'^VMG?E(xit|XIT)$', r'^VM[MX]?$',
-            r'^VM(CALL|ENTER|LAUNCH|RESUME)$',
-            r'^VMPL([0-3])?$', r'^x86(-(32|64))?$', r'^(Xen(PV)?|XENPV)$', r'^XSAVE[CS]?$' ]
+            r'^VM(CALL|ENTER|LAUNCH|RESUME)$', r'^VMPCKs?$',
+            r'^VMPL([0-3])?$', r'^[dq]words?$', r'^WRU?SS$',
+            r'^x86(-(32|64))?$', r'^(Xen(PV)?|XENPV)$', r'^XSAVE[CS]?$' ]
 
 def load_spellchecker():
     global dc, regexes, regexes_pats, rex_abs_fnames, rex_amd_fam, rex_asm_dir, rex_brackets, \
 rex_c_keywords, rex_c_macro, rex_comment, rex_comment_end, \
 rex_commit_ref, rex_constant, rex_decimal, rex_errval, rex_fnames, rex_gpr, rex_hyphenated, \
 rex_kcmdline, rex_kdoc_arg, rex_kdoc_cmt, rex_misc_num, rex_non_alpha, \
-rex_opts, rex_paths, rex_reg_field, rex_sections, rex_sent_end, rex_sha1, \
+rex_opts, rex_paths, rex_reg_field, rex_regs, rex_sections, rex_sent_end, rex_sha1, \
 rex_struct_mem, rex_units, rex_url, rex_version, rex_word_bla, \
 rex_word_split, rex_x86_traps
 
@@ -294,7 +297,7 @@ rex_word_split, rex_x86_traps
     # compile all regexes
     # Use /usr/share/doc/pythonX.X/examples/demo/redemo.py for checking
     rex_asm_dir     = re.compile(r'^\.(align|org)$')
-    rex_amd_fam     = re.compile(r'^[Ff]?[0-9a-f]+h$')
+    rex_amd_fam     = re.compile(r'^[Ff]?1[0-9a-f]h$')
     rex_brackets    = re.compile(r'^.*[()\[\]]+.*$')
     rex_c_keywords  = re.compile(r'#(ifdef|include)')
     rex_c_macro     = re.compile(r'^[A-Z0-9_]+$')
@@ -307,7 +310,7 @@ rex_word_split, rex_x86_traps
     rex_constant    = re.compile(r'^~?[0-9]+(?:UL)?$')
 
     rex_decimal     = re.compile(r'^[0-9]+$')
-    rex_errval      = re.compile(r'-E(EINVAL|EXIST|NODEV|NOMEM|OPNOTSUPP|PROBE_DEFER)')
+    rex_errval      = re.compile(r'-E(EINVAL|EXIST|IO|NODEV|NOMEM|(OP)?NOTSUPP|PROBE_DEFER|TIMEDOUT)')
 
     # match only absolute filenames, for regex simplicity
     # \W is consuming the char so make sure you replace with ' '
@@ -336,22 +339,28 @@ rex_word_split, rex_x86_traps
     rex_non_alpha   = re.compile(r'^[-]*$')
     rex_opts        = re.compile(r'^-[\w\d=-]+$')    # assumption: tool options are lowercase
     # path spec can begin on a new line
-    rex_paths       = re.compile(r'(^|\s)/[\w/_\*-]+\s')
+    rex_paths       = re.compile(r'(^|\s)([\w_-]+/)+\w+(\s|$)')
 
     # xx:xx, with brackets around it
     rex_reg_field   = re.compile(r'(\w+)?\[\d+(:\d+)?\]', re.I)
-    rex_sections    = re.compile(r'\.(altinstr_replacement|bss|data|head|noinstr(\.text)?|text)')
+    # other x86 registers
+    rex_regs        = re.compile(r'^%?[cdfg]s$', re.I)
+    rex_sections    = re.compile(r'\.(altinstr_replacement|bss|data|head|noinstr(\.text)?|parainstructions|text)')
 
     rex_sent_end    = re.compile(r"""\.((\s+)?      # catch all spaces after the end of the sentence
                                                     # as some formatters add more than one for block
                                                     # formatting
-                                  ([A-Za-z]+|$))  # Either another sentence starts here or EOL.
+                                  ([A-Za-z0-9(]+|$)) # Either another sentence starts here or EOL.
+                                                    # Apparently sentences can start with numbers
+                                                    # or opening brackets too. ;-\
                                   """, re.VERBOSE)
 
     rex_struct_mem  = re.compile(r'\w+->\w+')
     # a hex with a following commit name
     rex_sha1        = re.compile(r'[a-f0-9]{12,40}\s?\(?"\w+"\)?', re.I)
-    rex_units       = re.compile(r'^(0x[0-9a-f]+|[0-9a-f]+[GMKP](i?b)?)$', re.I)
+
+    # , for digit group (thousands) separation
+    rex_units       = re.compile(r'^(0x[0-9a-f]+|[0-9,]+([GMKP](i?b)|bytes)?)$', re.I)
     rex_url         = re.compile(r'https?://[a-z0-9:/.-]+')
     rex_version     = re.compile(r'v\d+$', re.I)
     rex_word_bla    = re.compile(r'non-(\w+)')
@@ -512,12 +521,18 @@ def spellcheck(s, where, flags):
 
         for i, w in enumerate(words):
             # remove punctuation, etc
-            w = w.strip('`\',*+:;!|<>"=^')
+            w = w.strip('`\',*+:;\!|<>"=^')
 
             # remove prepended chars
             w = w.lstrip('%')
 
             w = strip_brackets(w)
+
+            if not w:
+                continue
+
+            # remove other punctuation after brackets stripping, ex the '!' in "(uninitialized!)"
+            w = w.strip('`\',*+:;\!|<>"=^')
 
             if not w:
                 continue
@@ -606,7 +621,7 @@ def spellcheck(s, where, flags):
                 continue
 
             # x86 registers
-            if rex_gpr.match(w):
+            if rex_gpr.match(w) or rex_regs.match(w):
                 dbg(f"Skip x86 register: [{w}]")
                 continue
 
@@ -674,7 +689,7 @@ def spellcheck(s, where, flags):
 
             if not dc.check(w):
                 # see if it is plural or genitive: "<word>'s"
-                if dc.check(w.rstrip('\'s')):
+                if dc.check(w.removesuffix('\'s')):
                     continue
 
                 # gerund?
@@ -1250,9 +1265,6 @@ f"""Class patch:
                 info(f"{tag}: {v}")
                 f.write(f"{tag}: {v}\n")
 
-        if self.no_link_tag:
-            return
-
         # go through Link tags from the patch itself:
         if od['Link']:
             warn("Patch contains Link tags - select the relevant one(s):")
@@ -1279,6 +1291,10 @@ f"""Class patch:
                 except requests.exceptions.RequestException as e:
                     warn(f"Exception {e} while trying to get URL: { link_url }")
                     prefix = "URL UNVERIFIED: "
+
+            # do not add this message-id as a Link tag:
+            if self.no_link_tag:
+                return
 
             info(f"Link: { prefix }{ link_url }\n")
             f.write(f"Link: { prefix }{ link_url }\n")
@@ -1510,13 +1526,20 @@ def  check_for_deprecated_apis(pfile, h):
     if not h.added:
         return
 
-    rex_deprecated = re.compile(r'^\+[^*].*kmap_atomic\(.*$')
+    rex_kmap_atomic = re.compile(r'^\+[^*].*kmap_atomic\(.*$')
+    rex_cpu_has = re.compile(r'^\+[^*].*((boot|static|this)_cpu_has)\(.*$')
 
     for line in h.target_lines():
         l = str(line)
 
-        warn_on(rex_deprecated.match(l),
+        warn_on(rex_kmap_atomic.match(l),
                 f"{ pfile }:{ line.target_line_no }: Do not use kmap_atomic() - use kmap_local() instead.\n")
+
+        m = rex_cpu_has.match(l)
+        if m:
+            warn_on(m, f"""{ pfile }:{ line.target_line_no }: Do not use { m.group(1) }() - """
+                        """use cpu_feature_enabled() instead.\n""")
+
 
 
 def verify_commit_quotation(linenum, prev, cur, nxt):
