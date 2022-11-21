@@ -1530,7 +1530,7 @@ static void add_hugetlb_page(struct hstate *h, struct page *page,
 	}
 
 	set_compound_page_dtor(page, HUGETLB_PAGE_DTOR);
-	set_page_private(page, 0);
+	set_page_private(page, NULL);
 	/*
 	 * We have to set HPageVmemmapOptimized again as above
 	 * set_page_private(page, 0) cleared it.
