@@ -99,7 +99,7 @@ static bool io_bundle_init(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	    sqe->personality || sqe->splice_fd_in || sqe->file_index ||
 	    sqe->addr3)
 		return true;
-	if (req->flags & REQ_F_FORCE_ASYNC)
+	if (req->flags & (REQ_F_FORCE_ASYNC | REQ_F_IO_DRAIN))
 		return true;
 	if (WARN_ON_ONCE(ctx->submit_state.parent))
 		return true;
