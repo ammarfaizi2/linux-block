@@ -128,6 +128,23 @@ int io_bundle_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	return 0;
 }
 
+static void io_bundle_issue_req(struct io_kiocb *req, unsigned issue_flags)
+{
+	int ret;
+
+	if (req->flags & REQ_F_FORCE_ASYNC) {
+		ret = io_req_prep_async(req);
+		if (ret)
+			io_req_defer_failed(req, ret);
+		else
+			io_queue_iowq(req, NULL);
+	} else {
+		ret = io_issue_sqe(req, issue_flags);
+		if (ret < 0)
+			io_req_task_queue_fail(req, ret);
+	}
+}
+
 /*
  * IORING_OP_NOP just posts a completion event, nothing else.
  */
@@ -137,7 +154,6 @@ int io_bundle(struct io_kiocb *req, unsigned int issue_flags)
 	struct io_ring_ctx *ctx = req->ctx;
 	struct io_submit_state *state = &ctx->submit_state;
 	struct io_kiocb *cur;
-	int ret;
 
 	if (WARN_ON_ONCE(state->parent != req))
 		return -EINVAL;
@@ -159,11 +175,7 @@ int io_bundle(struct io_kiocb *req, unsigned int issue_flags)
 
 		next = cur->link;
 		cur->link = req;
-
-		ret = io_issue_sqe(cur, issue_flags);
-		if (ret < 0)
-			io_req_task_queue_fail(cur, ret);
-
+		io_bundle_issue_req(cur, issue_flags);
 		cur = next;
 	}
 
