@@ -91,6 +91,7 @@
 #include "cancel.h"
 #include "net.h"
 #include "notif.h"
+#include "bundle.h"
 
 #include "timeout.h"
 #include "poll.h"
@@ -113,7 +114,7 @@
 				REQ_F_ASYNC_DATA)
 
 #define IO_REQ_CLEAN_SLOW_FLAGS (REQ_F_REFCOUNT | REQ_F_LINK | REQ_F_HARDLINK |\
-				 IO_REQ_CLEAN_FLAGS)
+				 IO_REQ_CLEAN_FLAGS | REQ_F_BUNDLE)
 
 #define IO_TCTX_REFS_CACHE_NR	(1U << 10)
 
@@ -959,6 +960,8 @@ static void __io_req_complete_post(struct io_kiocb *req)
 	 * free_list cache.
 	 */
 	if (req_ref_put_and_test(req)) {
+		if (req->flags & REQ_F_BUNDLE)
+			io_bundle_req_complete(req, IO_URING_F_UNLOCKED);
 		if (req->flags & IO_REQ_LINK_FLAGS) {
 			if (req->flags & IO_DISARM_MASK)
 				io_disarm_next(req);
@@ -1440,6 +1443,8 @@ void io_free_batch_list(struct io_ring_ctx *ctx, struct io_wq_work_node *node)
 					kfree(apoll);
 				req->flags &= ~REQ_F_POLLED;
 			}
+			if (req->flags & REQ_F_BUNDLE)
+				io_bundle_req_complete(req, 0);
 			if (req->flags & IO_REQ_LINK_FLAGS)
 				io_queue_next(req);
 			if (unlikely(req->flags & IO_REQ_CLEAN_FLAGS))
@@ -1507,6 +1512,8 @@ static inline struct io_kiocb *io_put_req_find_next(struct io_kiocb *req)
 	struct io_kiocb *nxt = NULL;
 
 	if (req_ref_put_and_test(req)) {
+		 if (req->flags & REQ_F_BUNDLE)
+			io_bundle_req_complete(req, IO_URING_F_UNLOCKED);
 		if (unlikely(req->flags & IO_REQ_LINK_FLAGS))
 			nxt = io_req_find_next(req);
 		io_free_req(req);
@@ -2260,7 +2267,8 @@ static inline int io_submit_sqe(struct io_ring_ctx *ctx, struct io_kiocb *req,
 			 const struct io_uring_sqe *sqe)
 	__must_hold(&ctx->uring_lock)
 {
-	struct io_submit_link *link = &ctx->submit_state.link;
+	struct io_submit_state *state = &ctx->submit_state;
+	struct io_submit_link *link = &state->link;
 	int ret;
 
 	ret = io_init_req(ctx, req, sqe);
@@ -2270,14 +2278,19 @@ static inline int io_submit_sqe(struct io_ring_ctx *ctx, struct io_kiocb *req,
 	/* don't need @sqe from now on */
 	trace_io_uring_submit_sqe(req, true);
 
-	/*
-	 * If we already have a head request, queue this one for async
-	 * submittal once the head completes. If we don't have a head but
-	 * IOSQE_IO_LINK is set in the sqe, start a new head. This one will be
-	 * submitted sync once the chain is complete. If none of those
-	 * conditions are true (normal request), then just queue it.
-	 */
-	if (unlikely(link->head)) {
+	if (unlikely(state->parent)) {
+		req = io_bundle_req_add(req);
+		if (!req)
+			return 0;
+	} else if (unlikely(link->head)) {
+		/*
+		 * If we already have a head request, queue this one for async
+		 * submittal once the head completes. If we don't have a head
+		 * but IOSQE_IO_LINK is set in the sqe, start a new head. This
+		 * one will be submitted sync once the chain is complete. If
+		 * none of those conditions are true (normal request), then
+		 * just queue it.
+		 */
 		ret = io_req_prep_async(req);
 		if (unlikely(ret))
 			return io_submit_fail_init(sqe, req, ret);
@@ -2319,6 +2332,10 @@ static void io_submit_state_end(struct io_ring_ctx *ctx)
 
 	if (unlikely(state->link.head))
 		io_queue_sqe_fallback(state->link.head);
+	if (unlikely(state->parent)) {
+		io_req_set_res(state->parent, 0, 0);
+		io_req_complete_defer(state->parent);
+	}
 	/* flush only after queuing links as they can generate completions */
 	io_submit_flush_completions(ctx);
 	if (state->plug_started)
@@ -2336,6 +2353,7 @@ static void io_submit_state_start(struct io_submit_state *state,
 	state->submit_nr = max_ios;
 	/* set only head, no need to init link_last in advance */
 	state->link.head = NULL;
+	state->parent = NULL;
 }
 
 static void io_commit_sqring(struct io_ring_ctx *ctx)

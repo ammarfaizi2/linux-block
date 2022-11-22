@@ -33,6 +33,7 @@
 #include "poll.h"
 #include "cancel.h"
 #include "rw.h"
+#include "bundle.h"
 
 static int io_no_issue(struct io_kiocb *req, unsigned int issue_flags)
 {
@@ -530,6 +531,13 @@ const struct io_op_def io_op_defs[] = {
 #else
 		.prep			= io_eopnotsupp_prep,
 #endif
+	},
+	[IORING_OP_BUNDLE] = {
+		.name			= "BUNDLE",
+		.iopoll			= 1,
+		.audit_skip		= 1,
+		.prep			= io_bundle_prep,
+		.issue			= io_bundle,
 	},
 };
 
