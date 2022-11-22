@@ -10743,6 +10743,7 @@ F:	io_uring/
 F:	include/linux/io_uring.h
 F:	include/linux/io_uring_types.h
 F:	include/uapi/linux/io_uring.h
+F:	include/trace/events/io_uring.h
 F:	tools/io_uring/
 
 IPMI SUBSYSTEM
