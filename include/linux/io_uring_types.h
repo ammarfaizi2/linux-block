@@ -572,10 +572,10 @@ struct io_kiocb {
 	};
 	/* internal polling, see IORING_FEAT_FAST_POLL */
 	struct async_poll		*apoll;
-	/* opcode allocated if it needs to store data for async defer */
-	void				*async_data;
 	/* linked requests, IFF REQ_F_HARDLINK or REQ_F_LINK are set */
 	struct io_kiocb			*link;
+	/* opcode allocated if it needs to store data for async defer */
+	void				*async_data;
 	/* custom credentials, valid IFF REQ_F_CREDS is set */
 	const struct cred		*creds;
 	struct io_wq_work		work;
