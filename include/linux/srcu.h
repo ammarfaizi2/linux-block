@@ -78,11 +78,7 @@ static inline void __srcu_read_unlock_nmisafe(struct srcu_struct *ssp, int idx)
 }
 #endif /* CONFIG_NEED_SRCU_NMI_SAFE */
 
-#ifdef CONFIG_SRCU
 void srcu_init(void);
-#else /* #ifdef CONFIG_SRCU */
-static inline void srcu_init(void) { }
-#endif /* #else #ifdef CONFIG_SRCU */
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 
