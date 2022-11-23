@@ -1222,9 +1222,6 @@ void page_add_anon_rmap(struct page *page,
 	bool compound = flags & RMAP_COMPOUND;
 	bool first = true;
 
-	if (unlikely(PageKsm(page)))
-		lock_page_memcg(page);
-
 	/* Is page being mapped by PTE? Is this its first map to be added? */
 	if (likely(!compound)) {
 		first = atomic_inc_and_test(&page->_mapcount);
@@ -1253,9 +1250,6 @@ void page_add_anon_rmap(struct page *page,
 		__mod_lruvec_page_state(page, NR_ANON_THPS, nr_pmdmapped);
 	if (nr)
 		__mod_lruvec_page_state(page, NR_ANON_MAPPED, nr);
-
-	if (unlikely(PageKsm(page)))
-		unlock_page_memcg(page);
 
 	/* address might be in next vma when migration races vma_adjust */
 	else if (first)
@@ -1321,7 +1315,6 @@ void page_add_file_rmap(struct page *page,
 	bool first;
 
 	VM_BUG_ON_PAGE(compound && !PageTransHuge(page), page);
-	lock_page_memcg(page);
 
 	/* Is page being mapped by PTE? Is this its first map to be added? */
 	if (likely(!compound)) {
@@ -1349,7 +1342,6 @@ void page_add_file_rmap(struct page *page,
 			NR_SHMEM_PMDMAPPED : NR_FILE_PMDMAPPED, nr_pmdmapped);
 	if (nr)
 		__mod_lruvec_page_state(page, NR_FILE_MAPPED, nr);
-	unlock_page_memcg(page);
 
 	mlock_vma_page(page, vma, compound);
 }
@@ -1377,8 +1369,6 @@ void page_remove_rmap(struct page *page,
 		atomic_dec(compound_mapcount_ptr(page));
 		return;
 	}
-
-	lock_page_memcg(page);
 
 	/* Is page being unmapped by PTE? Is this its last map to be removed? */
 	if (likely(!compound)) {
@@ -1426,8 +1416,6 @@ void page_remove_rmap(struct page *page,
 	 * before us: so leave the reset to free_pages_prepare,
 	 * and remember that it's only reliable while mapped.
 	 */
-
-	unlock_page_memcg(page);
 
 	munlock_vma_page(page, vma, compound);
 }
