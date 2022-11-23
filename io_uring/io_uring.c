@@ -1113,7 +1113,7 @@ __cold bool __io_alloc_req_refill(struct io_ring_ctx *ctx)
 
 static inline void io_dismantle_req(struct io_kiocb *req)
 {
-	unsigned int flags = req->flags;
+	u64 flags = req->flags;
 
 	if (unlikely(flags & IO_REQ_CLEAN_FLAGS))
 		io_clean_op(req);
@@ -1797,7 +1797,7 @@ static bool __io_file_supports_nowait(struct file *file, umode_t mode)
  * any file. For now, just ensure that anything potentially problematic is done
  * inline.
  */
-unsigned int io_file_get_flags(struct file *file)
+u64 io_file_get_flags(struct file *file)
 {
 	umode_t mode = file_inode(file)->i_mode;
 	unsigned int res = 0;
@@ -4544,7 +4544,7 @@ static int __init io_uring_init(void)
 	BUILD_BUG_ON(SQE_COMMON_FLAGS >= (1 << 8));
 	BUILD_BUG_ON((SQE_VALID_FLAGS | SQE_COMMON_FLAGS) != SQE_VALID_FLAGS);
 
-	BUILD_BUG_ON(__REQ_F_LAST_BIT > 8 * sizeof(int));
+	BUILD_BUG_ON(__REQ_F_LAST_BIT > 8 * sizeof(u64));
 
 	BUILD_BUG_ON(sizeof(atomic_t) != sizeof(u32));
 
