@@ -1289,7 +1289,23 @@ void *zs_map_object(struct zs_pool *pool, unsigned long handle,
 	zspage = get_zspage(page);
 
 #ifdef CONFIG_ZPOOL
-	/* Move the zspage to front of pool's LRU */
+	/*
+	 * Move the zspage to front of pool's LRU.
+	 *
+	 * Note that this is swap-specific, so by definition there are no ongoing
+	 * accesses to the memory while the page is swapped out that would make
+	 * it "hot". A new entry is hot, then ages to the tail until it gets either
+	 * written back or swaps back in.
+	 *
+	 * Furthermore, map is also called during writeback. We must not put an
+	 * isolated page on the LRU mid-reclaim.
+	 *
+	 * As a result, only update the LRU when the page is mapped for write
+	 * when it's first instantiated.
+	 *
+	 * This is a deviation from the other backends, which perform this update
+	 * in the allocation function (zbud_alloc, z3fold_alloc).
+	 */
 	if (mm == ZS_MM_WO) {
 		if (!list_empty(&zspage->lru))
 			list_del(&zspage->lru);
