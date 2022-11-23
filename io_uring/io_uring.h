@@ -59,6 +59,7 @@ __cold void io_uring_cancel_generic(bool cancel_all, struct io_sq_data *sqd);
 int io_uring_alloc_task_context(struct task_struct *task,
 				struct io_ring_ctx *ctx);
 
+int io_issue_sqe(struct io_kiocb *req, unsigned int issue_flags);
 int io_poll_issue(struct io_kiocb *req, bool *locked);
 int io_submit_sqes(struct io_ring_ctx *ctx, unsigned int nr);
 int io_do_iopoll(struct io_ring_ctx *ctx, bool force_nonspin);
