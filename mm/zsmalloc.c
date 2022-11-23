@@ -2509,12 +2509,13 @@ static int zs_reclaim_page(struct zs_pool *pool, unsigned int retries)
 		remove_zspage(class, zspage, fullness);
 
 		spin_unlock(&pool->lock);
+		cond_resched();
 
 		/* Lock backing pages into place */
 		lock_zspage(zspage);
 
 		obj_idx = 0;
-		page = zspage->first_page;
+		page = get_first_page(zspage);
 		while (1) {
 			handle = find_alloced_obj(class, page, &obj_idx);
 			if (!handle) {
