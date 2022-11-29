@@ -1060,12 +1060,9 @@ static int mlx5e_hairpin_flow_add(struct mlx5e_priv *priv,
 		 hash_hairpin_info(peer_id, match_prio));
 	mutex_unlock(&tc->hairpin_tbl_lock);
 
-	params.log_data_size = 16;
-	params.log_data_size = min_t(u8, params.log_data_size,
-				     MLX5_CAP_GEN(priv->mdev, log_max_hairpin_wq_data_sz));
-	params.log_data_size = max_t(u8, params.log_data_size,
-				     MLX5_CAP_GEN(priv->mdev, log_min_hairpin_wq_data_sz));
-
+	params.log_data_size = clamp_t(u8, 16,
+				       MLX5_CAP_GEN(priv->mdev, log_min_hairpin_wq_data_sz),
+				       MLX5_CAP_GEN(priv->mdev, log_max_hairpin_wq_data_sz));
 	params.log_num_packets = params.log_data_size -
 				 MLX5_MPWRQ_MIN_LOG_STRIDE_SZ(priv->mdev);
 	params.log_num_packets = min_t(u8, params.log_num_packets,
@@ -3633,10 +3630,14 @@ mlx5e_clone_flow_attr_for_post_act(struct mlx5_flow_attr *attr,
 	attr2->action = 0;
 	attr2->flags = 0;
 	attr2->parse_attr = parse_attr;
-	attr2->esw_attr->out_count = 0;
-	attr2->esw_attr->split_count = 0;
 	attr2->dest_chain = 0;
 	attr2->dest_ft = NULL;
+
+	if (ns_type == MLX5_FLOW_NAMESPACE_FDB) {
+		attr2->esw_attr->out_count = 0;
+		attr2->esw_attr->split_count = 0;
+	}
+
 	return attr2;
 }
 
@@ -4755,12 +4756,6 @@ int mlx5e_policer_validate(const struct flow_action *action,
 	    act->police.avrate || act->police.overhead) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Offload not supported when peakrate/avrate/overhead is configured");
-		return -EOPNOTSUPP;
-	}
-
-	if (act->police.rate_pkt_ps) {
-		NL_SET_ERR_MSG_MOD(extack,
-				   "QoS offload not support packets per second");
 		return -EOPNOTSUPP;
 	}
 

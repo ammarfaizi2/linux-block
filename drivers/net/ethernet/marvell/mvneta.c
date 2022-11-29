@@ -4228,7 +4228,6 @@ static void mvneta_mac_link_up(struct phylink_config *config,
 }
 
 static const struct phylink_mac_ops mvneta_phylink_ops = {
-	.validate = phylink_generic_validate,
 	.mac_select_pcs = mvneta_mac_select_pcs,
 	.mac_prepare = mvneta_mac_prepare,
 	.mac_config = mvneta_mac_config,
@@ -4266,7 +4265,7 @@ static void mvneta_mdio_remove(struct mvneta_port *pp)
  */
 static void mvneta_percpu_elect(struct mvneta_port *pp)
 {
-	int elected_cpu = 0, max_cpu, cpu, i = 0;
+	int elected_cpu = 0, max_cpu, cpu;
 
 	/* Use the cpu associated to the rxq when it is online, in all
 	 * the other cases, use the cpu 0 which can't be offline.
@@ -4306,8 +4305,6 @@ static void mvneta_percpu_elect(struct mvneta_port *pp)
 		 */
 		smp_call_function_single(cpu, mvneta_percpu_unmask_interrupt,
 					 pp, true);
-		i++;
-
 	}
 };
 

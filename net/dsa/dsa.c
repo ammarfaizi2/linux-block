@@ -11,6 +11,7 @@
 #include <linux/netdevice.h>
 #include <linux/sysfs.h>
 #include <linux/ptp_classify.h>
+#include <net/dst_metadata.h>
 
 #include "dsa_priv.h"
 
@@ -78,16 +79,18 @@ const char *dsa_tag_protocol_to_str(const struct dsa_device_ops *ops)
 /* Function takes a reference on the module owning the tagger,
  * so dsa_tag_driver_put must be called afterwards.
  */
-const struct dsa_device_ops *dsa_find_tagger_by_name(const char *buf)
+const struct dsa_device_ops *dsa_tag_driver_get_by_name(const char *name)
 {
 	const struct dsa_device_ops *ops = ERR_PTR(-ENOPROTOOPT);
 	struct dsa_tag_driver *dsa_tag_driver;
+
+	request_module("%s%s", DSA_TAG_DRIVER_ALIAS, name);
 
 	mutex_lock(&dsa_tag_drivers_lock);
 	list_for_each_entry(dsa_tag_driver, &dsa_tag_drivers_list, list) {
 		const struct dsa_device_ops *tmp = dsa_tag_driver->ops;
 
-		if (!sysfs_streq(buf, tmp->name))
+		if (strcmp(name, tmp->name))
 			continue;
 
 		if (!try_module_get(dsa_tag_driver->owner))
@@ -101,13 +104,13 @@ const struct dsa_device_ops *dsa_find_tagger_by_name(const char *buf)
 	return ops;
 }
 
-const struct dsa_device_ops *dsa_tag_driver_get(int tag_protocol)
+const struct dsa_device_ops *dsa_tag_driver_get_by_id(int tag_protocol)
 {
 	struct dsa_tag_driver *dsa_tag_driver;
 	const struct dsa_device_ops *ops;
 	bool found = false;
 
-	request_module("%s%d", DSA_TAG_DRIVER_ALIAS, tag_protocol);
+	request_module("%sid-%d", DSA_TAG_DRIVER_ALIAS, tag_protocol);
 
 	mutex_lock(&dsa_tag_drivers_lock);
 	list_for_each_entry(dsa_tag_driver, &dsa_tag_drivers_list, list) {
@@ -216,6 +219,7 @@ static bool dsa_skb_defer_rx_timestamp(struct dsa_slave_priv *p,
 static int dsa_switch_rcv(struct sk_buff *skb, struct net_device *dev,
 			  struct packet_type *pt, struct net_device *unused)
 {
+	struct metadata_dst *md_dst = skb_metadata_dst(skb);
 	struct dsa_port *cpu_dp = dev->dsa_ptr;
 	struct sk_buff *nskb = NULL;
 	struct dsa_slave_priv *p;
@@ -229,7 +233,22 @@ static int dsa_switch_rcv(struct sk_buff *skb, struct net_device *dev,
 	if (!skb)
 		return 0;
 
-	nskb = cpu_dp->rcv(skb, dev);
+	if (md_dst && md_dst->type == METADATA_HW_PORT_MUX) {
+		unsigned int port = md_dst->u.port_info.port_id;
+
+		skb_dst_drop(skb);
+		if (!skb_has_extensions(skb))
+			skb->slow_gro = 0;
+
+		skb->dev = dsa_master_find_slave(dev, 0, port);
+		if (likely(skb->dev)) {
+			dsa_default_offload_fwd_mark(skb);
+			nskb = skb;
+		}
+	} else {
+		nskb = cpu_dp->rcv(skb, dev);
+	}
+
 	if (!nskb) {
 		kfree_skb(skb);
 		return 0;

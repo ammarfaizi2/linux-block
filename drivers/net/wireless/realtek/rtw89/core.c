@@ -171,7 +171,7 @@ bool rtw89_ra_report_to_bitrate(struct rtw89_dev *rtwdev, u8 rpt_rate, u16 *bitr
 	return true;
 }
 
-static struct ieee80211_supported_band rtw89_sband_2ghz = {
+static const struct ieee80211_supported_band rtw89_sband_2ghz = {
 	.band		= NL80211_BAND_2GHZ,
 	.channels	= rtw89_channels_2ghz,
 	.n_channels	= ARRAY_SIZE(rtw89_channels_2ghz),
@@ -181,7 +181,7 @@ static struct ieee80211_supported_band rtw89_sband_2ghz = {
 	.vht_cap	= {0},
 };
 
-static struct ieee80211_supported_band rtw89_sband_5ghz = {
+static const struct ieee80211_supported_band rtw89_sband_5ghz = {
 	.band		= NL80211_BAND_5GHZ,
 	.channels	= rtw89_channels_5ghz,
 	.n_channels	= ARRAY_SIZE(rtw89_channels_5ghz),
@@ -193,7 +193,7 @@ static struct ieee80211_supported_band rtw89_sband_5ghz = {
 	.vht_cap	= {0},
 };
 
-static struct ieee80211_supported_band rtw89_sband_6ghz = {
+static const struct ieee80211_supported_band rtw89_sband_6ghz = {
 	.band		= NL80211_BAND_6GHZ,
 	.channels	= rtw89_channels_6ghz,
 	.n_channels	= ARRAY_SIZE(rtw89_channels_6ghz),
@@ -1196,7 +1196,11 @@ static void rtw89_core_parse_phy_status_ie01(struct rtw89_dev *rtwdev, u8 *addr,
 	if (phy_ppdu->rate < RTW89_HW_RATE_OFDM6)
 		return;
 	/* sign conversion for S(12,2) */
-	cfo = sign_extend32(RTW89_GET_PHY_STS_IE01_CFO(addr), 11);
+	if (rtwdev->chip->cfo_src_fd)
+		cfo = sign_extend32(RTW89_GET_PHY_STS_IE01_FD_CFO(addr), 11);
+	else
+		cfo = sign_extend32(RTW89_GET_PHY_STS_IE01_PREMB_CFO(addr), 11);
+
 	rtw89_phy_cfo_parse(rtwdev, cfo, phy_ppdu);
 }
 
@@ -2204,6 +2208,9 @@ static void rtw89_track_work(struct work_struct *work)
 						track_work.work);
 	bool tfc_changed;
 
+	if (test_bit(RTW89_FLAG_FORBIDDEN_TRACK_WROK, rtwdev->flags))
+		return;
+
 	mutex_lock(&rtwdev->mutex);
 
 	if (!test_bit(RTW89_FLAG_RUNNING, rtwdev->flags))
@@ -2230,6 +2237,7 @@ static void rtw89_track_work(struct work_struct *work)
 	rtw89_phy_ra_update(rtwdev);
 	rtw89_phy_cfo_track(rtwdev);
 	rtw89_phy_tx_path_div_track(rtwdev);
+	rtw89_phy_ul_tb_ctrl_track(rtwdev);
 
 	if (rtwdev->lps_enabled && !rtwdev->btc.lps)
 		rtw89_enter_lps_track(rtwdev);
@@ -2413,6 +2421,8 @@ int rtw89_core_sta_add(struct rtw89_dev *rtwdev,
 	} else if (vif->type == NL80211_IFTYPE_AP || sta->tdls) {
 		rtwsta->mac_id = rtw89_core_acquire_bit_map(rtwdev->mac_id_map,
 							    RTW89_MAX_MAC_ID_NUM);
+		if (rtwsta->mac_id == RTW89_MAX_MAC_ID_NUM)
+			return -ENOSPC;
 	}
 
 	return 0;
@@ -2530,7 +2540,7 @@ int rtw89_core_sta_assoc(struct rtw89_dev *rtwdev,
 	}
 
 	/* update cam aid mac_id net_type */
-	rtw89_fw_h2c_cam(rtwdev, rtwvif, rtwsta, NULL);
+	ret = rtw89_fw_h2c_cam(rtwdev, rtwvif, rtwsta, NULL);
 	if (ret) {
 		rtw89_warn(rtwdev, "failed to send h2c cam\n");
 		return ret;
@@ -2551,6 +2561,7 @@ int rtw89_core_sta_assoc(struct rtw89_dev *rtwdev,
 		rtw89_btc_ntfy_role_info(rtwdev, rtwvif, rtwsta,
 					 BTC_ROLE_MSTS_STA_CONN_END);
 		rtw89_core_get_no_ul_ofdma_htc(rtwdev, &rtwsta->htc_template);
+		rtw89_phy_ul_tb_assoc(rtwdev, rtwvif);
 	}
 
 	return ret;
@@ -2960,7 +2971,7 @@ int rtw89_core_start(struct rtw89_dev *rtwdev)
 		return ret;
 
 	rtw89_phy_init_bb_reg(rtwdev);
-	rtw89_phy_init_rf_reg(rtwdev);
+	rtw89_phy_init_rf_reg(rtwdev, false);
 
 	rtw89_btc_ntfy_init(rtwdev, BTC_MODE_NORMAL);
 
@@ -3040,6 +3051,7 @@ int rtw89_core_init(struct rtw89_dev *rtwdev)
 			continue;
 		INIT_LIST_HEAD(&rtwdev->scan_info.pkt_list[band]);
 	}
+	INIT_LIST_HEAD(&rtwdev->wow.pkt_list);
 	INIT_WORK(&rtwdev->ba_work, rtw89_core_ba_work);
 	INIT_WORK(&rtwdev->txq_work, rtw89_core_txq_work);
 	INIT_DELAYED_WORK(&rtwdev->txq_reinvoke_work, rtw89_core_txq_reinvoke_work);
@@ -3270,6 +3282,10 @@ static int rtw89_core_register_hw(struct rtw89_dev *rtwdev)
 
 	hw->wiphy->max_scan_ssids = RTW89_SCANOFLD_MAX_SSID;
 	hw->wiphy->max_scan_ie_len = RTW89_SCANOFLD_MAX_IE_LEN;
+
+#ifdef CONFIG_PM
+	hw->wiphy->wowlan = rtwdev->chip->wowlan_stub;
+#endif
 
 	hw->wiphy->tid_config_support.vif |= BIT(NL80211_TID_CONFIG_ATTR_AMPDU_CTRL);
 	hw->wiphy->tid_config_support.peer |= BIT(NL80211_TID_CONFIG_ATTR_AMPDU_CTRL);

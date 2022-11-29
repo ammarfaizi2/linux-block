@@ -27,7 +27,6 @@
 #include <linux/page_ref.h>
 #include <linux/pci.h>
 #include <linux/pci_regs.h>
-#include <linux/msi.h>
 #include <linux/ethtool.h>
 #include <linux/log2.h>
 #include <linux/if_vlan.h>
@@ -735,8 +734,9 @@ static unsigned int nfp_net_calc_fl_bufsz_xsk(struct nfp_net_dp *dp)
  */
 static void nfp_net_vecs_init(struct nfp_net *nn)
 {
+	int numa_node = dev_to_node(&nn->pdev->dev);
 	struct nfp_net_r_vector *r_vec;
-	int r;
+	unsigned int r;
 
 	nn->lsc_handler = nfp_net_irq_lsc;
 	nn->exn_handler = nfp_net_irq_exn;
@@ -762,7 +762,7 @@ static void nfp_net_vecs_init(struct nfp_net *nn)
 			tasklet_disable(&r_vec->tasklet);
 		}
 
-		cpumask_set_cpu(r, &r_vec->affinity_mask);
+		cpumask_set_cpu(cpumask_local_spread(r, numa_node), &r_vec->affinity_mask);
 	}
 }
 
@@ -2013,7 +2013,6 @@ const struct net_device_ops nfp_nfd3_netdev_ops = {
 	.ndo_get_phys_port_name	= nfp_net_get_phys_port_name,
 	.ndo_bpf		= nfp_net_xdp,
 	.ndo_xsk_wakeup		= nfp_net_xsk_wakeup,
-	.ndo_get_devlink_port	= nfp_devlink_get_devlink_port,
 	.ndo_bridge_getlink     = nfp_net_bridge_getlink,
 	.ndo_bridge_setlink     = nfp_net_bridge_setlink,
 };
@@ -2044,7 +2043,6 @@ const struct net_device_ops nfp_nfdk_netdev_ops = {
 	.ndo_features_check	= nfp_net_features_check,
 	.ndo_get_phys_port_name	= nfp_net_get_phys_port_name,
 	.ndo_bpf		= nfp_net_xdp,
-	.ndo_get_devlink_port	= nfp_devlink_get_devlink_port,
 	.ndo_bridge_getlink     = nfp_net_bridge_getlink,
 	.ndo_bridge_setlink     = nfp_net_bridge_setlink,
 };

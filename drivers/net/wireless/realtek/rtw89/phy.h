@@ -64,6 +64,9 @@
 #define MAX_CFO_TOLERANCE 30
 #define CFO_TF_CNT_TH 300
 
+#define UL_TB_TF_CNT_L2H_TH 100
+#define UL_TB_TF_CNT_H2L_TH 70
+
 #define CCX_MAX_PERIOD 2097
 #define CCX_MAX_PERIOD_UNIT 32
 #define MS_TO_4US_RATIO 250
@@ -500,7 +503,7 @@ bool rtw89_phy_write_rf(struct rtw89_dev *rtwdev, enum rtw89_rf_path rf_path,
 bool rtw89_phy_write_rf_v1(struct rtw89_dev *rtwdev, enum rtw89_rf_path rf_path,
 			   u32 addr, u32 mask, u32 data);
 void rtw89_phy_init_bb_reg(struct rtw89_dev *rtwdev);
-void rtw89_phy_init_rf_reg(struct rtw89_dev *rtwdev);
+void rtw89_phy_init_rf_reg(struct rtw89_dev *rtwdev, bool noio);
 void rtw89_phy_config_rf_reg_v1(struct rtw89_dev *rtwdev,
 				const struct rtw89_reg2_def *reg,
 				enum rtw89_rf_path rf_path,
@@ -550,5 +553,7 @@ void rtw89_phy_set_bss_color(struct rtw89_dev *rtwdev, struct ieee80211_vif *vif
 void rtw89_phy_tssi_ctrl_set_bandedge_cfg(struct rtw89_dev *rtwdev,
 					  enum rtw89_mac_idx mac_idx,
 					  enum rtw89_tssi_bandedge_cfg bandedge_cfg);
+void rtw89_phy_ul_tb_assoc(struct rtw89_dev *rtwdev, struct rtw89_vif *rtwvif);
+void rtw89_phy_ul_tb_ctrl_track(struct rtw89_dev *rtwdev);
 
 #endif
