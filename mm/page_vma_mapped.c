@@ -171,7 +171,7 @@ bool page_vma_mapped_walk(struct page_vma_mapped_walk *pvmw)
 
 		hugetlb_vma_lock_read(vma);
 		/* when pud is not present, pte will be NULL */
-		pvmw->pte = huge_pte_offset(mm, pvmw->address, size);
+		pvmw->pte = hugetlb_walk(vma, pvmw->address, size);
 		if (!pvmw->pte) {
 			hugetlb_vma_unlock_read(vma);
 			return false;
