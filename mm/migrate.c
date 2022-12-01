@@ -214,7 +214,14 @@ static bool remove_migration_pte(struct folio *folio,
 		if (is_writable_migration_entry(entry))
 			pte = maybe_mkwrite(pte, vma);
 		else
-			/* NOTE: mk_pte can have write bit set */
+			/*
+			 * NOTE: mk_pte() can have write bit set per memory
+			 * type (e.g. shmem), or pte_mkdirty() per archs
+			 * (e.g., sparc64).  If this is a read migration
+			 * entry, we need to make sure when we recover the
+			 * pte from migration entry to present entry the
+			 * write bit is cleared.
+			 */
 			pte = pte_wrprotect(pte);
 
 		if (pte_swp_uffd_wp(*pvmw.pte)) {
