@@ -334,7 +334,7 @@ static unsigned long dax_end_pfn(void *entry)
 	for (pfn = dax_to_pfn(entry); \
 			pfn < dax_end_pfn(entry); pfn++)
 
-static inline bool dax_mapping_is_shared(struct page *page)
+static inline bool dax_page_is_shared(struct page *page)
 {
 	return (unsigned long)page->mapping == PAGE_MAPPING_DAX_SHARED;
 }
@@ -343,7 +343,7 @@ static inline bool dax_mapping_is_shared(struct page *page)
  * Set the page->mapping with PAGE_MAPPING_DAX_SHARED flag, increase the
  * refcount.
  */
-static inline void dax_mapping_set_shared(struct page *page)
+static inline void dax_page_bump_sharing(struct page *page)
 {
 	if ((uintptr_t)page->mapping != PAGE_MAPPING_DAX_SHARED) {
 		/*
@@ -357,7 +357,7 @@ static inline void dax_mapping_set_shared(struct page *page)
 	page->share++;
 }
 
-static inline unsigned long dax_mapping_decrease_shared(struct page *page)
+static inline unsigned long dax_page_drop_sharing(struct page *page)
 {
 	return --page->share;
 }
@@ -381,7 +381,7 @@ static void dax_associate_entry(void *entry, struct address_space *mapping,
 		struct page *page = pfn_to_page(pfn);
 
 		if (shared) {
-			dax_mapping_set_shared(page);
+			dax_page_bump_sharing(page);
 		} else {
 			WARN_ON_ONCE(page->mapping);
 			page->mapping = mapping;
@@ -402,9 +402,9 @@ static void dax_disassociate_entry(void *entry, struct address_space *mapping,
 		struct page *page = pfn_to_page(pfn);
 
 		WARN_ON_ONCE(trunc && page_ref_count(page) > 1);
-		if (dax_mapping_is_shared(page)) {
+		if (dax_page_is_shared(page)) {
 			/* keep the shared flag if this page is still shared */
-			if (dax_mapping_decrease_shared(page) > 0)
+			if (dax_page_drop_sharing(page) > 0)
 				continue;
 		} else
 			WARN_ON_ONCE(page->mapping && page->mapping != mapping);
