@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: GPL-2.0-only
+config INTERCONNECT_RISCV
+	tristate "RISC-V Interconnect Drivers"
+	depends on RISCV
+	help
+	  Support for RISC-V interconnect hardware.
+
+	  If in doubt, say Y.
+
+config INTERCONNECT_RISCV_QOS
+	tristate "RISC-V QoS (Ssqosid) Support"
+	depends on INTERCONNECT_RISCV
+	help
+	  Support for Ssqosid, the RISC-V extension for QOS IDs.
+
+	  Please say N, this is a joke.
