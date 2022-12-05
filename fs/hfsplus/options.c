@@ -137,6 +137,7 @@ int hfsplus_parse_options(char *input, struct hfsplus_sb_info *sbi)
 				return 0;
 			}
 			sbi->uid = make_kuid(current_user_ns(), (uid_t)tmp);
+			set_bit(HFSPLUS_SB_UID, &sbi->flags);
 			if (!uid_valid(sbi->uid)) {
 				pr_err("invalid uid specified\n");
 				return 0;
@@ -148,6 +149,7 @@ int hfsplus_parse_options(char *input, struct hfsplus_sb_info *sbi)
 				return 0;
 			}
 			sbi->gid = make_kgid(current_user_ns(), (gid_t)tmp);
+			set_bit(HFSPLUS_SB_GID, &sbi->flags);
 			if (!gid_valid(sbi->gid)) {
 				pr_err("invalid gid specified\n");
 				return 0;
