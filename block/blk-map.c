@@ -241,23 +241,24 @@ static void blk_mq_map_bio_put(struct bio *bio)
 	}
 }
 
-static struct bio *blk_rq_map_bio_alloc(struct request *rq,
+static struct bio *blk_rq_map_bio_alloc(blk_opf_t opf,
 		unsigned int nr_vecs, gfp_t gfp_mask)
 {
 	struct bio *bio;
 
-	if (rq->cmd_flags & REQ_POLLED) {
-		blk_opf_t opf = rq->cmd_flags | REQ_ALLOC_CACHE;
+	if (opf & REQ_POLLED) {
+		opf |= REQ_ALLOC_CACHE;
 
 		bio = bio_alloc_bioset(NULL, nr_vecs, opf, gfp_mask,
 					&fs_bio_set);
 		if (!bio)
 			return NULL;
 	} else {
+		opf &= REQ_OP_MASK;
 		bio = bio_kmalloc(nr_vecs, gfp_mask);
 		if (!bio)
 			return NULL;
-		bio_init(bio, NULL, bio->bi_inline_vecs, nr_vecs, req_op(rq));
+		bio_init(bio, NULL, bio->bi_inline_vecs, nr_vecs, opf);
 	}
 	return bio;
 }
@@ -275,7 +276,7 @@ static int bio_map_user_iov(struct request *rq, struct iov_iter *iter,
 	if (!iov_iter_count(iter))
 		return -EINVAL;
 
-	bio = blk_rq_map_bio_alloc(rq, nr_vecs, gfp_mask);
+	bio = blk_rq_map_bio_alloc(rq->cmd_flags, nr_vecs, gfp_mask);
 	if (bio == NULL)
 		return -ENOMEM;
 
@@ -570,7 +571,7 @@ static int blk_rq_map_user_bvec(struct request *rq, const struct iov_iter *iter)
 		return -EINVAL;
 
 	/* no iovecs to alloc, as we already have a BVEC iterator */
-	bio = blk_rq_map_bio_alloc(rq, 0, GFP_KERNEL);
+	bio = blk_rq_map_bio_alloc(rq->cmd_flags, 0, GFP_KERNEL);
 	if (bio == NULL)
 		return -ENOMEM;
 
