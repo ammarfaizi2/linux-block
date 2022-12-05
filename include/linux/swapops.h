@@ -32,11 +32,13 @@
  * store PFN, we only need SWP_PFN_BITS bits.  Each of the pfn swap entries
  * can use the extra bits to store other information besides PFN.
  */
-#ifdef MAX_PHYSMEM_BITS
+#if defined(MAX_PHYSMEM_BITS)
 #define SWP_PFN_BITS			(MAX_PHYSMEM_BITS - PAGE_SHIFT)
-#else  /* MAX_PHYSMEM_BITS */
+#elif !defined(CONFIG_64BIT) && defined(CONFIG_PHYS_ADDR_T_64BIT)
+#define SWP_PFN_BITS			SWP_TYPE_SHIFT
+#else
 #define SWP_PFN_BITS			(BITS_PER_LONG - PAGE_SHIFT)
-#endif	/* MAX_PHYSMEM_BITS */
+#endif	/* defined(MAX_PHYSMEM_BITS) */
 #define SWP_PFN_MASK			(BIT(SWP_PFN_BITS) - 1)
 
 /**
