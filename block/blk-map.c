@@ -540,9 +540,9 @@ int blk_rq_append_bio(struct request *rq, struct bio *bio)
 EXPORT_SYMBOL(blk_rq_append_bio);
 
 /* Prepare bio for passthrough IO given ITER_BVEC iter */
-static int blk_rq_map_user_bvec(struct request *rq, const struct iov_iter *iter)
+static struct bio *blk_rq_map_user_bvec(struct request_queue *q, blk_opf_t opf,
+			const struct iov_iter *iter)
 {
-	struct request_queue *q = rq->q;
 	size_t nr_iter = iov_iter_count(iter);
 	size_t nr_segs = iter->nr_segs;
 	struct bio_vec *bvecs, *bvprvp = NULL;
@@ -552,15 +552,14 @@ static int blk_rq_map_user_bvec(struct request *rq, const struct iov_iter *iter)
 	size_t i;
 
 	if (nr_segs > queue_max_segments(q))
-		return -EINVAL;
+		return ERR_PTR(-EINVAL);
 
 	/* no iovecs to alloc, as we already have a BVEC iterator */
-	bio = blk_rq_map_bio_alloc(rq->cmd_flags, 0, GFP_KERNEL);
+	bio = blk_rq_map_bio_alloc(opf, 0, GFP_KERNEL);
 	if (bio == NULL)
-		return -ENOMEM;
+		return ERR_PTR(-ENOMEM);
 
 	bio_iov_bvec_set(bio, (struct iov_iter *)iter);
-	blk_rq_bio_prep(rq, bio, nr_segs);
 
 	/* loop to perform a bunch of sanity checks */
 	bvecs = (struct bio_vec *)iter->bvec;
@@ -573,7 +572,7 @@ static int blk_rq_map_user_bvec(struct request *rq, const struct iov_iter *iter)
 		 */
 		if (bvprvp && bvec_gap_to_prev(lim, bvprvp, bv->bv_offset)) {
 			blk_mq_map_bio_put(bio);
-			return -EREMOTEIO;
+			return NULL;
 		}
 		/* check full condition */
 		if (bytes + bv->bv_len > nr_iter)
@@ -584,10 +583,10 @@ static int blk_rq_map_user_bvec(struct request *rq, const struct iov_iter *iter)
 		bytes += bv->bv_len;
 		bvprvp = bv;
 	}
-	return 0;
+	return bio;
 put_bio:
 	blk_mq_map_bio_put(bio);
-	return -EINVAL;
+	return ERR_PTR(-EINVAL);
 }
 
 /**
@@ -636,11 +635,13 @@ int blk_rq_map_user_iov(struct request_queue *q, struct request *rq,
 		copy = queue_virt_boundary(q) & iov_iter_gap_alignment(iter);
 
 	if (map_bvec) {
-		ret = blk_rq_map_user_bvec(rq, iter);
-		if (!ret)
+		bio = blk_rq_map_user_bvec(rq->q, rq->cmd_flags, iter);
+		if (IS_ERR(bio))
+			return PTR_ERR(bio);
+		if (bio) {
+			blk_rq_append_bio(rq, bio);	/* can't fail */
 			return 0;
-		if (ret != -EREMOTEIO)
-			goto fail;
+		}
 		/* fall back to copying the data on limits mismatches */
 		copy = true;
 	}
@@ -668,7 +669,6 @@ int blk_rq_map_user_iov(struct request_queue *q, struct request *rq,
 
 unmap_rq:
 	blk_rq_unmap_user(rq->bio);
-fail:
 	rq->bio = NULL;
 	return ret;
 }
