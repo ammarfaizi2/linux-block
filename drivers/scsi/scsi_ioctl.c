@@ -342,17 +342,12 @@ bool scsi_cmd_allowed(unsigned char *cmd, fmode_t mode)
 }
 EXPORT_SYMBOL(scsi_cmd_allowed);
 
-static int scsi_fill_sghdr_rq(struct scsi_device *sdev, struct request *rq,
-		struct sg_io_hdr *hdr, fmode_t mode)
+static void scsi_fill_sghdr_rq(struct scsi_device *sdev, struct request *rq,
+		struct sg_io_hdr *hdr, unsigned char *cmnd)
 {
 	struct scsi_cmnd *scmd = blk_mq_rq_to_pdu(rq);
 
-	if (hdr->cmd_len < 6)
-		return -EMSGSIZE;
-	if (copy_from_user(scmd->cmnd, hdr->cmdp, hdr->cmd_len))
-		return -EFAULT;
-	if (!scsi_cmd_allowed(scmd->cmnd, mode))
-		return -EPERM;
+	memcpy(scmd->cmnd, cmnd, hdr->cmd_len);
 	scmd->cmd_len = hdr->cmd_len;
 
 	rq->timeout = msecs_to_jiffies(hdr->timeout);
@@ -362,15 +357,12 @@ static int scsi_fill_sghdr_rq(struct scsi_device *sdev, struct request *rq,
 		rq->timeout = BLK_DEFAULT_SG_TIMEOUT;
 	if (rq->timeout < BLK_MIN_SG_TIMEOUT)
 		rq->timeout = BLK_MIN_SG_TIMEOUT;
-
-	return 0;
 }
 
-static int scsi_complete_sghdr_rq(struct request *rq, struct sg_io_hdr *hdr,
-		struct bio *bio)
+static void scsi_complete_sghdr_rq(struct request *rq, struct sg_io_hdr *hdr,
+		unsigned char *sense)
 {
 	struct scsi_cmnd *scmd = blk_mq_rq_to_pdu(rq);
-	int r, ret = 0;
 
 	/*
 	 * fill in all the output members
@@ -390,29 +382,22 @@ static int scsi_complete_sghdr_rq(struct request *rq, struct sg_io_hdr *hdr,
 
 	if (scmd->sense_len && hdr->sbp) {
 		int len = min((unsigned int) hdr->mx_sb_len, scmd->sense_len);
-
-		if (!copy_to_user(hdr->sbp, scmd->sense_buffer, len))
-			hdr->sb_len_wr = len;
-		else
-			ret = -EFAULT;
+		memcpy(sense, scmd->sense_buffer, len);
+		hdr->sb_len_wr = len;
 	}
-
-	r = blk_rq_unmap_user(bio);
-	if (!ret)
-		ret = r;
-
-	return ret;
 }
 
 static int sg_io(struct scsi_device *sdev, struct sg_io_hdr *hdr, fmode_t mode)
 {
 	unsigned long start_time;
 	ssize_t ret = 0;
-	int writing = 0;
 	int at_head = 0;
 	struct request *rq;
 	struct scsi_cmnd *scmd;
 	struct bio *bio;
+	unsigned char sense[SCSI_SENSE_BUFFERSIZE];
+	unsigned char cmnd[sizeof(scmd->cmnd)];
+	blk_opf_t opf = REQ_OP_DRV_IN;
 
 	if (hdr->interface_id != 'S')
 		return -EINVAL;
@@ -425,7 +410,7 @@ static int sg_io(struct scsi_device *sdev, struct sg_io_hdr *hdr, fmode_t mode)
 		default:
 			return -EINVAL;
 		case SG_DXFER_TO_DEV:
-			writing = 1;
+			opf = REQ_OP_DRV_OUT;
 			break;
 		case SG_DXFER_TO_FROM_DEV:
 		case SG_DXFER_FROM_DEV:
@@ -434,28 +419,33 @@ static int sg_io(struct scsi_device *sdev, struct sg_io_hdr *hdr, fmode_t mode)
 	if (hdr->flags & SG_FLAG_Q_AT_HEAD)
 		at_head = 1;
 
-	rq = scsi_alloc_request(sdev->request_queue, writing ?
-			     REQ_OP_DRV_OUT : REQ_OP_DRV_IN, 0);
-	if (IS_ERR(rq))
-		return PTR_ERR(rq);
-	scmd = blk_mq_rq_to_pdu(rq);
+	if (hdr->cmd_len > sizeof(cmnd))
+		return -EINVAL;
 
-	if (hdr->cmd_len > sizeof(scmd->cmnd)) {
-		ret = -EINVAL;
-		goto out_put_request;
+	if (hdr->cmd_len < 6)
+		return -EMSGSIZE;
+	if (copy_from_user(cmnd, hdr->cmdp, hdr->cmd_len))
+		return -EFAULT;
+	if (!scsi_cmd_allowed(cmnd, mode))
+		return -EPERM;
+
+	bio = blk_map_user_io(sdev->request_queue, opf, NULL,
+			hdr->dxferp, hdr->dxfer_len,
+			hdr->iovec_count && hdr->dxfer_len,
+			hdr->iovec_count, 0);
+	if (IS_ERR(bio))
+		return PTR_ERR(bio);
+
+	rq = scsi_alloc_request(sdev->request_queue, opf, 0);
+	if (IS_ERR(rq)) {
+		blk_rq_unmap_user(bio);
+		return PTR_ERR(rq);
 	}
 
-	ret = scsi_fill_sghdr_rq(sdev, rq, hdr, mode);
-	if (ret < 0)
-		goto out_put_request;
+	blk_rq_attach_bios(rq, bio);
 
-	ret = blk_rq_map_user_io(rq, NULL, hdr->dxferp, hdr->dxfer_len,
-			GFP_KERNEL, hdr->iovec_count && hdr->dxfer_len,
-			hdr->iovec_count, 0, rq_data_dir(rq));
-	if (ret)
-		goto out_put_request;
-
-	bio = rq->bio;
+	scmd = blk_mq_rq_to_pdu(rq);
+	scsi_fill_sghdr_rq(sdev, rq, hdr, cmnd);
 	scmd->allowed = 0;
 
 	start_time = jiffies;
@@ -463,11 +453,12 @@ static int sg_io(struct scsi_device *sdev, struct sg_io_hdr *hdr, fmode_t mode)
 	blk_execute_rq(rq, at_head);
 
 	hdr->duration = jiffies_to_msecs(jiffies - start_time);
+	scsi_complete_sghdr_rq(rq, hdr, sense);
 
-	ret = scsi_complete_sghdr_rq(rq, hdr, bio);
-
-out_put_request:
 	blk_mq_free_request(rq);
+	ret = blk_rq_unmap_user(bio);
+	if (hdr->sb_len_wr && copy_to_user(hdr->sbp, sense, hdr->sb_len_wr))
+		ret = -EFAULT;
 	return ret;
 }
 
