@@ -931,16 +931,20 @@ static int sr_read_cdda_bpc(struct cdrom_device_info *cdi, void __user *ubuf,
 	struct scsi_cmnd *scmd;
 	struct request *rq;
 	struct bio *bio;
-	int ret;
+	int ret = 0;
+
+	bio = blk_map_user(disk->queue, REQ_OP_DRV_IN, NULL, ubuf, len);
+	if (IS_ERR(bio))
+		return PTR_ERR(bio);
 
 	rq = scsi_alloc_request(disk->queue, REQ_OP_DRV_IN, 0);
-	if (IS_ERR(rq))
+	if (IS_ERR(rq)) {
+		blk_rq_unmap_user(bio);
 		return PTR_ERR(rq);
-	scmd = blk_mq_rq_to_pdu(rq);
+	}
+	blk_rq_attach_bios(rq, bio);
 
-	ret = blk_rq_map_user(disk->queue, rq, NULL, ubuf, len, GFP_KERNEL);
-	if (ret)
-		goto out_put_request;
+	scmd = blk_mq_rq_to_pdu(rq);
 
 	scmd->cmnd[0] = GPCMD_READ_CD;
 	scmd->cmnd[1] = 1 << 2;
@@ -954,7 +958,6 @@ static int sr_read_cdda_bpc(struct cdrom_device_info *cdi, void __user *ubuf,
 	scmd->cmnd[9] = 0xf8;
 	scmd->cmd_len = 12;
 	rq->timeout = 60 * HZ;
-	bio = rq->bio;
 
 	blk_execute_rq(rq, false);
 	if (scmd->result) {
@@ -966,10 +969,9 @@ static int sr_read_cdda_bpc(struct cdrom_device_info *cdi, void __user *ubuf,
 		ret = -EIO;
 	}
 
+	blk_mq_free_request(rq);
 	if (blk_rq_unmap_user(bio))
 		ret = -EFAULT;
-out_put_request:
-	blk_mq_free_request(rq);
 	return ret;
 }
 
