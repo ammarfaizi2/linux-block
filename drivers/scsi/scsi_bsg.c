@@ -13,9 +13,12 @@ static int scsi_bsg_sg_io_fn(struct request_queue *q, struct sg_io_v4 *hdr,
 		fmode_t mode, unsigned int timeout)
 {
 	struct scsi_cmnd *scmd;
+	unsigned char cmnd[sizeof(scmd->cmnd)];
+	unsigned char sense[SCSI_SENSE_BUFFERSIZE];
+	int sense_len = 0;
+	blk_opf_t opf = hdr->dout_xfer_len ?  REQ_OP_DRV_OUT : REQ_OP_DRV_IN;
 	struct request *rq;
-	struct bio *bio;
-	int ret;
+	struct bio *bio = NULL;
 
 	if (hdr->protocol != BSG_PROTOCOL_SCSI  ||
 	    hdr->subprotocol != BSG_SUB_PROTOCOL_SCSI_CMD)
@@ -24,40 +27,34 @@ static int scsi_bsg_sg_io_fn(struct request_queue *q, struct sg_io_v4 *hdr,
 		pr_warn_once("BIDI support in bsg has been removed.\n");
 		return -EOPNOTSUPP;
 	}
+	if (hdr->request_len > sizeof(cmnd))
+		return -EINVAL;
+	if (copy_from_user(cmnd, uptr64(hdr->request), hdr->request_len))
+		return -EFAULT;
+	if (!scsi_cmd_allowed(cmnd, mode))
+		return -EPERM;
 
-	rq = scsi_alloc_request(q, hdr->dout_xfer_len ?
-				REQ_OP_DRV_OUT : REQ_OP_DRV_IN, 0);
-	if (IS_ERR(rq))
+	if (hdr->dout_xfer_len)
+		bio = blk_map_user(q, opf, NULL, uptr64(hdr->dout_xferp),
+				hdr->dout_xfer_len);
+	else if (hdr->din_xfer_len)
+		bio = blk_map_user(q, opf, NULL, uptr64(hdr->din_xferp),
+				hdr->din_xfer_len);
+	if (IS_ERR(bio))
+		return PTR_ERR(bio);
+
+	rq = scsi_alloc_request(q, opf, 0);
+	if (IS_ERR(rq)) {
+		blk_rq_unmap_user(bio);
 		return PTR_ERR(rq);
+	}
 	rq->timeout = timeout;
 
 	scmd = blk_mq_rq_to_pdu(rq);
 	scmd->cmd_len = hdr->request_len;
-	if (scmd->cmd_len > sizeof(scmd->cmnd)) {
-		ret = -EINVAL;
-		goto out_put_request;
-	}
+	memcpy(scmd->cmnd, cmnd, scmd->cmd_len);
+	blk_rq_attach_bios(rq, bio);
 
-	ret = -EFAULT;
-	if (copy_from_user(scmd->cmnd, uptr64(hdr->request), scmd->cmd_len))
-		goto out_put_request;
-	ret = -EPERM;
-	if (!scsi_cmd_allowed(scmd->cmnd, mode))
-		goto out_put_request;
-
-	ret = 0;
-	if (hdr->dout_xfer_len) {
-		ret = blk_rq_map_user(rq->q, rq, NULL, uptr64(hdr->dout_xferp),
-				hdr->dout_xfer_len, GFP_KERNEL);
-	} else if (hdr->din_xfer_len) {
-		ret = blk_rq_map_user(rq->q, rq, NULL, uptr64(hdr->din_xferp),
-				hdr->din_xfer_len, GFP_KERNEL);
-	}
-
-	if (ret)
-		goto out_put_request;
-
-	bio = rq->bio;
 	blk_execute_rq(rq, !(hdr->flags & BSG_FLAG_Q_AT_TAIL));
 
 	/*
@@ -71,17 +68,11 @@ static int scsi_bsg_sg_io_fn(struct request_queue *q, struct sg_io_v4 *hdr,
 	hdr->info = 0;
 	if (hdr->device_status || hdr->transport_status || hdr->driver_status)
 		hdr->info |= SG_INFO_CHECK;
-	hdr->response_len = 0;
 
 	if (scmd->sense_len && hdr->response) {
-		int len = min_t(unsigned int, hdr->max_response_len,
+		sense_len = min_t(unsigned int, hdr->max_response_len,
 				scmd->sense_len);
-
-		if (copy_to_user(uptr64(hdr->response), scmd->sense_buffer,
-				 len))
-			ret = -EFAULT;
-		else
-			hdr->response_len = len;
+		memcpy(sense, scmd->sense_buffer, sense_len);
 	}
 
 	if (rq_data_dir(rq) == READ)
@@ -89,11 +80,13 @@ static int scsi_bsg_sg_io_fn(struct request_queue *q, struct sg_io_v4 *hdr,
 	else
 		hdr->dout_resid = scmd->resid_len;
 
-	blk_rq_unmap_user(bio);
-
-out_put_request:
 	blk_mq_free_request(rq);
-	return ret;
+	blk_rq_unmap_user(bio);
+	if (sense_len && copy_to_user(uptr64(hdr->response), sense, sense_len))
+		return -EFAULT;
+
+	hdr->response_len = sense_len;
+	return 0;
 }
 
 struct bsg_device *scsi_bsg_register_queue(struct scsi_device *sdev)
