@@ -674,20 +674,21 @@ struct bio *blk_map_user_iov(struct request_queue *q, blk_opf_t opf,
 }
 EXPORT_SYMBOL(blk_map_user_iov);
 
-int blk_rq_map_user(struct request_queue *q, struct request *rq,
+struct bio *blk_map_user(struct request_queue *q, blk_opf_t opf,
 		    struct rq_map_data *map_data, void __user *ubuf,
-		    unsigned long len, gfp_t gfp_mask)
+		    unsigned long len)
 {
 	struct iovec iov;
 	struct iov_iter i;
-	int ret = import_single_range(rq_data_dir(rq), ubuf, len, &iov, &i);
+	int ret = import_single_range(op_is_write(opf) ? WRITE : READ,
+				      ubuf, len, &iov, &i);
 
 	if (unlikely(ret < 0))
-		return ret;
+		return ERR_PTR(ret);
 
-	return blk_rq_map_user_iov(q, rq, map_data, &i, gfp_mask);
+	return blk_map_user_iov(q, opf, map_data, &i);
 }
-EXPORT_SYMBOL(blk_rq_map_user);
+EXPORT_SYMBOL(blk_map_user);
 
 int blk_rq_map_user_io(struct request *req, struct rq_map_data *map_data,
 		void __user *ubuf, unsigned long buf_len, gfp_t gfp_mask,
