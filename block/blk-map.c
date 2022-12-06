@@ -589,6 +589,19 @@ put_bio:
 	return ERR_PTR(-EINVAL);
 }
 
+static void blk_rq_attach_bios(struct request *rq, struct bio *bio)
+{
+	if (bio) {
+		rq->bio = bio;
+		rq->ioprio = bio_prio(bio);
+		for_each_bio (bio) {
+			rq->nr_phys_segments += bio->bi_vcnt;
+			rq->__data_len += bio->bi_iter.bi_size;
+			rq->biotail = bio;
+		}
+	}
+}
+
 /**
  * blk_rq_map_user_iov - map user data to a request, for passthrough requests
  * @q:		request queue where request should be inserted
@@ -608,11 +621,11 @@ int blk_rq_map_user_iov(struct request_queue *q, struct request *rq,
 			struct rq_map_data *map_data,
 			const struct iov_iter *iter, gfp_t gfp_mask)
 {
+	unsigned int nsegs = queue_max_segments(q);
 	bool copy = false, map_bvec = false;
 	unsigned long align = q->dma_pad_mask | queue_dma_alignment(q);
-	struct bio *bio = NULL;
+	struct bio *bio = NULL, **p = &bio;
 	struct iov_iter i;
-	int ret = -EINVAL;
 
 	if (!iov_iter_count(iter))
 		return -EINVAL;
@@ -639,7 +652,7 @@ int blk_rq_map_user_iov(struct request_queue *q, struct request *rq,
 		if (IS_ERR(bio))
 			return PTR_ERR(bio);
 		if (bio) {
-			blk_rq_append_bio(rq, bio);	/* can't fail */
+			blk_rq_attach_bios(rq, bio);
 			return 0;
 		}
 		/* fall back to copying the data on limits mismatches */
@@ -648,29 +661,27 @@ int blk_rq_map_user_iov(struct request_queue *q, struct request *rq,
 
 	i = *iter;
 	do {
+		struct bio *next;
 		if (copy)
-			bio = bio_copy_user_iov(q, rq->cmd_flags,
-						     map_data, &i, gfp_mask);
+			next = bio_copy_user_iov(q, rq->cmd_flags,
+						 map_data, &i, gfp_mask);
 		else
-			bio = bio_map_user_iov(q, rq->cmd_flags, &i,
-						    gfp_mask);
-		if (IS_ERR(bio)) {
-			ret = PTR_ERR(bio);
-			goto unmap_rq;
-		}
-		ret = blk_rq_append_bio(rq, bio);
-		if (ret) {
+			next = bio_map_user_iov(q, rq->cmd_flags, &i, gfp_mask);
+		if (IS_ERR(next)) {
 			blk_rq_unmap_user(bio);
-			goto unmap_rq;
+			return PTR_ERR(next);
 		}
+		*p = next;
+		if (unlikely(nsegs < next->bi_vcnt)) {
+			blk_rq_unmap_user(bio);	/* including next */
+			return -EINVAL;
+		}
+		nsegs -= next->bi_vcnt;
+		p = &next->bi_next;
 	} while (iov_iter_count(&i));
 
+	blk_rq_attach_bios(rq, bio);
 	return 0;
-
-unmap_rq:
-	blk_rq_unmap_user(rq->bio);
-	rq->bio = NULL;
-	return ret;
 }
 EXPORT_SYMBOL(blk_rq_map_user_iov);
 
