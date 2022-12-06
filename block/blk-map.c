@@ -589,7 +589,7 @@ put_bio:
 	return ERR_PTR(-EINVAL);
 }
 
-static void blk_rq_attach_bios(struct request *rq, struct bio *bio)
+void blk_rq_attach_bios(struct request *rq, struct bio *bio)
 {
 	if (bio) {
 		rq->bio = bio;
@@ -601,14 +601,14 @@ static void blk_rq_attach_bios(struct request *rq, struct bio *bio)
 		}
 	}
 }
+EXPORT_SYMBOL(blk_rq_attach_bios);
 
 /**
- * blk_rq_map_user_iov - map user data to a request, for passthrough requests
+ * blk_map_user_iov - map user data to a bio chain, for passthrough requests
  * @q:		request queue where request should be inserted
- * @rq:		request to map data to
+ * @opf:	opcode
  * @map_data:   pointer to the rq_map_data holding pages (if necessary)
  * @iter:	iovec iterator
- * @gfp_mask:	memory allocation flags
  *
  * Description:
  *    Data will be mapped directly for zero copy I/O, if possible. Otherwise
@@ -617,22 +617,22 @@ static void blk_rq_attach_bios(struct request *rq, struct bio *bio)
  *    A matching blk_rq_unmap_user() must be issued at the end of I/O, while
  *    still in process context.
  */
-int blk_rq_map_user_iov(struct request_queue *q, struct request *rq,
+struct bio *blk_map_user_iov(struct request_queue *q, blk_opf_t opf,
 			struct rq_map_data *map_data,
-			const struct iov_iter *iter, gfp_t gfp_mask)
+			const struct iov_iter *iter)
 {
 	unsigned int nsegs = queue_max_segments(q);
-	bool copy = false, map_bvec = false;
+	bool copy = false;
 	unsigned long align = q->dma_pad_mask | queue_dma_alignment(q);
 	struct bio *bio = NULL, **p = &bio;
 	struct iov_iter i;
 
 	if (!iov_iter_count(iter))
-		return -EINVAL;
+		return ERR_PTR(-EINVAL);
 	if (iov_iter_count(iter) > queue_max_hw_sectors(q) << 9)
-		return -EINVAL;
+		return ERR_PTR(-EINVAL);
 	if (WARN_ON_ONCE(iov_iter_count(iter) > UINT_MAX))
-		return -EINVAL;
+		return ERR_PTR(-EINVAL);
 
 	if (map_data)
 		copy = true;
@@ -640,50 +640,39 @@ int blk_rq_map_user_iov(struct request_queue *q, struct request *rq,
 		copy = true;
 	else if (iov_iter_alignment(iter) & align)
 		copy = true;
-	else if (iov_iter_is_bvec(iter))
-		map_bvec = true;
-	else if (!iter_is_iovec(iter))
+	else if (iov_iter_is_bvec(iter)) {
+		bio = blk_rq_map_user_bvec(q, opf, iter);
+		if (bio)
+			return bio;
+		/* fall back to copying the data on limits mismatches */
+		copy = true;
+	} else if (!iter_is_iovec(iter))
 		copy = true;
 	else if (queue_virt_boundary(q))
 		copy = queue_virt_boundary(q) & iov_iter_gap_alignment(iter);
-
-	if (map_bvec) {
-		bio = blk_rq_map_user_bvec(rq->q, rq->cmd_flags, iter);
-		if (IS_ERR(bio))
-			return PTR_ERR(bio);
-		if (bio) {
-			blk_rq_attach_bios(rq, bio);
-			return 0;
-		}
-		/* fall back to copying the data on limits mismatches */
-		copy = true;
-	}
 
 	i = *iter;
 	do {
 		struct bio *next;
 		if (copy)
-			next = bio_copy_user_iov(q, rq->cmd_flags,
-						 map_data, &i, gfp_mask);
+			next = bio_copy_user_iov(q, opf, map_data, &i, GFP_KERNEL);
 		else
-			next = bio_map_user_iov(q, rq->cmd_flags, &i, gfp_mask);
+			next = bio_map_user_iov(q, opf, &i, GFP_KERNEL);
 		if (IS_ERR(next)) {
 			blk_rq_unmap_user(bio);
-			return PTR_ERR(next);
+			return next;
 		}
 		*p = next;
 		if (unlikely(nsegs < next->bi_vcnt)) {
 			blk_rq_unmap_user(bio);	/* including next */
-			return -EINVAL;
+			return ERR_PTR(-EINVAL);
 		}
 		nsegs -= next->bi_vcnt;
 		p = &next->bi_next;
 	} while (iov_iter_count(&i));
-
-	blk_rq_attach_bios(rq, bio);
-	return 0;
+	return bio;
 }
-EXPORT_SYMBOL(blk_rq_map_user_iov);
+EXPORT_SYMBOL(blk_map_user_iov);
 
 int blk_rq_map_user(struct request_queue *q, struct request *rq,
 		    struct rq_map_data *map_data, void __user *ubuf,

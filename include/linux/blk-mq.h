@@ -989,13 +989,27 @@ struct rq_map_data {
 	bool from_user;
 };
 
+struct bio *blk_map_user_iov(struct request_queue *, blk_opf_t, struct rq_map_data *,
+			const struct iov_iter *);
 int blk_rq_map_user(struct request_queue *, struct request *,
 		struct rq_map_data *, void __user *, unsigned long, gfp_t);
 int blk_rq_map_user_io(struct request *, struct rq_map_data *,
 		void __user *, unsigned long, gfp_t, bool, int, bool, int);
-int blk_rq_map_user_iov(struct request_queue *, struct request *,
-		struct rq_map_data *, const struct iov_iter *, gfp_t);
 int blk_rq_unmap_user(struct bio *);
+void blk_rq_attach_bios(struct request *, struct bio *);
+
+static inline int blk_rq_map_user_iov(struct request_queue *q,
+			struct request *rq, struct rq_map_data *map_data,
+			const struct iov_iter *iter, gfp_t gfp_mask)
+{
+	struct bio *bio = blk_map_user_iov(q, rq->cmd_flags, map_data, iter);
+
+	if (IS_ERR(bio))
+		return PTR_ERR(bio);
+	blk_rq_attach_bios(rq, bio);
+	return 0;
+}
+
 int blk_rq_map_kern(struct request_queue *, struct request *, void *,
 		unsigned int, gfp_t);
 int blk_rq_append_bio(struct request *rq, struct bio *bio);
