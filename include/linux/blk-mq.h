@@ -993,8 +993,9 @@ struct bio *blk_map_user_iov(struct request_queue *, blk_opf_t, struct rq_map_da
 			const struct iov_iter *);
 struct bio *blk_map_user(struct request_queue *, blk_opf_t,
 		struct rq_map_data *, void __user *, unsigned long);
-int blk_rq_map_user_io(struct request *, struct rq_map_data *,
-		void __user *, unsigned long, gfp_t, bool, int, bool, int);
+struct bio *blk_map_user_io(struct request_queue *, blk_opf_t,
+		struct rq_map_data *, void __user *, unsigned long,
+		bool, int, bool);
 int blk_rq_unmap_user(struct bio *);
 void blk_rq_attach_bios(struct request *, struct bio *);
 
@@ -1016,6 +1017,20 @@ static inline int blk_rq_map_user(struct request_queue *q, struct request *rq,
 {
 	struct bio *bio = blk_map_user(q, rq->cmd_flags, map_data,
 				       ubuf, len);
+
+	if (IS_ERR(bio))
+		return PTR_ERR(bio);
+	blk_rq_attach_bios(rq, bio);
+	return 0;
+}
+
+static inline int blk_rq_map_user_io(struct request *rq, struct rq_map_data *map_data,
+		void __user *ubuf, unsigned long buf_len, gfp_t gfp_mask,
+		bool vec, int iov_count, bool check_iter_count, int rw)
+{
+	struct bio *bio = blk_map_user_io(rq->q, rq->cmd_flags, map_data,
+				       ubuf, buf_len, vec,
+				       iov_count, check_iter_count);
 
 	if (IS_ERR(bio))
 		return PTR_ERR(bio);
