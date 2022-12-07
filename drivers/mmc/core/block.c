@@ -661,8 +661,8 @@ static int mmc_blk_ioctl_cmd(struct mmc_blk_data *md,
 	req_to_mmc_queue_req(req)->ioc_count = 1;
 	blk_execute_rq(req, false);
 	ioc_err = req_to_mmc_queue_req(req)->drv_op_result;
-	err = mmc_blk_ioctl_copy_to_user(ic_ptr, idata);
 	blk_mq_free_request(req);
+	err = mmc_blk_ioctl_copy_to_user(ic_ptr, idata);
 
 cmd_done:
 	kfree(idata->buf);
@@ -732,12 +732,11 @@ static int mmc_blk_ioctl_multi_cmd(struct mmc_blk_data *md,
 	req_to_mmc_queue_req(req)->ioc_count = n;
 	blk_execute_rq(req, false);
 	ioc_err = req_to_mmc_queue_req(req)->drv_op_result;
+	blk_mq_free_request(req);
 
 	/* copy to user if data and response */
 	for (i = 0; i < n && !err; i++)
 		err = mmc_blk_ioctl_copy_to_user(&cmds[i], idata[i]);
-
-	blk_mq_free_request(req);
 
 cmd_err:
 	for (i = 0; i < n; i++) {
