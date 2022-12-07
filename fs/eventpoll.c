@@ -2195,6 +2195,7 @@ int do_epoll_ctl(int epfd, int op, int fd, struct epoll_event *epds,
 	}
 
 	/* Get the "struct file *" for the target file */
+	error = -EBADF;
 	tf = fdget(fd);
 	if (!tf.file)
 		goto error_fput;
