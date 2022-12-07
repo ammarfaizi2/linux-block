@@ -35,7 +35,7 @@
 #ifdef MAX_PHYSMEM_BITS
 #define SWP_PFN_BITS		(MAX_PHYSMEM_BITS - PAGE_SHIFT)
 #else  /* MAX_PHYSMEM_BITS */
-#define SWP_PFN_BITS		min_t(phys_addr_t, \
+#define SWP_PFN_BITS		min_t(int, \
 				      sizeof(phys_addr_t) * 8 - PAGE_SHIFT, \
 				      SWP_TYPE_SHIFT)
 #endif	/* MAX_PHYSMEM_BITS */
