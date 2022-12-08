@@ -564,10 +564,10 @@ static int nvme_uring_cmd_io(struct nvme_ctrl *ctrl, struct nvme_ns *ns,
 		rq_flags = REQ_NOWAIT;
 		blk_flags = BLK_MQ_REQ_NOWAIT;
 	}
-	if (issue_flags & IO_URING_F_IOPOLL)
+	/* can't poll without a bio... */
+	if ((issue_flags & IO_URING_F_IOPOLL) && (d.addr && d.data_len))
 		rq_flags |= REQ_POLLED;
 
-retry:
 	req = nvme_alloc_user_request(q, &c, rq_flags, blk_flags);
 	if (IS_ERR(req))
 		return PTR_ERR(req);
@@ -581,16 +581,9 @@ retry:
 			return ret;
 	}
 
-	if (issue_flags & IO_URING_F_IOPOLL && rq_flags & REQ_POLLED) {
-		if (unlikely(!req->bio)) {
-			/* we can't poll this, so alloc regular req instead */
-			blk_mq_free_request(req);
-			rq_flags &= ~REQ_POLLED;
-			goto retry;
-		} else {
-			WRITE_ONCE(ioucmd->cookie, req->bio);
-			req->bio->bi_opf |= REQ_POLLED;
-		}
+	if (rq_flags & REQ_POLLED) {
+		WRITE_ONCE(ioucmd->cookie, req->bio);
+		req->bio->bi_opf |= REQ_POLLED;
 	}
 	/* to free bio on completion, as req->bio will be null at that time */
 	pdu->bio = req->bio;
