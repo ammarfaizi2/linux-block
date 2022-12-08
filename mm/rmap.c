@@ -1294,7 +1294,8 @@ void page_add_new_anon_rmap(struct page *page,
 	int nr;
 
 	VM_BUG_ON_VMA(address < vma->vm_start || address >= vma->vm_end, vma);
-	__SetPageSwapBacked(page);
+	if (!(vma->vm_flags & VM_DROPPABLE))
+		__SetPageSwapBacked(page);
 
 	if (likely(!PageCompound(page))) {
 		/* increment count (starts at -1) */
@@ -1683,7 +1684,7 @@ static bool try_to_unmap_one(struct folio *folio, struct vm_area_struct *vma,
 				 * plus the rmap(s) (dropped by discard:).
 				 */
 				if (ref_count == 1 + map_count &&
-				    !folio_test_dirty(folio)) {
+				    (!folio_test_dirty(folio) || (vma->vm_flags & VM_DROPPABLE))) {
 					/* Invalidate as we cleared the pte */
 					mmu_notifier_invalidate_range(mm,
 						address, address + PAGE_SIZE);
