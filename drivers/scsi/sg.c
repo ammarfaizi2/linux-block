@@ -780,7 +780,6 @@ sg_common_write(Sg_fd * sfp, Sg_request * srp,
 		unsigned char *cmnd, int timeout, int blocking)
 {
 	int k, at_head;
-	Sg_device *sdp = sfp->parentdp;
 	sg_io_hdr_t *hp = &srp->header;
 
 	srp->data.cmd_opcode = cmnd[0];	/* hold opcode of command */
@@ -807,16 +806,6 @@ sg_common_write(Sg_fd * sfp, Sg_request * srp,
 		sg_finish_rem_req(srp);
 		sg_remove_request(sfp, srp);
 		return k;	/* probably out of space --> ENOMEM */
-	}
-	if (atomic_read(&sdp->detaching)) {
-		if (srp->bio) {
-			blk_mq_free_request(srp->rq);
-			srp->rq = NULL;
-		}
-
-		sg_finish_rem_req(srp);
-		sg_remove_request(sfp, srp);
-		return -ENODEV;
 	}
 
 	hp->duration = jiffies_to_msecs(jiffies);
@@ -1718,20 +1707,65 @@ sg_start_req(Sg_request *srp, unsigned char *cmd)
 	int res;
 	struct request *rq;
 	Sg_fd *sfp = srp->parentfp;
+	Sg_device *sdp = sfp->parentdp;
 	sg_io_hdr_t *hp = &srp->header;
 	int dxfer_len = (int) hp->dxfer_len;
 	int dxfer_dir = hp->dxfer_direction;
 	unsigned int iov_count = hp->iovec_count;
 	Sg_scatter_hold *req_schp = &srp->data;
 	Sg_scatter_hold *rsv_schp = &sfp->reserve;
-	struct request_queue *q = sfp->parentdp->device->request_queue;
-	struct rq_map_data *md, map_data;
-	int rw = hp->dxfer_direction == SG_DXFER_TO_DEV ? WRITE : READ;
+	struct request_queue *q = sdp->device->request_queue;
+	struct rq_map_data *md = NULL, map_data;
 	struct scsi_cmnd *scmd;
+	blk_opf_t opf = hp->dxfer_direction == SG_DXFER_TO_DEV ?
+			REQ_OP_DRV_OUT : REQ_OP_DRV_IN;
+	struct bio *bio;
 
 	SCSI_LOG_TIMEOUT(4, sg_printk(KERN_INFO, sfp->parentdp,
 				      "sg_start_req: dxfer_len=%d\n",
 				      dxfer_len));
+
+	if (hp->cmd_len > sizeof(scmd->cmnd))
+		return -EINVAL;
+
+	if ((dxfer_len <= 0) || (dxfer_dir == SG_DXFER_NONE)) {
+		bio = NULL;
+	} else if (sg_allow_dio && hp->flags & SG_FLAG_DIRECT_IO &&
+	    dxfer_dir != SG_DXFER_UNKNOWN && !iov_count &&
+	    blk_rq_aligned(q, (unsigned long)hp->dxferp, dxfer_len)) {
+		bio = blk_map_user_io(q, opf, NULL, hp->dxferp, hp->dxfer_len,
+					iov_count, iov_count, 1);
+	} else {
+		md = &map_data;
+		mutex_lock(&sfp->f_mutex);
+		if (dxfer_len <= rsv_schp->bufflen &&
+		    !sfp->res_in_use) {
+			sfp->res_in_use = 1;
+			sg_link_reserve(sfp, srp, dxfer_len);
+			res = 0;
+		} else if (hp->flags & SG_FLAG_MMAP_IO) {
+			res = -EBUSY; /* sfp->res_in_use == 1 */
+			if (dxfer_len > rsv_schp->bufflen)
+				res = -ENOMEM;
+		} else {
+			res = sg_build_indirect(req_schp, sfp, dxfer_len);
+		}
+		mutex_unlock(&sfp->f_mutex);
+		if (res)
+			return res;
+
+		md->pages = req_schp->pages;
+		md->page_order = req_schp->page_order;
+		md->nr_entries = req_schp->k_use_sg;
+		md->offset = 0;
+		md->null_mapped = hp->dxferp ? 0 : 1;
+		if (dxfer_dir == SG_DXFER_TO_FROM_DEV)
+			md->from_user = 1;
+		else
+			md->from_user = 0;
+		bio = blk_map_user_io(q, opf, md, hp->dxferp, hp->dxfer_len,
+					iov_count, iov_count, 1);
+	}
 
 	/*
 	 * NOTE
@@ -1744,16 +1778,18 @@ sg_start_req(Sg_request *srp, unsigned char *cmd)
 	 * do not want to use BLK_MQ_REQ_NOWAIT here because userspace might
 	 * not expect an EWOULDBLOCK from this condition.
 	 */
-	rq = scsi_alloc_request(q, hp->dxfer_direction == SG_DXFER_TO_DEV ?
-			REQ_OP_DRV_OUT : REQ_OP_DRV_IN, 0);
-	if (IS_ERR(rq))
+	rq = scsi_alloc_request(q, opf, 0);
+	if (IS_ERR(rq)) {
+		blk_rq_unmap_user(bio);
 		return PTR_ERR(rq);
-	scmd = blk_mq_rq_to_pdu(rq);
-
-	if (hp->cmd_len > sizeof(scmd->cmnd)) {
-		blk_mq_free_request(rq);
-		return -EINVAL;
 	}
+	blk_rq_attach_bios(rq, bio);
+	if (atomic_read(&sdp->detaching)) {
+		blk_mq_free_request(rq);
+		blk_rq_unmap_user(bio);
+		return -ENODEV;
+	}
+	scmd = blk_mq_rq_to_pdu(rq);
 
 	memcpy(scmd->cmnd, cmd, hp->cmd_len);
 	scmd->cmd_len = hp->cmd_len;
@@ -1761,60 +1797,12 @@ sg_start_req(Sg_request *srp, unsigned char *cmd)
 	srp->rq = rq;
 	rq->end_io_data = srp;
 	scmd->allowed = SG_DEFAULT_RETRIES;
-
-	if ((dxfer_len <= 0) || (dxfer_dir == SG_DXFER_NONE))
-		return 0;
-
-	if (sg_allow_dio && hp->flags & SG_FLAG_DIRECT_IO &&
-	    dxfer_dir != SG_DXFER_UNKNOWN && !iov_count &&
-	    blk_rq_aligned(q, (unsigned long)hp->dxferp, dxfer_len))
-		md = NULL;
-	else
-		md = &map_data;
-
-	if (md) {
-		mutex_lock(&sfp->f_mutex);
-		if (dxfer_len <= rsv_schp->bufflen &&
-		    !sfp->res_in_use) {
-			sfp->res_in_use = 1;
-			sg_link_reserve(sfp, srp, dxfer_len);
-		} else if (hp->flags & SG_FLAG_MMAP_IO) {
-			res = -EBUSY; /* sfp->res_in_use == 1 */
-			if (dxfer_len > rsv_schp->bufflen)
-				res = -ENOMEM;
-			mutex_unlock(&sfp->f_mutex);
-			return res;
-		} else {
-			res = sg_build_indirect(req_schp, sfp, dxfer_len);
-			if (res) {
-				mutex_unlock(&sfp->f_mutex);
-				return res;
-			}
-		}
-		mutex_unlock(&sfp->f_mutex);
-
-		md->pages = req_schp->pages;
-		md->page_order = req_schp->page_order;
-		md->nr_entries = req_schp->k_use_sg;
-		md->offset = 0;
-		md->null_mapped = hp->dxferp ? 0 : 1;
-		if (dxfer_dir == SG_DXFER_TO_FROM_DEV)
-			md->from_user = 1;
-		else
-			md->from_user = 0;
+	srp->bio = bio;
+	if (bio && !md) {
+		req_schp->dio_in_use = 1;
+		hp->info |= SG_INFO_DIRECT_IO;
 	}
-
-	res = blk_rq_map_user_io(rq, md, hp->dxferp, hp->dxfer_len,
-			GFP_ATOMIC, iov_count, iov_count, 1, rw);
-	if (!res) {
-		srp->bio = rq->bio;
-
-		if (!md) {
-			req_schp->dio_in_use = 1;
-			hp->info |= SG_INFO_DIRECT_IO;
-		}
-	}
-	return res;
+	return 0;
 }
 
 static int
@@ -1828,11 +1816,7 @@ sg_finish_rem_req(Sg_request *srp)
 	SCSI_LOG_TIMEOUT(4, sg_printk(KERN_INFO, sfp->parentdp,
 				      "sg_finish_rem_req: res_used=%d\n",
 				      (int) srp->res_used));
-	if (srp->bio)
-		ret = blk_rq_unmap_user(srp->bio);
-
-	if (srp->rq)
-		blk_mq_free_request(srp->rq);
+	ret = blk_rq_unmap_user(srp->bio);
 
 	if (srp->res_used)
 		sg_unlink_reserve(sfp, srp);
@@ -2204,6 +2188,10 @@ sg_remove_sfp_usercontext(struct work_struct *work)
 	write_lock_irqsave(&sfp->rq_list_lock, iflags);
 	while (!list_empty(&sfp->rq_list)) {
 		srp = list_first_entry(&sfp->rq_list, Sg_request, entry);
+		// this is vile - normally blk_rq_unmap_user() could block,
+		// and sg_finish_rem_req() calls it, but it (hopefully)
+		// notices that it's run via schedule_work() and skips
+		// the copyout.
 		sg_finish_rem_req(srp);
 		list_del(&srp->entry);
 		srp->parentfp = NULL;
