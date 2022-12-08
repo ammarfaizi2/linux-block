@@ -26,6 +26,7 @@
 #define EPOLL_CTL_ADD 1
 #define EPOLL_CTL_DEL 2
 #define EPOLL_CTL_MOD 3
+#define EPOLL_CTL_MIN_WAIT	4
 
 /* Epoll event masks */
 #define EPOLLIN		(__force __poll_t)0x00000001
