@@ -64,20 +64,19 @@ static void __user *nvme_to_user_ptr(uintptr_t ptrval)
 	return (void __user *)ptrval;
 }
 
-static void *nvme_add_user_metadata(struct request *req, void __user *ubuf,
+static void *nvme_add_user_metadata(struct bio *bio, void __user *ubuf,
 		unsigned len, u32 seed)
 {
 	struct bio_integrity_payload *bip;
 	int ret = -ENOMEM;
 	void *buf;
-	struct bio *bio = req->bio;
 
 	buf = kmalloc(len, GFP_KERNEL);
 	if (!buf)
-		goto out;
+		return ERR_PTR(-ENOMEM);
 
 	ret = -EFAULT;
-	if ((req_op(req) == REQ_OP_DRV_OUT) && copy_from_user(buf, ubuf, len))
+	if ((bio_op(bio) == REQ_OP_DRV_OUT) && copy_from_user(buf, ubuf, len))
 		goto out_free_meta;
 
 	bip = bio_integrity_alloc(bio, GFP_KERNEL, 1);
@@ -95,18 +94,16 @@ static void *nvme_add_user_metadata(struct request *req, void __user *ubuf,
 		goto out_free_meta;
 	}
 
-	req->cmd_flags |= REQ_INTEGRITY;
 	return buf;
 out_free_meta:
 	kfree(buf);
-out:
 	return ERR_PTR(ret);
 }
 
-static int nvme_finish_user_metadata(struct request *req, void __user *ubuf,
+static int nvme_finish_user_metadata(struct bio *bio, void __user *ubuf,
 		void *meta, unsigned len, int ret)
 {
-	if (!ret && req_op(req) == REQ_OP_DRV_IN &&
+	if (!ret && bio_op(bio) == REQ_OP_DRV_IN &&
 	    copy_to_user(ubuf, meta, len))
 		ret = -EFAULT;
 	kfree(meta);
@@ -127,12 +124,18 @@ static struct request *nvme_alloc_user_request(struct request_queue *q,
 	return req;
 }
 
-static int nvme_map_user_request(struct request *req, u64 ubuffer,
-		unsigned bufflen, void __user *meta_buffer, unsigned meta_len,
+static inline blk_opf_t nvme_user_request_opf(struct nvme_command *cmd,
+						blk_opf_t rq_flags)
+{
+	return nvme_req_op(cmd) | rq_flags | REQ_FAILFAST_DRIVER;
+}
+
+static struct bio *nvme_map_user_request(struct request_queue *q, blk_opf_t opf,
+		u64 ubuffer, unsigned bufflen,
+		void __user *meta_buffer, unsigned meta_len,
 		u32 meta_seed, void **metap, struct io_uring_cmd *ioucmd,
 		bool vec)
 {
-	struct request_queue *q = req->q;
 	struct nvme_ns *ns = q->queuedata;
 	struct block_device *bdev = ns ? ns->disk->part0 : NULL;
 	struct bio *bio = NULL;
@@ -144,42 +147,33 @@ static int nvme_map_user_request(struct request *req, u64 ubuffer,
 
 		/* fixedbufs is only for non-vectored io */
 		if (WARN_ON_ONCE(vec))
-			return -EINVAL;
+			return ERR_PTR(-EINVAL);
 		ret = io_uring_cmd_import_fixed(ubuffer, bufflen,
-				rq_data_dir(req), &iter, ioucmd);
+				(op_is_write(opf) ? WRITE : READ),
+				&iter, ioucmd);
 		if (ret < 0)
-			goto out;
-		ret = blk_rq_map_user_iov(q, req, NULL, &iter, GFP_KERNEL);
+			return ERR_PTR(ret);
+		bio = blk_map_user_iov(q, opf, NULL, &iter);
 	} else {
-		ret = blk_rq_map_user_io(req, NULL, nvme_to_user_ptr(ubuffer),
-				bufflen, GFP_KERNEL, vec, 0, 0,
-				rq_data_dir(req));
+		bio = blk_map_user_io(q, opf, NULL, nvme_to_user_ptr(ubuffer),
+				bufflen, vec, 0, 0);
 	}
+	if (IS_ERR(bio))
+		return bio;
 
-	if (ret)
-		goto out;
-	bio = req->bio;
 	if (bdev)
 		bio_set_dev(bio, bdev);
 
 	if (bdev && meta_buffer && meta_len) {
-		meta = nvme_add_user_metadata(req, meta_buffer, meta_len,
+		meta = nvme_add_user_metadata(bio, meta_buffer, meta_len,
 				meta_seed);
 		if (IS_ERR(meta)) {
-			ret = PTR_ERR(meta);
-			goto out_unmap;
+			blk_rq_unmap_user(bio);
+			return ERR_CAST(meta);
 		}
 		*metap = meta;
 	}
-
-	return ret;
-
-out_unmap:
-	if (bio)
-		blk_rq_unmap_user(bio);
-out:
-	blk_mq_free_request(req);
-	return ret;
+	return bio;
 }
 
 static int nvme_submit_user_cmd(struct request_queue *q,
@@ -190,35 +184,38 @@ static int nvme_submit_user_cmd(struct request_queue *q,
 	struct nvme_ctrl *ctrl;
 	struct request *req;
 	void *meta = NULL;
-	struct bio *bio;
+	struct bio *bio = NULL;
+	blk_opf_t opf = nvme_user_request_opf(cmd, 0);
 	u32 effects;
 	int ret;
 
-	req = nvme_alloc_user_request(q, cmd, 0, 0);
-	if (IS_ERR(req))
-		return PTR_ERR(req);
-
-	req->timeout = timeout;
 	if (ubuffer && bufflen) {
-		ret = nvme_map_user_request(req, ubuffer, bufflen, meta_buffer,
+		bio = nvme_map_user_request(q, opf, ubuffer, bufflen, meta_buffer,
 				meta_len, meta_seed, &meta, NULL, vec);
-		if (ret)
-			return ret;
+		if (IS_ERR(bio))
+			return PTR_ERR(bio);
 	}
 
-	bio = req->bio;
+	req = nvme_alloc_user_request(q, cmd, meta ? REQ_INTEGRITY : 0, 0);
+	if (IS_ERR(req)) {
+		blk_rq_unmap_user(bio);
+		return PTR_ERR(req);
+	}
+	blk_rq_attach_bios(req, bio);
+	req->timeout = timeout;
 	ctrl = nvme_req(req)->ctrl;
 
 	ret = nvme_execute_passthru_rq(req, &effects);
 
 	if (result)
 		*result = le64_to_cpu(nvme_req(req)->result.u64);
-	if (meta)
-		ret = nvme_finish_user_metadata(req, meta_buffer, meta,
-						meta_len, ret);
-	if (bio)
-		blk_rq_unmap_user(bio);
+
 	blk_mq_free_request(req);
+
+	if (meta)
+		ret = nvme_finish_user_metadata(bio, meta_buffer, meta,
+						meta_len, ret);
+	blk_rq_unmap_user(bio);
 
 	if (effects)
 		nvme_passthru_end(ctrl, effects, cmd, ret);
@@ -438,6 +435,7 @@ static void nvme_uring_task_meta_cb(struct io_uring_cmd *ioucmd)
 {
 	struct nvme_uring_cmd_pdu *pdu = nvme_uring_cmd_pdu(ioucmd);
 	struct request *req = pdu->req;
+	struct bio *bio = req->bio;
 	int status;
 	u64 result;
 
@@ -448,12 +446,12 @@ static void nvme_uring_task_meta_cb(struct io_uring_cmd *ioucmd)
 
 	result = le64_to_cpu(nvme_req(req)->result.u64);
 
-	if (pdu->meta_len)
-		status = nvme_finish_user_metadata(req, pdu->u.meta_buffer,
-					pdu->u.meta, pdu->meta_len, status);
-	if (req->bio)
-		blk_rq_unmap_user(req->bio);
 	blk_mq_free_request(req);
+
+	if (pdu->meta_len)
+		status = nvme_finish_user_metadata(bio, pdu->u.meta_buffer,
+					pdu->u.meta, pdu->meta_len, status);
+	blk_rq_unmap_user(bio);
 
 	io_uring_cmd_done(ioucmd, status, result);
 }
@@ -462,9 +460,7 @@ static void nvme_uring_task_cb(struct io_uring_cmd *ioucmd)
 {
 	struct nvme_uring_cmd_pdu *pdu = nvme_uring_cmd_pdu(ioucmd);
 
-	if (pdu->bio)
-		blk_rq_unmap_user(pdu->bio);
-
+	blk_rq_unmap_user(pdu->bio);
 	io_uring_cmd_done(ioucmd, pdu->nvme_status, pdu->u.result);
 }
 
@@ -530,11 +526,12 @@ static int nvme_uring_cmd_io(struct nvme_ctrl *ctrl, struct nvme_ns *ns,
 	struct request_queue *q = ns ? ns->queue : ctrl->admin_q;
 	struct nvme_uring_data d;
 	struct nvme_command c;
+	struct bio *bio = NULL;
 	struct request *req;
 	blk_opf_t rq_flags = 0;
 	blk_mq_req_flags_t blk_flags = 0;
+	blk_opf_t opf;
 	void *meta = NULL;
-	int ret;
 
 	c.common.opcode = READ_ONCE(cmd->opcode);
 	c.common.flags = READ_ONCE(cmd->flags);
@@ -574,25 +571,32 @@ static int nvme_uring_cmd_io(struct nvme_ctrl *ctrl, struct nvme_ns *ns,
 	if ((issue_flags & IO_URING_F_IOPOLL) && (d.addr && d.data_len))
 		rq_flags |= REQ_POLLED;
 
-	req = nvme_alloc_user_request(q, &c, rq_flags, blk_flags);
-	if (IS_ERR(req))
-		return PTR_ERR(req);
-	req->timeout = d.timeout_ms ? msecs_to_jiffies(d.timeout_ms) : 0;
+	opf = nvme_user_request_opf(&c, rq_flags);
 
 	if (d.addr && d.data_len) {
-		ret = nvme_map_user_request(req, d.addr,
+		bio = nvme_map_user_request(q, opf, d.addr,
 			d.data_len, nvme_to_user_ptr(d.metadata),
 			d.metadata_len, 0, &meta, ioucmd, vec);
-		if (ret)
-			return ret;
+		if (IS_ERR(bio))
+			return PTR_ERR(bio);
+		if (meta)
+			rq_flags |= REQ_INTEGRITY;
 	}
+
+	req = nvme_alloc_user_request(q, &c, rq_flags, blk_flags);
+	if (IS_ERR(req)) {
+		blk_rq_unmap_user(bio);
+		return PTR_ERR(req);
+	}
+	blk_rq_attach_bios(req, bio);
+	req->timeout = d.timeout_ms ? msecs_to_jiffies(d.timeout_ms) : 0;
 
 	if (rq_flags & REQ_POLLED) {
 		WRITE_ONCE(ioucmd->cookie, req->bio);
-		req->bio->bi_opf |= REQ_POLLED;
+		bio->bi_opf |= REQ_POLLED;
 	}
 	/* to free bio on completion, as req->bio will be null at that time */
-	pdu->bio = req->bio;
+	pdu->bio = bio;
 	pdu->meta_len = d.metadata_len;
 	req->end_io_data = ioucmd;
 	if (pdu->meta_len) {
