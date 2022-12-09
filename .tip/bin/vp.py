@@ -13,7 +13,6 @@ vp.py - Patch verifier and massager tool
 #
 # - a8: switch to logging module maybe:
 #   https://docs.python.org/3/howto/logging.html#logging-basic-tutorial
-#
 
 import re
 import sys
@@ -50,6 +49,8 @@ git_repo = None
 
 ### generic helpers
 
+cdb = "Co-developed-by"
+
 def __func__():
     return inspect.stack()[2][3]
 
@@ -63,10 +64,10 @@ def err(s):
 
 def warn_on(cond, s):
     if cond:
-        print(f"{ __func__() }: WARNING: {s}")
+        sys.stderr.write(f"{ __func__() }: WARNING: {s}\n")
 
 def warn(s):
-    print(f"{ __func__() }: WARNING: {s}")
+    sys.stderr.write(f"{ __func__() }: WARNING: {s}\n")
 
 def __verbose_helper(s, v, v_lvl):
     if v < v_lvl:
@@ -191,8 +192,8 @@ dc = None
 # my words
 dc_words = [ "3rd", "accessor", "ACPI", "AER", "allocator", "AMD", "AMD64",
          # that's some stupid dictionary
-         "amongst", "AMX", "APEI", "arm64", "ASID", "asm",
-         "binutils", "bitmask", "bitfield", "bool", "breakpoint", "brk", "BTF", "btree",
+         "amongst", "AMX", "APEI", "APIC", "arm64", "ASID", "asm",
+         "binutils", "bool", "breakpoint", "brk", "BTF", "btree",
          "C1E", "cacheline", "callee", "CET", "CLAC", "clocksource", "CMCI", "cmdline", "CMOV", "CMPXCHG",
          "Coccinelle", "codename", "config", "CPER", "CPPC", "CPUID", "CRIU", "Cyrix",
          "DCT", "debugfs", "devicetree",
@@ -200,24 +201,25 @@ dc_words = [ "3rd", "accessor", "ACPI", "AER", "allocator", "AMD", "AMD64",
          "e820", "EAX", "EBDA", "ECC", "EDAC", "EHCI", "enablement",
          "ENDBR", "ENQCMD", "EPT", "ERMS", "extern", "filesystem", 
          "fixup", "gcc", "GCM", "GDT", "GHES", "goto", "GPR", "GSBASE", "GUID", "HEST", "hotplug", "hugepage", "Hygon",
-         "hypercall", "HyperV", "HV", "hwpoison", "i915", "I/O", "IBPB", "IBS", "IMA", "init", "inlined",
+         "HyperV", "HV", "hwpoison", "i915", "I/O", "IBPB", "IBS", "IMA", "init", "inlined",
          "INT3", "IPI", "IRET", "IOMMU", "IRQ",
          "kallsyms", "KASAN", "Kbuild", "Kconfig", "kdump", "kexec", "kmemleak", "kobject", "kPTI", "KVM",
          "LFENCE", "libc", "linux", "livepatch", "LSB", "lvalue", "LVT",
          "maintainership", "Makefile",
-         "MCE", "MDS", "memfd", "mmap", "MMIO", "MMU", "modpost", "ModRM", "MTRR",
+         "MCE", "MDS", "memfd", "mitigations", "mmap", "MMIO", "MMU", "modpost", "ModRM", 
          "NIST", "NOHZ", "NOP", "NX",
-         "objtool", "OEM", "ok", "oneliner", "ORL", "OVMF", "pahole", "passthrough", "pdf", "percpu",
+         "objtool", "OEM", "ok", "oneliner", "ORL", "OVMF", "pahole", "paravisor",
+         "passthrough", "pdf", "percpu",
          "perf", "PKRU", "PPIN",
          "preemptible",
          "prepend", # derived from append, not in the dictionaries
-         "printk", "PTE", "pthread",
+         "prefetch", "printk", "pthread",
          "PV", "PVALIDATE", "QEMU", "QOS",
          "RAS", "refcount", "resctrl", "repurposing", "RCU", "RDT", "RDTSC", "RET",
          "retpoline", "rFLAGS", "RMPUPDATE", "RNG", "RSB", "RTM", "runtime", "Ryzen",
-         "s390", "scalable", "SDM", "selftest", "SETcc",
-         "SGX", "sideband", "sigreturn", "Skylake", "SLS", "Smatch", "SMN", "SNP", "SoC", "SPDX", "SRAR", "SRBDS",
-         "SSP", "STAC", "STLF", "stringify", "struct", "SWAPGS", "swiotlb",
+         "s390", "scalable", "selftest", "SETcc",
+         "SGX", "SHSTK", "sideband", "sigreturn", "Skylake", "SLS", "Smatch", "SMN", "SoC", "SPDX", "SRAR", "SRBDS",
+         "STAC", "STLF", "stringify", "struct", "SWAPGS", "swiotlb",
          "symtab", "Synopsys", "SYSENTER", "sysfs", "TAA", "TCC", "TDCALL", "TDGETVEINFO",
          "TDVMCALL", "tl;dr", "TLB", "tmpfs", "TODO",
          "TPM", "tracepoint", "TSC", "TZCNT", "UC", "uarch", "udev", "uncore",
@@ -229,10 +231,10 @@ dc_words = [ "3rd", "accessor", "ACPI", "AER", "allocator", "AMD", "AMD64",
 dc_non_words = [ "E820", "X86" ]
 
 # prominent kernel vars, etc which get mentioned often in commit messages and comments
-known_vars = [ '__BOOT_DS', 'clearcpuid', 'cpumask', 'earlyprintk',
+known_vars = [ 'alignof', '__BOOT_DS', 'bzImage', 'clearcpuid', 'cpumask', 'earlyprintk',
            'fpstate', 'idtentry', 'kobj_type',
-           'kptr_restrict', 'libvirt', 'mmap', 'noinstr', 'pt_regs',
-           'ptr', 'pvops', 'set_lvt_off', 'setup_data', 'shstk',
+           'kptr_restrict', 'libvirt', 'mmap', 'noinstr', 'offsetof', 'pt_regs',
+           'ptr', 'pvops', 'readelf', 'realmode', 'set_lvt_off', 'setup_data', 'shstk',
            'sme_me_mask', 'sysctl_perf_event_paranoid', 'threshold_banks', 'vfio', 'virtio_gpu',
            'vmlinux', 'xfeatures' ]
 
@@ -242,49 +244,49 @@ regexes_pats = [ r'^(32|64)-?bit$',
             r'^all(mod|yes)config$',
             r'^AP[IMU]$', r'^[kK]?ASLR$',
             r'^AVX(512)?(-FP16)?$',
-            r'BIOS(e[sn])?', r'boot(loader|up)', r'boot_params([\.\w_]+)?$', r'BS[FPS]$',
-            r'^B[HT]B$',
-            r'^C[1-6]$', r'^C[BS]M$', r'^CPU(\d+|s)?$', r'^cpuinfo(_x86)?$', r'^CR[1-4]$',
-            r'default_(attrs|groups)', r'^DDR([1-5])?$',
+            r'BIOS(e[sn])?', r'^bit(field|mask)$', r'boot(able|loader|up)', r'boot_params([\.\w_]+)?$',
+            r'BS[FPS]$', r'^B[HT]B$',
+            r'^C[1-6]$', r'^C[BS]M$', r'^CPU(\d+|s)?$', r'^cpuinfo(_x86)?$', r'^CR[0-4]$',
+            r'^(en|de)crypt(ed|s)$', r'default_(attrs|groups)', r'^DDR([1-5])?$',
             r'^S?DRAM$',
             r'^[Ee].g.$', r'^[eE]?IBRS$', r'^E?VEX$',
             r'^F[PR]U$', r'^[pf]trace$',
             r'^GHC(B|I)$',
-            r'^HL[ET]$', r'^i38[67]$',
+            r'^hypercalls?$', r'^HL[ET]$', r'^i38[67]$',
             r'^Icelake(-D)?$', r'I[BDS]T', r'init(ializer|rd|ramfs)?',
             r'^(in|off)lining$',
             r'(?i)^jmp$', r'^(k[cm]|vm)alloc$',
             r'^[ku]probes?$', r'^L[0-3]$', r'^LL(C|VM)$',
             r'S?MCA$', r'^[Mm]em(block|cpy|move|remap|set|type)$',
             r'^microarchitectur(al|e)$', r'^mispredict(ed)?$',
-            r'MOV([SB]|DIR64B)?', r'^MSRs?$', r'^[NS]MI$',
+            r'MOV([SB]|DIR64B)?', r'^MSRs?$', r'^MTRRs?$', r'^[NS]MI$',
             r'^param(s)?$',
             r'^([Pp]ara)?virt(ualiz(ed|ing|ation))?$',
             # embedded modifier which goes at the beginning of the regex
-            r'(?i)^pasid$', r'^PCIe?$', r'PS[CP]', r'^P[MU]D$',
-            r'RD(MSR|RAND|SEED)$', r'^RMP(ADJUST)?$',
+            r'(?i)^pasid$', r'^PCIe?$', r'^P(TE|MD)s?$', r'PS[CP]', r'^P[MU]D$',
+            r'RD(MSR|RAND|SEED)$', r'^relocs?$', r'^RMP(ADJUST)?$',
+            r'^S[DM]M$',
             r'sev_(features|status)', r'^SEV(-(ES|SNP))?$', r'(?i)^SHA(1|256|512|384)$',
             r'^SH[LR]$', r'^SIG(BUS|SEGV)$',
-            r'^SM[ET]$',
+            r'^SM[ET]$', r'^S[MNS]P$',
             r'^SM[AE]P$', r'^[Ss]pectre(_v2)*$', r'^steppings?$', r'^STI(BP)?$',
             r'^str(lcat|[lns]cpy|tab)$', r'^SV[AM]$',
             r'T[DS]X', r'^u(16|32|64)$',
             r'^U?EFI$', r'^UM[CL]$', r'^unmap(ping)?$',
             r'^un(cache(e?able|d)|correctable|initialized|trusted)$',
-            r'^v?syscall$', r'^VMC[BS]$', r'^VMG?E(xit|XIT)$', r'^VM[MX]?$',
+            r'^v?syscall$', r'^VMs?$', r'^VMC[BS]$', r'^VMG?E(xit|XIT)$', r'^VM[MX]?$',
             r'^VM(CALL|ENTER|LAUNCH|RESUME)$', r'^VMPCKs?$',
             r'^VMPL([0-3])?$', r'^[dq]words?$', r'^WRU?SS$',
-            r'^x86(-(32|64))?$', r'^(Xen(PV)?|XENPV)$', r'^XSAVE[CS]?$' ]
+            r'^x86(-(32|64))?$', r'^(Xen(PV)?|XENPV)$', r'^XSAVE[CS]?$', r'^[Zz]en[1-4]$' ]
 
 def load_spellchecker():
-    global dc, regexes, regexes_pats, rex_abs_fnames, rex_amd_fam, rex_asm_dir, rex_brackets, \
-rex_c_keywords, rex_c_macro, rex_comment, rex_comment_end, \
+    global dc, regexes, regexes_pats, rex_abs_fnames, rex_amd_fam, rex_array_elem, rex_asm_dir, \
+        rex_brackets, rex_c_keywords, rex_c_macro, rex_comment, rex_comment_end, \
 rex_commit_ref, rex_constant, rex_decimal, rex_errval, rex_fnames, rex_gpr, rex_hyphenated, \
 rex_kcmdline, rex_kdoc_arg, rex_kdoc_cmt, rex_misc_num, rex_non_alpha, \
-rex_opts, rex_paths, rex_reg_field, rex_regs, rex_sections, rex_sent_end, rex_sha1, \
+rex_opts, rex_paths, rex_reg_field, rex_regs, rex_sections, rex_sha1, \
 rex_struct_mem, rex_units, rex_url, rex_version, rex_word_bla, \
 rex_word_split, rex_x86_traps
-
 
     dc = enchant.Dict("en_US")
 
@@ -298,6 +300,7 @@ rex_word_split, rex_x86_traps
     # Use /usr/share/doc/pythonX.X/examples/demo/redemo.py for checking
     rex_asm_dir     = re.compile(r'^\.(align|org)$')
     rex_amd_fam     = re.compile(r'^[Ff]?1[0-9a-f]h$')
+    rex_array_elem  = re.compile(r'\w+\[[0-9]+(:[0-9]+)?\]\W?$')
     rex_brackets    = re.compile(r'^.*[()\[\]]+.*$')
     rex_c_keywords  = re.compile(r'#(ifdef|include)')
     rex_c_macro     = re.compile(r'^[A-Z0-9_]+$')
@@ -323,7 +326,7 @@ rex_word_split, rex_x86_traps
                                      re.VERBOSE)
 
     # potential word and / chars ending with a filename
-    rex_fnames      = re.compile(r'[\w_/-]?[\w_-]+\.(?:c|h|S|config|rst)')
+    rex_fnames      = re.compile(r'\W[A-Za-z0-9_-]+\.(?:c|h|S|config|rst)\W')
 
     rex_gpr         = re.compile(r"""([re]?[abcd]x|     # the first 4
                                        r([89]|1[0-5])|  # the extended ones
@@ -345,14 +348,8 @@ rex_word_split, rex_x86_traps
     rex_reg_field   = re.compile(r'(\w+)?\[\d+(:\d+)?\]', re.I)
     # other x86 registers
     rex_regs        = re.compile(r'^%?[cdfg]s$', re.I)
-    rex_sections    = re.compile(r'\.(altinstr_replacement|bss|data|head|noinstr(\.text)?|parainstructions|text)')
-
-    rex_sent_end    = re.compile(r"""\.((\s+)?      # catch all spaces after the end of the sentence
-                                                    # as some formatters add more than one for block
-                                                    # formatting
-                                  ([A-Za-z0-9(]+|$)) # Either another sentence starts here or EOL.
-                                                    # Apparently sentences can start with numbers
-                                                    # or opening brackets too. ;-\
+    rex_sections    = re.compile(r"""\.(altinstr_replacement|bss|data|head|init.text|
+                                  noinstr(\.text)?|parainstructions|text(.hot|unlikely)?)
                                   """, re.VERBOSE)
 
     rex_struct_mem  = re.compile(r'\w+->\w+')
@@ -393,8 +390,8 @@ def spellcheck_func_name(w):
         dbg(f"Skip function name: [{w}]")
         return True
 
-    if w.endswith('[]'):
-        dbg(f"Skip array name: [{w}]")
+    if rex_array_elem.match(w):
+        dbg(f"Skip array element specification: [{w}]")
         return True
 
     # linker range defines, heuristic only
@@ -485,6 +482,9 @@ def spellcheck(s, where, flags):
     global dc
 
     for line in s.splitlines():
+
+        dbg(f"     orig line: [{line}]")
+
         # see if the line contains a commit reference and check it if so
         m = rex_commit_ref.match(line)
         if m:
@@ -506,20 +506,21 @@ def spellcheck(s, where, flags):
         # paths... replace with a single \s because the regex is eating it
         line = rex_paths.sub(' ', line)
 
-        # section names - no need to check those
-        line = rex_sections.sub(' ', line)
-
-        # remove fullstops ending a sentence - not other dots, as in "i.e." for example.
-        line = rex_sent_end.sub(r' \1', line)
-
         # replace "word/word" with "word word" so that the line can be
         # split into words properly
         line = rex_word_split.sub(r'\1 \2', line)
+
+        dbg(f" massaged line: [{line}]")
 
         # '/' to split "word/word" formulations
         words = re.split(r'[\s/]', line)
 
         for i, w in enumerate(words):
+            # match ELF sections before stripping punctuation
+            if rex_sections.match(w):
+                dbg(f"Skip ELF section [{w}]")
+                continue
+
             # remove punctuation, etc
             w = w.strip('`\',*+:;\!|<>"=^')
 
@@ -533,7 +534,8 @@ def spellcheck(s, where, flags):
 
             # remove other punctuation after brackets stripping, ex the '!' in "(uninitialized!)"
             w = w.strip('`\',*+:;\!|<>"=^')
-
+            # strip the . only when trailing, the assumption being it is the end of a sentence
+            w = w.rstrip('.')
             if not w:
                 continue
 
@@ -1174,7 +1176,7 @@ f"""Class patch:
             warn("Patch doesn't have a commit message.\n")
             return
 
-        rex_pers_pronoun = re.compile(r'\W?we\W', re.I)
+        rex_pers_pronoun = re.compile(r'\W(us|we)\W', re.I)
         rex_this_patch   = re.compile(r'(.*this\s+patch.*)', re.I)
 
         for i, l in enumerate(lines):
@@ -1183,7 +1185,7 @@ f"""Class patch:
             if l.startswith("  [ bp:"):
                 continue
 
-            warn_on(rex_pers_pronoun.search(l), f"Commit message has 'we':\n [{l}]\n")
+            warn_on(rex_pers_pronoun.search(l), f"Commit message has personal pronouns:\n [{l}]\n")
             warn_on(rex_this_patch.search(l),   f"Commit message has 'this patch':\n [{l}]\n")
 
             if rex_sha1.search(l):
@@ -1200,42 +1202,64 @@ f"""Class patch:
     def verify_tags(self):
         od = self.od
 
-        rex_remove_email_addr = re.compile(r'(.*)\W\<.*$', re.I)
-        rex_email_addr = re.compile(r'([a-z._]+@[a-z._]+)>?', re.I)
+        # internal method, let's try this travesty.
+        #
+        # Return true if sender has SOBed the patch. False otherwise.
+        def verify_tags_sender(od):
+            rex_remove_email_addr = re.compile(r'(.*)\W\<.*$', re.I)
+            rex_email_addr = re.compile(r'([a-z._]+@[a-z._]+)>?', re.I)
+
+            for tag in od:
+                if not od[tag]:
+                    continue
+
+                if tag == "Signed-off-by":
+                    # Sender name might be in "" due to a middle initial
+                    sender = re.sub(r'"', "", self.sender)
+    
+                    for t in od['Signed-off-by']:
+    
+                        dbg(f"t:{t}, sender: {sender}")
+
+                        if sender == t:
+                            return True
+
+                        # see if the names match, i.e., using different email addresses
+                        sender_name = re.sub(rex_remove_email_addr, r'\1', sender)
+                        sob_name    = re.sub(rex_remove_email_addr, r'\1', t)
+
+                        if sender_name == sob_name:
+                            return True
+
+                        # otherwise, see if the email addresses match
+                        m1 = re.search(rex_email_addr, sender)
+                        m2 = re.search(rex_email_addr, t)
+                        if not (m1 and m2):
+                            continue
+
+                        if m1.group(1) == m2.group(1):
+                            return True
+
+                return False
+                ## eoim: End of Internal Method
+
+            if not verify_tags_sender(od):
+                info(f"Sender [{ sender }] hasn't signed off on the patch!")
+                warn(f"Sender [{ sender }] hasn't signed off on the patch!")
 
         for tag in od:
             if not od[tag]:
                 continue
 
-            if tag == "Signed-off-by":
-                # Sender name might be in "" due to a middle initial
-                sender = re.sub(r'"', "", self.sender)
-
-                for sob in od[tag]:
-                    if sender == sob:
-                        return
-
-                    # see if the names match, i.e., using different email addresses
-                    sender_name = re.sub(rex_remove_email_addr, r'\1', sender)
-                    sob_name    = re.sub(rex_remove_email_addr, r'\1', sob)
-
-                    if sender_name == sob_name:
-                        return
-
-                    # otherwise, see if the email addresses match
-                    m1 = re.search(rex_email_addr, sender)
-                    m2 = re.search(rex_email_addr, sob)
-                    if not (m1 and m2):
-                        continue
-
-                    if m1.group(1) == m2.group(1):
-                        return
-
-                warn(f"Sender { sender } hasn't signed off on the patch!")
-
             # check Fixes: tag
             if tag == 'Fixes':
                 verify_fixes_tags(od[tag], od['Cc'])
+
+            # check Co-developed-by: has a corresponding SOB:
+            if tag == cdb:
+                for c in od[cdb]:
+                    if c not in od['Signed-off-by']:
+                        warn(f"Co-developed-by {c} hasn't signed off on the patch!")
 
 
     def format_tags(self, f):
@@ -1244,9 +1268,9 @@ f"""Class patch:
         """
 
         od = self.od
-        cdb = "Co-developed-by"
 
         for tag in od:
+
             if not od[tag]:
                 continue
 
