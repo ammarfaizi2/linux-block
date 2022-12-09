@@ -1038,6 +1038,15 @@ static inline int blk_rq_map_user_io(struct request *rq, struct rq_map_data *map
 	return 0;
 }
 
+static inline bool blk_unmap_would_copy(struct bio *bio)
+{
+	if (!bio || !bio->bi_private)
+		return false;
+	if (WARN_ON_ONCE(!blk_op_is_passthrough(bio->bi_opf)))
+		return false;
+	return true;
+}
+
 int blk_rq_map_kern(struct request_queue *, struct request *, void *,
 		unsigned int, gfp_t);
 int blk_rq_append_bio(struct request *rq, struct bio *bio);

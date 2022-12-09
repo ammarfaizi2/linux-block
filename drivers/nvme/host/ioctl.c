@@ -474,6 +474,7 @@ static enum rq_end_io_ret nvme_uring_cmd_end_io(struct request *req,
 	struct io_uring_cmd *ioucmd = req->end_io_data;
 	struct nvme_uring_cmd_pdu *pdu = nvme_uring_cmd_pdu(ioucmd);
 	void *cookie = READ_ONCE(ioucmd->cookie);
+	enum rq_end_io_ret res = RQ_END_IO_FREE;
 
 	req->bio = pdu->bio;
 	if (nvme_req(req)->flags & NVME_REQ_CANCELLED)
@@ -486,12 +487,17 @@ static enum rq_end_io_ret nvme_uring_cmd_end_io(struct request *req,
 	 * For iopoll, complete it directly.
 	 * Otherwise, move the completion to task work.
 	 */
-	if (cookie != NULL && blk_rq_is_poll(req))
+	if (cookie != NULL && blk_rq_is_poll(req)) {
+		if (blk_unmap_would_copy(req->bio)) {
+			/* need to release request first */
+			blk_mq_free_request(req);
+			res = RQ_END_IO_NONE;
+		}
 		nvme_uring_task_cb(ioucmd);
-	else
+	} else {
 		io_uring_cmd_complete_in_task(ioucmd, nvme_uring_task_cb);
-
-	return RQ_END_IO_FREE;
+	}
+	return res;
 }
 
 static enum rq_end_io_ret nvme_uring_cmd_end_io_meta(struct request *req,
