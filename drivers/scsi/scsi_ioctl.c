@@ -496,7 +496,9 @@ static int sg_scsi_ioctl(struct request_queue *q, fmode_t mode,
 	int err;
 	unsigned int in_len, out_len, bytes, opcode, cmdlen;
 	struct scsi_cmnd *scmd;
-	char *buffer = NULL;
+	unsigned char sense[SCSI_SENSE_BUFFERSIZE];
+	unsigned char cmnd[sizeof(scmd->cmnd)];
+	char *buffer = NULL, *p;
 
 	if (!sic)
 		return -EINVAL;
@@ -513,12 +515,27 @@ static int sg_scsi_ioctl(struct request_queue *q, fmode_t mode,
 	if (get_user(opcode, sic->data))
 		return -EFAULT;
 
+	/*
+	 * get command and data to send to device, if any
+	 */
+	cmdlen = COMMAND_SIZE(opcode);
+	cmnd[0] = opcode;
+	if (copy_from_user(cmnd + 1, sic->data + 1, cmdlen - 1))
+		return -EFAULT;
+
+	if (!scsi_cmd_allowed(cmnd, mode))
+		return -EPERM;
+
 	bytes = max(in_len, out_len);
 	if (bytes) {
 		buffer = kzalloc(bytes, GFP_NOIO | GFP_USER | __GFP_NOWARN);
 		if (!buffer)
 			return -ENOMEM;
 
+		if (in_len && copy_from_user(buffer, sic->data + cmdlen, in_len)) {
+			kfree(buffer);
+			return -EFAULT;
+		}
 	}
 
 	rq = scsi_alloc_request(q, in_len ? REQ_OP_DRV_OUT : REQ_OP_DRV_IN, 0);
@@ -528,22 +545,8 @@ static int sg_scsi_ioctl(struct request_queue *q, fmode_t mode,
 	}
 	scmd = blk_mq_rq_to_pdu(rq);
 
-	cmdlen = COMMAND_SIZE(opcode);
-
-	/*
-	 * get command and data to send to device, if any
-	 */
-	err = -EFAULT;
 	scmd->cmd_len = cmdlen;
-	if (copy_from_user(scmd->cmnd, sic->data, cmdlen))
-		goto error;
-
-	if (in_len && copy_from_user(buffer, sic->data + cmdlen, in_len))
-		goto error;
-
-	err = -EPERM;
-	if (!scsi_cmd_allowed(scmd->cmnd, mode))
-		goto error;
+	memcpy(scmd->cmnd, cmnd, cmdlen);
 
 	/* default.  possible overridden later */
 	scmd->allowed = 5;
@@ -574,27 +577,26 @@ static int sg_scsi_ioctl(struct request_queue *q, fmode_t mode,
 
 	if (bytes) {
 		err = blk_rq_map_kern(q, rq, buffer, bytes, GFP_NOIO);
-		if (err)
-			goto error;
+		if (err) {
+			blk_mq_free_request(rq);
+			goto error_free_buffer;
+		}
 	}
 
 	blk_execute_rq(rq, false);
 
+	p = buffer;
 	err = scmd->result & 0xff;	/* only 8 bit SCSI status */
-	if (err) {
-		if (scmd->sense_len && scmd->sense_buffer) {
-			/* limit sense len for backward compatibility */
-			if (copy_to_user(sic->data, scmd->sense_buffer,
-					 min(scmd->sense_len, 16U)))
-				err = -EFAULT;
-		}
-	} else {
-		if (copy_to_user(sic->data, buffer, out_len))
-			err = -EFAULT;
+	if (err && scmd->sense_len && scmd->sense_buffer) {
+		/* limit sense len for backward compatibility */
+		p = sense;
+		out_len = min(scmd->sense_len, 16U);
+		memcpy(p, scmd->sense_buffer, out_len);
 	}
-
-error:
 	blk_mq_free_request(rq);
+
+	if (copy_to_user(sic->data, p, out_len))
+		err = -EFAULT;
 
 error_free_buffer:
 	kfree(buffer);
