@@ -273,9 +273,6 @@ static int bio_map_user_iov(struct request *rq, struct iov_iter *iter,
 	int ret;
 	int j;
 
-	if (!iov_iter_count(iter))
-		return -EINVAL;
-
 	bio = blk_rq_map_bio_alloc(rq->cmd_flags, nr_vecs, gfp_mask);
 	if (bio == NULL)
 		return -ENOMEM;
@@ -304,27 +301,23 @@ static int bio_map_user_iov(struct request *rq, struct iov_iter *iter,
 
 		npages = DIV_ROUND_UP(offs + bytes, PAGE_SIZE);
 
-		if (unlikely(offs & queue_dma_alignment(rq->q)))
-			j = 0;
-		else {
-			for (j = 0; j < npages; j++) {
-				struct page *page = pages[j];
-				unsigned int n = PAGE_SIZE - offs;
-				bool same_page = false;
+		for (j = 0; j < npages; j++) {
+			struct page *page = pages[j];
+			unsigned int n = PAGE_SIZE - offs;
+			bool same_page = false;
 
-				if (n > bytes)
-					n = bytes;
+			if (n > bytes)
+				n = bytes;
 
-				if (!bio_add_hw_page(rq->q, bio, page, n, offs,
-						     max_sectors, &same_page)) {
-					if (same_page)
-						put_page(page);
-					break;
-				}
-
-				bytes -= n;
-				offs = 0;
+			if (!bio_add_hw_page(rq->q, bio, page, n, offs,
+					     max_sectors, &same_page)) {
+				if (same_page)
+					put_page(page);
+				break;
 			}
+
+			bytes -= n;
+			offs = 0;
 		}
 		/*
 		 * release the pages we didn't map into the bio, if any
@@ -561,12 +554,10 @@ static int blk_rq_map_user_bvec(struct request *rq, const struct iov_iter *iter)
 	size_t nr_segs = iter->nr_segs;
 	struct bio_vec *bvecs, *bvprvp = NULL;
 	const struct queue_limits *lim = &q->limits;
-	unsigned int nsegs = 0, bytes = 0;
+	unsigned int bytes = 0;
 	struct bio *bio;
 	size_t i;
 
-	if (!nr_iter || (nr_iter >> SECTOR_SHIFT) > queue_max_hw_sectors(q))
-		return -EINVAL;
 	if (nr_segs > queue_max_segments(q))
 		return -EINVAL;
 
@@ -592,14 +583,11 @@ static int blk_rq_map_user_bvec(struct request *rq, const struct iov_iter *iter)
 			return -EREMOTEIO;
 		}
 		/* check full condition */
-		if (nsegs >= nr_segs || bytes > UINT_MAX - bv->bv_len)
-			goto put_bio;
 		if (bytes + bv->bv_len > nr_iter)
 			goto put_bio;
 		if (bv->bv_offset + bv->bv_len > PAGE_SIZE)
 			goto put_bio;
 
-		nsegs++;
 		bytes += bv->bv_len;
 		bvprvp = bv;
 	}
@@ -633,6 +621,13 @@ int blk_rq_map_user_iov(struct request_queue *q, struct request *rq,
 	struct bio *bio = NULL;
 	struct iov_iter i;
 	int ret = -EINVAL;
+
+	if (!iov_iter_count(iter))
+		return -EINVAL;
+	if (iov_iter_count(iter) > queue_max_hw_sectors(q) << 9)
+		return -EINVAL;
+	if (WARN_ON_ONCE(iov_iter_count(iter) > UINT_MAX))
+		return -EINVAL;
 
 	if (map_data)
 		copy = true;
