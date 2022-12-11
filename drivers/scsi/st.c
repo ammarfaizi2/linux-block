@@ -531,8 +531,8 @@ static enum rq_end_io_ret st_scsi_execute_end(struct request *req,
 	if (SRpnt->waiting)
 		complete(SRpnt->waiting);
 
-	blk_rq_unmap_user(tmp);
 	blk_mq_free_request(req);
+	blk_rq_unmap_user(tmp);
 	return RQ_END_IO_NONE;
 }
 
@@ -542,28 +542,29 @@ static int st_scsi_execute(struct st_request *SRpnt, const unsigned char *cmd,
 {
 	struct request *req;
 	struct rq_map_data *mdata = &SRpnt->stp->buffer->map_data;
-	int err = 0;
+	struct request_queue *q = SRpnt->stp->device->request_queue;
 	struct scsi_tape *STp = SRpnt->stp;
 	struct scsi_cmnd *scmd;
-
-	req = scsi_alloc_request(SRpnt->stp->device->request_queue,
-			data_direction == DMA_TO_DEVICE ?
-			REQ_OP_DRV_OUT : REQ_OP_DRV_IN, 0);
-	if (IS_ERR(req))
-		return PTR_ERR(req);
-	scmd = blk_mq_rq_to_pdu(req);
-	req->rq_flags |= RQF_QUIET;
+	struct bio *bio = NULL;
+	blk_opf_t opf = data_direction == DMA_TO_DEVICE ?
+			REQ_OP_DRV_OUT : REQ_OP_DRV_IN;
 
 	mdata->null_mapped = 1;
 
 	if (bufflen) {
-		err = blk_rq_map_user(req->q, req, mdata, NULL, bufflen,
-				      GFP_KERNEL);
-		if (err) {
-			blk_mq_free_request(req);
-			return err;
-		}
+		bio = blk_map_user(q, opf, mdata, NULL, bufflen);
+		if (IS_ERR(bio))
+			return PTR_ERR(bio);
 	}
+
+	req = scsi_alloc_request(q, opf, 0);
+	if (IS_ERR(req)) {
+		blk_rq_unmap_user(bio);
+		return PTR_ERR(req);
+	}
+	blk_rq_attach_bios(req, bio);
+	scmd = blk_mq_rq_to_pdu(req);
+	req->rq_flags |= RQF_QUIET;
 
 	atomic64_inc(&STp->stats->in_flight);
 	if (cmd[0] == WRITE_6) {
