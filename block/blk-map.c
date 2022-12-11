@@ -126,7 +126,8 @@ static int bio_uncopy_user(struct bio *bio)
 	return ret;
 }
 
-static int bio_copy_user_iov(struct request *rq, struct rq_map_data *map_data,
+static struct bio *bio_copy_user_iov(struct request_queue *q,
+		blk_opf_t opf, struct rq_map_data *map_data,
 		struct iov_iter *iter, gfp_t gfp_mask)
 {
 	struct bio_map_data *bmd;
@@ -139,7 +140,7 @@ static int bio_copy_user_iov(struct request *rq, struct rq_map_data *map_data,
 
 	bmd = bio_alloc_map_data(iter, gfp_mask);
 	if (!bmd)
-		return -ENOMEM;
+		return ERR_PTR(-ENOMEM);
 
 	/*
 	 * We need to do a deep copy of the iov_iter including the iovecs.
@@ -155,7 +156,7 @@ static int bio_copy_user_iov(struct request *rq, struct rq_map_data *map_data,
 	bio = bio_kmalloc(nr_pages, gfp_mask);
 	if (!bio)
 		goto out_bmd;
-	bio_init(bio, NULL, bio->bi_inline_vecs, nr_pages, req_op(rq));
+	bio_init(bio, NULL, bio->bi_inline_vecs, nr_pages, opf & REQ_OP_MASK);
 
 	if (map_data) {
 		nr_pages = 1U << map_data->page_order;
@@ -187,7 +188,7 @@ static int bio_copy_user_iov(struct request *rq, struct rq_map_data *map_data,
 			}
 		}
 
-		if (bio_add_pc_page(rq->q, bio, page, bytes, offset) < bytes) {
+		if (bio_add_pc_page(q, bio, page, bytes, offset) < bytes) {
 			if (!map_data)
 				__free_page(page);
 			break;
@@ -216,11 +217,7 @@ static int bio_copy_user_iov(struct request *rq, struct rq_map_data *map_data,
 	}
 
 	bio->bi_private = bmd;
-
-	ret = blk_rq_append_bio(rq, bio);
-	if (ret)
-		goto cleanup;
-	return 0;
+	return bio;
 cleanup:
 	if (!map_data)
 		bio_free_pages(bio);
@@ -228,7 +225,7 @@ cleanup:
 	kfree(bio);
 out_bmd:
 	kfree(bmd);
-	return ret;
+	return ERR_PTR(ret);
 }
 
 static void blk_mq_map_bio_put(struct bio *bio)
@@ -263,21 +260,21 @@ static struct bio *blk_rq_map_bio_alloc(blk_opf_t opf,
 	return bio;
 }
 
-static int bio_map_user_iov(struct request *rq, struct iov_iter *iter,
-		gfp_t gfp_mask)
+static struct bio *bio_map_user_iov(struct request_queue *q, blk_opf_t opf,
+		struct iov_iter *iter, gfp_t gfp_mask)
 {
-	unsigned int max_sectors = queue_max_hw_sectors(rq->q);
+	unsigned int max_sectors = queue_max_hw_sectors(q);
 	unsigned int nr_vecs = iov_iter_npages(iter, BIO_MAX_VECS);
 	unsigned int gup_flags = 0;
 	struct bio *bio;
 	int ret;
 	int j;
 
-	bio = blk_rq_map_bio_alloc(rq->cmd_flags, nr_vecs, gfp_mask);
+	bio = blk_rq_map_bio_alloc(opf, nr_vecs, gfp_mask);
 	if (bio == NULL)
-		return -ENOMEM;
+		return ERR_PTR(-ENOMEM);
 
-	if (blk_queue_pci_p2pdma(rq->q))
+	if (blk_queue_pci_p2pdma(q))
 		gup_flags |= FOLL_PCI_P2PDMA;
 
 	while (iov_iter_count(iter)) {
@@ -309,7 +306,7 @@ static int bio_map_user_iov(struct request *rq, struct iov_iter *iter,
 			if (n > bytes)
 				n = bytes;
 
-			if (!bio_add_hw_page(rq->q, bio, page, n, offs,
+			if (!bio_add_hw_page(q, bio, page, n, offs,
 					     max_sectors, &same_page)) {
 				if (same_page)
 					put_page(page);
@@ -332,16 +329,12 @@ static int bio_map_user_iov(struct request *rq, struct iov_iter *iter,
 			break;
 		}
 	}
-
-	ret = blk_rq_append_bio(rq, bio);
-	if (ret)
-		goto out_unmap;
-	return 0;
+	return bio;
 
  out_unmap:
 	bio_release_pages(bio, false);
 	blk_mq_map_bio_put(bio);
-	return ret;
+	return ERR_PTR(ret);
 }
 
 static void bio_invalidate_vmalloc_pages(struct bio *bio)
@@ -655,19 +648,26 @@ int blk_rq_map_user_iov(struct request_queue *q, struct request *rq,
 	i = *iter;
 	do {
 		if (copy)
-			ret = bio_copy_user_iov(rq, map_data, &i, gfp_mask);
+			bio = bio_copy_user_iov(q, rq->cmd_flags,
+						     map_data, &i, gfp_mask);
 		else
-			ret = bio_map_user_iov(rq, &i, gfp_mask);
-		if (ret)
+			bio = bio_map_user_iov(q, rq->cmd_flags, &i,
+						    gfp_mask);
+		if (IS_ERR(bio)) {
+			ret = PTR_ERR(bio);
 			goto unmap_rq;
-		if (!bio)
-			bio = rq->bio;
+		}
+		ret = blk_rq_append_bio(rq, bio);
+		if (ret) {
+			blk_rq_unmap_user(bio);
+			goto unmap_rq;
+		}
 	} while (iov_iter_count(&i));
 
 	return 0;
 
 unmap_rq:
-	blk_rq_unmap_user(bio);
+	blk_rq_unmap_user(rq->bio);
 fail:
 	rq->bio = NULL;
 	return ret;
