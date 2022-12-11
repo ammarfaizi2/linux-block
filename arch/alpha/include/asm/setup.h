@@ -2,8 +2,6 @@
 #ifndef __ALPHA_SETUP_H
 #define __ALPHA_SETUP_H
 
-#include <uapi/asm/setup.h>
-
 /*
  * We leave one page for the initial stack page, and one page for
  * the initial process structure. Also, the console eats 3 MB for
@@ -13,6 +11,8 @@
 #define BOOT_ADDR	0x20000000
 /* Remove when official MILO sources have ELF support: */
 #define BOOT_SIZE	(16*1024)
+
+#define COMMAND_LINE_SIZE	256
 
 #ifdef CONFIG_ALPHA_LEGACY_START_ADDRESS
 #define KERNEL_START_PHYS	0x300000 /* Old bootloaders hardcoded this.  */
