@@ -1172,6 +1172,8 @@ static inline int blk_rq_map_sg(struct request_queue *q, struct request *rq,
 
 	return __blk_rq_map_sg(q, rq, sglist, &last_sg);
 }
+int blk_bios_map_sg(struct request_queue *q, struct bio *bio,
+			struct scatterlist *sglist);
 void blk_dump_rq_flags(struct request *, char *);
 
 #ifdef CONFIG_BLK_DEV_ZONED

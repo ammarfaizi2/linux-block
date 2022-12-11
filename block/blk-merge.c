@@ -547,6 +547,18 @@ static int __blk_bios_map_sg(struct request_queue *q, struct bio *bio,
 	return nsegs;
 }
 
+int blk_bios_map_sg(struct request_queue *q, struct bio *bio,
+			     struct scatterlist *sglist)
+{
+	struct scatterlist *last_sg = NULL;
+	int nsegs = __blk_bios_map_sg(q, bio, sglist, &last_sg);
+
+	if (last_sg)
+		sg_mark_end(last_sg);
+	return nsegs;
+}
+EXPORT_SYMBOL(blk_bios_map_sg);
+
 /*
  * map a request to scatterlist, return number of sg entries setup. Caller
  * must make sure sg can hold rq->nr_phys_segments entries

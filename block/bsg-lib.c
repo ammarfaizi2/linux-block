@@ -30,8 +30,11 @@ static int bsg_transport_sg_io_fn(struct request_queue *q, struct sg_io_v4 *hdr,
 {
 	struct bsg_job *job;
 	struct request *rq;
-	struct bio *bio;
-	void *reply;
+	struct bio *bio = NULL, *bidi_bio = NULL;
+	blk_opf_t opf = hdr->dout_xfer_len ?  REQ_OP_DRV_OUT : REQ_OP_DRV_IN;
+	char sense[SCSI_SENSE_BUFFERSIZE];
+	void *reply, *request;
+	int response_len = 0;
 	int ret;
 
 	if (hdr->protocol != BSG_PROTOCOL_SCSI  ||
@@ -40,10 +43,37 @@ static int bsg_transport_sg_io_fn(struct request_queue *q, struct sg_io_v4 *hdr,
 	if (!capable(CAP_SYS_RAWIO))
 		return -EPERM;
 
-	rq = blk_mq_alloc_request(q, hdr->dout_xfer_len ?
-			     REQ_OP_DRV_OUT : REQ_OP_DRV_IN, 0);
-	if (IS_ERR(rq))
-		return PTR_ERR(rq);
+	request = memdup_user(uptr64(hdr->request), hdr->request_len);
+	if (IS_ERR(request))
+		return PTR_ERR(request);
+
+	if (hdr->dout_xfer_len && hdr->din_xfer_len) {
+		bidi_bio = blk_map_user(q, REQ_OP_DRV_IN, NULL,
+				uptr64(hdr->din_xferp), hdr->din_xfer_len);
+		if (IS_ERR(bidi_bio)) {
+			ret = PTR_ERR(bidi_bio);
+			goto out_free_request;
+		}
+	}
+
+	if (hdr->dout_xfer_len)
+		bio = blk_map_user(q, opf, NULL, uptr64(hdr->dout_xferp),
+				hdr->dout_xfer_len);
+	else if (hdr->din_xfer_len)
+		bio = blk_map_user(q, opf, NULL, uptr64(hdr->din_xferp),
+				hdr->din_xfer_len);
+
+	if (IS_ERR(bio)) {
+		ret = PTR_ERR(bio);
+		goto out_unmap_bidi_bio;
+	}
+
+	rq = blk_mq_alloc_request(q, opf, 0);
+	if (IS_ERR(rq)) {
+		ret = PTR_ERR(rq);
+		goto out_unmap_bio;
+	}
+
 	rq->timeout = timeout;
 
 	job = blk_mq_rq_to_pdu(rq);
@@ -54,44 +84,9 @@ static int bsg_transport_sg_io_fn(struct request_queue *q, struct sg_io_v4 *hdr,
 	job->dd_data = job + 1;
 
 	job->request_len = hdr->request_len;
-	job->request = memdup_user(uptr64(hdr->request), hdr->request_len);
-	if (IS_ERR(job->request)) {
-		ret = PTR_ERR(job->request);
-		goto out_free_rq;
-	}
+	job->request = request;
+	job->bidi_bio = bidi_bio;
 
-	if (hdr->dout_xfer_len && hdr->din_xfer_len) {
-		job->bidi_rq = blk_mq_alloc_request(rq->q, REQ_OP_DRV_IN, 0);
-		if (IS_ERR(job->bidi_rq)) {
-			ret = PTR_ERR(job->bidi_rq);
-			goto out_free_job_request;
-		}
-
-		ret = blk_rq_map_user(rq->q, job->bidi_rq, NULL,
-				uptr64(hdr->din_xferp), hdr->din_xfer_len,
-				GFP_KERNEL);
-		if (ret)
-			goto out_free_bidi_rq;
-
-		job->bidi_bio = job->bidi_rq->bio;
-	} else {
-		job->bidi_rq = NULL;
-		job->bidi_bio = NULL;
-	}
-
-	ret = 0;
-	if (hdr->dout_xfer_len) {
-		ret = blk_rq_map_user(rq->q, rq, NULL, uptr64(hdr->dout_xferp),
-				hdr->dout_xfer_len, GFP_KERNEL);
-	} else if (hdr->din_xfer_len) {
-		ret = blk_rq_map_user(rq->q, rq, NULL, uptr64(hdr->din_xferp),
-				hdr->din_xfer_len, GFP_KERNEL);
-	}
-
-	if (ret)
-		goto out_unmap_bidi_rq;
-
-	bio = rq->bio;
 	blk_execute_rq(rq, !(hdr->flags & BSG_FLAG_Q_AT_TAIL));
 
 	/*
@@ -106,6 +101,7 @@ static int bsg_transport_sg_io_fn(struct request_queue *q, struct sg_io_v4 *hdr,
 		hdr->info |= SG_INFO_CHECK;
 	hdr->response_len = 0;
 
+	ret = 0;
 	if (job->result < 0) {
 		/* we're only returning the result field in the reply */
 		job->reply_len = sizeof(u32);
@@ -113,18 +109,14 @@ static int bsg_transport_sg_io_fn(struct request_queue *q, struct sg_io_v4 *hdr,
 	}
 
 	if (job->reply_len && hdr->response) {
-		int len = min(hdr->max_response_len, job->reply_len);
-
-		if (copy_to_user(uptr64(hdr->response), job->reply, len))
-			ret = -EFAULT;
-		else
-			hdr->response_len = len;
+		response_len = min(hdr->max_response_len, job->reply_len);
+		memcpy(sense, job->reply, response_len);
 	}
 
 	/* we assume all request payload was transferred, residual == 0 */
 	hdr->dout_resid = 0;
 
-	if (job->bidi_rq) {
+	if (bidi_bio) {
 		unsigned int rsp_len = job->reply_payload.payload_len;
 
 		if (WARN_ON(job->reply_payload_rcv_len > rsp_len))
@@ -135,17 +127,20 @@ static int bsg_transport_sg_io_fn(struct request_queue *q, struct sg_io_v4 *hdr,
 		hdr->din_resid = 0;
 	}
 
-	blk_rq_unmap_user(bio);
-out_unmap_bidi_rq:
-	if (job->bidi_rq)
-		blk_rq_unmap_user(job->bidi_bio);
-out_free_bidi_rq:
-	if (job->bidi_rq)
-		blk_mq_free_request(job->bidi_rq);
-out_free_job_request:
-	kfree(job->request);
-out_free_rq:
 	blk_mq_free_request(rq);
+
+	if (response_len) {
+		if (copy_to_user(uptr64(hdr->response), sense, response_len))
+			ret = -EFAULT;
+		else
+			hdr->response_len = response_len;
+	}
+out_unmap_bio:
+	blk_rq_unmap_user(bio);
+out_unmap_bidi_bio:
+	blk_rq_unmap_user(bidi_bio);
+out_free_request:
+	kfree(request);
 	return ret;
 }
 
@@ -209,18 +204,17 @@ static void bsg_complete(struct request *rq)
 	bsg_job_put(job);
 }
 
-static int bsg_map_buffer(struct bsg_buffer *buf, struct request *req)
+static int bsg_map_buffer(struct bsg_buffer *buf, struct request_queue *q,
+			  struct bio *bio, unsigned int nsegs, unsigned int len)
 {
-	size_t sz = (sizeof(struct scatterlist) * req->nr_phys_segments);
-
-	BUG_ON(!req->nr_phys_segments);
+	size_t sz = sizeof(struct scatterlist) * nsegs;
 
 	buf->sg_list = kmalloc(sz, GFP_KERNEL);
 	if (!buf->sg_list)
 		return -ENOMEM;
-	sg_init_table(buf->sg_list, req->nr_phys_segments);
-	buf->sg_cnt = blk_rq_map_sg(req->q, req, buf->sg_list);
-	buf->payload_len = blk_rq_bytes(req);
+	sg_init_table(buf->sg_list, nsegs);
+	buf->sg_cnt = blk_bios_map_sg(q, bio, buf->sg_list);
+	buf->payload_len = len;
 	return 0;
 }
 
@@ -231,18 +225,28 @@ static int bsg_map_buffer(struct bsg_buffer *buf, struct request *req)
  */
 static bool bsg_prepare_job(struct device *dev, struct request *req)
 {
+	struct request_queue *q = req->q;
 	struct bsg_job *job = blk_mq_rq_to_pdu(req);
 	int ret;
 
 	job->timeout = req->timeout;
 
 	if (req->bio) {
-		ret = bsg_map_buffer(&job->request_payload, req);
+		ret = bsg_map_buffer(&job->request_payload, q, req->bio,
+				     req->nr_phys_segments, blk_rq_bytes(req));
 		if (ret)
 			goto failjob_rls_job;
 	}
-	if (job->bidi_rq) {
-		ret = bsg_map_buffer(&job->reply_payload, job->bidi_rq);
+	if (job->bidi_bio) {
+		unsigned int nseg = 0, len = 0;
+		struct bio *bio = job->bidi_bio;
+
+		for_each_bio(bio) {
+			nseg += bio->bi_vcnt;
+			len += bio->bi_iter.bi_size;
+		}
+		ret = bsg_map_buffer(&job->reply_payload, q, job->bidi_bio,
+				     nseg, len);
 		if (ret)
 			goto failjob_rls_rqst_payload;
 	}
