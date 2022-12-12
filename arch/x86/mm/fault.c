@@ -33,6 +33,8 @@
 #include <asm/kvm_para.h>		/* kvm_handle_async_pf		*/
 #include <asm/vdso.h>			/* fixup_vdso_exception()	*/
 #include <asm/irq_stack.h>
+#include <asm/insn.h>			/* struct insn			*/
+#include <asm/insn-eval.h>		/* insn_fetch_from_user(), ...	*/
 
 #define CREATE_TRACE_POINTS
 #include <asm/trace/exceptions.h>
@@ -1454,6 +1456,23 @@ good_area:
 	}
 
 	mmap_read_unlock(mm);
+
+	if (fault & VM_FAULT_SKIP_INSN) {
+		u8 buf[MAX_INSN_SIZE];
+		struct insn insn;
+		int nr_copied;
+
+		nr_copied = insn_fetch_from_user(regs, buf);
+		if (nr_copied <= 0)
+			return;
+
+		if (!insn_decode_from_regs(&insn, regs, buf, nr_copied))
+			return;
+
+		regs->ip += insn.length;
+		return;
+	}
+
 	if (likely(!(fault & VM_FAULT_ERROR)))
 		return;
 
