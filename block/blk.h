@@ -295,13 +295,17 @@ ssize_t part_timeout_store(struct device *, struct device_attribute *,
 static inline bool bio_may_exceed_limits(struct bio *bio,
 					 const struct queue_limits *lim)
 {
-	switch (bio_op(bio)) {
-	case REQ_OP_DISCARD:
-	case REQ_OP_SECURE_ERASE:
-	case REQ_OP_WRITE_ZEROES:
-		return true; /* non-trivial splitting decisions */
-	default:
-		break;
+	enum req_op op = bio_op(bio);
+
+	if (op != REQ_OP_READ && op != REQ_OP_WRITE && op != REQ_OP_FLUSH) {
+		switch (op) {
+		case REQ_OP_DISCARD:
+		case REQ_OP_SECURE_ERASE:
+		case REQ_OP_WRITE_ZEROES:
+			return true; /* non-trivial splitting decisions */
+		default:
+			break;
+		}
 	}
 
 	/*
