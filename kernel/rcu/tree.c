@@ -1314,7 +1314,7 @@ static void rcu_poll_gp_seq_start(unsigned long *snap)
 {
 	struct rcu_node *rnp = rcu_get_root();
 
-	if (rcu_init_invoked())
+	if (rcu_scheduler_active != RCU_SCHEDULER_INACTIVE)
 		raw_lockdep_assert_held_rcu_node(rnp);
 
 	// If RCU was idle, note beginning of GP.
@@ -1330,7 +1330,7 @@ static void rcu_poll_gp_seq_end(unsigned long *snap)
 {
 	struct rcu_node *rnp = rcu_get_root();
 
-	if (rcu_init_invoked())
+	if (rcu_scheduler_active != RCU_SCHEDULER_INACTIVE)
 		raw_lockdep_assert_held_rcu_node(rnp);
 
 	// If the previously noted GP is still in effect, record the
@@ -1353,7 +1353,8 @@ static void rcu_poll_gp_seq_start_unlocked(unsigned long *snap)
 	struct rcu_node *rnp = rcu_get_root();
 
 	if (rcu_init_invoked()) {
-		lockdep_assert_irqs_enabled();
+		if (rcu_scheduler_active != RCU_SCHEDULER_INACTIVE)
+			lockdep_assert_irqs_enabled();
 		raw_spin_lock_irqsave_rcu_node(rnp, flags);
 	}
 	rcu_poll_gp_seq_start(snap);
@@ -1369,7 +1370,8 @@ static void rcu_poll_gp_seq_end_unlocked(unsigned long *snap)
 	struct rcu_node *rnp = rcu_get_root();
 
 	if (rcu_init_invoked()) {
-		lockdep_assert_irqs_enabled();
+		if (rcu_scheduler_active != RCU_SCHEDULER_INACTIVE)
+			lockdep_assert_irqs_enabled();
 		raw_spin_lock_irqsave_rcu_node(rnp, flags);
 	}
 	rcu_poll_gp_seq_end(snap);
