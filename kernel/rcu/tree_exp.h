@@ -1019,14 +1019,14 @@ unsigned long start_poll_synchronize_rcu_expedited(void)
 	s = get_state_synchronize_rcu();
 	rdp = per_cpu_ptr(&rcu_data, raw_smp_processor_id());
 	rnp = rdp->mynode;
-	if (rcu_init_invoked())
+	if (rcu_scheduler_active != RCU_SCHEDULER_INACTIVE)
 		raw_spin_lock_irqsave(&rnp->exp_poll_lock, flags);
 	if (!poll_state_synchronize_rcu(s)) {
 		rnp->exp_seq_poll_rq = s;
-		if (rcu_init_invoked())
+		if (rcu_scheduler_active != RCU_SCHEDULER_INACTIVE)
 			queue_work(rcu_gp_wq, &rnp->exp_poll_wq);
 	}
-	if (rcu_init_invoked())
+	if (rcu_scheduler_active != RCU_SCHEDULER_INACTIVE)
 		raw_spin_unlock_irqrestore(&rnp->exp_poll_lock, flags);
 
 	return s;

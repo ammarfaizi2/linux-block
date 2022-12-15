@@ -151,7 +151,6 @@ static void sync_sched_exp_online_cleanup(int cpu);
 static void check_cb_ovld_locked(struct rcu_data *rdp, struct rcu_node *rnp);
 static bool rcu_rdp_is_offloaded(struct rcu_data *rdp);
 static bool rcu_rdp_cpu_online(struct rcu_data *rdp);
-static bool rcu_init_invoked(void);
 static void rcu_cleanup_dead_rnp(struct rcu_node *rnp_leaf);
 static void rcu_init_new_rnp(struct rcu_node *rnp_leaf);
 
@@ -1314,7 +1313,7 @@ static void rcu_poll_gp_seq_start(unsigned long *snap)
 {
 	struct rcu_node *rnp = rcu_get_root();
 
-	if (rcu_init_invoked())
+	if (rcu_scheduler_active != RCU_SCHEDULER_INACTIVE)
 		raw_lockdep_assert_held_rcu_node(rnp);
 
 	// If RCU was idle, note beginning of GP.
@@ -1330,7 +1329,7 @@ static void rcu_poll_gp_seq_end(unsigned long *snap)
 {
 	struct rcu_node *rnp = rcu_get_root();
 
-	if (rcu_init_invoked())
+	if (rcu_scheduler_active != RCU_SCHEDULER_INACTIVE)
 		raw_lockdep_assert_held_rcu_node(rnp);
 
 	// If the previously noted GP is still in effect, record the
@@ -1352,12 +1351,12 @@ static void rcu_poll_gp_seq_start_unlocked(unsigned long *snap)
 	unsigned long flags;
 	struct rcu_node *rnp = rcu_get_root();
 
-	if (rcu_init_invoked()) {
+	if (rcu_scheduler_active != RCU_SCHEDULER_INACTIVE) {
 		lockdep_assert_irqs_enabled();
 		raw_spin_lock_irqsave_rcu_node(rnp, flags);
 	}
 	rcu_poll_gp_seq_start(snap);
-	if (rcu_init_invoked())
+	if (rcu_scheduler_active != RCU_SCHEDULER_INACTIVE)
 		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 }
 
@@ -1368,12 +1367,12 @@ static void rcu_poll_gp_seq_end_unlocked(unsigned long *snap)
 	unsigned long flags;
 	struct rcu_node *rnp = rcu_get_root();
 
-	if (rcu_init_invoked()) {
+	if (rcu_scheduler_active != RCU_SCHEDULER_INACTIVE) {
 		lockdep_assert_irqs_enabled();
 		raw_spin_lock_irqsave_rcu_node(rnp, flags);
 	}
 	rcu_poll_gp_seq_end(snap);
-	if (rcu_init_invoked())
+	if (rcu_scheduler_active != RCU_SCHEDULER_INACTIVE)
 		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 }
 
@@ -4041,13 +4040,6 @@ bool rcu_lockdep_current_cpu_online(void)
 EXPORT_SYMBOL_GPL(rcu_lockdep_current_cpu_online);
 
 #endif /* #if defined(CONFIG_PROVE_RCU) && defined(CONFIG_HOTPLUG_CPU) */
-
-// Has rcu_init() been invoked?  This is used (for example) to determine
-// whether spinlocks may be acquired safely.
-static bool rcu_init_invoked(void)
-{
-	return !!rcu_state.n_online_cpus;
-}
 
 /*
  * Near the end of the offline process.  Trace the fact that this CPU
