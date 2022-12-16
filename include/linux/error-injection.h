@@ -4,6 +4,7 @@
 
 #include <linux/compiler.h>
 #include <asm-generic/error-injection.h>
+#include <linux/errno.h>
 
 #ifdef CONFIG_FUNCTION_ERROR_INJECTION
 
