@@ -177,7 +177,6 @@ struct rxrpc_sock {
 	struct rxrpc_service	*service;
 	unsigned long		*call_id_backlog; /* Precharged call IDs */
 	struct list_head	sock_calls;	/* List of calls owned by this socket */
-	struct list_head	to_be_accepted;	/* calls awaiting acceptance */
 	struct list_head	recvmsg_q;	/* Calls awaiting recvmsg's attention  */
 	struct list_head	accept_link;	/* Link in service->waiting_sockets */
 	struct hlist_node	ns_link;	/* Link in net->sockets */

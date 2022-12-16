@@ -630,15 +630,6 @@ void rxrpc_release_calls_on_socket(struct rxrpc_sock *rx)
 
 	_enter("%p", rx);
 
-	while (!list_empty(&rx->to_be_accepted)) {
-		call = list_entry(rx->to_be_accepted.next,
-				  struct rxrpc_call, accept_link);
-		list_del(&call->accept_link);
-		rxrpc_propose_abort(call, RX_CALL_DEAD, -ECONNRESET,
-				    rxrpc_abort_call_sock_release_tba);
-		rxrpc_put_call(call, rxrpc_call_put_release_sock_tba);
-	}
-
 	while (!list_empty(&rx->sock_calls)) {
 		call = list_entry(rx->sock_calls.next,
 				  struct rxrpc_call, sock_link);

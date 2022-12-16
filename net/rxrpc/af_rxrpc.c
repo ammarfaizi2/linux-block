@@ -950,7 +950,6 @@ static int rxrpc_create(struct net *net, struct socket *sock, int protocol,
 	rx->calls = RB_ROOT;
 
 	INIT_LIST_HEAD(&rx->sock_calls);
-	INIT_LIST_HEAD(&rx->to_be_accepted);
 	INIT_LIST_HEAD(&rx->recvmsg_q);
 	INIT_LIST_HEAD(&rx->accept_link);
 	spin_lock_init(&rx->recvmsg_lock);
