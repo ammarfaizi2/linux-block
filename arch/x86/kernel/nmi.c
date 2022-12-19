@@ -71,9 +71,11 @@ struct nmi_stats {
 	unsigned int swallow;
 	unsigned long recv_jiffies;
 	unsigned long idt_seq;
+	unsigned long idt_nmi_seq;
 	unsigned long idt_ignored;
 	atomic_long_t idt_calls;
 	unsigned long idt_seq_snap;
+	unsigned long idt_nmi_seq_snap;
 	unsigned long idt_ignored_snap;
 	long idt_calls_snap;
 };
@@ -524,10 +526,15 @@ nmi_restart:
 
 	inc_irq_stat(__nmi_count);
 
-	if (IS_ENABLED(CONFIG_NMI_CHECK_CPU) && ignore_nmis)
+	if (IS_ENABLED(CONFIG_NMI_CHECK_CPU) && ignore_nmis) {
 		WRITE_ONCE(nsp->idt_ignored, nsp->idt_ignored + 1);
-	else if (!ignore_nmis)
+	} else if (!ignore_nmis) {
+		WRITE_ONCE(nsp->idt_nmi_seq, nsp->idt_nmi_seq + 1);
+		WARN_ON_ONCE(!(nsp->idt_nmi_seq & 0x1));
 		default_do_nmi(regs);
+		WRITE_ONCE(nsp->idt_nmi_seq, nsp->idt_nmi_seq + 1);
+		WARN_ON_ONCE(nsp->idt_nmi_seq & 0x1);
+	}
 
 	irqentry_nmi_exit(regs, irq_state);
 
