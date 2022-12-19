@@ -581,14 +581,14 @@ static char *nmi_check_stall_msg[] = {
 /* | | |	NMI handler has been invoked.				*/
 /* | | |								*/
 /* V V V								*/
-/* 0 0 0 */	"NMIs are not reaching handler",
-/* 0 0 1 */	"NMI handler is ignoring NMIs",
-/* 0 1 0 */	"CPU is offline and NMIs are not reaching handler",
-/* 0 1 1 */	"CPU is offline and NMI handler is legitimately ignoring NMIs",
-/* 1 0 0 */	"CPU is in NMI handler and no further NMIs are reaching handler",
-/* 1 0 1 */	"CPU is in NMI handler which is legitimately ignoring NMIs",
-/* 1 1 0 */	"CPU is offline in an NMI handler and no further NMIs are reaching handler",
-/* 1 1 1 */	"CPU is offline in an NMI handler which is legitimately ignoring NMIs",
+/* 0 0 0 */ "NMIs are not reaching exc_nmi handler",
+/* 0 0 1 */ "exc_nmi handler is ignoring NMIs",
+/* 0 1 0 */ "CPU is offline and NMIs are not reaching exc_nmi handler",
+/* 0 1 1 */ "CPU is offline and exc_nmi handler is legitimately ignoring NMIs",
+/* 1 0 0 */ "CPU is in exc_nmi handler and no further NMIs are reaching handler",
+/* 1 0 1 */ "CPU is in exc_nmi handler which is legitimately ignoring NMIs",
+/* 1 1 0 */ "CPU is offline in exc_nmi handler and no further NMIs are reaching exc_nmi handler",
+/* 1 1 1 */ "CPU is offline in exc_nmi handler which is legitimately ignoring NMIs",
 };
 
 void nmi_backtrace_stall_snap(const struct cpumask *btp)
@@ -613,15 +613,17 @@ void nmi_backtrace_stall_check(const struct cpumask *btp)
 	unsigned long j = jiffies;
 	char *modp;
 	char *msgp;
+	char *msghp;
 	struct nmi_stats *nsp;
 
 	for_each_cpu(cpu, btp) {
 		nsp = per_cpu_ptr(&nmi_stats, cpu);
 		modp = "";
+		msghp = "";
 		nmi_seq = READ_ONCE(nsp->idt_nmi_seq);
 		if (nsp->idt_nmi_seq_snap == (nmi_seq & ~0x1)) {
 			msgp = "CPU entered NMI handler function, but has not exited";
-		} else if (nsp->idt_nmi_seq_snap != nmi_seq) {
+		} else if ((nsp->idt_nmi_seq_snap & 0x1) != (nmi_seq & 0x1)) {
 			msgp = "CPU is handling NMIs";
 		} else {
 			idx = ((nsp->idt_seq_snap & 0x1) << 2) |
@@ -630,9 +632,13 @@ void nmi_backtrace_stall_check(const struct cpumask *btp)
 			msgp = nmi_check_stall_msg[idx];
 			if (nsp->idt_ignored_snap != READ_ONCE(nsp->idt_ignored) && (idx & 0x1))
 				modp = ", but OK because ignore_nmis was set";
+			if (nmi_seq & ~0x1)
+				msghp = " (CPU currently in NMI handler function)";
+			else if (nsp->idt_nmi_seq_snap + 1 == nmi_seq)
+				msghp = " (CPU exited one NMI handler function)";
 		}
-		pr_alert("%s: CPU %d: %s%s, last activity: %lu jiffies ago.\n",
-			 __func__, cpu, msgp, modp, j - READ_ONCE(nsp->recv_jiffies));
+		pr_alert("%s: CPU %d: %s%s%s, last activity: %lu jiffies ago.\n",
+			 __func__, cpu, msgp, modp, msghp, j - READ_ONCE(nsp->recv_jiffies));
 	}
 }
 
