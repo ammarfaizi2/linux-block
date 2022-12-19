@@ -609,6 +609,7 @@ void nmi_backtrace_stall_check(const struct cpumask *btp)
 {
 	int cpu;
 	int idx;
+	unsigned long nmi_seq;
 	unsigned long j = jiffies;
 	char *modp;
 	char *msgp;
@@ -617,7 +618,10 @@ void nmi_backtrace_stall_check(const struct cpumask *btp)
 	for_each_cpu(cpu, btp) {
 		nsp = per_cpu_ptr(&nmi_stats, cpu);
 		modp = "";
-		if (nsp->idt_nmi_seq_snap != READ_ONCE(nsp->idt_nmi_seq)) {
+		nmi_seq = READ_ONCE(nsp->idt_nmi_seq);
+		if (nsp->idt_nmi_seq_snap == (nmi_seq & ~0x1)) {
+			msgp = "CPU entered NMI handler function, but has not exited";
+		} else if (nsp->idt_nmi_seq_snap != nmi_seq) {
 			msgp = "CPU is handling NMIs";
 		} else {
 			idx = ((nsp->idt_seq_snap & 0x1) << 2) |
