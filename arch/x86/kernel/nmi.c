@@ -594,6 +594,7 @@ void nmi_backtrace_stall_snap(const struct cpumask *btp)
 	for_each_cpu(cpu, btp) {
 		nsp = per_cpu_ptr(&nmi_stats, cpu);
 		nsp->idt_seq_snap = READ_ONCE(nsp->idt_seq);
+		nsp->idt_nmi_seq_snap = READ_ONCE(nsp->idt_nmi_seq);
 		nsp->idt_ignored_snap = READ_ONCE(nsp->idt_ignored);
 		nsp->idt_calls_snap = atomic_long_read(&nsp->idt_calls);
 	}
@@ -611,7 +612,7 @@ void nmi_backtrace_stall_check(const struct cpumask *btp)
 	for_each_cpu(cpu, btp) {
 		nsp = per_cpu_ptr(&nmi_stats, cpu);
 		modp = "";
-		if (nsp->idt_seq_snap != READ_ONCE(nsp->idt_seq)) {
+		if (nsp->idt_nmi_seq_snap != READ_ONCE(nsp->idt_nmi_seq)) {
 			msgp = "CPU is handling NMIs";
 		} else {
 			idx = ((nsp->idt_seq_snap & 0x1) << 2) |
