@@ -11259,6 +11259,7 @@ void dump_cpu_task(int cpu)
 	pr_info("Task dump for CPU %d:\n", cpu);
 	sched_show_task(cpu_curr(cpu));
 }
+EXPORT_SYMBOL_GPL(dump_cpu_task);
 
 /*
  * Nice levels are multiplicative, with a gentle 10% change for every
