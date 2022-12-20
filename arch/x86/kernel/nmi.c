@@ -618,7 +618,7 @@ void nmi_backtrace_stall_check(const struct cpumask *btp)
 		modp = "";
 		msghp = "";
 		nmi_seq = READ_ONCE(nsp->idt_nmi_seq);
-		if (nsp->idt_nmi_seq_snap == (nmi_seq & ~0x1)) {
+		if (nsp->idt_nmi_seq_snap + 1 == nmi_seq && (nmi_seq & 0x1)) {
 			msgp = "CPU entered NMI handler function, but has not exited";
 		} else if ((nsp->idt_nmi_seq_snap & 0x1) != (nmi_seq & 0x1)) {
 			msgp = "CPU is handling NMIs";
