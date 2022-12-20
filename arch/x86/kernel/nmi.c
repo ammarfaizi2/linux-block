@@ -496,6 +496,8 @@ DEFINE_IDTENTRY_RAW(exc_nmi)
 	 */
 	sev_es_nmi_complete();
 	if (IS_ENABLED(CONFIG_NMI_CHECK_CPU))
+		return;
+	if (IS_ENABLED(CONFIG_NMI_CHECK_CPU))
 		arch_atomic_long_inc(&nsp->idt_calls);
 
 	if (IS_ENABLED(CONFIG_SMP) && arch_cpu_is_offline(smp_processor_id()))
