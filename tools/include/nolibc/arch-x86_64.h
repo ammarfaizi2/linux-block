@@ -212,4 +212,16 @@ __asm__ (".section .text\n"
     "hlt\n"                     // ensure it does not return
     "");
 
+void __arch_restore_rt(void);
+
+__asm__ (
+".section .text\n"
+"__arch_restore_rt:\n\t"
+	"movl	$0xf, %eax\n\t" // __NR_rt_sigreturn == 0xf
+	"syscall\n\t"           // %rsp must point to a valid struct rt_sigframe.
+	"int3"
+);
+
+#define __HAVE_ARCH_RESTORE_RT
+
 #endif // _NOLIBC_ARCH_X86_64_H
