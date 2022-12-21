@@ -18,6 +18,7 @@
 #include <linux/fs.h>
 #include <linux/loop.h>
 #include <linux/time.h>
+#include <linux/auxvec.h>
 
 #include "arch.h"
 #include "errno.h"
@@ -406,6 +407,119 @@ int getdents64(int fd, struct linux_dirent64 *dirp, int count)
 	}
 	return ret;
 }
+
+/*
+ * The getpagesize() syscall doesn't always exist on the Linux syscall
+ * table. Only specific architectures have this syscall.
+ *
+ * Implementation detail:
+ * Some architectures use a fixed page size, like x86. We can hard-code
+ * the page size value on such architectures.
+ *
+ * Some other architectures may use different page sizes. For example,
+ * Linux aarch64 supports three values of page size: 4K, 16K, and 64K
+ * which are selected at kernel compilation time. The kernel stores the
+ * used page size in the auxiliary vector. The auxiliary vector can be
+ * obtained from /proc/self/auxv at AT_PAGESZ key-val-pair.
+ * /proc/self/auxv is available on all architectures.
+ *
+ * Once we obtain the page size info, cache the value in a static
+ * variable to avoid traversing the auxiliary vector again in the next
+ * getpagesize() call. The page size should never change during kernel
+ * uptime.
+ *
+ * Link: https://lwn.net/Articles/519085
+ * Link: https://github.com/torvalds/linux/blob/v6.1/fs/binfmt_elf.c#L260
+ *
+ *
+ * long getpagesize(void);
+ *
+ */
+
+#if defined(__x86_64__) || defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
+__attribute__((unused))
+static inline long getpagesize(void)
+{
+	/*
+	 * x86 family is always 4K page. Don't bother
+	 * reading the auxiliary vector.
+	 */
+	return 4096;
+}
+#else
+static int sys_open(const char *path, int flags, mode_t mode);
+static ssize_t sys_read(int fd, void *buf, size_t count);
+
+/*
+ * This function works for all architectures.
+ */
+static long sys_getpagesize(void)
+{
+	uint64_t buf[2] = {0, 0};
+	long ret;
+	int fd;
+
+
+	fd = sys_open("/proc/self/auxv", O_RDONLY, 0);
+	if (fd < 0)
+		return fd;
+
+	while (1) {
+		ssize_t x;
+
+		x = sys_read(fd, buf, sizeof(buf));
+		if (x < 0) {
+			ret = x;
+			break;
+		}
+
+		if (__builtin_expect(x == 0, 0)) {
+			/*
+			 * We've reached the end of the auxiliary
+			 * vector, but can't find the AT_PAGESZ
+			 * entry.
+			 */
+			ret = -ENOENT;
+			break;
+		}
+
+		/*
+		 * buf[0] is the key.
+		 * buf[1] is the value.
+		 */
+		if (buf[0] == AT_PAGESZ) {
+			ret = buf[1];
+			break;
+		}
+	}
+
+	sys_close(fd);
+	return ret;
+}
+
+__attribute__((unused))
+static long getpagesize(void)
+{
+	static long cached;
+	long ret;
+
+	/*
+	 * No need to read the auxv for the second
+	 * getpagesize() call.
+	 */
+	if (__builtin_expect(cached != 0, 1))
+		return cached;
+
+	ret = sys_getpagesize();
+	if (ret < 0) {
+		SET_ERRNO(-ret);
+		ret = -1;
+	} else {
+		cached = ret;
+	}
+	return ret;
+}
+#endif
 
 
 /*
