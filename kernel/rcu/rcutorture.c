@@ -3282,6 +3282,10 @@ static void rcutorture_test_nmis(int n)
 	int dumpcpu;
 	int i;
 
+	if (!IS_BUILTIN(CONFIG_RCU_TORTURE_TEST)) {
+		WARN_ONCE(n, "Non-zero rcutorture.test_nmis=%d permitted only when rcutorture is built in.\n", test_nmis);
+		return;
+	}
 	for (i = 0; i < n; i++) {
 		preempt_disable();
 		cpu = smp_processor_id();
