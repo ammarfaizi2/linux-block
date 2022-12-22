@@ -471,6 +471,50 @@ static int test_getpagesize(void)
 	return !c;
 }
 
+/*
+ * Test fork().
+ * Make sure the exit code can be read from the parent process.
+ */
+static int test_fork_and_exit(int expected_code)
+{
+	int status;
+	int code;
+	pid_t ret;
+	pid_t p;
+
+	p = fork();
+	if (p < 0)
+		return p;
+
+	if (!p)
+		exit(expected_code);
+
+	do {
+		ret = waitpid(p, &status, 0);
+		if (ret < 0)
+			return ret;
+	} while (!WIFEXITED(status));
+
+	code = WEXITSTATUS(status);
+	if (code != expected_code) {
+		printf("test_fork_and_exit(): waitpid(): Invalid exit code: %d; expected = %d\n", code, expected_code);
+		return -1;
+	}
+
+	return 0;
+}
+
+static int test_fork(void)
+{
+	int i;
+
+	for (i = 0; i < 255; i++) {
+		if (test_fork_and_exit(i))
+			return -1;
+	}
+	return 0;
+}
+
 /* Run syscall tests between IDs <min> and <max>.
  * Return 0 on success, non-zero on failure.
  */
@@ -523,6 +567,7 @@ int run_syscall(int min, int max)
 		CASE_TEST(dup3_0);            tmp = dup3(0, 100, 0);  EXPECT_SYSNE(1, tmp, -1); close(tmp); break;
 		CASE_TEST(dup3_m1);           tmp = dup3(-1, 100, 0); EXPECT_SYSER(1, tmp, -1, EBADF); if (tmp != -1) close(tmp); break;
 		CASE_TEST(execve_root);       EXPECT_SYSER(1, execve("/", (char*[]){ [0] = "/", [1] = NULL }, NULL), -1, EACCES); break;
+		CASE_TEST(fork);              EXPECT_SYSZR(1, test_fork()); break;
 		CASE_TEST(getdents64_root);   EXPECT_SYSNE(1, test_getdents64("/"), -1); break;
 		CASE_TEST(getdents64_null);   EXPECT_SYSER(1, test_getdents64("/dev/null"), -1, ENOTDIR); break;
 		CASE_TEST(gettimeofday_null); EXPECT_SYSZR(1, gettimeofday(NULL, NULL)); break;
