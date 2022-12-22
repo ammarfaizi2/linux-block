@@ -528,6 +528,7 @@ nmi_restart:
 
 	if (IS_ENABLED(CONFIG_NMI_CHECK_CPU) && ignore_nmis) {
 		WRITE_ONCE(nsp->idt_ignored, nsp->idt_ignored + 1);
+	} else if (IS_ENABLED(CONFIG_NMI_CHECK_CPU)) {
 	} else if (!ignore_nmis) {
 		if (IS_ENABLED(CONFIG_NMI_CHECK_CPU)) {
 			WRITE_ONCE(nsp->idt_nmi_seq, nsp->idt_nmi_seq + 1);
