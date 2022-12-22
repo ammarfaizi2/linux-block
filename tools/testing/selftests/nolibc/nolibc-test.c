@@ -488,7 +488,7 @@ static int test_fork(void)
 
 static volatile int g_test_sig;
 
-static void test_sigaction_signal_handler(int sig)
+static void test_signal_handler(int sig)
 {
 	g_test_sig = sig;
 }
@@ -496,7 +496,7 @@ static void test_sigaction_signal_handler(int sig)
 static int test_sigaction_sig(int sig)
 {
 	const struct sigaction new = {
-		.sa_handler = test_sigaction_signal_handler
+		.sa_handler = test_signal_handler
 	};
 	struct sigaction old;
 	int ret;
@@ -517,7 +517,7 @@ static int test_sigaction_sig(int sig)
 	kill(getpid(), sig);
 
 	/*
-	 * test_sigaction_signal_handler() must set @g_test_sig to @sig.
+	 * test_signal_handler() must set @g_test_sig to @sig.
 	 */
 	if (g_test_sig != sig) {
 		printf("test_sigaction_sig(%d): Invalid g_test_sig value (%d != %d)\n", sig, g_test_sig, sig);
@@ -536,20 +536,74 @@ static int test_sigaction_sig(int sig)
 	return 0;
 }
 
+static int test_signal_sig(int sig)
+{
+	sighandler_t old;
+
+	/*
+	 * Set the signal handler.
+	 */
+	old = signal(sig, test_signal_handler);
+	if (old == SIG_ERR) {
+		printf("test_signal_sig(%d): Failed to set a signal handler\n", sig);
+		return -1;
+	}
+
+	/*
+	 * Test the signal handler.
+	 */
+	g_test_sig = 0;
+	kill(getpid(), sig);
+
+	/*
+	 * test_signal_handler() must set @g_test_sig to @sig.
+	 */
+	if (g_test_sig != sig) {
+		printf("test_signal_sig(%d): Invalid g_test_sig value (%d != %d)\n", sig, g_test_sig, sig);
+		return -1;
+	}
+
+	/*
+	 * Restore the original signal handler.
+	 */
+	old = signal(sig, old);
+	if (old == SIG_ERR) {
+		printf("test_signal_sig(%d): Failed to restore the signal handler\n", sig);
+		return -1;
+	}
+
+	return 0;
+}
+
+static const int g_sig_to_test[] = {
+	SIGINT,
+	SIGHUP,
+	SIGTERM,
+	SIGQUIT,
+	SIGSEGV
+};
+
 static int test_sigaction(void)
 {
-	static const int sig_to_test[] = {
-		SIGINT,
-		SIGHUP,
-		SIGTERM,
-		SIGQUIT,
-		SIGSEGV
-	};
 	size_t i;
 	int ret;
 
-	for (i = 0; i < (sizeof(sig_to_test) / sizeof(sig_to_test[0])); i++) {
-		ret = test_sigaction_sig(sig_to_test[i]);
+	for (i = 0; i < (sizeof(g_sig_to_test) / sizeof(g_sig_to_test[0])); i++) {
+		ret = test_sigaction_sig(g_sig_to_test[i]);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
+static int test_signal(void)
+{
+	size_t i;
+	int ret;
+
+	for (i = 0; i < (sizeof(g_sig_to_test) / sizeof(g_sig_to_test[0])); i++) {
+		ret = test_signal_sig(g_sig_to_test[i]);
 		if (ret)
 			return ret;
 	}
@@ -564,6 +618,11 @@ static int should_test_sigaction(void)
 #else
 	return 0;
 #endif
+}
+
+static int should_test_signal(void)
+{
+	return should_test_sigaction();
 }
 
 /* Run syscall tests between IDs <min> and <max>.
@@ -647,6 +706,7 @@ int run_syscall(int min, int max)
 		CASE_TEST(select_stdout);     EXPECT_SYSNE(1, ({ fd_set fds; FD_ZERO(&fds); FD_SET(1, &fds); select(2, NULL, &fds, NULL, NULL); }), -1); break;
 		CASE_TEST(select_fault);      EXPECT_SYSER(1, select(1, (void *)1, NULL, NULL, 0), -1, EFAULT); break;
 		CASE_TEST(sigaction);         EXPECT_SYSZR(should_test_sigaction(), test_sigaction()); break;
+		CASE_TEST(signal);            EXPECT_SYSZR(should_test_signal(), test_signal()); break;
 		CASE_TEST(stat_blah);         EXPECT_SYSER(1, stat("/proc/self/blah", &stat_buf), -1, ENOENT); break;
 		CASE_TEST(stat_fault);        EXPECT_SYSER(1, stat(NULL, &stat_buf), -1, EFAULT); break;
 		CASE_TEST(symlink_root);      EXPECT_SYSER(1, symlink("/", "/"), -1, EEXIST); break;
