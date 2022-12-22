@@ -66,7 +66,7 @@ else
 Q=@
 endif
 
-CFLAGS  ?= -Os -fno-ident -fno-asynchronous-unwind-tables
+CFLAGS  ?= -Os -fno-ident -fno-asynchronous-unwind-tables -Wall -Wno-unused-function
 LDFLAGS := -s
 
 help:
