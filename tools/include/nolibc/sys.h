@@ -1119,6 +1119,31 @@ int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
 	return ret;
 }
 
+/*
+ * sighandler_t signal(int signum, sighandler_t handler);
+ */
+
+static __attribute__((unused))
+sighandler_t signal(int signum, sighandler_t handler)
+{
+	const struct sigaction act = {
+		.sa_handler = handler,
+		.sa_flags = SA_RESTORER,
+		.sa_restorer = __restore_rt
+	};
+	sighandler_t old_sah;
+	struct sigaction old;
+	int ret;
+
+	ret = sys_sigaction(signum, &act, &old);
+	if (ret < 0) {
+		SET_ERRNO(-ret);
+		old_sah = SIG_ERR;
+	} else {
+		old_sah = old.sa_handler;
+	}
+	return old_sah;
+}
 
 /*
  * int stat(const char *path, struct stat *buf);
