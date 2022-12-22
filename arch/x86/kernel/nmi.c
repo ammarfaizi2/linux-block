@@ -530,8 +530,13 @@ nmi_restart:
 		WRITE_ONCE(nsp->idt_ignored, nsp->idt_ignored + 1);
 	} else if (IS_ENABLED(CONFIG_NMI_CHECK_CPU)) {
 	} else if (!ignore_nmis) {
+		int i;
+
 		WRITE_ONCE(nsp->idt_nmi_seq, nsp->idt_nmi_seq + 1);
 		WARN_ON_ONCE(!(nsp->idt_nmi_seq & 0x1));
+		for (i = 0; i < 12000; i++) {
+			udelay(1000);
+		}
 		default_do_nmi(regs);
 		WRITE_ONCE(nsp->idt_nmi_seq, nsp->idt_nmi_seq + 1);
 		WARN_ON_ONCE(nsp->idt_nmi_seq & 0x1);
