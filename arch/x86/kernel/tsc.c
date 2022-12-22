@@ -53,6 +53,9 @@ static u32 art_to_tsc_denominator;
 static u64 art_to_tsc_offset;
 struct clocksource *art_related_clocksource;
 
+static int max_tsc_watchdogged = INT_MAX;
+static atomic_t cur_tsc_watchdogged;
+
 struct cyc2ns {
 	struct cyc2ns_data data[2];	/*  0 + 2*16 = 32 */
 	seqcount_latch_t   seq;		/* 32 + 4    = 36 */
@@ -307,6 +310,14 @@ static int __init tsc_setup(char *str)
 }
 
 __setup("tsc=", tsc_setup);
+
+static int __init tsc_watchdogged_setup(char *str)
+{
+	max_tsc_watchdogged = simple_strtol(str, NULL, 0);
+	return 1;
+}
+
+__setup("tsc_watchdogged=", tsc_watchdogged_setup);
 
 #define MAX_RETRIES		5
 #define TSC_DEFAULT_THRESHOLD	0x20000
@@ -1186,9 +1197,18 @@ static void __init tsc_disable_clocksource_watchdog(void)
 	clocksource_tsc.flags &= ~CLOCK_SOURCE_MUST_VERIFY;
 }
 
-bool tsc_clocksource_watchdog_disabled(void)
+/*
+ * If the TSC is judged trustworthy and the limit on the number of
+ * to-be-watchdogged clocksources has not been exceeded, place the specified
+ * clocksource into must-verify state.
+ */
+void tsc_clocksource_watchdog_disabled(struct clocksource *csp)
 {
-	return !(clocksource_tsc.flags & CLOCK_SOURCE_MUST_VERIFY);
+	if (clocksource_tsc.flags & CLOCK_SOURCE_MUST_VERIFY ||
+	    atomic_inc_return(&cur_tsc_watchdogged) > max_tsc_watchdogged)
+		return;
+	pr_info("clocksource: '%s' will be checked by clocksource watchdog.\n", csp->name);
+	csp->flags |= CLOCK_SOURCE_MUST_VERIFY;
 }
 
 static void __init check_system_tsc_reliable(void)

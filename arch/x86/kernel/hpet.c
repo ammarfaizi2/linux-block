@@ -1091,8 +1091,7 @@ int __init hpet_enable(void)
 	if (!hpet_counting())
 		goto out_nohpet;
 
-	if (tsc_clocksource_watchdog_disabled())
-		clocksource_hpet.flags |= CLOCK_SOURCE_MUST_VERIFY;
+	tsc_clocksource_watchdog_disabled(&clocksource_hpet);
 	clocksource_register_hz(&clocksource_hpet, (u32)hpet_freq);
 
 	if (id & HPET_ID_LEGSUP) {

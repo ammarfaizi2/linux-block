@@ -211,8 +211,7 @@ static int __init init_acpi_pm_clocksource(void)
 		return -ENODEV;
 	}
 
-	if (tsc_clocksource_watchdog_disabled())
-		clocksource_acpi_pm.flags |= CLOCK_SOURCE_MUST_VERIFY;
+	tsc_clocksource_watchdog_disabled(&clocksource_acpi_pm);
 	return clocksource_register_hz(&clocksource_acpi_pm, PMTMR_TICKS_PER_SEC);
 }
 

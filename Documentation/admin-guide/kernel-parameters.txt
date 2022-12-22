@@ -6345,6 +6345,12 @@
 			with CPUID.16h support and partial CPUID.15h support.
 			Format: <unsigned int>
 
+	tsc_watchdogged=  [X86]
+			Specify the limit on the number of clocksources
+			that will be verified against TSC in cases where
+			the TSC is deemed trustworthy.	Defaults to
+			INT_MAX.  Specify zero to avoid verification.
+
 	tsx=		[X86] Control Transactional Synchronization
 			Extensions (TSX) feature in Intel processors that
 			support TSX control.
