@@ -174,6 +174,8 @@ struct sys_stat_struct {
 	_arg1;                                                                \
 })
 
+char **environ __attribute__((weak));
+
 /* startup code */
 __asm__ (".section .text\n"
     ".weak _start\n"
@@ -194,11 +196,16 @@ __asm__ (".section .text\n"
     "mov %r1, %sp\n"              // argv = sp
     "add %r2, %r1, %r0, lsl #2\n" // envp = argv + 4*argc ...
     "add %r2, %r2, $4\n"          //        ... + 4
+    "ldr %r3, 1f\n"               // r3 = &environ (see below)
+    "str %r2, [r3]\n"             // store envp into environ
     "and %r3, %r1, $-8\n"         // AAPCS : sp must be 8-byte aligned in the
     "mov %sp, %r3\n"              //         callee, an bl doesn't push (lr=pc)
     "bl main\n"                   // main() returns the status code, we'll exit with it.
     "movs r7, $1\n"               // NR_exit == 1
     "svc $0x00\n"
+    ".align 2\n"                  // below are the pointers to a few variables
+    "1:\n"
+    ".word environ\n"
     "");
 
 #endif // _NOLIBC_ARCH_ARM_H
