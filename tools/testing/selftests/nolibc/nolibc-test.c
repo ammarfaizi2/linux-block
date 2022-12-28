@@ -12,9 +12,13 @@
  *   $(CC) with default libc                    => NOLIBC* never defined
  */
 #ifndef NOLIBC
+#include <errno.h>
+#include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #ifndef _NOLIBC_STDIO_H
 /* standard libcs need more includes */
 #include <linux/reboot.h>
@@ -28,13 +32,9 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <dirent.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <sched.h>
-#include <signal.h>
-#include <stdarg.h>
-#include <unistd.h>
 #endif
 #endif
 
