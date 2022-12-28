@@ -413,7 +413,7 @@ static inline void free_anon_vma_name(struct vm_area_struct *vma)
 	 * Not using anon_vma_name because it generates a warning if mmap_lock
 	 * is not held, which might be the case here.
 	 */
-	if (!vma->vm_file)
+	if (!vma->vm_file || vma_is_anon_shmem(vma))
 		anon_vma_name_put(vma->anon_name);
 }
 
