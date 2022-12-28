@@ -183,7 +183,8 @@ __asm__ (".section .text\n"
      * 16-bit mode, the assembler cannot know, so we need to tell it we're in
      * 32-bit now, then switch to 16-bit (is there a better way to do it than
      * adding 1 by hand ?) and tell the asm we're now in 16-bit mode so that
-     * it generates correct instructions. Note that we do not support thumb1.
+     * it generates correct instructions. Note that thumb1 is also supported,
+     * as it only slightly increases the instruction count.
      */
     ".code 32\n"
     "add     r0, pc, #1\n"
@@ -192,10 +193,16 @@ __asm__ (".section .text\n"
 #endif
     "pop {%r0}\n"                 // argc was in the stack
     "mov %r1, %sp\n"              // argv = sp
-    "add %r2, %r1, %r0, lsl #2\n" // envp = argv + 4*argc ...
-    "add %r2, %r2, $4\n"          //        ... + 4
-    "and %r3, %r1, $-8\n"         // AAPCS : sp must be 8-byte aligned in the
-    "mov %sp, %r3\n"              //         callee, an bl doesn't push (lr=pc)
+
+    "add %r2, %r0, $1\n"          // envp = (argc + 1) ...
+    "lsl %r2, %r2, $2\n"          //        * 4        ...
+    "add %r2, %r2, %r1\n"         //        + argv
+
+    "mov %r3, $8\n"               // AAPCS : sp must be 8-byte aligned in the
+    "neg %r3, %r3\n"              //         callee, and bl doesn't push (lr=pc)
+    "and %r3, %r3, %r1\n"         // so we do sp = r1(=sp) & r3(=-8);
+    "mov %sp, %r3\n"              //
+
     "bl main\n"                   // main() returns the status code, we'll exit with it.
     "movs r7, $1\n"               // NR_exit == 1
     "svc $0x00\n"
