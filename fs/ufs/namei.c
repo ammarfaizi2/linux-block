@@ -250,7 +250,7 @@ static int ufs_rename(struct mnt_idmap *idmap, struct inode *old_dir,
 	struct inode *old_inode = d_inode(old_dentry);
 	struct inode *new_inode = d_inode(new_dentry);
 	struct page *dir_page = NULL;
-	struct ufs_dir_entry * dir_de = NULL;
+	struct ufs_dir_entry *dir_de = NULL;
 	struct page *old_page;
 	struct ufs_dir_entry *old_de;
 	int err = -ENOENT;
@@ -307,7 +307,7 @@ static int ufs_rename(struct mnt_idmap *idmap, struct inode *old_dir,
 		if (old_dir != new_dir)
 			ufs_set_link(old_inode, dir_de, dir_page, new_dir, 0);
 		else {
-			ufs_put_page(dir_page);
+			put_and_unmap_page(dir_page, dir_de);
 		}
 		inode_dec_link_count(old_dir);
 	}
@@ -316,10 +316,10 @@ static int ufs_rename(struct mnt_idmap *idmap, struct inode *old_dir,
 
 out_dir:
 	if (dir_de) {
-		ufs_put_page(dir_page);
+		put_and_unmap_page(dir_page, dir_de);
 	}
 out_old:
-	ufs_put_page(old_page);
+	put_and_unmap_page(old_page, old_de);
 out:
 	return err;
 }
