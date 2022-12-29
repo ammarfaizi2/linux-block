@@ -307,8 +307,7 @@ static int ufs_rename(struct mnt_idmap *idmap, struct inode *old_dir,
 		if (old_dir != new_dir)
 			ufs_set_link(old_inode, dir_de, dir_page, new_dir, 0);
 		else {
-			kunmap(dir_page);
-			put_page(dir_page);
+			ufs_put_page(dir_page);
 		}
 		inode_dec_link_count(old_dir);
 	}
@@ -317,12 +316,10 @@ static int ufs_rename(struct mnt_idmap *idmap, struct inode *old_dir,
 
 out_dir:
 	if (dir_de) {
-		kunmap(dir_page);
-		put_page(dir_page);
+		ufs_put_page(dir_page);
 	}
 out_old:
-	kunmap(old_page);
-	put_page(old_page);
+	ufs_put_page(old_page);
 out:
 	return err;
 }

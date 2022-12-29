@@ -66,7 +66,7 @@ static int ufs_handle_dirsync(struct inode *dir)
 	return err;
 }
 
-static inline void ufs_put_page(struct page *page)
+inline void ufs_put_page(struct page *page)
 {
 	kunmap(page);
 	put_page(page);
