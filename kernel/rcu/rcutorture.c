@@ -3278,14 +3278,11 @@ static void rcu_torture_read_exit_cleanup(void)
 
 static void rcutorture_test_nmis(int n)
 {
+#if IS_BUILTIN(CONFIG_RCU_TORTURE_TEST)
 	int cpu;
 	int dumpcpu;
 	int i;
 
-	if (!IS_BUILTIN(CONFIG_RCU_TORTURE_TEST)) {
-		WARN_ONCE(n, "Non-zero rcutorture.test_nmis=%d permitted only when rcutorture is built in.\n", test_nmis);
-		return;
-	}
 	for (i = 0; i < n; i++) {
 		preempt_disable();
 		cpu = smp_processor_id();
@@ -3297,6 +3294,9 @@ static void rcutorture_test_nmis(int n)
 		preempt_enable();
 		schedule_timeout_uninterruptible(15 * HZ);
 	}
+#else // #if IS_BUILTIN(CONFIG_RCU_TORTURE_TEST)
+	WARN_ONCE(n, "Non-zero rcutorture.test_nmis=%d permitted only when rcutorture is built in.\n", test_nmis);
+#endif // #else // #if IS_BUILTIN(CONFIG_RCU_TORTURE_TEST)
 }
 
 static enum cpuhp_state rcutor_hp;
