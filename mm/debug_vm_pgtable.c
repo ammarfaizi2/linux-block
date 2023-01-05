@@ -15,6 +15,7 @@
 #include <linux/hugetlb.h>
 #include <linux/kernel.h>
 #include <linux/kconfig.h>
+#include <linux/memblock.h>
 #include <linux/mm.h>
 #include <linux/mman.h>
 #include <linux/mm_types.h>
@@ -79,6 +80,8 @@ struct pgtable_debug_args {
 	unsigned long		pud_pfn;
 	unsigned long		pmd_pfn;
 	unsigned long		pte_pfn;
+
+	phys_addr_t		fixed_alignment;
 
 	unsigned long		fixed_pgd_pfn;
 	unsigned long		fixed_p4d_pfn;
@@ -430,7 +433,8 @@ static void __init pmd_huge_tests(struct pgtable_debug_args *args)
 {
 	pmd_t pmd;
 
-	if (!arch_vmap_pmd_supported(args->page_prot))
+	if (!arch_vmap_pmd_supported(args->page_prot) ||
+	    args->fixed_alignment < PMD_SIZE)
 		return;
 
 	pr_debug("Validating PMD huge\n");
@@ -449,7 +453,8 @@ static void __init pud_huge_tests(struct pgtable_debug_args *args)
 {
 	pud_t pud;
 
-	if (!arch_vmap_pud_supported(args->page_prot))
+	if (!arch_vmap_pud_supported(args->page_prot) ||
+	    args->fixed_alignment < PUD_SIZE)
 		return;
 
 	pr_debug("Validating PUD huge\n");
@@ -1077,11 +1082,41 @@ debug_vm_pgtable_alloc_huge_page(struct pgtable_debug_args *args, int order)
 	return page;
 }
 
+/*
+ * Check if a physical memory range described by <pstart, pend> contains
+ * an area that is of size psize, and aligned to the same.
+ *
+ * Don't use address 0, and check for overflow.
+ */
+static int __init phys_align_check(phys_addr_t pstart,
+	phys_addr_t pend, phys_addr_t psize, phys_addr_t *physp,
+	phys_addr_t *alignp)
+{
+	phys_addr_t aligned_start, aligned_end;
+
+	if (pstart == 0)
+		pstart = PAGE_SIZE;
+
+	aligned_start = ALIGN(pstart, psize);
+	aligned_end = aligned_start + psize;
+
+	if (aligned_end > aligned_start && aligned_end <= pend) {
+		*alignp = psize;
+		*physp = aligned_start;
+		return 1;
+	}
+
+	return 0;
+}
+
+
 static int __init init_args(struct pgtable_debug_args *args)
 {
 	struct page *page = NULL;
 	phys_addr_t phys;
 	int ret = 0;
+	u64 idx;
+	phys_addr_t pstart, pend;
 
 	/*
 	 * Initialize the debugging data.
@@ -1161,15 +1196,32 @@ static int __init init_args(struct pgtable_debug_args *args)
 	WARN_ON(!args->start_ptep);
 
 	/*
-	 * PFN for mapping at PTE level is determined from a standard kernel
-	 * text symbol. But pfns for higher page table levels are derived by
-	 * masking lower bits of this real pfn. These derived pfns might not
-	 * exist on the platform but that does not really matter as pfn_pxx()
-	 * helpers will still create appropriate entries for the test. This
-	 * helps avoid large memory block allocations to be used for mapping
-	 * at higher page table levels in some of the tests.
+	 * Find a valid physical range, preferably aligned to PUD_SIZE.
+	 * Return the address and the alignment. It doesn't need to be
+	 * allocated, it just needs to exist as usable memory. The memory
+	 * won't be touched.
+	 *
+	 * The alignment is recorded, and can be checked to see if we
+	 * can run the tests that require and actual valid physical
+	 * address range on some architectures ({pmd,pud}_huge_test
+	 * on x86).
 	 */
+
 	phys = __pa_symbol(&start_kernel);
+	args->fixed_alignment = PAGE_SIZE;
+
+	for_each_mem_range(idx, &pstart, &pend) {
+		if (phys_align_check(pstart, pend, PUD_SIZE, &phys,
+				&args->fixed_alignment))
+			break;
+
+		if (args->fixed_alignment >= PMD_SIZE)
+			continue;
+
+		(void)phys_align_check(pstart, pend, PMD_SIZE, &phys,
+				&args->fixed_alignment);
+	}
+
 	args->fixed_pgd_pfn = __phys_to_pfn(phys & PGDIR_MASK);
 	args->fixed_p4d_pfn = __phys_to_pfn(phys & P4D_MASK);
 	args->fixed_pud_pfn = __phys_to_pfn(phys & PUD_MASK);
