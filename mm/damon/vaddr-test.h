@@ -24,8 +24,10 @@ static void __link_vmas(struct maple_tree *mt, struct vm_area_struct *vmas,
 		return;
 
 	mas_lock(&mas);
-	for (i = 0; i < nr_vmas; i++)
-		vma_mas_store(&vmas[i], &mas);
+	for (i = 0; i < nr_vmas; i++) {
+		mas_set_range(&mas, vmas[i].vm_start, vmas[i].vm_end - 1);
+		mas_store_gfp(&mas, &vmas[i], GFP_KERNEL);
+	}
 	mas_unlock(&mas);
 }
 
