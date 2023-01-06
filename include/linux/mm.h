@@ -2823,8 +2823,13 @@ extern struct vm_area_struct *vma_merge(struct vma_iterator *vmi,
 extern struct anon_vma *find_mergeable_anon_vma(struct vm_area_struct *);
 extern int __split_vma(struct vma_iterator *vmi, struct vm_area_struct *,
 		       unsigned long addr, int new_below);
+#ifdef CONFIG_MMU
 extern int split_vma(struct vma_iterator *vmi, struct vm_area_struct *,
 			 unsigned long addr, int new_below);
+#else
+extern int split_vma(struct mm_struct *, struct vm_area_struct *,
+			 unsigned long addr, int new_below);
+#endif	/* CONFIG_MMU */
 extern int insert_vm_struct(struct mm_struct *, struct vm_area_struct *);
 extern void unlink_file_vma(struct vm_area_struct *);
 extern struct vm_area_struct *copy_vma(struct vm_area_struct **,
