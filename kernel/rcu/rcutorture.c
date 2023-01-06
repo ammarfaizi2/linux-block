@@ -2277,6 +2277,18 @@ rcu_torture_stats_print(void)
 	rtcv_snap = rcu_torture_current_version;
 }
 
+static struct work_struct test_work[10];
+
+static void test_work_func(struct work_struct *work)
+{
+	schedule_timeout_uninterruptible(HZ / 10);
+}
+
+static void test_work_func1(struct work_struct *work)
+{
+	schedule_timeout_uninterruptible(HZ / 20);
+}
+
 /*
  * Periodically prints torture statistics, if periodic statistics printing
  * was specified via the stat_interval module parameter.
@@ -2284,10 +2296,17 @@ rcu_torture_stats_print(void)
 static int
 rcu_torture_stats(void *arg)
 {
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(test_work); i++)
+		INIT_WORK(&test_work[i], i < 5 ? test_work_func : test_work_func1);
 	VERBOSE_TOROUT_STRING("rcu_torture_stats task started");
 	do {
 		schedule_timeout_interruptible(stat_interval * HZ);
 		rcu_torture_stats_print();
+		for (i = 0; i < ARRAY_SIZE(test_work); i++)
+			queue_work(system_wq, &test_work[i]);
+		show_all_workqueues();
 		torture_shutdown_absorb("rcu_torture_stats");
 	} while (!torture_must_stop());
 	torture_kthread_stopping("rcu_torture_stats");
