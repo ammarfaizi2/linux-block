@@ -544,7 +544,7 @@ static void put_nommu_region(struct vm_region *region)
 	__put_nommu_region(region);
 }
 
-void vma_mas_store(struct vm_area_struct *vma, struct ma_state *mas)
+static void vma_mas_store(struct vm_area_struct *vma, struct ma_state *mas)
 {
 	mas_set_range(mas, vma->vm_start, vma->vm_end - 1);
 	mas_store_prealloc(mas, vma);
