@@ -31,10 +31,18 @@
 
 int memcmp(const void *s1, const void *s2, size_t len)
 {
-	bool diff;
-	asm("repe; cmpsb" CC_SET(nz)
-	    : CC_OUT(nz) (diff), "+D" (s1), "+S" (s2), "+c" (len));
-	return diff;
+	const unsigned char *_s1 = s1;
+	const unsigned char *_s2 = s2;
+
+	if (!len)
+		return 0;
+
+	asm("repe; cmpsb"
+		: "+D"(_s1), "+S"(_s2), "+c"(len)
+		:
+		: "memory");
+
+	return (int)_s1[-1] - (int)_s2[-1];
 }
 
 /*
