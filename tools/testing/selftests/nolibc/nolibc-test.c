@@ -535,7 +535,7 @@ static int test_sigaction_sig(int sig)
 	 */
 	ret = sigaction(sig, &new, &old);
 	if (ret) {
-		printf("test_sigaction_sig(%d): Failed to set a signal handler\n", sig);
+		printf(" (failed to set handler for signal %d)", sig);
 		return ret;
 	}
 
@@ -549,7 +549,7 @@ static int test_sigaction_sig(int sig)
 	 * test_signal_handler() must set @g_test_sig to @sig.
 	 */
 	if (g_test_sig != sig) {
-		printf("test_sigaction_sig(%d): Invalid g_test_sig value (%d != %d)\n", sig, g_test_sig, sig);
+		printf(" (invalid g_test_sig value (%d != %d))", sig, g_test_sig);
 		return -1;
 	}
 
@@ -558,8 +558,47 @@ static int test_sigaction_sig(int sig)
 	 */
 	ret = sigaction(sig, &old, NULL);
 	if (ret) {
-		printf("test_sigaction_sig(%d): Failed to restore the signal handler\n", sig);
+		printf(" (Failed to restore handler for signal %d)", sig);
 		return ret;
+	}
+
+	return 0;
+}
+
+static int test_signal_sig(int sig)
+{
+	sighandler_t old;
+
+	/*
+	 * Set the signal handler.
+	 */
+	old = signal(sig, test_signal_handler);
+	if (old == SIG_ERR) {
+		printf(" (failed to set handler for signal %d)", sig);
+		return -1;
+	}
+
+	/*
+	 * Test the signal handler.
+	 */
+	g_test_sig = 0;
+	kill(getpid(), sig);
+
+	/*
+	 * test_signal_handler() must set @g_test_sig to @sig.
+	 */
+	if (g_test_sig != sig) {
+		printf(" (invalid g_test_sig value (%d != %d))", sig, g_test_sig);
+		return -1;
+	}
+
+	/*
+	 * Restore the original signal handler.
+	 */
+	old = signal(sig, old);
+	if (old == SIG_ERR) {
+		printf(" (Failed to restore handler for signal %d)", sig);
+		return -1;
 	}
 
 	return 0;
@@ -580,6 +619,20 @@ static int test_sigaction(void)
 
 	for (i = 0; i < (sizeof(g_sig_to_test) / sizeof(g_sig_to_test[0])); i++) {
 		ret = test_sigaction_sig(g_sig_to_test[i]);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
+static int test_signal(void)
+{
+	size_t i;
+	int ret;
+
+	for (i = 0; i < (sizeof(g_sig_to_test) / sizeof(g_sig_to_test[0])); i++) {
+		ret = test_signal_sig(g_sig_to_test[i]);
 		if (ret)
 			return ret;
 	}
@@ -669,6 +722,7 @@ int run_syscall(int min, int max)
 		CASE_TEST(select_stdout);     EXPECT_SYSNE(1, ({ fd_set fds; FD_ZERO(&fds); FD_SET(1, &fds); select(2, NULL, &fds, NULL, NULL); }), -1); break;
 		CASE_TEST(select_fault);      EXPECT_SYSER(1, select(1, (void *)1, NULL, NULL, 0), -1, EFAULT); break;
 		CASE_TEST(sigaction);         EXPECT_SYSZR(1, test_sigaction()); break;
+		CASE_TEST(signal);            EXPECT_SYSZR(1, test_signal()); break;
 		CASE_TEST(stat_blah);         EXPECT_SYSER(1, stat("/proc/self/blah", &stat_buf), -1, ENOENT); break;
 		CASE_TEST(stat_fault);        EXPECT_SYSER(1, stat(NULL, &stat_buf), -1, EFAULT); break;
 		CASE_TEST(symlink_root);      EXPECT_SYSER(1, symlink("/", "/"), -1, EEXIST); break;
