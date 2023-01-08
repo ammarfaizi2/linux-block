@@ -497,23 +497,12 @@ static int rtl8723bu_parse_efuse(struct rtl8xxxu_priv *priv)
 	dev_info(&priv->udev->dev, "Vendor: %.7s\n", efuse->vendor_name);
 	dev_info(&priv->udev->dev, "Product: %.41s\n", efuse->device_name);
 
-	if (rtl8xxxu_debug & RTL8XXXU_DEBUG_EFUSE) {
-		int i;
-		unsigned char *raw = priv->efuse_wifi.raw;
-
-		dev_info(&priv->udev->dev,
-			 "%s: dumping efuse (0x%02zx bytes):\n",
-			 __func__, sizeof(struct rtl8723bu_efuse));
-		for (i = 0; i < sizeof(struct rtl8723bu_efuse); i += 8)
-			dev_info(&priv->udev->dev, "%02x: %8ph\n", i, &raw[i]);
-	}
-
 	return 0;
 }
 
 static int rtl8723bu_load_firmware(struct rtl8xxxu_priv *priv)
 {
-	char *fw_name;
+	const char *fw_name;
 	int ret;
 
 	if (priv->enable_bluetooth)
@@ -1691,8 +1680,8 @@ static s8 rtl8723b_cck_rssi(struct rtl8xxxu_priv *priv, u8 cck_agc_rpt)
 	s8 rx_pwr_all = 0x00;
 	u8 vga_idx, lna_idx;
 
-	lna_idx = (cck_agc_rpt & 0xE0) >> 5;
-	vga_idx = cck_agc_rpt & 0x1F;
+	lna_idx = u8_get_bits(cck_agc_rpt, CCK_AGC_RPT_LNA_IDX_MASK);
+	vga_idx = u8_get_bits(cck_agc_rpt, CCK_AGC_RPT_VGA_IDX_MASK);
 
 	switch (lna_idx) {
 	case 6:
