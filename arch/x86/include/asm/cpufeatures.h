@@ -427,6 +427,7 @@
 #define X86_FEATURE_SME_COHERENT	(19*32+10) /* "" AMD hardware-enforced cache coherency */
 
 /* AMD-defined extended feature 2, CPUID level 0x80000021 (EAX), word 20 */
+#define X86_FEATURE_CPUID_USER_DIS	(20*32+17) /* "" CPUID disable for non-privileged software */
 
 /*
  * BUG word(s)

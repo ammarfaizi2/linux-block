@@ -905,6 +905,9 @@ static void init_amd_zn(struct cpuinfo_x86 *c)
 		if (c->x86 == 0x19 && !cpu_has(c, X86_FEATURE_BTC_NO))
 			set_cpu_cap(c, X86_FEATURE_BTC_NO);
 	}
+
+	if (cpu_has(c, X86_FEATURE_CPUID_USER_DIS))
+		set_cpu_cap(c, X86_FEATURE_CPUID_FAULT);
 }
 
 static void init_amd(struct cpuinfo_x86 *c)
