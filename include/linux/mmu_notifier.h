@@ -269,7 +269,6 @@ extern struct lockdep_map __mmu_notifier_invalidate_range_start_map;
 #endif
 
 struct mmu_notifier_range {
-	struct vm_area_struct *vma;
 	struct mm_struct *mm;
 	unsigned long start;
 	unsigned long end;
@@ -519,7 +518,6 @@ static inline void mmu_notifier_range_init(struct mmu_notifier_range *range,
 					   unsigned long start,
 					   unsigned long end)
 {
-	range->vma = vma;
 	range->event = event;
 	range->mm = mm;
 	range->start = start;
