@@ -2825,6 +2825,8 @@ extern struct vm_area_struct *vmi_vma_merge(struct vma_iterator *vmi,
 	struct file *, pgoff_t, struct mempolicy *, struct vm_userfaultfd_ctx,
 	struct anon_vma_name *);
 extern struct anon_vma *find_mergeable_anon_vma(struct vm_area_struct *);
+extern int __split_vma(struct mm_struct *, struct vm_area_struct *,
+			       unsigned long addr, int new_below);
 extern int vmi__split_vma(struct vma_iterator *vmi, struct mm_struct *,
 	struct vm_area_struct *, unsigned long addr, int new_below);
 extern int split_vma(struct mm_struct *, struct vm_area_struct *,
