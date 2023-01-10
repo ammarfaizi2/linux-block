@@ -1038,7 +1038,7 @@ static void __migrate_folio_extract(struct folio *dst,
 				   int *page_was_mappedp,
 				   struct anon_vma **anon_vmap)
 {
-	*anon_vmap = (struct anon_vma *)dst->mapping;
+	*anon_vmap = (void *)dst->mapping;
 	*page_was_mappedp = (unsigned long)dst->private;
 	dst->mapping = NULL;
 	dst->private = NULL;
