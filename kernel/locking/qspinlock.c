@@ -324,8 +324,8 @@ void __lockfunc queued_spin_lock_slowpath(struct qspinlock *lock, u32 val)
 	if (pv_enabled())
 		goto pv_queue;
 
-	if (virt_spin_lock(lock))
-		return;
+//	if (virt_spin_lock(lock))
+//		return;
 
 	/*
 	 * Wait for in-progress pending->locked hand-overs with a bounded
