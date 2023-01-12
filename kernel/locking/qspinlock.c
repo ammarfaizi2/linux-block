@@ -379,8 +379,26 @@ void __lockfunc queued_spin_lock_slowpath(struct qspinlock *lock, u32 val)
 	 * clear_pending_set_locked() implementations imply full
 	 * barriers.
 	 */
-	if (val & _Q_LOCKED_MASK)
-		smp_cond_load_acquire(&lock->locked, !VAL);
+	if (val & _Q_LOCKED_MASK) {
+		if (!IS_ENABLED(CONFIG_DEBUG_QSPINLOCK_SLOWPATH)) {
+			atomic_cond_read_acquire(&lock->val, !(VAL & _Q_LOCKED_MASK));
+		} else {
+			int cnt = _Q_PENDING_LOOPS;
+			unsigned long j = jiffies + 10 * HZ;
+			struct qspinlock qval;
+			int val;
+
+			for (;;) {
+				val = atomic_read_acquire(&lock->val);
+				atomic_set(&qval.val, val);
+				WARN_ON_ONCE(!(val & _Q_PENDING_VAL));
+				if (!(val & _Q_LOCKED_MASK))
+					break;
+				if (!--cnt && !WARN(time_after(jiffies, j), "%s: Still pending and locked: %#x (%c%c%#x)\n", __func__, val, ".L"[!!qval.locked], ".P"[!!qval.pending], qval.tail))
+					cnt = _Q_PENDING_LOOPS;
+			}
+		}
+	}
 
 	/*
 	 * take ownership and clear the pending bit.
