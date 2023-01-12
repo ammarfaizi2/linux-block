@@ -4507,22 +4507,24 @@ static vm_fault_t do_read_fault(struct vm_fault *vmf)
 static vm_fault_t do_cow_fault(struct vm_fault *vmf)
 {
 	struct vm_area_struct *vma = vmf->vma;
+	struct folio *cow_folio, *folio;
 	vm_fault_t ret;
 
 	if (unlikely(anon_vma_prepare(vma)))
 		return VM_FAULT_OOM;
 
-	vmf->cow_page = alloc_page_vma(GFP_HIGHUSER_MOVABLE, vma, vmf->address);
-	if (!vmf->cow_page)
+	cow_folio = vma_alloc_folio(GFP_HIGHUSER_MOVABLE, 0, vma, vmf->address,
+				    false);
+	if (!cow_folio)
 		return VM_FAULT_OOM;
 
-	if (mem_cgroup_charge(page_folio(vmf->cow_page), vma->vm_mm,
-				GFP_KERNEL)) {
-		put_page(vmf->cow_page);
+	if (mem_cgroup_charge(cow_folio, vma->vm_mm, GFP_KERNEL)) {
+		folio_put(cow_folio);
 		return VM_FAULT_OOM;
 	}
-	cgroup_throttle_swaprate(vmf->cow_page, GFP_KERNEL);
+	folio_throttle_swaprate(cow_folio, GFP_KERNEL);
 
+	vmf->cow_page = &cow_folio->page;
 	ret = __do_fault(vmf);
 	if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY)))
 		goto uncharge_out;
@@ -4530,16 +4532,17 @@ static vm_fault_t do_cow_fault(struct vm_fault *vmf)
 		return ret;
 
 	copy_user_highpage(vmf->cow_page, vmf->page, vmf->address, vma);
-	__SetPageUptodate(vmf->cow_page);
+	__folio_mark_uptodate(cow_folio);
 
 	ret |= finish_fault(vmf);
-	unlock_page(vmf->page);
-	put_page(vmf->page);
+	folio = page_folio(vmf->page);
+	folio_unlock(folio);
+	folio_put(folio);
 	if (unlikely(ret & (VM_FAULT_ERROR | VM_FAULT_NOPAGE | VM_FAULT_RETRY)))
 		goto uncharge_out;
 	return ret;
 uncharge_out:
-	put_page(vmf->cow_page);
+	folio_put(cow_folio);
 	return ret;
 }
 
