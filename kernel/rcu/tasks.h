@@ -838,8 +838,10 @@ static void rcu_tasks_postscan(struct list_head *hop)
 {
 	int rtsi = READ_ONCE(rcu_task_stall_info);
 
-	tasks_rcu_exit_srcu_stall_timer.expires = jiffies + rtsi;
-	add_timer(&tasks_rcu_exit_srcu_stall_timer);
+	if (!IS_ENABLED(CONFIG_TINY_RCU)) {
+		tasks_rcu_exit_srcu_stall_timer.expires = jiffies + rtsi;
+		add_timer(&tasks_rcu_exit_srcu_stall_timer);
+	}
 
 	/*
 	 * Exiting tasks may escape the tasklist scan. Those are vulnerable
@@ -859,7 +861,9 @@ static void rcu_tasks_postscan(struct list_head *hop)
 	 * call to synchronize_rcu().
 	 */
 	synchronize_srcu(&tasks_rcu_exit_srcu);
-	del_timer_sync(&tasks_rcu_exit_srcu_stall_timer);
+
+	if (!IS_ENABLED(CONFIG_TINY_RCU))
+		del_timer_sync(&tasks_rcu_exit_srcu_stall_timer);
 }
 
 /* See if tasks are still holding out, complain if so. */
@@ -937,14 +941,17 @@ DEFINE_RCU_TASKS(rcu_tasks, rcu_tasks_wait_gp, call_rcu_tasks, "RCU Tasks");
 
 static void tasks_rcu_exit_srcu_stall(struct timer_list *unused)
 {
-	int rtsi = READ_ONCE(rcu_task_stall_info);
+#ifndef CONFIG_TINY_RCU
+	int rtsi;
 
+	rtsi = READ_ONCE(rcu_task_stall_info);
 	pr_info("%s: %s grace period number %lu (since boot) gp_state: %s is %lu jiffies old.\n",
 		__func__, rcu_tasks.kname, rcu_tasks.tasks_gp_seq,
 		tasks_gp_state_getname(&rcu_tasks), jiffies - rcu_tasks.gp_jiffies);
 	pr_info("Please check any exiting tasks stuck between calls to exit_tasks_rcu_start() and exit_tasks_rcu_finish()\n");
 	tasks_rcu_exit_srcu_stall_timer.expires = jiffies + rtsi;
 	add_timer(&tasks_rcu_exit_srcu_stall_timer);
+#endif // #ifndef CONFIG_TINY_RCU
 }
 
 /**
