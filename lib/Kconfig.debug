@@ -1489,6 +1489,13 @@ config CSD_LOCK_WAIT_DEBUG_DEFAULT
 	  This option causes the csdlock_debug= kernel boot parameter to
 	  default to 1 (basic debugging) instead of 0 (no debugging).
 
+config DEBUG_QSPINLOCK_SLOWPATH
+	bool "Queued spinlock debugging: Slowpath testing"
+	depends on DEBUG_KERNEL
+	help
+	 This feature enables diagnostics to be printed when a qspinlock
+	 wait loop takes too long.
+
 endmenu # lock debugging
 
 config TRACE_IRQFLAGS
