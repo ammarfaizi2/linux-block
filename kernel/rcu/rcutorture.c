@@ -3496,6 +3496,7 @@ static void rcutorture_sync(void)
 static void rcu_torture_init_srcu_lockdep(void)
 {
 	int idx;
+	static DEFINE_MUTEX(mut1);
 	DEFINE_STATIC_SRCU(srcu1);
 	DEFINE_STATIC_SRCU(srcu2);
 	DEFINE_STATIC_SRCU(srcu3);
@@ -3536,6 +3537,19 @@ static void rcu_torture_init_srcu_lockdep(void)
 		idx = srcu_read_lock(&srcu3);
 		synchronize_srcu(&srcu1);
 		srcu_read_unlock(&srcu3, idx);
+		return;
+	}
+
+	// SRCU/mutex deadlock.
+	if (test_srcu_lockdep == 11) {
+		idx = srcu_read_lock(&srcu1);
+		mutex_lock(&mut1);
+		mutex_unlock(&mut1);
+		srcu_read_unlock(&srcu1, idx);
+
+		mutex_lock(&mut1);
+		synchronize_srcu(&srcu1);
+		mutex_unlock(&mut1);
 		return;
 	}
 
