@@ -3492,16 +3492,17 @@ static void rcutorture_sync(void)
 		cur_ops->sync();
 }
 
-// Test SRCU-based deadlock scenarios.
+static DEFINE_MUTEX(mut1);
+static DEFINE_MUTEX(mut2);
+static DEFINE_MUTEX(mut3);
+DEFINE_STATIC_SRCU(srcu1);
+DEFINE_STATIC_SRCU(srcu2);
+DEFINE_STATIC_SRCU(srcu3);
+
+// Test lockdep on SRCU-based deadlock scenarios.
 static void rcu_torture_init_srcu_lockdep(void)
 {
 	int idx;
-	static DEFINE_MUTEX(mut1);
-	static DEFINE_MUTEX(mut2);
-	static DEFINE_MUTEX(mut3);
-	DEFINE_STATIC_SRCU(srcu1);
-	DEFINE_STATIC_SRCU(srcu2);
-	DEFINE_STATIC_SRCU(srcu3);
 
 	if (!test_srcu_lockdep)
 		return;
