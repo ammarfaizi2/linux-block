@@ -57,6 +57,8 @@ flag ~empty Rcu-lock \ domain(rcu-rscs) as unbalanced-rcu-locking
 flag ~empty Rcu-unlock \ range(rcu-rscs) as unbalanced-rcu-locking
 
 (* Compute matching pairs of Srcu-lock and Srcu-unlock, but prohibit nesting *)
+(* Also, blindly assume that srcu_read_lock() is passed to the corresopnding *)
+(* srcu_read_unlock(). *)
 let srcu-unmatched = Srcu-lock | Srcu-unlock
 let srcu-unmatched-po = ([srcu-unmatched] ; po ; [srcu-unmatched]) & loc
 let srcu-unmatched-locks-to-unlock = ([Srcu-lock] ; po ; [Srcu-unlock]) & loc
