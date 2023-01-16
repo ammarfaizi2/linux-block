@@ -91,6 +91,7 @@ static int rtw89_fw_hdr_parser(struct rtw89_dev *rtwdev, const u8 *fw, u32 len,
 	const u8 *fwdynhdr;
 	const u8 *bin;
 	u32 base_hdr_len;
+	u32 mssc_len = 0;
 	u32 i;
 
 	if (!info)
@@ -120,6 +121,14 @@ static int rtw89_fw_hdr_parser(struct rtw89_dev *rtwdev, const u8 *fw, u32 len,
 	fw += RTW89_FW_HDR_SIZE;
 	section_info = info->section_info;
 	for (i = 0; i < info->section_num; i++) {
+		section_info->type = GET_FWSECTION_HDR_SECTIONTYPE(fw);
+		if (section_info->type == FWDL_SECURITY_SECTION_TYPE) {
+			section_info->mssc = GET_FWSECTION_HDR_MSSC(fw);
+			mssc_len += section_info->mssc * FWDL_SECURITY_SIGLEN;
+		} else {
+			section_info->mssc = 0;
+		}
+
 		section_info->len = GET_FWSECTION_HDR_SEC_SIZE(fw);
 		if (GET_FWSECTION_HDR_CHECKSUM(fw))
 			section_info->len += FWDL_SECTION_CHKSUM_LEN;
@@ -132,7 +141,7 @@ static int rtw89_fw_hdr_parser(struct rtw89_dev *rtwdev, const u8 *fw, u32 len,
 		section_info++;
 	}
 
-	if (fw_end != bin) {
+	if (fw_end != bin + mssc_len) {
 		rtw89_err(rtwdev, "[ERR]fw bin size\n");
 		return -EINVAL;
 	}
@@ -342,6 +351,8 @@ int rtw89_fw_recognize(struct rtw89_dev *rtwdev)
 	__rtw89_fw_recognize(rtwdev, RTW89_FW_WOWLAN);
 
 	rtw89_fw_recognize_features(rtwdev);
+
+	rtw89_coex_recognize_ver(rtwdev);
 
 	return 0;
 }
@@ -2738,7 +2749,7 @@ static void rtw89_hw_scan_add_chan(struct rtw89_dev *rtwdev, int chan_type,
 		if (ssid_num == 1 && req->ssids[0].ssid_len == 0) {
 			ch_info->tx_pkt = false;
 			if (!req->duration_mandatory)
-				ch_info->period -= RTW89_DWELL_TIME;
+				ch_info->period -= RTW89_DWELL_TIME_6G;
 		}
 	}
 
@@ -2791,7 +2802,8 @@ static int rtw89_hw_scan_add_chan_list(struct rtw89_dev *rtwdev,
 		if (req->duration_mandatory)
 			ch_info->period = req->duration;
 		else if (channel->band == NL80211_BAND_6GHZ)
-			ch_info->period = RTW89_CHANNEL_TIME_6G + RTW89_DWELL_TIME;
+			ch_info->period = RTW89_CHANNEL_TIME_6G +
+					  RTW89_DWELL_TIME_6G;
 		else
 			ch_info->period = RTW89_CHANNEL_TIME;
 

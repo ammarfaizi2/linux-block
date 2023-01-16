@@ -2106,20 +2106,6 @@ const struct rtw89_chip_info rtw8852a_chip_info = {
 	.btcx_desired		= 0x7,
 	.scbd			= 0x1,
 	.mailbox		= 0x1,
-	.btc_fwinfo_buf		= 1024,
-
-	.fcxbtcrpt_ver		= 1,
-	.fcxtdma_ver		= 1,
-	.fcxslots_ver		= 1,
-	.fcxcysta_ver		= 2,
-	.fcxstep_ver		= 2,
-	.fcxnullsta_ver		= 1,
-	.fcxmreg_ver		= 1,
-	.fcxgpiodbg_ver		= 1,
-	.fcxbtver_ver		= 1,
-	.fcxbtscan_ver		= 1,
-	.fcxbtafh_ver		= 1,
-	.fcxbtdevinfo_ver	= 1,
 
 	.afh_guard_ch		= 6,
 	.wl_rssi_thres		= rtw89_btc_8852a_wl_rssi_thres,
@@ -2149,6 +2135,7 @@ const struct rtw89_chip_info rtw8852a_chip_info = {
 	.dcfo_comp_sft		= 3,
 	.imr_info		= &rtw8852a_imr_info,
 	.rrsr_cfgs		= &rtw8852a_rrsr_cfgs,
+	.bss_clr_map_reg	= R_BSS_CLR_MAP,
 	.dma_ch_mask		= 0,
 #ifdef CONFIG_PM
 	.wowlan_stub		= &rtw_wowlan_stub_8852a,
