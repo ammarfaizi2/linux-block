@@ -346,6 +346,7 @@ struct ath11k_vif {
 
 	bool is_started;
 	bool is_up;
+	bool ftm_responder;
 	bool spectral_enabled;
 	bool ps;
 	u32 aid;
@@ -520,8 +521,8 @@ struct ath11k_sta {
 #define ATH11K_MIN_5G_FREQ 4150
 #define ATH11K_MIN_6G_FREQ 5925
 #define ATH11K_MAX_6G_FREQ 7115
-#define ATH11K_NUM_CHANS 101
-#define ATH11K_MAX_5G_CHAN 173
+#define ATH11K_NUM_CHANS 102
+#define ATH11K_MAX_5G_CHAN 177
 
 enum ath11k_state {
 	ATH11K_STATE_OFF,
