@@ -588,7 +588,7 @@ ath12k_dp_mon_rx_parse_status_tlv(struct ath12k_base *ab,
 				  u32 tlv_tag, u8 *tlv_data, u32 userid)
 {
 	struct hal_rx_mon_ppdu_info *ppdu_info = &pmon->mon_ppdu_info;
-	u32 info[6];
+	u32 info[7];
 
 	switch (tlv_tag) {
 	case HAL_RX_PPDU_START: {
@@ -2076,8 +2076,6 @@ int ath12k_dp_mon_srng_process(struct ath12k *ar, int mac_id, int *budget,
 	bool end_of_ppdu;
 	struct hal_rx_mon_ppdu_info *ppdu_info;
 	struct ath12k_peer *peer = NULL;
-	u32 rx_buf_sz;
-	u16 log_type = 0;
 
 	ppdu_info = &pmon->mon_ppdu_info;
 	memset(ppdu_info, 0, sizeof(*ppdu_info));
@@ -2132,10 +2130,6 @@ int ath12k_dp_mon_srng_process(struct ath12k *ar, int mac_id, int *budget,
 
 		for (i = 0; i < dest_idx; i++) {
 			skb = pmon->dest_skb_q[i];
-
-			if (log_type)
-				trace_ath12k_htt_rxdesc(ar, skb->data,
-							log_type, rx_buf_sz);
 
 			if (monitor_mode == ATH12K_DP_RX_MONITOR_MODE)
 				ath12k_dp_mon_rx_parse_mon_status(ar, pmon, mac_id,
