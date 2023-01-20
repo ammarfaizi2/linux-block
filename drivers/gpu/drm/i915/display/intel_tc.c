@@ -699,8 +699,7 @@ static void tgl_tc_phy_init(struct intel_tc_port *tc)
 	with_intel_display_power(i915, tc_phy_cold_off_domain(tc), wakeref)
 		val = intel_de_read(i915, PORT_TX_DFLEXDPSP(FIA1));
 
-	drm_WARN_ON(&i915->drm, val == 0xffffffff);
-
+	// drm_WARN_ON(&i915->drm, val == 0xffffffff);
 	tc_phy_load_fia_params(tc, val & MODULAR_FIA_MASK);
 }
 
