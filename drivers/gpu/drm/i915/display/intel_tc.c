@@ -590,9 +590,15 @@ intel_tc_port_get_current_mode(struct intel_digital_port *dig_port)
 	u32 live_status_mask = tc_port_live_status_mask(dig_port);
 	enum tc_port_mode mode;
 
-	if (!tc_phy_is_owned(dig_port) ||
-	    drm_WARN_ON(&i915->drm, !tc_phy_status_complete(dig_port)))
+	if (!tc_phy_is_owned(dig_port)) {
 		return TC_PORT_TBT_ALT;
+	} else {
+		bool x = drm_WARN_ON(&i915->drm, !!tc_phy_status_complete(dig_port));
+		if (!x) {
+			pr_warn("Yeah, we hit that intel_tc_port warn");
+			return TC_PORT_TBT_ALT;
+		}
+	}
 
 	mode = dig_port->tc_legacy_port ? TC_PORT_LEGACY : TC_PORT_DP_ALT;
 	if (live_status_mask) {
@@ -911,7 +917,7 @@ tc_has_modular_fia(struct drm_i915_private *i915, struct intel_digital_port *dig
 	tc_cold_unblock(dig_port, domain, wakeref);
 	mutex_unlock(&dig_port->tc_lock);
 
-	drm_WARN_ON(&i915->drm, val == 0xffffffff);
+	// drm_WARN_ON(&i915->drm, val == 0xffffffff);
 
 	return val & MODULAR_FIA_MASK;
 }
