@@ -431,6 +431,24 @@ out:
 	instrumentation_end();
 }
 
+/* Definitions to allow testing NMI diagnostics. */
+int nmi_delay; /* Spin loop duration in seconds. */
+bool nmi_halt1; /* Take early exit before counting NMI. */
+bool nmi_halt2; /* Take early exit after counting NMI. */
+bool nmi_halt3; /* Skip invoking NMI handler. */
+
+/* Set the test values as desired. */
+void set_nmi_torture(int nmi_delay_in, bool nmi_halt1_in, bool nmi_halt2_in, bool nmi_halt3_in)
+{
+	WRITE_ONCE(nmi_delay, nmi_delay_in);
+	WRITE_ONCE(nmi_halt1, nmi_halt1_in);
+	WRITE_ONCE(nmi_halt2, nmi_halt2_in);
+	WRITE_ONCE(nmi_halt3, nmi_halt3_in);
+	pr_info("%s: Set NMI test parameters nmi_delay=%d nmi_halt1=%d nmi_halt2=%d nmi_halt3=%d\n",
+		__func__, nmi_delay, nmi_halt1, nmi_halt2, nmi_halt3);
+}
+EXPORT_SYMBOL_GPL(set_nmi_torture);
+
 /*
  * NMIs can page fault or hit breakpoints which will cause it to lose
  * its NMI context with the CPU when the breakpoint or page fault does an IRET.
@@ -495,8 +513,12 @@ DEFINE_IDTENTRY_RAW(exc_nmi)
 	 * cause nested NMIs, but those can be handled safely.
 	 */
 	sev_es_nmi_complete();
-	if (IS_ENABLED(CONFIG_NMI_CHECK_CPU))
-		arch_atomic_long_inc(&nsp->idt_calls);
+	if (IS_ENABLED(CONFIG_NMI_CHECK_CPU)) {
+		if (!READ_ONCE(nmi_halt1))
+			arch_atomic_long_inc(&nsp->idt_calls);
+		if (READ_ONCE(nmi_halt1) || READ_ONCE(nmi_halt2))
+			return;
+	}
 
 	if (IS_ENABLED(CONFIG_SMP) && arch_cpu_is_offline(smp_processor_id()))
 		return;
@@ -528,10 +550,15 @@ nmi_restart:
 
 	if (IS_ENABLED(CONFIG_NMI_CHECK_CPU) && ignore_nmis) {
 		WRITE_ONCE(nsp->idt_ignored, nsp->idt_ignored + 1);
+	} else if (IS_ENABLED(CONFIG_NMI_CHECK_CPU) && READ_ONCE(nmi_halt3)) {
 	} else if (!ignore_nmis) {
+		int i = READ_ONCE(nmi_delay) * 1000;
+
 		if (IS_ENABLED(CONFIG_NMI_CHECK_CPU)) {
 			WRITE_ONCE(nsp->idt_nmi_seq, nsp->idt_nmi_seq + 1);
 			WARN_ON_ONCE(!(nsp->idt_nmi_seq & 0x1));
+			for (; i > 0; i--)
+				udelay(1000);
 		}
 		default_do_nmi(regs);
 		if (IS_ENABLED(CONFIG_NMI_CHECK_CPU)) {
