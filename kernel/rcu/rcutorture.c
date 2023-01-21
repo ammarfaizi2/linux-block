@@ -98,6 +98,10 @@ torture_param(int, irqreader, 1, "Allow RCU readers from irq handlers");
 torture_param(int, leakpointer, 0, "Leak pointer dereferences from readers");
 torture_param(int, n_barrier_cbs, 0, "# of callbacks/kthreads for barrier testing");
 torture_param(int, nfakewriters, 4, "Number of RCU fake writer threads");
+torture_param(int, nmi_delay, 0, "NMI spin loop duration in seconds");
+torture_param(bool, nmi_halt1, false, "Take early exit before counting NMI");
+torture_param(bool, nmi_halt2, false, "Take early exit after counting NMI");
+torture_param(bool, nmi_halt3, false, "Skip invoking NMI handler");
 torture_param(int, nreaders, -1, "Number of RCU reader threads");
 torture_param(int, object_debug, 0, "Enable debug-object double call_rcu() testing");
 torture_param(int, onoff_holdoff, 0, "Time after boot before CPU hotplugs (s)");
@@ -3276,12 +3280,15 @@ static void rcu_torture_read_exit_cleanup(void)
 	torture_stop_kthread(rcutorture_read_exit, read_exit_task);
 }
 
+void set_nmi_torture(int nmi_delay_in, bool nmi_halt1_in, bool nmi_halt2_in, bool nmi_halt3_in);
+
 static void rcutorture_test_nmis(int n)
 {
 	int cpu;
 	int dumpcpu;
 	int i;
 
+	set_nmi_torture(nmi_delay, nmi_halt1, nmi_halt2, nmi_halt3);
 	for (i = 0; i < n; i++) {
 		preempt_disable();
 		cpu = smp_processor_id();
@@ -3293,6 +3300,7 @@ static void rcutorture_test_nmis(int n)
 		preempt_enable();
 		schedule_timeout_uninterruptible(15 * HZ);
 	}
+	set_nmi_torture(0, false, false, false);
 }
 
 static enum cpuhp_state rcutor_hp;
