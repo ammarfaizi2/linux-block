@@ -38,7 +38,7 @@ err=
 nerrs=0
 for d in 0 1
 do
-	for t in 0 1
+	for t in 0 1 2
 	do
 		for c in 1 2 3
 		do
