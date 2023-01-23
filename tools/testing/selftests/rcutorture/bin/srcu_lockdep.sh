@@ -36,36 +36,33 @@ done
 
 err=
 nerrs=0
-for v in 0 1
+for d in 0 1
 do
-	for d in 0 1
+	for t in 0 1
 	do
-		for t in 0 1
+		for c in 1 2 3
 		do
-			for c in 1 2 3
-			do
-				err=
-				val=$((v*10000+d*1000+t*10+c))
-				tools/testing/selftests/rcutorture/bin/kvm.sh --allcpus --duration 5s --configs "SRCU-P" --bootargs "rcutorture.test_srcu_lockdep=$val" --trust-make --datestamp "$ds/$val" > "$T/kvm.sh.out" 2>&1
-				ret=$?
-				mv "$T/kvm.sh.out" "$RCUTORTURE/res/$ds/$val"
-				if test "$d" -ne 0 && test "$ret" -eq 0
-				then
-					err=1
-					echo -n Unexpected success for > "$RCUTORTURE/res/$ds/$val/kvm.sh.err"
-				fi
-				if test "$d" -eq 0 && test "$ret" -ne 0
-				then
-					err=1
-					echo -n Unexpected failure for > "$RCUTORTURE/res/$ds/$val/kvm.sh.err"
-				fi
-				if test -n "$err"
-				then
-					grep "rcu_torture_init_srcu_lockdep: test_srcu_lockdep = " "RCUTORTURE/res/$ds/$val/SRCU-P/console.log" | sed -e 's/^.*rcu_torture_init_srcu_lockdep://' >> "$RCUTORTURE/res/$ds/$val/kvm.sh.err"
-					cat "$RCUTORTURE/res/$ds/$val/kvm.sh.err"
-					nerrs=$((nerrs+1))
-				fi
-			done
+			err=
+			val=$((d*1000+t*10+c))
+			tools/testing/selftests/rcutorture/bin/kvm.sh --allcpus --duration 5s --configs "SRCU-P" --bootargs "rcutorture.test_srcu_lockdep=$val" --trust-make --datestamp "$ds/$val" > "$T/kvm.sh.out" 2>&1
+			ret=$?
+			mv "$T/kvm.sh.out" "$RCUTORTURE/res/$ds/$val"
+			if test "$d" -ne 0 && test "$ret" -eq 0
+			then
+				err=1
+				echo -n Unexpected success for > "$RCUTORTURE/res/$ds/$val/kvm.sh.err"
+			fi
+			if test "$d" -eq 0 && test "$ret" -ne 0
+			then
+				err=1
+				echo -n Unexpected failure for > "$RCUTORTURE/res/$ds/$val/kvm.sh.err"
+			fi
+			if test -n "$err"
+			then
+				grep "rcu_torture_init_srcu_lockdep: test_srcu_lockdep = " "RCUTORTURE/res/$ds/$val/SRCU-P/console.log" | sed -e 's/^.*rcu_torture_init_srcu_lockdep://' >> "$RCUTORTURE/res/$ds/$val/kvm.sh.err"
+				cat "$RCUTORTURE/res/$ds/$val/kvm.sh.err"
+				nerrs=$((nerrs+1))
+			fi
 		done
 	done
 done
