@@ -3499,6 +3499,17 @@ static DEFINE_MUTEX(mut7);
 static DEFINE_MUTEX(mut8);
 static DEFINE_MUTEX(mut9);
 
+static DECLARE_RWSEM(rwsem0);
+static DECLARE_RWSEM(rwsem1);
+static DECLARE_RWSEM(rwsem2);
+static DECLARE_RWSEM(rwsem3);
+static DECLARE_RWSEM(rwsem4);
+static DECLARE_RWSEM(rwsem5);
+static DECLARE_RWSEM(rwsem6);
+static DECLARE_RWSEM(rwsem7);
+static DECLARE_RWSEM(rwsem8);
+static DECLARE_RWSEM(rwsem9);
+
 DEFINE_STATIC_SRCU(srcu0);
 DEFINE_STATIC_SRCU(srcu1);
 DEFINE_STATIC_SRCU(srcu2);
@@ -3522,6 +3533,8 @@ static void rcu_torture_init_srcu_lockdep(void)
 	int idx;
 	struct mutex *muts[] = { &mut0, &mut1, &mut2, &mut3, &mut4,
 				 &mut5, &mut6, &mut7, &mut8, &mut9 };
+	struct rw_semaphore *rwsems[] = { &rwsem0, &rwsem1, &rwsem2, &rwsem3, &rwsem4,
+					  &rwsem5, &rwsem6, &rwsem7, &rwsem8, &rwsem9 };
 	struct srcu_struct *srcus[] = { &srcu0, &srcu1, &srcu2, &srcu3, &srcu4,
 					&srcu5, &srcu6, &srcu7, &srcu8, &srcu9 };
 	int testtype;
@@ -3592,6 +3605,32 @@ static void rcu_torture_init_srcu_lockdep(void)
 				mutex_lock(muts[i]);
 				synchronize_srcu(srcus[j]);
 				mutex_unlock(muts[i]);
+			}
+		}
+		return;
+	}
+
+	if (testtype == 2) {
+		pr_info("%s: test_srcu_lockdep = %05d: SRCU/rwsem %d-way %sdeadlock.\n",
+			__func__, test_srcu_lockdep, cyclelen, deadlock ? "" : "non-");
+		for (i = 0; i < cyclelen; i++) {
+			j = i + 1;
+			if (i >= cyclelen - 1)
+				j = deadlock ? 0 : -1;
+
+			pr_info("%s: srcu_read_lock(%d), down_read(%d), up_read(%d), srcu_read_unlock(%d)\n",
+				__func__, i, i, i, i);
+			idx = srcu_read_lock(srcus[i]);
+			down_read(rwsems[i]);
+			up_read(rwsems[i]);
+			srcu_read_unlock(srcus[i], idx);
+
+			if (j >= 0) {
+				pr_info("%s: down_write(%d), synchronize_srcu(%d), up_write(%d)\n",
+					__func__, i, j, i);
+				down_write(rwsems[i]);
+				synchronize_srcu(srcus[j]);
+				up_write(rwsems[i]);
 			}
 		}
 		return;
