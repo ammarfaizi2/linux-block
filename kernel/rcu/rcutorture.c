@@ -3491,9 +3491,24 @@ static void rcutorture_sync(void)
 static DEFINE_MUTEX(mut0);
 static DEFINE_MUTEX(mut1);
 static DEFINE_MUTEX(mut2);
+static DEFINE_MUTEX(mut3);
+static DEFINE_MUTEX(mut4);
+static DEFINE_MUTEX(mut5);
+static DEFINE_MUTEX(mut6);
+static DEFINE_MUTEX(mut7);
+static DEFINE_MUTEX(mut8);
+static DEFINE_MUTEX(mut9);
+
 DEFINE_STATIC_SRCU(srcu0);
 DEFINE_STATIC_SRCU(srcu1);
 DEFINE_STATIC_SRCU(srcu2);
+DEFINE_STATIC_SRCU(srcu3);
+DEFINE_STATIC_SRCU(srcu4);
+DEFINE_STATIC_SRCU(srcu5);
+DEFINE_STATIC_SRCU(srcu6);
+DEFINE_STATIC_SRCU(srcu7);
+DEFINE_STATIC_SRCU(srcu8);
+DEFINE_STATIC_SRCU(srcu9);
 
 // Test lockdep on SRCU-based deadlock scenarios.
 static void rcu_torture_init_srcu_lockdep(void)
@@ -3505,31 +3520,23 @@ static void rcu_torture_init_srcu_lockdep(void)
 	int i;
 	int j;
 	int idx;
-	struct mutex *muts[] = { &mut0, &mut1, &mut2 };
-	struct srcu_struct *srcus[] = { &srcu0, &srcu1, &srcu2 };
+	struct mutex *muts[] = { &mut0, &mut1, &mut2, &mut3, &mut4,
+				 &mut5, &mut6, &mut7, &mut8, &mut9 };
+	struct srcu_struct *srcus[] = { &srcu0, &srcu1, &srcu2, &srcu3, &srcu4,
+					&srcu5, &srcu6, &srcu7, &srcu8, &srcu9 };
 	int testtype;
-	int v;
 
 	if (!test_srcu_lockdep)
 		return;
 
-	v = test_srcu_lockdep / 10000;
-	deadlock = test_srcu_lockdep / 1000 % 10;
+	deadlock = test_srcu_lockdep / 1000;
 	testtype = (test_srcu_lockdep / 10) % 100;
 	cyclelen = test_srcu_lockdep % 10;
 	cyclelenmax = min(ARRAY_SIZE(muts), ARRAY_SIZE(srcus));
 	WARN_ON_ONCE(ARRAY_SIZE(muts) != ARRAY_SIZE(srcus));
-	if (WARN_ONCE(v != !!v,
-		      "%s: test_srcu_lockdep=%d and verbosity digit %d must be zero or one.\n",
-		      __func__, test_srcu_lockdep, v))
-		err = true;
 	if (WARN_ONCE(deadlock != !!deadlock,
 		      "%s: test_srcu_lockdep=%d and deadlock digit %d must be zero or one.\n",
 		      __func__, test_srcu_lockdep, deadlock))
-		err = true;
-	if (WARN_ONCE(cyclelen > cyclelenmax,
-		      "%s: test_srcu_lockdep=%d and cycle-length digit %d must be less than %d.\n",
-		      __func__, test_srcu_lockdep, cyclelen, cyclelenmax))
 		err = true;
 	if (WARN_ONCE(cyclelen <= 0,
 		      "%s: test_srcu_lockdep=%d and cycle-length digit %d must be greater than zero.\n",
@@ -3537,6 +3544,8 @@ static void rcu_torture_init_srcu_lockdep(void)
 		err = true;
 	if (err)
 		goto err_out;
+
+	for (i = 0; i < cyclelen; i++)
 
 	if (testtype == 0) {
 		pr_info("%s: test_srcu_lockdep = %05d: SRCU %d-way %sdeadlock.\n",
@@ -3548,14 +3557,12 @@ static void rcu_torture_init_srcu_lockdep(void)
 			if (i >= cyclelen - 1)
 				j = deadlock ? 0 : -1;
 
-			if (v) {
-				if (j >= 0)
-					pr_info("%s: srcu_read_lock(%d), synchronize_srcu(%d), srcu_read_unlock(%d)\n",
-						__func__, i, j, i);
-				else
-					pr_info("%s: srcu_read_lock(%d), srcu_read_unlock(%d)\n",
-						__func__, i, i);
-			}
+			if (j >= 0)
+				pr_info("%s: srcu_read_lock(%d), synchronize_srcu(%d), srcu_read_unlock(%d)\n",
+					__func__, i, j, i);
+			else
+				pr_info("%s: srcu_read_lock(%d), srcu_read_unlock(%d)\n",
+					__func__, i, i);
 			idx = srcu_read_lock(srcus[i]);
 			if (j >= 0)
 				synchronize_srcu(srcus[j]);
@@ -3572,10 +3579,8 @@ static void rcu_torture_init_srcu_lockdep(void)
 			if (i >= cyclelen - 1)
 				j = deadlock ? 0 : -1;
 
-			if (v) {
-				pr_info("%s: srcu_read_lock(%d), mutex_lock(%d), mutex_unlock(%d), srcu_read_unlock(%d)\n",
-					__func__, i, i, i, i);
-			}
+			pr_info("%s: srcu_read_lock(%d), mutex_lock(%d), mutex_unlock(%d), srcu_read_unlock(%d)\n",
+				__func__, i, i, i, i);
 			idx = srcu_read_lock(srcus[i]);
 			mutex_lock(muts[i]);
 			mutex_unlock(muts[i]);
@@ -3594,8 +3599,7 @@ static void rcu_torture_init_srcu_lockdep(void)
 
 err_out:
 	pr_info("%s: test_srcu_lockdep = %05d does nothing.\n", __func__, test_srcu_lockdep);
-	pr_info("%s: test_srcu_lockdep = VDTTC.\n", __func__);
-	pr_info("%s: V: Verbosity, print operations if nonzero.\n", __func__);
+	pr_info("%s: test_srcu_lockdep = DTTC.\n", __func__);
 	pr_info("%s: D: Deadlock if nonzero.\n", __func__);
 	pr_info("%s: TT: Test number, 0=SRCU, 1=SRCU/mutex.\n", __func__);
 	pr_info("%s: C: Cycle length.\n", __func__);
