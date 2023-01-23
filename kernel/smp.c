@@ -105,6 +105,15 @@ void __init call_function_init(void)
 
 static DEFINE_STATIC_KEY_MAYBE(CONFIG_CSD_LOCK_WAIT_DEBUG_DEFAULT, csdlock_debug_enabled);
 
+/*
+ * Parse the csdlock_debug= kernel boot parameter.
+ *
+ * If you need to restore the old "ext" value that once provided
+ * additional debugging information, reapply the following commits:
+ *
+ * de7b09ef658d ("locking/csd_lock: Prepare more CSD lock debugging")
+ * a5aabace5fb8 ("locking/csd_lock: Add more data to CSD lock debugging")
+ */
 static int __init csdlock_debug(char *str)
 {
 	unsigned int val = 0;
