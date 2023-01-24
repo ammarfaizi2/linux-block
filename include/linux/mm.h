@@ -913,6 +913,11 @@ static inline int page_mapcount(struct page *page)
 	return mapcount;
 }
 
+static inline int folio_estimated_mapcount(struct folio *folio)
+{
+	return page_mapcount(folio_page(folio, 0));
+}
+
 int folio_total_mapcount(struct folio *folio);
 
 /**
