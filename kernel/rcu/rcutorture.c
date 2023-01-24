@@ -3539,7 +3539,6 @@ static int srcu_lockdep_next(const char *f, const char *fl, const char *fs, cons
 static void rcu_torture_init_srcu_lockdep(void)
 {
 	int cyclelen;
-	int cyclelenmax;
 	int deadlock;
 	bool err = false;
 	int i;
@@ -3559,7 +3558,6 @@ static void rcu_torture_init_srcu_lockdep(void)
 	deadlock = test_srcu_lockdep / 1000;
 	testtype = (test_srcu_lockdep / 10) % 100;
 	cyclelen = test_srcu_lockdep % 10;
-	cyclelenmax = min(ARRAY_SIZE(muts), ARRAY_SIZE(srcus));
 	WARN_ON_ONCE(ARRAY_SIZE(muts) != ARRAY_SIZE(srcus));
 	if (WARN_ONCE(deadlock != !!deadlock,
 		      "%s: test_srcu_lockdep=%d and deadlock digit %d must be zero or one.\n",
@@ -3571,8 +3569,6 @@ static void rcu_torture_init_srcu_lockdep(void)
 		err = true;
 	if (err)
 		goto err_out;
-
-	for (i = 0; i < cyclelen; i++)
 
 	if (testtype == 0) {
 		pr_info("%s: test_srcu_lockdep = %05d: SRCU %d-way %sdeadlock.\n",
