@@ -274,6 +274,28 @@ static void test_syscall_rcx_r11_consistent(void)
 	do_syscall(__NR_getppid, 0, 0, 0, 0, 0, 0);
 }
 
+static unsigned long usr2_rcx;
+static unsigned long usr2_r11;
+
+static void sigusr2(int sig, siginfo_t *info, void *ctx_void)
+{
+	ucontext_t *ctx = (ucontext_t*)ctx_void;
+
+	usr2_r11 = ctx->uc_mcontext.gregs[REG_R11];
+	usr2_rcx = ctx->uc_mcontext.gregs[REG_RCX];
+
+	check_regs_result(ctx->uc_mcontext.gregs[REG_R11],
+			  ctx->uc_mcontext.gregs[REG_RCX],
+			  ctx->uc_mcontext.gregs[REG_RBX]);
+}
+
+static void test_sysret_consistent(void)
+{
+	printf("[RUN]\ttest_sysret_consistent\n");
+	__raise(SIGUSR2);
+	printf("[OK]\tRCX = %#lx;  R11 = %#lx\n", usr2_rcx, usr2_r11);
+}
+
 int main()
 {
 	int i;
@@ -290,6 +312,14 @@ int main()
 	sethandler(SIGUSR1, sigusr1, 0);
 	for (i = 47; i < 64; i++)
 		test_sigreturn_to(1UL<<i);
+
+	/*
+	 * test_sigreturn_to() above will test the IRET path. Now test
+	 * the SYSRET path.
+	 */
+	sethandler(SIGUSR2, sigusr2, 0);
+	for (i = 0; i < 32; i++)
+		test_sysret_consistent();
 
 	clearhandler(SIGUSR1);
 
