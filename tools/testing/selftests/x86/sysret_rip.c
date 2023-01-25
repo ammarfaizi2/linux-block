@@ -39,6 +39,112 @@ asm (
 extern const char test_page[];
 static void const *current_test_page_addr = test_page;
 
+/*
+ * Arbitrary values.
+ */
+static const unsigned long r11_sentinel = 0xfeedfacedeadbeef;
+static const unsigned long rcx_sentinel = 0x5ca1ab1e0b57ac1e;
+
+/*
+ * An arbitrary *valid* RFLAGS value.
+ */
+static const unsigned long rflags_sentinel = 0x200a93;
+
+enum regs_ok {
+	REGS_UNDEFINED	= -1,
+	REGS_SAVED	=  0,	/* Registers properly preserved (Intel FRED). */
+	REGS_SYSRET	=  1	/* Registers match syscall/sysret. */
+};
+
+/*
+ * @rbx should be set to the syscall return %rip.
+ */
+static void check_regs_result(unsigned long r11, unsigned long rcx,
+			      unsigned long rbx)
+{
+	static enum regs_ok regs_ok_state = REGS_UNDEFINED;
+	enum regs_ok ret;
+
+	if (r11 == r11_sentinel && rcx == rcx_sentinel) {
+		ret = REGS_SAVED;
+	} else if (r11 == rflags_sentinel && rcx == rbx) {
+		ret = REGS_SYSRET;
+	} else {
+		printf("[FAIL] check_regs_result\n");
+		printf("        r11_sentinel = %#lx; %%r11 = %#lx;\n", r11_sentinel, r11);
+		printf("        rcx_sentinel = %#lx; %%rcx = %#lx;\n", rcx_sentinel, rcx);
+		printf("        rflags_sentinel = %#lx\n", rflags_sentinel);
+		exit(1);
+	}
+
+
+	/*
+	 * Test that we don't get a mix of REGS_SAVED and REGS_SYSRET.
+	 * It needs at least calling check_regs_result() twice to assert.
+	 */
+	if (regs_ok_state == REGS_UNDEFINED) {
+		/*
+		 * First time calling check_regs_result().
+		 */
+		regs_ok_state = ret;
+	} else {
+		assert(regs_ok_state == ret);
+	}
+}
+
+/*
+ * There are two cases:
+ *
+ *   A) 'syscall' in a FRED system preserves %rcx and %r11.
+ *   B) 'syscall' in a non-FRED system sets %rcx=%rip and %r11=%rflags.
+ *
+ * When the do_syscall() function is called for the first time,
+ * check_regs_result() will memorize the behavior, either (A) or (B).
+ * Then, the next do_syscall() call will verify that the 'syscall'
+ * behavior is the same.
+ *
+ * This function needs to be called at least twice to assert.
+ */
+static long do_syscall(long nr_syscall, unsigned long arg1, unsigned long arg2,
+		       unsigned long arg3, unsigned long arg4,
+		       unsigned long arg5, unsigned long arg6)
+{
+	unsigned long rbx;
+	unsigned long rcx = rcx_sentinel;
+	register unsigned long r11 __asm__("%r11") = r11_sentinel;
+	register unsigned long r10 __asm__("%r10") = arg4;
+	register unsigned long r8 __asm__("%r8") = arg5;
+	register unsigned long r9 __asm__("%r9") = arg6;
+
+	__asm__ volatile (
+		"movq       -8(%%rsp), %%r12\n\t"    // Do not clobber the red zone.
+		"pushq      %[rflags_sentinel]\n\t"
+		"popfq\n\t"
+		"movq       %%r12, -8(%%rsp)\n\t"
+		"leaq       1f(%%rip), %[rbx]\n\t"
+		"syscall\n"
+		"1:"
+
+		: "+a" (nr_syscall),
+		  "+r" (r11),
+		  "+c" (rcx),
+		  [rbx] "=b" (rbx)
+
+		: [rflags_sentinel] "g" (rflags_sentinel),
+		  "D" (arg1),	/* %rdi */
+		  "S" (arg2),	/* %rsi */
+		  "d" (arg3),	/* %rdx */
+		  "r" (r10),
+		  "r" (r8),
+		  "r" (r9)
+
+		: "r12", "memory"
+	);
+
+	check_regs_result(r11, rcx, rbx);
+	return nr_syscall;
+}
+
 static void sethandler(int sig, void (*handler)(int, siginfo_t *, void *),
 		       int flags)
 {
@@ -88,24 +194,26 @@ static void sigusr1(int sig, siginfo_t *info, void *ctx_void)
 
 	memcpy(&initial_regs, &ctx->uc_mcontext.gregs, sizeof(gregset_t));
 
+	check_regs_result(ctx->uc_mcontext.gregs[REG_R11],
+			  ctx->uc_mcontext.gregs[REG_RCX],
+			  ctx->uc_mcontext.gregs[REG_RBX]);
+
 	/* Set IP and CX to match so that SYSRET can happen. */
 	ctx->uc_mcontext.gregs[REG_RIP] = rip;
 	ctx->uc_mcontext.gregs[REG_RCX] = rip;
-
-	/* R11 and EFLAGS should already match. */
-	assert(ctx->uc_mcontext.gregs[REG_EFL] ==
-	       ctx->uc_mcontext.gregs[REG_R11]);
-
 	sethandler(SIGSEGV, sigsegv_for_sigreturn_test, SA_RESETHAND);
+}
 
-	return;
+static void __raise(int sig)
+{
+	do_syscall(__NR_kill, getpid(), sig, 0, 0, 0, 0);
 }
 
 static void test_sigreturn_to(unsigned long ip)
 {
 	rip = ip;
 	printf("[RUN]\tsigreturn to 0x%lx\n", ip);
-	raise(SIGUSR1);
+	__raise(SIGUSR1);
 }
 
 static jmp_buf jmpbuf;
