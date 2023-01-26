@@ -951,7 +951,7 @@ static int do_mmap_private(struct vm_area_struct *vma,
 	atomic_long_add(total, &mmap_pages_allocated);
 
 	set_vm_flags(vma, VM_MAPPED_COPY);
-	region->vm_flags = vma->flags;
+	region->vm_flags = vma->vm_flags;
 	region->vm_start = (unsigned long) base;
 	region->vm_end   = region->vm_start + len;
 	region->vm_top   = region->vm_start + (total << PAGE_SHIFT);
