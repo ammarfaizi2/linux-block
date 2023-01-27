@@ -8937,6 +8937,7 @@ static void update_cpu_capacity(struct sched_domain *sd, int cpu)
 
 	trace_android_rvh_update_cpu_capacity(cpu, &capacity);
 	rq->cpu_capacity = capacity;
+	trace_sched_cpu_capacity_tp(rq);
 
 	/*
 	 * Detect if the performance domain is in capacity inversion state.
