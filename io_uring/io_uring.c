@@ -5666,7 +5666,7 @@ static void io_poll_task_func(struct io_kiocb *req, bool *locked)
 	spin_lock(&ctx->completion_lock);
 	hash_del(&req->hash_node);
 	spin_unlock(&ctx->completion_lock);
-	io_req_complete_post(req, req->result, 0);
+	io_req_task_complete(req, locked);
 }
 
 static void io_apoll_task_func(struct io_kiocb *req, bool *locked)
