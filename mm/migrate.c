@@ -1939,7 +1939,8 @@ int migrate_pages(struct list_head *from, new_page_t get_new_page,
 
 	rc_gather = migrate_hugetlbs(from, get_new_page, put_new_page, private,
 				     mode, reason, &stats, &ret_folios);
-	if (rc_gather < 0)
+	/* There may be free non-hugetlb folios available, continue to migrate. */
+	if (rc_gather < 0 && rc_gather != -ENOMEM)
 		goto out;
 again:
 	nr_pages = 0;
