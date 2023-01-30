@@ -220,7 +220,7 @@ out_unlock:
 }
 EXPORT_SYMBOL_GPL(stack_depot_init);
 
-static bool init_stack_slab(void **prealloc)
+static bool depot_init_slab(void **prealloc)
 {
 	if (!*prealloc)
 		return false;
@@ -268,12 +268,12 @@ depot_alloc_stack(unsigned long *entries, int size, u32 hash, void **prealloc)
 		/*
 		 * smp_store_release() here pairs with smp_load_acquire() from
 		 * |next_slab_inited| in stack_depot_save() and
-		 * init_stack_slab().
+		 * depot_init_slab().
 		 */
 		if (depot_index + 1 < STACK_ALLOC_MAX_SLABS)
 			smp_store_release(&next_slab_inited, 0);
 	}
-	init_stack_slab(prealloc);
+	depot_init_slab(prealloc);
 	if (stack_slabs[depot_index] == NULL)
 		return NULL;
 
@@ -402,7 +402,7 @@ depot_stack_handle_t __stack_depot_save(unsigned long *entries,
 	 * lock.
 	 *
 	 * The smp_load_acquire() here pairs with smp_store_release() to
-	 * |next_slab_inited| in depot_alloc_stack() and init_stack_slab().
+	 * |next_slab_inited| in depot_alloc_stack() and depot_init_slab().
 	 */
 	if (unlikely(can_alloc && !smp_load_acquire(&next_slab_inited))) {
 		/*
@@ -438,7 +438,7 @@ depot_stack_handle_t __stack_depot_save(unsigned long *entries,
 		 * We didn't need to store this stack trace, but let's keep
 		 * the preallocated memory for the future.
 		 */
-		WARN_ON(!init_stack_slab(&prealloc));
+		WARN_ON(!depot_init_slab(&prealloc));
 	}
 
 	raw_spin_unlock_irqrestore(&depot_lock, flags);
