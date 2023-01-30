@@ -269,8 +269,11 @@ depot_alloc_stack(unsigned long *entries, int size, u32 hash, void **prealloc)
 			return NULL;
 		}
 
-		/* Move on to the next slab. */
-		slab_index++;
+		/*
+		 * Move on to the next slab.
+		 * WRITE_ONCE annotates a race with stack_depot_fetch.
+		 */
+		WRITE_ONCE(slab_index, slab_index + 1);
 		slab_offset = 0;
 		/*
 		 * smp_store_release() here pairs with smp_load_acquire() in
@@ -492,6 +495,8 @@ unsigned int stack_depot_fetch(depot_stack_handle_t handle,
 			       unsigned long **entries)
 {
 	union handle_parts parts = { .handle = handle };
+	/* READ_ONCE annotates a race with depot_alloc_stack. */
+	int slab_index_cached = READ_ONCE(slab_index);
 	void *slab;
 	size_t offset = parts.offset << DEPOT_STACK_ALIGN;
 	struct stack_record *stack;
@@ -500,9 +505,9 @@ unsigned int stack_depot_fetch(depot_stack_handle_t handle,
 	if (!handle)
 		return 0;
 
-	if (parts.slab_index > slab_index) {
+	if (parts.slab_index > slab_index_cached) {
 		WARN(1, "slab index %d out of bounds (%d) for stack id %08x\n",
-			parts.slab_index, slab_index, handle);
+			parts.slab_index, slab_index_cached, handle);
 		return 0;
 	}
 	slab = stack_slabs[parts.slab_index];
