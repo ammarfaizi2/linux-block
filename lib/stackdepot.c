@@ -105,12 +105,13 @@ static bool init_stack_slab(void **prealloc)
 		if (depot_index + 1 < STACK_ALLOC_MAX_SLABS) {
 			stack_slabs[depot_index + 1] = *prealloc;
 			*prealloc = NULL;
+			/*
+			 * This smp_store_release pairs with smp_load_acquire()
+			 * from |next_slab_inited| above and in
+			 * stack_depot_save().
+			 */
+			smp_store_release(&next_slab_inited, 1);
 		}
-		/*
-		 * This smp_store_release pairs with smp_load_acquire() from
-		 * |next_slab_inited| above and in stack_depot_save().
-		 */
-		smp_store_release(&next_slab_inited, 1);
 	}
 	return true;
 }
