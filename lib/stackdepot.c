@@ -218,33 +218,41 @@ out_unlock:
 }
 EXPORT_SYMBOL_GPL(stack_depot_init);
 
+/* Uses preallocated memory to initialize a new stack depot slab. */
 static void depot_init_slab(void **prealloc)
 {
 	/*
-	 * This smp_load_acquire() pairs with smp_store_release() to
-	 * |next_slab_inited| below and in depot_alloc_stack().
+	 * If the next slab is already initialized, do not use the
+	 * preallocated memory.
+	 * smp_load_acquire() here pairs with smp_store_release() below and
+	 * in depot_alloc_stack().
 	 */
 	if (smp_load_acquire(&next_slab_inited))
 		return;
+
+	/* Check if the current slab is not yet allocated. */
 	if (stack_slabs[slab_index] == NULL) {
+		/* Use the preallocated memory for the current slab. */
 		stack_slabs[slab_index] = *prealloc;
 		*prealloc = NULL;
 	} else {
-		/* If this is the last depot slab, do not touch the next one. */
+		/*
+		 * Otherwise, use the preallocated memory for the next slab
+		 * as long as we do not exceed the maximum number of slabs.
+		 */
 		if (slab_index + 1 < DEPOT_MAX_SLABS) {
 			stack_slabs[slab_index + 1] = *prealloc;
 			*prealloc = NULL;
 			/*
 			 * This smp_store_release pairs with smp_load_acquire()
-			 * from |next_slab_inited| above and in
-			 * stack_depot_save().
+			 * above and in stack_depot_save().
 			 */
 			smp_store_release(&next_slab_inited, 1);
 		}
 	}
 }
 
-/* Allocation of a new stack in raw storage */
+/* Allocates a new stack in a stack depot slab. */
 static struct stack_record *
 depot_alloc_stack(unsigned long *entries, int size, u32 hash, void **prealloc)
 {
@@ -253,28 +261,35 @@ depot_alloc_stack(unsigned long *entries, int size, u32 hash, void **prealloc)
 
 	required_size = ALIGN(required_size, 1 << DEPOT_STACK_ALIGN);
 
+	/* Check if there is not enough space in the current slab. */
 	if (unlikely(slab_offset + required_size > DEPOT_SLAB_SIZE)) {
+		/* Bail out if we reached the slab limit. */
 		if (unlikely(slab_index + 1 >= DEPOT_MAX_SLABS)) {
 			WARN_ONCE(1, "Stack depot reached limit capacity");
 			return NULL;
 		}
+
+		/* Move on to the next slab. */
 		slab_index++;
 		slab_offset = 0;
 		/*
-		 * smp_store_release() here pairs with smp_load_acquire() from
-		 * |next_slab_inited| in stack_depot_save() and
-		 * depot_init_slab().
+		 * smp_store_release() here pairs with smp_load_acquire() in
+		 * stack_depot_save() and depot_init_slab().
 		 */
 		if (slab_index + 1 < DEPOT_MAX_SLABS)
 			smp_store_release(&next_slab_inited, 0);
 	}
+
+	/* Assign the preallocated memory to a slab if required. */
 	if (*prealloc)
 		depot_init_slab(prealloc);
+
+	/* Check if we have a slab to save the stack trace. */
 	if (stack_slabs[slab_index] == NULL)
 		return NULL;
 
+	/* Save the stack trace. */
 	stack = stack_slabs[slab_index] + slab_offset;
-
 	stack->hash = hash;
 	stack->size = size;
 	stack->handle.slab_index = slab_index;
