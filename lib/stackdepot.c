@@ -218,16 +218,14 @@ out_unlock:
 }
 EXPORT_SYMBOL_GPL(stack_depot_init);
 
-static bool depot_init_slab(void **prealloc)
+static void depot_init_slab(void **prealloc)
 {
-	if (!*prealloc)
-		return false;
 	/*
 	 * This smp_load_acquire() pairs with smp_store_release() to
 	 * |next_slab_inited| below and in depot_alloc_stack().
 	 */
 	if (smp_load_acquire(&next_slab_inited))
-		return true;
+		return;
 	if (stack_slabs[slab_index] == NULL) {
 		stack_slabs[slab_index] = *prealloc;
 		*prealloc = NULL;
@@ -244,7 +242,6 @@ static bool depot_init_slab(void **prealloc)
 			smp_store_release(&next_slab_inited, 1);
 		}
 	}
-	return true;
 }
 
 /* Allocation of a new stack in raw storage */
@@ -271,7 +268,8 @@ depot_alloc_stack(unsigned long *entries, int size, u32 hash, void **prealloc)
 		if (slab_index + 1 < DEPOT_MAX_SLABS)
 			smp_store_release(&next_slab_inited, 0);
 	}
-	depot_init_slab(prealloc);
+	if (*prealloc)
+		depot_init_slab(prealloc);
 	if (stack_slabs[slab_index] == NULL)
 		return NULL;
 
@@ -436,7 +434,7 @@ depot_stack_handle_t __stack_depot_save(unsigned long *entries,
 		 * We didn't need to store this stack trace, but let's keep
 		 * the preallocated memory for the future.
 		 */
-		WARN_ON(!depot_init_slab(&prealloc));
+		depot_init_slab(&prealloc);
 	}
 
 	raw_spin_unlock_irqrestore(&slab_lock, flags);
