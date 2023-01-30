@@ -56,7 +56,7 @@
 union handle_parts {
 	depot_stack_handle_t handle;
 	struct {
-		u32 slabindex : STACK_ALLOC_INDEX_BITS;
+		u32 slab_index : STACK_ALLOC_INDEX_BITS;
 		u32 offset : STACK_ALLOC_OFFSET_BITS;
 		u32 valid : STACK_ALLOC_NULL_PROTECTION_BITS;
 		u32 extra : STACK_DEPOT_EXTRA_BITS;
@@ -93,11 +93,11 @@ static unsigned int stack_hash_mask;
 /* Array of memory regions that store stack traces. */
 static void *stack_slabs[STACK_ALLOC_MAX_SLABS];
 /* Currently used slab in stack_slabs. */
-static int depot_index;
+static int slab_index;
 /* Offset to the unused space in the currently used slab. */
-static size_t depot_offset;
+static size_t slab_offset;
 /* Lock that protects the variables above. */
-static DEFINE_RAW_SPINLOCK(depot_lock);
+static DEFINE_RAW_SPINLOCK(slab_lock);
 /* Whether the next slab is initialized. */
 static int next_slab_inited;
 
@@ -230,13 +230,13 @@ static bool depot_init_slab(void **prealloc)
 	 */
 	if (smp_load_acquire(&next_slab_inited))
 		return true;
-	if (stack_slabs[depot_index] == NULL) {
-		stack_slabs[depot_index] = *prealloc;
+	if (stack_slabs[slab_index] == NULL) {
+		stack_slabs[slab_index] = *prealloc;
 		*prealloc = NULL;
 	} else {
 		/* If this is the last depot slab, do not touch the next one. */
-		if (depot_index + 1 < STACK_ALLOC_MAX_SLABS) {
-			stack_slabs[depot_index + 1] = *prealloc;
+		if (slab_index + 1 < STACK_ALLOC_MAX_SLABS) {
+			stack_slabs[slab_index + 1] = *prealloc;
 			*prealloc = NULL;
 			/*
 			 * This smp_store_release pairs with smp_load_acquire()
@@ -258,35 +258,35 @@ depot_alloc_stack(unsigned long *entries, int size, u32 hash, void **prealloc)
 
 	required_size = ALIGN(required_size, 1 << STACK_ALLOC_ALIGN);
 
-	if (unlikely(depot_offset + required_size > STACK_ALLOC_SIZE)) {
-		if (unlikely(depot_index + 1 >= STACK_ALLOC_MAX_SLABS)) {
+	if (unlikely(slab_offset + required_size > STACK_ALLOC_SIZE)) {
+		if (unlikely(slab_index + 1 >= STACK_ALLOC_MAX_SLABS)) {
 			WARN_ONCE(1, "Stack depot reached limit capacity");
 			return NULL;
 		}
-		depot_index++;
-		depot_offset = 0;
+		slab_index++;
+		slab_offset = 0;
 		/*
 		 * smp_store_release() here pairs with smp_load_acquire() from
 		 * |next_slab_inited| in stack_depot_save() and
 		 * depot_init_slab().
 		 */
-		if (depot_index + 1 < STACK_ALLOC_MAX_SLABS)
+		if (slab_index + 1 < STACK_ALLOC_MAX_SLABS)
 			smp_store_release(&next_slab_inited, 0);
 	}
 	depot_init_slab(prealloc);
-	if (stack_slabs[depot_index] == NULL)
+	if (stack_slabs[slab_index] == NULL)
 		return NULL;
 
-	stack = stack_slabs[depot_index] + depot_offset;
+	stack = stack_slabs[slab_index] + slab_offset;
 
 	stack->hash = hash;
 	stack->size = size;
-	stack->handle.slabindex = depot_index;
-	stack->handle.offset = depot_offset >> STACK_ALLOC_ALIGN;
+	stack->handle.slab_index = slab_index;
+	stack->handle.offset = slab_offset >> STACK_ALLOC_ALIGN;
 	stack->handle.valid = 1;
 	stack->handle.extra = 0;
 	memcpy(stack->entries, entries, flex_array_size(stack, entries, size));
-	depot_offset += required_size;
+	slab_offset += required_size;
 
 	return stack;
 }
@@ -418,7 +418,7 @@ depot_stack_handle_t __stack_depot_save(unsigned long *entries,
 			prealloc = page_address(page);
 	}
 
-	raw_spin_lock_irqsave(&depot_lock, flags);
+	raw_spin_lock_irqsave(&slab_lock, flags);
 
 	found = find_stack(*bucket, entries, nr_entries, hash);
 	if (!found) {
@@ -441,7 +441,7 @@ depot_stack_handle_t __stack_depot_save(unsigned long *entries,
 		WARN_ON(!depot_init_slab(&prealloc));
 	}
 
-	raw_spin_unlock_irqrestore(&depot_lock, flags);
+	raw_spin_unlock_irqrestore(&slab_lock, flags);
 exit:
 	if (prealloc) {
 		/* Nobody used this memory, ok to free it. */
@@ -497,12 +497,12 @@ unsigned int stack_depot_fetch(depot_stack_handle_t handle,
 	if (!handle)
 		return 0;
 
-	if (parts.slabindex > depot_index) {
+	if (parts.slab_index > slab_index) {
 		WARN(1, "slab index %d out of bounds (%d) for stack id %08x\n",
-			parts.slabindex, depot_index, handle);
+			parts.slab_index, slab_index, handle);
 		return 0;
 	}
-	slab = stack_slabs[parts.slabindex];
+	slab = stack_slabs[parts.slab_index];
 	if (!slab)
 		return 0;
 	stack = slab + offset;
