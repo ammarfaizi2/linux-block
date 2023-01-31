@@ -1132,12 +1132,10 @@ retry_deleg:
 	if (error)
 		goto out_inode_unlock;
 
-	if (inode->i_opflags & IOP_XATTR)
+	if (likely(!is_bad_inode(inode)))
 		error = set_posix_acl(mnt_userns, dentry, acl_type, kacl);
-	else if (unlikely(is_bad_inode(inode)))
-		error = -EIO;
 	else
-		error = -EOPNOTSUPP;
+		error = -EIO;
 	if (!error) {
 		fsnotify_xattr(dentry);
 		evm_inode_post_set_acl(dentry, acl_name, kacl);
@@ -1242,12 +1240,10 @@ retry_deleg:
 	if (error)
 		goto out_inode_unlock;
 
-	if (inode->i_opflags & IOP_XATTR)
+	if (likely(!is_bad_inode(inode)))
 		error = set_posix_acl(mnt_userns, dentry, acl_type, NULL);
-	else if (unlikely(is_bad_inode(inode)))
-		error = -EIO;
 	else
-		error = -EOPNOTSUPP;
+		error = -EIO;
 	if (!error) {
 		fsnotify_xattr(dentry);
 		evm_inode_post_remove_acl(mnt_userns, dentry, acl_name);
