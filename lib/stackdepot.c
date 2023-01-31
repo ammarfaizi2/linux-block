@@ -271,7 +271,8 @@ depot_alloc_stack(unsigned long *entries, int size, u32 hash, void **prealloc)
 
 		/*
 		 * Move on to the next slab.
-		 * WRITE_ONCE annotates a race with stack_depot_fetch.
+		 * WRITE_ONCE pairs with potential concurrent read in
+		 * stack_depot_fetch().
 		 */
 		WRITE_ONCE(slab_index, slab_index + 1);
 		slab_offset = 0;
