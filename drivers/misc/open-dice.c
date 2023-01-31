@@ -95,7 +95,7 @@ static int open_dice_mmap(struct file *filp, struct vm_area_struct *vma)
 		if (vma->vm_flags & VM_WRITE)
 			return -EPERM;
 		/* Ensure userspace cannot acquire VM_WRITE later. */
-		vm_flags_clear(vma, VM_MAYSHARE);
+		vm_flags_clear(vma, VM_MAYWRITE);
 	}
 
 	/* Create write-combine mapping so all clients observe a wipe. */
