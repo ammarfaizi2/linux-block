@@ -17,9 +17,6 @@
 #
 # Author: Paul E. McKenney <paulmck@linux.ibm.com>
 
-T="`mktemp -d ${TMPDIR-/tmp}/kvm-find-errors.sh.XXXXXX`"
-trap 'rm -rf $T' 0
-
 rundir="${1}"
 if test -z "$rundir" -o ! -d "$rundir"
 then
@@ -35,10 +32,9 @@ for i in ${rundir}/*/Make.out
 do
 	scenariodir="`dirname $i`"
 	scenariobasedir="`echo ${scenariodir} | sed -e 's/\.[0-9]*$//'`"
-	grep -E "error:|warning:|^ld: .*undefined reference to" < $i | grep -v '\<objtool: .*: unreachable instruction$' > $T/diags
-	if test -s "$T/diags"
+	if grep -E -q "error:|warning:|^ld: .*undefined reference to" < $i
 	then
-		cp $T/diags $i.diags
+		grep -E "error:|warning:|^ld: .*undefined reference to" < $i > $i.diags
 		files="$files $i.diags $i"
 	elif ! test -f ${scenariobasedir}/vmlinux && ! test -f ${scenariobasedir}/vmlinux.xz && ! test -f "${rundir}/re-run"
 	then
