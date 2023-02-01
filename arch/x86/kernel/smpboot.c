@@ -1328,9 +1328,12 @@ int native_cpu_up(unsigned int cpu, struct task_struct *tidle)
 {
 	int ret;
 
-	ret = do_cpu_up(cpu, tidle);
-	if (ret)
-		return ret;
+	/* If parallel AP bringup isn't enabled, perform the first steps now. */
+	if (!do_parallel_bringup) {
+		ret = do_cpu_up(cpu, tidle);
+		if (ret)
+			return ret;
+	}
 
 	ret = do_wait_cpu_initialized(cpu);
 	if (ret)
@@ -1350,6 +1353,12 @@ int native_cpu_up(unsigned int cpu, struct task_struct *tidle)
 	}
 
 	return ret;
+}
+
+/* Bringup step one: Send INIT/SIPI to the target AP */
+static int native_cpu_kick(unsigned int cpu)
+{
+	return do_cpu_up(cpu, idle_thread_get(cpu));
 }
 
 /**
@@ -1541,6 +1550,10 @@ void __init native_smp_prepare_cpus(unsigned int max_cpus)
 	    cc_platform_has(CC_ATTR_GUEST_STATE_ENCRYPT) ||
 	    boot_cpu_data.x86_vendor == X86_VENDOR_AMD)
 		do_parallel_bringup = false;
+
+	if (do_parallel_bringup)
+		cpuhp_setup_state_nocalls(CPUHP_BP_PARALLEL_DYN, "x86/cpu:kick",
+					  native_cpu_kick, NULL);
 
 	snp_set_wakeup_secondary_cpu();
 }
