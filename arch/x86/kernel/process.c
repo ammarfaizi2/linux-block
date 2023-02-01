@@ -730,6 +730,7 @@ void arch_cpu_idle_enter(void)
 void arch_cpu_idle_dead(void)
 {
 	play_dead();
+	BUG();
 }
 
 /*
