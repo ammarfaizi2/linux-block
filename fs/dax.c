@@ -1274,6 +1274,7 @@ static s64 dax_unshare_iter(struct iomap_iter *iter)
 	ret = copy_mc_to_kernel(daddr, saddr, length);
 	if (ret)
 		ret = -EIO;
+	ret = length;
 
 out_unlock:
 	dax_read_unlock(id);
