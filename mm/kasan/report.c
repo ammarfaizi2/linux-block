@@ -268,7 +268,7 @@ static void describe_object_addr(const void *addr, struct kasan_report_info *inf
 	}
 
 	pr_err("The buggy address is located %d bytes %s of\n"
-	       " %s%lu-byte region [%px, %px)\n",
+	       " %s%zu-byte region [%px, %px)\n",
 	       rel_bytes, rel_type, region_state, info->alloc_size,
 	       (void *)object_addr, (void *)(object_addr + info->alloc_size));
 }
