@@ -117,6 +117,7 @@ static inline int shrinker_debugfs_add(struct shrinker *shrinker)
 }
 static inline struct dentry *shrinker_debugfs_remove(struct shrinker *shrinker)
 {
+	return NULL;
 }
 static inline __printf(2, 3)
 int shrinker_debugfs_rename(struct shrinker *shrinker, const char *fmt, ...)
