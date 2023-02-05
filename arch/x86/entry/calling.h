@@ -122,6 +122,10 @@ For 32-bit we have the following conventions - kernel is built with
 	CLEAR_REGS
 .endm
 
+.macro MY_PUSH_REGS rdx=%rdx rcx=%rcx rax=%rax save_ret=0
+	PUSH_REGS rdx=\rdx, rcx=\rcx, rax=\rax, save_ret=\save_ret
+.endm
+
 .macro POP_REGS pop_rdi=1
 	popq %r15
 	popq %r14
