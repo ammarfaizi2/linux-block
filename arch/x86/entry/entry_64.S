@@ -106,7 +106,7 @@ SYM_INNER_LABEL(entry_SYSCALL_64_safe_stack, SYM_L_GLOBAL)
 SYM_INNER_LABEL(entry_SYSCALL_64_after_hwframe, SYM_L_GLOBAL)
 	pushq	%rax					/* pt_regs->orig_ax */
 
-	PUSH_AND_CLEAR_REGS rax=$-ENOSYS
+	MY_PUSH_REGS rax=$-ENOSYS
 
 	/* IRQs are off. */
 	movq	%rsp, %rdi
