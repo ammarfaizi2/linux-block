@@ -57,6 +57,7 @@
 #include <linux/pgtable.h>
 #include <linux/overflow.h>
 #include <linux/stackprotector.h>
+#include <linux/smpboot.h>
 
 #include <asm/acpi.h>
 #include <asm/cacheinfo.h>
@@ -1326,9 +1327,12 @@ int native_cpu_up(unsigned int cpu, struct task_struct *tidle)
 {
 	int ret;
 
-	ret = do_cpu_up(cpu, tidle);
-	if (ret)
-		return ret;
+	/* If parallel AP bringup isn't enabled, perform the first steps now. */
+	if (!do_parallel_bringup) {
+		ret = do_cpu_up(cpu, tidle);
+		if (ret)
+			return ret;
+	}
 
 	ret = do_wait_cpu_initialized(cpu);
 	if (ret)
@@ -1348,6 +1352,12 @@ int native_cpu_up(unsigned int cpu, struct task_struct *tidle)
 	}
 
 	return ret;
+}
+
+/* Bringup step one: Send INIT/SIPI to the target AP */
+static int native_cpu_kick(unsigned int cpu)
+{
+	return do_cpu_up(cpu, idle_thread_get(cpu));
 }
 
 /**
@@ -1563,6 +1573,11 @@ void __init native_smp_prepare_cpus(unsigned int max_cpus)
 	} else if (do_parallel_bringup) {
 		/* Without X2APIC, what's in CPUID 0x01 should suffice. */
 		smpboot_control = STARTUP_SECONDARY | STARTUP_APICID_CPUID_01;
+	}
+
+	if (do_parallel_bringup) {
+		cpuhp_setup_state_nocalls(CPUHP_BP_PARALLEL_DYN, "x86/cpu:kick",
+					  native_cpu_kick, NULL);
 	}
 
 	snp_set_wakeup_secondary_cpu();
