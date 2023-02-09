@@ -4354,8 +4354,12 @@ struct page *shmem_read_mapping_page_gfp(struct address_space *mapping,
 					 pgoff_t index, gfp_t gfp)
 {
 	struct folio *folio = shmem_read_folio_gfp(mapping, index, gfp);
-	struct page *page = folio_file_page(folio, index);
+	struct page *page;
 
+	if (IS_ERR(folio))
+		return &folio->page;
+
+	page = folio_file_page(folio, index);
 	if (PageHWPoison(page)) {
 		folio_put(folio);
 		return ERR_PTR(-EIO);
