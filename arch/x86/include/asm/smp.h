@@ -199,5 +199,13 @@ extern void nmi_selftest(void);
 #define nmi_selftest() do { } while (0)
 #endif
 
-#endif /* __ASSEMBLY__ */
+extern unsigned int smpboot_control;
+
+#endif /* !__ASSEMBLY__ */
+
+/* Control bits for startup_64 */
+#define STARTUP_SECONDARY	0x80000000
+#define STARTUP_APICID_CPUID_0B	0x40000000
+#define STARTUP_APICID_CPUID_01	0x20000000
+
 #endif /* _ASM_X86_SMP_H */
