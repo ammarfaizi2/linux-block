@@ -395,7 +395,7 @@ static int spi_match_device(struct device *dev, struct device_driver *drv)
 	return strcmp(spi->modalias, drv->name) == 0;
 }
 
-static int spi_uevent(struct device *dev, struct kobj_uevent_env *env)
+static int spi_uevent(const struct device *dev, struct kobj_uevent_env *env)
 {
 	const struct spi_device		*spi = to_spi_device(dev);
 	int rc;
@@ -2310,7 +2310,7 @@ static int of_spi_parse_dt(struct spi_controller *ctlr, struct spi_device *spi,
 	if (!of_property_read_u32(nc, "spi-max-frequency", &value))
 		spi->max_speed_hz = value;
 
-	if (!of_property_read_u16(nc, "spi-cs-setup-ns", &cs_setup)) {
+	if (!of_property_read_u16(nc, "spi-cs-setup-delay-ns", &cs_setup)) {
 		spi->cs_setup.value = cs_setup;
 		spi->cs_setup.unit = SPI_DELAY_UNIT_NSECS;
 	}
