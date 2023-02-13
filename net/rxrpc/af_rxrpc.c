@@ -58,7 +58,6 @@ static inline int rxrpc_writable(struct sock *sk)
  */
 static void rxrpc_write_space(struct sock *sk)
 {
-	_enter("%p", sk);
 	rcu_read_lock();
 	if (rxrpc_writable(sk)) {
 		struct socket_wq *wq = rcu_dereference(sk->sk_wq);
@@ -135,7 +134,7 @@ static int rxrpc_bind(struct socket *sock, struct sockaddr *saddr, int len)
 	u16 service_id;
 	int ret;
 
-	_enter("%p,%p,%d", rx, saddr, len);
+	_enter(",,%d", len);
 
 	ret = rxrpc_validate_address(rx, srx, len);
 	if (ret < 0)
@@ -214,7 +213,7 @@ static int rxrpc_listen(struct socket *sock, int backlog)
 	unsigned int max, old;
 	int ret;
 
-	_enter("%p,%d", rx, backlog);
+	_enter(",%d", backlog);
 
 	lock_sock(&rx->sk);
 
@@ -328,7 +327,7 @@ struct rxrpc_call *rxrpc_kernel_begin_call(struct socket *sock,
 		mutex_unlock(&call->user_mutex);
 	}
 
-	_leave(" = %p", call);
+	_leave(" = c=%x", call->debug_id);
 	return call;
 }
 EXPORT_SYMBOL(rxrpc_kernel_begin_call);
@@ -458,7 +457,7 @@ static int rxrpc_connect(struct socket *sock, struct sockaddr *addr,
 	struct rxrpc_sock *rx = rxrpc_sk(sock->sk);
 	int ret;
 
-	_enter("%p,%p,%d,%d", rx, addr, addr_len, flags);
+	_enter(",,%d,%d", addr_len, flags);
 
 	ret = rxrpc_validate_address(rx, srx, addr_len);
 	if (ret < 0) {
@@ -754,7 +753,7 @@ static int rxrpc_create(struct net *net, struct socket *sock, int protocol,
 	struct rxrpc_sock *rx;
 	struct sock *sk;
 
-	_enter("%p,%d", sock, protocol);
+	_enter(",%d", protocol);
 
 	/* we support transport protocol UDP/UDP6 only */
 	if (protocol != PF_INET &&
@@ -793,7 +792,7 @@ static int rxrpc_create(struct net *net, struct socket *sock, int protocol,
 	rxnet = rxrpc_net(sock_net(&rx->sk));
 	timer_reduce(&rxnet->peer_keepalive_timer, jiffies + 1);
 
-	_leave(" = 0 [%p]", rx);
+	_leave(" = 0");
 	return 0;
 }
 
@@ -806,7 +805,7 @@ static int rxrpc_shutdown(struct socket *sock, int flags)
 	struct rxrpc_sock *rx = rxrpc_sk(sk);
 	int ret = 0;
 
-	_enter("%p,%d", sk, flags);
+	_enter(",%d", flags);
 
 	if (flags != SHUT_RDWR)
 		return -EOPNOTSUPP;
@@ -833,18 +832,14 @@ static int rxrpc_shutdown(struct socket *sock, int flags)
  */
 static void rxrpc_sock_destructor(struct sock *sk)
 {
-	_enter("%p", sk);
+	_enter("");
 
 	rxrpc_purge_queue(&sk->sk_receive_queue);
 
 	WARN_ON(refcount_read(&sk->sk_wmem_alloc));
 	WARN_ON(!sk_unhashed(sk));
 	WARN_ON(sk->sk_socket);
-
-	if (!sock_flag(sk, SOCK_DEAD)) {
-		printk("Attempt to release alive rxrpc socket: %p\n", sk);
-		return;
-	}
+	WARN_ON(!sock_flag(sk, SOCK_DEAD));
 }
 
 /*
@@ -854,7 +849,7 @@ static int rxrpc_release_sock(struct sock *sk)
 {
 	struct rxrpc_sock *rx = rxrpc_sk(sk);
 
-	_enter("%p{%d,%d}", sk, sk->sk_state, refcount_read(&sk->sk_refcnt));
+	_enter("{%d,%d}", sk->sk_state, refcount_read(&sk->sk_refcnt));
 
 	/* declare the socket closed for business */
 	sock_orphan(sk);
@@ -907,7 +902,7 @@ static int rxrpc_release(struct socket *sock)
 {
 	struct sock *sk = sock->sk;
 
-	_enter("%p{%p}", sock, sk);
+	_enter("");
 
 	if (!sk)
 		return 0;

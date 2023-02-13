@@ -139,7 +139,7 @@ struct rxrpc_peer *rxrpc_lookup_peer_rcu(struct rxrpc_local *local,
 
 	peer = __rxrpc_lookup_peer_rcu(local, srx, hash_key);
 	if (peer)
-		_leave(" = %p {u=%d}", peer, refcount_read(&peer->ref));
+		_leave(" = P=%x {r=%d}", peer->debug_id, refcount_read(&peer->ref));
 	return peer;
 }
 
@@ -227,9 +227,9 @@ struct rxrpc_peer *rxrpc_alloc_peer(struct rxrpc_local *local, gfp_t gfp,
 
 		peer->cong_ssthresh = RXRPC_TX_MAX_WINDOW;
 		trace_rxrpc_peer(peer->debug_id, 1, why);
+		_leave(" = P=%x", peer->debug_id);
 	}
 
-	_leave(" = %p", peer);
 	return peer;
 }
 
@@ -285,9 +285,9 @@ static struct rxrpc_peer *rxrpc_create_peer(struct rxrpc_local *local,
 	if (peer) {
 		memcpy(&peer->srx, srx, sizeof(*srx));
 		rxrpc_init_peer(local, peer, hash_key);
+		_leave(" = P=%x", peer->debug_id);
 	}
 
-	_leave(" = %p", peer);
 	return peer;
 }
 
@@ -367,7 +367,7 @@ struct rxrpc_peer *rxrpc_lookup_peer(struct rxrpc_local *local,
 			peer = candidate;
 	}
 
-	_leave(" = %p {u=%d}", peer, refcount_read(&peer->ref));
+	_leave(" = P=%x {u=%d}", peer->debug_id, refcount_read(&peer->ref));
 	return peer;
 }
 
@@ -448,7 +448,7 @@ void rxrpc_destroy_all_peers(struct rxrpc_net *rxnet)
 			continue;
 
 		hlist_for_each_entry(peer, &rxnet->peer_hash[i], hash_link) {
-			pr_err("Leaked peer %u {%u} %pISp\n",
+			pr_err("Leaked peer P=%x {%u} %pISp\n",
 			       peer->debug_id,
 			       refcount_read(&peer->ref),
 			       &peer->srx.transport);

@@ -76,7 +76,7 @@ struct rxrpc_connection *rxrpc_alloc_connection(struct rxrpc_net *rxnet,
 		conn->idle_timestamp = jiffies;
 	}
 
-	_leave(" = %p{%d}", conn, conn ? conn->debug_id : 0);
+	_leave(" = C=%d", conn ? conn->debug_id : 0);
 	return conn;
 }
 
@@ -137,7 +137,7 @@ struct rxrpc_connection *rxrpc_find_client_connection_rcu(struct rxrpc_local *lo
 		BUG();
 	}
 
-	_leave(" = %p", conn);
+	_leave(" = C=%x", conn->debug_id);
 	return conn;
 
 not_found:
@@ -472,8 +472,8 @@ void rxrpc_destroy_all_connections(struct rxrpc_net *rxnet)
 
 	write_lock(&rxnet->conn_lock);
 	list_for_each_entry_safe(conn, _p, &rxnet->service_conns, link) {
-		pr_err("AF_RXRPC: Leaked conn %p {%d}\n",
-		       conn, refcount_read(&conn->ref));
+		pr_err("AF_RXRPC: Leaked conn C=%x {%d}\n",
+		       conn->debug_id, refcount_read(&conn->ref));
 		leak = true;
 	}
 	write_unlock(&rxnet->conn_lock);

@@ -100,7 +100,7 @@ struct rxrpc_call *rxrpc_find_call_by_user_ID(struct rxrpc_sock *rx,
 	struct rxrpc_call *call;
 	struct rb_node *p;
 
-	_enter("%p,%lx", rx, user_call_ID);
+	_enter(",%lx", user_call_ID);
 
 	read_lock(&rx->call_lock);
 
@@ -123,7 +123,7 @@ struct rxrpc_call *rxrpc_find_call_by_user_ID(struct rxrpc_sock *rx,
 found_extant_call:
 	rxrpc_get_call(call, rxrpc_call_get_sendmsg);
 	read_unlock(&rx->call_lock);
-	_leave(" = %p [%d]", call, refcount_read(&call->ref));
+	_leave(" = c=%x [%d]", call->debug_id, refcount_read(&call->ref));
 	return call;
 }
 
@@ -238,7 +238,7 @@ static struct rxrpc_call *rxrpc_alloc_client_call(struct rxrpc_sock *rx,
 	trace_rxrpc_call(call->debug_id, refcount_read(&call->ref),
 			 p->user_call_ID, rxrpc_call_new_client);
 
-	_leave(" = %p", call);
+	_leave(" = c=%x", call->debug_id);
 	return call;
 }
 
@@ -342,7 +342,7 @@ struct rxrpc_call *rxrpc_new_client_call(struct rxrpc_sock *rx,
 	struct rb_node *parent, **pp;
 	int ret;
 
-	_enter("%p,%lx", rx, p->user_call_ID);
+	_enter(",%lx", p->user_call_ID);
 
 	limiter = rxrpc_get_call_slot(p, gfp);
 	if (!limiter) {
@@ -405,7 +405,7 @@ struct rxrpc_call *rxrpc_new_client_call(struct rxrpc_sock *rx,
 	if (ret < 0)
 		goto error_attached_to_socket;
 
-	_leave(" = %p [new]", call);
+	_leave(" = c=%x [new]", call->debug_id);
 	return call;
 
 	/* We unexpectedly found the user ID in the list after taking
@@ -566,8 +566,8 @@ void rxrpc_release_call(struct rxrpc_sock *rx, struct rxrpc_call *call)
 	spin_lock(&rx->recvmsg_lock);
 
 	if (!list_empty(&call->recvmsg_link)) {
-		_debug("unlinking once-pending call %p { e=%lx f=%lx }",
-		       call, call->events, call->flags);
+		_debug("unlinking once-pending call c=%x { e=%lx f=%lx }",
+		       call->debug_id, call->events, call->flags);
 		list_del(&call->recvmsg_link);
 		put = true;
 	}
@@ -591,7 +591,8 @@ void rxrpc_release_call(struct rxrpc_sock *rx, struct rxrpc_call *call)
 	list_del(&call->sock_link);
 	write_unlock(&rx->call_lock);
 
-	_debug("RELEASE CALL %p (%d CONN %p)", call, call->debug_id, conn);
+	_debug("RELEASE CALL c=%x (CONN C=%x)",
+	       call->debug_id, conn ? conn->debug_id : 0);
 
 	if (putu)
 		rxrpc_put_call(call, rxrpc_call_put_userid);
@@ -606,7 +607,7 @@ void rxrpc_release_calls_on_socket(struct rxrpc_sock *rx)
 {
 	struct rxrpc_call *call;
 
-	_enter("%p", rx);
+	_enter("");
 
 	while (!list_empty(&rx->to_be_accepted)) {
 		call = list_entry(rx->to_be_accepted.next,
@@ -739,13 +740,13 @@ void rxrpc_destroy_all_calls(struct rxrpc_net *rxnet)
 		while (!list_empty(&rxnet->calls)) {
 			call = list_entry(rxnet->calls.next,
 					  struct rxrpc_call, link);
-			_debug("Zapping call %p", call);
+			_debug("Zapping call c=%x", call->debug_id);
 
 			rxrpc_see_call(call, rxrpc_call_see_zap);
 			list_del_init(&call->link);
 
-			pr_err("Call %p still in use (%d,%s,%lx,%lx)!\n",
-			       call, refcount_read(&call->ref),
+			pr_err("Call c=%x still in use (%d,%s,%lx,%lx)!\n",
+			       call->debug_id, refcount_read(&call->ref),
 			       rxrpc_call_states[__rxrpc_call_state(call)],
 			       call->flags, call->events);
 

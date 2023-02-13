@@ -140,7 +140,7 @@ static struct rxrpc_local *rxrpc_alloc_local(struct net *net,
 		trace_rxrpc_local(local->debug_id, rxrpc_local_new, 1, 1);
 	}
 
-	_leave(" = %p", local);
+	_leave(" = L=%x", local->debug_id);
 	return local;
 }
 
@@ -157,8 +157,8 @@ static int rxrpc_open_socket(struct rxrpc_local *local, struct net *net)
 	struct sock *usk;
 	int ret;
 
-	_enter("%p{%d,%d}",
-	       local, srx->transport_type, srx->transport.family);
+	_enter("L=%x{%d,%d}",
+	       local->debug_id, srx->transport_type, srx->transport.family);
 
 	udp_conf.family = srx->transport.family;
 	udp_conf.use_udp_checksums = true;
@@ -295,7 +295,7 @@ struct rxrpc_local *rxrpc_lookup_local(struct net *net,
 
 found:
 	mutex_unlock(&rxnet->local_mutex);
-	_leave(" = %p", local);
+	_leave(" = L=%x", local->debug_id);
 	return local;
 
 nomem:
@@ -468,8 +468,8 @@ void rxrpc_destroy_all_locals(struct rxrpc_net *rxnet)
 	if (!hlist_empty(&rxnet->local_endpoints)) {
 		mutex_lock(&rxnet->local_mutex);
 		hlist_for_each_entry(local, &rxnet->local_endpoints, link) {
-			pr_err("AF_RXRPC: Leaked local %p {%d}\n",
-			       local, refcount_read(&local->ref));
+			pr_err("AF_RXRPC: Leaked local L=%x {%d}\n",
+			       local->debug_id, refcount_read(&local->ref));
 		}
 		mutex_unlock(&rxnet->local_mutex);
 		BUG();

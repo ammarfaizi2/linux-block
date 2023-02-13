@@ -961,7 +961,7 @@ void rxrpc_input_call_packet(struct rxrpc_call *call, struct sk_buff *skb)
 	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
 	unsigned long timo;
 
-	_enter("%p,%p", call, skb);
+	_enter("c=%x,", call->debug_id);
 
 	if (sp->hdr.serviceId != call->dest_srx.srx_service)
 		call->dest_srx.srx_service = sp->hdr.serviceId;

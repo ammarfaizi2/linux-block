@@ -367,7 +367,7 @@ void rxrpc_process_connection(struct work_struct *work)
 static void rxrpc_post_packet_to_conn(struct rxrpc_connection *conn,
 				      struct sk_buff *skb)
 {
-	_enter("%p,%p", conn, skb);
+	_enter("C=%x,", conn->debug_id);
 
 	rxrpc_get_skb(skb, rxrpc_skb_get_conn_work);
 	skb_queue_tail(&conn->rx_queue, skb);

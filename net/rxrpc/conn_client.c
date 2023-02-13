@@ -58,8 +58,8 @@ static void rxrpc_destroy_client_conn_ids(struct rxrpc_local *local)
 
 	if (!idr_is_empty(&local->conn_ids)) {
 		idr_for_each_entry(&local->conn_ids, conn, id) {
-			pr_err("AF_RXRPC: Leaked client conn %p {%d}\n",
-			       conn, refcount_read(&conn->ref));
+			pr_err("AF_RXRPC: Leaked client conn C=%x {%d}\n",
+			       conn->debug_id, refcount_read(&conn->ref));
 		}
 		BUG();
 	}
@@ -246,8 +246,8 @@ int rxrpc_look_up_bundle(struct rxrpc_call *call, gfp_t gfp)
 	long diff;
 	bool upgrade = test_bit(RXRPC_CALL_UPGRADE, &call->flags);
 
-	_enter("{%px,%x,%u,%u}",
-	       call->peer, key_serial(call->key), call->security_level,
+	_enter("{P=%x,%x,%u,%u}",
+	       call->peer->debug_id, key_serial(call->key), call->security_level,
 	       upgrade);
 
 	if (test_bit(RXRPC_CALL_EXCLUSIVE, &call->flags)) {
