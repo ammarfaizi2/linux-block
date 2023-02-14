@@ -697,7 +697,7 @@ EXPORT_SYMBOL(boot_option_idle_override);
 static void (*x86_idle)(void);
 
 #ifndef CONFIG_SMP
-static inline void play_dead(void)
+static inline void __noreturn play_dead(void)
 {
 	BUG();
 }
