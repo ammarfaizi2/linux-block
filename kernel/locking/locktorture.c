@@ -257,6 +257,61 @@ static struct lock_torture_ops spin_lock_irq_ops = {
 	.name		= "spin_lock_irq"
 };
 
+#ifdef CONFIG_PREEMPT_RT
+static DEFINE_RAW_SPINLOCK(torture_raw_spinlock);
+
+static int torture_raw_spin_lock_write_lock(int tid __maybe_unused)
+__acquires(torture_raw_spinlock)
+{
+	raw_spin_lock(&torture_raw_spinlock);
+	return 0;
+}
+
+static void torture_raw_spin_lock_write_unlock(int tid __maybe_unused)
+__releases(torture_raw_spinlock)
+{
+	raw_spin_unlock(&torture_raw_spinlock);
+}
+
+static struct lock_torture_ops raw_spin_lock_ops = {
+	.writelock	= torture_raw_spin_lock_write_lock,
+	.write_delay	= torture_spin_lock_write_delay,
+	.task_boost	= torture_rt_boost,
+	.writeunlock	= torture_raw_spin_lock_write_unlock,
+	.readlock	= NULL,
+	.read_delay	= NULL,
+	.readunlock	= NULL,
+	.name		= "raw_spin_lock"
+};
+
+static int torture_raw_spin_lock_write_lock_irq(int tid __maybe_unused)
+__acquires(torture_raw_spinlock)
+{
+	unsigned long flags;
+
+	raw_spin_lock_irqsave(&torture_raw_spinlock, flags);
+	cxt.cur_ops->flags = flags;
+	return 0;
+}
+
+static void torture_raw_spin_lock_write_unlock_irq(int tid __maybe_unused)
+__releases(torture_raw_spinlock)
+{
+	raw_spin_unlock_irqrestore(&torture_raw_spinlock, cxt.cur_ops->flags);
+}
+
+static struct lock_torture_ops raw_spin_lock_irq_ops = {
+	.writelock	= torture_raw_spin_lock_write_lock_irq,
+	.write_delay	= torture_spin_lock_write_delay,
+	.task_boost	= torture_rt_boost,
+	.writeunlock	= torture_raw_spin_lock_write_unlock_irq,
+	.readlock	= NULL,
+	.read_delay	= NULL,
+	.readunlock	= NULL,
+	.name		= "raw_spin_lock_irq"
+};
+#endif // #ifdef CONFIG_PREEMPT_RT
+
 static DEFINE_RWLOCK(torture_rwlock);
 
 static int torture_rwlock_write_lock(int tid __maybe_unused)
@@ -1017,6 +1072,9 @@ static int __init lock_torture_init(void)
 	static struct lock_torture_ops *torture_ops[] = {
 		&lock_busted_ops,
 		&spin_lock_ops, &spin_lock_irq_ops,
+#ifdef CONFIG_PREEMPT_RT
+		&raw_spin_lock_ops, &raw_spin_lock_irq_ops,
+#endif // #ifdef CONFIG_PREEMPT_RT
 		&rw_lock_ops, &rw_lock_irq_ops,
 		&mutex_lock_ops,
 		&ww_mutex_lock_ops,
