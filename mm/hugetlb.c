@@ -2933,8 +2933,8 @@ retry:
 		 */
 		spin_unlock_irq(&hugetlb_lock);
 		isolated = isolate_hugetlb(old_folio, list);
-		spin_lock_irq(&hugetlb_lock);
 		ret = isolated ? 0 : -EBUSY;
+		spin_lock_irq(&hugetlb_lock);
 		goto free_new;
 	} else if (!folio_test_hugetlb_freed(old_folio)) {
 		/*
