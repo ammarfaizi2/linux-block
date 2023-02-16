@@ -1672,7 +1672,7 @@ do_migrate_range(unsigned long start_pfn, unsigned long end_pfn)
 			isolated = isolate_lru_page(page);
 		else
 			isolated = isolate_movable_page(page, ISOLATE_UNEVICTABLE);
-		if (isolated) { /* Success */
+		if (isolated) {
 			list_add_tail(&page->lru, &source);
 			if (!__PageMovable(page))
 				inc_node_page_state(page, NR_ISOLATED_ANON +
