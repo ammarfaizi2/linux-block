@@ -133,17 +133,17 @@ mtk_wed_wo_dequeue(struct mtk_wed_wo *wo, struct mtk_wed_wo_queue *q, u32 *len,
 
 static int
 mtk_wed_wo_queue_refill(struct mtk_wed_wo *wo, struct mtk_wed_wo_queue *q,
-			gfp_t gfp, bool rx)
+			bool rx)
 {
 	enum dma_data_direction dir = rx ? DMA_FROM_DEVICE : DMA_TO_DEVICE;
 	int n_buf = 0;
 
-	spin_lock_bh(&q->lock);
 	while (q->queued < q->n_desc) {
-		void *buf = page_frag_alloc(&q->cache, q->buf_size, gfp);
 		struct mtk_wed_wo_queue_entry *entry;
 		dma_addr_t addr;
+		void *buf;
 
+		buf = page_frag_alloc(&q->cache, q->buf_size, GFP_ATOMIC);
 		if (!buf)
 			break;
 
@@ -171,7 +171,6 @@ mtk_wed_wo_queue_refill(struct mtk_wed_wo *wo, struct mtk_wed_wo_queue *q,
 		q->queued++;
 		n_buf++;
 	}
-	spin_unlock_bh(&q->lock);
 
 	return n_buf;
 }
@@ -215,7 +214,7 @@ mtk_wed_wo_rx_run_queue(struct mtk_wed_wo *wo, struct mtk_wed_wo_queue *q)
 			mtk_wed_mcu_rx_unsolicited_event(wo, skb);
 	}
 
-	if (mtk_wed_wo_queue_refill(wo, q, GFP_ATOMIC, true)) {
+	if (mtk_wed_wo_queue_refill(wo, q, true)) {
 		u32 index = (q->head - 1) % q->n_desc;
 
 		mtk_wed_wo_queue_kick(wo, q, index);
@@ -259,7 +258,6 @@ mtk_wed_wo_queue_alloc(struct mtk_wed_wo *wo, struct mtk_wed_wo_queue *q,
 		       int n_desc, int buf_size, int index,
 		       struct mtk_wed_wo_queue_regs *regs)
 {
-	spin_lock_init(&q->lock);
 	q->regs = *regs;
 	q->n_desc = n_desc;
 	q->buf_size = buf_size;
@@ -291,7 +289,6 @@ mtk_wed_wo_queue_tx_clean(struct mtk_wed_wo *wo, struct mtk_wed_wo_queue *q)
 	struct page *page;
 	int i;
 
-	spin_lock_bh(&q->lock);
 	for (i = 0; i < q->n_desc; i++) {
 		struct mtk_wed_wo_queue_entry *entry = &q->entry[i];
 
@@ -300,7 +297,6 @@ mtk_wed_wo_queue_tx_clean(struct mtk_wed_wo *wo, struct mtk_wed_wo_queue *q)
 		skb_free_frag(entry->buf);
 		entry->buf = NULL;
 	}
-	spin_unlock_bh(&q->lock);
 
 	if (!q->cache.va)
 		return;
@@ -315,7 +311,6 @@ mtk_wed_wo_queue_rx_clean(struct mtk_wed_wo *wo, struct mtk_wed_wo_queue *q)
 {
 	struct page *page;
 
-	spin_lock_bh(&q->lock);
 	for (;;) {
 		void *buf = mtk_wed_wo_dequeue(wo, q, NULL, true);
 
@@ -324,7 +319,6 @@ mtk_wed_wo_queue_rx_clean(struct mtk_wed_wo *wo, struct mtk_wed_wo_queue *q)
 
 		skb_free_frag(buf);
 	}
-	spin_unlock_bh(&q->lock);
 
 	if (!q->cache.va)
 		return;
@@ -349,8 +343,6 @@ int mtk_wed_wo_queue_tx_skb(struct mtk_wed_wo *wo, struct mtk_wed_wo_queue *q,
 	struct mtk_wed_wo_queue_desc *desc;
 	int ret = 0, index;
 	u32 ctrl;
-
-	spin_lock_bh(&q->lock);
 
 	q->tail = mtk_wed_mmio_r32(wo, q->regs.dma_idx);
 	index = (q->head + 1) % q->n_desc;
@@ -382,8 +374,6 @@ int mtk_wed_wo_queue_tx_skb(struct mtk_wed_wo *wo, struct mtk_wed_wo_queue *q,
 	mtk_wed_wo_queue_kick(wo, q, q->head);
 	mtk_wed_wo_kickout(wo);
 out:
-	spin_unlock_bh(&q->lock);
-
 	dev_kfree_skb(skb);
 
 	return ret;
@@ -407,8 +397,10 @@ mtk_wed_wo_hardware_init(struct mtk_wed_wo *wo)
 		return -ENODEV;
 
 	wo->mmio.regs = syscon_regmap_lookup_by_phandle(np, NULL);
-	if (IS_ERR_OR_NULL(wo->mmio.regs))
-		return PTR_ERR(wo->mmio.regs);
+	if (IS_ERR(wo->mmio.regs)) {
+		ret = PTR_ERR(wo->mmio.regs);
+		goto error_put;
+	}
 
 	wo->mmio.irq = irq_of_parse_and_map(np, 0);
 	wo->mmio.irq_mask = MTK_WED_WO_ALL_INT_MASK;
@@ -432,7 +424,7 @@ mtk_wed_wo_hardware_init(struct mtk_wed_wo *wo)
 	if (ret)
 		goto error;
 
-	mtk_wed_wo_queue_refill(wo, &wo->q_tx, GFP_KERNEL, false);
+	mtk_wed_wo_queue_refill(wo, &wo->q_tx, false);
 	mtk_wed_wo_queue_reset(wo, &wo->q_tx);
 
 	regs.desc_base = MTK_WED_WO_CCIF_DUMMY5;
@@ -446,7 +438,7 @@ mtk_wed_wo_hardware_init(struct mtk_wed_wo *wo)
 	if (ret)
 		goto error;
 
-	mtk_wed_wo_queue_refill(wo, &wo->q_rx, GFP_KERNEL, true);
+	mtk_wed_wo_queue_refill(wo, &wo->q_rx, true);
 	mtk_wed_wo_queue_reset(wo, &wo->q_rx);
 
 	/* rx queue irqmask */
@@ -456,7 +448,8 @@ mtk_wed_wo_hardware_init(struct mtk_wed_wo *wo)
 
 error:
 	devm_free_irq(wo->hw->dev, wo->mmio.irq, wo);
-
+error_put:
+	of_node_put(np);
 	return ret;
 }
 

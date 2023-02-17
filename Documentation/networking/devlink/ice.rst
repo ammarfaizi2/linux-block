@@ -189,12 +189,21 @@ device data.
     * - ``nvm-flash``
       - The contents of the entire flash chip, sometimes referred to as
         the device's Non Volatile Memory.
+    * - ``shadow-ram``
+      - The contents of the Shadow RAM, which is loaded from the beginning
+        of the flash. Although the contents are primarily from the flash,
+        this area also contains data generated during device boot which is
+        not stored in flash.
     * - ``device-caps``
       - The contents of the device firmware's capabilities buffer. Useful to
         determine the current state and configuration of the device.
 
-Users can request an immediate capture of a snapshot via the
-``DEVLINK_CMD_REGION_NEW``
+Both the ``nvm-flash`` and ``shadow-ram`` regions can be accessed without a
+snapshot. The ``device-caps`` region requires a snapshot as the contents are
+sent by firmware and can't be split into separate reads.
+
+Users can request an immediate capture of a snapshot for all three regions
+via the ``DEVLINK_CMD_REGION_NEW`` command.
 
 .. code:: shell
 
@@ -276,7 +285,7 @@ features are enabled after the hierarchy is exported, but before any
 changes are made.
 
 This feature is also dependent on switchdev being enabled in the system.
-It's required bacause devlink-rate requires devlink-port objects to be
+It's required because devlink-rate requires devlink-port objects to be
 present, and those objects are only created in switchdev mode.
 
 If the driver is set to the switchdev mode, it will export internal
@@ -311,7 +320,7 @@ nodes and nodes with children also can't be deleted.
     * - ``tx_weight``
       - allows for usage of Weighted Fair Queuing arbitration scheme among
         siblings. This arbitration scheme can be used simultaneously with
-        the strict priority. Range 1-200. Only relative values mater for
+        the strict priority. Range 1-200. Only relative values matter for
         arbitration.
 
 ``tx_priority`` and ``tx_weight`` can be used simultaneously. In that case

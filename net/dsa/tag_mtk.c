@@ -8,7 +8,7 @@
 #include <linux/etherdevice.h>
 #include <linux/if_vlan.h>
 
-#include "dsa_priv.h"
+#include "tag.h"
 
 #define MTK_NAME		"mtk"
 
@@ -26,6 +26,8 @@ static struct sk_buff *mtk_tag_xmit(struct sk_buff *skb,
 	struct dsa_port *dp = dsa_slave_to_port(dev);
 	u8 xmit_tpid;
 	u8 *mtk_tag;
+
+	skb_set_queue_mapping(skb, dp->index);
 
 	/* Build the special tag after the MAC Source Address. If VLAN header
 	 * is present, it's required that VLAN header and special tag is

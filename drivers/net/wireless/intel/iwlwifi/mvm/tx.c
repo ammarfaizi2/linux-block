@@ -1107,8 +1107,8 @@ static int iwl_mvm_tx_mpdu(struct iwl_mvm *mvm, struct sk_buff *skb,
 	spin_lock(&mvmsta->lock);
 
 	/* nullfunc frames should go to the MGMT queue regardless of QOS,
-	 * the condition of !ieee80211_is_qos_nullfunc(fc) keeps the default
-	 * assignment of MGMT TID
+	 * the conditions of !ieee80211_is_qos_nullfunc(fc) and
+	 * !ieee80211_is_data_qos(fc) keep the default assignment of MGMT TID
 	 */
 	if (ieee80211_is_data_qos(fc) && !ieee80211_is_qos_nullfunc(fc)) {
 		tid = ieee80211_get_tid(hdr);
@@ -1133,7 +1133,8 @@ static int iwl_mvm_tx_mpdu(struct iwl_mvm *mvm, struct sk_buff *skb,
 			/* update the tx_cmd hdr as it was already copied */
 			tx_cmd->hdr->seq_ctrl = hdr->seq_ctrl;
 		}
-	} else if (ieee80211_is_data(fc) && !ieee80211_is_data_qos(fc)) {
+	} else if (ieee80211_is_data(fc) && !ieee80211_is_data_qos(fc) &&
+		   !ieee80211_is_nullfunc(fc)) {
 		tid = IWL_TID_NON_QOS;
 	}
 
@@ -1215,6 +1216,7 @@ int iwl_mvm_tx_skb_sta(struct iwl_mvm *mvm, struct sk_buff *skb,
 	struct sk_buff_head mpdus_skbs;
 	unsigned int payload_len;
 	int ret;
+	struct sk_buff *orig_skb = skb;
 
 	if (WARN_ON_ONCE(!mvmsta))
 		return -1;
@@ -1247,8 +1249,17 @@ int iwl_mvm_tx_skb_sta(struct iwl_mvm *mvm, struct sk_buff *skb,
 
 		ret = iwl_mvm_tx_mpdu(mvm, skb, &info, sta);
 		if (ret) {
+			/* Free skbs created as part of TSO logic that have not yet been dequeued */
 			__skb_queue_purge(&mpdus_skbs);
-			return ret;
+			/* skb here is not necessarily same as skb that entered this method,
+			 * so free it explicitly.
+			 */
+			if (skb == orig_skb)
+				ieee80211_free_txskb(mvm->hw, skb);
+			else
+				kfree_skb(skb);
+			/* there was error, but we consumed skb one way or another, so return 0 */
+			return 0;
 		}
 	}
 

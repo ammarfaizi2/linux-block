@@ -168,6 +168,8 @@ enum rtw89_mac_ax_l0_to_l1_event {
 	MAC_AX_L0_TO_L1_EVENT_MAX = 15,
 };
 
+#define RTW89_PORT_OFFSET_TU_TO_32US(shift_tu) ((shift_tu) * 1024 / 32)
+
 enum rtw89_mac_dbg_port_sel {
 	/* CMAC 0 related */
 	RTW89_DBG_PORT_SEL_PTCL_C0 = 0,
@@ -368,6 +370,15 @@ enum rtw89_mac_c2h_info_func {
 	RTW89_MAC_C2H_FUNC_INFO_MAX,
 };
 
+enum rtw89_mac_c2h_mcc_func {
+	RTW89_MAC_C2H_FUNC_MCC_RCV_ACK = 0,
+	RTW89_MAC_C2H_FUNC_MCC_REQ_ACK = 1,
+	RTW89_MAC_C2H_FUNC_MCC_TSF_RPT = 2,
+	RTW89_MAC_C2H_FUNC_MCC_STATUS_RPT = 3,
+
+	NUM_OF_RTW89_MAC_C2H_FUNC_MCC,
+};
+
 enum rtw89_mac_c2h_class {
 	RTW89_MAC_C2H_CLASS_INFO,
 	RTW89_MAC_C2H_CLASS_OFLD,
@@ -376,6 +387,31 @@ enum rtw89_mac_c2h_class {
 	RTW89_MAC_C2H_CLASS_MCC,
 	RTW89_MAC_C2H_CLASS_FWDBG,
 	RTW89_MAC_C2H_CLASS_MAX,
+};
+
+enum rtw89_mac_mcc_status {
+	RTW89_MAC_MCC_ADD_ROLE_OK = 0,
+	RTW89_MAC_MCC_START_GROUP_OK = 1,
+	RTW89_MAC_MCC_STOP_GROUP_OK = 2,
+	RTW89_MAC_MCC_DEL_GROUP_OK = 3,
+	RTW89_MAC_MCC_RESET_GROUP_OK = 4,
+	RTW89_MAC_MCC_SWITCH_CH_OK = 5,
+	RTW89_MAC_MCC_TXNULL0_OK = 6,
+	RTW89_MAC_MCC_TXNULL1_OK = 7,
+
+	RTW89_MAC_MCC_SWITCH_EARLY = 10,
+	RTW89_MAC_MCC_TBTT = 11,
+	RTW89_MAC_MCC_DURATION_START = 12,
+	RTW89_MAC_MCC_DURATION_END = 13,
+
+	RTW89_MAC_MCC_ADD_ROLE_FAIL = 20,
+	RTW89_MAC_MCC_START_GROUP_FAIL = 21,
+	RTW89_MAC_MCC_STOP_GROUP_FAIL = 22,
+	RTW89_MAC_MCC_DEL_GROUP_FAIL = 23,
+	RTW89_MAC_MCC_RESET_GROUP_FAIL = 24,
+	RTW89_MAC_MCC_SWITCH_CH_FAIL = 25,
+	RTW89_MAC_MCC_TXNULL0_FAIL = 26,
+	RTW89_MAC_MCC_TXNULL1_FAIL = 27,
 };
 
 struct rtw89_mac_ax_coex {
@@ -587,6 +623,7 @@ struct rtw89_mac_dle_dfi_qempty {
 };
 
 enum rtw89_mac_error_scenario {
+	RTW89_RXI300_ERROR		= 1,
 	RTW89_WCPU_CPU_EXCEPTION	= 2,
 	RTW89_WCPU_ASSERTION		= 3,
 };
@@ -733,6 +770,7 @@ enum mac_ax_err_info {
 	MAC_AX_ERR_L2_ERR_WDT_TIMEOUT_INT = 0x2599,
 	MAC_AX_ERR_CPU_EXCEPTION = 0x3000,
 	MAC_AX_ERR_ASSERTION = 0x4000,
+	MAC_AX_ERR_RXI300 = 0x5000,
 	MAC_AX_GET_ERR_MAX,
 	MAC_AX_DUMP_SHAREBUFF_INDICATOR = 0x80000000,
 
@@ -789,6 +827,15 @@ static inline u32 rtw89_mac_reg_by_idx(u32 reg_base, u8 band)
 static inline u32 rtw89_mac_reg_by_port(u32 base, u8 port, u8 mac_idx)
 {
 	return rtw89_mac_reg_by_idx(base + port * 0x40, mac_idx);
+}
+
+static inline u32
+rtw89_read32_port(struct rtw89_dev *rtwdev, struct rtw89_vif *rtwvif, u32 base)
+{
+	u32 reg;
+
+	reg = rtw89_mac_reg_by_port(base, rtwvif->port, rtwvif->mac_idx);
+	return rtw89_read32(rtwdev, reg);
 }
 
 static inline u32
@@ -870,8 +917,15 @@ int rtw89_mac_write_lte(struct rtw89_dev *rtwdev, const u32 offset, u32 val);
 int rtw89_mac_read_lte(struct rtw89_dev *rtwdev, const u32 offset, u32 *val);
 int rtw89_mac_add_vif(struct rtw89_dev *rtwdev, struct rtw89_vif *vif);
 int rtw89_mac_port_update(struct rtw89_dev *rtwdev, struct rtw89_vif *rtwvif);
+void rtw89_mac_port_tsf_sync(struct rtw89_dev *rtwdev,
+			     struct rtw89_vif *rtwvif,
+			     struct rtw89_vif *rtwvif_src,
+			     u16 offset_tu);
+int rtw89_mac_port_get_tsf(struct rtw89_dev *rtwdev, struct rtw89_vif *rtwvif,
+			   u64 *tsf);
 void rtw89_mac_set_he_obss_narrow_bw_ru(struct rtw89_dev *rtwdev,
 					struct ieee80211_vif *vif);
+void rtw89_mac_stop_ap(struct rtw89_dev *rtwdev, struct rtw89_vif *rtwvif);
 int rtw89_mac_remove_vif(struct rtw89_dev *rtwdev, struct rtw89_vif *vif);
 void rtw89_mac_disable_cpu(struct rtw89_dev *rtwdev);
 int rtw89_mac_enable_cpu(struct rtw89_dev *rtwdev, u8 boot_reason, bool dlfw);
@@ -894,6 +948,7 @@ static inline int rtw89_chip_disable_bb_rf(struct rtw89_dev *rtwdev)
 
 u32 rtw89_mac_get_err_status(struct rtw89_dev *rtwdev);
 int rtw89_mac_set_err_status(struct rtw89_dev *rtwdev, u32 err);
+bool rtw89_mac_c2h_chk_atomic(struct rtw89_dev *rtwdev, u8 class, u8 func);
 void rtw89_mac_c2h_handle(struct rtw89_dev *rtwdev, struct sk_buff *skb,
 			  u32 len, u8 class, u8 func);
 int rtw89_mac_setup_phycap(struct rtw89_dev *rtwdev);

@@ -71,6 +71,8 @@ struct mlx5_flow_attr {
 	u32 action;
 	struct mlx5_fc *counter;
 	struct mlx5_modify_hdr *modify_hdr;
+	struct mlx5e_mod_hdr_handle *mh; /* attached mod header instance */
+	struct mlx5e_mod_hdr_handle *slow_mh; /* attached mod header instance for slow path */
 	struct mlx5_ct_attr ct_attr;
 	struct mlx5e_sample_attr sample_attr;
 	struct mlx5e_meter_attr meter_attr;
@@ -82,7 +84,6 @@ struct mlx5_flow_attr {
 	struct mlx5_flow_table *dest_ft;
 	u8 inner_match_level;
 	u8 outer_match_level;
-	u8 ip_version;
 	u8 tun_ip_version;
 	int tunnel_id; /* mapped tunnel id */
 	u32 flags;
@@ -95,10 +96,13 @@ struct mlx5_flow_attr {
 		 */
 		bool count;
 	} lag;
+	struct mlx5_flow_attr *branch_true;
+	struct mlx5_flow_attr *branch_false;
+	struct mlx5_flow_attr *jumping_attr;
 	/* keep this union last */
 	union {
-		struct mlx5_esw_flow_attr esw_attr[0];
-		struct mlx5_nic_flow_attr nic_attr[0];
+		DECLARE_FLEX_ARRAY(struct mlx5_esw_flow_attr, esw_attr);
+		DECLARE_FLEX_ARRAY(struct mlx5_nic_flow_attr, nic_attr);
 	};
 };
 
@@ -110,6 +114,8 @@ enum {
 	MLX5_ATTR_FLAG_SAMPLE        = BIT(4),
 	MLX5_ATTR_FLAG_ACCEPT        = BIT(5),
 	MLX5_ATTR_FLAG_CT            = BIT(6),
+	MLX5_ATTR_FLAG_TERMINATING   = BIT(7),
+	MLX5_ATTR_FLAG_MTU           = BIT(8),
 };
 
 /* Returns true if any of the flags that require skipping further TC/NF processing are set. */
@@ -129,7 +135,6 @@ struct mlx5_rx_tun_attr {
 		__be32 v4;
 		struct in6_addr v6;
 	} dst_ip; /* Valid if decap_vport is not zero */
-	u32 vni;
 };
 
 #define MLX5E_TC_TABLE_CHAIN_TAG_BITS 16
@@ -280,9 +285,13 @@ int mlx5e_tc_match_to_reg_set_and_get_id(struct mlx5_core_dev *mdev,
 					 enum mlx5e_tc_attr_to_reg type,
 					 u32 data);
 
-int mlx5e_tc_add_flow_mod_hdr(struct mlx5e_priv *priv,
-			      struct mlx5e_tc_flow *flow,
-			      struct mlx5_flow_attr *attr);
+int mlx5e_tc_attach_mod_hdr(struct mlx5e_priv *priv,
+			    struct mlx5e_tc_flow *flow,
+			    struct mlx5_flow_attr *attr);
+
+void mlx5e_tc_detach_mod_hdr(struct mlx5e_priv *priv,
+			     struct mlx5e_tc_flow *flow,
+			     struct mlx5_flow_attr *attr);
 
 void mlx5e_tc_set_ethertype(struct mlx5_core_dev *mdev,
 			    struct flow_match_basic *match, bool outer,

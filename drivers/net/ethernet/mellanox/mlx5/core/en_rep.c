@@ -85,18 +85,25 @@ static const struct counter_desc sw_rep_stats_desc[] = {
 	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, tx_bytes) },
 };
 
-struct vport_stats {
-	u64 vport_rx_packets;
-	u64 vport_tx_packets;
-	u64 vport_rx_bytes;
-	u64 vport_tx_bytes;
-};
-
 static const struct counter_desc vport_rep_stats_desc[] = {
-	{ MLX5E_DECLARE_STAT(struct vport_stats, vport_rx_packets) },
-	{ MLX5E_DECLARE_STAT(struct vport_stats, vport_rx_bytes) },
-	{ MLX5E_DECLARE_STAT(struct vport_stats, vport_tx_packets) },
-	{ MLX5E_DECLARE_STAT(struct vport_stats, vport_tx_bytes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_rep_stats, vport_rx_packets) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_rep_stats, vport_rx_bytes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_rep_stats, vport_tx_packets) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_rep_stats, vport_tx_bytes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_rep_stats,
+			     rx_vport_rdma_unicast_packets) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_rep_stats, rx_vport_rdma_unicast_bytes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_rep_stats,
+			     tx_vport_rdma_unicast_packets) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_rep_stats, tx_vport_rdma_unicast_bytes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_rep_stats,
+			     rx_vport_rdma_multicast_packets) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_rep_stats,
+			     rx_vport_rdma_multicast_bytes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_rep_stats,
+			     tx_vport_rdma_multicast_packets) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_rep_stats,
+			     tx_vport_rdma_multicast_bytes) },
 };
 
 #define NUM_VPORT_REP_SW_COUNTERS ARRAY_SIZE(sw_rep_stats_desc)
@@ -161,33 +168,81 @@ static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(vport_rep)
 	int i;
 
 	for (i = 0; i < NUM_VPORT_REP_HW_COUNTERS; i++)
-		data[idx++] = MLX5E_READ_CTR64_CPU(&priv->stats.vf_vport,
+		data[idx++] = MLX5E_READ_CTR64_CPU(&priv->stats.rep_stats,
 						   vport_rep_stats_desc, i);
 	return idx;
 }
 
 static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(vport_rep)
 {
+	struct mlx5e_rep_stats *rep_stats = &priv->stats.rep_stats;
+	int outlen = MLX5_ST_SZ_BYTES(query_vport_counter_out);
 	struct mlx5_eswitch *esw = priv->mdev->priv.eswitch;
 	struct mlx5e_rep_priv *rpriv = priv->ppriv;
 	struct mlx5_eswitch_rep *rep = rpriv->rep;
-	struct rtnl_link_stats64 *vport_stats;
-	struct ifla_vf_stats vf_stats;
+	u32 *out;
 	int err;
 
-	err = mlx5_eswitch_get_vport_stats(esw, rep->vport, &vf_stats);
+	out = kvzalloc(outlen, GFP_KERNEL);
+	if (!out)
+		return;
+
+	err = mlx5_core_query_vport_counter(esw->dev, 1, rep->vport - 1, 0, out);
 	if (err) {
 		netdev_warn(priv->netdev, "vport %d error %d reading stats\n",
 			    rep->vport, err);
-		return;
+		goto out;
 	}
 
-	vport_stats = &priv->stats.vf_vport;
+	#define MLX5_GET_CTR(p, x) \
+		MLX5_GET64(query_vport_counter_out, p, x)
 	/* flip tx/rx as we are reporting the counters for the switch vport */
-	vport_stats->rx_packets = vf_stats.tx_packets;
-	vport_stats->rx_bytes   = vf_stats.tx_bytes;
-	vport_stats->tx_packets = vf_stats.rx_packets;
-	vport_stats->tx_bytes   = vf_stats.rx_bytes;
+	rep_stats->vport_rx_packets =
+		MLX5_GET_CTR(out, transmitted_ib_unicast.packets) +
+		MLX5_GET_CTR(out, transmitted_eth_unicast.packets) +
+		MLX5_GET_CTR(out, transmitted_ib_multicast.packets) +
+		MLX5_GET_CTR(out, transmitted_eth_multicast.packets) +
+		MLX5_GET_CTR(out, transmitted_eth_broadcast.packets);
+
+	rep_stats->vport_tx_packets =
+		MLX5_GET_CTR(out, received_ib_unicast.packets) +
+		MLX5_GET_CTR(out, received_eth_unicast.packets) +
+		MLX5_GET_CTR(out, received_ib_multicast.packets) +
+		MLX5_GET_CTR(out, received_eth_multicast.packets) +
+		MLX5_GET_CTR(out, received_eth_broadcast.packets);
+
+	rep_stats->vport_rx_bytes =
+		MLX5_GET_CTR(out, transmitted_ib_unicast.octets) +
+		MLX5_GET_CTR(out, transmitted_eth_unicast.octets) +
+		MLX5_GET_CTR(out, transmitted_ib_multicast.octets) +
+		MLX5_GET_CTR(out, transmitted_eth_broadcast.octets);
+
+	rep_stats->vport_tx_bytes =
+		MLX5_GET_CTR(out, received_ib_unicast.octets) +
+		MLX5_GET_CTR(out, received_eth_unicast.octets) +
+		MLX5_GET_CTR(out, received_ib_multicast.octets) +
+		MLX5_GET_CTR(out, received_eth_multicast.octets) +
+		MLX5_GET_CTR(out, received_eth_broadcast.octets);
+
+	rep_stats->rx_vport_rdma_unicast_packets =
+		MLX5_GET_CTR(out, transmitted_ib_unicast.packets);
+	rep_stats->tx_vport_rdma_unicast_packets =
+		MLX5_GET_CTR(out, received_ib_unicast.packets);
+	rep_stats->rx_vport_rdma_unicast_bytes =
+		MLX5_GET_CTR(out, transmitted_ib_unicast.octets);
+	rep_stats->tx_vport_rdma_unicast_bytes =
+		MLX5_GET_CTR(out, received_ib_unicast.octets);
+	rep_stats->rx_vport_rdma_multicast_packets =
+		MLX5_GET_CTR(out, transmitted_ib_multicast.packets);
+	rep_stats->tx_vport_rdma_multicast_packets =
+		MLX5_GET_CTR(out, received_ib_multicast.packets);
+	rep_stats->rx_vport_rdma_multicast_bytes =
+		MLX5_GET_CTR(out, transmitted_ib_multicast.octets);
+	rep_stats->tx_vport_rdma_multicast_bytes =
+		MLX5_GET_CTR(out, received_ib_multicast.octets);
+
+out:
+	kvfree(out);
 }
 
 static void mlx5e_rep_get_strings(struct net_device *dev,
@@ -734,8 +789,10 @@ static int mlx5e_init_rep(struct mlx5_core_dev *mdev,
 {
 	struct mlx5e_priv *priv = netdev_priv(netdev);
 
-	priv->fs = mlx5e_fs_init(priv->profile, mdev,
-				 !test_bit(MLX5E_STATE_DESTROYING, &priv->state));
+	priv->fs =
+		mlx5e_fs_init(priv->profile, mdev,
+			      !test_bit(MLX5E_STATE_DESTROYING, &priv->state),
+			      priv->dfs_root);
 	if (!priv->fs) {
 		netdev_err(priv->netdev, "FS allocation failed\n");
 		return -ENOMEM;
@@ -751,18 +808,14 @@ static int mlx5e_init_ul_rep(struct mlx5_core_dev *mdev,
 			     struct net_device *netdev)
 {
 	struct mlx5e_priv *priv = netdev_priv(netdev);
-	int err;
 
 	priv->fs = mlx5e_fs_init(priv->profile, mdev,
-				 !test_bit(MLX5E_STATE_DESTROYING, &priv->state));
+				 !test_bit(MLX5E_STATE_DESTROYING, &priv->state),
+				 priv->dfs_root);
 	if (!priv->fs) {
 		netdev_err(priv->netdev, "FS allocation failed\n");
 		return -ENOMEM;
 	}
-
-	err = mlx5e_ipsec_init(priv);
-	if (err)
-		mlx5_core_err(mdev, "Uplink rep IPsec initialization failed, %d\n", err);
 
 	mlx5e_vxlan_set_netdev_info(priv);
 	mlx5e_build_rep_params(netdev);
@@ -773,7 +826,6 @@ static int mlx5e_init_ul_rep(struct mlx5_core_dev *mdev,
 static void mlx5e_cleanup_rep(struct mlx5e_priv *priv)
 {
 	mlx5e_fs_cleanup(priv->fs);
-	mlx5e_ipsec_cleanup(priv);
 }
 
 static int mlx5e_create_rep_ttc_table(struct mlx5e_priv *priv)
@@ -1112,6 +1164,8 @@ static void mlx5e_uplink_rep_enable(struct mlx5e_priv *priv)
 	struct mlx5_core_dev *mdev = priv->mdev;
 	u16 max_mtu;
 
+	mlx5e_ipsec_init(priv);
+
 	netdev->min_mtu = ETH_MIN_MTU;
 	mlx5_query_port_max_mtu(priv->mdev, &max_mtu, 1);
 	netdev->max_mtu = MLX5E_HW2SW_MTU(&priv->channels.params, max_mtu);
@@ -1158,6 +1212,8 @@ static void mlx5e_uplink_rep_disable(struct mlx5e_priv *priv)
 	mlx5e_rep_tc_disable(priv);
 	mlx5_lag_remove_netdev(mdev, priv->netdev);
 	mlx5_vxlan_reset_to_default(mdev->vxlan);
+
+	mlx5e_ipsec_cleanup(priv);
 }
 
 static MLX5E_DEFINE_STATS_GRP(sw_rep, 0);

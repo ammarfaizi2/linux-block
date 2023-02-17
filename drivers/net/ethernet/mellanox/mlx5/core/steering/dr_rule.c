@@ -3,7 +3,12 @@
 
 #include "dr_types.h"
 
+#if defined(CONFIG_FRAME_WARN) && (CONFIG_FRAME_WARN < 2048)
+/* don't try to optimize STE allocation if the stack is too constaraining */
+#define DR_RULE_MAX_STES_OPTIMIZED 0
+#else
 #define DR_RULE_MAX_STES_OPTIMIZED 5
+#endif
 #define DR_RULE_MAX_STE_CHAIN_OPTIMIZED (DR_RULE_MAX_STES_OPTIMIZED + DR_ACTION_MAX_STES)
 
 static int dr_rule_append_to_miss_list(struct mlx5dr_domain *dmn,
@@ -35,16 +40,28 @@ static int dr_rule_append_to_miss_list(struct mlx5dr_domain *dmn,
 	return 0;
 }
 
+static void dr_rule_set_last_ste_miss_addr(struct mlx5dr_matcher *matcher,
+					   struct mlx5dr_matcher_rx_tx *nic_matcher,
+					   u8 *hw_ste)
+{
+	struct mlx5dr_ste_ctx *ste_ctx = matcher->tbl->dmn->ste_ctx;
+	u64 icm_addr;
+
+	if (mlx5dr_ste_is_miss_addr_set(ste_ctx, hw_ste))
+		return;
+
+	icm_addr = mlx5dr_icm_pool_get_chunk_icm_addr(nic_matcher->e_anchor->chunk);
+	mlx5dr_ste_set_miss_addr(ste_ctx, hw_ste, icm_addr);
+}
+
 static struct mlx5dr_ste *
 dr_rule_create_collision_htbl(struct mlx5dr_matcher *matcher,
 			      struct mlx5dr_matcher_rx_tx *nic_matcher,
 			      u8 *hw_ste)
 {
 	struct mlx5dr_domain *dmn = matcher->tbl->dmn;
-	struct mlx5dr_ste_ctx *ste_ctx = dmn->ste_ctx;
 	struct mlx5dr_ste_htbl *new_htbl;
 	struct mlx5dr_ste *ste;
-	u64 icm_addr;
 
 	/* Create new table for miss entry */
 	new_htbl = mlx5dr_ste_htbl_alloc(dmn->ste_icm_pool,
@@ -58,8 +75,7 @@ dr_rule_create_collision_htbl(struct mlx5dr_matcher *matcher,
 
 	/* One and only entry, never grows */
 	ste = new_htbl->chunk->ste_arr;
-	icm_addr = mlx5dr_icm_pool_get_chunk_icm_addr(nic_matcher->e_anchor->chunk);
-	mlx5dr_ste_set_miss_addr(ste_ctx, hw_ste, icm_addr);
+	dr_rule_set_last_ste_miss_addr(matcher, nic_matcher, hw_ste);
 	mlx5dr_htbl_get(new_htbl);
 
 	return ste;
@@ -241,7 +257,6 @@ dr_rule_rehash_copy_ste(struct mlx5dr_matcher *matcher,
 	bool use_update_list = false;
 	u8 hw_ste[DR_STE_SIZE] = {};
 	struct mlx5dr_ste *new_ste;
-	u64 icm_addr;
 	int new_idx;
 	u8 sb_idx;
 
@@ -250,9 +265,8 @@ dr_rule_rehash_copy_ste(struct mlx5dr_matcher *matcher,
 	mlx5dr_ste_set_bit_mask(hw_ste, nic_matcher->ste_builder[sb_idx].bit_mask);
 
 	/* Copy STE control and tag */
-	icm_addr = mlx5dr_icm_pool_get_chunk_icm_addr(nic_matcher->e_anchor->chunk);
 	memcpy(hw_ste, mlx5dr_ste_get_hw_ste(cur_ste), DR_STE_SIZE_REDUCED);
-	mlx5dr_ste_set_miss_addr(dmn->ste_ctx, hw_ste, icm_addr);
+	dr_rule_set_last_ste_miss_addr(matcher, nic_matcher, hw_ste);
 
 	new_idx = mlx5dr_ste_calc_hash_index(hw_ste, new_htbl);
 	new_ste = &new_htbl->chunk->ste_arr[new_idx];
@@ -773,7 +787,6 @@ static int dr_rule_handle_empty_entry(struct mlx5dr_matcher *matcher,
 {
 	struct mlx5dr_domain *dmn = matcher->tbl->dmn;
 	struct mlx5dr_ste_send_info *ste_info;
-	u64 icm_addr;
 
 	/* Take ref on table, only on first time this ste is used */
 	mlx5dr_htbl_get(cur_htbl);
@@ -781,8 +794,7 @@ static int dr_rule_handle_empty_entry(struct mlx5dr_matcher *matcher,
 	/* new entry -> new branch */
 	list_add_tail(&ste->miss_list_node, miss_list);
 
-	icm_addr = mlx5dr_icm_pool_get_chunk_icm_addr(nic_matcher->e_anchor->chunk);
-	mlx5dr_ste_set_miss_addr(dmn->ste_ctx, hw_ste, icm_addr);
+	dr_rule_set_last_ste_miss_addr(matcher, nic_matcher, hw_ste);
 
 	ste->ste_chain_location = ste_location;
 
@@ -1126,12 +1138,14 @@ dr_rule_create_rule_nic(struct mlx5dr_rule *rule,
 			 rule->flow_source))
 		return 0;
 
+	mlx5dr_domain_nic_lock(nic_dmn);
+
 	ret = mlx5dr_matcher_select_builders(matcher,
 					     nic_matcher,
 					     dr_rule_get_ipv(&param->outer),
 					     dr_rule_get_ipv(&param->inner));
 	if (ret)
-		return ret;
+		goto err_unlock;
 
 	hw_ste_arr_is_opt = nic_matcher->num_of_builders <= DR_RULE_MAX_STES_OPTIMIZED;
 	if (likely(hw_ste_arr_is_opt)) {
@@ -1140,11 +1154,11 @@ dr_rule_create_rule_nic(struct mlx5dr_rule *rule,
 		hw_ste_arr = kzalloc((nic_matcher->num_of_builders + DR_ACTION_MAX_STES) *
 				     DR_STE_SIZE, GFP_KERNEL);
 
-		if (!hw_ste_arr)
-			return -ENOMEM;
+		if (!hw_ste_arr) {
+			ret = -ENOMEM;
+			goto err_unlock;
+		}
 	}
-
-	mlx5dr_domain_nic_lock(nic_dmn);
 
 	ret = mlx5dr_matcher_add_to_tbl_nic(dmn, nic_matcher);
 	if (ret)
@@ -1229,10 +1243,11 @@ remove_from_nic_tbl:
 		mlx5dr_matcher_remove_from_tbl_nic(dmn, nic_matcher);
 
 free_hw_ste:
-	mlx5dr_domain_nic_unlock(nic_dmn);
-
-	if (unlikely(!hw_ste_arr_is_opt))
+	if (!hw_ste_arr_is_opt)
 		kfree(hw_ste_arr);
+
+err_unlock:
+	mlx5dr_domain_nic_unlock(nic_dmn);
 
 	return ret;
 }

@@ -3646,7 +3646,8 @@ static void tcp_send_challenge_ack(struct sock *sk)
 		u32 half = (ack_limit + 1) >> 1;
 
 		WRITE_ONCE(net->ipv4.tcp_challenge_timestamp, now);
-		WRITE_ONCE(net->ipv4.tcp_challenge_count, half + prandom_u32_max(ack_limit));
+		WRITE_ONCE(net->ipv4.tcp_challenge_count,
+			   get_random_u32_inclusive(half, ack_limit + half - 1));
 	}
 	count = READ_ONCE(net->ipv4.tcp_challenge_count);
 	if (count > 0) {
@@ -6845,7 +6846,7 @@ static bool tcp_syn_flood_action(const struct sock *sk, const char *proto)
 	    xchg(&queue->synflood_warned, 1) == 0) {
 		if (IS_ENABLED(CONFIG_IPV6) && sk->sk_family == AF_INET6) {
 			net_info_ratelimited("%s: Possible SYN flooding on port [%pI6c]:%u. %s.\n",
-					proto, &sk->sk_v6_rcv_saddr,
+					proto, inet6_rcv_saddr(sk),
 					sk->sk_num, msg);
 		} else {
 			net_info_ratelimited("%s: Possible SYN flooding on port %pI4:%u. %s.\n",
