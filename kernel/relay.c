@@ -1086,9 +1086,12 @@ static void relay_pipe_buf_release(struct pipe_inode_info *pipe,
 				   struct pipe_buffer *buf)
 {
 	struct rchan_buf *rbuf;
+	unsigned int size = buf->bvec[buf->index].bv_len;
 
-	rbuf = (struct rchan_buf *)page_private(buf->page);
-	relay_consume_bytes(rbuf, buf->private);
+	rbuf = buf->private;
+	if (buf->index == buf->nr - 1)
+		size += buf->private_2; /* Account for end padding */
+	relay_consume_bytes(rbuf, size);
 }
 
 static const struct pipe_buf_operations relay_pipe_buf_ops = {
@@ -1096,10 +1099,6 @@ static const struct pipe_buf_operations relay_pipe_buf_ops = {
 	.try_steal	= generic_pipe_buf_try_steal,
 	.get		= generic_pipe_buf_get,
 };
-
-static void relay_page_release(struct splice_pipe_desc *spd, unsigned int i)
-{
-}
 
 /*
  *	subbuf_splice_actor - splice up to one subbuf's worth of data
@@ -1112,6 +1111,7 @@ static ssize_t subbuf_splice_actor(struct file *in,
 			       int *nonpad_ret)
 {
 	unsigned int pidx, poff, total_len, subbuf_pages, nr_pages;
+	struct pipe_buffer *buf;
 	struct rchan_buf *rbuf = in->private_data;
 	unsigned int subbuf_size = rbuf->chan->subbuf_size;
 	uint64_t pos = (uint64_t) *ppos;
@@ -1120,22 +1120,12 @@ static ssize_t subbuf_splice_actor(struct file *in,
 	size_t read_subbuf = read_start / subbuf_size;
 	size_t padding = rbuf->padding[read_subbuf];
 	size_t nonpad_end = read_subbuf * subbuf_size + subbuf_size - padding;
-	struct page *pages[PIPE_DEF_BUFFERS];
-	struct partial_page partial[PIPE_DEF_BUFFERS];
-	struct splice_pipe_desc spd = {
-		.pages = pages,
-		.nr_pages = 0,
-		.nr_pages_max = PIPE_DEF_BUFFERS,
-		.partial = partial,
-		.ops = &relay_pipe_buf_ops,
-		.spd_release = relay_page_release,
-	};
-	ssize_t ret;
+	ssize_t spliced = 0;
+	bool full = false;
+	int ret = 0;
 
 	if (rbuf->subbufs_produced == rbuf->subbufs_consumed)
 		return 0;
-	if (splice_grow_spd(pipe, &spd))
-		return -ENOMEM;
 
 	/*
 	 * Adjust read len, if longer than what is available
@@ -1146,54 +1136,57 @@ static ssize_t subbuf_splice_actor(struct file *in,
 	subbuf_pages = rbuf->chan->alloc_size >> PAGE_SHIFT;
 	pidx = (read_start / PAGE_SIZE) % subbuf_pages;
 	poff = read_start & ~PAGE_MASK;
-	nr_pages = min_t(unsigned int, subbuf_pages, spd.nr_pages_max);
+	nr_pages = min_t(unsigned int, subbuf_pages, PIPE_DEF_BUFFERS);
 
-	for (total_len = 0; spd.nr_pages < nr_pages; spd.nr_pages++) {
-		unsigned int this_len, this_end, private;
+	buf = pipe_alloc_buffer(pipe, &relay_pipe_buf_ops, nr_pages,
+				GFP_KERNEL, &ret);
+	if (!buf)
+		return ret;
+
+	buf->private	= rbuf;
+	/* buf->private_2 = 0; -- The amount of padding after the last segment */
+
+	for (total_len = 0; buf->nr < nr_pages;) {
+		struct folio *folio;
+		unsigned int this_len, this_end;
 		unsigned int cur_pos = read_start + total_len;
 
 		if (!len)
 			break;
 
 		this_len = min_t(unsigned long, len, PAGE_SIZE - poff);
-		private = this_len;
-
-		spd.pages[spd.nr_pages] = rbuf->page_array[pidx];
-		spd.partial[spd.nr_pages].offset = poff;
 
 		this_end = cur_pos + this_len;
 		if (this_end >= nonpad_end) {
 			this_len = nonpad_end - cur_pos;
-			private = this_len + padding;
+			buf->private_2 = padding;
 		}
-		spd.partial[spd.nr_pages].len = this_len;
-		spd.partial[spd.nr_pages].private = private;
+
+		folio = page_folio(rbuf->page_array[pidx]);
+
+		bvec_set_folio(&buf->bvec[buf->nr], folio, this_len, poff);
+		buf->footprint += folio_nr_pages(folio);
+		// TODO: Take page ref?
 
 		len -= this_len;
 		total_len += this_len;
 		poff = 0;
 		pidx = (pidx + 1) % subbuf_pages;
+		buf->nr++;
 
-		if (this_end >= nonpad_end) {
-			spd.nr_pages++;
+		if (this_end >= nonpad_end)
 			break;
-		}
 	}
 
-	ret = 0;
-	if (!spd.nr_pages)
+	spliced = *nonpad_ret = pipe_add(pipe, buf, &full);
+	if (spliced < total_len)
 		goto out;
 
-	ret = *nonpad_ret = splice_to_pipe(pipe, &spd);
-	if (ret < 0 || ret < total_len)
-		goto out;
-
-        if (read_start + ret == nonpad_end)
-                ret += padding;
+        if (read_start + spliced == nonpad_end)
+                spliced += padding;
 
 out:
-	splice_shrink_spd(&spd);
-	return ret;
+	return spliced;
 }
 
 static ssize_t relay_file_splice_read(struct file *in,
@@ -1228,10 +1221,7 @@ static ssize_t relay_file_splice_read(struct file *in,
 		nonpad_ret = 0;
 	}
 
-	if (spliced)
-		return spliced;
-
-	return ret;
+	return spliced ?: ret;
 }
 
 const struct file_operations relay_file_operations = {

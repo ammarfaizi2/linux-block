@@ -12,25 +12,38 @@
 #define PIPE_BUF_FLAG_PACKET	0x08	/* read() as a packet */
 #define PIPE_BUF_FLAG_CAN_MERGE	0x10	/* can merge buffers */
 #define PIPE_BUF_FLAG_WHOLE	0x20	/* read() must return entire buffer or error */
+#define PIPE_BUF_FLAG_IX_STOLEN	0x40	/* The folio at bvec[index] has been stolen/copied */
 #ifdef CONFIG_WATCH_QUEUE
 #define PIPE_BUF_FLAG_LOSS	0x40	/* Message loss happened after this buffer */
 #endif
 
 /**
  *	struct pipe_buffer - a linux kernel pipe buffer
- *	@page: the page containing the data for the pipe buffer
- *	@offset: offset of data inside the @page
- *	@len: length of data inside the @page
+ *	@queue_link: Link in pipe_inode_info::queue_link
  *	@ops: operations associated with this buffer. See @pipe_buf_operations.
  *	@flags: pipe buffer flags. See above.
  *	@private: private data owned by the ops.
+ *	@private_2: Additional private data owned by the ops.
+ *	@size: Size of the buffer
+ *	@footprint: Amount of memory pinned by this buffer in pages
+ *	@max: The size of bvec[]
+ *	@index: Current element in bvec[] to consume.
+ *	@nr: bvec[] count.
+ *	@bvec: List of buffer folios
  **/
 struct pipe_buffer {
-	struct page *page;
-	unsigned int offset, len;
 	const struct pipe_buf_operations *ops;
-	unsigned int flags;
-	unsigned long private;
+	struct list_head	queue_link;
+	size_t			size;
+	size_t			footprint;
+	void			*private;
+	unsigned long		private_2;
+	unsigned int		flags;
+	unsigned short		index;
+	unsigned short		max;
+	unsigned short		nr;
+	unsigned short		nr_confirmed;
+	struct bio_vec		bvec[0];
 };
 
 /*
@@ -46,10 +59,10 @@ struct pipe_buffer {
 struct pipe_buf_operations {
 	/*
 	 * ->confirm() verifies that the data in the pipe buffer is there
-	 * and that the contents are good. If the pages in the pipe belong
+	 * and that the contents are good. If the folios in the pipe belong
 	 * to a file system, we may need to wait for IO completion in this
 	 * hook. Returns 0 for good, or a negative error value in case of
-	 * error.  If not present all pages are considered good.
+	 * error.  If not present all folios are considered good.
 	 */
 	int (*confirm)(struct pipe_inode_info *, struct pipe_buffer *);
 
@@ -62,17 +75,25 @@ struct pipe_buf_operations {
 	/*
 	 * Attempt to take ownership of the pipe buffer and its contents.
 	 * ->try_steal() returns %true for success, in which case the contents
-	 * of the pipe (the buf->page) is locked and now completely owned by the
-	 * caller. The page may then be transferred to a different mapping, the
-	 * most often used case is insertion into different file address space
-	 * cache.
+	 * of the pipe (the bvec[]) is locked and now completely owned by the
+	 * caller. The folios may then be transferred to a different mapping,
+	 * the most often used case is insertion into different file address
+	 * space cache.
 	 */
 	bool (*try_steal)(struct pipe_inode_info *, struct pipe_buffer *);
 
 	/*
 	 * Get a reference to the pipe buffer.
 	 */
-	bool (*get)(struct pipe_inode_info *, struct pipe_buffer *);
+	bool (*get_pages)(struct pipe_inode_info *pipe, struct pipe_buffer *buf);
+
+	/*
+	 * Copy data out of the pipe buffer, performing any confirmatory step
+	 * necessary beforehand and releasing any used up bufferage.  The
+	 * caller will dispose of the buffer when buf->size reduces to zero.
+	 */
+	ssize_t (*copy_to_iter)(struct pipe_inode_info *pipe,
+				struct pipe_buffer *buf, struct iov_iter *iter);
 };
 
 /**
@@ -86,20 +107,6 @@ static inline __must_check bool pipe_buf_get(struct pipe_inode_info *pipe,
 				struct pipe_buffer *buf)
 {
 	return buf->ops->get(pipe, buf);
-}
-
-/**
- * pipe_buf_release - put a reference to a pipe_buffer
- * @pipe:	the pipe that the buffer belongs to
- * @buf:	the buffer to put a reference to
- */
-static inline void pipe_buf_release(struct pipe_inode_info *pipe,
-				    struct pipe_buffer *buf)
-{
-	const struct pipe_buf_operations *ops = buf->ops;
-
-	buf->ops = NULL;
-	ops->release(pipe, buf);
 }
 
 /**
@@ -137,6 +144,7 @@ ssize_t pipe_add(struct pipe_inode_info *pipe, struct pipe_buffer *buf, bool *fu
 #ifdef CONFIG_WATCH_QUEUE
 void pipe_set_lost_mark(struct pipe_inode_info *pipe);
 #endif
+void pipe_buf_release(struct pipe_inode_info *pipe, struct pipe_buffer *buf);
 
 /* Get data from a pipe */
 size_t pipe_query_content(struct pipe_inode_info *pipe, size_t *len);

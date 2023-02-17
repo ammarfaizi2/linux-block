@@ -6399,7 +6399,7 @@ static void tracing_set_nop(struct trace_array *tr)
 {
 	if (tr->current_trace == &nop_trace)
 		return;
-	
+
 	tr->current_trace->enabled--;
 
 	if (tr->current_trace->reset)
@@ -6901,12 +6901,6 @@ out:
 	return sret;
 }
 
-static void tracing_spd_release_pipe(struct splice_pipe_desc *spd,
-				     unsigned int idx)
-{
-	__free_page(spd->pages[idx]);
-}
-
 static size_t
 tracing_fill_pipe_page(size_t rem, struct trace_iterator *iter)
 {
@@ -6960,23 +6954,17 @@ static ssize_t tracing_splice_read_pipe(struct file *filp,
 					size_t len,
 					unsigned int flags)
 {
-	struct page *pages_def[PIPE_DEF_BUFFERS];
-	struct partial_page partial_def[PIPE_DEF_BUFFERS];
+	struct pipe_buffer *buf;
 	struct trace_iterator *iter = filp->private_data;
-	struct splice_pipe_desc spd = {
-		.pages		= pages_def,
-		.partial	= partial_def,
-		.nr_pages	= 0, /* This gets updated below. */
-		.nr_pages_max	= PIPE_DEF_BUFFERS,
-		.ops		= &default_pipe_buf_ops,
-		.spd_release	= tracing_spd_release_pipe,
-	};
 	ssize_t ret;
 	size_t rem;
+	bool full = false;
 	unsigned int i;
 
-	if (splice_grow_spd(pipe, &spd))
+	buf = kzalloc(struct_size(buf, bvec, PIPE_DEF_BUFFERS), GFP_KERNEL);
+	if (!buf)
 		return -ENOMEM;
+	buf->ops = &default_pipe_buf_ops;
 
 	mutex_lock(&iter->mutex);
 
@@ -7000,42 +6988,41 @@ static ssize_t tracing_splice_read_pipe(struct file *filp,
 	trace_access_lock(iter->cpu_file);
 
 	/* Fill as many pages as possible. */
-	for (i = 0, rem = len; i < spd.nr_pages_max && rem; i++) {
-		spd.pages[i] = alloc_page(GFP_KERNEL);
-		if (!spd.pages[i])
+	for (i = 0, rem = len; i < PIPE_DEF_BUFFERS && rem; i++) {
+		struct folio *folio;
+		void *p;
+
+		folio = folio_alloc(GFP_KERNEL, 0);
+		if (!folio)
 			break;
 
 		rem = tracing_fill_pipe_page(rem, iter);
 
 		/* Copy the data into the page, so we can start over. */
-		ret = trace_seq_to_buffer(&iter->seq,
-					  page_address(spd.pages[i]),
+		p = kmap_local_folio(folio, 0);
+		ret = trace_seq_to_buffer(&iter->seq, p,
 					  trace_seq_used(&iter->seq));
+		kunmap_local(p);
 		if (ret < 0) {
-			__free_page(spd.pages[i]);
+			folio_put(folio);
 			break;
 		}
-		spd.partial[i].offset = 0;
-		spd.partial[i].len = trace_seq_used(&iter->seq);
 
+		bvec_set_folio(&buf->bvec[i], folio, trace_seq_used(&iter->seq), 0);
 		trace_seq_init(&iter->seq);
 	}
 
+	buf->nr = i;
 	trace_access_unlock(iter->cpu_file);
 	trace_event_read_unlock();
 	mutex_unlock(&iter->mutex);
 
-	spd.nr_pages = i;
-
-	if (i)
-		ret = splice_to_pipe(pipe, &spd);
-	else
-		ret = 0;
+	ret = pipe_add(pipe, buf, &full);
 out:
-	splice_shrink_spd(&spd);
 	return ret;
 
 out_err:
+	pipe_add(pipe, buf, &full);
 	mutex_unlock(&iter->mutex);
 	goto out;
 }
@@ -8297,19 +8284,6 @@ static const struct pipe_buf_operations buffer_pipe_buf_ops = {
 	.get			= buffer_pipe_buf_get,
 };
 
-/*
- * Callback from splice_to_pipe(), if we need to release some pages
- * at the end of the spd in case we error'ed out in filling the pipe.
- */
-static void buffer_spd_release(struct splice_pipe_desc *spd, unsigned int i)
-{
-	struct buffer_ref *ref =
-		(struct buffer_ref *)spd->partial[i].private;
-
-	buffer_ref_release(ref);
-	spd->partial[i].private = 0;
-}
-
 static ssize_t
 tracing_buffers_splice_read(struct file *file, loff_t *ppos,
 			    struct pipe_inode_info *pipe, size_t len,
@@ -8317,23 +8291,11 @@ tracing_buffers_splice_read(struct file *file, loff_t *ppos,
 {
 	struct ftrace_buffer_info *info = file->private_data;
 	struct trace_iterator *iter = &info->iter;
-	struct partial_page partial_def[PIPE_DEF_BUFFERS];
-	struct page *pages_def[PIPE_DEF_BUFFERS];
-	struct splice_pipe_desc spd = {
-		.pages		= pages_def,
-		.partial	= partial_def,
-		.nr_pages_max	= PIPE_DEF_BUFFERS,
-		.ops		= &buffer_pipe_buf_ops,
-		.spd_release	= buffer_spd_release,
-	};
-	struct buffer_ref *ref;
-	int entries, i;
-	ssize_t ret = 0;
-
-#ifdef CONFIG_TRACER_MAX_TRACE
-	if (iter->snapshot && iter->tr->current_trace->use_max_tr)
-		return -EBUSY;
-#endif
+	struct pipe_buffer *buf;
+	struct buffer_ref **refs;
+	ssize_t spliced;
+	bool full = false;
+	int ret = 0, entries;
 
 	if (*ppos & (PAGE_SIZE - 1))
 		return -EINVAL;
@@ -8344,15 +8306,31 @@ tracing_buffers_splice_read(struct file *file, loff_t *ppos,
 		len &= PAGE_MASK;
 	}
 
-	if (splice_grow_spd(pipe, &spd))
+#ifdef CONFIG_TRACER_MAX_TRACE
+	if (iter->snapshot && iter->tr->current_trace->use_max_tr)
+		return -EBUSY;
+#endif
+
+	buf = pipe_alloc_buffer(pipe, &buffer_pipe_buf_ops, PIPE_DEF_BUFFERS,
+				GFP_KERNEL, &ret);
+	if (!buf)
+		return ret;
+
+	refs = kcalloc(sizeof(*refs), PIPE_DEF_BUFFERS, GFP_KERNEL);
+	if (!refs) {
+		pipe_add(pipe, buf, &full);
 		return -ENOMEM;
+	}
+
+	buf->private_2 = (unsigned long)refs;
 
  again:
 	trace_access_lock(iter->cpu_file);
-	entries = ring_buffer_entries_cpu(iter->array_buffer->buffer, iter->cpu_file);
 
-	for (i = 0; i < spd.nr_pages_max && len && entries; i++, len -= PAGE_SIZE) {
-		struct page *page;
+	while (len && buf->nr < buf->max &&
+	       (entries = ring_buffer_entries_cpu(iter->array_buffer->buffer,
+						  iter->cpu_file))) {
+		struct buffer_ref *ref;
 		int r;
 
 		ref = kzalloc(sizeof(*ref), GFP_KERNEL);
@@ -8381,27 +8359,19 @@ tracing_buffers_splice_read(struct file *file, loff_t *ppos,
 			break;
 		}
 
-		page = virt_to_page(ref->page);
-
-		spd.pages[i] = page;
-		spd.partial[i].len = PAGE_SIZE;
-		spd.partial[i].offset = 0;
-		spd.partial[i].private = (unsigned long)ref;
-		spd.nr_pages++;
+		bvec_set_page(&buf->bvec[buf->nr], ref->page, PAGE_SIZE, 0);
+		refs[buf->nr] = ref; // TODO: Use page->private?
+		buf->nr++;
+		buf->size += PAGE_SIZE;
 		*ppos += PAGE_SIZE;
-
-		entries = ring_buffer_entries_cpu(iter->array_buffer->buffer, iter->cpu_file);
+		len -= PAGE_SIZE;
 	}
 
 	trace_access_unlock(iter->cpu_file);
-	spd.nr_pages = i;
 
 	/* did we read anything? */
-	if (!spd.nr_pages) {
+	if (!ret && !buf->nr) {
 		long wait_index;
-
-		if (ret)
-			goto out;
 
 		ret = -EAGAIN;
 		if ((file->f_flags & O_NONBLOCK) || (flags & SPLICE_F_NONBLOCK))
@@ -8425,11 +8395,9 @@ tracing_buffers_splice_read(struct file *file, loff_t *ppos,
 		goto again;
 	}
 
-	ret = splice_to_pipe(pipe, &spd);
 out:
-	splice_shrink_spd(&spd);
-
-	return ret;
+	spliced = pipe_add(pipe, buf, &full);
+	return spliced ?: ret;
 }
 
 /* An ioctl call with cmd 0 to the ring buffer file will wake up all waiters */

@@ -2744,15 +2744,6 @@ fault:
 }
 EXPORT_SYMBOL(skb_copy_bits);
 
-/*
- * Callback from splice_to_pipe(), if we need to release some pages
- * at the end of the spd in case we error'ed out in filling the pipe.
- */
-static void sock_spd_release(struct splice_pipe_desc *spd, unsigned int i)
-{
-	put_page(spd->pages[i]);
-}
-
 static struct page *linear_to_page(struct page *page, unsigned int *len,
 				   unsigned int *offset,
 				   struct sock *sk)
@@ -2772,26 +2763,27 @@ static struct page *linear_to_page(struct page *page, unsigned int *len,
 	return pfrag->page;
 }
 
-static bool spd_can_coalesce(const struct splice_pipe_desc *spd,
+static bool spd_can_coalesce(const struct pipe_buffer *buf,
 			     struct page *page,
 			     unsigned int offset)
 {
-	return	spd->nr_pages &&
-		spd->pages[spd->nr_pages - 1] == page &&
-		(spd->partial[spd->nr_pages - 1].offset +
-		 spd->partial[spd->nr_pages - 1].len == offset);
+	const struct bio_vec *p = &buf->bvec[buf->nr - 1];
+
+	return	buf->nr &&
+		p->bv_page == page &&
+		p->bv_offset + p->bv_len == offset;
 }
 
 /*
  * Fill page/offset/length into spd, if it can hold more pages.
  */
-static bool spd_fill_page(struct splice_pipe_desc *spd,
+static bool spd_fill_page(struct pipe_buffer *buf,
 			  struct pipe_inode_info *pipe, struct page *page,
 			  unsigned int *len, unsigned int offset,
 			  bool linear,
 			  struct sock *sk)
 {
-	if (unlikely(spd->nr_pages == MAX_SKB_FRAGS))
+	if (unlikely(buf->nr == MAX_SKB_FRAGS))
 		return true;
 
 	if (linear) {
@@ -2799,23 +2791,22 @@ static bool spd_fill_page(struct splice_pipe_desc *spd,
 		if (!page)
 			return true;
 	}
-	if (spd_can_coalesce(spd, page, offset)) {
-		spd->partial[spd->nr_pages - 1].len += *len;
+	if (spd_can_coalesce(buf, page, offset)) {
+		buf->bvec[buf->nr - 1].bv_len += *len;
 		return false;
 	}
 	get_page(page);
-	spd->pages[spd->nr_pages] = page;
-	spd->partial[spd->nr_pages].len = *len;
-	spd->partial[spd->nr_pages].offset = offset;
-	spd->nr_pages++;
-
+	buf->bvec[buf->nr].bv_page = page;
+	buf->bvec[buf->nr].bv_len = *len;
+	buf->bvec[buf->nr].bv_offset = offset;
+	buf->nr++;
 	return false;
 }
 
 static bool __splice_segment(struct page *page, unsigned int poff,
 			     unsigned int plen, unsigned int *off,
 			     unsigned int *len,
-			     struct splice_pipe_desc *spd, bool linear,
+			     struct pipe_buffer *buf, bool linear,
 			     struct sock *sk,
 			     struct pipe_inode_info *pipe)
 {
@@ -2836,8 +2827,7 @@ static bool __splice_segment(struct page *page, unsigned int poff,
 	do {
 		unsigned int flen = min(*len, plen);
 
-		if (spd_fill_page(spd, pipe, page, &flen, poff,
-				  linear, sk))
+		if (spd_fill_page(buf, pipe, page, &flen, poff, linear, sk))
 			return true;
 		poff += flen;
 		plen -= flen;
@@ -2853,7 +2843,7 @@ static bool __splice_segment(struct page *page, unsigned int poff,
  */
 static bool __skb_splice_bits(struct sk_buff *skb, struct pipe_inode_info *pipe,
 			      unsigned int *offset, unsigned int *len,
-			      struct splice_pipe_desc *spd, struct sock *sk)
+			      struct pipe_buffer *buf, struct sock *sk)
 {
 	int seg;
 	struct sk_buff *iter;
@@ -2866,7 +2856,7 @@ static bool __skb_splice_bits(struct sk_buff *skb, struct pipe_inode_info *pipe,
 	if (__splice_segment(virt_to_page(skb->data),
 			     (unsigned long) skb->data & (PAGE_SIZE - 1),
 			     skb_headlen(skb),
-			     offset, len, spd,
+			     offset, len, buf,
 			     skb_head_is_locked(skb),
 			     sk, pipe))
 		return true;
@@ -2879,7 +2869,7 @@ static bool __skb_splice_bits(struct sk_buff *skb, struct pipe_inode_info *pipe,
 
 		if (__splice_segment(skb_frag_page(f),
 				     skb_frag_off(f), skb_frag_size(f),
-				     offset, len, spd, false, sk, pipe))
+				     offset, len, buf, false, sk, pipe))
 			return true;
 	}
 
@@ -2892,7 +2882,7 @@ static bool __skb_splice_bits(struct sk_buff *skb, struct pipe_inode_info *pipe,
 		 * left, so no point in going over the frag_list for the error
 		 * case.
 		 */
-		if (__skb_splice_bits(iter, pipe, offset, len, spd, sk))
+		if (__skb_splice_bits(iter, pipe, offset, len, buf, sk))
 			return true;
 	}
 
@@ -2907,23 +2897,17 @@ int skb_splice_bits(struct sk_buff *skb, struct sock *sk, unsigned int offset,
 		    struct pipe_inode_info *pipe, unsigned int tlen,
 		    unsigned int flags)
 {
-	struct partial_page partial[MAX_SKB_FRAGS];
-	struct page *pages[MAX_SKB_FRAGS];
-	struct splice_pipe_desc spd = {
-		.pages = pages,
-		.partial = partial,
-		.nr_pages_max = MAX_SKB_FRAGS,
-		.ops = &nosteal_pipe_buf_ops,
-		.spd_release = sock_spd_release,
-	};
+	struct pipe_buffer *buf;
+	bool full = false;
 	int ret = 0;
 
-	__skb_splice_bits(skb, pipe, &offset, &tlen, &spd, sk);
+	buf = pipe_alloc_buffer(pipe, &nosteal_pipe_buf_ops, MAX_SKB_FRAGS,
+				GFP_KERNEL, &ret);
+	if (!buf)
+		return ret;
 
-	if (spd.nr_pages)
-		ret = splice_to_pipe(pipe, &spd);
-
-	return ret;
+	__skb_splice_bits(skb, pipe, &offset, &tlen, buf, sk);
+	return pipe_add(pipe, buf, &full);
 }
 EXPORT_SYMBOL_GPL(skb_splice_bits);
 

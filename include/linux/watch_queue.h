@@ -77,16 +77,16 @@ struct watch_list {
 	spinlock_t		lock;
 };
 
-extern void __post_watch_notification(struct watch_list *,
-				      struct watch_notification *,
-				      const struct cred *,
-				      u64);
+extern void __post_watch_notification(struct watch_list *wlist,
+				      struct watch_notification *n,
+				      const struct cred *cred,
+				      gfp_t gfp,
+				      u64 id);
 extern struct watch_queue *get_watch_queue(int);
 extern void put_watch_queue(struct watch_queue *);
 extern void init_watch(struct watch *, struct watch_queue *);
 extern int add_watch_to_object(struct watch *, struct watch_list *);
 extern int remove_watch_from_object(struct watch_list *, struct watch_queue *, u64, bool);
-extern long watch_queue_set_size(struct pipe_inode_info *, unsigned int);
 extern long watch_queue_set_filter(struct pipe_inode_info *,
 				   struct watch_notification_filter __user *);
 extern int watch_queue_init(struct pipe_inode_info *);
@@ -103,10 +103,11 @@ static inline void init_watch_list(struct watch_list *wlist,
 static inline void post_watch_notification(struct watch_list *wlist,
 					   struct watch_notification *n,
 					   const struct cred *cred,
+					   gfp_t gfp,
 					   u64 id)
 {
 	if (unlikely(wlist))
-		__post_watch_notification(wlist, n, cred, id);
+		__post_watch_notification(wlist, n, cred, gfp, id);
 }
 
 static inline void remove_watch_list(struct watch_list *wlist, u64 id)

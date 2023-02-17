@@ -195,7 +195,7 @@ static inline void notify_key(struct key *key,
 	};
 
 	post_watch_notification(key->watchers, &n.watch, current_cred(),
-				n.key_id);
+				n.key_id, GFP_KERNEL);
 #endif
 }
 

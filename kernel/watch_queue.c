@@ -26,15 +26,13 @@
 #include <linux/sched/signal.h>
 #include <linux/watch_queue.h>
 #include <linux/pipe_fs_i.h>
+#include <linux/uio.h>
 #include "../fs/pipe.h"
 #include "../fs/internal.h"
 
 MODULE_DESCRIPTION("Watch queue");
 MODULE_AUTHOR("Red Hat, Inc.");
 MODULE_LICENSE("GPL");
-
-#define WATCH_QUEUE_NOTE_SIZE 128
-#define WATCH_QUEUE_NOTES_PER_PAGE (PAGE_SIZE / WATCH_QUEUE_NOTE_SIZE)
 
 /*
  * This must be called under the RCU read-lock, which makes
@@ -57,37 +55,45 @@ static inline void unlock_wqueue(struct watch_queue *wqueue)
 	spin_unlock_bh(&wqueue->lock);
 }
 
+static ssize_t watchqueue_copy_buf_to_iter(struct pipe_inode_info *pipe,
+					   struct pipe_buffer *buf,
+					   struct iov_iter *iter)
+{
+	const struct watch_notification *n = buf->private;
+	struct watch_notification hdr;
+	size_t size = buf->size, body = size - sizeof(hdr);
+	__u32 id = buf->private_2 & 0xff;
+
+	/* Substitute the ID at the point of copying so the notification buffer
+	 * can be shared
+	 */
+	hdr = *n;
+	hdr.info &= ~WATCH_INFO_ID;
+	hdr.info |= id << WATCH_INFO_ID__SHIFT;
+
+	if (size > iov_iter_count(iter))
+		return -ENOBUFS; /* All or nothing */
+	if (copy_to_iter(&hdr, sizeof(hdr), iter) != sizeof(hdr))
+		return -EFAULT;
+	if (size > sizeof(hdr) &&
+	    copy_to_iter(buf->private + sizeof(hdr), body, iter) != body)
+		return -EFAULT;
+	kfree(buf->private);
+	buf->size = 0;
+	return size;
+}
+
 static void watch_queue_pipe_buf_release(struct pipe_inode_info *pipe,
 					 struct pipe_buffer *buf)
 {
-	struct watch_queue *wqueue = (struct watch_queue *)buf->private;
-	struct page *page;
-	unsigned int bit;
-
-	/* We need to work out which note within the page this refers to, but
-	 * the note might have been maximum size, so merely ANDing the offset
-	 * off doesn't work.  OTOH, the note must've been more than zero size.
-	 */
-	bit = buf->offset + buf->len;
-	if ((bit & (WATCH_QUEUE_NOTE_SIZE - 1)) == 0)
-		bit -= WATCH_QUEUE_NOTE_SIZE;
-	bit /= WATCH_QUEUE_NOTE_SIZE;
-
-	page = buf->page;
-	bit += page->index;
-
-	set_bit(bit, wqueue->notes_bitmap);
-	generic_pipe_buf_release(pipe, buf);
+	kfree(buf->private);
 }
-
-// No try_steal function => no stealing
-#define watch_queue_pipe_buf_try_steal NULL
 
 /* New data written to a pipe may be appended to a buffer with this type. */
 static const struct pipe_buf_operations watch_queue_pipe_buf_ops = {
 	.release	= watch_queue_pipe_buf_release,
-	.try_steal	= watch_queue_pipe_buf_try_steal,
 	.get		= generic_pipe_buf_get,
+	.copy_to_iter	= watchqueue_copy_buf_to_iter,
 };
 
 /*
@@ -97,62 +103,52 @@ static const struct pipe_buf_operations watch_queue_pipe_buf_ops = {
  * watch_queue lock held, which guarantees that the pipe
  * hasn't been released.
  */
-static bool post_one_notification(struct watch_queue *wqueue,
-				  struct watch_notification *n)
+static void post_one_notification(struct watch_queue *wqueue,
+				  struct watch_notification *n,
+				  unsigned int id)
 {
-	void *p;
+	struct watch_notification *buf2;
 	struct pipe_inode_info *pipe = wqueue->pipe;
 	struct pipe_buffer *buf;
-	struct page *page;
-	unsigned int note, offset, len;
-	bool done = false, full = false;
+	unsigned int len = n->info & WATCH_INFO_LENGTH;
+	bool wake = false, full = false;
 	int error = 0;
 
 	if (!pipe)
-		return false;
-
-	spin_lock_irq(&pipe->rd_wait.lock);
+		return;
 
 	buf = pipe_alloc_buffer(pipe, &watch_queue_pipe_buf_ops, 1, GFP_ATOMIC,
 				&error);
-	if (IS_ERR_OR_NULL(buf))
+	if (!buf)
+		goto lost;
+	buf2 = kmemdup(n, n->info & WATCH_INFO_LENGTH, GFP_ATOMIC);
+	if (!buf2)
 		goto lost;
 
-	note = find_first_bit(wqueue->notes_bitmap, wqueue->nr_notes);
-	if (note >= wqueue->nr_notes)
-		goto lost;
+	buf->flags	= PIPE_BUF_FLAG_WHOLE;
+	buf->ops	= &watch_queue_pipe_buf_ops;
+	buf->private	= buf2;
+	buf->private_2	= id;
+	buf->size	= len;
+	buf->footprint	+= len;
 
-	page = wqueue->notes[note / WATCH_QUEUE_NOTES_PER_PAGE];
-	offset = note % WATCH_QUEUE_NOTES_PER_PAGE * WATCH_QUEUE_NOTE_SIZE;
-	get_page(page);
-	len = n->info & WATCH_INFO_LENGTH;
-	p = kmap_atomic(page);
-	memcpy(p + offset, n, len);
-	kunmap_atomic(p);
-
-	buf->page = page;
-	buf->private = (unsigned long)wqueue;
-	buf->offset = offset;
-	buf->len = len;
-	buf->flags = PIPE_BUF_FLAG_WHOLE;
 	pipe_add(pipe, buf, &full);
-
-	if (!test_and_clear_bit(note, wqueue->notes_bitmap)) {
-		spin_unlock_irq(&pipe->rd_wait.lock);
-		BUG();
-	}
-	wake_up_interruptible_sync_poll_locked(&pipe->rd_wait, EPOLLIN | EPOLLRDNORM);
-	done = true;
-
-out:
+	wake = true;
 	spin_unlock_irq(&pipe->rd_wait.lock);
-	if (done)
+
+wake:
+	if (wake) {
+		wake_up_interruptible_sync_poll_locked(&pipe->rd_wait, EPOLLIN | EPOLLRDNORM);
 		kill_fasync(&pipe->fasync_readers, SIGIO, POLL_IN);
-	return done;
+	}
+	return;
 
 lost:
 	pipe_set_lost_mark(pipe);
-	goto out;
+	if (buf)
+		pipe_buf_release(pipe, buf);
+	wake = true;
+	goto wake;
 }
 
 /*
@@ -186,6 +182,7 @@ static bool filter_watch_notification(const struct watch_filter *wf,
  * @wlist: The watch list to post the event to.
  * @n: The notification record to post.
  * @cred: The creds of the process that triggered the notification.
+ * @gfp: Allocation flags for notification and pipe buf.
  * @id: The ID to match on the watch.
  *
  * Post a notification of an event into a set of watch queues and let the users
@@ -197,6 +194,7 @@ static bool filter_watch_notification(const struct watch_filter *wf,
 void __post_watch_notification(struct watch_list *wlist,
 			       struct watch_notification *n,
 			       const struct cred *cred,
+			       gfp_t gfp,
 			       u64 id)
 {
 	const struct watch_filter *wf;
@@ -225,7 +223,7 @@ void __post_watch_notification(struct watch_list *wlist,
 			continue;
 
 		if (lock_wqueue(wqueue)) {
-			post_one_notification(wqueue, n);
+			post_one_notification(wqueue, n, watch->info_id);
 			unlock_wqueue(wqueue);
 		}
 	}
@@ -233,75 +231,6 @@ void __post_watch_notification(struct watch_list *wlist,
 	rcu_read_unlock();
 }
 EXPORT_SYMBOL(__post_watch_notification);
-
-/*
- * Allocate sufficient pages to preallocation for the requested number of
- * notifications.
- */
-long watch_queue_set_size(struct pipe_inode_info *pipe, unsigned int nr_notes)
-{
-	struct watch_queue *wqueue = pipe->watch_queue;
-	struct page **pages;
-	unsigned long *bitmap;
-	unsigned long user_bufs;
-	int ret, i, nr_pages;
-
-	if (!wqueue)
-		return -ENODEV;
-	if (wqueue->notes)
-		return -EBUSY;
-
-	if (nr_notes < 1 ||
-	    nr_notes > 512) /* TODO: choose a better hard limit */
-		return -EINVAL;
-
-	nr_pages = (nr_notes + WATCH_QUEUE_NOTES_PER_PAGE - 1);
-	nr_pages /= WATCH_QUEUE_NOTES_PER_PAGE;
-	user_bufs = account_pipe_buffers(pipe->user, pipe->nr_accounted, nr_pages);
-
-	if (nr_pages > pipe->max_usage &&
-	    (too_many_pipe_buffers_hard(user_bufs) ||
-	     too_many_pipe_buffers_soft(user_bufs)) &&
-	    pipe_is_unprivileged_user()) {
-		ret = -EPERM;
-		goto error;
-	}
-
-	nr_notes = nr_pages * WATCH_QUEUE_NOTES_PER_PAGE;
-	ret = pipe_resize_ring(pipe, roundup_pow_of_two(nr_notes));
-	if (ret < 0)
-		goto error;
-
-	pages = kcalloc(sizeof(struct page *), nr_pages, GFP_KERNEL);
-	if (!pages)
-		goto error;
-
-	for (i = 0; i < nr_pages; i++) {
-		pages[i] = alloc_page(GFP_KERNEL);
-		if (!pages[i])
-			goto error_p;
-		pages[i]->index = i * WATCH_QUEUE_NOTES_PER_PAGE;
-	}
-
-	bitmap = bitmap_alloc(nr_notes, GFP_KERNEL);
-	if (!bitmap)
-		goto error_p;
-
-	bitmap_fill(bitmap, nr_notes);
-	wqueue->notes = pages;
-	wqueue->notes_bitmap = bitmap;
-	wqueue->nr_pages = nr_pages;
-	wqueue->nr_notes = nr_notes;
-	return 0;
-
-error_p:
-	while (--i >= 0)
-		__free_page(pages[i]);
-	kfree(pages);
-error:
-	(void) account_pipe_buffers(pipe->user, nr_pages, pipe->nr_accounted);
-	return ret;
-}
 
 /*
  * Set the filter on a watch queue.
@@ -560,7 +489,7 @@ found:
 	wqueue = rcu_dereference(watch->queue);
 
 	if (lock_wqueue(wqueue)) {
-		post_one_notification(wqueue, &n.watch);
+		post_one_notification(wqueue, &n.watch, watch->info_id);
 
 		if (!hlist_unhashed(&watch->queue_node)) {
 			hlist_del_init_rcu(&watch->queue_node);

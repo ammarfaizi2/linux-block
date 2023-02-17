@@ -18,6 +18,7 @@ struct page;
 
 /**
  * struct bio_vec - a contiguous range of physical memory addresses
+ * @bv_folio:  First folio associated with the address range.
  * @bv_page:   First page associated with the address range.
  * @bv_len:    Number of bytes in the address range.
  * @bv_offset: Start of the address range relative to the start of @bv_page.
@@ -29,7 +30,10 @@ struct page;
  * This holds because page_is_mergeable() checks the above property.
  */
 struct bio_vec {
-	struct page	*bv_page;
+	union {
+		struct folio	*bv_folio;
+		struct page	*bv_page;
+	};
 	unsigned int	bv_len;
 	unsigned int	bv_offset;
 };

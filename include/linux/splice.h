@@ -45,24 +45,9 @@ struct splice_desc {
 	bool steal_or_copy;		/* Want the pages pre-stealing or copying */
 };
 
-struct partial_page {
-	unsigned int offset;
-	unsigned int len;
-	unsigned long private;
-};
-
 /*
  * Passed to splice_to_pipe
  */
-struct splice_pipe_desc {
-	struct page **pages;		/* page map */
-	struct partial_page *partial;	/* pages[] may not be contig */
-	int nr_pages;			/* number of populated pages in map */
-	unsigned int nr_pages_max;	/* pages[] & partial[] arrays size */
-	const struct pipe_buf_operations *ops;/* ops associated with output pipe */
-	void (*spd_release)(struct splice_pipe_desc *, unsigned int);
-};
-
 typedef int (splice_actor)(struct pipe_inode_info *pipe, struct splice_desc *sd,
 			   unsigned int nr_bv, struct bio_vec *bv);
 typedef int (splice_direct_actor)(struct pipe_inode_info *,
@@ -72,11 +57,7 @@ extern ssize_t splice_from_pipe(struct pipe_inode_info *, struct file *,
 				loff_t *, size_t, unsigned int,
 				splice_actor);
 extern ssize_t __splice_from_pipe(struct pipe_inode_info *,
-				  struct splice_desc *, splice_actor);
-extern ssize_t splice_to_pipe(struct pipe_inode_info *,
-			      struct splice_pipe_desc *);
-extern ssize_t add_to_pipe(struct pipe_inode_info *,
-			      struct pipe_buffer *);
+				  struct splice_desc *, splice_actor *);
 long vfs_splice_read(struct file *in, loff_t *ppos,
 		     struct pipe_inode_info *pipe, size_t len,
 		     unsigned int flags);
@@ -94,8 +75,8 @@ extern ssize_t splice_to_socket(struct pipe_inode_info *pipe, struct file *out,
 /*
  * for dynamic pipe sizing
  */
-extern int splice_grow_spd(const struct pipe_inode_info *, struct splice_pipe_desc *);
-extern void splice_shrink_spd(struct splice_pipe_desc *);
+int splice_grow_buf(const struct pipe_inode_info *pipe, struct pipe_buffer *buf);
+void splice_shrink_buf(struct pipe_buffer *buf);
 
 extern const struct pipe_buf_operations page_cache_pipe_buf_ops;
 extern const struct pipe_buf_operations default_pipe_buf_ops;

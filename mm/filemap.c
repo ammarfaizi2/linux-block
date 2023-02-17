@@ -2841,39 +2841,6 @@ generic_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
 EXPORT_SYMBOL(generic_file_read_iter);
 
 /*
- * Splice subpages from a folio into a pipe.
- */
-size_t splice_folio_into_pipe(struct pipe_inode_info *pipe,
-			      struct folio *folio, loff_t fpos, size_t size,
-			      bool *full, int *error)
-{
-	struct pipe_buffer *buf;
-	struct page *page;
-	size_t spliced = 0, offset = offset_in_folio(folio, fpos);
-
-	page = folio_page(folio, offset / PAGE_SIZE);
-	size = min(size, folio_size(folio) - offset);
-	offset %= PAGE_SIZE;
-
-	while (spliced < size &&
-	       (buf = pipe_alloc_buffer(pipe, &page_cache_pipe_buf_ops, 1,
-					GFP_KERNEL, error))) {
-		size_t part = min_t(size_t, PAGE_SIZE - offset, size - spliced);
-
-		buf->page	= page++;
-		buf->offset	= offset;
-		buf->len	= part;
-		folio_get(folio);
-		spliced += pipe_add(pipe, buf, full);
-		offset = 0;
-		if (*full)
-			break;
-	}
-
-	return spliced;
-}
-
-/*
  * Splice folios from the pagecache of a buffered (ie. non-O_DIRECT) file into
  * a pipe.
  */
@@ -2881,9 +2848,10 @@ ssize_t filemap_splice_read(struct file *in, loff_t *ppos,
 			    struct pipe_inode_info *pipe,
 			    size_t len, unsigned int flags)
 {
+	struct pipe_buffer *buf = NULL;
 	struct folio_batch fbatch;
 	struct kiocb iocb;
-	size_t total_spliced = 0;
+	size_t total_spliced = 0, max_pages;
 	loff_t isize, end_offset;
 	bool writably_mapped, full = false;
 	int i, error = 0;
@@ -2892,10 +2860,16 @@ ssize_t filemap_splice_read(struct file *in, loff_t *ppos,
 	iocb.ki_pos = *ppos;
 
 	/* Work out how much data we can actually add into the pipe */
-	if (!pipe_query_space(pipe, &len, &error))
+	max_pages = pipe_query_space(pipe, &len, &error);
+	if (!max_pages)
 		return error;
 
 	folio_batch_init(&fbatch);
+
+	buf = pipe_alloc_buffer(pipe, &page_cache_pipe_buf_ops, max_pages,
+				GFP_KERNEL, &error);
+	if (!buf)
+		goto out;
 
 	do {
 		cond_resched();
@@ -2929,10 +2903,11 @@ ssize_t filemap_splice_read(struct file *in, loff_t *ppos,
 
 		for (i = 0; i < folio_batch_count(&fbatch); i++) {
 			struct folio *folio = fbatch.folios[i];
-			size_t n;
+			struct bio_vec *bv = buf->bvec;
+			size_t n, o;
 
 			if (folio_pos(folio) >= end_offset)
-				goto out;
+				break;
 			folio_mark_accessed(folio);
 
 			/*
@@ -2943,22 +2918,32 @@ ssize_t filemap_splice_read(struct file *in, loff_t *ppos,
 			if (writably_mapped)
 				flush_dcache_folio(folio);
 
+			o = offset_in_folio(folio, *ppos);
 			n = min_t(loff_t, len, isize - *ppos);
-			n = splice_folio_into_pipe(pipe, folio, *ppos, n,
-						   &full, &error);
-			if (!n)
-				goto out;
+			n = min_t(size_t, n, folio_size(folio) - o);
+
+			bv[buf->nr].bv_page = folio_page(folio, 0);
+			bv[buf->nr].bv_offset = offset_in_folio(folio, *ppos);
+			bv[buf->nr].bv_len = n;
+			buf->nr++;
+			buf->size += n;
+			buf->footprint += folio_size(folio);
+
+			folio_get(folio); //fbatch.folios[i] = NULL;
+
 			len -= n;
 			total_spliced += n;
 			*ppos += n;
 			in->f_ra.prev_pos = *ppos;
-			if (full)
-				goto out;
+
+			if (buf->footprint >= max_pages)
+				break;
 		}
 
 		folio_batch_release(&fbatch);
 	} while (len);
 
+	pipe_add(pipe, buf, &full);
 out:
 	folio_batch_release(&fbatch);
 	file_accessed(in);
