@@ -912,7 +912,7 @@ static ssize_t port_fops_splice_write(struct pipe_inode_info *pipe,
 		.pos = *ppos,
 		.u.data = &sgl,
 	};
-	unsigned int occupancy;
+	size_t occupancy, content_len;
 
 	/*
 	 * Rproc_serial does not yet support splice. To support splice
@@ -925,14 +925,14 @@ static ssize_t port_fops_splice_write(struct pipe_inode_info *pipe,
 
 	pipe_lock(pipe);
 	ret = 0;
-	if (pipe_empty(pipe->head, pipe->tail))
+	occupancy = pipe_query_content(pipe, &content_len);
+	if (!occupancy)
 		goto error_out;
 
 	ret = wait_port_writable(port, filp->f_flags & O_NONBLOCK);
 	if (ret < 0)
 		goto error_out;
 
-	occupancy = pipe_occupancy(pipe->head, pipe->tail);
 	buf = alloc_buf(port->portdev->vdev, 0, occupancy);
 
 	if (!buf) {

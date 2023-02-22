@@ -827,7 +827,8 @@ struct migration_target_control {
  * mm/filemap.c
  */
 size_t splice_folio_into_pipe(struct pipe_inode_info *pipe,
-			      struct folio *folio, loff_t fpos, size_t size);
+			      struct folio *folio, loff_t fpos, size_t size,
+			      bool *full, int *error);
 
 /*
  * mm/vmalloc.c

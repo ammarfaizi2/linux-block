@@ -31,6 +31,13 @@
 #include <asm/ioctls.h>
 
 #include "internal.h"
+#include "pipe.h"
+
+/*
+ * Differs from PIPE_BUF in that PIPE_SIZE is the length of the actual
+ * memory allocation, whereas PIPE_BUF makes atomicity guarantees.
+ */
+#define PIPE_SIZE		PAGE_SIZE
 
 /*
  * New pipe buffers will be restricted to this size while the user is exceeding
@@ -216,6 +223,147 @@ static const struct pipe_buf_operations anon_pipe_buf_ops = {
 	.try_steal	= anon_pipe_buf_try_steal,
 	.get		= generic_pipe_buf_get,
 };
+
+/**
+ * pipe_query_space - Find out how much space is available in a pipe.
+ * @pipe: The pipe to query
+ * @len: The length requested (in) / the maximum length allowed (out)
+ * @error: Where to set any error
+ *
+ * Checks to see if there's space available in the pipe for *@len amount of
+ * data, returning the number of folios that can be added (0 if the pipe is
+ * full) and shrinking *@len to fit.
+ *
+ * If there are no readers, it will send SIGPIPE and set -EPIPE.
+ */
+size_t pipe_query_space(struct pipe_inode_info *pipe, size_t *len, int *error)
+{
+	size_t used = pipe_occupancy(pipe->head, pipe->tail);
+	size_t npages = max_t(ssize_t, pipe->max_usage - used, 0);
+
+	if (unlikely(!pipe->readers)) {
+		send_sig(SIGPIPE, current, 0);
+		*error = -EPIPE;
+		return 0;
+	}
+
+	if (npages == 0)
+		*error = -EAGAIN;
+	*len = min_t(size_t, *len, npages * PAGE_SIZE);
+	return npages;
+}
+EXPORT_SYMBOL(pipe_query_space);
+
+/**
+ * pipe_query_content - Find out how much data is available in a pipe.
+ * @pipe: The pipe to query
+ * @len: Where to return the amount of data
+ *
+ * Checks to see if there's content available in the pipe and if so, returns
+ * the number of pages and sets *@len to the amount of bytes.
+ */
+size_t pipe_query_content(struct pipe_inode_info *pipe, size_t *len)
+{
+	unsigned int head = pipe->head;
+	unsigned int tail = pipe->tail;
+	size_t size = 0, used = pipe_occupancy(head, tail);
+
+	while (!pipe_empty(head, tail)) {
+		size += pipe_buf(pipe, tail)->len;
+		tail++;
+	}
+
+	*len = size;
+	return used;
+}
+EXPORT_SYMBOL(pipe_query_content);
+
+/**
+ * pipe_alloc_buffer - Allocate a pipe buffer
+ * @pipe: The pipe to allocate from
+ * @ops: The operations to set
+ * @bvcount: The number of folios we want to attach
+ * @gfp: Allocation mode
+ * @error: Where to place -ENOMEM if OOM occurs
+ *
+ * Allocate and return new pipe buffer with sufficient slots for the requested
+ * number of folios.  Returns NULL if the pipe is full or we hit an OOM
+ * condition.  In the OOM case, *@error will be set to -ENOMEM but left
+ * untouched otherwise.
+ */
+struct pipe_buffer *pipe_alloc_buffer(struct pipe_inode_info *pipe,
+				      const struct pipe_buf_operations *ops,
+				      size_t bvcount, gfp_t gfp, int *error)
+{
+	struct pipe_buffer *buf;
+
+	if (pipe_full(pipe->head, pipe->tail, pipe->max_usage))
+		return NULL;
+	buf = pipe_head_buf(pipe);
+	memset(buf, 0, sizeof(*buf));
+	buf->ops = ops;
+	return buf;
+}
+EXPORT_SYMBOL(pipe_alloc_buffer);
+
+/**
+ * pipe_add - Pass filled data buffer into a pipe
+ * @pipe: Pipe to append to
+ * @buf: Buffer to add
+ * @full: Set to true if the pipe is now full
+ *
+ * This function adds the given buffer to the tail end of the pipe.  The data
+ * is contained in an array of bio_vecs providing tuples of source page, offset
+ * and length.  The buffer also points to operations for managing these pages.
+ *
+ * The buffer is discarded without being added if there is no data in it, there
+ * is no attached reader or the pipe is full.  If the buffer would overrun the
+ * space in the pipe, it will be overcommitted.
+ */
+ssize_t pipe_add(struct pipe_inode_info *pipe, struct pipe_buffer *buf,
+		 bool *full)
+{
+	unsigned int head = pipe->head;
+	unsigned int tail = pipe->tail;
+
+	if (WARN_ON(pipe_full(head, tail, pipe->max_usage)))
+		goto error;
+
+	pipe->head = head + 1;
+	*full = pipe_full(head, tail, pipe->max_usage);
+	return buf->len;
+
+error:
+	pipe_buf_release(pipe, buf);
+	*full = true;
+	return -EAGAIN;
+}
+EXPORT_SYMBOL(pipe_add);
+
+#ifdef CONFIG_WATCH_QUEUE
+/**
+ * pipe_set_lost_mark - Mark the pipe as having lost some data
+ * @pipe: Pipe to mark
+ *
+ * Set a mark on a pipe to indicate that some data was lost, either due to the
+ * pipe being full or failure to allocate memory.  This will cause a
+ * lost-notification message to be read when the pipe gets around to the
+ * current add point.
+ *
+ * The caller must hold pipe->rd_wait.lock and have interrupts disabled.
+ */
+void pipe_set_lost_mark(struct pipe_inode_info *pipe)
+{
+	struct pipe_buffer *buf;
+
+	if (pipe_empty(pipe->head, pipe->tail)) {
+		pipe->note_loss = true;
+	} else {
+		buf = pipe_buf(pipe, pipe->head - 1);
+		buf->flags |= PIPE_BUF_FLAG_LOSS;
+	}
+}
+#endif
 
 /* Done while waiting without holding the pipe lock - thus the READ_ONCE() */
 static inline bool pipe_readable(const struct pipe_inode_info *pipe)
@@ -1231,7 +1379,7 @@ const struct file_operations pipefifo_fops = {
  * Currently we rely on the pipe array holding a power-of-2 number
  * of pages. Returns 0 on error.
  */
-unsigned int round_pipe_size(unsigned long size)
+static unsigned int round_pipe_size(unsigned long size)
 {
 	if (size > (1U << 31))
 		return 0;

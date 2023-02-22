@@ -2844,8 +2844,10 @@ EXPORT_SYMBOL(generic_file_read_iter);
  * Splice subpages from a folio into a pipe.
  */
 size_t splice_folio_into_pipe(struct pipe_inode_info *pipe,
-			      struct folio *folio, loff_t fpos, size_t size)
+			      struct folio *folio, loff_t fpos, size_t size,
+			      bool *full, int *error)
 {
+	struct pipe_buffer *buf;
 	struct page *page;
 	size_t spliced = 0, offset = offset_in_folio(folio, fpos);
 
@@ -2854,21 +2856,18 @@ size_t splice_folio_into_pipe(struct pipe_inode_info *pipe,
 	offset %= PAGE_SIZE;
 
 	while (spliced < size &&
-	       !pipe_full(pipe->head, pipe->tail, pipe->max_usage)) {
-		struct pipe_buffer *buf = pipe_head_buf(pipe);
+	       (buf = pipe_alloc_buffer(pipe, &page_cache_pipe_buf_ops, 1,
+					GFP_KERNEL, error))) {
 		size_t part = min_t(size_t, PAGE_SIZE - offset, size - spliced);
 
-		*buf = (struct pipe_buffer) {
-			.ops	= &page_cache_pipe_buf_ops,
-			.page	= page,
-			.offset	= offset,
-			.len	= part,
-		};
+		buf->page	= page++;
+		buf->offset	= offset;
+		buf->len	= part;
 		folio_get(folio);
-		pipe->head++;
-		page++;
-		spliced += part;
+		spliced += pipe_add(pipe, buf, full);
 		offset = 0;
+		if (*full)
+			break;
 	}
 
 	return spliced;
@@ -2884,18 +2883,17 @@ ssize_t filemap_splice_read(struct file *in, loff_t *ppos,
 {
 	struct folio_batch fbatch;
 	struct kiocb iocb;
-	size_t total_spliced = 0, used, npages;
+	size_t total_spliced = 0;
 	loff_t isize, end_offset;
-	bool writably_mapped;
+	bool writably_mapped, full = false;
 	int i, error = 0;
 
 	init_sync_kiocb(&iocb, in);
 	iocb.ki_pos = *ppos;
 
 	/* Work out how much data we can actually add into the pipe */
-	used = pipe_occupancy(pipe->head, pipe->tail);
-	npages = max_t(ssize_t, pipe->max_usage - used, 0);
-	len = min_t(size_t, len, npages * PAGE_SIZE);
+	if (!pipe_query_space(pipe, &len, &error))
+		return error;
 
 	folio_batch_init(&fbatch);
 
@@ -2946,14 +2944,15 @@ ssize_t filemap_splice_read(struct file *in, loff_t *ppos,
 				flush_dcache_folio(folio);
 
 			n = min_t(loff_t, len, isize - *ppos);
-			n = splice_folio_into_pipe(pipe, folio, *ppos, n);
+			n = splice_folio_into_pipe(pipe, folio, *ppos, n,
+						   &full, &error);
 			if (!n)
 				goto out;
 			len -= n;
 			total_spliced += n;
 			*ppos += n;
 			in->f_ra.prev_pos = *ppos;
-			if (pipe_full(pipe->head, pipe->tail, pipe->max_usage))
+			if (full)
 				goto out;
 		}
 

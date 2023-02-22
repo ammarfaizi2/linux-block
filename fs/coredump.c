@@ -50,6 +50,7 @@
 
 #include <trace/events/task.h>
 #include "internal.h"
+#include "pipe.h"
 
 #include <trace/events/sched.h>
 

@@ -31,57 +31,6 @@ struct pipe_buffer {
 	unsigned long private;
 };
 
-/**
- *	struct pipe_inode_info - a linux kernel pipe
- *	@mutex: mutex protecting the whole thing
- *	@rd_wait: reader wait point in case of empty pipe
- *	@wr_wait: writer wait point in case of full pipe
- *	@head: The point of buffer production
- *	@tail: The point of buffer consumption
- *	@note_loss: The next read() should insert a data-lost message
- *	@max_usage: The maximum number of slots that may be used in the ring
- *	@ring_size: total number of buffers (should be a power of 2)
- *	@nr_accounted: The amount this pipe accounts for in user->pipe_bufs
- *	@tmp_page: cached released page
- *	@readers: number of current readers of this pipe
- *	@writers: number of current writers of this pipe
- *	@files: number of struct file referring this pipe (protected by ->i_lock)
- *	@r_counter: reader counter
- *	@w_counter: writer counter
- *	@poll_usage: is this pipe used for epoll, which has crazy wakeups?
- *	@fasync_readers: reader side fasync
- *	@fasync_writers: writer side fasync
- *	@bufs: the circular array of pipe buffers
- *	@user: the user who created this pipe
- *	@watch_queue: If this pipe is a watch_queue, this is the stuff for that
- **/
-struct pipe_inode_info {
-	struct mutex mutex;
-	wait_queue_head_t rd_wait, wr_wait;
-	unsigned int head;
-	unsigned int tail;
-	unsigned int max_usage;
-	unsigned int ring_size;
-#ifdef CONFIG_WATCH_QUEUE
-	bool note_loss;
-#endif
-	unsigned int nr_accounted;
-	unsigned int readers;
-	unsigned int writers;
-	unsigned int files;
-	unsigned int r_counter;
-	unsigned int w_counter;
-	bool poll_usage;
-	struct page *tmp_page;
-	struct fasync_struct *fasync_readers;
-	struct fasync_struct *fasync_writers;
-	struct pipe_buffer *bufs;
-	struct user_struct *user;
-#ifdef CONFIG_WATCH_QUEUE
-	struct watch_queue *watch_queue;
-#endif
-};
-
 /*
  * Note on the nesting of these functions:
  *
@@ -123,58 +72,6 @@ struct pipe_buf_operations {
 	 */
 	bool (*get)(struct pipe_inode_info *, struct pipe_buffer *);
 };
-
-/**
- * pipe_empty - Return true if the pipe is empty
- * @head: The pipe ring head pointer
- * @tail: The pipe ring tail pointer
- */
-static inline bool pipe_empty(unsigned int head, unsigned int tail)
-{
-	return head == tail;
-}
-
-/**
- * pipe_occupancy - Return number of slots used in the pipe
- * @head: The pipe ring head pointer
- * @tail: The pipe ring tail pointer
- */
-static inline unsigned int pipe_occupancy(unsigned int head, unsigned int tail)
-{
-	return head - tail;
-}
-
-/**
- * pipe_full - Return true if the pipe is full
- * @head: The pipe ring head pointer
- * @tail: The pipe ring tail pointer
- * @limit: The maximum amount of slots available.
- */
-static inline bool pipe_full(unsigned int head, unsigned int tail,
-			     unsigned int limit)
-{
-	return pipe_occupancy(head, tail) >= limit;
-}
-
-/**
- * pipe_buf - Return the pipe buffer for the specified slot in the pipe ring
- * @pipe: The pipe to access
- * @slot: The slot of interest
- */
-static inline struct pipe_buffer *pipe_buf(const struct pipe_inode_info *pipe,
-					   unsigned int slot)
-{
-	return &pipe->bufs[slot & (pipe->ring_size - 1)];
-}
-
-/**
- * pipe_head_buf - Return the pipe buffer at the head of the pipe ring
- * @pipe: The pipe to access
- */
-static inline struct pipe_buffer *pipe_head_buf(const struct pipe_inode_info *pipe)
-{
-	return pipe_buf(pipe, pipe->head);
-}
 
 /**
  * pipe_buf_get - get a reference to a pipe_buffer
@@ -229,30 +126,23 @@ static inline bool pipe_buf_try_steal(struct pipe_inode_info *pipe,
 	return buf->ops->try_steal(pipe, buf);
 }
 
-static inline void pipe_discard_from(struct pipe_inode_info *pipe,
-		unsigned int old_head)
-{
-	unsigned int mask = pipe->ring_size - 1;
+/* Add data to a pipe */
+size_t pipe_query_space(struct pipe_inode_info *pipe, size_t *len, int *error);
+struct pipe_buffer *pipe_alloc_buffer(struct pipe_inode_info *pipe,
+				      const struct pipe_buf_operations *ops,
+				      size_t bvcount, gfp_t gfp, int *error);
+ssize_t pipe_add(struct pipe_inode_info *pipe, struct pipe_buffer *buf, bool *full);
+#ifdef CONFIG_WATCH_QUEUE
+void pipe_set_lost_mark(struct pipe_inode_info *pipe);
+#endif
 
-	while (pipe->head > old_head)
-		pipe_buf_release(pipe, &pipe->bufs[--pipe->head & mask]);
-}
-
-/* Differs from PIPE_BUF in that PIPE_SIZE is the length of the actual
-   memory allocation, whereas PIPE_BUF makes atomicity guarantees.  */
-#define PIPE_SIZE		PAGE_SIZE
+/* Get data from a pipe */
+size_t pipe_query_content(struct pipe_inode_info *pipe, size_t *len);
 
 /* Pipe lock and unlock operations */
 void pipe_lock(struct pipe_inode_info *);
 void pipe_unlock(struct pipe_inode_info *);
 void pipe_double_lock(struct pipe_inode_info *, struct pipe_inode_info *);
-
-/* Wait for a pipe to be readable/writable while dropping the pipe lock */
-void pipe_wait_readable(struct pipe_inode_info *);
-void pipe_wait_writable(struct pipe_inode_info *);
-
-struct pipe_inode_info *alloc_pipe_info(void);
-void free_pipe_info(struct pipe_inode_info *);
 
 /* Generic pipe buffer ops functions */
 bool generic_pipe_buf_get(struct pipe_inode_info *, struct pipe_buffer *);
@@ -261,22 +151,7 @@ void generic_pipe_buf_release(struct pipe_inode_info *, struct pipe_buffer *);
 
 extern const struct pipe_buf_operations nosteal_pipe_buf_ops;
 
-#ifdef CONFIG_WATCH_QUEUE
-unsigned long account_pipe_buffers(struct user_struct *user,
-				   unsigned long old, unsigned long new);
-bool too_many_pipe_buffers_soft(unsigned long user_bufs);
-bool too_many_pipe_buffers_hard(unsigned long user_bufs);
-bool pipe_is_unprivileged_user(void);
-#endif
-
-/* for F_SETPIPE_SZ and F_GETPIPE_SZ */
-#ifdef CONFIG_WATCH_QUEUE
-int pipe_resize_ring(struct pipe_inode_info *pipe, unsigned int nr_slots);
-#endif
-long pipe_fcntl(struct file *, unsigned int, unsigned long arg);
-struct pipe_inode_info *get_pipe_info(struct file *file, bool for_splice);
-
 int create_pipe_files(struct file **, int);
-unsigned int round_pipe_size(unsigned long size);
+void free_pipe_info(struct pipe_inode_info *);
 
 #endif

@@ -2743,25 +2743,22 @@ static const struct pipe_buf_operations zero_pipe_buf_ops = {
 };
 
 static size_t splice_zeropage_into_pipe(struct pipe_inode_info *pipe,
-					loff_t fpos, size_t size)
+					loff_t fpos, size_t size,
+					bool *full, int *error)
 {
+	struct pipe_buffer *buf;
 	size_t offset = fpos & ~PAGE_MASK;
 
 	size = min_t(size_t, size, PAGE_SIZE - offset);
 
-	if (!pipe_full(pipe->head, pipe->tail, pipe->max_usage)) {
-		struct pipe_buffer *buf = pipe_head_buf(pipe);
+	buf = pipe_alloc_buffer(pipe, &zero_pipe_buf_ops, 1, GFP_KERNEL, error);
+	if (!buf)
+		return 0;
 
-		*buf = (struct pipe_buffer) {
-			.ops	= &zero_pipe_buf_ops,
-			.page	= ZERO_PAGE(0),
-			.offset	= offset,
-			.len	= size,
-		};
-		pipe->head++;
-	}
-
-	return size;
+	buf->page	= ZERO_PAGE(0);
+	buf->offset	= offset;
+	buf->len	= size;
+	return pipe_add(pipe, buf, full);
 }
 
 static ssize_t shmem_file_splice_read(struct file *in, loff_t *ppos,
@@ -2771,23 +2768,25 @@ static ssize_t shmem_file_splice_read(struct file *in, loff_t *ppos,
 	struct inode *inode = file_inode(in);
 	struct address_space *mapping = inode->i_mapping;
 	struct folio *folio = NULL;
-	size_t total_spliced = 0, used, npages, n, part;
+	int error = -EAGAIN, error2;
+	size_t total_spliced = 0, n, part;
 	loff_t isize;
-	int error = 0;
+	bool full = false;
 
 	/* Work out how much data we can actually add into the pipe */
-	used = pipe_occupancy(pipe->head, pipe->tail);
-	npages = max_t(ssize_t, pipe->max_usage - used, 0);
-	len = min_t(size_t, len, npages * PAGE_SIZE);
+	if (!pipe_query_space(pipe, &len, &error))
+		return error;
 
 	do {
-		if (*ppos >= i_size_read(inode))
+		if (*ppos >= i_size_read(inode)) {
+			error = 0;
 			break;
+		}
 
-		error = shmem_get_folio(inode, *ppos / PAGE_SIZE, &folio, SGP_READ);
-		if (error) {
-			if (error == -EINVAL)
-				error = 0;
+		error2 = shmem_get_folio(inode, *ppos / PAGE_SIZE, &folio, SGP_READ);
+		if (error2) {
+			if (error2 != -EINVAL)
+				error = error2;
 			break;
 		}
 		if (folio) {
@@ -2808,8 +2807,10 @@ static ssize_t shmem_file_splice_read(struct file *in, loff_t *ppos,
 		 * another truncate extends the file - this is desired though).
 		 */
 		isize = i_size_read(inode);
-		if (unlikely(*ppos >= isize))
+		if (unlikely(*ppos >= isize)) {
+			error = 0;
 			break;
+		}
 		part = min_t(loff_t, isize - *ppos, len);
 
 		if (folio) {
@@ -2825,11 +2826,13 @@ static ssize_t shmem_file_splice_read(struct file *in, loff_t *ppos,
 			 * Ok, we have the page, and it's up-to-date, so we can
 			 * now splice it into the pipe.
 			 */
-			n = splice_folio_into_pipe(pipe, folio, *ppos, part);
+			n = splice_folio_into_pipe(pipe, folio, *ppos, part,
+						   &full, &error);
 			folio_put(folio);
 			folio = NULL;
 		} else {
-			n = splice_zeropage_into_pipe(pipe, *ppos, len);
+			n = splice_zeropage_into_pipe(pipe, *ppos, len,
+						      &full, &error);
 		}
 
 		if (!n)
@@ -2838,7 +2841,7 @@ static ssize_t shmem_file_splice_read(struct file *in, loff_t *ppos,
 		total_spliced += n;
 		*ppos += n;
 		in->f_ra.prev_pos = *ppos;
-		if (pipe_full(pipe->head, pipe->tail, pipe->max_usage))
+		if (full)
 			break;
 
 		cond_resched();

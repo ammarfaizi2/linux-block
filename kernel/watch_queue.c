@@ -26,6 +26,8 @@
 #include <linux/sched/signal.h>
 #include <linux/watch_queue.h>
 #include <linux/pipe_fs_i.h>
+#include "../fs/pipe.h"
+#include "../fs/internal.h"
 
 MODULE_DESCRIPTION("Watch queue");
 MODULE_AUTHOR("Red Hat, Inc.");
@@ -102,18 +104,18 @@ static bool post_one_notification(struct watch_queue *wqueue,
 	struct pipe_inode_info *pipe = wqueue->pipe;
 	struct pipe_buffer *buf;
 	struct page *page;
-	unsigned int head, tail, mask, note, offset, len;
-	bool done = false;
+	unsigned int note, offset, len;
+	bool done = false, full = false;
+	int error = 0;
 
 	if (!pipe)
 		return false;
 
 	spin_lock_irq(&pipe->rd_wait.lock);
 
-	mask = pipe->ring_size - 1;
-	head = pipe->head;
-	tail = pipe->tail;
-	if (pipe_full(head, tail, pipe->ring_size))
+	buf = pipe_alloc_buffer(pipe, &watch_queue_pipe_buf_ops, 1, GFP_ATOMIC,
+				&error);
+	if (IS_ERR_OR_NULL(buf))
 		goto lost;
 
 	note = find_first_bit(wqueue->notes_bitmap, wqueue->nr_notes);
@@ -128,14 +130,12 @@ static bool post_one_notification(struct watch_queue *wqueue,
 	memcpy(p + offset, n, len);
 	kunmap_atomic(p);
 
-	buf = &pipe->bufs[head & mask];
 	buf->page = page;
 	buf->private = (unsigned long)wqueue;
-	buf->ops = &watch_queue_pipe_buf_ops;
 	buf->offset = offset;
 	buf->len = len;
 	buf->flags = PIPE_BUF_FLAG_WHOLE;
-	smp_store_release(&pipe->head, head + 1); /* vs pipe_read() */
+	pipe_add(pipe, buf, &full);
 
 	if (!test_and_clear_bit(note, wqueue->notes_bitmap)) {
 		spin_unlock_irq(&pipe->rd_wait.lock);
@@ -151,8 +151,7 @@ out:
 	return done;
 
 lost:
-	buf = &pipe->bufs[(head - 1) & mask];
-	buf->flags |= PIPE_BUF_FLAG_LOSS;
+	pipe_set_lost_mark(pipe);
 	goto out;
 }
 

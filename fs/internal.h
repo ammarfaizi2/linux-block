@@ -176,6 +176,8 @@ extern void shrink_dentry_list(struct list_head *);
  * pipe.c
  */
 extern const struct file_operations pipefifo_fops;
+long pipe_fcntl(struct file *file, unsigned int cmd, unsigned long arg);
+struct pipe_inode_info *get_pipe_info(struct file *file, bool for_splice);
 
 /*
  * fs_pin.c

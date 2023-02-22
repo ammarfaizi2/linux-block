@@ -37,6 +37,7 @@
 #include <linux/sched/signal.h>
 
 #include "internal.h"
+#include "pipe.h"
 
 /*
  * Attempt to steal a page from a pipe buffer. This should perhaps go into
