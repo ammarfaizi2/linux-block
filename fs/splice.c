@@ -184,48 +184,38 @@ static void wakeup_pipe_readers(struct pipe_inode_info *pipe)
 ssize_t splice_to_pipe(struct pipe_inode_info *pipe,
 		       struct splice_pipe_desc *spd)
 {
+	struct pipe_buffer *buf;
 	unsigned int spd_pages = spd->nr_pages;
-	unsigned int tail = pipe->tail;
-	unsigned int head = pipe->head;
-	unsigned int mask = pipe->ring_size - 1;
-	int ret = 0, page_nr = 0;
+	size_t len = INT_MAX, spliced = 0;
+	bool full = false;
+	int ret = -EAGAIN, page_nr = 0;
 
 	if (!spd_pages)
 		return 0;
 
-	if (unlikely(!pipe->readers)) {
-		send_sig(SIGPIPE, current, 0);
-		ret = -EPIPE;
+	if (!pipe_query_space(pipe, &len, &ret))
 		goto out;
-	}
 
-	while (!pipe_full(head, tail, pipe->max_usage)) {
-		struct pipe_buffer *buf = &pipe->bufs[head & mask];
+	do {
+		buf = pipe_alloc_buffer(pipe, spd->ops, 1, GFP_KERNEL, &ret);
+		if (!buf)
+			goto out;
 
 		buf->page = spd->pages[page_nr];
 		buf->offset = spd->partial[page_nr].offset;
 		buf->len = spd->partial[page_nr].len;
 		buf->private = spd->partial[page_nr].private;
-		buf->ops = spd->ops;
-		buf->flags = 0;
-
-		head++;
-		pipe->head = head;
 		page_nr++;
-		ret += buf->len;
+		spd->nr_pages--;
 
-		if (!--spd->nr_pages)
-			break;
-	}
-
-	if (!ret)
-		ret = -EAGAIN;
+		spliced += pipe_add(pipe, buf, &full);
+	} while (!full && spd->nr_pages);
 
 out:
 	while (page_nr < spd_pages)
 		spd->spd_release(spd, page_nr++);
 
-	return ret;
+	return spliced ?: ret;
 }
 EXPORT_SYMBOL_GPL(splice_to_pipe);
 
