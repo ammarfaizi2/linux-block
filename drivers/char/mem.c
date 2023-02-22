@@ -468,8 +468,8 @@ static ssize_t write_iter_null(struct kiocb *iocb, struct iov_iter *from)
 	return count;
 }
 
-static int pipe_to_null(struct pipe_inode_info *info, struct pipe_buffer *buf,
-			struct splice_desc *sd)
+static int pipe_to_null(struct pipe_inode_info *info, struct splice_desc *sd,
+			unsigned int nr_bv, struct bio_vec *bv)
 {
 	return sd->len;
 }

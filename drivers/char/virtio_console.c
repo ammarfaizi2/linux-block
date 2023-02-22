@@ -854,22 +854,26 @@ struct sg_list {
 	struct scatterlist *sg;
 };
 
-static int pipe_to_sg(struct pipe_inode_info *pipe, struct pipe_buffer *buf,
-			struct splice_desc *sd)
+static int pipe_to_sg(struct pipe_inode_info *pipe, struct splice_desc *sd,
+		      unsigned int nr_bv, struct bio_vec *bv)
 {
 	struct sg_list *sgl = sd->u.data;
-	unsigned int len;
+	unsigned int i, spliced = 0, len;
 
-	if (sgl->n == sgl->size)
-		return 0;
+	for (i = 0; i < nr_bv; i++) {
+		if (sgl->n == sgl->size)
+			return 0;
 
-	get_page(buf->page);
-	len = min(buf->len, sd->len);
-	sg_set_page(&(sgl->sg[sgl->n]), buf->page, len, buf->offset);
-	sgl->n++;
-	sgl->len += len;
+		get_page(bv[i].bv_page);
+		len = min(bv[i].bv_len, sd->len);
+		sg_set_page(&sgl->sg[sgl->n],
+			    bv[i].bv_page, len, bv[i].bv_offset);
+		sgl->n++;
+		sgl->len += len;
+		spliced += len;
+	}
 
-	return len;
+	return spliced;
 }
 
 /* Faster zero-copy write by splicing */

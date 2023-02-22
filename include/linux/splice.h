@@ -63,16 +63,16 @@ struct splice_pipe_desc {
 	void (*spd_release)(struct splice_pipe_desc *, unsigned int);
 };
 
-typedef int (splice_actor)(struct pipe_inode_info *, struct pipe_buffer *,
-			   struct splice_desc *);
+typedef int (splice_actor)(struct pipe_inode_info *pipe, struct splice_desc *sd,
+			   unsigned int nr_bv, struct bio_vec *bv);
 typedef int (splice_direct_actor)(struct pipe_inode_info *,
 				  struct splice_desc *);
 
 extern ssize_t splice_from_pipe(struct pipe_inode_info *, struct file *,
 				loff_t *, size_t, unsigned int,
-				splice_actor *);
+				splice_actor);
 extern ssize_t __splice_from_pipe(struct pipe_inode_info *,
-				  struct splice_desc *, splice_actor *);
+				  struct splice_desc *, splice_actor);
 extern ssize_t splice_to_pipe(struct pipe_inode_info *,
 			      struct splice_pipe_desc *);
 extern ssize_t add_to_pipe(struct pipe_inode_info *,
@@ -81,7 +81,7 @@ long vfs_splice_read(struct file *in, loff_t *ppos,
 		     struct pipe_inode_info *pipe, size_t len,
 		     unsigned int flags);
 extern ssize_t splice_direct_to_actor(struct file *, struct splice_desc *,
-				      splice_direct_actor *);
+				      splice_direct_actor);
 extern long do_splice(struct file *in, loff_t *off_in,
 		      struct file *out, loff_t *off_out,
 		      size_t len, unsigned int flags);

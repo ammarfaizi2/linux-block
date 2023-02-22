@@ -407,11 +407,10 @@ EXPORT_SYMBOL(nosteal_pipe_buf_ops);
  * Send 'sd->len' bytes to socket from 'sd->file' at position 'sd->pos'
  * using sendpage(). Return the number of bytes sent.
  */
-static int pipe_to_sendmsg(struct pipe_inode_info *pipe,
-			   struct pipe_buffer *buf, struct splice_desc *sd)
+static int pipe_to_sendmsg(struct pipe_inode_info *pipe, struct splice_desc *sd,
+			   unsigned int nr_bv, struct bio_vec *bv)
 {
 	struct socket *sock = sock_from_file(sd->u.file);
-	struct bio_vec bvec;
 	struct msghdr msg = {
 		.msg_flags = MSG_SPLICE_PAGES,
 	};
@@ -423,8 +422,7 @@ static int pipe_to_sendmsg(struct pipe_inode_info *pipe,
 	    pipe_occupancy(pipe->head, pipe->tail) > 1)
 		msg.msg_flags |= MSG_MORE;
 
-	bvec_set_page(&bvec, buf->page, sd->len, buf->offset);
-	iov_iter_bvec(&msg.msg_iter, ITER_SOURCE, &bvec, 1, sd->len);
+	iov_iter_bvec(&msg.msg_iter, ITER_SOURCE, bv, nr_bv, sd->len);
 	return sock_sendmsg(sock, &msg);
 }
 #endif
@@ -509,6 +507,7 @@ static int splice_from_pipe_feed(struct pipe_inode_info *pipe, struct splice_des
 
 	while (!pipe_empty(head, tail)) {
 		struct pipe_buffer *buf = &pipe->bufs[tail & mask];
+		struct bio_vec bv;
 
 		sd->len = buf->len;
 		if (sd->len > sd->total_len)
@@ -527,7 +526,8 @@ static int splice_from_pipe_feed(struct pipe_inode_info *pipe, struct splice_des
 				return ret;
 		}
 
-		ret = actor(pipe, buf, sd);
+		bvec_set_page(&bv, buf->page, buf->offset, buf->len);
+		ret = actor(pipe, sd, 1, &bv);
 		if (ret <= 0)
 			return ret;
 
@@ -1322,10 +1322,10 @@ out:
 	return total ? total : ret;
 }
 
-static int pipe_to_user(struct pipe_inode_info *pipe, struct pipe_buffer *buf,
-			struct splice_desc *sd)
+static int pipe_to_user(struct pipe_inode_info *pipe, struct splice_desc *sd,
+			unsigned int nr_bv, struct bio_vec *bv)
 {
-	int n = copy_page_to_iter(buf->page, buf->offset, sd->len, sd->u.data);
+	int n = copy_page_to_iter(bv->bv_page, bv->bv_offset, sd->len, sd->u.data);
 	return n == sd->len ? n : -EFAULT;
 }
 
