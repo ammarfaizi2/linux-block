@@ -207,6 +207,40 @@ static __init int strspn_selftest(void)
 	return 0;
 }
 
+static __init int strncmp_selftest(void)
+{
+	static const struct strncmp_test {
+		const char *str_a;
+		const char *str_b;
+		unsigned long count;
+		unsigned long max_off;
+		size_t retval;
+	} tests[] __initconst = {
+		{ "/dev/vda", "/dev/",    5, 4, 0 },
+		{ "/dev/vda", "/dev/vdb", 5, 4, 0 },
+	};
+	size_t i;
+
+	for (i = 0; i < ARRAY_SIZE(tests); ++i) {
+		const struct strncmp_test *s = tests + i;
+		size_t off;
+
+		for (off = 0; off <= s->max_off; ++off) {
+			size_t res = strncmp(s->str_a + off,
+					     s->str_b + off,
+					     s->count - off);
+
+			if (res == 0 && s->retval != 0)
+				return 0x1000 + 0x100*off + 0x10*i + 0x0;
+			if (res > 0 && s->retval <= 0)
+				return 0x1000 + 0x100*off + 0x10*i + 0x1;
+			if (res < 0 && s->retval >= 0)
+				return 0x1000 + 0x100*off + 0x10*i + 0x2;
+		}
+	}
+	return 0;
+}
+
 static __exit void string_selftest_remove(void)
 {
 }
@@ -242,6 +276,11 @@ static __init int string_selftest_init(void)
 
 	test = 6;
 	subtest = strspn_selftest();
+	if (subtest)
+		goto fail;
+
+	test = 7;
+	subtest = strncmp_selftest();
 	if (subtest)
 		goto fail;
 
