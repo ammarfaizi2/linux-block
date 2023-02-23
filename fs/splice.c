@@ -437,6 +437,48 @@ static void wakeup_pipe_writers(struct pipe_inode_info *pipe)
 	kill_fasync(&pipe->fasync_writers, SIGIO, POLL_OUT);
 }
 
+/*
+ * Try to steal the page from a pipe buffer and if we fail, copy the page and
+ * replace the pipe buffer with one that points to the copy.
+ */
+static int splice_steal_or_copy(struct pipe_inode_info *pipe,
+				struct pipe_buffer *buf,
+				struct splice_desc *sd)
+{
+	if (!pipe_buf_try_steal(pipe, buf)) {
+		/* Fall back to replacing the buffer page with a copy. */
+		struct page *page;
+		size_t offset = buf->offset, len = buf->len;
+		void *src, *dst;
+
+		page = alloc_page(GFP_KERNEL);
+		if (!page)
+			return -ENOMEM;
+
+		src = kmap_local_page(buf->page);
+		dst = kmap_local_page(page);
+		memcpy(dst + offset, src + offset, len);
+		kunmap_local(src);
+		kunmap_local(dst);
+
+		pipe_buf_release(pipe, buf);
+
+		*buf = (struct pipe_buffer) {
+			.page	= page,
+			.offset	= offset,
+			.len	= len,
+			.ops	= &default_pipe_buf_ops,
+		};
+	} else {
+		/* Need to unlock the page */
+		unlock_page(buf->page);
+		buf->ops = &default_pipe_buf_ops;
+		buf->private = 0;
+	}
+
+	return 0;
+}
+
 /**
  * splice_from_pipe_feed - feed available data from a pipe to a file
  * @pipe:	pipe to splice from
@@ -477,6 +519,12 @@ static int splice_from_pipe_feed(struct pipe_inode_info *pipe, struct splice_des
 			if (ret == -ENODATA)
 				ret = 0;
 			return ret;
+		}
+
+		if (sd->steal_or_copy) {
+			ret = splice_steal_or_copy(pipe, buf, sd);
+			if (ret < 0)
+				return ret;
 		}
 
 		ret = actor(pipe, buf, sd);
