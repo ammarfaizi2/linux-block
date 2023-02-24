@@ -704,87 +704,83 @@ static int afs_writepages_region(struct address_space *mapping,
 				 bool max_one_loop)
 {
 	struct folio *folio;
-	struct folio_batch fbatch;
 	ssize_t ret;
-	unsigned int i;
-	int n, skips = 0;
+	int skips = 0;
 
 	_enter("%llx,%llx,", start, end);
-	folio_batch_init(&fbatch);
 
 	do {
 		pgoff_t index = start / PAGE_SIZE;
 
-		n = filemap_get_folios_tag(mapping, &index, end / PAGE_SIZE,
-					PAGECACHE_TAG_DIRTY, &fbatch);
-
-		if (!n)
+		folio = filemap_get_folio_tag(mapping, &index, end / PAGE_SIZE,
+					      PAGECACHE_TAG_DIRTY);
+		if (!folio)
 			break;
-		for (i = 0; i < n; i++) {
-			folio = fbatch.folios[i];
-			start = folio_pos(folio); /* May regress with THPs */
 
-			_debug("wback %lx", folio_index(folio));
+		start = folio_pos(folio); /* May regress with THPs */
 
-			/* At this point we hold neither the i_pages lock nor the
-			 * page lock: the page may be truncated or invalidated
-			 * (changing page->mapping to NULL), or even swizzled
-			 * back from swapper_space to tmpfs file mapping
-			 */
-			if (wbc->sync_mode != WB_SYNC_NONE) {
-				ret = folio_lock_killable(folio);
-				if (ret < 0) {
-					folio_batch_release(&fbatch);
-					return ret;
-				}
-			} else {
-				if (!folio_trylock(folio))
-					continue;
-			}
+		_debug("wback %lx", folio_index(folio));
 
-			if (folio->mapping != mapping ||
-			    !folio_test_dirty(folio)) {
-				start += folio_size(folio);
-				folio_unlock(folio);
-				continue;
-			}
-
-			if (folio_test_writeback(folio) ||
-			    folio_test_fscache(folio)) {
-				folio_unlock(folio);
-				if (wbc->sync_mode != WB_SYNC_NONE) {
-					folio_wait_writeback(folio);
-#ifdef CONFIG_AFS_FSCACHE
-					folio_wait_fscache(folio);
-#endif
-				} else {
-					start += folio_size(folio);
-				}
-				if (wbc->sync_mode == WB_SYNC_NONE) {
-					if (skips >= 5 || need_resched()) {
-						*_next = start;
-						_leave(" = 0 [%llx]", *_next);
-						return 0;
-					}
-					skips++;
-				}
-				continue;
-			}
-
-			if (!folio_clear_dirty_for_io(folio))
-				BUG();
-			ret = afs_write_back_from_locked_folio(mapping, wbc,
-					folio, start, end);
+		/* At this point we hold neither the i_pages lock nor the
+		 * page lock: the page may be truncated or invalidated
+		 * (changing page->mapping to NULL), or even swizzled
+		 * back from swapper_space to tmpfs file mapping
+		 */
+		if (wbc->sync_mode != WB_SYNC_NONE) {
+			ret = folio_lock_killable(folio);
 			if (ret < 0) {
-				_leave(" = %zd", ret);
-				folio_batch_release(&fbatch);
+				folio_put(folio);
 				return ret;
 			}
-
-			start += ret;
+		} else {
+			if (!folio_trylock(folio)) {
+				folio_put(folio);
+				return 0;
+			}
 		}
 
-		folio_batch_release(&fbatch);
+		if (folio_mapping(folio) != mapping ||
+		    !folio_test_dirty(folio)) {
+			start += folio_size(folio);
+			folio_unlock(folio);
+			folio_put(folio);
+			continue;
+		}
+
+		if (folio_test_writeback(folio) ||
+		    folio_test_fscache(folio)) {
+			folio_unlock(folio);
+			if (wbc->sync_mode != WB_SYNC_NONE) {
+				folio_wait_writeback(folio);
+#ifdef CONFIG_AFS_FSCACHE
+				folio_wait_fscache(folio);
+#endif
+			} else {
+				start += folio_size(folio);
+			}
+			folio_put(folio);
+			if (wbc->sync_mode == WB_SYNC_NONE) {
+				if (skips >= 5 || need_resched())
+					break;
+				skips++;
+			}
+			continue;
+		}
+
+		if (!folio_clear_dirty_for_io(folio))
+			BUG();
+		ret = afs_write_back_from_locked_folio(mapping, wbc, folio, start, end);
+		folio_put(folio);
+		if (ret < 0) {
+			_leave(" = %zd", ret);
+			return ret;
+		}
+
+		start += ret;
+
+		if (max_one_loop)
+			break;
+
 		cond_resched();
 	} while (wbc->nr_to_write > 0);
 
