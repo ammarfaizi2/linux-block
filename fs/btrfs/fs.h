@@ -170,6 +170,7 @@ enum {
 	BTRFS_MOUNT_IGNOREBADROOTS		= (1UL << 29),
 	BTRFS_MOUNT_IGNOREDATACSUMS		= (1UL << 30),
 	BTRFS_MOUNT_NODISCARD			= (1UL << 31),
+	BTRFS_MOUNT_WQ_CPU_SET			= (1ULL << 32),
 };
 
 /*
@@ -798,6 +799,8 @@ struct btrfs_fs_info {
 	spinlock_t eb_leak_lock;
 	struct list_head allocated_ebs;
 #endif
+
+	struct btrfs_cpu_set *wq_cpu_set;
 };
 
 static inline void btrfs_set_last_root_drop_gen(struct btrfs_fs_info *fs_info,

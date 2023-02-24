@@ -11,6 +11,7 @@
 #include <linux/freezer.h>
 #include "async-thread.h"
 #include "ctree.h"
+#include "messages.h"
 
 enum {
 	WORK_DONE_BIT,
@@ -339,3 +340,53 @@ void btrfs_flush_workqueue(struct btrfs_workqueue *wq)
 {
 	flush_workqueue(wq->normal_wq);
 }
+
+static int apply_wq_cpu_set_notice(struct btrfs_fs_info *info,
+				   struct workqueue_struct *wq,
+				   const char *wq_name)
+{
+	const char *mask_str = info->wq_cpu_set->mask_str;
+	int ret;
+
+	ret = set_workqueue_cpumask(wq, info->wq_cpu_set->mask);
+	if (ret) {
+		btrfs_err(info, "failed to set cpu mask for %s wq: %d", wq_name,
+			  ret);
+		return ret;
+	}
+
+	btrfs_info(info, "set cpu mask for %s wq to %s", wq_name, mask_str);
+	return 0;
+}
+
+#define apply_wq_cpu_set(INFO, WQ) \
+	apply_wq_cpu_set_notice(INFO, (INFO)->WQ, # WQ)
+
+#define btrfs_apply_wq_cpu_set(INFO, WQ) \
+	apply_wq_cpu_set_notice(INFO, (INFO)->WQ->normal_wq, # WQ)
+
+
+void btrfs_apply_workqueue_cpu_set(struct btrfs_fs_info *fs_info)
+{
+	if (!btrfs_test_opt(fs_info, WQ_CPU_SET))
+		return;
+
+	btrfs_apply_wq_cpu_set(fs_info, workers);
+	btrfs_apply_wq_cpu_set(fs_info, hipri_workers);
+	btrfs_apply_wq_cpu_set(fs_info, delalloc_workers);
+	btrfs_apply_wq_cpu_set(fs_info, flush_workers);
+	btrfs_apply_wq_cpu_set(fs_info, caching_workers);
+	btrfs_apply_wq_cpu_set(fs_info, fixup_workers);
+	apply_wq_cpu_set(fs_info, endio_workers);
+	apply_wq_cpu_set(fs_info, endio_meta_workers);
+	apply_wq_cpu_set(fs_info, rmw_workers);
+	btrfs_apply_wq_cpu_set(fs_info, endio_write_workers);
+	apply_wq_cpu_set(fs_info, compressed_write_workers);
+	btrfs_apply_wq_cpu_set(fs_info, endio_freespace_worker);
+	btrfs_apply_wq_cpu_set(fs_info, delayed_workers);
+	btrfs_apply_wq_cpu_set(fs_info, qgroup_rescan_workers);
+	apply_wq_cpu_set(fs_info, discard_ctl.discard_workers);
+}
+
+#undef apply_wq_cpu_set
+#undef btrfs_apply_wq_cpu_set

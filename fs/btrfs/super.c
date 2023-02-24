@@ -138,6 +138,7 @@ enum {
 #ifdef CONFIG_BTRFS_FS_REF_VERIFY
 	Opt_ref_verify,
 #endif
+	Opt_wq_cpu_set,
 	Opt_err,
 };
 
@@ -212,6 +213,7 @@ static const match_table_t tokens = {
 #ifdef CONFIG_BTRFS_FS_REF_VERIFY
 	{Opt_ref_verify, "ref_verify"},
 #endif
+	{Opt_wq_cpu_set, "wq_cpu_set=%s"},
 	{Opt_err, NULL},
 };
 
@@ -295,6 +297,22 @@ static int parse_rescue_options(struct btrfs_fs_info *info, const char *options)
 out:
 	kfree(orig);
 	return ret;
+}
+
+static int parse_wq_cpu_set(struct btrfs_fs_info *info, const char *mask_str)
+{
+	struct btrfs_cpu_set *cpu_set;
+	int ret;
+
+	ret = btrfs_parse_cpu_set(&cpu_set, mask_str);
+	if (ret) {
+		btrfs_err(info, "failed to parse wq_cpu_set: %d", ret);
+		return ret;
+	}
+
+	info->wq_cpu_set = cpu_set;
+	btrfs_set_and_info(info, WQ_CPU_SET, "using wq_cpu_set=%s", mask_str);
+	return 0;
 }
 
 /*
@@ -802,6 +820,11 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 			btrfs_set_opt(info->mount_opt, REF_VERIFY);
 			break;
 #endif
+		case Opt_wq_cpu_set:
+			ret = parse_wq_cpu_set(info, args[0].from);
+			if (ret < 0)
+				goto out;
+			break;
 		case Opt_err:
 			btrfs_err(info, "unrecognized mount option '%s'", p);
 			ret = -EINVAL;
@@ -1318,6 +1341,8 @@ static int btrfs_show_options(struct seq_file *seq, struct dentry *dentry)
 #endif
 	if (btrfs_test_opt(info, REF_VERIFY))
 		seq_puts(seq, ",ref_verify");
+	if (btrfs_test_opt(info, WQ_CPU_SET))
+		seq_printf(seq, ",wq_cpu_set=%s", info->wq_cpu_set->mask_str);
 	seq_printf(seq, ",subvolid=%llu",
 		  BTRFS_I(d_inode(dentry))->root->root_key.objectid);
 	subvol_name = btrfs_get_subvol_name_from_objectid(info,
@@ -1685,6 +1710,7 @@ static int btrfs_remount(struct super_block *sb, int *flags, char *data)
 	u64 old_max_inline = fs_info->max_inline;
 	u32 old_thread_pool_size = fs_info->thread_pool_size;
 	u32 old_metadata_ratio = fs_info->metadata_ratio;
+	struct btrfs_cpu_set *old_wq_cpu_set = fs_info->wq_cpu_set;
 	int ret;
 
 	sync_filesystem(sb);
@@ -1838,6 +1864,14 @@ static int btrfs_remount(struct super_block *sb, int *flags, char *data)
 	}
 out:
 	/*
+	 * The remount operation changes the wq_cpu_set.
+	 */
+	if (fs_info->wq_cpu_set != old_wq_cpu_set) {
+		btrfs_destroy_cpu_set(old_wq_cpu_set);
+		btrfs_apply_workqueue_cpu_set(fs_info);
+	}
+
+	/*
 	 * We need to set SB_I_VERSION here otherwise it'll get cleared by VFS,
 	 * since the absence of the flag means it can be toggled off by remount.
 	 */
@@ -1851,6 +1885,15 @@ out:
 	return 0;
 
 restore:
+	/*
+	 * The remount operation changes the wq_cpu_set, but we hit an error,
+	 * destroy the new value and roll it back to the previous value.
+	 */
+	if (fs_info->wq_cpu_set != old_wq_cpu_set) {
+		btrfs_destroy_cpu_set(fs_info->wq_cpu_set);
+		fs_info->wq_cpu_set = old_wq_cpu_set;
+	}
+
 	/* We've hit an error - don't reset SB_RDONLY */
 	if (sb_rdonly(sb))
 		old_flags |= SB_RDONLY;
