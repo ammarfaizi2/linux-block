@@ -2415,7 +2415,7 @@ static int btrfs_init_workqueues(struct btrfs_fs_info *fs_info)
 	      fs_info->discard_ctl.discard_workers)) {
 		return -ENOMEM;
 	}
-
+	btrfs_apply_workqueue_cpu_set(fs_info);
 	return 0;
 }
 
