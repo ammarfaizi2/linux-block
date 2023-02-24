@@ -1681,6 +1681,10 @@ static void free_global_roots(struct btrfs_fs_info *fs_info)
 
 void btrfs_free_fs_info(struct btrfs_fs_info *fs_info)
 {
+	if (btrfs_test_opt(fs_info, WQ_CPU_SET)) {
+		kfree(fs_info->wq_cpu_set_str);
+		free_cpumask_var(fs_info->wq_cpu_set);
+	}
 	percpu_counter_destroy(&fs_info->dirty_metadata_bytes);
 	percpu_counter_destroy(&fs_info->delalloc_bytes);
 	percpu_counter_destroy(&fs_info->ordered_bytes);

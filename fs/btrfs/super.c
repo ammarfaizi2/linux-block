@@ -138,6 +138,7 @@ enum {
 #ifdef CONFIG_BTRFS_FS_REF_VERIFY
 	Opt_ref_verify,
 #endif
+	Opt_wq_cpu_set,
 	Opt_err,
 };
 
@@ -212,6 +213,7 @@ static const match_table_t tokens = {
 #ifdef CONFIG_BTRFS_FS_REF_VERIFY
 	{Opt_ref_verify, "ref_verify"},
 #endif
+	{Opt_wq_cpu_set, "wq_cpu_set=%s"},
 	{Opt_err, NULL},
 };
 
@@ -294,6 +296,66 @@ static int parse_rescue_options(struct btrfs_fs_info *info, const char *options)
 	}
 out:
 	kfree(orig);
+	return ret;
+}
+
+
+static void wq_cpu_set_fix_cpulist(char *set)
+{
+	/*
+	 * The user can't use the taskset pattern because ',' is used as
+	 * the mount option delimiter. They use the same taskset pattern,
+	 * but replace the ',' with '.' and we will replace it back to
+	 * ',', so the cpulist_parse() can recognize it.
+	 *
+	 * For example:
+	 * taskset -c 1,4,7 ls
+	 *
+	 * The equivalent CPU mask for the btrfs mount option will be:
+	 * kthread_cpu_set=1.4.7
+	 */
+	while (*set) {
+		if (*set == '.')
+			*set = ',';
+		set++;
+	}
+}
+
+static int parse_wq_cpu_set(struct btrfs_fs_info *info, const char *set)
+{
+	char *set_copy;
+	int ret;
+
+	set_copy = kstrdup(set, GFP_KERNEL);
+	if (!set_copy)
+		return -ENOMEM;
+
+	if (!alloc_cpumask_var(&info->wq_cpu_set, GFP_KERNEL)) {
+		ret = -ENOMEM;
+		goto out_fail;
+	}
+
+	wq_cpu_set_fix_cpulist(set_copy);
+	ret = cpulist_parse(set_copy, info->wq_cpu_set);
+	if (ret) {
+		btrfs_err(info, "failed to parse wq_cpu_set: %d", ret);
+		goto out_fail_cpu;
+	}
+
+	if (cpumask_empty(info->wq_cpu_set)) {
+		ret = -EINVAL;
+		btrfs_err(info, "wq_cpu_set cannot be empty");
+		goto out_fail_cpu;
+	}
+
+	info->wq_cpu_set_str = set_copy;
+	btrfs_set_and_info(info, WQ_CPU_SET, "using wq_cpu_set=%s", set_copy);
+	return 0;
+
+out_fail_cpu:
+	free_cpumask_var(info->wq_cpu_set);
+out_fail:
+	kfree(set_copy);
 	return ret;
 }
 
@@ -802,6 +864,11 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 			btrfs_set_opt(info->mount_opt, REF_VERIFY);
 			break;
 #endif
+		case Opt_wq_cpu_set:
+			ret = parse_wq_cpu_set(info, args[0].from);
+			if (ret < 0)
+				goto out;
+			break;
 		case Opt_err:
 			btrfs_err(info, "unrecognized mount option '%s'", p);
 			ret = -EINVAL;
@@ -1318,6 +1385,8 @@ static int btrfs_show_options(struct seq_file *seq, struct dentry *dentry)
 #endif
 	if (btrfs_test_opt(info, REF_VERIFY))
 		seq_puts(seq, ",ref_verify");
+	if (btrfs_test_opt(info, WQ_CPU_SET))
+		seq_printf(seq, ",wq_cpu_set=%s", info->wq_cpu_set_str);
 	seq_printf(seq, ",subvolid=%llu",
 		  BTRFS_I(d_inode(dentry))->root->root_key.objectid);
 	subvol_name = btrfs_get_subvol_name_from_objectid(info,

@@ -170,6 +170,7 @@ enum {
 	BTRFS_MOUNT_IGNOREBADROOTS		= (1UL << 29),
 	BTRFS_MOUNT_IGNOREDATACSUMS		= (1UL << 30),
 	BTRFS_MOUNT_NODISCARD			= (1UL << 31),
+	BTRFS_MOUNT_WQ_CPU_SET			= (1ULL << 32),
 };
 
 /*
@@ -415,7 +416,7 @@ struct btrfs_fs_info {
 	 * required instead of the faster short fsync log commits
 	 */
 	u64 last_trans_log_full_commit;
-	unsigned long mount_opt;
+	u64 mount_opt;
 
 	unsigned long compress_type:4;
 	unsigned int compress_level;
@@ -793,6 +794,9 @@ struct btrfs_fs_info {
 	spinlock_t eb_leak_lock;
 	struct list_head allocated_ebs;
 #endif
+
+	cpumask_var_t wq_cpu_set;
+	char *wq_cpu_set_str;
 };
 
 static inline void btrfs_set_last_root_drop_gen(struct btrfs_fs_info *fs_info,
