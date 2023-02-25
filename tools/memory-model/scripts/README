@@ -79,7 +79,7 @@ README
 
 Testing a change to LKMM might go as follows:
 
-	# Populate expeted results without that change, and
+	# Populate expected results without that change, and
 	# runs for about an hour on an 8-CPU x86 system:
 	scripts/initlitmushist.sh --timeout 10m --procs 10
 	# Incorporate the change:
