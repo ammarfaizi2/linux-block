@@ -1498,6 +1498,7 @@ static void free_global_roots(struct btrfs_fs_info *fs_info)
 
 void btrfs_free_fs_info(struct btrfs_fs_info *fs_info)
 {
+	btrfs_destroy_cpu_set(fs_info->wq_cpu_set);
 	percpu_counter_destroy(&fs_info->dirty_metadata_bytes);
 	percpu_counter_destroy(&fs_info->delalloc_bytes);
 	percpu_counter_destroy(&fs_info->ordered_bytes);
@@ -2231,7 +2232,7 @@ static int btrfs_init_workqueues(struct btrfs_fs_info *fs_info)
 	      fs_info->discard_ctl.discard_workers)) {
 		return -ENOMEM;
 	}
-
+	btrfs_apply_workqueue_cpu_set(fs_info);
 	return 0;
 }
 
