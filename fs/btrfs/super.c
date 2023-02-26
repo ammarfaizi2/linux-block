@@ -333,7 +333,8 @@ static void adjust_default_thread_pool_size(struct btrfs_fs_info *info)
 	}
 
 	old_thread_pool_size = info->thread_pool_size;
-	new_thread_pool_size = min_t(unsigned long, total_usable_cpu + 2, 8);
+	new_thread_pool_size = min_t(unsigned long, total_usable_cpu + 2,
+				     BTRFS_DEFAULT_MAX_THREAD_POOL_SIZE);
 
 	if (old_thread_pool_size == new_thread_pool_size)
 		return;

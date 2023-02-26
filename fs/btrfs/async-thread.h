@@ -9,6 +9,8 @@
 
 #include <linux/workqueue.h>
 
+#define BTRFS_DEFAULT_MAX_THREAD_POOL_SIZE 8
+
 struct btrfs_fs_info;
 struct btrfs_workqueue;
 struct btrfs_work;
