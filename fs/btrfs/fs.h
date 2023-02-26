@@ -422,7 +422,7 @@ struct btrfs_fs_info {
 	 * required instead of the faster short fsync log commits
 	 */
 	u64 last_trans_log_full_commit;
-	unsigned long mount_opt;
+	u64 mount_opt;
 
 	unsigned long compress_type:4;
 	unsigned int compress_level;
