@@ -4398,6 +4398,25 @@ static int init_rescuer(struct workqueue_struct *wq)
 	return 0;
 }
 
+int set_workqueue_cpumask(struct workqueue_struct *wq, const cpumask_var_t mask)
+{
+	struct workqueue_attrs *tmp_attrs;
+	int ret;
+
+	tmp_attrs = alloc_workqueue_attrs();
+	if (!tmp_attrs)
+		return -ENOMEM;
+
+	apply_wqattrs_lock();
+	copy_workqueue_attrs(tmp_attrs, wq->unbound_attrs);
+	cpumask_copy(tmp_attrs->cpumask, mask);
+	ret = apply_workqueue_attrs_locked(wq, tmp_attrs);
+	apply_wqattrs_unlock();
+	free_workqueue_attrs(tmp_attrs);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(set_workqueue_cpumask);
+
 __printf(1, 4)
 struct workqueue_struct *alloc_workqueue(const char *fmt,
 					 unsigned int flags,

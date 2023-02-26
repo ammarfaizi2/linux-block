@@ -710,6 +710,9 @@ int workqueue_online_cpu(unsigned int cpu);
 int workqueue_offline_cpu(unsigned int cpu);
 #endif
 
+int set_workqueue_cpumask(struct workqueue_struct *wq,
+			  const cpumask_var_t mask);
+
 void __init workqueue_init_early(void);
 void __init workqueue_init(void);
 
