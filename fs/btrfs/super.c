@@ -138,6 +138,7 @@ enum {
 #ifdef CONFIG_BTRFS_FS_REF_VERIFY
 	Opt_ref_verify,
 #endif
+	Opt_kthread_cpu_set,
 	Opt_wq_cpu_set,
 	Opt_err,
 };
@@ -213,6 +214,7 @@ static const match_table_t tokens = {
 #ifdef CONFIG_BTRFS_FS_REF_VERIFY
 	{Opt_ref_verify, "ref_verify"},
 #endif
+	{Opt_kthread_cpu_set, "kthread_cpu_set=%s"},
 	{Opt_wq_cpu_set, "wq_cpu_set=%s"},
 	{Opt_err, NULL},
 };
@@ -297,6 +299,24 @@ static int parse_rescue_options(struct btrfs_fs_info *info, const char *options)
 out:
 	kfree(orig);
 	return ret;
+}
+
+static int parse_kthread_cpu_set(struct btrfs_fs_info *info,
+				 const char *mask_str)
+{
+	struct btrfs_cpu_set *cpu_set;
+	int ret;
+
+	ret = btrfs_parse_cpu_set(&cpu_set, mask_str);
+	if (ret) {
+		btrfs_err(info, "failed to parse kthread_cpu_set: %d", ret);
+		return ret;
+	}
+
+	info->kthread_cpu_set = cpu_set;
+	btrfs_set_and_info(info, KTHREAD_CPU_SET, "using kthread_cpu_set=%s",
+			   mask_str);
+	return 0;
 }
 
 static int parse_wq_cpu_set(struct btrfs_fs_info *info, const char *mask_str)
@@ -820,6 +840,11 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 			btrfs_set_opt(info->mount_opt, REF_VERIFY);
 			break;
 #endif
+		case Opt_kthread_cpu_set:
+			ret = parse_kthread_cpu_set(info, args[0].from);
+			if (ret < 0)
+				goto out;
+			break;
 		case Opt_wq_cpu_set:
 			ret = parse_wq_cpu_set(info, args[0].from);
 			if (ret < 0)
@@ -1711,6 +1736,7 @@ static int btrfs_remount(struct super_block *sb, int *flags, char *data)
 	u32 old_thread_pool_size = fs_info->thread_pool_size;
 	u32 old_metadata_ratio = fs_info->metadata_ratio;
 	struct btrfs_cpu_set *old_wq_cpu_set = fs_info->wq_cpu_set;
+	struct btrfs_cpu_set *old_kthread_cpu_set = fs_info->kthread_cpu_set;
 	int ret;
 
 	sync_filesystem(sb);
@@ -1864,11 +1890,16 @@ static int btrfs_remount(struct super_block *sb, int *flags, char *data)
 	}
 out:
 	/*
-	 * The remount operation changes the wq_cpu_set.
+	 * The remount operation changes the wq_cpu_set. The same applies to
+	 * kthread_cpu_set.
 	 */
 	if (fs_info->wq_cpu_set != old_wq_cpu_set) {
 		btrfs_destroy_cpu_set(old_wq_cpu_set);
 		btrfs_apply_workqueue_cpu_set(fs_info);
+	}
+	if (fs_info->kthread_cpu_set != old_kthread_cpu_set) {
+		btrfs_destroy_cpu_set(old_kthread_cpu_set);
+		btrfs_apply_kthread_cpu_set(fs_info);
 	}
 
 	/*
@@ -1887,11 +1918,16 @@ out:
 restore:
 	/*
 	 * The remount operation changes the wq_cpu_set, but we hit an error,
-	 * destroy the new value and roll it back to the previous value.
+	 * destroy the new value and roll it back to the previous value. The
+	 * same applies to the kthread_cpu_set.
 	 */
 	if (fs_info->wq_cpu_set != old_wq_cpu_set) {
 		btrfs_destroy_cpu_set(fs_info->wq_cpu_set);
 		fs_info->wq_cpu_set = old_wq_cpu_set;
+	}
+	if (fs_info->kthread_cpu_set != old_kthread_cpu_set) {
+		btrfs_destroy_cpu_set(fs_info->kthread_cpu_set);
+		fs_info->kthread_cpu_set = old_kthread_cpu_set;
 	}
 
 	/* We've hit an error - don't reset SB_RDONLY */

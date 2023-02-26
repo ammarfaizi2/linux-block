@@ -366,6 +366,7 @@ static int apply_wq_cpu_set_notice(struct btrfs_fs_info *info,
 	apply_wq_cpu_set_notice(INFO, (INFO)->WQ->normal_wq, # WQ)
 
 
+
 void btrfs_apply_workqueue_cpu_set(struct btrfs_fs_info *fs_info)
 {
 	if (!btrfs_test_opt(fs_info, WQ_CPU_SET))
@@ -390,3 +391,7 @@ void btrfs_apply_workqueue_cpu_set(struct btrfs_fs_info *fs_info)
 
 #undef apply_wq_cpu_set
 #undef btrfs_apply_wq_cpu_set
+
+void btrfs_apply_kthread_cpu_set(struct btrfs_fs_info *fs_info)
+{
+}

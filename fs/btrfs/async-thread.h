@@ -42,5 +42,20 @@ struct btrfs_fs_info * __pure btrfs_workqueue_owner(const struct btrfs_workqueue
 bool btrfs_workqueue_normal_congested(const struct btrfs_workqueue *wq);
 void btrfs_flush_workqueue(struct btrfs_workqueue *wq);
 void btrfs_apply_workqueue_cpu_set(struct btrfs_fs_info *fs_info);
+void btrfs_apply_kthread_cpu_set(struct btrfs_fs_info *fs_info);
+
+#define btrfs_kthread_create(INFO, ...)	({				\
+	struct btrfs_fs_info *__info = (INFO);				\
+	struct task_struct *__p;					\
+									\
+	__p = kthread_create(__VA_ARGS__);				\
+	if (!IS_ERR(__p)) {						\
+		if (btrfs_test_opt(__info, KTHREAD_CPU_SET))		\
+			kthread_bind_mask(__p,				\
+					  __info->kthread_cpu_set->mask);\
+		wake_up_process(__p);					\
+	}								\
+	__p;								\
+})
 
 #endif
