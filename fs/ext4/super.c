@@ -482,7 +482,7 @@ static void ext4_journal_commit_callback(journal_t *journal, transaction_t *txn)
  *
  * However, we may have to redirty a page (see below.)
  */
-static int ext4_journalled_writepage_callback(struct page *page,
+static int ext4_journalled_writepage_callback(struct folio *folio,
 					      struct writeback_control *wbc,
 					      void *data)
 {
@@ -490,7 +490,7 @@ static int ext4_journalled_writepage_callback(struct page *page,
 	struct buffer_head *bh, *head;
 	struct journal_head *jh;
 
-	bh = head = page_buffers(page);
+	bh = head = folio_buffers(folio);
 	do {
 		/*
 		 * We have to redirty a page in these cases:
@@ -509,7 +509,7 @@ static int ext4_journalled_writepage_callback(struct page *page,
 		if (buffer_dirty(bh) ||
 		    (jh && (jh->b_transaction != transaction ||
 			    jh->b_next_transaction))) {
-			redirty_page_for_writepage(wbc, page);
+			folio_redirty_for_writepage(wbc, folio);
 			goto out;
 		}
 	} while ((bh = bh->b_this_page) != head);
@@ -2635,7 +2635,6 @@ static int ext4_check_test_dummy_encryption(const struct fs_context *fc,
 {
 	const struct ext4_fs_context *ctx = fc->fs_private;
 	const struct ext4_sb_info *sbi = EXT4_SB(sb);
-	int err;
 
 	if (!fscrypt_is_dummy_policy_set(&ctx->dummy_enc_policy))
 		return 0;
@@ -2668,17 +2667,7 @@ static int ext4_check_test_dummy_encryption(const struct fs_context *fc,
 			 "Conflicting test_dummy_encryption options");
 		return -EINVAL;
 	}
-	/*
-	 * fscrypt_add_test_dummy_key() technically changes the super_block, so
-	 * technically it should be delayed until ext4_apply_options() like the
-	 * other changes.  But since we never get here for remounts (see above),
-	 * and this is the last chance to report errors, we do it here.
-	 */
-	err = fscrypt_add_test_dummy_key(sb, &ctx->dummy_enc_policy);
-	if (err)
-		ext4_msg(NULL, KERN_WARNING,
-			 "Error adding test dummy encryption key [%d]", err);
-	return err;
+	return 0;
 }
 
 static void ext4_apply_test_dummy_encryption(struct ext4_fs_context *ctx,
@@ -5334,11 +5323,6 @@ static int __ext4_fill_super(struct fs_context *fc, struct super_block *sb)
 				goto failed_mount_wq;
 			}
 		}
-	}
-
-	if (ext4_has_feature_verity(sb) && sb->s_blocksize != PAGE_SIZE) {
-		ext4_msg(sb, KERN_ERR, "Unsupported blocksize for fs-verity");
-		goto failed_mount_wq;
 	}
 
 	/*

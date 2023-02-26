@@ -1016,9 +1016,8 @@ ssize_t part_inflight_show(struct device *dev, struct device_attribute *attr,
 static ssize_t disk_capability_show(struct device *dev,
 				    struct device_attribute *attr, char *buf)
 {
-	struct gendisk *disk = dev_to_disk(dev);
-
-	return sprintf(buf, "%x\n", disk->flags);
+	dev_warn_once(dev, "the capability attribute has been deprecated.\n");
+	return sprintf(buf, "0\n");
 }
 
 static ssize_t disk_alignment_offset_show(struct device *dev,
@@ -1201,7 +1200,7 @@ struct class block_class = {
 	.dev_uevent	= block_uevent,
 };
 
-static char *block_devnode(struct device *dev, umode_t *mode,
+static char *block_devnode(const struct device *dev, umode_t *mode,
 			   kuid_t *uid, kgid_t *gid)
 {
 	struct gendisk *disk = dev_to_disk(dev);
