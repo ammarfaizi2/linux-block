@@ -2957,7 +2957,8 @@ void btrfs_init_fs_info(struct btrfs_fs_info *fs_info)
 	btrfs_init_ref_verify(fs_info);
 
 	fs_info->thread_pool_size = min_t(unsigned long,
-					  num_online_cpus() + 2, 8);
+					  num_online_cpus() + 2,
+					  BTRFS_DEFAULT_MAX_THREAD_POOL_SIZE);
 
 	INIT_LIST_HEAD(&fs_info->ordered_roots);
 	spin_lock_init(&fs_info->ordered_root_lock);
