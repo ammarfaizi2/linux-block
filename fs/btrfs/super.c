@@ -317,6 +317,32 @@ static int parse_wq_cpu_set(struct btrfs_fs_info *info, const char *mask_str)
 	return 0;
 }
 
+static void adjust_default_thread_pool_size(struct btrfs_fs_info *info)
+{
+	unsigned long old_thread_pool_size;
+	unsigned long new_thread_pool_size;
+	unsigned long total_usable_cpu = 0;
+	unsigned long cpu;
+
+	if (!btrfs_test_opt(info, WQ_CPU_SET))
+		return;
+
+	for_each_online_cpu(cpu) {
+		if (cpumask_test_cpu(cpu, info->wq_cpu_set->mask))
+			total_usable_cpu++;
+	}
+
+	old_thread_pool_size = info->thread_pool_size;
+	new_thread_pool_size = min_t(unsigned long, total_usable_cpu + 2, 8);
+
+	if (old_thread_pool_size == new_thread_pool_size)
+		return;
+
+	info->thread_pool_size = new_thread_pool_size;
+	btrfs_info(info, "adjusting thread_pool_size to %lu due to wq_cpu_set (you can override this with thread_pool=%%u option)",
+		   new_thread_pool_size);
+}
+
 /*
  * Regular mount options parser.  Everything that is needed only when
  * reading in a new superblock is parsed here.
@@ -336,6 +362,7 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 	bool saved_compress_force;
 	int no_compress = 0;
 	const bool remounting = test_bit(BTRFS_FS_STATE_REMOUNTING, &info->fs_state);
+	bool has_thread_pool_opt = false;
 
 	if (btrfs_fs_compat_ro(info, FREE_SPACE_TREE))
 		btrfs_set_opt(info->mount_opt, FREE_SPACE_TREE);
@@ -543,6 +570,7 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 				goto out;
 			}
 			info->thread_pool_size = intarg;
+			has_thread_pool_opt = true;
 			break;
 		case Opt_max_inline:
 			num = match_strdup(&args[0]);
@@ -854,6 +882,16 @@ out:
 	}
 	if (!ret)
 		ret = btrfs_check_mountopts_zoned(info);
+
+	/*
+	 * If wq_cpu_set is specified, adjust thread_pool_size to the number of
+	 * CPUs in the set plus 2 to avoid the case where the number of CPUs in
+	 * the set is less than the default thread_pool_size + 2, which might
+	 * cause the thread pool to be starved. The thread_pool=%u mount option
+	 * overrides this adjusting behavior.
+	 */
+	if (!ret && !has_thread_pool_opt)
+		adjust_default_thread_pool_size(info);
 	if (!ret && !remounting) {
 		if (btrfs_test_opt(info, SPACE_CACHE))
 			btrfs_info(info, "disk space caching is enabled");
