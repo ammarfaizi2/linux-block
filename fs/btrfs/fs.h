@@ -356,6 +356,11 @@ struct btrfs_commit_stats {
 	u64 total_commit_dur;
 };
 
+struct btrfs_cpu_set {
+	cpumask_var_t mask;
+	char *mask_str;
+};
+
 struct btrfs_fs_info {
 	u8 chunk_tree_uuid[BTRFS_UUID_SIZE];
 	unsigned long flags;
@@ -876,6 +881,8 @@ void btrfs_exclop_start_unlock(struct btrfs_fs_info *fs_info);
 void btrfs_exclop_finish(struct btrfs_fs_info *fs_info);
 void btrfs_exclop_balance(struct btrfs_fs_info *fs_info,
 			  enum btrfs_exclusive_operation op);
+int btrfs_parse_cpu_set(struct btrfs_cpu_set **cpu_set_p, const char *mask_str);
+void btrfs_destroy_cpu_set(struct btrfs_cpu_set *cpu_set);
 
 /* Compatibility and incompatibility defines */
 void __btrfs_set_fs_incompat(struct btrfs_fs_info *fs_info, u64 flag,
