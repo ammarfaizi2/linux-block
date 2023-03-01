@@ -2068,6 +2068,12 @@ void ath11k_wmi_start_scan_init(struct ath11k *ar,
 				  WMI_SCAN_EVENT_FOREIGN_CHAN |
 				  WMI_SCAN_EVENT_DEQUEUED;
 	arg->scan_flags |= WMI_SCAN_CHAN_STAT_EVENT;
+
+	if (test_bit(WMI_TLV_SERVICE_PASSIVE_SCAN_START_TIME_ENHANCE,
+		     ar->ab->wmi_ab.svc_map))
+		arg->scan_ctrl_flags_ext |=
+			WMI_SCAN_FLAG_EXT_PASSIVE_SCAN_START_TIME_ENHANCE;
+
 	arg->num_bssid = 1;
 
 	/* fill bssid_list[0] with 0xff, otherwise bssid and RA will be
@@ -2149,6 +2155,8 @@ ath11k_wmi_copy_scan_event_cntrl_flags(struct wmi_start_scan_cmd *cmd,
 	/* for adaptive scan mode using 3 bits (21 - 23 bits) */
 	WMI_SCAN_SET_DWELL_MODE(cmd->scan_ctrl_flags,
 				param->adaptive_dwell_time_mode);
+
+	cmd->scan_ctrl_flags_ext = param->scan_ctrl_flags_ext;
 }
 
 int ath11k_wmi_send_scan_start_cmd(struct ath11k *ar,
@@ -5221,8 +5229,8 @@ static int ath11k_pull_mgmt_rx_params_tlv(struct ath11k_base *ab,
 	return 0;
 }
 
-static int wmi_process_mgmt_tx_comp(struct ath11k *ar, u32 desc_id,
-				    u32 status)
+static int wmi_process_mgmt_tx_comp(struct ath11k *ar,
+				    struct wmi_mgmt_tx_compl_event *tx_compl_param)
 {
 	struct sk_buff *msdu;
 	struct ieee80211_tx_info *info;
@@ -5230,24 +5238,29 @@ static int wmi_process_mgmt_tx_comp(struct ath11k *ar, u32 desc_id,
 	int num_mgmt;
 
 	spin_lock_bh(&ar->txmgmt_idr_lock);
-	msdu = idr_find(&ar->txmgmt_idr, desc_id);
+	msdu = idr_find(&ar->txmgmt_idr, tx_compl_param->desc_id);
 
 	if (!msdu) {
 		ath11k_warn(ar->ab, "received mgmt tx compl for invalid msdu_id: %d\n",
-			    desc_id);
+			    tx_compl_param->desc_id);
 		spin_unlock_bh(&ar->txmgmt_idr_lock);
 		return -ENOENT;
 	}
 
-	idr_remove(&ar->txmgmt_idr, desc_id);
+	idr_remove(&ar->txmgmt_idr, tx_compl_param->desc_id);
 	spin_unlock_bh(&ar->txmgmt_idr_lock);
 
 	skb_cb = ATH11K_SKB_CB(msdu);
 	dma_unmap_single(ar->ab->dev, skb_cb->paddr, msdu->len, DMA_TO_DEVICE);
 
 	info = IEEE80211_SKB_CB(msdu);
-	if ((!(info->flags & IEEE80211_TX_CTL_NO_ACK)) && !status)
+	if ((!(info->flags & IEEE80211_TX_CTL_NO_ACK)) &&
+	    !tx_compl_param->status) {
 		info->flags |= IEEE80211_TX_STAT_ACK;
+		if (test_bit(WMI_TLV_SERVICE_TX_DATA_MGMT_ACK_RSSI,
+			     ar->ab->wmi_ab.svc_map))
+			info->status.ack_signal = tx_compl_param->ack_rssi;
+	}
 
 	ieee80211_tx_status_irqsafe(ar->hw, msdu);
 
@@ -5259,7 +5272,7 @@ static int wmi_process_mgmt_tx_comp(struct ath11k *ar, u32 desc_id,
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_WMI,
 		   "wmi mgmt tx comp pending %d desc id %d\n",
-		   num_mgmt, desc_id);
+		   num_mgmt, tx_compl_param->desc_id);
 
 	if (!num_mgmt)
 		wake_up(&ar->txmgmt_empty_waitq);
@@ -5292,6 +5305,7 @@ static int ath11k_pull_mgmt_tx_compl_param_tlv(struct ath11k_base *ab,
 	param->pdev_id = ev->pdev_id;
 	param->desc_id = ev->desc_id;
 	param->status = ev->status;
+	param->ack_rssi = ev->ack_rssi;
 
 	kfree(tb);
 	return 0;
@@ -7062,13 +7076,12 @@ static void ath11k_mgmt_tx_compl_event(struct ath11k_base *ab, struct sk_buff *s
 		goto exit;
 	}
 
-	wmi_process_mgmt_tx_comp(ar, tx_compl_param.desc_id,
-				 tx_compl_param.status);
+	wmi_process_mgmt_tx_comp(ar, &tx_compl_param);
 
 	ath11k_dbg(ab, ATH11K_DBG_MGMT,
-		   "mgmt tx compl ev pdev_id %d, desc_id %d, status %d",
+		   "mgmt tx compl ev pdev_id %d, desc_id %d, status %d ack_rssi %d",
 		   tx_compl_param.pdev_id, tx_compl_param.desc_id,
-		   tx_compl_param.status);
+		   tx_compl_param.status, tx_compl_param.ack_rssi);
 
 exit:
 	rcu_read_unlock();
