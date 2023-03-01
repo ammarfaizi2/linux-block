@@ -2339,6 +2339,64 @@ out:
 }
 EXPORT_SYMBOL(filemap_get_folios_tag);
 
+/**
+ * filemap_get_folio_tag - Get the first folio matching @tag
+ * @mapping:    The address_space to search
+ * @start:      The starting page index
+ * @end:        The final page index (inclusive)
+ * @tag:        The tag index
+ *
+ * Search for and return the first folios in the mapping starting at index
+ * @start and up to index @end (inclusive).  The folio is returned with an
+ * elevated reference count.
+ *
+ * If a folio is returned, it may start before @start; if it does, it will
+ * contain @start.  The folio may also extend beyond @end; if it does, it will
+ * contain @end.  If folios are added to or removed from the page cache while
+ * this is running, they may or may not be found by this call.
+ *
+ * Return: The folio that was found or NULL.  @start is also updated to index
+ * the next folio for the traversal or will be left pointing after @end.
+ */
+struct folio *filemap_get_folio_tag(struct address_space *mapping, pgoff_t *start,
+				    pgoff_t end, xa_mark_t tag)
+{
+	XA_STATE(xas, &mapping->i_pages, *start);
+	struct folio *folio;
+
+	rcu_read_lock();
+	while ((folio = find_get_entry(&xas, end, tag)) != NULL) {
+		/*
+		 * Shadow entries should never be tagged, but this iteration
+		 * is lockless so there is a window for page reclaim to evict
+		 * a page we saw tagged. Skip over it.
+		 */
+		if (xa_is_value(folio))
+			continue;
+
+		if (folio_test_hugetlb(folio))
+			*start = folio->index + 1;
+		else
+			*start = folio_next_index(folio);
+		goto out;
+	}
+
+	/*
+	 * We come here when there is no page beyond @end. We take care to not
+	 * overflow the index @start as it confuses some of the callers. This
+	 * breaks the iteration when there is a page at index -1 but that is
+	 * already broke anyway.
+	 */
+	if (end == (pgoff_t)-1)
+		*start = (pgoff_t)-1;
+	else
+		*start = end + 1;
+out:
+	rcu_read_unlock();
+	return folio;
+}
+EXPORT_SYMBOL(filemap_get_folio_tag);
+
 /*
  * CD/DVDs are error prone. When a medium error occurs, the driver may fail
  * a _large_ part of the i/o request. Imagine the worst scenario:
