@@ -1915,6 +1915,10 @@ static u64 cmp_next_hrtimer_event(u64 basem, u64 expires)
  * @basej:	base time jiffies
  * @basem:	base time clock monotonic
  *
+ * If required, base->clk is forwarded and base is also marked as
+ * idle. Idle handling of timer bases is allowed only to be done by CPU
+ * itself.
+ *
  * Returns the tick aligned clock monotonic time of the next pending
  * timer or KTIME_MAX if no timer is pending.
  */
