@@ -1944,6 +1944,46 @@ static unsigned long next_timer_interrupt(struct timer_base *base)
 	return base->next_expiry;
 }
 
+static unsigned long fetch_next_timer_interrupt(struct timer_base *base_local,
+						struct timer_base *base_global,
+						unsigned long basej, u64 basem,
+						struct timer_events *tevt)
+{
+	unsigned long nextevt_local, nextevt_global;
+	bool local_first;
+
+	nextevt_local = next_timer_interrupt(base_local);
+	nextevt_global = next_timer_interrupt(base_global);
+
+	/*
+	 * Check whether the local event is expiring before or at the same
+	 * time as the global event.
+	 *
+	 * Note, that nextevt_global and nextevt_local might be based on
+	 * different base->clk values. So it's not guaranteed that
+	 * comparing with empty bases results in a correct local_first.
+	 */
+	if (base_local->timers_pending && base_global->timers_pending)
+		local_first = time_before_eq(nextevt_local, nextevt_global);
+	else
+		local_first = base_local->timers_pending;
+
+	/*
+	 * Update tevt->* values:
+	 *
+	 * If the local queue expires first, then the global event can
+	 * be ignored. If the global queue is empty, nothing to do
+	 * either.
+	 */
+	if (!local_first && base_global->timers_pending)
+		tevt->global = basem + (u64)(nextevt_global - basej) * TICK_NSEC;
+
+	if (base_local->timers_pending)
+		tevt->local = basem + (u64)(nextevt_local - basej) * TICK_NSEC;
+
+	return local_first ? nextevt_local : nextevt_global;
+}
+
 /*
  * Forward base clock is done only when @basej is past base->clk, otherwise
  * base-clk might be rewind.
@@ -1976,7 +2016,7 @@ u64 get_next_timer_interrupt(unsigned long basej, u64 basem)
 	struct timer_events tevt = { .local = KTIME_MAX, .global = KTIME_MAX };
 	unsigned long nextevt, nextevt_local, nextevt_global;
 	struct timer_base *base_local, *base_global;
-	bool local_first, is_idle;
+	bool is_idle;
 
 	/*
 	 * Pretend that there is no timer pending if the cpu is offline.
@@ -1991,8 +2031,11 @@ u64 get_next_timer_interrupt(unsigned long basej, u64 basem)
 	raw_spin_lock(&base_local->lock);
 	raw_spin_lock_nested(&base_global->lock, SINGLE_DEPTH_NESTING);
 
-	nextevt_local = next_timer_interrupt(base_local);
-	nextevt_global = next_timer_interrupt(base_global);
+	nextevt = fetch_next_timer_interrupt(base_local, base_global,
+					     basej, basem, &tevt);
+
+	nextevt_local = base_local->next_expiry;
+	nextevt_global = base_global->next_expiry;
 
 	/*
 	 * We have a fresh next event. Check whether we can forward the
@@ -2000,21 +2043,6 @@ u64 get_next_timer_interrupt(unsigned long basej, u64 basem)
 	 */
 	forward_base_clk(base_local, nextevt_local, basej);
 	forward_base_clk(base_global, nextevt_global, basej);
-
-	/*
-	 * Check whether the local event is expiring before or at the same
-	 * time as the global event.
-	 *
-	 * Note, that nextevt_global and nextevt_local might be based on
-	 * different base->clk values. So it's not guaranteed that
-	 * comparing with empty bases results in a correct local_first.
-	 */
-	if (base_local->timers_pending && base_global->timers_pending)
-		local_first = time_before_eq(nextevt_local, nextevt_global);
-	else
-		local_first = base_local->timers_pending;
-
-	nextevt = local_first ? nextevt_local : nextevt_global;
 
 	/*
 	 * Bases are idle if the next event is more than a tick away. Also
@@ -2028,6 +2056,9 @@ u64 get_next_timer_interrupt(unsigned long basej, u64 basem)
 	/* We need to mark both bases in sync */
 	base_local->is_idle = base_global->is_idle = is_idle;
 
+	raw_spin_unlock(&base_global->lock);
+	raw_spin_unlock(&base_local->lock);
+
 	/*
 	 * If the bases are not marked idle, i.e one of the events is at
 	 * max. one tick away, then the CPU can't go into a NOHZ idle
@@ -2040,30 +2071,8 @@ u64 get_next_timer_interrupt(unsigned long basej, u64 basem)
 		if (time_before(nextevt, basej))
 			nextevt = basej;
 		tevt.local = basem + (u64)(nextevt - basej) * TICK_NSEC;
-		goto unlock;
+		tevt.global = KTIME_MAX;
 	}
-
-	/*
-	 * If the bases are marked idle, i.e. the next event on both the
-	 * local and the global queue are farther away than a tick,
-	 * evaluate both bases. No need to check whether one of the bases
-	 * has an already expired timer as this is caught by the !is_idle
-	 * condition above.
-	 */
-	if (base_local->timers_pending)
-		tevt.local = basem + (u64)(nextevt_local - basej) * TICK_NSEC;
-
-	/*
-	 * If the local queue expires first, then the global event can be
-	 * ignored. The CPU wakes up before that. If the global queue is
-	 * empty, nothing to do either.
-	 */
-	if (!local_first && base_global->timers_pending)
-		tevt.global = basem + (u64)(nextevt_global - basej) * TICK_NSEC;
-
-unlock:
-	raw_spin_unlock(&base_global->lock);
-	raw_spin_unlock(&base_local->lock);
 
 	tevt.local = min_t(u64, tevt.local, tevt.global);
 
