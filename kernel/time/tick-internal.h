@@ -8,6 +8,11 @@
 #include "timekeeping.h"
 #include "tick-sched.h"
 
+struct timer_events {
+	u64	local;
+	u64	global;
+};
+
 #ifdef CONFIG_GENERIC_CLOCKEVENTS
 
 # define TICK_DO_TIMER_NONE	-1
@@ -164,6 +169,9 @@ static inline void timers_update_nohz(void) { }
 DECLARE_PER_CPU(struct hrtimer_cpu_base, hrtimer_bases);
 
 extern u64 get_next_timer_interrupt(unsigned long basej, u64 basem);
+extern void fetch_next_timer_interrupt_remote(unsigned long basej, u64 basem,
+					    struct timer_events *tevt,
+					    unsigned int cpu);
 void timer_clear_idle(void);
 
 #define CLOCK_SET_WALL							\
