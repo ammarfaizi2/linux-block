@@ -13,6 +13,9 @@
 #include "timer_migration.h"
 #include "tick-internal.h"
 
+#define CREATE_TRACE_POINTS
+#include <trace/events/timer_migration.h>
+
 /*
  * The timer migration mechanism is built on a hierarchy of groups. The
  * lowest level group contains CPUs, the next level groups of CPU groups
@@ -320,6 +323,8 @@ retry:
 	 */
 	group->groupevt.ignore = 1;
 
+	trace_tmigr_group_set_cpu_active(group, newstate, childmask);
+
 	return walk_done;
 }
 
@@ -344,6 +349,7 @@ void tmigr_cpu_activate(void)
 	raw_spin_lock(&tmc->lock);
 	tmc->idle = 0;
 	tmc->wakeup = KTIME_MAX;
+	trace_tmigr_cpu_active(tmc);
 	__tmigr_cpu_activate(tmc);
 	raw_spin_unlock(&tmc->lock);
 }
@@ -450,6 +456,9 @@ check_toplvl:
 		data->nextexp = tmigr_next_groupevt_expires(group);
 	}
 
+	trace_tmigr_update_events(child, group, data->childstate,
+				  data->groupstate, nextexp);
+
 unlock:
 	raw_spin_unlock(&group->lock);
 
@@ -492,6 +501,8 @@ static u64 tmigr_new_timer(struct tmigr_cpu *tmc, u64 nextexp)
 
 	if (tmc->remote)
 		return KTIME_MAX;
+
+	trace_tmigr_cpu_new_timer(tmc);
 
 	tmc->cpuevt.ignore = 0;
 
@@ -593,6 +604,8 @@ retry:
 		}
 	}
 
+	trace_tmigr_group_set_cpu_inactive(group, newstate, childmask);
+
 	return walk_done;
 }
 
@@ -669,6 +682,7 @@ u64 tmigr_cpu_deactivate(u64 nextexp)
 	tmc->idle = 1;
 
 unlock:
+	trace_tmigr_cpu_idle(tmc, ret);
 	raw_spin_unlock(&tmc->lock);
 	return ret;
 }
@@ -694,6 +708,8 @@ static u64 tmigr_handle_remote_cpu(unsigned int cpu, u64 now,
 		raw_spin_unlock_irqrestore(&tmc->lock, flags);
 		return next;
 	}
+
+	trace_tmigr_handle_remote_cpu(tmc);
 
 	tmc->remote = 1;
 
@@ -746,6 +762,7 @@ static bool tmigr_handle_remote_up(struct tmigr_group *group,
 
 	childmask = data->childmask;
 
+	trace_tmigr_handle_remote(group);
 again:
 	/*
 	 * Handle the group only if @childmask is the migrator or if the
@@ -979,6 +996,7 @@ reloop:
 	tmigr_init_group(group, lvl, node, migr_state);
 	/* Setup successful. Add it to the hierarchy */
 	list_add(&group->list, &tmigr_level_list[lvl]);
+	trace_tmigr_group_set(group);
 	return group;
 }
 
@@ -996,6 +1014,8 @@ static void tmigr_connect_child_parent(struct tmigr_group *child,
 
 	raw_spin_unlock(&parent->lock);
 	raw_spin_unlock_irqrestore(&child->lock, flags);
+
+	trace_tmigr_connect_child_parent(child);
 
 	/*
 	 * To prevent inconsistent states, active childs needs to be active
@@ -1083,6 +1103,8 @@ static int tmigr_setup_groups(unsigned int cpu, unsigned int node)
 
 			raw_spin_unlock_irqrestore(&group->lock, flags);
 
+			trace_tmigr_connect_cpu_parent(tmc);
+
 			/* There are no childs that needs to be connected */
 			continue;
 		} else {
@@ -1151,6 +1173,7 @@ static int tmigr_cpu_online(unsigned int cpu)
 		tmc->wakeup = KTIME_MAX;
 	}
 	raw_spin_lock_irqsave(&tmc->lock, flags);
+	trace_tmigr_cpu_online(tmc);
 	__tmigr_cpu_activate(tmc);
 	tmc->online = 1;
 	raw_spin_unlock_irqrestore(&tmc->lock, flags);
@@ -1164,6 +1187,7 @@ static int tmigr_cpu_offline(unsigned int cpu)
 	raw_spin_lock_irq(&tmc->lock);
 	tmc->online = 0;
 	__tmigr_cpu_deactivate(tmc, KTIME_MAX);
+	trace_tmigr_cpu_offline(tmc);
 	raw_spin_unlock_irq(&tmc->lock);
 
 	return 0;
