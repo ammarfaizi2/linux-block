@@ -53,6 +53,7 @@
 #include <asm/io.h>
 
 #include "tick-internal.h"
+#include "timer_migration.h"
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/timer.h>
@@ -2044,8 +2045,11 @@ static void forward_base_clk(struct timer_base *base, unsigned long nextevt,
  * idle. Idle handling of timer bases is allowed only to be done by CPU
  * itself.
  *
- * Returns the tick aligned clock monotonic time of the next pending
- * timer or KTIME_MAX if no timer is pending.
+ * Returns the tick aligned clock monotonic time of the next pending timer
+ * or KTIME_MAX if no timer is pending. If timer of global base was queued
+ * into timer migration hierarchy, first global timer is not taken into
+ * account. If it was the last CPU of timer migration hierarchy going idle,
+ * first global event is taken into account.
  */
 u64 get_next_timer_interrupt(unsigned long basej, u64 basem)
 {
@@ -2089,6 +2093,40 @@ u64 get_next_timer_interrupt(unsigned long basej, u64 basem)
 	 */
 	is_idle = time_after(nextevt, basej + 1);
 
+	if (is_idle) {
+		u64 next_tmigr;
+
+		/*
+		 * Enqueue first global timer into timer migration
+		 * hierarchy, afterwards tevt.global is no longer used.
+		 */
+		next_tmigr = tmigr_cpu_deactivate(tevt.global);
+
+		/*
+		 * If CPU is the last going idle in timer migration
+		 * hierarchy, make sure CPU will wake up in time to handle
+		 * remote timers. next_tmigr == KTIME_MAX if other CPUs are
+		 * still active.
+		 */
+		if (next_tmigr < tevt.local) {
+			u64 tmp;
+
+			/* If we missed a tick already, force 0 delta */
+			if (next_tmigr < basem)
+				next_tmigr = basem;
+
+			tmp = div_u64(next_tmigr - basem, TICK_NSEC);
+
+			nextevt = basej + (unsigned long)tmp;
+			tevt.local = next_tmigr;
+			is_idle = time_after(nextevt, basej + 1);
+		}
+		/*
+		 * Update of nextevt is not required in an else path, as it
+		 * is revisited in !is_idle path only.
+		 */
+	}
+
 	/* We need to mark both bases in sync */
 	base_local->is_idle = base_global->is_idle = is_idle;
 
@@ -2099,18 +2137,15 @@ u64 get_next_timer_interrupt(unsigned long basej, u64 basem)
 	 * If the bases are not marked idle, i.e one of the events is at
 	 * max. one tick away, then the CPU can't go into a NOHZ idle
 	 * sleep. Use the earlier event of both and store it in the local
-	 * expiry value. The next global event is irrelevant in this case
-	 * and can be left as KTIME_MAX. CPU will wakeup on time.
+	 * expiry value. tevt.global update is superfluous and is
+	 * ignored. CPU will wakeup on time.
 	 */
 	if (!is_idle) {
 		/* If we missed a tick already, force 0 delta */
 		if (time_before(nextevt, basej))
 			nextevt = basej;
 		tevt.local = basem + (u64)(nextevt - basej) * TICK_NSEC;
-		tevt.global = KTIME_MAX;
 	}
-
-	tevt.local = min_t(u64, tevt.local, tevt.global);
 
 	return cmp_next_hrtimer_event(basem, tevt.local);
 }
@@ -2130,6 +2165,9 @@ void timer_clear_idle(void)
 	 */
 	__this_cpu_write(timer_bases[BASE_LOCAL].is_idle, false);
 	__this_cpu_write(timer_bases[BASE_GLOBAL].is_idle, false);
+
+	/* Activate without holding the timer_base->lock */
+	tmigr_cpu_activate();
 }
 #endif
 
@@ -2186,6 +2224,15 @@ static void run_timer_base(int index)
 	__run_timer_base(base);
 }
 
+#ifdef CONFIG_SMP
+void timer_expire_remote(unsigned int cpu)
+{
+       struct timer_base *base = per_cpu_ptr(&timer_bases[BASE_GLOBAL], cpu);
+
+       __run_timer_base(base);
+}
+#endif
+
 /*
  * This function runs timers and the timer-tq in bottom half context.
  */
@@ -2195,6 +2242,9 @@ static __latent_entropy void run_timer_softirq(struct softirq_action *h)
 	if (IS_ENABLED(CONFIG_NO_HZ_COMMON)) {
 		run_timer_base(BASE_GLOBAL);
 		run_timer_base(BASE_DEF);
+
+		if (is_timers_nohz_active())
+			tmigr_handle_remote();
 	}
 }
 
@@ -2209,7 +2259,8 @@ static void run_local_timers(void)
 
 	for (int i = 0; i < NR_BASES; i++, base++) {
 		/* Raise the softirq only if required. */
-		if (time_after_eq(jiffies, base->next_expiry)) {
+		if (time_after_eq(jiffies, base->next_expiry) ||
+		    (i == BASE_DEF && tmigr_requires_handle_remote())) {
 			raise_softirq(TIMER_SOFTIRQ);
 			return;
 		}
