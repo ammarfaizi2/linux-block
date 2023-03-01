@@ -1007,7 +1007,7 @@ static DEFINE_PER_CPU(struct fast_pool, irq_randomness) = {
 #define FASTMIX_PERM HSIPHASH_PERMUTATION
 	.pool = { HSIPHASH_CONST_0, HSIPHASH_CONST_1, HSIPHASH_CONST_2, HSIPHASH_CONST_3 },
 #endif
-	.mix = __TIMER_INITIALIZER(mix_interrupt_randomness, 0)
+	.mix = __TIMER_INITIALIZER(mix_interrupt_randomness, TIMER_PINNED)
 };
 
 /*

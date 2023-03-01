@@ -110,7 +110,8 @@ static int __init start_sync_check_timer(void)
 	if (!cpu_feature_enabled(X86_FEATURE_TSC_ADJUST) || tsc_clocksource_reliable)
 		return 0;
 
-	timer_setup(&tsc_sync_check_timer, tsc_sync_check_timer_fn, 0);
+	timer_setup(&tsc_sync_check_timer, tsc_sync_check_timer_fn,
+		    TIMER_PINNED);
 	tsc_sync_check_timer.expires = jiffies + SYNC_CHECK_INTERVAL;
 	add_timer(&tsc_sync_check_timer);
 

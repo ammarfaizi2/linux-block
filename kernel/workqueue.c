@@ -1670,10 +1670,21 @@ static void __queue_delayed_work(int cpu, struct workqueue_struct *wq,
 	dwork->cpu = cpu;
 	timer->expires = jiffies + delay;
 
-	if (unlikely(cpu != WORK_CPU_UNBOUND))
+	if (unlikely(cpu != WORK_CPU_UNBOUND)) {
+		/*
+		 * TODO: Setting the flag is a workaround for now; needs to
+		 * be cleaned up with new work initializers and defines
+		 */
+		timer->flags |= TIMER_PINNED;
 		add_timer_on(timer, cpu);
-	else
+	} else {
+		/*
+		 * TODO: Resetting the flag is a workaround for now; needs
+		 * to be cleaned up with new work initializers and defines
+		 */
+		timer->flags &= ~TIMER_PINNED;
 		add_timer(timer);
+	}
 }
 
 /**
