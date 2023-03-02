@@ -1047,7 +1047,16 @@ static void __migrate_folio_extract(struct folio *dst,
 				   int *page_was_mappedp,
 				   struct anon_vma **anon_vmap)
 {
-	*anon_vmap = (void *)dst->mapping;
+	struct anon_vma *anon_vma;
+
+	/*
+	 * 2 steps assignment to silence gcc notes for mis-casting. The
+	 * casting is safe.  Because we only use dst->mapping to store
+	 * the pointer itself temporarily and dst is a newly allocated
+	 * folio and not used by anyone else during that.
+	 */
+	anon_vma = (void *)dst->mapping;
+	*anon_vmap = anon_vma;
 	*page_was_mappedp = (unsigned long)dst->private;
 	dst->mapping = NULL;
 	dst->private = NULL;
