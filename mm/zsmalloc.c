@@ -651,9 +651,9 @@ static int zs_stats_size_show(struct seq_file *s, void *v)
 		 * stats.
 		 */
 		for (fg = ZS_INUSE_RATIO_70; fg <= ZS_INUSE_RATIO_99; fg++)
-			class_almost_full = zs_stat_get(class, fg);
+			class_almost_full += zs_stat_get(class, fg);
 		for (fg = ZS_INUSE_RATIO_10; fg < ZS_INUSE_RATIO_70; fg++)
-			class_almost_empty = zs_stat_get(class, fg);
+			class_almost_empty += zs_stat_get(class, fg);
 
 		obj_allocated = zs_stat_get(class, ZS_OBJS_ALLOCATED);
 		obj_used = zs_stat_get(class, ZS_OBJS_INUSE);
