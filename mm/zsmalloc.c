@@ -647,7 +647,7 @@ static int zs_stats_size_show(struct seq_file *s, void *v)
 		spin_lock(&pool->lock);
 
 		/*
-		 * Replecate old behaviour for almost_full and almost_empty
+		 * Replicate old behaviour for almost_full and almost_empty
 		 * stats.
 		 */
 		for (fg = ZS_INUSE_RATIO_70; fg <= ZS_INUSE_RATIO_99; fg++)
