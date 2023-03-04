@@ -20,6 +20,7 @@
 #include <linux/hardirq.h>
 #include <linux/mutex.h>
 #include <linux/prefetch.h>
+#include <linux/kthread.h>
 #include <asm/byteorder.h>
 #include <asm/qspinlock.h>
 #include <trace/events/lock.h>
@@ -292,6 +293,71 @@ static __always_inline u32  __pv_wait_head_or_lock(struct qspinlock *lock,
 
 #endif /* _GEN_PV_LOCK_SLOWPATH */
 
+#if defined(CONFIG_DEBUG_QSPINLOCK_SLOWPATH) && !defined(_GEN_PV_LOCK_SLOWPATH)
+
+static LLIST_HEAD(qwait_diags);
+static struct task_struct *qwait_diags_task;
+static int qwait_diags_select = 2;
+module_param(qwait_diags_select, int, 0444);
+
+static bool queued_spin_lock_slowpath_diags(int val, struct qspinlock *lock)
+{
+	struct qspinlock qval;
+
+	if (!qwait_diags_select)
+		return false;
+	atomic_set(&qval.val, val);
+	if (qwait_diags_select == 1) {
+		WARN(1, "%s: Still pending and locked: %#x (%c%c%#x)\n", __func__, val, ".L"[!!qval.locked], ".P"[!!qval.pending], qval.tail);
+		return true;
+	}
+	if (qwait_diags_select == 2 && !READ_ONCE(current->qwait_diags_ql)) {
+		current->qwait_diags_val = val;
+		current->qwait_diags_jiffies = jiffies;
+		current->qwait_diags_ql = lock;
+		llist_add(&current->qwait_diags_node, &qwait_diags);
+		return true;
+	}
+	return false;
+}
+
+static int __noreturn qwait_diags_kthread(void *unused)
+{
+	struct llist_node *llnp;
+	struct qspinlock qval;
+	struct task_struct *t;
+	struct task_struct *t1;
+
+	for (;; ) {
+		llnp = llist_del_all(&qwait_diags);
+		llist_for_each_entry_safe(t, t1, llnp, qwait_diags_node) {
+			atomic_set(&qval.val, t->qwait_diags_val);
+			pr_alert("%s: [%lu.%03d] Still pending and locked %ps (%c%c%#x)\n",
+				 __func__,
+				 t->qwait_diags_jiffies / HZ,
+				 (int)((t->qwait_diags_jiffies % HZ) * 1000 / HZ),
+				 t->qwait_diags_ql,
+				 ".L"[!!qval.locked],
+				 ".P"[!!qval.pending],
+				 (unsigned int)qval.tail);
+			smp_store_release(&t->qwait_diags_ql, NULL);
+		}
+		schedule_timeout_idle(HZ / 10);
+	}
+}
+
+static int __init qwait_diags_init(void)
+{
+	qwait_diags_task = kthread_run(qwait_diags_kthread, NULL, "qwait_diags_kthread");
+	WARN_ON_ONCE(!qwait_diags_task);
+	return 0;
+}
+late_initcall(qwait_diags_init);
+
+#else /* defined(CONFIG_DEBUG_QSPINLOCK_SLOWPATH) && !defined(_GEN_PV_LOCK_SLOWPATH) */
+static bool queued_spin_lock_slowpath_diags(int val, struct qspinlock *lock) { return false; }
+#endif /* defined(CONFIG_DEBUG_QSPINLOCK_SLOWPATH) && !defined(_GEN_PV_LOCK_SLOWPATH) */
+
 /**
  * queued_spin_lock_slowpath - acquire the queued spinlock
  * @lock: Pointer to queued spinlock structure
@@ -394,8 +460,12 @@ void __lockfunc queued_spin_lock_slowpath(struct qspinlock *lock, u32 val)
 				WARN_ON_ONCE(!(val & _Q_PENDING_VAL));
 				if (!(val & _Q_LOCKED_MASK))
 					break;
-				if (!--cnt && !WARN(time_after(jiffies, j), "%s: Still pending and locked: %#x (%c%c%#x)\n", __func__, val, ".L"[!!qval.locked], ".P"[!!qval.pending], qval.tail))
+				if (!--cnt && IS_ENABLED(CONFIG_DEBUG_QSPINLOCK_SLOWPATH) && time_after(jiffies, j)) {
+					if (!queued_spin_lock_slowpath_diags(val, lock))
+						cnt = _Q_PENDING_LOOPS;
+				} else {
 					cnt = _Q_PENDING_LOOPS;
+				}
 			}
 		}
 	}
@@ -600,6 +670,7 @@ EXPORT_SYMBOL(queued_spin_lock_slowpath);
 
 #undef  queued_spin_lock_slowpath
 #define queued_spin_lock_slowpath	__pv_queued_spin_lock_slowpath
+#define queued_spin_lock_slowpath_diags	__pv_queued_spin_lock_slowpath_diags
 
 #include "qspinlock_paravirt.h"
 #include "qspinlock.c"
