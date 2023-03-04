@@ -1144,6 +1144,13 @@ struct task_struct {
 	struct mutex_waiter		*blocked_on;
 #endif
 
+#ifdef CONFIG_DEBUG_QSPINLOCK_SLOWPATH
+	struct llist_node qwait_diags_node;
+	int qwait_diags_val;
+	unsigned long qwait_diags_jiffies;
+	struct qspinlock *qwait_diags_ql;
+#endif
+
 #ifdef CONFIG_DEBUG_ATOMIC_SLEEP
 	int				non_block_count;
 #endif
