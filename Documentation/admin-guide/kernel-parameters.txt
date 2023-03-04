@@ -4588,6 +4588,13 @@
 			[KNL] Number of legacy pty's. Overwrites compiled-in
 			default number.
 
+	qspinlock.qwait_diags_select=	[KNL]
+			=0: No diagnostics.
+			=1: Direct printk() from loop (possible deadlock).
+			=2: Lockless list to kthread (no stack traces).
+			This option exists only in kernels built with
+			CONFIG_DEBUG_QSPINLOCK_SLOWPATH=y.
+
 	quiet		[KNL] Disable most log messages
 
 	r128=		[HW,DRM]
