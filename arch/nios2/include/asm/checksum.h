@@ -10,14 +10,10 @@
 #ifndef _ASM_NIOS_CHECKSUM_H
 #define _ASM_NIOS_CHECKSUM_H
 
-/* Take these from lib/checksum.c */
-extern __wsum csum_partial(const void *buff, int len, __wsum sum);
-extern __sum16 ip_fast_csum(const void *iph, unsigned int ihl);
-extern __sum16 ip_compute_csum(const void *buff, int len);
-
 /*
  * Fold a partial checksum
  */
+#define csum_fold csum_fold
 static inline __sum16 csum_fold(__wsum sum)
 {
 	__asm__ __volatile__(
@@ -60,11 +56,6 @@ static inline __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
 	return sum;
 }
 
-static inline __sum16 csum_tcpudp_magic(__be32 saddr, __be32 daddr,
-					__u32 len, __u8 proto,
-					__wsum sum)
-{
-	return csum_fold(csum_tcpudp_nofold(saddr, daddr, len, proto, sum));
-}
+#include <asm-generic/checksum.h>
 
 #endif /* _ASM_NIOS_CHECKSUM_H */
