@@ -117,15 +117,7 @@ extern __wsum csum_and_copy_from_user(const void __user *src, void *dst, int len
 extern __wsum csum_and_copy_to_user(const void *src, void __user *dst, int len);
 extern __wsum csum_partial_copy_nocheck(const void *src, void *dst, int len);
 
-/**
- * ip_compute_csum - Compute an 16bit IP checksum.
- * @buff: buffer address.
- * @len: length of buffer.
- *
- * Returns the 16bit folded/inverted checksum of the passed buffer.
- * Ready to fill in.
- */
-extern __sum16 ip_compute_csum(const void *buff, int len);
+#define _HAVE_IP_COMPUTE_CSUM
 
 /**
  * csum_ipv6_magic - Compute checksum of an IPv6 pseudo header.

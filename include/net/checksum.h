@@ -24,6 +24,23 @@
 #include <linux/uaccess.h>
 #endif
 
+/**
+ * ip_compute_csum - Compute an 16bit IP checksum.
+ * @buff: buffer address.
+ * @len: length of buffer.
+ *
+ * Returns the 16bit folded/inverted checksum of the passed buffer.
+ * Ready to fill in.
+ */
+#ifndef _HAVE_IP_COMPUTE_CSUM
+static inline __sum16 ip_compute_csum(const void *buff, int len)
+{
+	return csum_fold (csum_partial(buff, len, 0));
+}
+#else
+extern __sum16 ip_compute_csum(const void *buff, int len);
+#endif
+
 /*
  * computes the checksum of the TCP/UDP pseudo-header
  * returns a 16-bit checksum, already complemented

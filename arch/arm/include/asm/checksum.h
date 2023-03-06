@@ -130,16 +130,6 @@ csum_tcpudp_nofold(__be32 saddr, __be32 daddr, __u32 len,
 	return sum;
 }	
 
-/*
- * this routine is used for miscellaneous IP-like checksums, mainly
- * in icmp.c
- */
-static inline __sum16
-ip_compute_csum(const void *buff, int len)
-{
-	return csum_fold(csum_partial(buff, len, 0));
-}
-
 #define _HAVE_ARCH_IPV6_CSUM
 extern __wsum
 __csum_ipv6_magic(const struct in6_addr *saddr, const struct in6_addr *daddr, __be32 len,

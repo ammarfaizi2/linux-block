@@ -5,11 +5,6 @@
 #ifndef __UM_SYSDEP_CHECKSUM_H
 #define __UM_SYSDEP_CHECKSUM_H
 
-static inline __sum16 ip_compute_csum(const void *buff, int len)
-{
-    return csum_fold (csum_partial(buff, len, 0));
-}
-
 #define _HAVE_ARCH_IPV6_CSUM
 static __inline__ __sum16 csum_ipv6_magic(const struct in6_addr *saddr,
 					  const struct in6_addr *daddr,

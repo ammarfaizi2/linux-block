@@ -47,10 +47,8 @@ csum_tcpudp_nofold(__be32 saddr, __be32 daddr, __u32 len,
 		   __u8 proto, __wsum sum);
 #endif
 
-/*
- * this routine is used for miscellaneous IP-like checksums, mainly
- * in icmp.c
- */
-extern __sum16 ip_compute_csum(const void *buff, int len);
+#ifdef CONFIG_GENERIC_CSUM
+#define _HAVE_IP_COMPUTE_CSUM
+#endif
 
 #endif /* __ASM_GENERIC_CHECKSUM_H */
