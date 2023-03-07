@@ -11,24 +11,6 @@
 #include <linux/compiler.h>
 #include <asm/byteorder.h>
 
-/**
- * csum_fold - Fold and invert a 32bit checksum.
- * sum: 32bit unfolded sum
- *
- * Fold a 32bit running checksum to 16bit and invert it. This is usually
- * the last step before putting a checksum into a packet.
- * Make sure not to mix with 64bit checksums.
- */
-static inline __sum16 csum_fold(__wsum sum)
-{
-	asm("  addl %1,%0\n"
-	    "  adcl $0xffff,%0"
-	    : "=r" (sum)
-	    : "r" ((__force u32)sum << 16),
-	      "0" ((__force u32)sum & 0xffff0000));
-	return (__force __sum16)(~(__force u32)sum >> 16);
-}
-
 /*
  *	This is a version of ip_compute_csum() optimized for IP headers,
  *	which always checksum on 4 octet boundaries.

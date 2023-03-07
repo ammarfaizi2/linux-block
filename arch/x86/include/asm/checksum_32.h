@@ -92,20 +92,6 @@ static inline __sum16 ip_fast_csum(const void *iph, unsigned int ihl)
 	return (__force __sum16)sum;
 }
 
-/*
- *	Fold a partial checksum
- */
-
-static inline __sum16 csum_fold(__wsum sum)
-{
-	asm("addl %1, %0		;\n"
-	    "adcl $0xffff, %0	;\n"
-	    : "=r" (sum)
-	    : "r" ((__force u32)sum << 16),
-	      "0" ((__force u32)sum & 0xffff0000));
-	return (__force __sum16)(~(__force u32)sum >> 16);
-}
-
 static inline __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
 					__u32 len, __u8 proto,
 					__wsum sum)
