@@ -304,6 +304,7 @@ static bool queued_spin_lock_slowpath_diags(int val, struct qspinlock *lock)
 {
 	struct qspinlock qval;
 
+	WARN_ON_ONCE(1);
 	if (!qwait_diags_select)
 		return false;
 	atomic_set(&qval.val, val);
@@ -312,6 +313,7 @@ static bool queued_spin_lock_slowpath_diags(int val, struct qspinlock *lock)
 		return true;
 	}
 	if (qwait_diags_select == 2 && !READ_ONCE(current->qwait_diags_ql)) {
+		WARN_ON_ONCE(1);
 		current->qwait_diags_val = val;
 		current->qwait_diags_jiffies = jiffies;
 		current->qwait_diags_ql = lock;
