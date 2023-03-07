@@ -199,14 +199,12 @@ static void torture_spin_lock_write_delay(struct torture_random_state *trsp)
 	/* We want a short delay mostly to emulate likely code, and
 	 * we want a long delay occasionally to force massive contention.
 	 */
-	if (WARN_ON_ONCE(!(torture_random(trsp) %
-	      (cxt.nrealwriters_stress * 2000 * longdelay_ms)))) {
+	if (!(torture_random(trsp) % (cxt.nrealwriters_stress * 2000 * longdelay_ms))) {
 		j = jiffies;
 		mdelay(longdelay_ms);
 		pr_alert("%s: delay = %lu jiffies.\n", __func__, jiffies - j);
 	}
-	if (WARN_ON_ONCE(!(torture_random(trsp) %
-	      (cxt.nrealwriters_stress * 200 * shortdelay_us))))
+	if (!(torture_random(trsp) % (cxt.nrealwriters_stress * 200 * shortdelay_us)))
 		udelay(shortdelay_us);
 	if (!(torture_random(trsp) % (cxt.nrealwriters_stress * 20000)))
 		torture_preempt_schedule();  /* Allow test to be preempted. */
