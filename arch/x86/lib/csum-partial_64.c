@@ -8,7 +8,7 @@
  
 #include <linux/compiler.h>
 #include <linux/export.h>
-#include <asm/checksum.h>
+#include <net/checksum.h>
 #include <asm/word-at-a-time.h>
 
 static inline unsigned short from32to16(unsigned a) 
