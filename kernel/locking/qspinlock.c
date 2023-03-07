@@ -293,7 +293,7 @@ static __always_inline u32  __pv_wait_head_or_lock(struct qspinlock *lock,
 
 #endif /* _GEN_PV_LOCK_SLOWPATH */
 
-#ifdef CONFIG_DEBUG_QSPINLOCK_SLOWPATH
+#if defined(CONFIG_DEBUG_QSPINLOCK_SLOWPATH) && !defined(_GEN_PV_LOCK_SLOWPATH)
 
 static LLIST_HEAD(qwait_diags);
 static struct task_struct *qwait_diags_task;
@@ -354,9 +354,9 @@ static int __init qwait_diags_init(void)
 }
 late_initcall(qwait_diags_init);
 
-#else /* CONFIG_DEBUG_QSPINLOCK_SLOWPATH */
+#else /* defined(CONFIG_DEBUG_QSPINLOCK_SLOWPATH) && !defined(_GEN_PV_LOCK_SLOWPATH) */
 static bool queued_spin_lock_slowpath_diags(int val, struct qspinlock *lock) { return false; }
-#endif /* CONFIG_DEBUG_QSPINLOCK_SLOWPATH */
+#endif /* defined(CONFIG_DEBUG_QSPINLOCK_SLOWPATH) && !defined(_GEN_PV_LOCK_SLOWPATH) */
 
 /**
  * queued_spin_lock_slowpath - acquire the queued spinlock
@@ -670,6 +670,7 @@ EXPORT_SYMBOL(queued_spin_lock_slowpath);
 
 #undef  queued_spin_lock_slowpath
 #define queued_spin_lock_slowpath	__pv_queued_spin_lock_slowpath
+#define queued_spin_lock_slowpath_diags	__pv_queued_spin_lock_slowpath_diags
 
 #include "qspinlock_paravirt.h"
 #include "qspinlock.c"
