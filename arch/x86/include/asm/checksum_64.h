@@ -12,32 +12,6 @@
 #include <asm/byteorder.h>
 
 /**
- * csum_tcpup_nofold - Compute an IPv4 pseudo header checksum.
- * @saddr: source address
- * @daddr: destination address
- * @len: length of packet
- * @proto: ip protocol of packet
- * @sum: initial sum to be added in (32bit unfolded)
- *
- * Returns the pseudo header checksum the input data. Result is
- * 32bit unfolded.
- */
-static inline __wsum
-csum_tcpudp_nofold(__be32 saddr, __be32 daddr, __u32 len,
-		   __u8 proto, __wsum sum)
-{
-	asm("  addl %1, %0\n"
-	    "  adcl %2, %0\n"
-	    "  adcl %3, %0\n"
-	    "  adcl $0, %0\n"
-	    : "=r" (sum)
-	    : "g" (daddr), "g" (saddr),
-	      "g" ((len + proto)<<8), "0" (sum));
-	return sum;
-}
-
-
-/**
  * csum_partial - Compute an internet checksum.
  * @buff: buffer to be checksummed
  * @len: length of buffer.

@@ -55,20 +55,6 @@ static inline __wsum csum_and_copy_from_user(const void __user *src,
 	return ret;
 }
 
-static inline __wsum csum_tcpudp_nofold(__be32 saddr, __be32 daddr,
-					__u32 len, __u8 proto,
-					__wsum sum)
-{
-	asm("addl %1, %0	;\n"
-	    "adcl %2, %0	;\n"
-	    "adcl %3, %0	;\n"
-	    "adcl $0, %0	;\n"
-	    : "=r" (sum)
-	    : "g" (daddr), "g"(saddr),
-	      "g" ((len + proto) << 8), "0" (sum));
-	return sum;
-}
-
 #define _HAVE_ARCH_IPV6_CSUM
 static inline __sum16 csum_ipv6_magic(const struct in6_addr *saddr,
 				      const struct in6_addr *daddr,

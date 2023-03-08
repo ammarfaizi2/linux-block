@@ -26,6 +26,31 @@ static inline __sum16 csum_fold(__wsum sum)
 	return (__force __sum16)(~(__force u32)sum >> 16);
 }
 
+/**
+ * csum_tcpup_nofold - Compute an IPv4 pseudo header checksum.
+ * @saddr: source address
+ * @daddr: destination address
+ * @len: length of packet
+ * @proto: ip protocol of packet
+ * @sum: initial sum to be added in (32bit unfolded)
+ *
+ * Returns the pseudo header checksum the input data. Result is
+ * 32bit unfolded.
+ */
+static inline __wsum
+csum_tcpudp_nofold(__be32 saddr, __be32 daddr, __u32 len,
+		   __u8 proto, __wsum sum)
+{
+	asm("  addl %1, %0\n"
+	    "  adcl %2, %0\n"
+	    "  adcl %3, %0\n"
+	    "  adcl $0, %0\n"
+	    : "=r" (sum)
+	    : "g" (daddr), "g" (saddr),
+	      "g" ((len + proto)<<8), "0" (sum));
+	return sum;
+}
+
 /*
  *	This is a version of ip_compute_csum() optimized for IP headers,
  *	which always checksum on 4 octet boundaries.
