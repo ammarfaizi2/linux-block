@@ -297,7 +297,7 @@ pipe_read(struct kiocb *iocb, struct iov_iter *to)
 				chars = total_len;
 			}
 
-			error = pipe_buf_confirm(pipe, buf);
+			error = pipe_buf_confirm(pipe, buf, false);
 			if (error) {
 				if (!ret)
 					ret = error;
@@ -461,7 +461,7 @@ pipe_write(struct kiocb *iocb, struct iov_iter *from)
 
 		if ((buf->flags & PIPE_BUF_FLAG_CAN_MERGE) &&
 		    offset + chars <= PAGE_SIZE) {
-			ret = pipe_buf_confirm(pipe, buf);
+			ret = pipe_buf_confirm(pipe, buf, false);
 			if (ret)
 				goto out;
 
