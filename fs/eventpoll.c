@@ -714,6 +714,8 @@ static void ep_free(struct eventpoll *ep)
  * Removes a "struct epitem" from the eventpoll RB tree and deallocates
  * all the associated resources. Must be called with "mtx" held.
  * If the dying flag is set, do the removal only if force is true.
+ * This prevents ep_clear_and_put() from dropping all the ep references
+ * while running concurrently with eventpoll_release_file().
  * Returns true if the eventpoll can be disposed.
  */
 static bool __ep_remove(struct eventpoll *ep, struct epitem *epi, bool force)
@@ -941,14 +943,13 @@ void eventpoll_release_file(struct file *file)
 	bool dispose;
 
 	/*
-	 * Use the 'dying' flag to prevent a concurrent ep_cleat_and_put() from
+	 * Use the 'dying' flag to prevent a concurrent ep_clear_and_put() from
 	 * touching the epitems list before eventpoll_release_file() can access
 	 * the ep->mtx.
 	 */
 again:
 	spin_lock(&file->f_lock);
 	if (file->f_ep && file->f_ep->first) {
-		/* detach from ep tree */
 		epi = hlist_entry(file->f_ep->first, struct epitem, fllink);
 		epi->dying = true;
 		spin_unlock(&file->f_lock);
