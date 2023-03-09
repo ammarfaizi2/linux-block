@@ -11,16 +11,6 @@
 #include <net/checksum.h>
 #include <asm/word-at-a-time.h>
 
-static inline unsigned short from32to16(unsigned a) 
-{
-	unsigned short b = a >> 16; 
-	asm("addw %w2,%w0\n\t"
-	    "adcw $0,%w0\n" 
-	    : "=r" (b)
-	    : "0" (b), "r" (a));
-	return b;
-}
-
 /*
  * Do a checksum on an arbitrary memory area.
  * Returns a 32bit checksum.
@@ -104,10 +94,8 @@ __wsum csum_partial(const void *buff, int len, __wsum sum)
 			: [trail] "r" (trail));
 	}
 	result = add32_with_carry(temp64 >> 32, temp64 & 0xffffffff);
-	if (unlikely(odd)) {
-		result = from32to16(result);
-		result = ((result >> 8) & 0xff) | ((result & 0xff) << 8);
-	}
+	if (unlikely(odd))
+		result = rol32(result, 8);
 	return (__force __wsum)result;
 }
 EXPORT_SYMBOL(csum_partial);
