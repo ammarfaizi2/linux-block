@@ -977,7 +977,7 @@ static int __ip_append_data(struct sock *sk,
 	int err;
 	int offset = 0;
 	bool zc = false;
-	unsigned int maxfraglen, fragheaderlen, maxnonfragsize;
+	unsigned int maxfraglen, fragheaderlen, maxnonfragsize, xlength;
 	int csummode = CHECKSUM_NONE;
 	struct rtable *rt = (struct rtable *)cork->dst;
 	unsigned int wmem_alloc_delta = 0;
@@ -1017,6 +1017,7 @@ static int __ip_append_data(struct sock *sk,
 	    (!exthdrlen || (rt->dst.dev->features & NETIF_F_HW_ESP_TX_CSUM)))
 		csummode = CHECKSUM_PARTIAL;
 
+	xlength = length;
 	if ((flags & MSG_ZEROCOPY) && length) {
 		struct msghdr *msg = from;
 
@@ -1047,6 +1048,16 @@ static int __ip_append_data(struct sock *sk,
 				skb_zcopy_set(skb, uarg, &extra_uref);
 			}
 		}
+	} else if ((flags & MSG_SPLICE_PAGES) && length) {
+		struct msghdr *msg = from;
+
+		if (!iov_iter_is_bvec(&msg->msg_iter))
+			return -EINVAL;
+		if (inet->hdrincl)
+			return -EPERM;
+		if (!(rt->dst.dev->features & NETIF_F_SG))
+			return -EOPNOTSUPP;
+		xlength = transhdrlen; /* We need an empty buffer to attach stuff to */
 	}
 
 	cork->length += length;
@@ -1074,6 +1085,50 @@ static int __ip_append_data(struct sock *sk,
 			unsigned int alloclen, alloc_extra;
 			unsigned int pagedlen;
 			struct sk_buff *skb_prev;
+
+			if (unlikely(flags & MSG_SPLICE_PAGES)) {
+				skb_prev = skb;
+				fraggap = skb_prev->len - maxfraglen;
+
+				alloclen = fragheaderlen + hh_len + fraggap + 15;
+				skb = sock_wmalloc(sk, alloclen, 1, sk->sk_allocation);
+				if (unlikely(!skb)) {
+					err = -ENOBUFS;
+					goto error;
+				}
+
+				/*
+				 *	Fill in the control structures
+				 */
+				skb->ip_summed = CHECKSUM_NONE;
+				skb->csum = 0;
+				skb_reserve(skb, hh_len);
+
+				/*
+				 *	Find where to start putting bytes.
+				 */
+				skb_put(skb, fragheaderlen + fraggap);
+				skb_reset_network_header(skb);
+				skb->transport_header = (skb->network_header +
+							 fragheaderlen);
+				if (fraggap) {
+					skb->csum = skb_copy_and_csum_bits(
+						skb_prev, maxfraglen,
+						skb_transport_header(skb),
+						fraggap);
+					skb_prev->csum = csum_sub(skb_prev->csum,
+								  skb->csum);
+					pskb_trim_unique(skb_prev, maxfraglen);
+				}
+
+				/*
+				 * Put the packet on the pending queue.
+				 */
+				__skb_queue_tail(&sk->sk_write_queue, skb);
+				continue;
+			}
+			xlength = length;
+
 alloc_new_skb:
 			skb_prev = skb;
 			if (skb_prev)
@@ -1085,7 +1140,7 @@ alloc_new_skb:
 			 * If remaining data exceeds the mtu,
 			 * we know we need more fragment(s).
 			 */
-			datalen = length + fraggap;
+			datalen = xlength + fraggap;
 			if (datalen > mtu - fragheaderlen)
 				datalen = maxfraglen - fragheaderlen;
 			fraglen = datalen + fragheaderlen;
@@ -1099,7 +1154,7 @@ alloc_new_skb:
 			 * because we have no idea what fragment will be
 			 * the last.
 			 */
-			if (datalen == length + fraggap)
+			if (datalen == xlength + fraggap)
 				alloc_extra += rt->dst.trailer_len;
 
 			if ((flags & MSG_MORE) &&
@@ -1206,6 +1261,34 @@ alloc_new_skb:
 				err = -EFAULT;
 				goto error;
 			}
+		} else if (flags & MSG_SPLICE_PAGES) {
+			struct msghdr *msg = from;
+			struct iov_iter *iter = &msg->msg_iter;
+			const struct bio_vec *bv = iter->bvec;
+
+			if (iov_iter_count(iter) <= 0) {
+				err = -EIO;
+				goto error;
+			}
+
+			copy = iov_iter_single_seg_count(&msg->msg_iter);
+
+			err = skb_append_pagefrags(skb, bv->bv_page,
+						   bv->bv_offset + iter->iov_offset,
+						   copy);
+			if (err < 0)
+				goto error;
+
+			if (skb->ip_summed == CHECKSUM_NONE) {
+				__wsum csum;
+				csum = csum_page(bv->bv_page,
+						 bv->bv_offset + iter->iov_offset, copy);
+				skb->csum = csum_block_add(skb->csum, csum, skb->len);
+			}
+
+			iov_iter_advance(iter, copy);
+			skb_len_add(skb, copy);
+			refcount_add(copy, &sk->sk_wmem_alloc);
 		} else if (!zc) {
 			int i = skb_shinfo(skb)->nr_frags;
 
