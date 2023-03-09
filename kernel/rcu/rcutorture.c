@@ -3279,6 +3279,9 @@ static void rcu_torture_read_exit_cleanup(void)
 
 void set_nmi_torture(int nmi_delay_in, bool nmi_halt1_in, bool nmi_halt2_in, bool nmi_halt3_in);
 
+void __weak set_nmi_torture(int nmi_delay_in, bool nmi_halt1_in, bool nmi_halt2_in, bool nmi_halt3_in){
+}
+
 static void rcutorture_test_nmis(int n)
 {
 #if IS_BUILTIN(CONFIG_RCU_TORTURE_TEST)
