@@ -916,7 +916,7 @@ struct vm_area_struct *vma_merge(struct vma_iterator *vmi, struct mm_struct *mm,
 	bool vma_expanded = false;
 	struct vma_prepare vp;
 	unsigned long vma_end = end;
-	long adj_next = 0;
+	long adj_start = 0;
 	unsigned long vma_start = addr;
 
 	validate_mm(mm);
@@ -984,7 +984,7 @@ struct vm_area_struct *vma_merge(struct vma_iterator *vmi, struct mm_struct *mm,
 				remove = mid;
 			} else {			/* case 5 */
 				adjust = mid;
-				adj_next = (end - mid->vm_start);
+				adj_start = (end - mid->vm_start);
 			}
 		}
 	} else if (merge_next) {
@@ -992,7 +992,7 @@ struct vm_area_struct *vma_merge(struct vma_iterator *vmi, struct mm_struct *mm,
 		if (prev && addr < prev->vm_end) {	/* case 4 */
 			vma_end = addr;
 			adjust = next;
-			adj_next = -(prev->vm_end - addr);
+			adj_start = -(prev->vm_end - addr);
 			err = dup_anon_vma(next, prev);
 		} else {
 			vma = next;			/* case 3 */
@@ -1020,7 +1020,7 @@ struct vm_area_struct *vma_merge(struct vma_iterator *vmi, struct mm_struct *mm,
 		   vp.anon_vma != adjust->anon_vma);
 
 	vma_prepare(&vp);
-	vma_adjust_trans_huge(vma, vma_start, vma_end, adj_next);
+	vma_adjust_trans_huge(vma, vma_start, vma_end, adj_start);
 	if (vma_start < vma->vm_start || vma_end > vma->vm_end)
 		vma_expanded = true;
 
@@ -1031,10 +1031,10 @@ struct vm_area_struct *vma_merge(struct vma_iterator *vmi, struct mm_struct *mm,
 	if (vma_expanded)
 		vma_iter_store(vmi, vma);
 
-	if (adj_next) {
-		adjust->vm_start += adj_next;
-		adjust->vm_pgoff += adj_next >> PAGE_SHIFT;
-		if (adj_next < 0) {
+	if (adj_start) {
+		adjust->vm_start += adj_start;
+		adjust->vm_pgoff += adj_start >> PAGE_SHIFT;
+		if (adj_start < 0) {
 			WARN_ON(vma_expanded);
 			vma_iter_store(vmi, next);
 		}
