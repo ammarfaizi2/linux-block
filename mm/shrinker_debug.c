@@ -2,6 +2,7 @@
 #include <linux/idr.h>
 #include <linux/slab.h>
 #include <linux/debugfs.h>
+#include <linux/srcu.h>
 #include <linux/seq_file.h>
 #include <linux/shrinker.h>
 #include <linux/memcontrol.h>
