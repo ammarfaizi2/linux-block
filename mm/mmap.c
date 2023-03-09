@@ -861,10 +861,11 @@ can_vma_merge_after(struct vm_area_struct *vma, unsigned long vm_flags,
  *
  * The following mprotect cases have to be considered, where AAAA is
  * the area passed down from mprotect_fixup, never extending beyond one
- * vma, PPPPPP is the prev vma specified, and NNNNNN the next vma after:
+ * vma, PPPPPP is the prev vma specified, NNNN is a vma that overlaps
+ * the area AAAA and XXXXXX the next vma after AAAA:
  *
  *     AAAA             AAAA                   AAAA
- *    PPPPPPNNNNNN    PPPPPPXXXXXX       PPPPPPNNNNNN
+ *    PPPPPPXXXXXX    PPPPPPXXXXXX       PPPPPPNNNNNN
  *    cannot merge    might become       might become
  *                    PPXXXXXXXXXX       PPPPPPPPPPNN
  *    mmap, brk or    case 4 below       case 5 below
@@ -892,9 +893,10 @@ can_vma_merge_after(struct vm_area_struct *vma, unsigned long vm_flags,
  *
  * In the code below:
  * PPPP is represented by *prev
- * NNNN is represented by *mid (and possibly equal to *next)
- * XXXX is represented by *next or not represented at all.
- * AAAA is not represented - it will be merged or the function will return NULL
+ * NNNN is represented by *mid or not represented at all (NULL)
+ * XXXX is represented by *next or not represented at all (NULL)
+ * AAAA is not represented - it will be merged and the vma containing the
+ *      area is returned, or the function will return NULL
  */
 struct vm_area_struct *vma_merge(struct vma_iterator *vmi, struct mm_struct *mm,
 			struct vm_area_struct *prev, unsigned long addr,
@@ -931,6 +933,9 @@ struct vm_area_struct *vma_merge(struct vma_iterator *vmi, struct mm_struct *mm,
 	else
 		next = mid;
 
+	if (mid && end <= mid->vm_start)
+		mid = NULL;
+
 	/* verify some invariant that must be enforced by the caller */
 	VM_WARN_ON(prev && addr <= prev->vm_start);
 	VM_WARN_ON(mid && end > mid->vm_end);
@@ -965,7 +970,7 @@ struct vm_area_struct *vma_merge(struct vma_iterator *vmi, struct mm_struct *mm,
 		remove = next;				/* case 1 */
 		vma_end = next->vm_end;
 		err = dup_anon_vma(prev, next);
-		if (mid != next) {			/* case 6 */
+		if (mid) {				/* case 6 */
 			remove = mid;
 			remove2 = next;
 			if (!next->anon_vma)
@@ -973,7 +978,7 @@ struct vm_area_struct *vma_merge(struct vma_iterator *vmi, struct mm_struct *mm,
 		}
 	} else if (merge_prev) {
 		err = 0;				/* case 2 */
-		if (mid && end > mid->vm_start) {
+		if (mid) {
 			err = dup_anon_vma(prev, mid);
 			if (end == mid->vm_end) {	/* case 7 */
 				remove = mid;
@@ -995,7 +1000,7 @@ struct vm_area_struct *vma_merge(struct vma_iterator *vmi, struct mm_struct *mm,
 			vma_end = next->vm_end;
 			vma_pgoff = next->vm_pgoff;
 			err = 0;
-			if (mid != next) {		/* case 8 */
+			if (mid) {			/* case 8 */
 				vma_pgoff = mid->vm_pgoff;
 				remove = mid;
 				err = dup_anon_vma(next, mid);
