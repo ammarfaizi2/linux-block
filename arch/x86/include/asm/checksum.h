@@ -27,6 +27,18 @@ static inline __wsum csum_add(__wsum csum, __wsum addend)
 # define _HAVE_ARCH_CSUM_AND_COPY
 
 /**
+ * csum_partial - Compute an internet checksum.
+ * @buff: buffer to be checksummed
+ * @len: length of buffer.
+ * @sum: initial sum to be added in (32bit unfolded)
+ *
+ * Returns the 32bit unfolded internet checksum of the buffer.
+ * Before filling it in it needs to be csum_fold()'ed.
+ * buff should be aligned to a word boundary if possible.
+ */
+extern __wsum csum_partial(const void *buff, int len, __wsum sum);
+
+/**
  * csum_fold - Fold and invert a 32bit checksum.
  * sum: 32bit unfolded sum
  *

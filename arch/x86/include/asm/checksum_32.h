@@ -6,20 +6,6 @@
 #include <linux/uaccess.h>
 
 /*
- * computes the checksum of a memory block at buff, length len,
- * and adds in "sum" (32-bit)
- *
- * returns a 32-bit number suitable for feeding into itself
- * or csum_tcpudp_magic
- *
- * this function must be called with even lengths, except
- * for the last fragment, which may be odd
- *
- * it's best to have buff aligned on a 32-bit boundary
- */
-asmlinkage __wsum csum_partial(const void *buff, int len, __wsum sum);
-
-/*
  * the same as csum_partial, but copies from src while it
  * checksums, and handles user-space pointer exceptions correctly, when needed.
  *

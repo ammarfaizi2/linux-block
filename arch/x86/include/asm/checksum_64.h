@@ -11,18 +11,6 @@
 #include <linux/compiler.h>
 #include <asm/byteorder.h>
 
-/**
- * csum_partial - Compute an internet checksum.
- * @buff: buffer to be checksummed
- * @len: length of buffer.
- * @sum: initial sum to be added in (32bit unfolded)
- *
- * Returns the 32bit unfolded internet checksum of the buffer.
- * Before filling it in it needs to be csum_fold()'ed.
- * buff should be aligned to a 64bit boundary if possible.
- */
-extern __wsum csum_partial(const void *buff, int len, __wsum sum);
-
 /* Do not call this directly. Use the wrappers below */
 extern __visible __wsum csum_partial_copy_generic(const void *src, void *dst, int len);
 
