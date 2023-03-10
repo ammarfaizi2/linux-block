@@ -22,9 +22,6 @@ static inline __wsum csum_add(__wsum csum, __wsum addend)
 #ifdef CONFIG_GENERIC_CSUM
 # include <asm-generic/checksum.h>
 #else
-# define  _HAVE_ARCH_COPY_AND_CSUM_FROM_USER 1
-# define HAVE_CSUM_COPY_USER
-# define _HAVE_ARCH_CSUM_AND_COPY
 
 /**
  * csum_partial - Compute an internet checksum.
@@ -124,10 +121,70 @@ static inline __sum16 ip_fast_csum(const void *iph, unsigned int ihl)
 	return (__force __sum16)sum;
 }
 
+struct in6_addr;
+
+# ifdef CONFIG_X86_32
+
+#define _HAVE_ARCH_IPV6_CSUM
+static inline __sum16 csum_ipv6_magic(const struct in6_addr *saddr,
+				      const struct in6_addr *daddr,
+				      __u32 len, __u8 proto, __wsum sum)
+{
+	asm("addl 0(%1), %0	;\n"
+	    "adcl 4(%1), %0	;\n"
+	    "adcl 8(%1), %0	;\n"
+	    "adcl 12(%1), %0	;\n"
+	    "adcl 0(%2), %0	;\n"
+	    "adcl 4(%2), %0	;\n"
+	    "adcl 8(%2), %0	;\n"
+	    "adcl 12(%2), %0	;\n"
+	    "adcl %3, %0	;\n"
+	    "adcl %4, %0	;\n"
+	    "adcl $0, %0	;\n"
+	    : "=&r" (sum)
+	    : "r" (saddr), "r" (daddr),
+	      "r" (htonl(len)), "r" (htonl(proto)), "0" (sum)
+	    : "memory");
+
+	return csum_fold(sum);
+}
+# else
+
+#define _HAVE_IP_COMPUTE_CSUM
+
+/**
+ * csum_ipv6_magic - Compute checksum of an IPv6 pseudo header.
+ * @saddr: source address
+ * @daddr: destination address
+ * @len: length of packet
+ * @proto: protocol of packet
+ * @sum: initial sum (32bit unfolded) to be added in
+ *
+ * Computes an IPv6 pseudo header checksum. This sum is added the checksum
+ * into UDP/TCP packets and contains some link layer information.
+ * Returns the unfolded 32bit checksum.
+ */
+
+#define _HAVE_ARCH_IPV6_CSUM 1
+extern __sum16
+csum_ipv6_magic(const struct in6_addr *saddr, const struct in6_addr *daddr,
+		__u32 len, __u8 proto, __wsum sum);
+# endif
+
+#ifndef CONFIG_UML
+/*
+ * UML uaccess is better done in large chunks, so combining csum with
+ * copyin/copyout is not worth the trouble.
+ */
+# define  _HAVE_ARCH_COPY_AND_CSUM_FROM_USER 1
+# define HAVE_CSUM_COPY_USER
+# define _HAVE_ARCH_CSUM_AND_COPY
 # ifdef CONFIG_X86_32
 #  include <asm/checksum_32.h>
 # else
 #  include <asm/checksum_64.h>
 # endif
+#endif
+
 #endif
 #endif
