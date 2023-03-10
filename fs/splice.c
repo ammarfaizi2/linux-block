@@ -32,6 +32,7 @@
 #include <linux/uio.h>
 #include <linux/security.h>
 #include <linux/gfp.h>
+#include <linux/net.h>
 #include <linux/socket.h>
 #include <linux/sched/signal.h>
 
@@ -431,29 +432,32 @@ const struct pipe_buf_operations nosteal_pipe_buf_ops = {
 };
 EXPORT_SYMBOL(nosteal_pipe_buf_ops);
 
+#ifdef CONFIG_NET
 /*
  * Send 'sd->len' bytes to socket from 'sd->file' at position 'sd->pos'
  * using sendpage(). Return the number of bytes sent.
  */
-static int pipe_to_sendpage(struct pipe_inode_info *pipe,
-			    struct pipe_buffer *buf, struct splice_desc *sd)
+static int pipe_to_sendmsg(struct pipe_inode_info *pipe,
+			   struct pipe_buffer *buf, struct splice_desc *sd)
 {
-	struct file *file = sd->u.file;
-	loff_t pos = sd->pos;
-	int more;
+	struct socket *sock = sock_from_file(sd->u.file);
+	struct bio_vec bvec;
+	struct msghdr msg = {
+		.msg_flags = MSG_SPLICE_PAGES,
+	};
 
-	if (!likely(file->f_op->sendpage))
-		return -EINVAL;
-
-	more = (sd->flags & SPLICE_F_MORE) ? MSG_MORE : 0;
+	if (sd->flags & SPLICE_F_MORE)
+		msg.msg_flags |= MSG_MORE;
 
 	if (sd->len < sd->total_len &&
 	    pipe_occupancy(pipe->head, pipe->tail) > 1)
-		more |= MSG_SENDPAGE_NOTLAST;
+		msg.msg_flags |= MSG_MORE;
 
-	return file->f_op->sendpage(file, buf->page, buf->offset,
-				    sd->len, &pos, more);
+	bvec_set_page(&bvec, buf->page, sd->len, buf->offset);
+	iov_iter_bvec(&msg.msg_iter, ITER_SOURCE, &bvec, 1, sd->len);
+	return sock_sendmsg(sock, &msg);
 }
+#endif
 
 static void wakeup_pipe_writers(struct pipe_inode_info *pipe)
 {
@@ -635,7 +639,7 @@ static void splice_from_pipe_end(struct pipe_inode_info *pipe, struct splice_des
  * Description:
  *    This function does little more than loop over the pipe and call
  *    @actor to do the actual moving of a single struct pipe_buffer to
- *    the desired destination. See pipe_to_file, pipe_to_sendpage, or
+ *    the desired destination. See pipe_to_file, pipe_to_sendmsg, or
  *    pipe_to_user.
  *
  */
@@ -816,8 +820,9 @@ done:
 
 EXPORT_SYMBOL(iter_file_splice_write);
 
+#ifdef CONFIG_NET
 /**
- * generic_splice_sendpage - splice data from a pipe to a socket
+ * splice_to_socket - splice data from a pipe to a socket
  * @pipe:	pipe to splice from
  * @out:	socket to write to
  * @ppos:	position in @out
@@ -829,13 +834,12 @@ EXPORT_SYMBOL(iter_file_splice_write);
  *    is involved.
  *
  */
-ssize_t generic_splice_sendpage(struct pipe_inode_info *pipe, struct file *out,
-				loff_t *ppos, size_t len, unsigned int flags)
+ssize_t splice_to_socket(struct pipe_inode_info *pipe, struct file *out,
+			 loff_t *ppos, size_t len, unsigned int flags)
 {
-	return splice_from_pipe(pipe, out, ppos, len, flags, pipe_to_sendpage);
+	return splice_from_pipe(pipe, out, ppos, len, flags, pipe_to_sendmsg);
 }
-
-EXPORT_SYMBOL(generic_splice_sendpage);
+#endif
 
 static int warn_unsupported(struct file *file, const char *op)
 {
