@@ -312,113 +312,7 @@ static int siw_tx_ctrl(struct siw_iwarp_tx *c_tx, struct socket *s,
 	return rv;
 }
 
-/*
- * 0copy TCP transmit interface: Use MSG_SPLICE_PAGES.
- *
- * Using sendpage to push page by page appears to be less efficient
- * than using sendmsg, even if data are copied.
- *
- * A general performance limitation might be the extra four bytes
- * trailer checksum segment to be pushed after user data.
- */
-static int siw_tcp_sendpages(struct socket *s, struct page **page, int offset,
-			     size_t size)
-{
-	struct bio_vec bvec;
-	struct msghdr msg = {
-		.msg_flags = (MSG_MORE | MSG_DONTWAIT | MSG_SENDPAGE_NOTLAST |
-			      MSG_SPLICE_PAGES),
-	};
-	struct sock *sk = s->sk;
-	int i = 0, rv = 0, sent = 0;
-
-	while (size) {
-		size_t bytes = min_t(size_t, PAGE_SIZE - offset, size);
-
-		if (size + offset <= PAGE_SIZE)
-			msg.msg_flags &= ~MSG_SENDPAGE_NOTLAST;
-
-		tcp_rate_check_app_limited(sk);
-		bvec_set_page(&bvec, page[i], bytes, offset);
-		iov_iter_bvec(&msg.msg_iter, ITER_SOURCE, &bvec, 1, size);
-
-try_page_again:
-		lock_sock(sk);
-		rv = tcp_sendmsg_locked(sk, &msg, size);
-		release_sock(sk);
-
-		if (rv > 0) {
-			size -= rv;
-			sent += rv;
-			if (rv != bytes) {
-				offset += rv;
-				bytes -= rv;
-				goto try_page_again;
-			}
-			offset = 0;
-		} else {
-			if (rv == -EAGAIN || rv == 0)
-				break;
-			return rv;
-		}
-		i++;
-	}
-	return sent;
-}
-
-/*
- * siw_0copy_tx()
- *
- * Pushes list of pages to TCP socket. If pages from multiple
- * SGE's, all referenced pages of each SGE are pushed in one
- * shot.
- */
-static int siw_0copy_tx(struct socket *s, struct page **page,
-			struct siw_sge *sge, unsigned int offset,
-			unsigned int size)
-{
-	int i = 0, sent = 0, rv;
-	int sge_bytes = min(sge->length - offset, size);
-
-	offset = (sge->laddr + offset) & ~PAGE_MASK;
-
-	while (sent != size) {
-		rv = siw_tcp_sendpages(s, &page[i], offset, sge_bytes);
-		if (rv >= 0) {
-			sent += rv;
-			if (size == sent || sge_bytes > rv)
-				break;
-
-			i += PAGE_ALIGN(sge_bytes + offset) >> PAGE_SHIFT;
-			sge++;
-			sge_bytes = min(sge->length, size - sent);
-			offset = sge->laddr & ~PAGE_MASK;
-		} else {
-			sent = rv;
-			break;
-		}
-	}
-	return sent;
-}
-
 #define MAX_TRAILER (MPA_CRC_SIZE + 4)
-
-static void siw_unmap_pages(struct kvec *iov, unsigned long kmap_mask, int len)
-{
-	int i;
-
-	/*
-	 * Work backwards through the array to honor the kmap_local_page()
-	 * ordering requirements.
-	 */
-	for (i = (len-1); i >= 0; i--) {
-		if (kmap_mask & BIT(i)) {
-			unsigned long addr = (unsigned long)iov[i].iov_base;
-
-			kunmap_local((void *)(addr & PAGE_MASK));
-		}
-	}
-}
 
 /*
  * siw_tx_hdt() tries to push a complete packet to TCP where all
@@ -439,30 +333,21 @@ static int siw_tx_hdt(struct siw_iwarp_tx *c_tx, struct socket *s)
 {
 	struct siw_wqe *wqe = &c_tx->wqe_active;
 	struct siw_sge *sge = &wqe->sqe.sge[c_tx->sge_idx];
-	struct kvec iov[MAX_ARRAY];
-	struct page *page_array[MAX_ARRAY];
+	struct bio_vec bvec[MAX_ARRAY];
 	struct msghdr msg = { .msg_flags = MSG_DONTWAIT | MSG_EOR };
+	void *trl;
 
 	int seg = 0, do_crc = c_tx->do_crc, is_kva = 0, rv;
 	unsigned int data_len = c_tx->bytes_unsent, hdr_len = 0, trl_len = 0,
 		     sge_off = c_tx->sge_off, sge_idx = c_tx->sge_idx,
 		     pbl_idx = c_tx->pbl_idx;
-	unsigned long kmap_mask = 0L;
 
 	if (c_tx->state == SIW_SEND_HDR) {
-		if (c_tx->use_sendpage) {
-			rv = siw_tx_ctrl(c_tx, s, MSG_DONTWAIT | MSG_MORE);
-			if (rv)
-				goto done;
+		void *hdr = &c_tx->pkt.ctrl + c_tx->ctrl_sent;
 
-			c_tx->state = SIW_SEND_DATA;
-		} else {
-			iov[0].iov_base =
-				(char *)&c_tx->pkt.ctrl + c_tx->ctrl_sent;
-			iov[0].iov_len = hdr_len =
-				c_tx->ctrl_len - c_tx->ctrl_sent;
-			seg = 1;
-		}
+		hdr_len = c_tx->ctrl_len - c_tx->ctrl_sent;
+		bvec_set_virt(&bvec[0], hdr, hdr_len);
+		seg = 1;
 	}
 
 	wqe->processed += data_len;
@@ -478,28 +363,9 @@ static int siw_tx_hdt(struct siw_iwarp_tx *c_tx, struct socket *s)
 		} else {
 			is_kva = 1;
 		}
-		if (is_kva && !c_tx->use_sendpage) {
-			/*
-			 * tx from kernel virtual address: either inline data
-			 * or memory region with assigned kernel buffer
-			 */
-			iov[seg].iov_base =
-				(void *)(uintptr_t)(sge->laddr + sge_off);
-			iov[seg].iov_len = sge_len;
-
-			if (do_crc)
-				crypto_shash_update(c_tx->mpa_crc_hd,
-						    iov[seg].iov_base,
-						    sge_len);
-			sge_off += sge_len;
-			data_len -= sge_len;
-			seg++;
-			goto sge_done;
-		}
 
 		while (sge_len) {
 			size_t plen = min((int)PAGE_SIZE - fp_off, sge_len);
-			void *kaddr;
 
 			if (!is_kva) {
 				struct page *p;
@@ -512,33 +378,12 @@ static int siw_tx_hdt(struct siw_iwarp_tx *c_tx, struct socket *s)
 					p = siw_get_upage(mem->umem,
 							  sge->laddr + sge_off);
 				if (unlikely(!p)) {
-					siw_unmap_pages(iov, kmap_mask, seg);
 					wqe->processed -= c_tx->bytes_unsent;
 					rv = -EFAULT;
 					goto done_crc;
 				}
-				page_array[seg] = p;
 
-				if (!c_tx->use_sendpage) {
-					void *kaddr = kmap_local_page(p);
-
-					/* Remember for later kunmap() */
-					kmap_mask |= BIT(seg);
-					iov[seg].iov_base = kaddr + fp_off;
-					iov[seg].iov_len = plen;
-
-					if (do_crc)
-						crypto_shash_update(
-							c_tx->mpa_crc_hd,
-							iov[seg].iov_base,
-							plen);
-				} else if (do_crc) {
-					kaddr = kmap_local_page(p);
-					crypto_shash_update(c_tx->mpa_crc_hd,
-							    kaddr + fp_off,
-							    plen);
-					kunmap_local(kaddr);
-				}
+				bvec_set_page(&bvec[seg], p, plen, fp_off);
 			} else {
 				/*
 				 * Cast to an uintptr_t to preserve all 64 bits
@@ -552,12 +397,16 @@ static int siw_tx_hdt(struct siw_iwarp_tx *c_tx, struct socket *s)
 				 * bits on a 64 bit platform and 32 bits on a
 				 * 32 bit platform.
 				 */
-				page_array[seg] = virt_to_page((void *)(va & PAGE_MASK));
-				if (do_crc)
-					crypto_shash_update(
-						c_tx->mpa_crc_hd,
-						(void *)va,
-						plen);
+				bvec_set_virt(&bvec[seg], (void *)va, plen);
+			}
+
+			if (do_crc) {
+				void *kaddr =
+					kmap_local_page(bvec[seg].bv_page);
+				crypto_shash_update(c_tx->mpa_crc_hd,
+						    kaddr + bvec[seg].bv_offset,
+						    bvec[seg].bv_len);
+				kunmap_local(kaddr);
 			}
 
 			sge_len -= plen;
@@ -567,13 +416,12 @@ static int siw_tx_hdt(struct siw_iwarp_tx *c_tx, struct socket *s)
 
 			if (++seg > (int)MAX_ARRAY) {
 				siw_dbg_qp(tx_qp(c_tx), "to many fragments\n");
-				siw_unmap_pages(iov, kmap_mask, seg-1);
 				wqe->processed -= c_tx->bytes_unsent;
 				rv = -EMSGSIZE;
 				goto done_crc;
 			}
 		}
-sge_done:
+
 		/* Update SGE variables at end of SGE */
 		if (sge_off == sge->length &&
 		    (data_len != 0 || wqe->processed < wqe->bytes)) {
@@ -582,15 +430,8 @@ sge_done:
 			sge_off = 0;
 		}
 	}
-	/* trailer */
-	if (likely(c_tx->state != SIW_SEND_TRAILER)) {
-		iov[seg].iov_base = &c_tx->trailer.pad[4 - c_tx->pad];
-		iov[seg].iov_len = trl_len = MAX_TRAILER - (4 - c_tx->pad);
-	} else {
-		iov[seg].iov_base = &c_tx->trailer.pad[c_tx->ctrl_sent];
-		iov[seg].iov_len = trl_len = MAX_TRAILER - c_tx->ctrl_sent;
-	}
 
+	/* Set the CRC in the trailer */
 	if (c_tx->pad) {
 		*(u32 *)c_tx->trailer.pad = 0;
 		if (do_crc)
@@ -603,23 +444,23 @@ sge_done:
 	else if (do_crc)
 		crypto_shash_final(c_tx->mpa_crc_hd, (u8 *)&c_tx->trailer.crc);
 
+	/* Copy the trailer and add it to the output list */
+	if (likely(c_tx->state != SIW_SEND_TRAILER)) {
+		trl = &c_tx->trailer.pad[4 - c_tx->pad];
+		trl_len = MAX_TRAILER - (4 - c_tx->pad);
+	} else {
+		trl = &c_tx->trailer.pad[c_tx->ctrl_sent];
+		trl_len = MAX_TRAILER - c_tx->ctrl_sent;
+	}
+	bvec_set_virt(&bvec[seg], trl, trl_len);
+
 	data_len = c_tx->bytes_unsent;
 
-	if (c_tx->use_sendpage) {
-		rv = siw_0copy_tx(s, page_array, &wqe->sqe.sge[c_tx->sge_idx],
-				  c_tx->sge_off, data_len);
-		if (rv == data_len) {
-			rv = kernel_sendmsg(s, &msg, &iov[seg], 1, trl_len);
-			if (rv > 0)
-				rv += data_len;
-			else
-				rv = data_len;
-		}
-	} else {
-		rv = kernel_sendmsg(s, &msg, iov, seg + 1,
-				    hdr_len + data_len + trl_len);
-		siw_unmap_pages(iov, kmap_mask, seg);
-	}
+	if (c_tx->use_sendpage)
+		msg.msg_flags |= MSG_SPLICE_PAGES;
+	iov_iter_bvec(&msg.msg_iter, ITER_SOURCE, bvec, seg + 1,
+		      hdr_len + data_len + trl_len);
+	rv = sock_sendmsg(s, &msg);
 	if (rv < (int)hdr_len) {
 		/* Not even complete hdr pushed or negative rv */
 		wqe->processed -= data_len;
@@ -680,7 +521,6 @@ sge_done:
 	}
 done_crc:
 	c_tx->do_crc = 0;
-done:
 	return rv;
 }
 
