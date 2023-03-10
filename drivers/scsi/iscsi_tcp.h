@@ -48,7 +48,7 @@ struct iscsi_sw_tcp_conn {
 	uint32_t		sendpage_failures_cnt;
 	uint32_t		discontiguous_hdr_cnt;
 
-	ssize_t (*sendpage)(struct socket *, struct page *, int, size_t, int);
+	bool			can_splice_to_tcp;
 };
 
 struct iscsi_sw_tcp_host {
