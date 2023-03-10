@@ -1297,6 +1297,7 @@ menu "Userspace interface"
 
 config CRYPTO_USER_API
 	tristate
+	select NETFS_SUPPORT # for netfs_extract_iter_to_sg()
 
 config CRYPTO_USER_API_HASH
 	tristate "Hash algorithms"
