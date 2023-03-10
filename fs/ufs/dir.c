@@ -81,8 +81,7 @@ ino_t ufs_inode_by_name(struct inode *dir, const struct qstr *qstr)
 }
 
 
-/* Releases the page */
-void ufs_set_link(struct inode *dir, struct ufs_dir_entry *de,
+int ufs_set_link(struct inode *dir, struct ufs_dir_entry *de,
 		  struct page *page, struct inode *inode,
 		  bool update_times)
 {
@@ -92,17 +91,19 @@ void ufs_set_link(struct inode *dir, struct ufs_dir_entry *de,
 
 	lock_page(page);
 	err = ufs_prepare_chunk(page, pos, len);
-	BUG_ON(err);
+	if (unlikely(err)) {
+		unlock_page(page);
+		return err;
+	}
 
 	de->d_ino = cpu_to_fs32(dir->i_sb, inode->i_ino);
 	ufs_set_de_type(dir->i_sb, de, inode->i_mode);
 
 	ufs_commit_chunk(page, pos, len);
-	put_and_unmap_page(page, de);
 	if (update_times)
 		dir->i_mtime = dir->i_ctime = current_time(dir);
 	mark_inode_dirty(dir);
-	ufs_handle_dirsync(dir);
+	return ufs_handle_dirsync(dir);
 }
 
 
@@ -522,8 +523,6 @@ int ufs_delete_entry(struct inode *inode, struct ufs_dir_entry *dir,
 	struct ufs_dir_entry *de = (struct ufs_dir_entry *) (kaddr + from);
 	int err;
 
-	UFSD("ENTER\n");
-
 	UFSD("ino %u, reclen %u, namlen %u, name %s\n",
 	      fs32_to_cpu(sb, de->d_ino),
 	      fs16_to_cpu(sb, de->d_reclen),
@@ -533,8 +532,7 @@ int ufs_delete_entry(struct inode *inode, struct ufs_dir_entry *dir,
 		if (de->d_reclen == 0) {
 			ufs_error(inode->i_sb, __func__,
 				  "zero-length directory entry");
-			err = -EIO;
-			goto out;
+			return -EIO;
 		}
 		pde = de;
 		de = ufs_next_entry(sb, de);
@@ -545,18 +543,17 @@ int ufs_delete_entry(struct inode *inode, struct ufs_dir_entry *dir,
 	pos = page_offset(page) + from;
 	lock_page(page);
 	err = ufs_prepare_chunk(page, pos, to - from);
-	BUG_ON(err);
+	if (unlikely(err)) {
+		unlock_page(page);
+		return err;
+	}
 	if (pde)
 		pde->d_reclen = cpu_to_fs16(sb, to - from);
 	dir->d_ino = 0;
 	ufs_commit_chunk(page, pos, to - from);
 	inode->i_ctime = inode->i_mtime = current_time(inode);
 	mark_inode_dirty(inode);
-	err = ufs_handle_dirsync(inode);
-out:
-	put_and_unmap_page(page, kaddr);
-	UFSD("EXIT\n");
-	return err;
+	return ufs_handle_dirsync(inode);
 }
 
 int ufs_make_empty(struct inode * inode, struct inode *dir)

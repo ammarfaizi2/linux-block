@@ -210,20 +210,18 @@ static int ufs_unlink(struct inode *dir, struct dentry *dentry)
 	struct inode * inode = d_inode(dentry);
 	struct ufs_dir_entry *de;
 	struct page *page;
-	int err = -ENOENT;
+	int err;
 
 	de = ufs_find_entry(dir, &dentry->d_name, &page);
 	if (!de)
-		goto out;
+		return -ENOENT;
 
 	err = ufs_delete_entry(dir, de, page);
-	if (err)
-		goto out;
-
-	inode->i_ctime = dir->i_ctime;
-	inode_dec_link_count(inode);
-	err = 0;
-out:
+	if (!err) {
+		inode->i_ctime = dir->i_ctime;
+		inode_dec_link_count(inode);
+	}
+	put_and_unmap_page(page, de);
 	return err;
 }
 
@@ -253,14 +251,14 @@ static int ufs_rename(struct mnt_idmap *idmap, struct inode *old_dir,
 	struct ufs_dir_entry *dir_de = NULL;
 	struct page *old_page;
 	struct ufs_dir_entry *old_de;
-	int err = -ENOENT;
+	int err;
 
 	if (flags & ~RENAME_NOREPLACE)
 		return -EINVAL;
 
 	old_de = ufs_find_entry(old_dir, &old_dentry->d_name, &old_page);
 	if (!old_de)
-		goto out;
+		return -ENOENT;
 
 	if (S_ISDIR(old_inode->i_mode)) {
 		err = -EIO;
@@ -281,7 +279,10 @@ static int ufs_rename(struct mnt_idmap *idmap, struct inode *old_dir,
 		new_de = ufs_find_entry(new_dir, &new_dentry->d_name, &new_page);
 		if (!new_de)
 			goto out_dir;
-		ufs_set_link(new_dir, new_de, new_page, old_inode, 1);
+		err = ufs_set_link(new_dir, new_de, new_page, old_inode, 1);
+		put_and_unmap_page(new_page, new_de);
+		if (err)
+			goto out_dir;
 		new_inode->i_ctime = current_time(new_inode);
 		if (dir_de)
 			drop_nlink(new_inode);
@@ -299,28 +300,20 @@ static int ufs_rename(struct mnt_idmap *idmap, struct inode *old_dir,
  	 * rename.
 	 */
 	old_inode->i_ctime = current_time(old_inode);
-
-	ufs_delete_entry(old_dir, old_de, old_page);
 	mark_inode_dirty(old_inode);
 
-	if (dir_de) {
+	err = ufs_delete_entry(old_dir, old_de, old_page);
+	if (!err && dir_de) {
 		if (old_dir != new_dir)
-			ufs_set_link(old_inode, dir_de, dir_page, new_dir, 0);
-		else {
-			put_and_unmap_page(dir_page, dir_de);
-		}
+			err = ufs_set_link(old_inode, dir_de, dir_page,
+					   new_dir, 0);
 		inode_dec_link_count(old_dir);
 	}
-	return 0;
-
-
 out_dir:
-	if (dir_de) {
+	if (dir_de)
 		put_and_unmap_page(dir_page, dir_de);
-	}
 out_old:
 	put_and_unmap_page(old_page, old_de);
-out:
 	return err;
 }
 

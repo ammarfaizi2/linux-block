@@ -106,7 +106,7 @@ extern struct ufs_dir_entry *ufs_find_entry(struct inode *, const struct qstr *,
 extern int ufs_delete_entry(struct inode *, struct ufs_dir_entry *, struct page *);
 extern int ufs_empty_dir (struct inode *);
 extern struct ufs_dir_entry *ufs_dotdot(struct inode *, struct page **);
-extern void ufs_set_link(struct inode *dir, struct ufs_dir_entry *de,
+extern int ufs_set_link(struct inode *dir, struct ufs_dir_entry *de,
 			 struct page *page, struct inode *inode, bool update_times);
 
 /* file.c */
