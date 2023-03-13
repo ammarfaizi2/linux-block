@@ -587,6 +587,7 @@ static unsigned long isolate_freepages_block(struct compact_control *cc,
 				blockpfn += (1UL << order) - 1;
 				cursor += (1UL << order) - 1;
 			}
+			nr_scanned += (1UL << order) - 1;
 			goto isolate_fail;
 		}
 
@@ -873,9 +874,8 @@ isolate_migratepages_block(struct compact_control *cc, unsigned long low_pfn,
 			cond_resched();
 		}
 
-		nr_scanned++;
-
 		page = pfn_to_page(low_pfn);
+		nr_scanned += compound_nr(page);
 
 		/*
 		 * Check if the pageblock has already been marked skipped.
@@ -1077,6 +1077,7 @@ isolate_migratepages_block(struct compact_control *cc, unsigned long low_pfn,
 			 */
 			if (unlikely(PageCompound(page) && !cc->alloc_contig)) {
 				low_pfn += compound_nr(page) - 1;
+				nr_scanned += compound_nr(page) - 1;
 				SetPageLRU(page);
 				goto isolate_fail_put;
 			}
@@ -1097,7 +1098,6 @@ isolate_success:
 isolate_success_no_list:
 		cc->nr_migratepages += compound_nr(page);
 		nr_isolated += compound_nr(page);
-		nr_scanned += compound_nr(page) - 1;
 
 		/*
 		 * Avoid isolating too much unless this block is being
