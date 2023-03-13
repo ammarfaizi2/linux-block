@@ -36,6 +36,7 @@
 #include <linux/skbuff.h>
 #include <linux/file.h>
 #include <linux/freezer.h>
+#include <linux/zcopy_alloc.h>
 #include <net/sock.h>
 #include <net/checksum.h>
 #include <net/ip.h>
@@ -1060,16 +1061,8 @@ err_noclose:
 	return 0;	/* record not complete */
 }
 
-static int svc_tcp_send_kvec(struct socket *sock, const struct kvec *vec,
-			      int flags)
-{
-	return kernel_sendpage(sock, virt_to_page(vec->iov_base),
-			       offset_in_page(vec->iov_base),
-			       vec->iov_len, flags);
-}
-
 /*
- * kernel_sendpage() is used exclusively to reduce the number of
+ * MSG_SPLICE_PAGES is used exclusively to reduce the number of
  * copy operations in this path. Therefore the caller must ensure
  * that the pages backing @xdr are unchanging.
  *
@@ -1081,65 +1074,38 @@ static int svc_tcp_sendmsg(struct socket *sock, struct xdr_buf *xdr,
 {
 	const struct kvec *head = xdr->head;
 	const struct kvec *tail = xdr->tail;
-	struct kvec rm = {
-		.iov_base	= &marker,
-		.iov_len	= sizeof(marker),
-	};
 	struct msghdr msg = {
-		.msg_flags	= 0,
+		.msg_flags	= MSG_SPLICE_PAGES,
 	};
-	int ret;
+	int ret, n = xdr_buf_pagecount(xdr), size;
 
 	*sentp = 0;
 	ret = xdr_alloc_bvec(xdr, GFP_KERNEL);
 	if (ret < 0)
 		return ret;
 
-	ret = kernel_sendmsg(sock, &msg, &rm, 1, rm.iov_len);
+	ret = zcopy_memdup(sizeof(marker), &marker, &xdr->bvec[-2], GFP_KERNEL);
 	if (ret < 0)
 		return ret;
-	*sentp += ret;
-	if (ret != rm.iov_len)
+
+	ret = zcopy_memdup(head->iov_len, head->iov_base, &xdr->bvec[-1], GFP_KERNEL);
+	if (ret < 0)
+		return ret;
+
+	ret = zcopy_memdup(tail->iov_len, tail->iov_base, &xdr->bvec[n], GFP_KERNEL);
+	if (ret < 0)
+		return ret;
+
+	size = sizeof(marker) + head->iov_len + xdr->page_len + tail->iov_len;
+	iov_iter_bvec(&msg.msg_iter, ITER_SOURCE, xdr->bvec - 2, n + 3, size);
+
+	ret = sock_sendmsg(sock, &msg);
+	if (ret < 0)
+		return ret;
+	if (ret > 0)
+		*sentp = ret;
+	if (ret != size)
 		return -EAGAIN;
-
-	ret = svc_tcp_send_kvec(sock, head, 0);
-	if (ret < 0)
-		return ret;
-	*sentp += ret;
-	if (ret != head->iov_len)
-		goto out;
-
-	if (xdr->page_len) {
-		unsigned int offset, len, remaining;
-		struct bio_vec *bvec;
-
-		bvec = xdr->bvec + (xdr->page_base >> PAGE_SHIFT);
-		offset = offset_in_page(xdr->page_base);
-		remaining = xdr->page_len;
-		while (remaining > 0) {
-			len = min(remaining, bvec->bv_len - offset);
-			ret = kernel_sendpage(sock, bvec->bv_page,
-					      bvec->bv_offset + offset,
-					      len, 0);
-			if (ret < 0)
-				return ret;
-			*sentp += ret;
-			if (ret != len)
-				goto out;
-			remaining -= len;
-			offset = 0;
-			bvec++;
-		}
-	}
-
-	if (tail->iov_len) {
-		ret = svc_tcp_send_kvec(sock, tail, 0);
-		if (ret < 0)
-			return ret;
-		*sentp += ret;
-	}
-
-out:
 	return 0;
 }
 

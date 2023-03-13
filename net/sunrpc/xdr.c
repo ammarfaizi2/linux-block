@@ -145,14 +145,19 @@ xdr_alloc_bvec(struct xdr_buf *buf, gfp_t gfp)
 {
 	size_t i, n = xdr_buf_pagecount(buf);
 
-	if (n != 0 && buf->bvec == NULL) {
-		buf->bvec = kmalloc_array(n, sizeof(buf->bvec[0]), gfp);
+	if (buf->bvec == NULL) {
+		/* Allow for two headers and a trailer to be attached */
+		buf->bvec = kmalloc_array(n + 3, sizeof(buf->bvec[0]), gfp);
 		if (!buf->bvec)
 			return -ENOMEM;
+		buf->bvec += 2;
+		buf->bvec[-2].bv_page = NULL;
+		buf->bvec[-1].bv_page = NULL;
 		for (i = 0; i < n; i++) {
 			bvec_set_page(&buf->bvec[i], buf->pages[i], PAGE_SIZE,
 				      0);
 		}
+		buf->bvec[n].bv_page = NULL;
 	}
 	return 0;
 }
@@ -160,8 +165,19 @@ xdr_alloc_bvec(struct xdr_buf *buf, gfp_t gfp)
 void
 xdr_free_bvec(struct xdr_buf *buf)
 {
-	kfree(buf->bvec);
-	buf->bvec = NULL;
+	if (buf->bvec) {
+		size_t n = xdr_buf_pagecount(buf);
+
+		if (buf->bvec[-2].bv_page)
+			put_page(buf->bvec[-2].bv_page);
+		if (buf->bvec[-1].bv_page)
+			put_page(buf->bvec[-1].bv_page);
+		if (buf->bvec[n].bv_page)
+			put_page(buf->bvec[n].bv_page);
+		buf->bvec -= 2;
+		kfree(buf->bvec);
+		buf->bvec = NULL;
+	}
 }
 
 /**
