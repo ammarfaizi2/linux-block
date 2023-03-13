@@ -551,11 +551,11 @@ static bool vma_ksm_compatible(struct vm_area_struct *vma)
 		return false;
 
 #ifdef VM_SAO
-	if (*vm_flags & VM_SAO)
+	if (vma->vm_flags & VM_SAO)
 		return false;
 #endif
 #ifdef VM_SPARC_ADI
-	if (*vm_flags & VM_SPARC_ADI)
+	if (vma->vm_flags & VM_SPARC_ADI)
 		return false;
 #endif
 
