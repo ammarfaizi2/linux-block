@@ -40,7 +40,7 @@ static int notifier_chain_register(struct notifier_block **nl,
 	}
 	n->next = *nl;
 	rcu_assign_pointer(*nl, n);
-	trace_notifier_register((void*)n->notifier_call);
+	trace_notifier_register((void *)n->notifier_call);
 	return 0;
 }
 
@@ -50,7 +50,7 @@ static int notifier_chain_unregister(struct notifier_block **nl,
 	while ((*nl) != NULL) {
 		if ((*nl) == n) {
 			rcu_assign_pointer(*nl, n->next);
-			trace_notifier_unregister((void*)n->notifier_call);
+			trace_notifier_unregister((void *)n->notifier_call);
 			return 0;
 		}
 		nl = &((*nl)->next);
@@ -89,7 +89,7 @@ static int notifier_call_chain(struct notifier_block **nl,
 			continue;
 		}
 #endif
-		trace_notifier_run((void*)nb->notifier_call);
+		trace_notifier_run((void *)nb->notifier_call);
 		ret = nb->notifier_call(nb, val, v);
 
 		if (nr_calls)
