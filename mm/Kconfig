@@ -346,9 +346,9 @@ config SHUFFLE_PAGE_ALLOCATOR
 	  the presence of a memory-side-cache. There are also incidental
 	  security benefits as it reduces the predictability of page
 	  allocations to compliment SLAB_FREELIST_RANDOM, but the
-	  default granularity of shuffling on the "MAX_ORDER - 1" i.e,
-	  10th order of pages is selected based on cache utilization
-	  benefits on x86.
+	  default granularity of shuffling on the MAX_ORDER i.e, 10th
+	  order of pages is selected based on cache utilization benefits
+	  on x86.
 
 	  While the randomization improves cache utilization it may
 	  negatively impact workloads on platforms without a cache. For
