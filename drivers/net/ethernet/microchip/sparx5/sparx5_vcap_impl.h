@@ -32,6 +32,9 @@
 #define SPARX5_VCAP_CID_IS2_MAX \
 	(VCAP_CID_INGRESS_STAGE2_L3 + VCAP_CID_LOOKUP_SIZE - 1) /* IS2 Max */
 
+#define SPARX5_VCAP_CID_ES0_L0 VCAP_CID_EGRESS_L0 /* ES0 lookup 0 */
+#define SPARX5_VCAP_CID_ES0_MAX (VCAP_CID_EGRESS_L1 - 1) /* ES0 Max */
+
 #define SPARX5_VCAP_CID_ES2_L0 VCAP_CID_EGRESS_STAGE2_L0 /* ES2 lookup 0 */
 #define SPARX5_VCAP_CID_ES2_L1 VCAP_CID_EGRESS_STAGE2_L1 /* ES2 lookup 1 */
 #define SPARX5_VCAP_CID_ES2_MAX \
@@ -134,6 +137,16 @@ enum vcap_is2_port_sel_arp {
 	VCAP_IS2_PS_ARP_ARP,
 };
 
+/* ES0 port keyset selection control */
+
+/* ES0 Egress port traffic type classification */
+enum vcap_es0_port_sel {
+	VCAP_ES0_PS_NORMAL_SELECTION,
+	VCAP_ES0_PS_FORCE_ISDX_LOOKUPS,
+	VCAP_ES0_PS_FORCE_VID_LOOKUPS,
+	VCAP_ES0_PS_RESERVED,
+};
+
 /* ES2 port keyset selection control */
 
 /* ES2 IPv4 traffic type keyset generation */
@@ -163,12 +176,30 @@ enum vcap_es2_port_sel_arp {
 	VCAP_ES2_PS_ARP_ARP,
 };
 
+/* Selects TPID for ES0 matching */
+enum SPX5_TPID_SEL {
+	SPX5_TPID_SEL_UNTAGGED,
+	SPX5_TPID_SEL_8100,
+	SPX5_TPID_SEL_UNUSED_0,
+	SPX5_TPID_SEL_UNUSED_1,
+	SPX5_TPID_SEL_88A8,
+	SPX5_TPID_SEL_TPIDCFG_1,
+	SPX5_TPID_SEL_TPIDCFG_2,
+	SPX5_TPID_SEL_TPIDCFG_3,
+};
+
 /* Get the port keyset for the vcap lookup */
 int sparx5_vcap_get_port_keyset(struct net_device *ndev,
 				struct vcap_admin *admin,
 				int cid,
 				u16 l3_proto,
 				struct vcap_keyset_list *kslist);
+
+/* Change the port keyset for the lookup and protocol */
+void sparx5_vcap_set_port_keyset(struct net_device *ndev,
+				 struct vcap_admin *admin, int cid,
+				 u16 l3_proto, enum vcap_keyfield_set keyset,
+				 struct vcap_keyset_list *orig);
 
 /* Check if the ethertype is supported by the vcap port classification */
 bool sparx5_vcap_is_known_etype(struct vcap_admin *admin, u16 etype);

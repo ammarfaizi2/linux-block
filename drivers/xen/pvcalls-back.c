@@ -174,6 +174,8 @@ static bool pvcalls_conn_back_write(struct sock_mapping *map)
 	RING_IDX cons, prod, size, array_size;
 	int ret;
 
+	atomic_set(&map->write, 0);
+
 	cons = intf->out_cons;
 	prod = intf->out_prod;
 	/* read the indexes before dealing with the data */
@@ -198,7 +200,6 @@ static bool pvcalls_conn_back_write(struct sock_mapping *map)
 		iov_iter_kvec(&msg.msg_iter, ITER_SOURCE, vec, 2, size);
 	}
 
-	atomic_set(&map->write, 0);
 	ret = inet_sendmsg(map->sock, &msg, size);
 	if (ret == -EAGAIN) {
 		atomic_inc(&map->write);
@@ -1190,7 +1191,7 @@ static void pvcalls_back_remove(struct xenbus_device *dev)
 {
 }
 
-static int pvcalls_back_uevent(struct xenbus_device *xdev,
+static int pvcalls_back_uevent(const struct xenbus_device *xdev,
 			       struct kobj_uevent_env *env)
 {
 	return 0;

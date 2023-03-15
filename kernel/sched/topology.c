@@ -580,7 +580,7 @@ out:
  */
 struct root_domain def_root_domain;
 
-void init_defrootdomain(void)
+void __init init_defrootdomain(void)
 {
 	init_rootdomain(&def_root_domain);
 
@@ -2079,14 +2079,19 @@ struct __cmp_key {
 
 static int hop_cmp(const void *a, const void *b)
 {
-	struct cpumask **prev_hop = *((struct cpumask ***)b - 1);
-	struct cpumask **cur_hop = *(struct cpumask ***)b;
+	struct cpumask **prev_hop, **cur_hop = *(struct cpumask ***)b;
 	struct __cmp_key *k = (struct __cmp_key *)a;
 
 	if (cpumask_weight_and(k->cpus, cur_hop[k->node]) <= k->cpu)
 		return 1;
 
-	k->w = (b == k->masks) ? 0 : cpumask_weight_and(k->cpus, prev_hop[k->node]);
+	if (b == k->masks) {
+		k->w = 0;
+		return 0;
+	}
+
+	prev_hop = *((struct cpumask ***)b - 1);
+	k->w = cpumask_weight_and(k->cpus, prev_hop[k->node]);
 	if (k->w <= k->cpu)
 		return 0;
 
@@ -2541,7 +2546,7 @@ void free_sched_domains(cpumask_var_t doms[], unsigned int ndoms)
  * Set up scheduler domains and groups.  For now this just excludes isolated
  * CPUs, but could be used to exclude other special cases in the future.
  */
-int sched_init_domains(const struct cpumask *cpu_map)
+int __init sched_init_domains(const struct cpumask *cpu_map)
 {
 	int err;
 

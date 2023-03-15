@@ -501,7 +501,7 @@ struct iwl_mvm_tt_mgmt {
  * @tzone: thermal zone device data
 */
 struct iwl_mvm_thermal_device {
-	s16 temp_trips[IWL_MAX_DTS_TRIPS];
+	struct thermal_trip trips[IWL_MAX_DTS_TRIPS];
 	u8 fw_trips_index[IWL_MAX_DTS_TRIPS];
 	struct thermal_zone_device *tzone;
 };
@@ -1096,6 +1096,11 @@ struct iwl_mvm {
 
 	/* does a monitor vif exist (only one can exist hence bool) */
 	bool monitor_on;
+	/*
+	 * primary channel position relative to he whole bandwidth,
+	 * in steps of 80 MHz
+	 */
+	u8 monitor_p80;
 
 	/* sniffer data to include in radiotap */
 	__le16 cur_aid;

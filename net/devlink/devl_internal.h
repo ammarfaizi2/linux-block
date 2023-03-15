@@ -29,7 +29,7 @@ struct devlink {
 	struct list_head sb_list;
 	struct list_head dpipe_table_list;
 	struct list_head resource_list;
-	struct list_head param_list;
+	struct xarray params;
 	struct list_head region_list;
 	struct list_head reporter_list;
 	struct devlink_dpipe_headers *dpipe_headers;
@@ -176,6 +176,8 @@ int devlink_port_netdevice_event(struct notifier_block *nb,
 
 struct devlink_port *
 devlink_port_get_from_info(struct devlink *devlink, struct genl_info *info);
+struct devlink_port *devlink_port_get_from_attrs(struct devlink *devlink,
+						 struct nlattr **attrs);
 
 /* Reload */
 bool devlink_reload_actions_valid(const struct devlink_ops *ops);
@@ -188,6 +190,9 @@ static inline bool devlink_reload_supported(const struct devlink_ops *ops)
 {
 	return ops->reload_down && ops->reload_up;
 }
+
+/* Params */
+void devlink_params_driverinit_load_new(struct devlink *devlink);
 
 /* Resources */
 struct devlink_resource;
@@ -218,3 +223,17 @@ int devlink_nl_cmd_info_get_doit(struct sk_buff *skb, struct genl_info *info);
 int devlink_nl_cmd_flash_update(struct sk_buff *skb, struct genl_info *info);
 int devlink_nl_cmd_selftests_get_doit(struct sk_buff *skb, struct genl_info *info);
 int devlink_nl_cmd_selftests_run(struct sk_buff *skb, struct genl_info *info);
+int devlink_nl_cmd_health_reporter_get_doit(struct sk_buff *skb,
+					    struct genl_info *info);
+int devlink_nl_cmd_health_reporter_set_doit(struct sk_buff *skb,
+					    struct genl_info *info);
+int devlink_nl_cmd_health_reporter_recover_doit(struct sk_buff *skb,
+						struct genl_info *info);
+int devlink_nl_cmd_health_reporter_diagnose_doit(struct sk_buff *skb,
+						 struct genl_info *info);
+int devlink_nl_cmd_health_reporter_dump_get_dumpit(struct sk_buff *skb,
+						   struct netlink_callback *cb);
+int devlink_nl_cmd_health_reporter_dump_clear_doit(struct sk_buff *skb,
+						   struct genl_info *info);
+int devlink_nl_cmd_health_reporter_test_doit(struct sk_buff *skb,
+					     struct genl_info *info);

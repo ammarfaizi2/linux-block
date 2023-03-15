@@ -668,6 +668,26 @@ static void mlx5e_rq_free_shampo(struct mlx5e_rq *rq)
 	mlx5e_rq_shampo_hd_free(rq);
 }
 
+static __be32 mlx5e_get_terminate_scatter_list_mkey(struct mlx5_core_dev *dev)
+{
+	u32 out[MLX5_ST_SZ_DW(query_special_contexts_out)] = {};
+	u32 in[MLX5_ST_SZ_DW(query_special_contexts_in)] = {};
+	int res;
+
+	if (!MLX5_CAP_GEN(dev, terminate_scatter_list_mkey))
+		return MLX5_TERMINATE_SCATTER_LIST_LKEY;
+
+	MLX5_SET(query_special_contexts_in, in, opcode,
+		 MLX5_CMD_OP_QUERY_SPECIAL_CONTEXTS);
+	res = mlx5_cmd_exec_inout(dev, query_special_contexts, in, out);
+	if (res)
+		return MLX5_TERMINATE_SCATTER_LIST_LKEY;
+
+	res = MLX5_GET(query_special_contexts_out, out,
+		       terminate_scatter_list_mkey);
+	return cpu_to_be32(res);
+}
+
 static int mlx5e_alloc_rq(struct mlx5e_params *params,
 			  struct mlx5e_xsk_param *xsk,
 			  struct mlx5e_rq_param *rqp,
@@ -832,7 +852,7 @@ static int mlx5e_alloc_rq(struct mlx5e_params *params,
 			/* check if num_frags is not a pow of two */
 			if (rq->wqe.info.num_frags < (1 << rq->wqe.info.log_num_frags)) {
 				wqe->data[f].byte_count = 0;
-				wqe->data[f].lkey = cpu_to_be32(MLX5_INVALID_LKEY);
+				wqe->data[f].lkey = mlx5e_get_terminate_scatter_list_mkey(mdev);
 				wqe->data[f].addr = 0;
 			}
 		}
@@ -5898,17 +5918,24 @@ static int mlx5e_probe(struct auxiliary_device *adev,
 	struct mlx5e_priv *priv;
 	int err;
 
-	mlx5e_dev = mlx5e_create_devlink(&adev->dev);
+	mlx5e_dev = mlx5e_create_devlink(&adev->dev, mdev);
 	if (IS_ERR(mlx5e_dev))
 		return PTR_ERR(mlx5e_dev);
 	auxiliary_set_drvdata(adev, mlx5e_dev);
+
+	err = mlx5e_devlink_port_register(mlx5e_dev, mdev);
+	if (err) {
+		mlx5_core_err(mdev, "mlx5e_devlink_port_register failed, %d\n", err);
+		goto err_devlink_unregister;
+	}
 
 	netdev = mlx5e_create_netdev(mdev, profile);
 	if (!netdev) {
 		mlx5_core_err(mdev, "mlx5e_create_netdev failed\n");
 		err = -ENOMEM;
-		goto err_devlink_unregister;
+		goto err_devlink_port_unregister;
 	}
+	SET_NETDEV_DEVLINK_PORT(netdev, &mlx5e_dev->dl_port);
 
 	mlx5e_build_nic_netdev(netdev);
 
@@ -5921,16 +5948,10 @@ static int mlx5e_probe(struct auxiliary_device *adev,
 	priv->dfs_root = debugfs_create_dir("nic",
 					    mlx5_debugfs_get_dev_root(priv->mdev));
 
-	err = mlx5e_devlink_port_register(mlx5e_dev, priv);
-	if (err) {
-		mlx5_core_err(mdev, "mlx5e_devlink_port_register failed, %d\n", err);
-		goto err_destroy_netdev;
-	}
-
 	err = profile->init(mdev, netdev);
 	if (err) {
 		mlx5_core_err(mdev, "mlx5e_nic_profile init failed, %d\n", err);
-		goto err_devlink_cleanup;
+		goto err_destroy_netdev;
 	}
 
 	err = mlx5e_resume(adev);
@@ -5939,7 +5960,6 @@ static int mlx5e_probe(struct auxiliary_device *adev,
 		goto err_profile_cleanup;
 	}
 
-	SET_NETDEV_DEVLINK_PORT(netdev, mlx5e_devlink_get_dl_port(priv));
 	err = register_netdev(netdev);
 	if (err) {
 		mlx5_core_err(mdev, "register_netdev failed, %d\n", err);
@@ -5955,11 +5975,11 @@ err_resume:
 	mlx5e_suspend(adev, state);
 err_profile_cleanup:
 	profile->cleanup(priv);
-err_devlink_cleanup:
-	mlx5e_devlink_port_unregister(priv);
 err_destroy_netdev:
 	debugfs_remove_recursive(priv->dfs_root);
 	mlx5e_destroy_netdev(priv);
+err_devlink_port_unregister:
+	mlx5e_devlink_port_unregister(mlx5e_dev);
 err_devlink_unregister:
 	mlx5e_destroy_devlink(mlx5e_dev);
 	return err;
@@ -5976,9 +5996,9 @@ static void mlx5e_remove(struct auxiliary_device *adev)
 	unregister_netdev(priv->netdev);
 	mlx5e_suspend(adev, state);
 	priv->profile->cleanup(priv);
-	mlx5e_devlink_port_unregister(priv);
 	debugfs_remove_recursive(priv->dfs_root);
 	mlx5e_destroy_netdev(priv);
+	mlx5e_devlink_port_unregister(mlx5e_dev);
 	mlx5e_destroy_devlink(mlx5e_dev);
 }
 

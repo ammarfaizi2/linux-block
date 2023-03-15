@@ -639,14 +639,16 @@ void qdisc_watchdog_schedule_range_ns(struct qdisc_watchdog *wd, u64 expires,
 		return;
 
 	if (hrtimer_is_queued(&wd->timer)) {
+		u64 softexpires;
+
+		softexpires = ktime_to_ns(hrtimer_get_softexpires(&wd->timer));
 		/* If timer is already set in [expires, expires + delta_ns],
 		 * do not reprogram it.
 		 */
-		if (wd->last_expires - expires <= delta_ns)
+		if (softexpires - expires <= delta_ns)
 			return;
 	}
 
-	wd->last_expires = expires;
 	hrtimer_start_range_ns(&wd->timer,
 			       ns_to_ktime(expires),
 			       delta_ns,
@@ -1286,7 +1288,7 @@ static struct Qdisc *qdisc_create(struct net_device *dev,
 		stab = qdisc_get_stab(tca[TCA_STAB], extack);
 		if (IS_ERR(stab)) {
 			err = PTR_ERR(stab);
-			goto err_out4;
+			goto err_out3;
 		}
 		rcu_assign_pointer(sch->stab, stab);
 	}
@@ -1294,14 +1296,14 @@ static struct Qdisc *qdisc_create(struct net_device *dev,
 	if (ops->init) {
 		err = ops->init(sch, tca[TCA_OPTIONS], extack);
 		if (err != 0)
-			goto err_out5;
+			goto err_out4;
 	}
 
 	if (tca[TCA_RATE]) {
 		err = -EOPNOTSUPP;
 		if (sch->flags & TCQ_F_MQROOT) {
 			NL_SET_ERR_MSG(extack, "Cannot attach rate estimator to a multi-queue root qdisc");
-			goto err_out5;
+			goto err_out4;
 		}
 
 		err = gen_new_estimator(&sch->bstats,
@@ -1312,7 +1314,7 @@ static struct Qdisc *qdisc_create(struct net_device *dev,
 					tca[TCA_RATE]);
 		if (err) {
 			NL_SET_ERR_MSG(extack, "Failed to generate new estimator");
-			goto err_out5;
+			goto err_out4;
 		}
 	}
 
@@ -1321,12 +1323,13 @@ static struct Qdisc *qdisc_create(struct net_device *dev,
 
 	return sch;
 
-err_out5:
-	qdisc_put_stab(rtnl_dereference(sch->stab));
 err_out4:
-	/* ops->init() failed, we call ->destroy() like qdisc_create_dflt() */
+	/* Even if ops->init() failed, we call ops->destroy()
+	 * like qdisc_create_dflt().
+	 */
 	if (ops->destroy)
 		ops->destroy(sch);
+	qdisc_put_stab(rtnl_dereference(sch->stab));
 err_out3:
 	netdev_put(dev, &sch->dev_tracker);
 	qdisc_free(sch);

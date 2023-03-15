@@ -6,7 +6,6 @@
 #include <linux/pci.h>
 #include <linux/netdevice.h>
 #include <linux/string.h>
-#include <linux/aer.h>
 #include <linux/etherdevice.h>
 #include <net/ip.h>
 
@@ -15,6 +14,7 @@
 #include "../libwx/wx_hw.h"
 #include "txgbe_type.h"
 #include "txgbe_hw.h"
+#include "txgbe_ethtool.h"
 
 char txgbe_driver_name[] = "txgbe";
 
@@ -537,7 +537,6 @@ static int txgbe_probe(struct pci_dev *pdev,
 		goto err_pci_disable_dev;
 	}
 
-	pci_enable_pcie_error_reporting(pdev);
 	pci_set_master(pdev);
 
 	netdev = devm_alloc_etherdev_mqs(&pdev->dev,
@@ -565,6 +564,8 @@ static int txgbe_probe(struct pci_dev *pdev,
 		goto err_pci_release_regions;
 	}
 
+	wx->driver_name = txgbe_driver_name;
+	txgbe_set_ethtool_ops(netdev);
 	netdev->netdev_ops = &txgbe_netdev_ops;
 
 	/* setup the private structure */
@@ -695,7 +696,6 @@ err_release_hw:
 err_free_mac_table:
 	kfree(wx->mac_table);
 err_pci_release_regions:
-	pci_disable_pcie_error_reporting(pdev);
 	pci_release_selected_regions(pdev,
 				     pci_select_bars(pdev, IORESOURCE_MEM));
 err_pci_disable_dev:
@@ -725,8 +725,6 @@ static void txgbe_remove(struct pci_dev *pdev)
 
 	kfree(wx->mac_table);
 	wx_clear_interrupt_scheme(wx);
-
-	pci_disable_pcie_error_reporting(pdev);
 
 	pci_disable_device(pdev);
 }

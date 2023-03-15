@@ -976,6 +976,25 @@ int vcap_lookup_rule_by_cookie(struct vcap_control *vctrl, u64 cookie)
 }
 EXPORT_SYMBOL_GPL(vcap_lookup_rule_by_cookie);
 
+/* Get number of rules in a vcap instance lookup chain id range */
+int vcap_admin_rule_count(struct vcap_admin *admin, int cid)
+{
+	int max_cid = roundup(cid + 1, VCAP_CID_LOOKUP_SIZE);
+	int min_cid = rounddown(cid, VCAP_CID_LOOKUP_SIZE);
+	struct vcap_rule_internal *elem;
+	int count = 0;
+
+	list_for_each_entry(elem, &admin->rules, list) {
+		mutex_lock(&admin->lock);
+		if (elem->data.vcap_chain_id >= min_cid &&
+		    elem->data.vcap_chain_id < max_cid)
+			++count;
+		mutex_unlock(&admin->lock);
+	}
+	return count;
+}
+EXPORT_SYMBOL_GPL(vcap_admin_rule_count);
+
 /* Make a copy of the rule, shallow or full */
 static struct vcap_rule_internal *vcap_dup_rule(struct vcap_rule_internal *ri,
 						bool full)
@@ -1649,10 +1668,8 @@ bool vcap_is_next_lookup(struct vcap_control *vctrl, int src_cid, int dst_cid)
 	if (vcap_api_check(vctrl))
 		return false;
 
-	/* The offset must be at least one lookup, round up */
-	next_cid = src_cid + VCAP_CID_LOOKUP_SIZE;
-	next_cid /= VCAP_CID_LOOKUP_SIZE;
-	next_cid *= VCAP_CID_LOOKUP_SIZE;
+	/* The offset must be at least one lookup so round up one chain */
+	next_cid = roundup(src_cid + 1, VCAP_CID_LOOKUP_SIZE);
 
 	if (dst_cid < next_cid)
 		return false;
@@ -2177,12 +2194,13 @@ static int vcap_get_next_chain(struct vcap_control *vctrl,
 static bool vcap_path_exist(struct vcap_control *vctrl, struct net_device *ndev,
 			    int dst_cid)
 {
+	int cid = rounddown(dst_cid, VCAP_CID_LOOKUP_SIZE);
 	struct vcap_enabled_port *eport = NULL;
 	struct vcap_enabled_port *elem;
 	struct vcap_admin *admin;
 	int tmp;
 
-	if (dst_cid == 0) /* Chain zero is always available */
+	if (cid == 0) /* Chain zero is always available */
 		return true;
 
 	/* Find first entry that starts from chain 0*/
@@ -2201,7 +2219,7 @@ static bool vcap_path_exist(struct vcap_control *vctrl, struct net_device *ndev,
 		return false;
 
 	tmp = eport->dst_cid;
-	while (tmp != dst_cid && tmp != 0)
+	while (tmp != cid && tmp != 0)
 		tmp = vcap_get_next_chain(vctrl, ndev, tmp);
 
 	return !!tmp;
@@ -2246,6 +2264,11 @@ int vcap_add_rule(struct vcap_rule *rule)
 	if (move.count > 0)
 		vcap_move_rules(ri, &move);
 
+	/* Set the counter to zero */
+	ret = vcap_write_counter(ri, &ctr);
+	if (ret)
+		goto out;
+
 	if (ri->state == VCAP_RS_DISABLED) {
 		/* Erase the rule area */
 		ri->vctrl->ops->init(ri->ndev, ri->admin, ri->addr, ri->size);
@@ -2264,8 +2287,6 @@ int vcap_add_rule(struct vcap_rule *rule)
 		pr_err("%s:%d: rule write error: %d\n", __func__, __LINE__, ret);
 		goto out;
 	}
-	/* Set the counter to zero */
-	ret = vcap_write_counter(ri, &ctr);
 out:
 	mutex_unlock(&ri->admin->lock);
 	return ret;
@@ -3401,6 +3422,25 @@ int vcap_rule_mod_key_u32(struct vcap_rule *rule, enum vcap_key_field key,
 }
 EXPORT_SYMBOL_GPL(vcap_rule_mod_key_u32);
 
+/* Remove a key field with value and mask in the rule */
+int vcap_rule_rem_key(struct vcap_rule *rule, enum vcap_key_field key)
+{
+	struct vcap_rule_internal *ri = to_intrule(rule);
+	struct vcap_client_keyfield *field;
+
+	field = vcap_find_keyfield(rule, key);
+	if (!field) {
+		pr_err("%s:%d: key %s is not in the rule\n",
+		       __func__, __LINE__, vcap_keyfield_name(ri->vctrl, key));
+		return -EINVAL;
+	}
+	/* Deallocate the key field */
+	list_del(&field->ctrl.list);
+	kfree(field);
+	return 0;
+}
+EXPORT_SYMBOL_GPL(vcap_rule_rem_key);
+
 static int vcap_rule_mod_action(struct vcap_rule *rule,
 				enum vcap_action_field action,
 				enum vcap_field_type ftype,
@@ -3472,6 +3512,29 @@ int vcap_filter_rule_keys(struct vcap_rule *rule,
 	return err;
 }
 EXPORT_SYMBOL_GPL(vcap_filter_rule_keys);
+
+/* Select the keyset from the list that results in the smallest rule size */
+enum vcap_keyfield_set
+vcap_select_min_rule_keyset(struct vcap_control *vctrl,
+			    enum vcap_type vtype,
+			    struct vcap_keyset_list *kslist)
+{
+	enum vcap_keyfield_set ret = VCAP_KFS_NO_VALUE;
+	const struct vcap_set *kset;
+	int max = 100, idx;
+
+	for (idx = 0; idx < kslist->cnt; ++idx) {
+		kset = vcap_keyfieldset(vctrl, vtype, kslist->keysets[idx]);
+		if (!kset)
+			continue;
+		if (kset->sw_per_item >= max)
+			continue;
+		max = kset->sw_per_item;
+		ret = kslist->keysets[idx];
+	}
+	return ret;
+}
+EXPORT_SYMBOL_GPL(vcap_select_min_rule_keyset);
 
 /* Make a full copy of an existing rule with a new rule id */
 struct vcap_rule *vcap_copy_rule(struct vcap_rule *erule)

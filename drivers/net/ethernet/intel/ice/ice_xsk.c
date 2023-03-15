@@ -598,7 +598,7 @@ ice_construct_skb_zc(struct ice_rx_ring *rx_ring, struct xdp_buff *xdp)
 }
 
 /**
- * ice_clean_xdp_irq_zc - AF_XDP ZC specific Tx cleaning routine
+ * ice_clean_xdp_irq_zc - produce AF_XDP descriptors to CQ
  * @xdp_ring: XDP Tx ring
  */
 static void ice_clean_xdp_irq_zc(struct ice_tx_ring *xdp_ring)
@@ -607,6 +607,7 @@ static void ice_clean_xdp_irq_zc(struct ice_tx_ring *xdp_ring)
 	struct ice_tx_desc *tx_desc;
 	u16 cnt = xdp_ring->count;
 	struct ice_tx_buf *tx_buf;
+	u16 completed_frames = 0;
 	u16 xsk_frames = 0;
 	u16 last_rs;
 	int i;
@@ -616,22 +617,25 @@ static void ice_clean_xdp_irq_zc(struct ice_tx_ring *xdp_ring)
 	if (tx_desc->cmd_type_offset_bsz &
 	    cpu_to_le64(ICE_TX_DESC_DTYPE_DESC_DONE)) {
 		if (last_rs >= ntc)
-			xsk_frames = last_rs - ntc + 1;
+			completed_frames = last_rs - ntc + 1;
 		else
-			xsk_frames = last_rs + cnt - ntc + 1;
+			completed_frames = last_rs + cnt - ntc + 1;
 	}
 
-	if (!xsk_frames)
+	if (!completed_frames)
 		return;
 
-	if (likely(!xdp_ring->xdp_tx_active))
+	if (likely(!xdp_ring->xdp_tx_active)) {
+		xsk_frames = completed_frames;
 		goto skip;
+	}
 
 	ntc = xdp_ring->next_to_clean;
-	for (i = 0; i < xsk_frames; i++) {
+	for (i = 0; i < completed_frames; i++) {
 		tx_buf = &xdp_ring->tx_buf[ntc];
 
-		if (tx_buf->xdp) {
+		if (tx_buf->type == ICE_TX_BUF_XSK_TX) {
+			tx_buf->type = ICE_TX_BUF_EMPTY;
 			xsk_buff_free(tx_buf->xdp);
 			xdp_ring->xdp_tx_active--;
 		} else {
@@ -639,12 +643,12 @@ static void ice_clean_xdp_irq_zc(struct ice_tx_ring *xdp_ring)
 		}
 
 		ntc++;
-		if (ntc == cnt)
+		if (ntc >= xdp_ring->count)
 			ntc = 0;
 	}
 skip:
 	tx_desc->cmd_type_offset_bsz = 0;
-	xdp_ring->next_to_clean += xsk_frames;
+	xdp_ring->next_to_clean += completed_frames;
 	if (xdp_ring->next_to_clean >= cnt)
 		xdp_ring->next_to_clean -= cnt;
 	if (xsk_frames)
@@ -685,6 +689,7 @@ static int ice_xmit_xdp_tx_zc(struct xdp_buff *xdp,
 
 	tx_buf = &xdp_ring->tx_buf[ntu];
 	tx_buf->xdp = xdp;
+	tx_buf->type = ICE_TX_BUF_XSK_TX;
 	tx_desc = ICE_TX_DESC(xdp_ring, ntu);
 	tx_desc->buf_addr = cpu_to_le64(dma);
 	tx_desc->cmd_type_offset_bsz = ice_build_ctob(ICE_TX_DESC_CMD_EOP,
@@ -1083,12 +1088,12 @@ void ice_xsk_clean_xdp_ring(struct ice_tx_ring *xdp_ring)
 	while (ntc != ntu) {
 		struct ice_tx_buf *tx_buf = &xdp_ring->tx_buf[ntc];
 
-		if (tx_buf->xdp)
+		if (tx_buf->type == ICE_TX_BUF_XSK_TX) {
+			tx_buf->type = ICE_TX_BUF_EMPTY;
 			xsk_buff_free(tx_buf->xdp);
-		else
+		} else {
 			xsk_frames++;
-
-		tx_buf->raw_buf = NULL;
+		}
 
 		ntc++;
 		if (ntc >= xdp_ring->count)

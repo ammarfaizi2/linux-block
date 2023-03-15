@@ -420,10 +420,9 @@ struct sk_buff *build_skb(void *data, unsigned int frag_size)
 {
 	struct sk_buff *skb = __build_skb(data, frag_size);
 
-	if (skb && frag_size) {
+	if (likely(skb && frag_size)) {
 		skb->head_frag = 1;
-		if (page_is_pfmemalloc(virt_to_head_page(data)))
-			skb->pfmemalloc = 1;
+		skb_propagate_pfmemalloc(virt_to_head_page(data), skb);
 	}
 	return skb;
 }
@@ -445,8 +444,7 @@ struct sk_buff *build_skb_around(struct sk_buff *skb,
 
 	if (frag_size) {
 		skb->head_frag = 1;
-		if (page_is_pfmemalloc(virt_to_head_page(data)))
-			skb->pfmemalloc = 1;
+		skb_propagate_pfmemalloc(virt_to_head_page(data), skb);
 	}
 	return skb;
 }
@@ -517,18 +515,16 @@ static void *kmalloc_reserve(unsigned int *size, gfp_t flags, int node,
 #ifdef HAVE_SKB_SMALL_HEAD_CACHE
 	if (obj_size <= SKB_SMALL_HEAD_CACHE_SIZE &&
 	    !(flags & KMALLOC_NOT_NORMAL_BITS)) {
-
-		/* skb_small_head_cache has non power of two size,
-		 * likely forcing SLUB to use order-3 pages.
-		 * We deliberately attempt a NOMEMALLOC allocation only.
-		 */
 		obj = kmem_cache_alloc_node(skb_small_head_cache,
 				flags | __GFP_NOMEMALLOC | __GFP_NOWARN,
 				node);
-		if (obj) {
-			*size = SKB_SMALL_HEAD_CACHE_SIZE;
+		*size = SKB_SMALL_HEAD_CACHE_SIZE;
+		if (obj || !(gfp_pfmemalloc_allowed(flags)))
 			goto out;
-		}
+		/* Try again but now we are using pfmemalloc reserves */
+		ret_pfmemalloc = true;
+		obj = kmem_cache_alloc_node(skb_small_head_cache, flags, node);
+		goto out;
 	}
 #endif
 	*size = obj_size = kmalloc_size_roundup(obj_size);
@@ -991,7 +987,7 @@ bool __kfree_skb_reason(struct sk_buff *skb, enum skb_drop_reason reason)
 	DEBUG_NET_WARN_ON_ONCE(reason <= 0 || reason >= SKB_DROP_REASON_MAX);
 
 	if (reason == SKB_CONSUMED)
-		trace_consume_skb(skb);
+		trace_consume_skb(skb, __builtin_return_address(0));
 	else
 		trace_kfree_skb(skb, __builtin_return_address(0), reason);
 	return true;
@@ -1189,7 +1185,7 @@ void consume_skb(struct sk_buff *skb)
 	if (!skb_unref(skb))
 		return;
 
-	trace_consume_skb(skb);
+	trace_consume_skb(skb, __builtin_return_address(0));
 	__kfree_skb(skb);
 }
 EXPORT_SYMBOL(consume_skb);
@@ -1204,7 +1200,7 @@ EXPORT_SYMBOL(consume_skb);
  */
 void __consume_stateless_skb(struct sk_buff *skb)
 {
-	trace_consume_skb(skb);
+	trace_consume_skb(skb, __builtin_return_address(0));
 	skb_release_data(skb, SKB_CONSUMED);
 	kfree_skbmem(skb);
 }
@@ -1260,7 +1256,7 @@ void napi_consume_skb(struct sk_buff *skb, int budget)
 		return;
 
 	/* if reaching here SKB is ready to free */
-	trace_consume_skb(skb);
+	trace_consume_skb(skb, __builtin_return_address(0));
 
 	/* if SKB is a clone, don't handle this case */
 	if (skb->fclone != SKB_FCLONE_UNAVAILABLE) {
@@ -1406,14 +1402,18 @@ EXPORT_SYMBOL_GPL(skb_morph);
 
 int mm_account_pinned_pages(struct mmpin *mmp, size_t size)
 {
-	unsigned long max_pg, num_pg, new_pg, old_pg;
+	unsigned long max_pg, num_pg, new_pg, old_pg, rlim;
 	struct user_struct *user;
 
 	if (capable(CAP_IPC_LOCK) || !size)
 		return 0;
 
+	rlim = rlimit(RLIMIT_MEMLOCK);
+	if (rlim == RLIM_INFINITY)
+		return 0;
+
 	num_pg = (size >> PAGE_SHIFT) + 2;	/* worst case */
-	max_pg = rlimit(RLIMIT_MEMLOCK) >> PAGE_SHIFT;
+	max_pg = rlim >> PAGE_SHIFT;
 	user = mmp->user ? : current_user();
 
 	old_pg = atomic_long_read(&user->locked_vm);
@@ -2078,6 +2078,7 @@ struct sk_buff *skb_realloc_headroom(struct sk_buff *skb, unsigned int headroom)
 }
 EXPORT_SYMBOL(skb_realloc_headroom);
 
+/* Note: We plan to rework this in linux-6.4 */
 int __skb_unclone_keeptruesize(struct sk_buff *skb, gfp_t pri)
 {
 	unsigned int saved_end_offset, saved_truesize;
@@ -2095,6 +2096,22 @@ int __skb_unclone_keeptruesize(struct sk_buff *skb, gfp_t pri)
 
 	if (likely(skb_end_offset(skb) == saved_end_offset))
 		return 0;
+
+#ifdef HAVE_SKB_SMALL_HEAD_CACHE
+	/* We can not change skb->end if the original or new value
+	 * is SKB_SMALL_HEAD_HEADROOM, as it might break skb_kfree_head().
+	 */
+	if (saved_end_offset == SKB_SMALL_HEAD_HEADROOM ||
+	    skb_end_offset(skb) == SKB_SMALL_HEAD_HEADROOM) {
+		/* We think this path should not be taken.
+		 * Add a temporary trace to warn us just in case.
+		 */
+		pr_err_once("__skb_unclone_keeptruesize() skb_end_offset() %u -> %u\n",
+			    saved_end_offset, skb_end_offset(skb));
+		WARN_ON_ONCE(1);
+		return 0;
+	}
+#endif
 
 	shinfo = skb_shinfo(skb);
 

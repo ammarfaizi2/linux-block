@@ -20,7 +20,6 @@
 #include <linux/pci.h>
 #include <linux/workqueue.h>
 #include <linux/wait.h>
-#include <linux/aer.h>
 #include <linux/interrupt.h>
 #include <linux/ethtool.h>
 #include <linux/timer.h>
@@ -122,6 +121,8 @@
 #define ICE_DFLT_NETIF_M (NETIF_MSG_DRV | NETIF_MSG_PROBE | NETIF_MSG_LINK)
 
 #define ICE_MAX_MTU	(ICE_AQ_SET_MAC_FRAME_SIZE_MAX - ICE_ETH_PKT_HDR_PAD)
+
+#define ICE_MAX_TSO_SIZE 131072
 
 #define ICE_UP_TABLE_TRANSLATE(val, i) \
 		(((val) << ICE_AQ_VSI_UP_TABLE_UP##i##_S) & \

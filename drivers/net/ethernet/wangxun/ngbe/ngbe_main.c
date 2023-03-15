@@ -6,7 +6,6 @@
 #include <linux/pci.h>
 #include <linux/netdevice.h>
 #include <linux/string.h>
-#include <linux/aer.h>
 #include <linux/etherdevice.h>
 #include <net/ip.h>
 #include <linux/phy.h>
@@ -17,6 +16,7 @@
 #include "ngbe_type.h"
 #include "ngbe_mdio.h"
 #include "ngbe_hw.h"
+#include "ngbe_ethtool.h"
 
 char ngbe_driver_name[] = "ngbe";
 
@@ -519,7 +519,6 @@ static int ngbe_probe(struct pci_dev *pdev,
 		goto err_pci_disable_dev;
 	}
 
-	pci_enable_pcie_error_reporting(pdev);
 	pci_set_master(pdev);
 
 	netdev = devm_alloc_etherdev_mqs(&pdev->dev,
@@ -546,6 +545,8 @@ static int ngbe_probe(struct pci_dev *pdev,
 		goto err_pci_release_regions;
 	}
 
+	wx->driver_name = ngbe_driver_name;
+	ngbe_set_ethtool_ops(netdev);
 	netdev->netdev_ops = &ngbe_netdev_ops;
 
 	netdev->features |= NETIF_F_HIGHDMA;
@@ -631,6 +632,8 @@ static int ngbe_probe(struct pci_dev *pdev,
 		etrack_id |= e2rom_ver;
 		wr32(wx, NGBE_EEPROM_VERSION_STORE_REG, etrack_id);
 	}
+	snprintf(wx->eeprom_id, sizeof(wx->eeprom_id),
+		 "0x%08x", etrack_id);
 
 	eth_hw_addr_set(netdev, wx->mac.perm_addr);
 	wx_mac_set_default_filter(wx, wx->mac.perm_addr);
@@ -664,7 +667,6 @@ err_clear_interrupt_scheme:
 err_free_mac_table:
 	kfree(wx->mac_table);
 err_pci_release_regions:
-	pci_disable_pcie_error_reporting(pdev);
 	pci_release_selected_regions(pdev,
 				     pci_select_bars(pdev, IORESOURCE_MEM));
 err_pci_disable_dev:
@@ -693,7 +695,6 @@ static void ngbe_remove(struct pci_dev *pdev)
 
 	kfree(wx->mac_table);
 	wx_clear_interrupt_scheme(wx);
-	pci_disable_pcie_error_reporting(pdev);
 
 	pci_disable_device(pdev);
 }

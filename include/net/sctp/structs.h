@@ -1412,6 +1412,7 @@ struct sctp_stream_priorities {
 	/* The next stream in line */
 	struct sctp_stream_out_ext *next;
 	__u16 prio;
+	__u16 users;
 };
 
 struct sctp_stream_out_ext {
@@ -1427,6 +1428,11 @@ struct sctp_stream_out_ext {
 		/* Fields used by RR scheduler */
 		struct {
 			struct list_head rr_list;
+		};
+		struct {
+			struct list_head fc_list;
+			__u32 fc_length;
+			__u16 fc_weight;
 		};
 	};
 };
@@ -1473,6 +1479,9 @@ struct sctp_stream {
 			struct list_head rr_list;
 			/* The next stream in line */
 			struct sctp_stream_out_ext *rr_next;
+		};
+		struct {
+			struct list_head fc_list;
 		};
 	};
 	struct sctp_stream_interleave *si;

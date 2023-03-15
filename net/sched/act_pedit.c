@@ -181,26 +181,6 @@ static int tcf_pedit_init(struct net *net, struct nlattr *nla,
 	}
 
 	parm = nla_data(pattr);
-	if (!parm->nkeys) {
-		NL_SET_ERR_MSG_MOD(extack, "Pedit requires keys to be passed");
-		return -EINVAL;
-	}
-	ksize = parm->nkeys * sizeof(struct tc_pedit_key);
-	if (nla_len(pattr) < sizeof(*parm) + ksize) {
-		NL_SET_ERR_MSG_ATTR(extack, pattr, "Length of TCA_PEDIT_PARMS or TCA_PEDIT_PARMS_EX pedit attribute is invalid");
-		return -EINVAL;
-	}
-
-	nparms = kzalloc(sizeof(*nparms), GFP_KERNEL);
-	if (!nparms)
-		return -ENOMEM;
-
-	nparms->tcfp_keys_ex =
-		tcf_pedit_keys_ex_parse(tb[TCA_PEDIT_KEYS_EX], parm->nkeys);
-	if (IS_ERR(nparms->tcfp_keys_ex)) {
-		ret = PTR_ERR(nparms->tcfp_keys_ex);
-		goto out_free;
-	}
 
 	index = parm->index;
 	err = tcf_idr_check_alloc(tn, &index, a, bind);
@@ -209,25 +189,49 @@ static int tcf_pedit_init(struct net *net, struct nlattr *nla,
 						&act_pedit_ops, bind, flags);
 		if (ret) {
 			tcf_idr_cleanup(tn, index);
-			goto out_free_ex;
+			return ret;
 		}
 		ret = ACT_P_CREATED;
 	} else if (err > 0) {
 		if (bind)
-			goto out_free;
+			return 0;
 		if (!(flags & TCA_ACT_FLAGS_REPLACE)) {
 			ret = -EEXIST;
 			goto out_release;
 		}
 	} else {
-		ret = err;
-		goto out_free_ex;
+		return err;
+	}
+
+	if (!parm->nkeys) {
+		NL_SET_ERR_MSG_MOD(extack, "Pedit requires keys to be passed");
+		ret = -EINVAL;
+		goto out_release;
+	}
+	ksize = parm->nkeys * sizeof(struct tc_pedit_key);
+	if (nla_len(pattr) < sizeof(*parm) + ksize) {
+		NL_SET_ERR_MSG_ATTR(extack, pattr, "Length of TCA_PEDIT_PARMS or TCA_PEDIT_PARMS_EX pedit attribute is invalid");
+		ret = -EINVAL;
+		goto out_release;
+	}
+
+	nparms = kzalloc(sizeof(*nparms), GFP_KERNEL);
+	if (!nparms) {
+		ret = -ENOMEM;
+		goto out_release;
+	}
+
+	nparms->tcfp_keys_ex =
+		tcf_pedit_keys_ex_parse(tb[TCA_PEDIT_KEYS_EX], parm->nkeys);
+	if (IS_ERR(nparms->tcfp_keys_ex)) {
+		ret = PTR_ERR(nparms->tcfp_keys_ex);
+		goto out_free;
 	}
 
 	err = tcf_action_check_ctrlact(parm->action, tp, &goto_ch, extack);
 	if (err < 0) {
 		ret = err;
-		goto out_release;
+		goto out_free_ex;
 	}
 
 	nparms->tcfp_off_max_hint = 0;
@@ -278,12 +282,12 @@ static int tcf_pedit_init(struct net *net, struct nlattr *nla,
 put_chain:
 	if (goto_ch)
 		tcf_chain_put_by_act(goto_ch);
-out_release:
-	tcf_idr_release(*a, bind);
 out_free_ex:
 	kfree(nparms->tcfp_keys_ex);
 out_free:
 	kfree(nparms);
+out_release:
+	tcf_idr_release(*a, bind);
 	return ret;
 }
 
@@ -443,9 +447,7 @@ TC_INDIRECT_SCOPE int tcf_pedit_act(struct sk_buff *skb,
 	goto done;
 
 bad:
-	spin_lock(&p->tcf_lock);
-	p->tcf_qstats.overlimits++;
-	spin_unlock(&p->tcf_lock);
+	tcf_action_inc_overlimit_qstats(&p->common);
 done:
 	return p->tcf_action;
 }
@@ -545,7 +547,28 @@ static int tcf_pedit_offload_act_setup(struct tc_action *act, void *entry_data,
 		}
 		*index_inc = k;
 	} else {
-		return -EOPNOTSUPP;
+		struct flow_offload_action *fl_action = entry_data;
+		u32 cmd = tcf_pedit_cmd(act, 0);
+		int k;
+
+		switch (cmd) {
+		case TCA_PEDIT_KEY_EX_CMD_SET:
+			fl_action->id = FLOW_ACTION_MANGLE;
+			break;
+		case TCA_PEDIT_KEY_EX_CMD_ADD:
+			fl_action->id = FLOW_ACTION_ADD;
+			break;
+		default:
+			NL_SET_ERR_MSG_MOD(extack, "Unsupported pedit command offload");
+			return -EOPNOTSUPP;
+		}
+
+		for (k = 1; k < tcf_pedit_nkeys(act); k++) {
+			if (cmd != tcf_pedit_cmd(act, k)) {
+				NL_SET_ERR_MSG_MOD(extack, "Unsupported pedit command offload");
+				return -EOPNOTSUPP;
+			}
+		}
 	}
 
 	return 0;

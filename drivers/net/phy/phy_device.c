@@ -132,6 +132,18 @@ static const int phy_10gbit_full_features_array[] = {
 	ETHTOOL_LINK_MODE_10000baseT_Full_BIT,
 };
 
+static const int phy_eee_cap1_features_array[] = {
+	ETHTOOL_LINK_MODE_100baseT_Full_BIT,
+	ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
+	ETHTOOL_LINK_MODE_10000baseT_Full_BIT,
+	ETHTOOL_LINK_MODE_1000baseKX_Full_BIT,
+	ETHTOOL_LINK_MODE_10000baseKX4_Full_BIT,
+	ETHTOOL_LINK_MODE_10000baseKR_Full_BIT,
+};
+
+__ETHTOOL_DECLARE_LINK_MODE_MASK(phy_eee_cap1_features) __ro_after_init;
+EXPORT_SYMBOL_GPL(phy_eee_cap1_features);
+
 static void features_init(void)
 {
 	/* 10/100 half/full*/
@@ -213,6 +225,10 @@ static void features_init(void)
 	linkmode_set_bit_array(phy_10gbit_fec_features_array,
 			       ARRAY_SIZE(phy_10gbit_fec_features_array),
 			       phy_10gbit_fec_features);
+	linkmode_set_bit_array(phy_eee_cap1_features_array,
+			       ARRAY_SIZE(phy_eee_cap1_features_array),
+			       phy_eee_cap1_features);
+
 }
 
 void phy_device_free(struct phy_device *phydev)
@@ -2215,7 +2231,10 @@ int __genphy_config_aneg(struct phy_device *phydev, bool changed)
 {
 	int err;
 
-	if (genphy_config_eee_advert(phydev))
+	err = genphy_c45_an_config_eee_aneg(phydev);
+	if (err < 0)
+		return err;
+	else if (err)
 		changed = true;
 
 	err = genphy_setup_master_slave(phydev);
@@ -2636,6 +2655,11 @@ int genphy_read_abilities(struct phy_device *phydev)
 		linkmode_mod_bit(ETHTOOL_LINK_MODE_1000baseX_Full_BIT,
 				 phydev->supported, val & ESTATUS_1000_XFULL);
 	}
+
+	/* This is optional functionality. If not supported, we may get an error
+	 * which should be ignored.
+	 */
+	genphy_c45_read_eee_abilities(phydev);
 
 	return 0;
 }
@@ -3074,8 +3098,6 @@ static int phy_probe(struct device *dev)
 	if (phydrv->flags & PHY_IS_INTERNAL)
 		phydev->is_internal = true;
 
-	mutex_lock(&phydev->lock);
-
 	/* Deassert the reset signal */
 	phy_device_reset(phydev, 0);
 
@@ -3089,8 +3111,10 @@ static int phy_probe(struct device *dev)
 	 * a controller will attach, and may modify one
 	 * or both of these values
 	 */
-	if (phydrv->features)
+	if (phydrv->features) {
 		linkmode_copy(phydev->supported, phydrv->features);
+		genphy_c45_read_eee_abilities(phydev);
+	}
 	else if (phydrv->get_features)
 		err = phydrv->get_features(phydev);
 	else if (phydev->is_c45)
@@ -3114,6 +3138,25 @@ static int phy_probe(struct device *dev)
 
 	of_set_phy_supported(phydev);
 	phy_advertise_supported(phydev);
+
+	/* Get PHY default EEE advertising modes and handle them as potentially
+	 * safe initial configuration.
+	 */
+	err = genphy_c45_read_eee_adv(phydev, phydev->advertising_eee);
+	if (err)
+		goto out;
+
+	/* There is no "enabled" flag. If PHY is advertising, assume it is
+	 * kind of enabled.
+	 */
+	phydev->eee_enabled = !linkmode_empty(phydev->advertising_eee);
+
+	/* Some PHYs may advertise, by default, not support EEE modes. So,
+	 * we need to clean them.
+	 */
+	if (phydev->eee_enabled)
+		linkmode_and(phydev->advertising_eee, phydev->supported_eee,
+			     phydev->advertising_eee);
 
 	/* Get the EEE modes we want to prohibit. We will ask
 	 * the PHY stop advertising these mode later on
@@ -3143,11 +3186,9 @@ static int phy_probe(struct device *dev)
 	phydev->state = PHY_READY;
 
 out:
-	/* Assert the reset signal */
+	/* Re-assert the reset signal on error */
 	if (err)
 		phy_device_reset(phydev, 1);
-
-	mutex_unlock(&phydev->lock);
 
 	return err;
 }
@@ -3158,9 +3199,7 @@ static int phy_remove(struct device *dev)
 
 	cancel_delayed_work_sync(&phydev->state_queue);
 
-	mutex_lock(&phydev->lock);
 	phydev->state = PHY_DOWN;
-	mutex_unlock(&phydev->lock);
 
 	sfp_bus_del_upstream(phydev->sfp_bus);
 	phydev->sfp_bus = NULL;

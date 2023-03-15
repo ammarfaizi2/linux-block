@@ -28,6 +28,7 @@
 #include <linux/btf.h>
 #include <linux/rcupdate_trace.h>
 #include <linux/static_call.h>
+#include <linux/memcontrol.h>
 
 struct bpf_verifier_env;
 struct bpf_verifier_log;
@@ -160,6 +161,8 @@ struct bpf_map_ops {
 				     bpf_callback_t callback_fn,
 				     void *callback_ctx, u64 flags);
 
+	u64 (*map_mem_usage)(const struct bpf_map *map);
+
 	/* BTF id of struct allocated by map_alloc */
 	int *map_btf_id;
 
@@ -180,6 +183,10 @@ enum btf_field_type {
 	BPF_KPTR       = BPF_KPTR_UNREF | BPF_KPTR_REF,
 	BPF_LIST_HEAD  = (1 << 4),
 	BPF_LIST_NODE  = (1 << 5),
+	BPF_RB_ROOT    = (1 << 6),
+	BPF_RB_NODE    = (1 << 7),
+	BPF_GRAPH_NODE_OR_ROOT = BPF_LIST_NODE | BPF_LIST_HEAD |
+				 BPF_RB_NODE | BPF_RB_ROOT,
 };
 
 struct btf_field_kptr {
@@ -283,6 +290,10 @@ static inline const char *btf_field_type_name(enum btf_field_type type)
 		return "bpf_list_head";
 	case BPF_LIST_NODE:
 		return "bpf_list_node";
+	case BPF_RB_ROOT:
+		return "bpf_rb_root";
+	case BPF_RB_NODE:
+		return "bpf_rb_node";
 	default:
 		WARN_ON_ONCE(1);
 		return "unknown";
@@ -303,6 +314,10 @@ static inline u32 btf_field_type_size(enum btf_field_type type)
 		return sizeof(struct bpf_list_head);
 	case BPF_LIST_NODE:
 		return sizeof(struct bpf_list_node);
+	case BPF_RB_ROOT:
+		return sizeof(struct bpf_rb_root);
+	case BPF_RB_NODE:
+		return sizeof(struct bpf_rb_node);
 	default:
 		WARN_ON_ONCE(1);
 		return 0;
@@ -323,6 +338,10 @@ static inline u32 btf_field_type_align(enum btf_field_type type)
 		return __alignof__(struct bpf_list_head);
 	case BPF_LIST_NODE:
 		return __alignof__(struct bpf_list_node);
+	case BPF_RB_ROOT:
+		return __alignof__(struct bpf_rb_root);
+	case BPF_RB_NODE:
+		return __alignof__(struct bpf_rb_node);
 	default:
 		WARN_ON_ONCE(1);
 		return 0;
@@ -346,6 +365,13 @@ static inline void bpf_obj_init(const struct btf_field_offs *foffs, void *obj)
 		memset(obj + foffs->field_off[i], 0, foffs->field_sz[i]);
 }
 
+/* 'dst' must be a temporary buffer and should not point to memory that is being
+ * used in parallel by a bpf program or bpf syscall, otherwise the access from
+ * the bpf program or bpf syscall may be corrupted by the reinitialization,
+ * leading to weird problems. Even 'dst' is newly-allocated from bpf memory
+ * allocator, it is still possible for 'dst' to be used in parallel by a bpf
+ * program or bpf syscall.
+ */
 static inline void check_and_init_map_value(struct bpf_map *map, void *dst)
 {
 	bpf_obj_init(map->field_offs, dst);
@@ -433,6 +459,9 @@ void copy_map_value_locked(struct bpf_map *map, void *dst, void *src,
 void bpf_timer_cancel_and_free(void *timer);
 void bpf_list_head_free(const struct btf_field *field, void *list_head,
 			struct bpf_spin_lock *spin_lock);
+void bpf_rb_root_free(const struct btf_field *field, void *rb_root,
+		      struct bpf_spin_lock *spin_lock);
+
 
 int bpf_obj_name_cpy(char *dst, const char *src, unsigned int size);
 
@@ -575,11 +604,23 @@ enum bpf_type_flag {
 	/* MEM is tagged with rcu and memory access needs rcu_read_lock protection. */
 	MEM_RCU			= BIT(13 + BPF_BASE_TYPE_BITS),
 
+	/* Used to tag PTR_TO_BTF_ID | MEM_ALLOC references which are non-owning.
+	 * Currently only valid for linked-list and rbtree nodes.
+	 */
+	NON_OWN_REF		= BIT(14 + BPF_BASE_TYPE_BITS),
+
+	/* DYNPTR points to sk_buff */
+	DYNPTR_TYPE_SKB		= BIT(15 + BPF_BASE_TYPE_BITS),
+
+	/* DYNPTR points to xdp_buff */
+	DYNPTR_TYPE_XDP		= BIT(16 + BPF_BASE_TYPE_BITS),
+
 	__BPF_TYPE_FLAG_MAX,
 	__BPF_TYPE_LAST_FLAG	= __BPF_TYPE_FLAG_MAX - 1,
 };
 
-#define DYNPTR_TYPE_FLAG_MASK	(DYNPTR_TYPE_LOCAL | DYNPTR_TYPE_RINGBUF)
+#define DYNPTR_TYPE_FLAG_MASK	(DYNPTR_TYPE_LOCAL | DYNPTR_TYPE_RINGBUF | DYNPTR_TYPE_SKB \
+				 | DYNPTR_TYPE_XDP)
 
 /* Max number of base types. */
 #define BPF_BASE_TYPE_LIMIT	(1UL << BPF_BASE_TYPE_BITS)
@@ -1091,6 +1132,37 @@ static __always_inline __nocfi unsigned int bpf_dispatcher_nop_func(
 {
 	return bpf_func(ctx, insnsi);
 }
+
+/* the implementation of the opaque uapi struct bpf_dynptr */
+struct bpf_dynptr_kern {
+	void *data;
+	/* Size represents the number of usable bytes of dynptr data.
+	 * If for example the offset is at 4 for a local dynptr whose data is
+	 * of type u64, the number of usable bytes is 4.
+	 *
+	 * The upper 8 bits are reserved. It is as follows:
+	 * Bits 0 - 23 = size
+	 * Bits 24 - 30 = dynptr type
+	 * Bit 31 = whether dynptr is read-only
+	 */
+	u32 size;
+	u32 offset;
+} __aligned(8);
+
+enum bpf_dynptr_type {
+	BPF_DYNPTR_TYPE_INVALID,
+	/* Points to memory that is local to the bpf program */
+	BPF_DYNPTR_TYPE_LOCAL,
+	/* Underlying data is a ringbuf record */
+	BPF_DYNPTR_TYPE_RINGBUF,
+	/* Underlying data is a sk_buff */
+	BPF_DYNPTR_TYPE_SKB,
+	/* Underlying data is a xdp_buff */
+	BPF_DYNPTR_TYPE_XDP,
+};
+
+int bpf_dynptr_check_size(u32 size);
+u32 bpf_dynptr_get_size(const struct bpf_dynptr_kern *ptr);
 
 #ifdef CONFIG_BPF_JIT
 int bpf_trampoline_link_prog(struct bpf_tramp_link *link, struct bpf_trampoline *tr);
@@ -1886,6 +1958,8 @@ struct bpf_prog *bpf_prog_get_curr_or_next(u32 *id);
 void *bpf_map_kmalloc_node(const struct bpf_map *map, size_t size, gfp_t flags,
 			   int node);
 void *bpf_map_kzalloc(const struct bpf_map *map, size_t size, gfp_t flags);
+void *bpf_map_kvcalloc(struct bpf_map *map, size_t n, size_t size,
+		       gfp_t flags);
 void __percpu *bpf_map_alloc_percpu(const struct bpf_map *map, size_t size,
 				    size_t align, gfp_t flags);
 #else
@@ -1900,6 +1974,12 @@ static inline void *
 bpf_map_kzalloc(const struct bpf_map *map, size_t size, gfp_t flags)
 {
 	return kzalloc(size, flags);
+}
+
+static inline void *
+bpf_map_kvcalloc(struct bpf_map *map, size_t n, size_t size, gfp_t flags)
+{
+	return kvcalloc(n, size, flags);
 }
 
 static inline void __percpu *
@@ -2201,7 +2281,7 @@ struct bpf_core_ctx {
 
 bool btf_nested_type_is_trusted(struct bpf_verifier_log *log,
 				const struct bpf_reg_state *reg,
-				int off);
+				int off, const char *suffix);
 
 bool btf_type_ids_nocast_alias(struct bpf_verifier_log *log,
 			       const struct btf *reg_btf, u32 reg_id,
@@ -2226,6 +2306,11 @@ static inline bool has_current_bpf_ctx(void)
 }
 
 void notrace bpf_prog_inc_misses_counter(struct bpf_prog *prog);
+
+void bpf_dynptr_init(struct bpf_dynptr_kern *ptr, void *data,
+		     enum bpf_dynptr_type type, u32 offset, u32 size);
+void bpf_dynptr_set_null(struct bpf_dynptr_kern *ptr);
+void bpf_dynptr_set_rdonly(struct bpf_dynptr_kern *ptr);
 #else /* !CONFIG_BPF_SYSCALL */
 static inline struct bpf_prog *bpf_prog_get(u32 ufd)
 {
@@ -2455,6 +2540,19 @@ static inline void bpf_prog_inc_misses_counter(struct bpf_prog *prog)
 static inline void bpf_cgrp_storage_free(struct cgroup *cgroup)
 {
 }
+
+static inline void bpf_dynptr_init(struct bpf_dynptr_kern *ptr, void *data,
+				   enum bpf_dynptr_type type, u32 offset, u32 size)
+{
+}
+
+static inline void bpf_dynptr_set_null(struct bpf_dynptr_kern *ptr)
+{
+}
+
+static inline void bpf_dynptr_set_rdonly(struct bpf_dynptr_kern *ptr)
+{
+}
 #endif /* CONFIG_BPF_SYSCALL */
 
 void __bpf_free_used_btfs(struct bpf_prog_aux *aux,
@@ -2526,6 +2624,7 @@ static inline bool bpf_map_is_offloaded(struct bpf_map *map)
 
 struct bpf_map *bpf_map_offload_map_alloc(union bpf_attr *attr);
 void bpf_map_offload_map_free(struct bpf_map *map);
+u64 bpf_map_offload_map_mem_usage(const struct bpf_map *map);
 int bpf_prog_test_run_syscall(struct bpf_prog *prog,
 			      const union bpf_attr *kattr,
 			      union bpf_attr __user *uattr);
@@ -2595,6 +2694,11 @@ static inline struct bpf_map *bpf_map_offload_map_alloc(union bpf_attr *attr)
 
 static inline void bpf_map_offload_map_free(struct bpf_map *map)
 {
+}
+
+static inline u64 bpf_map_offload_map_mem_usage(const struct bpf_map *map)
+{
+	return 0;
 }
 
 static inline int bpf_prog_test_run_syscall(struct bpf_prog *prog,
@@ -2761,6 +2865,8 @@ u32 bpf_sock_convert_ctx_access(enum bpf_access_type type,
 				struct bpf_insn *insn_buf,
 				struct bpf_prog *prog,
 				u32 *target_size);
+int bpf_dynptr_from_skb_rdonly(struct sk_buff *skb, u64 flags,
+			       struct bpf_dynptr_kern *ptr);
 #else
 static inline bool bpf_sock_common_is_valid_access(int off, int size,
 						   enum bpf_access_type type,
@@ -2781,6 +2887,11 @@ static inline u32 bpf_sock_convert_ctx_access(enum bpf_access_type type,
 					      u32 *target_size)
 {
 	return 0;
+}
+static inline int bpf_dynptr_from_skb_rdonly(struct sk_buff *skb, u64 flags,
+					     struct bpf_dynptr_kern *ptr)
+{
+	return -EOPNOTSUPP;
 }
 #endif
 
@@ -2873,36 +2984,6 @@ int bpf_bprintf_prepare(char *fmt, u32 fmt_size, const u64 *raw_args,
 			u32 num_args, struct bpf_bprintf_data *data);
 void bpf_bprintf_cleanup(struct bpf_bprintf_data *data);
 
-/* the implementation of the opaque uapi struct bpf_dynptr */
-struct bpf_dynptr_kern {
-	void *data;
-	/* Size represents the number of usable bytes of dynptr data.
-	 * If for example the offset is at 4 for a local dynptr whose data is
-	 * of type u64, the number of usable bytes is 4.
-	 *
-	 * The upper 8 bits are reserved. It is as follows:
-	 * Bits 0 - 23 = size
-	 * Bits 24 - 30 = dynptr type
-	 * Bit 31 = whether dynptr is read-only
-	 */
-	u32 size;
-	u32 offset;
-} __aligned(8);
-
-enum bpf_dynptr_type {
-	BPF_DYNPTR_TYPE_INVALID,
-	/* Points to memory that is local to the bpf program */
-	BPF_DYNPTR_TYPE_LOCAL,
-	/* Underlying data is a kernel-produced ringbuf record */
-	BPF_DYNPTR_TYPE_RINGBUF,
-};
-
-void bpf_dynptr_init(struct bpf_dynptr_kern *ptr, void *data,
-		     enum bpf_dynptr_type type, u32 offset, u32 size);
-void bpf_dynptr_set_null(struct bpf_dynptr_kern *ptr);
-int bpf_dynptr_check_size(u32 size);
-u32 bpf_dynptr_get_size(const struct bpf_dynptr_kern *ptr);
-
 #ifdef CONFIG_BPF_LSM
 void bpf_cgroup_atype_get(u32 attach_btf_id, int cgroup_atype);
 void bpf_cgroup_atype_put(int cgroup_atype);
@@ -2923,6 +3004,13 @@ struct bpf_key {
 static inline bool type_is_alloc(u32 type)
 {
 	return type & MEM_ALLOC;
+}
+
+static inline gfp_t bpf_memcg_flags(gfp_t flags)
+{
+	if (memcg_bpf_enabled())
+		return flags | __GFP_ACCOUNT;
+	return flags;
 }
 
 #endif /* _LINUX_BPF_H */

@@ -105,6 +105,7 @@ const struct bpf_map_ops bpf_map_offload_ops = {
 	.map_alloc = bpf_map_offload_map_alloc,
 	.map_free = bpf_map_offload_map_free,
 	.map_check_btf = map_check_no_btf,
+	.map_mem_usage = bpf_map_offload_map_mem_usage,
 };
 
 static struct bpf_map *find_and_alloc_map(union bpf_attr *attr)
@@ -128,6 +129,8 @@ static struct bpf_map *find_and_alloc_map(union bpf_attr *attr)
 	}
 	if (attr->map_ifindex)
 		ops = &bpf_map_offload_ops;
+	if (!ops->map_mem_usage)
+		return ERR_PTR(-EINVAL);
 	map = ops->map_alloc(attr);
 	if (IS_ERR(map))
 		return map;
@@ -309,7 +312,7 @@ static void *__bpf_map_area_alloc(u64 size, int numa_node, bool mmapable)
 	 * __GFP_RETRY_MAYFAIL to avoid such situations.
 	 */
 
-	const gfp_t gfp = __GFP_NOWARN | __GFP_ZERO | __GFP_ACCOUNT;
+	gfp_t gfp = bpf_memcg_flags(__GFP_NOWARN | __GFP_ZERO);
 	unsigned int flags = 0;
 	unsigned long align = 1;
 	void *area;
@@ -418,7 +421,8 @@ static void bpf_map_save_memcg(struct bpf_map *map)
 	 * So we have to check map->objcg for being NULL each time it's
 	 * being used.
 	 */
-	map->objcg = get_obj_cgroup_from_current();
+	if (memcg_bpf_enabled())
+		map->objcg = get_obj_cgroup_from_current();
 }
 
 static void bpf_map_release_memcg(struct bpf_map *map)
@@ -458,6 +462,21 @@ void *bpf_map_kzalloc(const struct bpf_map *map, size_t size, gfp_t flags)
 	memcg = bpf_map_get_memcg(map);
 	old_memcg = set_active_memcg(memcg);
 	ptr = kzalloc(size, flags | __GFP_ACCOUNT);
+	set_active_memcg(old_memcg);
+	mem_cgroup_put(memcg);
+
+	return ptr;
+}
+
+void *bpf_map_kvcalloc(struct bpf_map *map, size_t n, size_t size,
+		       gfp_t flags)
+{
+	struct mem_cgroup *memcg, *old_memcg;
+	void *ptr;
+
+	memcg = bpf_map_get_memcg(map);
+	old_memcg = set_active_memcg(memcg);
+	ptr = kvcalloc(n, size, flags | __GFP_ACCOUNT);
 	set_active_memcg(old_memcg);
 	mem_cgroup_put(memcg);
 
@@ -521,9 +540,6 @@ void btf_record_free(struct btf_record *rec)
 		return;
 	for (i = 0; i < rec->cnt; i++) {
 		switch (rec->fields[i].type) {
-		case BPF_SPIN_LOCK:
-		case BPF_TIMER:
-			break;
 		case BPF_KPTR_UNREF:
 		case BPF_KPTR_REF:
 			if (rec->fields[i].kptr.module)
@@ -532,7 +548,11 @@ void btf_record_free(struct btf_record *rec)
 			break;
 		case BPF_LIST_HEAD:
 		case BPF_LIST_NODE:
-			/* Nothing to release for bpf_list_head */
+		case BPF_RB_ROOT:
+		case BPF_RB_NODE:
+		case BPF_SPIN_LOCK:
+		case BPF_TIMER:
+			/* Nothing to release */
 			break;
 		default:
 			WARN_ON_ONCE(1);
@@ -565,9 +585,6 @@ struct btf_record *btf_record_dup(const struct btf_record *rec)
 	new_rec->cnt = 0;
 	for (i = 0; i < rec->cnt; i++) {
 		switch (fields[i].type) {
-		case BPF_SPIN_LOCK:
-		case BPF_TIMER:
-			break;
 		case BPF_KPTR_UNREF:
 		case BPF_KPTR_REF:
 			btf_get(fields[i].kptr.btf);
@@ -578,7 +595,11 @@ struct btf_record *btf_record_dup(const struct btf_record *rec)
 			break;
 		case BPF_LIST_HEAD:
 		case BPF_LIST_NODE:
-			/* Nothing to acquire for bpf_list_head */
+		case BPF_RB_ROOT:
+		case BPF_RB_NODE:
+		case BPF_SPIN_LOCK:
+		case BPF_TIMER:
+			/* Nothing to acquire */
 			break;
 		default:
 			ret = -EFAULT;
@@ -658,7 +679,13 @@ void bpf_obj_free_fields(const struct btf_record *rec, void *obj)
 				continue;
 			bpf_list_head_free(field, field_ptr, obj + rec->spin_lock_off);
 			break;
+		case BPF_RB_ROOT:
+			if (WARN_ON_ONCE(rec->spin_lock_off < 0))
+				continue;
+			bpf_rb_root_free(field, field_ptr, obj + rec->spin_lock_off);
+			break;
 		case BPF_LIST_NODE:
+		case BPF_RB_NODE:
 			break;
 		default:
 			WARN_ON_ONCE(1);
@@ -747,17 +774,10 @@ static fmode_t map_get_sys_perms(struct bpf_map *map, struct fd f)
 }
 
 #ifdef CONFIG_PROC_FS
-/* Provides an approximation of the map's memory footprint.
- * Used only to provide a backward compatibility and display
- * a reasonable "memlock" info.
- */
-static unsigned long bpf_map_memory_footprint(const struct bpf_map *map)
+/* Show the memory usage of a bpf map */
+static u64 bpf_map_memory_usage(const struct bpf_map *map)
 {
-	unsigned long size;
-
-	size = round_up(map->key_size + bpf_map_value_size(map), 8);
-
-	return round_up(map->max_entries * size, PAGE_SIZE);
+	return map->ops->map_mem_usage(map);
 }
 
 static void bpf_map_show_fdinfo(struct seq_file *m, struct file *filp)
@@ -779,7 +799,7 @@ static void bpf_map_show_fdinfo(struct seq_file *m, struct file *filp)
 		   "max_entries:\t%u\n"
 		   "map_flags:\t%#x\n"
 		   "map_extra:\t%#llx\n"
-		   "memlock:\t%lu\n"
+		   "memlock:\t%llu\n"
 		   "map_id:\t%u\n"
 		   "frozen:\t%u\n",
 		   map->map_type,
@@ -788,7 +808,7 @@ static void bpf_map_show_fdinfo(struct seq_file *m, struct file *filp)
 		   map->max_entries,
 		   map->map_flags,
 		   (unsigned long long)map->map_extra,
-		   bpf_map_memory_footprint(map),
+		   bpf_map_memory_usage(map),
 		   map->id,
 		   READ_ONCE(map->frozen));
 	if (type) {
@@ -871,10 +891,10 @@ static int bpf_map_mmap(struct file *filp, struct vm_area_struct *vma)
 	/* set default open/close callbacks */
 	vma->vm_ops = &bpf_map_default_vmops;
 	vma->vm_private_data = map;
-	vma->vm_flags &= ~VM_MAYEXEC;
+	vm_flags_clear(vma, VM_MAYEXEC);
 	if (!(vma->vm_flags & VM_WRITE))
 		/* disallow re-mapping with PROT_WRITE */
-		vma->vm_flags &= ~VM_MAYWRITE;
+		vm_flags_clear(vma, VM_MAYWRITE);
 
 	err = map->ops->map_mmap(map, vma);
 	if (err)
@@ -994,7 +1014,8 @@ static int map_check_btf(struct bpf_map *map, const struct btf *btf,
 		return -EINVAL;
 
 	map->record = btf_parse_fields(btf, value_type,
-				       BPF_SPIN_LOCK | BPF_TIMER | BPF_KPTR | BPF_LIST_HEAD,
+				       BPF_SPIN_LOCK | BPF_TIMER | BPF_KPTR | BPF_LIST_HEAD |
+				       BPF_RB_ROOT,
 				       map->value_size);
 	if (!IS_ERR_OR_NULL(map->record)) {
 		int i;
@@ -1034,14 +1055,21 @@ static int map_check_btf(struct bpf_map *map, const struct btf *btf,
 			case BPF_KPTR_UNREF:
 			case BPF_KPTR_REF:
 				if (map->map_type != BPF_MAP_TYPE_HASH &&
+				    map->map_type != BPF_MAP_TYPE_PERCPU_HASH &&
 				    map->map_type != BPF_MAP_TYPE_LRU_HASH &&
+				    map->map_type != BPF_MAP_TYPE_LRU_PERCPU_HASH &&
 				    map->map_type != BPF_MAP_TYPE_ARRAY &&
-				    map->map_type != BPF_MAP_TYPE_PERCPU_ARRAY) {
+				    map->map_type != BPF_MAP_TYPE_PERCPU_ARRAY &&
+				    map->map_type != BPF_MAP_TYPE_SK_STORAGE &&
+				    map->map_type != BPF_MAP_TYPE_INODE_STORAGE &&
+				    map->map_type != BPF_MAP_TYPE_TASK_STORAGE &&
+				    map->map_type != BPF_MAP_TYPE_CGRP_STORAGE) {
 					ret = -EOPNOTSUPP;
 					goto free_map_tab;
 				}
 				break;
 			case BPF_LIST_HEAD:
+			case BPF_RB_ROOT:
 				if (map->map_type != BPF_MAP_TYPE_HASH &&
 				    map->map_type != BPF_MAP_TYPE_LRU_HASH &&
 				    map->map_type != BPF_MAP_TYPE_ARRAY) {
