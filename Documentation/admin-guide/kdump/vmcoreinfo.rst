@@ -172,7 +172,7 @@ variables.
 Offset of the free_list's member. This value is used to compute the number
 of free pages.
 
-Each zone has a free_area structure array called free_area[MAX_ORDER].
+Each zone has a free_area structure array called free_area[MAX_ORDER + 1].
 The free_list represents a linked list of free page blocks.
 
 (list_head, next|prev)
