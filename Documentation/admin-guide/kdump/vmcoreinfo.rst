@@ -189,7 +189,7 @@ Offsets of the vmap_area's members. They carry vmalloc-specific
 information. Makedumpfile gets the start address of the vmalloc region
 from this.
 
-(zone.free_area, MAX_ORDER)
+(zone.free_area, MAX_ORDER + 1)
 ---------------------------
 
 Free areas descriptor. User-space tools use this value to iterate the
