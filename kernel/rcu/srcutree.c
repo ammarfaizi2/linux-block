@@ -1896,12 +1896,14 @@ static int srcu_module_coming(struct module *mod)
 {
 	int i;
 	struct srcu_struct **sspp = mod->srcu_struct_ptrs;
-	int ret;
+	struct srcu_struct *ssp;
 
 	for (i = 0; i < mod->num_srcu_structs; i++) {
-		ret = init_srcu_struct(*(sspp++));
-		if (WARN_ON_ONCE(ret))
-			return ret;
+		ssp = *(sspp++);
+		ssp->sda = alloc_percpu(struct srcu_data);
+		if (WARN_ON_ONCE(!ssp->sda))
+			return -ENOMEM;
+		init_srcu_struct_data(ssp);
 	}
 	return 0;
 }
