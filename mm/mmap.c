@@ -930,15 +930,53 @@ struct vm_area_struct *vma_merge(struct vma_iterator *vmi, struct mm_struct *mm,
 	if (vm_flags & VM_SPECIAL)
 		return NULL;
 
-	curr = find_vma(mm, prev ? prev->vm_end : 0);
-	if (curr && curr->vm_end == end)		/* cases 6, 7, 8 */
-		next = find_vma(mm, curr->vm_end);
-	else
-		next = curr;
+	/*
+	 * If there is a previous VMA specified, find the next, otherwise find
+	 * the first.
+	 */
+	vma = find_vma(mm, prev ? prev->vm_end : 0);
 
-	/* In cases 1 - 4 there's no CCCC vma */
-	if (curr && end <= curr->vm_start)
+	/*
+	 * Does the input range span an existing VMA? If so, we designate this
+	 * VMA 'curr'. The caller will have ensured that curr->vm_start == addr.
+	 *
+	 * Cases 5 - 8.
+	 */
+	if (vma && end > vma->vm_start) {
+		curr = vma;
+
+		/*
+		 * If the addr - end range spans this VMA entirely, then we
+		 * check to see if another VMA follows it.
+		 *
+		 * If it is _immediately_ adjacent (checked below), then we
+		 * designate it 'next' (cases 6 - 8).
+		 */
+		if (curr->vm_end == end)
+			vma = find_vma(mm, curr->vm_end);
+		else
+			/* Case 5. */
+			vma = NULL;
+	} else {
+		/*
+		 * The addr - end range either spans the end of prev or spans no
+		 * VMA at all - in either case we dispense with 'curr' and
+		 * maintain only 'prev' and (possibly) 'next'.
+		 *
+		 * Cases 1 - 4.
+		 */
 		curr = NULL;
+	}
+
+	/*
+	 * We only actually examine the next VMA if it is immediately adjacent
+	 * to end which sits either at the end of a hole (cases 1 - 3), PPPP
+	 * (case 4) or CCCC (cases 6 - 8).
+	 */
+	if (vma && end == vma->vm_start)
+		next = vma;
+	else
+		next = NULL;
 
 	/* verify some invariant that must be enforced by the caller */
 	VM_WARN_ON(prev && addr <= prev->vm_start);
@@ -959,11 +997,10 @@ struct vm_area_struct *vma_merge(struct vma_iterator *vmi, struct mm_struct *mm,
 		}
 	}
 	/* Can we merge the successor? */
-	if (next && end == next->vm_start &&
-			mpol_equal(policy, vma_policy(next)) &&
-			can_vma_merge_before(next, vm_flags,
-					     anon_vma, file, pgoff+pglen,
-					     vm_userfaultfd_ctx, anon_name)) {
+	if (next && mpol_equal(policy, vma_policy(next)) &&
+	    can_vma_merge_before(next, vm_flags,
+				 anon_vma, file, pgoff+pglen,
+				 vm_userfaultfd_ctx, anon_name)) {
 		merge_next = true;
 	}
 
