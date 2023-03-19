@@ -1873,7 +1873,6 @@ early_initcall(srcu_bootup_announce);
 
 void __init srcu_init(void)
 {
-	struct srcu_struct *ssp;
 	struct srcu_usage *sup;
 
 	/* Decide on srcu_struct-size strategy. */
@@ -1896,7 +1895,6 @@ void __init srcu_init(void)
 	while (!list_empty(&srcu_boot_list)) {
 		sup = list_first_entry(&srcu_boot_list, struct srcu_usage,
 				      work.work.entry);
-		ssp = sup->srcu_ssp;
 		list_del_init(&sup->work.work.entry);
 		if (SRCU_SIZING_IS(SRCU_SIZING_INIT) &&
 		    sup->srcu_size_state == SRCU_SIZE_SMALL)
