@@ -369,7 +369,9 @@ static inline pte_t pte_mkwrite_kernel(pte_t pte)
 	return pte_set_flags(pte, _PAGE_RW);
 }
 
-static inline pte_t pte_mkwrite(pte_t pte)
+struct vm_area_struct;
+
+static inline pte_t pte_mkwrite(pte_t pte, struct vm_area_struct *vma)
 {
 	return pte_mkwrite_kernel(pte);
 }
@@ -470,7 +472,7 @@ static inline pmd_t pmd_mkyoung(pmd_t pmd)
 	return pmd_set_flags(pmd, _PAGE_ACCESSED);
 }
 
-static inline pmd_t pmd_mkwrite(pmd_t pmd)
+static inline pmd_t pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma)
 {
 	return pmd_set_flags(pmd, _PAGE_RW);
 }
