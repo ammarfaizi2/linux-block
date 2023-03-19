@@ -2511,6 +2511,12 @@ void __init memblock_free_pages(struct page *page, unsigned long pfn,
 	__free_pages_core(page, order);
 }
 
+static void __init pgtable_init(void)
+{
+	ptlock_cache_init();
+	pgtable_cache_init();
+}
+
 /* Report memory auto-initialization states for this boot. */
 static void __init report_meminit(void)
 {
