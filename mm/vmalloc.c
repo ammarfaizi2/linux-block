@@ -40,6 +40,7 @@
 #include <linux/uaccess.h>
 #include <linux/hugetlb.h>
 #include <linux/sched/mm.h>
+#include <linux/rwsem.h>
 #include <asm/tlbflush.h>
 #include <asm/shmparam.h>
 
@@ -725,7 +726,7 @@ EXPORT_SYMBOL(vmalloc_to_pfn);
 #define DEBUG_AUGMENT_LOWEST_MATCH_CHECK 0
 
 
-static DEFINE_SPINLOCK(vmap_area_lock);
+static DECLARE_RWSEM(vmap_area_lock);
 static DEFINE_SPINLOCK(free_vmap_area_lock);
 /* Export for kexec only */
 LIST_HEAD(vmap_area_list);
@@ -1537,9 +1538,9 @@ static void free_vmap_area(struct vmap_area *va)
 	/*
 	 * Remove from the busy tree/list.
 	 */
-	spin_lock(&vmap_area_lock);
+	down_write(&vmap_area_lock);
 	unlink_va(va, &vmap_area_root);
-	spin_unlock(&vmap_area_lock);
+	up_write(&vmap_area_lock);
 
 	/*
 	 * Insert/Merge it back to the free tree/list.
@@ -1627,9 +1628,9 @@ retry:
 	va->vm = NULL;
 	va->flags = va_flags;
 
-	spin_lock(&vmap_area_lock);
+	down_write(&vmap_area_lock);
 	insert_vmap_area(va, &vmap_area_root, &vmap_area_list);
-	spin_unlock(&vmap_area_lock);
+	up_write(&vmap_area_lock);
 
 	BUG_ON(!IS_ALIGNED(va->va_start, align));
 	BUG_ON(va->va_start < vstart);
@@ -1854,9 +1855,9 @@ struct vmap_area *find_vmap_area(unsigned long addr)
 {
 	struct vmap_area *va;
 
-	spin_lock(&vmap_area_lock);
+	down_read(&vmap_area_lock);
 	va = __find_vmap_area(addr, &vmap_area_root);
-	spin_unlock(&vmap_area_lock);
+	up_read(&vmap_area_lock);
 
 	return va;
 }
@@ -1865,11 +1866,11 @@ static struct vmap_area *find_unlink_vmap_area(unsigned long addr)
 {
 	struct vmap_area *va;
 
-	spin_lock(&vmap_area_lock);
+	down_write(&vmap_area_lock);
 	va = __find_vmap_area(addr, &vmap_area_root);
 	if (va)
 		unlink_va(va, &vmap_area_root);
-	spin_unlock(&vmap_area_lock);
+	up_write(&vmap_area_lock);
 
 	return va;
 }
@@ -1914,7 +1915,7 @@ struct vmap_block_queue {
 };
 
 struct vmap_block {
-	spinlock_t lock;
+	struct mutex lock;
 	struct vmap_area *va;
 	unsigned long free, dirty;
 	DECLARE_BITMAP(used_map, VMAP_BBMAP_BITS);
@@ -1991,7 +1992,7 @@ static void *new_vmap_block(unsigned int order, gfp_t gfp_mask)
 	}
 
 	vaddr = vmap_block_vaddr(va->va_start, 0);
-	spin_lock_init(&vb->lock);
+	mutex_init(&vb->lock);
 	vb->va = va;
 	/* At least something should be left free */
 	BUG_ON(VMAP_BBMAP_BITS <= (1UL << order));
@@ -2026,9 +2027,9 @@ static void free_vmap_block(struct vmap_block *vb)
 	tmp = xa_erase(&vmap_blocks, addr_to_vb_idx(vb->va->va_start));
 	BUG_ON(tmp != vb);
 
-	spin_lock(&vmap_area_lock);
+	down_write(&vmap_area_lock);
 	unlink_va(vb->va, &vmap_area_root);
-	spin_unlock(&vmap_area_lock);
+	up_write(&vmap_area_lock);
 
 	free_vmap_area_noflush(vb->va);
 	kfree_rcu(vb, rcu_head);
@@ -2047,7 +2048,7 @@ static void purge_fragmented_blocks(int cpu)
 		if (!(vb->free + vb->dirty == VMAP_BBMAP_BITS && vb->dirty != VMAP_BBMAP_BITS))
 			continue;
 
-		spin_lock(&vb->lock);
+		mutex_lock(&vb->lock);
 		if (vb->free + vb->dirty == VMAP_BBMAP_BITS && vb->dirty != VMAP_BBMAP_BITS) {
 			vb->free = 0; /* prevent further allocs after releasing lock */
 			vb->dirty = VMAP_BBMAP_BITS; /* prevent purging it again */
@@ -2056,10 +2057,10 @@ static void purge_fragmented_blocks(int cpu)
 			spin_lock(&vbq->lock);
 			list_del_rcu(&vb->free_list);
 			spin_unlock(&vbq->lock);
-			spin_unlock(&vb->lock);
+			mutex_unlock(&vb->lock);
 			list_add_tail(&vb->purge, &purge);
 		} else
-			spin_unlock(&vb->lock);
+			mutex_unlock(&vb->lock);
 	}
 	rcu_read_unlock();
 
@@ -2101,9 +2102,9 @@ static void *vb_alloc(unsigned long size, gfp_t gfp_mask)
 	list_for_each_entry_rcu(vb, &vbq->free, free_list) {
 		unsigned long pages_off;
 
-		spin_lock(&vb->lock);
+		mutex_lock(&vb->lock);
 		if (vb->free < (1UL << order)) {
-			spin_unlock(&vb->lock);
+			mutex_unlock(&vb->lock);
 			continue;
 		}
 
@@ -2117,7 +2118,7 @@ static void *vb_alloc(unsigned long size, gfp_t gfp_mask)
 			spin_unlock(&vbq->lock);
 		}
 
-		spin_unlock(&vb->lock);
+		mutex_unlock(&vb->lock);
 		break;
 	}
 
@@ -2144,16 +2145,16 @@ static void vb_free(unsigned long addr, unsigned long size)
 	order = get_order(size);
 	offset = (addr & (VMAP_BLOCK_SIZE - 1)) >> PAGE_SHIFT;
 	vb = xa_load(&vmap_blocks, addr_to_vb_idx(addr));
-	spin_lock(&vb->lock);
+	mutex_lock(&vb->lock);
 	bitmap_clear(vb->used_map, offset, (1UL << order));
-	spin_unlock(&vb->lock);
+	mutex_unlock(&vb->lock);
 
 	vunmap_range_noflush(addr, addr + size);
 
 	if (debug_pagealloc_enabled_static())
 		flush_tlb_kernel_range(addr, addr + size);
 
-	spin_lock(&vb->lock);
+	mutex_lock(&vb->lock);
 
 	/* Expand dirty range */
 	vb->dirty_min = min(vb->dirty_min, offset);
@@ -2162,10 +2163,10 @@ static void vb_free(unsigned long addr, unsigned long size)
 	vb->dirty += 1UL << order;
 	if (vb->dirty == VMAP_BBMAP_BITS) {
 		BUG_ON(vb->free);
-		spin_unlock(&vb->lock);
+		mutex_unlock(&vb->lock);
 		free_vmap_block(vb);
 	} else
-		spin_unlock(&vb->lock);
+		mutex_unlock(&vb->lock);
 }
 
 static void _vm_unmap_aliases(unsigned long start, unsigned long end, int flush)
@@ -2183,7 +2184,7 @@ static void _vm_unmap_aliases(unsigned long start, unsigned long end, int flush)
 
 		rcu_read_lock();
 		list_for_each_entry_rcu(vb, &vbq->free, free_list) {
-			spin_lock(&vb->lock);
+			mutex_lock(&vb->lock);
 			if (vb->dirty && vb->dirty != VMAP_BBMAP_BITS) {
 				unsigned long va_start = vb->va->va_start;
 				unsigned long s, e;
@@ -2196,7 +2197,7 @@ static void _vm_unmap_aliases(unsigned long start, unsigned long end, int flush)
 
 				flush = 1;
 			}
-			spin_unlock(&vb->lock);
+			mutex_unlock(&vb->lock);
 		}
 		rcu_read_unlock();
 	}
@@ -2451,9 +2452,9 @@ static inline void setup_vmalloc_vm_locked(struct vm_struct *vm,
 static void setup_vmalloc_vm(struct vm_struct *vm, struct vmap_area *va,
 			      unsigned long flags, const void *caller)
 {
-	spin_lock(&vmap_area_lock);
+	down_write(&vmap_area_lock);
 	setup_vmalloc_vm_locked(vm, va, flags, caller);
-	spin_unlock(&vmap_area_lock);
+	up_write(&vmap_area_lock);
 }
 
 static void clear_vm_uninitialized_flag(struct vm_struct *vm)
@@ -3507,9 +3508,9 @@ static void vmap_ram_vread(char *buf, char *addr, int count, unsigned long flags
 	if (!vb)
 		goto finished;
 
-	spin_lock(&vb->lock);
+	mutex_lock(&vb->lock);
 	if (bitmap_empty(vb->used_map, VMAP_BBMAP_BITS)) {
-		spin_unlock(&vb->lock);
+		mutex_unlock(&vb->lock);
 		goto finished;
 	}
 	for_each_set_bitrange(rs, re, vb->used_map, VMAP_BBMAP_BITS) {
@@ -3536,7 +3537,7 @@ static void vmap_ram_vread(char *buf, char *addr, int count, unsigned long flags
 		count -= n;
 	}
 unlock:
-	spin_unlock(&vb->lock);
+	mutex_unlock(&vb->lock);
 
 finished:
 	/* zero-fill the left dirty or free regions */
@@ -3576,13 +3577,15 @@ long vread(char *buf, char *addr, unsigned long count)
 	unsigned long buflen = count;
 	unsigned long n, size, flags;
 
+	might_sleep();
+
 	addr = kasan_reset_tag(addr);
 
 	/* Don't allow overflow */
 	if ((unsigned long) addr + count < count)
 		count = -(unsigned long) addr;
 
-	spin_lock(&vmap_area_lock);
+	down_read(&vmap_area_lock);
 	va = find_vmap_area_exceed_addr((unsigned long)addr);
 	if (!va)
 		goto finished;
@@ -3639,7 +3642,7 @@ long vread(char *buf, char *addr, unsigned long count)
 		count -= n;
 	}
 finished:
-	spin_unlock(&vmap_area_lock);
+	up_read(&vmap_area_lock);
 
 	if (buf == buf_start)
 		return 0;
@@ -3980,14 +3983,14 @@ retry:
 	}
 
 	/* insert all vm's */
-	spin_lock(&vmap_area_lock);
+	down_write(&vmap_area_lock);
 	for (area = 0; area < nr_vms; area++) {
 		insert_vmap_area(vas[area], &vmap_area_root, &vmap_area_list);
 
 		setup_vmalloc_vm_locked(vms[area], vas[area], VM_ALLOC,
 				 pcpu_get_vm_areas);
 	}
-	spin_unlock(&vmap_area_lock);
+	up_write(&vmap_area_lock);
 
 	/*
 	 * Mark allocated areas as accessible. Do it now as a best-effort
@@ -4114,7 +4117,7 @@ static void *s_start(struct seq_file *m, loff_t *pos)
 	__acquires(&vmap_area_lock)
 {
 	mutex_lock(&vmap_purge_lock);
-	spin_lock(&vmap_area_lock);
+	down_read(&vmap_area_lock);
 
 	return seq_list_start(&vmap_area_list, *pos);
 }
@@ -4128,7 +4131,7 @@ static void s_stop(struct seq_file *m, void *p)
 	__releases(&vmap_area_lock)
 	__releases(&vmap_purge_lock)
 {
-	spin_unlock(&vmap_area_lock);
+	up_read(&vmap_area_lock);
 	mutex_unlock(&vmap_purge_lock);
 }
 
