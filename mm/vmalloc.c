@@ -37,7 +37,6 @@
 #include <linux/rbtree_augmented.h>
 #include <linux/overflow.h>
 #include <linux/pgtable.h>
-#include <linux/uaccess.h>
 #include <linux/hugetlb.h>
 #include <linux/sched/mm.h>
 #include <linux/rwsem.h>
@@ -3446,20 +3445,20 @@ EXPORT_SYMBOL(vmalloc_32_user);
  * small helper routine , copy contents to buf from addr.
  * If the page is not present, fill zero.
  */
-
-static int aligned_vread(char *buf, char *addr, unsigned long count)
+static void aligned_vread_iter(struct iov_iter *iter,
+			       char *addr, size_t count)
 {
-	struct page *p;
-	int copied = 0;
+	struct page *page;
 
-	while (count) {
+	while (count > 0) {
 		unsigned long offset, length;
+		size_t copied = 0;
 
 		offset = offset_in_page(addr);
 		length = PAGE_SIZE - offset;
 		if (length > count)
 			length = count;
-		p = vmalloc_to_page(addr);
+		page = vmalloc_to_page(addr);
 		/*
 		 * To do safe access to this _mapped_ area, we need
 		 * lock. But adding lock here means that we need to add
@@ -3467,23 +3466,24 @@ static int aligned_vread(char *buf, char *addr, unsigned long count)
 		 * interface, rarely used. Instead of that, we'll use
 		 * kmap() and get small overhead in this access function.
 		 */
-		if (p) {
+		if (page) {
 			/* We can expect USER0 is not used -- see vread() */
-			void *map = kmap_atomic(p);
-			memcpy(buf, map + offset, length);
-			kunmap_atomic(map);
-		} else
-			memset(buf, 0, length);
+			void *map = kmap_local_page(page);
+
+			copied = copy_to_iter(map + offset, length, iter);
+			kunmap_local(map);
+		}
+
+		if (copied < length)
+			iov_iter_zero(length - copied, iter);
 
 		addr += length;
-		buf += length;
-		copied += length;
 		count -= length;
 	}
-	return copied;
 }
 
-static void vmap_ram_vread(char *buf, char *addr, int count, unsigned long flags)
+static void vmap_ram_vread_iter(struct iov_iter *iter, char *addr, int count,
+				unsigned long flags)
 {
 	char *start;
 	struct vmap_block *vb;
@@ -3496,7 +3496,7 @@ static void vmap_ram_vread(char *buf, char *addr, int count, unsigned long flags
 	 * handle it here.
 	 */
 	if (!(flags & VMAP_BLOCK)) {
-		aligned_vread(buf, addr, count);
+		aligned_vread_iter(iter, addr, count);
 		return;
 	}
 
@@ -3517,22 +3517,24 @@ static void vmap_ram_vread(char *buf, char *addr, int count, unsigned long flags
 		if (!count)
 			break;
 		start = vmap_block_vaddr(vb->va->va_start, rs);
-		while (addr < start) {
+
+		if (addr < start) {
+			size_t to_zero = min_t(size_t, start - addr, count);
+
+			iov_iter_zero(to_zero, iter);
+			addr += to_zero;
+			count -= (int)to_zero;
 			if (count == 0)
 				goto unlock;
-			*buf = '\0';
-			buf++;
-			addr++;
-			count--;
 		}
+
 		/*it could start reading from the middle of used region*/
 		offset = offset_in_page(addr);
 		n = ((re - rs + 1) << PAGE_SHIFT) - offset;
 		if (n > count)
 			n = count;
-		aligned_vread(buf, start+offset, n);
+		aligned_vread_iter(iter, start + offset, n);
 
-		buf += n;
 		addr += n;
 		count -= n;
 	}
@@ -3541,15 +3543,15 @@ unlock:
 
 finished:
 	/* zero-fill the left dirty or free regions */
-	if (count)
-		memset(buf, 0, count);
+	if (count > 0)
+		iov_iter_zero(count, iter);
 }
 
 /**
- * vread() - read vmalloc area in a safe way.
- * @buf:     buffer for reading data
- * @addr:    vm address.
- * @count:   number of bytes to be read.
+ * vread_iter() - read vmalloc area in a safe way to an iterator.
+ * @iter:         the iterator to which data should be written.
+ * @addr:         vm address.
+ * @count:        number of bytes to be read.
  *
  * This function checks that addr is a valid vmalloc'ed area, and
  * copy data from that area to a given buffer. If the given memory range
@@ -3569,13 +3571,13 @@ finished:
  * (same number as @count) or %0 if [addr...addr+count) doesn't
  * include any intersection with valid vmalloc area
  */
-long vread(char *buf, char *addr, unsigned long count)
+long vread_iter(struct iov_iter *iter, char *addr, size_t count)
 {
 	struct vmap_area *va;
 	struct vm_struct *vm;
-	char *vaddr, *buf_start = buf;
-	unsigned long buflen = count;
-	unsigned long n, size, flags;
+	char *vaddr;
+	size_t buflen = count;
+	size_t n, size, flags;
 
 	might_sleep();
 
@@ -3595,7 +3597,7 @@ long vread(char *buf, char *addr, unsigned long count)
 		goto finished;
 
 	list_for_each_entry_from(va, &vmap_area_list, list) {
-		if (!count)
+		if (count == 0)
 			break;
 
 		vm = va->vm;
@@ -3619,36 +3621,39 @@ long vread(char *buf, char *addr, unsigned long count)
 
 		if (addr >= vaddr + size)
 			continue;
-		while (addr < vaddr) {
+
+		if (addr < vaddr) {
+			size_t to_zero = min_t(size_t, vaddr - addr, count);
+
+			iov_iter_zero(to_zero, iter);
+			addr += to_zero;
+			count -= to_zero;
 			if (count == 0)
 				goto finished;
-			*buf = '\0';
-			buf++;
-			addr++;
-			count--;
 		}
+
 		n = vaddr + size - addr;
 		if (n > count)
 			n = count;
 
 		if (flags & VMAP_RAM)
-			vmap_ram_vread(buf, addr, n, flags);
+			vmap_ram_vread_iter(iter, addr, n, flags);
 		else if (!(vm->flags & VM_IOREMAP))
-			aligned_vread(buf, addr, n);
+			aligned_vread_iter(iter, addr, n);
 		else /* IOREMAP area is treated as memory hole */
-			memset(buf, 0, n);
-		buf += n;
+			iov_iter_zero(n, iter);
+
 		addr += n;
 		count -= n;
 	}
 finished:
 	up_read(&vmap_area_lock);
 
-	if (buf == buf_start)
+	if (count == buflen)
 		return 0;
 	/* zero-fill memory holes */
-	if (buf != buf_start + buflen)
-		memset(buf, 0, buflen - (buf - buf_start));
+	if (count > 0)
+		iov_iter_zero(count, iter);
 
 	return buflen;
 }
