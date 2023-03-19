@@ -456,15 +456,7 @@ static inline pte_t pte_mkwrite_kernel(pte_t pte)
 
 struct vm_area_struct;
 
-static inline pte_t pte_mkwrite(pte_t pte, struct vm_area_struct *vma)
-{
-	pte = pte_mkwrite_kernel(pte);
-
-	if (pte_dirty(pte))
-		pte = pte_clear_saveddirty(pte);
-
-	return pte;
-}
+pte_t pte_mkwrite(pte_t pte, struct vm_area_struct *vma);
 
 static inline pte_t pte_mkhuge(pte_t pte)
 {
@@ -601,15 +593,7 @@ static inline pmd_t pmd_mkyoung(pmd_t pmd)
 	return pmd_set_flags(pmd, _PAGE_ACCESSED);
 }
 
-static inline pmd_t pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma)
-{
-	pmd = pmd_set_flags(pmd, _PAGE_RW);
-
-	if (pmd_dirty(pmd))
-		pmd = pmd_clear_saveddirty(pmd);
-
-	return pmd;
-}
+pmd_t pmd_mkwrite(pmd_t pmd, struct vm_area_struct *vma);
 
 static inline pud_t pud_set_flags(pud_t pud, pudval_t set)
 {
