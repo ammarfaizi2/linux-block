@@ -255,8 +255,11 @@ static int init_srcu_struct_fields(struct srcu_struct *ssp, bool is_static)
 	ssp->srcu_sup->sda_is_static = is_static;
 	if (!is_static)
 		ssp->sda = alloc_percpu(struct srcu_data);
-	if (!ssp->sda)
+	if (!ssp->sda) {
+		if (!is_static)
+			kfree(ssp->srcu_sup);
 		return -ENOMEM;
+	}
 	init_srcu_struct_data(ssp);
 	ssp->srcu_sup->srcu_gp_seq_needed_exp = 0;
 	ssp->srcu_sup->srcu_last_gp_end = ktime_get_mono_fast_ns();
@@ -265,6 +268,7 @@ static int init_srcu_struct_fields(struct srcu_struct *ssp, bool is_static)
 			if (!ssp->srcu_sup->sda_is_static) {
 				free_percpu(ssp->sda);
 				ssp->sda = NULL;
+				kfree(ssp->srcu_sup);
 				return -ENOMEM;
 			}
 		} else {
