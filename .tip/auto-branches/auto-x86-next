@@ -27,6 +27,7 @@ x86/pasid
 x86/platform
 x86/sev
 x86/sgx
+x86/shstk
 x86/splitlock
 x86/timers
 x86/tdx
