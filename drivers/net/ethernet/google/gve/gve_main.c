@@ -1261,14 +1261,6 @@ static void gve_unreg_xdp_info(struct gve_priv *priv)
 	}
 }
 
-static void gve_drain_page_cache(struct gve_priv *priv)
-{
-	int i;
-
-	for (i = 0; i < priv->rx_cfg.num_queues; i++)
-		page_frag_cache_clear(&priv->rx[i].page_cache);
-}
-
 static int gve_open(struct net_device *dev)
 {
 	struct gve_priv *priv = netdev_priv(dev);
@@ -1352,7 +1344,6 @@ static int gve_close(struct net_device *dev)
 	netif_carrier_off(dev);
 	if (gve_get_device_rings_ok(priv)) {
 		gve_turndown(priv);
-		gve_drain_page_cache(priv);
 		err = gve_destroy_rings(priv);
 		if (err)
 			goto err;

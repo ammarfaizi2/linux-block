@@ -147,8 +147,6 @@ struct nvme_tcp_queue {
 	__le32			exp_ddgst;
 	__le32			recv_ddgst;
 
-	struct page_frag_cache	pf_cache;
-
 	void (*state_change)(struct sock *);
 	void (*data_ready)(struct sock *);
 	void (*write_space)(struct sock *);
@@ -482,9 +480,8 @@ static int nvme_tcp_init_request(struct blk_mq_tag_set *set,
 	struct nvme_tcp_queue *queue = &ctrl->queues[queue_idx];
 	u8 hdgst = nvme_tcp_hdgst_len(queue);
 
-	req->pdu = page_frag_alloc(&queue->pf_cache,
-		sizeof(struct nvme_tcp_cmd_pdu) + hdgst,
-		GFP_KERNEL | __GFP_ZERO);
+	req->pdu = page_frag_alloc(NULL, sizeof(struct nvme_tcp_cmd_pdu) + hdgst,
+				   GFP_KERNEL | __GFP_ZERO);
 	if (!req->pdu)
 		return -ENOMEM;
 
@@ -1300,9 +1297,8 @@ static int nvme_tcp_alloc_async_req(struct nvme_tcp_ctrl *ctrl)
 	struct nvme_tcp_request *async = &ctrl->async_req;
 	u8 hdgst = nvme_tcp_hdgst_len(queue);
 
-	async->pdu = page_frag_alloc(&queue->pf_cache,
-		sizeof(struct nvme_tcp_cmd_pdu) + hdgst,
-		GFP_KERNEL | __GFP_ZERO);
+	async->pdu = page_frag_alloc(NULL, sizeof(struct nvme_tcp_cmd_pdu) + hdgst,
+				     GFP_KERNEL | __GFP_ZERO);
 	if (!async->pdu)
 		return -ENOMEM;
 
@@ -1322,7 +1318,6 @@ static void nvme_tcp_free_queue(struct nvme_ctrl *nctrl, int qid)
 	if (queue->hdr_digest || queue->data_digest)
 		nvme_tcp_free_crypto(queue);
 
-	page_frag_cache_clear(&queue->pf_cache);
 	noreclaim_flag = memalloc_noreclaim_save();
 	sock_release(queue->sock);
 	memalloc_noreclaim_restore(noreclaim_flag);

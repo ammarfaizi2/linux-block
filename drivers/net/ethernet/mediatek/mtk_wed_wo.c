@@ -143,7 +143,7 @@ mtk_wed_wo_queue_refill(struct mtk_wed_wo *wo, struct mtk_wed_wo_queue *q,
 		dma_addr_t addr;
 		void *buf;
 
-		buf = page_frag_alloc(&q->cache, q->buf_size, GFP_ATOMIC);
+		buf = page_frag_alloc(NULL, q->buf_size, GFP_ATOMIC);
 		if (!buf)
 			break;
 
@@ -296,8 +296,6 @@ mtk_wed_wo_queue_tx_clean(struct mtk_wed_wo *wo, struct mtk_wed_wo_queue *q)
 		skb_free_frag(entry->buf);
 		entry->buf = NULL;
 	}
-
-	page_frag_cache_clear(&q->cache);
 }
 
 static void
@@ -311,8 +309,6 @@ mtk_wed_wo_queue_rx_clean(struct mtk_wed_wo *wo, struct mtk_wed_wo_queue *q)
 
 		skb_free_frag(buf);
 	}
-
-	page_frag_cache_clear(&q->cache);
 }
 
 static void

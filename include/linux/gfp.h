@@ -304,17 +304,18 @@ extern void free_pages(unsigned long addr, unsigned int order);
 
 struct page_frag_cache;
 extern void __page_frag_cache_drain(struct page *page, unsigned int count);
-extern void *page_frag_alloc_align(struct page_frag_cache *nc,
-				   unsigned int fragsz, gfp_t gfp_mask,
-				   unsigned int align_mask);
+extern void *page_frag_alloc_align(struct page_frag_cache __percpu *frag_cache,
+				   size_t fragsz, gfp_t gfp,
+				   unsigned long align_mask);
+extern void *page_frag_memdup(struct page_frag_cache __percpu *frag_cache,
+			      const void *p, size_t fragsz, gfp_t gfp,
+			      unsigned long align_mask);
 
-static inline void *page_frag_alloc(struct page_frag_cache *nc,
-			     unsigned int fragsz, gfp_t gfp_mask)
+static inline void *page_frag_alloc(struct page_frag_cache __percpu *frag_cache,
+				    size_t fragsz, gfp_t gfp)
 {
-	return page_frag_alloc_align(nc, fragsz, gfp_mask, ~0u);
+	return page_frag_alloc_align(frag_cache, fragsz, gfp, ULONG_MAX);
 }
-
-void page_frag_cache_clear(struct page_frag_cache *nc);
 
 extern void page_frag_free(void *addr);
 
