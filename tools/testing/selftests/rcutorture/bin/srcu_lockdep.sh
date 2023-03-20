@@ -1,6 +1,11 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0+
 #
 # Run SRCU-lockdep tests and report any that fail to meet expectations.
+#
+# Copyright (C) 2021 Meta Platforms, Inc.
+#
+# Authors: Paul E. McKenney <paulmck@kernel.org>
 
 usage () {
 	echo "Usage: $scriptname optional arguments:"
