@@ -6406,7 +6406,7 @@ static int page_alloc_cpu_online(unsigned int cpu)
 	return 0;
 }
 
-void __init page_alloc_init(void)
+void __init page_alloc_init_cpuhp(void)
 {
 	int ret;
 
