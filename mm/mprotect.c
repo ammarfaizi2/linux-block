@@ -329,8 +329,8 @@ static inline int pmd_none_or_clear_bad_unless_trans_huge(pmd_t *pmd)
 }
 
 /*
- * Return true if we want to split huge thps in change protection
- * procedure, false otherwise.
+ * Return true if we want to split THPs into PTE mappings in change
+ * protection procedure, false otherwise.
  */
 static inline bool
 pgtable_split_needed(struct vm_area_struct *vma, unsigned long cp_flags)
