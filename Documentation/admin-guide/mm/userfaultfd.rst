@@ -226,7 +226,7 @@ For anonymous memory, ``ioctl(UFFDIO_WRITEPROTECT)`` will ignore none ptes
 (e.g. when pages are missing and not populated).  For file-backed memories
 like shmem and hugetlbfs, none ptes will be write protected just like a
 present pte.  In other words, there will be a userfaultfd write fault
-message generated when writting to a missing page on file typed memories,
+message generated when writing to a missing page on file typed memories,
 as long as the page range was write-protected before.  Such a message will
 not be generated on anonymous memories by default.
 
