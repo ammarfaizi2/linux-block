@@ -199,7 +199,7 @@ unsigned long vmalloc_to_pfn(const void *addr)
 }
 EXPORT_SYMBOL(vmalloc_to_pfn);
 
-long vread_iter(struct iov_iter *iter, char *addr, size_t count)
+long vread_iter(struct iov_iter *iter, const char *addr, size_t count)
 {
 	/* Don't allow overflow */
 	if ((unsigned long) addr + count < count)
