@@ -5478,7 +5478,7 @@ static vm_fault_t hugetlb_wp(struct mm_struct *mm, struct vm_area_struct *vma,
 		       struct folio *pagecache_folio, spinlock_t *ptl)
 {
 	const bool unshare = flags & FAULT_FLAG_UNSHARE;
-	pte_t pte, newpte;
+	pte_t pte = huge_ptep_get(ptep);
 	struct hstate *h = hstate_vma(vma);
 	struct page *old_page;
 	struct folio *new_folio;
@@ -5486,6 +5486,17 @@ static vm_fault_t hugetlb_wp(struct mm_struct *mm, struct vm_area_struct *vma,
 	vm_fault_t ret = 0;
 	unsigned long haddr = address & huge_page_mask(h);
 	struct mmu_notifier_range range;
+
+	/*
+	 * Never handle CoW for uffd-wp protected pages.  It should be only
+	 * handled when the uffd-wp protection is removed.
+	 *
+	 * Note that only the CoW optimization path can trigger this and
+	 * got skipped, because hugetlb_fault() will always resolve uffd-wp
+	 * bit first.
+	 */
+	if (huge_pte_uffd_wp(pte))
+		return 0;
 
 	/*
 	 * hugetlb does not support FOLL_FORCE-style write faults that keep the
@@ -5500,7 +5511,6 @@ static vm_fault_t hugetlb_wp(struct mm_struct *mm, struct vm_area_struct *vma,
 		return 0;
 	}
 
-	pte = huge_ptep_get(ptep);
 	old_page = pte_page(pte);
 
 	delayacct_wpcopy_start();
@@ -5622,10 +5632,8 @@ retry_avoidcopy:
 		mmu_notifier_invalidate_range(mm, range.start, range.end);
 		page_remove_rmap(old_page, vma, true);
 		hugepage_add_new_anon_rmap(new_folio, vma, haddr);
-		newpte = make_huge_pte(vma, &new_folio->page, !unshare);
-		if (huge_pte_uffd_wp(pte))
-			newpte = huge_pte_mkuffd_wp(newpte);
-		set_huge_pte_at(mm, haddr, ptep, newpte);
+		set_huge_pte_at(mm, haddr, ptep,
+				make_huge_pte(vma, &new_folio->page, !unshare));
 		folio_set_hugetlb_migratable(new_folio);
 		/* Make the old page be freed below */
 		new_folio = page_folio(old_page);
