@@ -2736,13 +2736,12 @@ restart:
 		sp_insert(sp, new);
 	write_unlock(&sp->lock);
 	ret = 0;
+put_mpol:
+	mpol_put(mpol_new);
 
-err_out:
-	if (mpol_new)
-		mpol_put(mpol_new);
 	if (n_new)
 		kmem_cache_free(sn_cache, n_new);
-
+exit:
 	return ret;
 
 alloc_new:
@@ -2750,10 +2749,10 @@ alloc_new:
 	ret = -ENOMEM;
 	n_new = kmem_cache_alloc(sn_cache, GFP_KERNEL);
 	if (!n_new)
-		goto err_out;
+		goto exit;
 	mpol_new = kmem_cache_alloc(policy_cache, GFP_KERNEL);
 	if (!mpol_new)
-		goto err_out;
+		goto put_mpol;
 	atomic_set(&mpol_new->refcnt, 1);
 	goto restart;
 }
