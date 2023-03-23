@@ -91,25 +91,21 @@ double-checked locking work correctly,  This litmus test illustrates
 one incorrect approach:
 
 	/* See Documentation/litmus-tests/locking/DCL-broken.litmus. */
-	P0(int *flag, int *data, int *lck)
+	void CPU0(void)
 	{
-		int r0;
-		int r1;
-		int r2;
-
-		r0 = READ_ONCE(*flag);
+		r0 = READ_ONCE(flag);
 		if (r0 == 0) {
-			spin_lock(lck);
-			r1 = READ_ONCE(*flag);
+			spin_lock(&lck);
+			r1 = READ_ONCE(flag);
 			if (r1 == 0) {
-				WRITE_ONCE(*data, 1);
-				WRITE_ONCE(*flag, 1);
+				WRITE_ONCE(data, 1);
+				WRITE_ONCE(flag, 1);
 			}
-			spin_unlock(lck);
+			spin_unlock(&lck);
 		}
-		r2 = READ_ONCE(*data);
+		r2 = READ_ONCE(data);
 	}
-	/* P1() is the exactly the same as P0(). */
+	/* CPU1() is the exactly the same as CPU0(). */
 
 There are two problems.  First, there is no ordering between the first
 READ_ONCE() of "flag" and the READ_ONCE() of "data".  Second, there is
@@ -120,25 +116,21 @@ One way to fix this is to use smp_load_acquire() and smp_store_release()
 as shown in this corrected version:
 
 	/* See Documentation/litmus-tests/locking/DCL-fixed.litmus. */
-	P0(int *flag, int *data, int *lck)
+	void CPU0(void)
 	{
-		int r0;
-		int r1;
-		int r2;
-
-		r0 = smp_load_acquire(flag);
+		r0 = smp_load_acquire(&flag);
 		if (r0 == 0) {
-			spin_lock(lck);
-			r1 = READ_ONCE(*flag);
+			spin_lock(&lck);
+			r1 = READ_ONCE(flag);
 			if (r1 == 0) {
-				WRITE_ONCE(*data, 1);
-				smp_store_release(flag, 1);
+				WRITE_ONCE(data, 1);
+				smp_store_release(&flag, 1);
 			}
-			spin_unlock(lck);
+			spin_unlock(&lck);
 		}
-		r2 = READ_ONCE(*data);
+		r2 = READ_ONCE(data);
 	}
-	/* P1() is the exactly the same as P0(). */
+	/* CPU1() is the exactly the same as CPU0(). */
 
 The smp_load_acquire() guarantees that its load from "flags" will
 be ordered before the READ_ONCE() from data, thus solving the first
@@ -238,81 +230,67 @@ loads, with a "filter" clause to constrain the first to return the
 initial value and the second to return the updated value, as shown below:
 
 	/* See Documentation/litmus-tests/locking/RM-fixed.litmus. */
-	P0(int *x, int *y, int *lck)
+	void CPU0(void)
 	{
-		int r2;
-
-		spin_lock(lck);
-		r2 = atomic_inc_return(y);
-		WRITE_ONCE(*x, 1);
-		spin_unlock(lck);
+		spin_lock(&lck);
+		r2 = atomic_inc_return(&y);
+		WRITE_ONCE(x, 1);
+		spin_unlock(&lck);
 	}
 
-	P1(int *x, int *y, int *lck)
+	void CPU1(void)
 	{
-		int r0;
-		int r1;
-		int r2;
-
-		r0 = READ_ONCE(*x);
-		r1 = READ_ONCE(*x);
-		spin_lock(lck);
-		r2 = atomic_inc_return(y);
-		spin_unlock(lck);
+		r0 = READ_ONCE(x);
+		r1 = READ_ONCE(x);
+		spin_lock(&lck);
+		r2 = atomic_inc_return(&y);
+		spin_unlock(&lck);
 	}
 
-	filter (y=2 /\ 1:r0=0 /\ 1:r1=1)
+	filter (1:r0=0 /\ 1:r1=1)
 	exists (1:r2=1)
 
 The variable "x" is the control variable for the emulated spin loop.
-P0() sets it to "1" while holding the lock, and P1() emulates the
+CPU0() sets it to "1" while holding the lock, and CPU1() emulates the
 spin loop by reading it twice, first into "1:r0" (which should get the
 initial value "0") and then into "1:r1" (which should get the updated
 value "1").
 
-The purpose of the variable "y" is to reject deadlocked executions.
-Only those executions where the final value of "y" have avoided deadlock.
+The "filter" clause takes this into account, constraining "1:r0" to
+equal "0" and "1:r1" to equal 1.
 
-The "filter" clause takes all this into account, constraining "y" to
-equal "2", "1:r0" to equal "0", and "1:r1" to equal 1.
-
-Then the "exists" clause checks to see if P1() acquired its lock first,
-which should not happen given the filter clause because P0() updates
+Then the "exists" clause checks to see if CPU1() acquired its lock first,
+which should not happen given the filter clause because CPU0() updates
 "x" while holding the lock.  And herd7 confirms this.
 
 But suppose that the compiler was permitted to reorder the spin loop
-into P1()'s critical section, like this:
+into CPU1()'s critical section, like this:
 
 	/* See Documentation/litmus-tests/locking/RM-broken.litmus. */
-	P0(int *x, int *y, int *lck)
+	void CPU0(void)
 	{
 		int r2;
 
-		spin_lock(lck);
-		r2 = atomic_inc_return(y);
-		WRITE_ONCE(*x, 1);
-		spin_unlock(lck);
+		spin_lock(&lck);
+		r2 = atomic_inc_return(&y);
+		WRITE_ONCE(x, 1);
+		spin_unlock(&lck);
 	}
 
-	P1(int *x, int *y, int *lck)
+	void CPU1(void)
 	{
-		int r0;
-		int r1;
-		int r2;
-
-		spin_lock(lck);
-		r0 = READ_ONCE(*x);
-		r1 = READ_ONCE(*x);
-		r2 = atomic_inc_return(y);
-		spin_unlock(lck);
+		spin_lock(&lck);
+		r0 = READ_ONCE(x);
+		r1 = READ_ONCE(x);
+		r2 = atomic_inc_return(&y);
+		spin_unlock(&lck);
 	}
 
-	locations [x;lck;0:r2;1:r0;1:r1;1:r2]
-	filter (y=2 /\ 1:r0=0 /\ 1:r1=1)
+	filter (1:r0=0 /\ 1:r1=1)
 	exists (1:r2=1)
 
-If "1:r0" is equal to "0", "1:r1" can never equal "1" because P0()
-cannot update "x" while P1() holds the lock.  And herd7 confirms this,
+If "1:r0" is equal to "0", "1:r1" can never equal "1" because CPU0()
+cannot update "x" while CPU1() holds the lock.  And herd7 confirms this,
 showing zero executions matching the "filter" criteria.
 
 And this is why Linux-kernel lock and unlock primitives must prevent
