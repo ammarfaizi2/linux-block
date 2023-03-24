@@ -14,6 +14,7 @@
 #include "iwl-eeprom-parse.h"
 #include "mvm.h"
 #include "sta.h"
+#include "time-sync.h"
 
 static void
 iwl_mvm_bar_check_trigger(struct iwl_mvm *mvm, const u8 *addr,
@@ -1396,8 +1397,8 @@ void iwl_mvm_hwrate_to_tx_rate(u32 rate_n_flags,
 		r->idx = rate;
 	} else if (format ==  RATE_MCS_VHT_MSK) {
 		ieee80211_rate_set_vht(r, rate,
-				       ((rate_n_flags & RATE_MCS_NSS_MSK) >>
-					RATE_MCS_NSS_POS) + 1);
+				       FIELD_GET(RATE_MCS_NSS_MSK,
+						 rate_n_flags) + 1);
 		r->flags |= IEEE80211_TX_RC_VHT_MCS;
 	} else if (format == RATE_MCS_HE_MSK) {
 		/* mac80211 cannot do this without ieee80211_tx_status_ext()
@@ -1428,8 +1429,7 @@ void iwl_mvm_hwrate_to_tx_rate_v1(u32 rate_n_flags,
 	} else if (rate_n_flags & RATE_MCS_VHT_MSK_V1) {
 		ieee80211_rate_set_vht(
 			r, rate_n_flags & RATE_VHT_MCS_RATE_CODE_MSK,
-			((rate_n_flags & RATE_VHT_MCS_NSS_MSK) >>
-						RATE_VHT_MCS_NSS_POS) + 1);
+			FIELD_GET(RATE_MCS_NSS_MSK, rate_n_flags) + 1);
 		r->flags |= IEEE80211_TX_RC_VHT_MCS;
 	} else {
 		r->idx = iwl_mvm_legacy_rate_to_mac80211_idx(rate_n_flags,
@@ -1644,7 +1644,8 @@ static void iwl_mvm_rx_tx_cmd_single(struct iwl_mvm *mvm,
 		info->status.status_driver_data[0] =
 			RS_DRV_DATA_PACK(lq_color, tx_resp->reduced_tpc);
 
-		ieee80211_tx_status(mvm->hw, skb);
+		if (likely(!iwl_mvm_time_sync_frame(mvm, skb, hdr->addr1)))
+			ieee80211_tx_status(mvm->hw, skb);
 	}
 
 	/* This is an aggregation queue or might become one, so we use
