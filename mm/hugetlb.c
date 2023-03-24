@@ -5491,11 +5491,11 @@ static vm_fault_t hugetlb_wp(struct mm_struct *mm, struct vm_area_struct *vma,
 	 * Never handle CoW for uffd-wp protected pages.  It should be only
 	 * handled when the uffd-wp protection is removed.
 	 *
-	 * Note that only the CoW optimization path can trigger this and
-	 * got skipped, because hugetlb_fault() will always resolve uffd-wp
-	 * bit first.
+	 * Note that only the CoW optimization path (in hugetlb_no_page())
+	 * can trigger this, because hugetlb_fault() will always resolve
+	 * uffd-wp bit first.
 	 */
-	if (huge_pte_uffd_wp(pte))
+	if (!unshare && huge_pte_uffd_wp(pte))
 		return 0;
 
 	/*
