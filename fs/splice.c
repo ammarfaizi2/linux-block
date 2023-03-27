@@ -432,33 +432,6 @@ const struct pipe_buf_operations nosteal_pipe_buf_ops = {
 };
 EXPORT_SYMBOL(nosteal_pipe_buf_ops);
 
-#ifdef CONFIG_NET
-/*
- * Send 'sd->len' bytes to socket from 'sd->file' at position 'sd->pos'
- * using sendpage(). Return the number of bytes sent.
- */
-static int pipe_to_sendmsg(struct pipe_inode_info *pipe,
-			   struct pipe_buffer *buf, struct splice_desc *sd)
-{
-	struct socket *sock = sock_from_file(sd->u.file);
-	struct bio_vec bvec;
-	struct msghdr msg = {
-		.msg_flags = MSG_SPLICE_PAGES,
-	};
-
-	if (sd->flags & SPLICE_F_MORE)
-		msg.msg_flags |= MSG_MORE;
-
-	if (sd->len < sd->total_len &&
-	    pipe_occupancy(pipe->head, pipe->tail) > 1)
-		msg.msg_flags |= MSG_MORE;
-
-	bvec_set_page(&bvec, buf->page, sd->len, buf->offset);
-	iov_iter_bvec(&msg.msg_iter, ITER_SOURCE, &bvec, 1, sd->len);
-	return sock_sendmsg(sock, &msg);
-}
-#endif
-
 static void wakeup_pipe_writers(struct pipe_inode_info *pipe)
 {
 	smp_mb();
@@ -837,7 +810,126 @@ EXPORT_SYMBOL(iter_file_splice_write);
 ssize_t splice_to_socket(struct pipe_inode_info *pipe, struct file *out,
 			 loff_t *ppos, size_t len, unsigned int flags)
 {
-	return splice_from_pipe(pipe, out, ppos, len, flags, pipe_to_sendmsg);
+	struct socket *sock = sock_from_file(out);
+	struct bio_vec bvec[16];
+	struct msghdr msg = {};
+	ssize_t ret;
+	size_t spliced = 0;
+	bool need_wakeup = false;
+
+	pipe_lock(pipe);
+
+	while (len > 0) {
+		unsigned int head, tail, mask, bc = 0;
+		size_t remain = len;
+
+		/*
+		 * Check for signal early to make process killable when there
+		 * are always buffers available
+		 */
+		ret = -ERESTARTSYS;
+		if (signal_pending(current))
+			break;
+
+		while (pipe_empty(pipe->head, pipe->tail)) {
+			ret = 0;
+			if (!pipe->writers)
+				goto out;
+
+			if (spliced)
+				goto out;
+
+			ret = -EAGAIN;
+			if (flags & SPLICE_F_NONBLOCK)
+				goto out;
+
+			ret = -ERESTARTSYS;
+			if (signal_pending(current))
+				goto out;
+
+			if (need_wakeup) {
+				wakeup_pipe_writers(pipe);
+				need_wakeup = false;
+			}
+
+			pipe_wait_readable(pipe);
+		}
+
+		head = pipe->head;
+		tail = pipe->tail;
+		mask = pipe->ring_size - 1;
+
+		while (!pipe_empty(head, tail)) {
+			struct pipe_buffer *buf = &pipe->bufs[tail & mask];
+			size_t seg;
+
+			if (!buf->len) {
+				tail++;
+				continue;
+			}
+
+			seg = min_t(size_t, remain, buf->len);
+			seg = min_t(size_t, seg, PAGE_SIZE);
+
+			ret = pipe_buf_confirm(pipe, buf);
+			if (unlikely(ret)) {
+				if (ret == -ENODATA)
+					ret = 0;
+				break;
+			}
+
+			bvec_set_page(&bvec[bc++], buf->page, seg, buf->offset);
+			remain -= seg;
+			if (seg >= buf->len)
+				tail++;
+			if (bc >= ARRAY_SIZE(bvec))
+				break;
+		}
+
+		if (!bc)
+			break;
+
+		msg.msg_flags = 0;
+		if (flags & SPLICE_F_MORE)
+			msg.msg_flags = MSG_MORE;
+		if (remain && pipe_occupancy(pipe->head, tail) > 0)
+			msg.msg_flags = MSG_MORE;
+		msg.msg_flags |= MSG_SPLICE_PAGES;
+
+		iov_iter_bvec(&msg.msg_iter, ITER_SOURCE, bvec, bc, len - remain);
+		ret = sock_sendmsg(sock, &msg);
+		if (ret <= 0)
+			break;
+
+		spliced += ret;
+		len -= ret;
+		tail = pipe->tail;
+		while (ret > 0) {
+			struct pipe_buffer *buf = &pipe->bufs[tail & mask];
+			size_t seg = min_t(size_t, ret, buf->len);
+
+			buf->offset += seg;
+			buf->len -= seg;
+			ret -= seg;
+
+			if (!buf->len) {
+				pipe_buf_release(pipe, buf);
+				tail++;
+			}
+		}
+
+		if (tail != pipe->tail) {
+			pipe->tail = tail;
+			if (pipe->files)
+				need_wakeup = true;
+		}
+	}
+
+out:
+	pipe_unlock(pipe);
+	if (need_wakeup)
+		wakeup_pipe_writers(pipe);
+	return spliced ?: ret;
 }
 #endif
 
