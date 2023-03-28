@@ -27,6 +27,7 @@
 #include <asm/apicdef.h>
 #include <asm/fixmap.h>
 #include <asm/smp.h>
+#include <asm/sev-common.h>
 
 /*
  * We are not able to switch in one step to the final KERNEL ADDRESS SPACE
@@ -237,22 +238,54 @@ SYM_INNER_LABEL(secondary_startup_64_no_verify, SYM_L_GLOBAL)
 
 #ifdef CONFIG_SMP
 	/*
-	 * For parallel boot, the APIC ID is read from the APIC, and then
-	 * used to look up the CPU number.  For booting a single CPU, the
-	 * CPU number is encoded in smpboot_control.
+	 * For parallel boot, the APIC ID is either read from the APIC
+	 * or from CPUID, and then used to look up the CPU number.
+	 * For booting a single CPU, the CPU number is encoded in
+	 * smpboot_control.
 	 *
 	 * Bit 31	STARTUP_READ_APICID (Read APICID from APIC)
+	 * Bit 30	STARTUP_SEV_ES_APICID flag (CPUID 0x0b via GHCB MSR)
 	 * Bit 0-23	CPU# if STARTUP_xx flags are not set
 	 */
 	movl	smpboot_control(%rip), %ecx
 	testl	$STARTUP_READ_APICID, %ecx
 	jnz	.Lread_apicid
+#ifdef CONFIG_AMD_MEM_ENCRYPT
+	testl	$STARTUP_APICID_SEV_ES, %ecx
+	jnz	.Luse_sev_cpuid_0b
+#endif
 	/*
 	 * No control bit set, single CPU bringup. CPU number is provided
 	 * in bit 0-23. This is also the boot CPU case (CPU number 0).
 	 */
 	andl	$(~STARTUP_PARALLEL_MASK), %ecx
 	jmp	.Lsetup_cpu
+
+#ifdef CONFIG_AMD_MEM_ENCRYPT
+.Luse_sev_cpuid_0b:
+	/* Set the GHCB MSR to request CPUID 0x0B_EDX */
+	movl	$MSR_AMD64_SEV_ES_GHCB, %ecx
+	movl	$(GHCB_CPUID_REQ_EDX << 30) | GHCB_MSR_CPUID_REQ, %eax
+	movl	$0x0b, %edx
+	wrmsr
+
+	/* Perform GHCB MSR protocol */
+	rep; vmmcall		/* vmgexit */
+
+	/*
+	 * Get the result. After the RDMSR:
+	 *   EAX should be 0xc0000005
+	 *   EDX should have the CPUID register value and since EDX
+	 *   is the target register, no need to move the result.
+	 */
+	rdmsr
+	andl	$GHCB_MSR_INFO_MASK, %eax
+	cmpl	$GHCB_MSR_CPUID_RESP, %eax
+	jne	1f
+	/* Lookup code expects APIC ID in EAX */
+	mov	%edx, %eax
+	jmp	.Llookup_AP
+#endif
 
 .Lread_apicid:
 	/* Check whether X2APIC mode is already enabled */

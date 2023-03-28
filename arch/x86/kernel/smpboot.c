@@ -86,6 +86,7 @@
 #include <asm/hw_irq.h>
 #include <asm/stackprotector.h>
 #include <asm/sev.h>
+#include <asm/coco.h>
 
 /* representing HT siblings of each logical CPU */
 DEFINE_PER_CPU_READ_MOSTLY(cpumask_var_t, cpu_sibling_map);
@@ -1248,13 +1249,23 @@ void __init smp_prepare_cpus_common(void)
 /* Establish whether parallel bringup can be supported. */
 bool __init arch_cpuhp_init_parallel_bringup(void)
 {
+	unsigned int ctrl = STARTUP_READ_APICID;
+
 	/* Encrypted guests require special handling. */
 	if (cc_platform_has(CC_ATTR_GUEST_STATE_ENCRYPT)) {
-		pr_info("Parallel CPU startup disabled due to guest state encryption\n");
-		return false;
+		switch (cc_get_vendor()) {
+		case CC_VENDOR_AMD:
+			ctrl = STARTUP_SEV_ES_APICID;
+			if (topology_extended_leaf == 0x0b)
+				break;
+			fallthrough;
+		default:
+			pr_info("Parallel CPU startup disabled due to guest state encryption\n");
+			return false;
+		}
 	}
 
-	smpboot_control = STARTUP_READ_APICID;
+	smpboot_control = ctrl;
 	pr_debug("Parallel CPU startup enabled: 0x%08x\n", smpboot_control);
 	return true;
 }

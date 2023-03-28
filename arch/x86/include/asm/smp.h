@@ -201,6 +201,7 @@ extern unsigned long apic_mmio_base;
 
 /* Control bits for startup_64 */
 #define STARTUP_READ_APICID	0x80000000
+#define STARTUP_SEV_ES_APICID	0x40000000
 
 /* Top 8 bits are reserved for control */
 #define STARTUP_PARALLEL_MASK	0xFF000000
