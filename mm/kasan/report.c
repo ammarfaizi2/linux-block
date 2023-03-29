@@ -81,7 +81,7 @@ __setup("kasan_multi_shot", kasan_set_multi_shot);
  *
  * Hardware Tag-Based KASAN instead relies on:
  * For #1: Resetting tags via kasan_reset_tag().
- * For #2: Supression of tag checks via CPU, see report_suppress_start/end().
+ * For #2: Suppression of tag checks via CPU, see report_suppress_start/end().
  */
 static bool report_suppressed_sw(void)
 {
@@ -96,10 +96,10 @@ static void report_suppress_start(void)
 {
 #ifdef CONFIG_KASAN_HW_TAGS
 	/*
-	 * Disable migration for the duration of printing a KASAN report, as
+	 * Disable preemption for the duration of printing a KASAN report, as
 	 * hw_suppress_tag_checks_start() disables checks on the current CPU.
 	 */
-	migrate_disable();
+	preempt_disable();
 	hw_suppress_tag_checks_start();
 #else
 	kasan_disable_current();
@@ -110,7 +110,7 @@ static void report_suppress_stop(void)
 {
 #ifdef CONFIG_KASAN_HW_TAGS
 	hw_suppress_tag_checks_stop();
-	migrate_enable();
+	preempt_enable();
 #else
 	kasan_enable_current();
 #endif
