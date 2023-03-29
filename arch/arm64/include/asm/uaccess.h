@@ -138,7 +138,7 @@ static inline void __uaccess_enable_hw_pan(void)
 
 static inline void uaccess_disable_privileged(void)
 {
-	__mte_disable_tco();
+	mte_disable_tco();
 
 	if (uaccess_ttbr0_disable())
 		return;
@@ -148,7 +148,7 @@ static inline void uaccess_disable_privileged(void)
 
 static inline void uaccess_enable_privileged(void)
 {
-	__mte_enable_tco();
+	mte_enable_tco();
 
 	if (uaccess_ttbr0_enable())
 		return;
