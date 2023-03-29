@@ -51,13 +51,13 @@ static inline bool system_uses_mte_async_or_asymm_mode(void)
  * The Tag check override (TCO) bit disables temporarily the tag checking
  * preventing the issue.
  */
-static inline void __mte_disable_tco(void)
+static inline void mte_disable_tco(void)
 {
 	asm volatile(ALTERNATIVE("nop", SET_PSTATE_TCO(0),
 				 ARM64_MTE, CONFIG_KASAN_HW_TAGS));
 }
 
-static inline void __mte_enable_tco(void)
+static inline void mte_enable_tco(void)
 {
 	asm volatile(ALTERNATIVE("nop", SET_PSTATE_TCO(1),
 				 ARM64_MTE, CONFIG_KASAN_HW_TAGS));
@@ -71,13 +71,13 @@ static inline void __mte_enable_tco(void)
 static inline void __mte_disable_tco_async(void)
 {
 	if (system_uses_mte_async_or_asymm_mode())
-		__mte_disable_tco();
+		mte_disable_tco();
 }
 
 static inline void __mte_enable_tco_async(void)
 {
 	if (system_uses_mte_async_or_asymm_mode())
-		__mte_enable_tco();
+		mte_enable_tco();
 }
 
 /*
@@ -203,11 +203,11 @@ void mte_enable_kernel_asymm(void);
 
 #else /* CONFIG_ARM64_MTE */
 
-static inline void __mte_disable_tco(void)
+static inline void mte_disable_tco(void)
 {
 }
 
-static inline void __mte_enable_tco(void)
+static inline void mte_enable_tco(void)
 {
 }
 
