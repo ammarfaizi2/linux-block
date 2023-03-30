@@ -58,6 +58,7 @@
 #include <linux/overflow.h>
 #include <linux/stackprotector.h>
 #include <linux/cpuhotplug.h>
+#include <linux/mc146818rtc.h>
 
 #include <asm/acpi.h>
 #include <asm/cacheinfo.h>
@@ -75,7 +76,7 @@
 #include <asm/fpu/api.h>
 #include <asm/setup.h>
 #include <asm/uv/uv.h>
-#include <linux/mc146818rtc.h>
+#include <asm/microcode.h>
 #include <asm/i8259.h>
 #include <asm/misc.h>
 #include <asm/qspinlock.h>
@@ -127,7 +128,6 @@ int arch_update_cpu_topology(void)
 	x86_topology_update = false;
 	return retval;
 }
-
 
 static unsigned int smpboot_warm_reset_vector_count;
 
@@ -235,6 +235,8 @@ static void notrace start_secondary(void *unused)
 	__flush_tlb_all();
 #endif
 	cpu_init_exception_handling();
+
+	load_ucode_ap();
 
 	/*
 	 * Sync point with the hotplug core. Sets the sync state to ALIVE
@@ -1241,6 +1243,22 @@ void __init smp_prepare_cpus_common(void)
 
 	set_cpu_sibling_map(0);
 }
+
+#ifdef CONFIG_X86_64
+/* Establish whether parallel bringup can be supported. */
+bool __init arch_cpuhp_init_parallel_bringup(void)
+{
+	/* Encrypted guests require special handling. */
+	if (cc_platform_has(CC_ATTR_GUEST_STATE_ENCRYPT)) {
+		pr_info("Parallel CPU startup disabled due to guest state encryption\n");
+		return false;
+	}
+
+	smpboot_control = STARTUP_READ_APICID;
+	pr_debug("Parallel CPU startup enabled: 0x%08x\n", smpboot_control);
+	return true;
+}
+#endif
 
 /*
  * Prepare for SMP bootup.
