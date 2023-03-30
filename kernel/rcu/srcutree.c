@@ -1937,7 +1937,7 @@ static void srcu_module_going(struct module *mod)
 		if (!rcu_seq_state(smp_load_acquire(&ssp->srcu_sup->srcu_gp_seq_needed)) &&
 		    !WARN_ON_ONCE(!ssp->srcu_sup->sda_is_static))
 			cleanup_srcu_struct(ssp);
-		else if (!WARN_ON(srcu_readers_active(ssp)))
+		if (!WARN_ON(srcu_readers_active(ssp)))
 			free_percpu(ssp->sda);
 	}
 }
