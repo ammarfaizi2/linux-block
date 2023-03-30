@@ -510,7 +510,30 @@ handle_error:
 			tls_append_frag(record, &zc_pfrag, copy);
 
 			iter_offset.offset += copy;
+		} else if (copy && (flags & MSG_SPLICE_PAGES)) {
+			struct page_frag zc_pfrag;
+			struct page **pages = &zc_pfrag.page;
+			size_t off;
+
+			rc = iov_iter_extract_pages(iter_offset.msg_iter, &pages,
+						    copy, 1, 0, &off);
+			if (rc <= 0) {
+				if (rc == 0)
+					rc = -EIO;
+				goto handle_error;
+			}
+			copy = rc;
+
+			if (!sendpage_ok(zc_pfrag.page)) {
+				iov_iter_revert(iter_offset.msg_iter, copy);
+				goto no_zcopy_this_page;
+			}
+
+			zc_pfrag.offset = off;
+			zc_pfrag.size = copy;
+			tls_append_frag(record, &zc_pfrag, copy);
 		} else if (copy) {
+no_zcopy_this_page:
 			copy = min_t(size_t, copy, pfrag->size - pfrag->offset);
 
 			rc = tls_device_copy_data(page_address(pfrag->page) +
@@ -572,6 +595,9 @@ int tls_device_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
 	struct tls_context *tls_ctx = tls_get_ctx(sk);
 	union tls_iter_offset iter;
 	int rc;
+
+	if (!tls_ctx->zerocopy_sendfile)
+		msg->msg_flags &= ~MSG_SPLICE_PAGES;
 
 	mutex_lock(&tls_ctx->tx_lock);
 	lock_sock(sk);
