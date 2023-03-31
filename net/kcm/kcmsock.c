@@ -989,29 +989,84 @@ start:
 			merge = false;
 		}
 
-		copy = min_t(int, msg_data_left(msg),
-			     pfrag->size - pfrag->offset);
+		if (msg->msg_flags & MSG_SPLICE_PAGES) {
+			struct page *page = NULL, **pages = &page;
+			size_t off;
+			bool put = false;
+			
+			err = iov_iter_extract_pages(&msg->msg_iter, &pages,
+						     INT_MAX, 1, 0, &off);
+			if (err <= 0) {
+				err = err ?: -EIO;
+				goto out_error;
+			}
+			copy = err;
 
-		if (!sk_wmem_schedule(sk, copy))
-			goto wait_for_memory;
+			if (skb_can_coalesce(skb, i, page, off)) {
+				skb_frag_size_add(&skb_shinfo(skb)->frags[i - 1], copy);
+				goto coalesced;
+			}
 
-		err = skb_copy_to_page_nocache(sk, &msg->msg_iter, skb,
-					       pfrag->page,
-					       pfrag->offset,
-					       copy);
-		if (err)
-			goto out_error;
+			if (!sk_wmem_schedule(sk, copy)) {
+				iov_iter_revert(&msg->msg_iter, copy);
+				goto wait_for_memory;
+			}
 
-		/* Update the skb. */
-		if (merge) {
-			skb_frag_size_add(&skb_shinfo(skb)->frags[i - 1], copy);
+			if (!sendpage_ok(page)) {
+				const void *p = kmap_local_page(page);
+				void *q;
+
+				q = page_frag_memdup(NULL, p + off, copy,
+						     sk->sk_allocation, ULONG_MAX);
+				kunmap_local(p);
+				if (!q) {
+					iov_iter_revert(&msg->msg_iter, copy);
+					err = -ENOMEM;
+					goto out_error;
+				}
+				page = virt_to_page(q);
+				off = offset_in_page(q);
+				put = true;
+			}
+
+			if (!put)
+				get_page(page);
+			skb_fill_page_desc_noacc(skb, i, page, off, copy);
+coalesced:
+			skb_shinfo(skb)->flags |= SKBFL_SHARED_FRAG;
+			skb->len += copy;
+			skb->data_len += copy;
+			skb->truesize += copy;
+			sk->sk_wmem_queued += copy;
+			sk_mem_charge(sk, copy);
+
+			if (head != skb)
+				head->truesize += copy;
 		} else {
-			skb_fill_page_desc(skb, i, pfrag->page,
-					   pfrag->offset, copy);
-			get_page(pfrag->page);
+			copy = min_t(int, msg_data_left(msg),
+				     pfrag->size - pfrag->offset);
+			if (!sk_wmem_schedule(sk, copy))
+				goto wait_for_memory;
+
+			err = skb_copy_to_page_nocache(sk, &msg->msg_iter, skb,
+						       pfrag->page,
+						       pfrag->offset,
+						       copy);
+			if (err)
+				goto out_error;
+
+			/* Update the skb. */
+			if (merge) {
+				skb_frag_size_add(&skb_shinfo(skb)->frags[i - 1], copy);
+			} else {
+				skb_fill_page_desc(skb, i, pfrag->page,
+						   pfrag->offset, copy);
+				get_page(pfrag->page);
+			}
+
+			pfrag->offset += copy;
 		}
 
-		pfrag->offset += copy;
 		copied += copy;
 		if (head != skb) {
 			head->len += copy;
