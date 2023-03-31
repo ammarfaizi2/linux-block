@@ -1092,7 +1092,65 @@ new_buf:
 		if (copy > size)
 			copy = size;
 
-		if (skb_tailroom(skb) > 0) {
+		if (msg->msg_flags & MSG_SPLICE_PAGES) {
+			struct page *page, **pages = &page;
+			ssize_t part;
+			size_t off, spliced = 0;
+			bool put = false;
+			int i;
+
+			do {
+				i = skb_shinfo(skb)->nr_frags;
+				part = iov_iter_extract_pages(&msg->msg_iter, &pages,
+							      copy - spliced, 1, 0, &off);
+				if (part <= 0) {
+					err = part ?: -EIO;
+					goto do_fault;
+				}
+
+				if (!sendpage_ok(page)) {
+					const void *p = kmap_local_page(page);
+					void *q;
+
+					q = page_frag_memdup(NULL, p + off, part,
+							     sk->sk_allocation, ULONG_MAX);
+					kunmap_local(p);
+					if (!q) {
+						iov_iter_revert(&msg->msg_iter, part);
+						return -ENOMEM;
+					}
+					page = virt_to_page(q);
+					off = offset_in_page(q);
+					put = true;
+				}
+
+				if (skb_can_coalesce(skb, i, page, off)) {
+					skb_frag_size_add(&skb_shinfo(skb)->frags[i - 1], part);
+					spliced += part;
+					if (put)
+						put_page(page);
+				} else if (i < MAX_SKB_FRAGS) {
+					if (!put)
+						get_page(page);
+					skb_fill_page_desc(skb, i, page, off, spliced);
+					spliced += part;
+					put = false;
+				} else {
+					if (put)
+						put_page(page);
+					if (!spliced)
+						goto new_buf;
+					break;
+				}
+			} while (spliced < copy);
+
+			copy = spliced;
+			skb->len += copy;
+			skb->data_len += copy;
+			skb->truesize += copy;
+			sk->sk_wmem_queued += copy;
+			
+		} else if (skb_tailroom(skb) > 0) {
 			copy = min(copy, skb_tailroom(skb));
 			if (is_tls_tx(csk))
 				copy = min_t(int, copy, csk->tlshws.txleft);
