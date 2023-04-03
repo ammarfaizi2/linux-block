@@ -1019,8 +1019,7 @@ static struct page *first_bvec_segment(const struct iov_iter *i,
 
 static ssize_t __iov_iter_get_pages_alloc(struct iov_iter *i,
 		   struct page ***pages, size_t maxsize,
-		   unsigned int maxpages, size_t *start,
-		   iov_iter_extraction_t extraction_flags)
+		   unsigned int maxpages, size_t *start)
 {
 	unsigned int n, gup_flags = 0;
 
@@ -1030,8 +1029,6 @@ static ssize_t __iov_iter_get_pages_alloc(struct iov_iter *i,
 		return 0;
 	if (maxsize > MAX_RW_COUNT)
 		maxsize = MAX_RW_COUNT;
-	if (extraction_flags & ITER_ALLOW_P2PDMA)
-		gup_flags |= FOLL_PCI_P2PDMA;
 
 	if (likely(user_backed_iter(i))) {
 		unsigned long addr;
@@ -1088,8 +1085,7 @@ ssize_t iov_iter_get_pages2(struct iov_iter *i, struct page **pages,
 		return 0;
 	BUG_ON(!pages);
 
-	return __iov_iter_get_pages_alloc(i, &pages, maxsize, maxpages,
-					  start, 0);
+	return __iov_iter_get_pages_alloc(i, &pages, maxsize, maxpages, start);
 }
 EXPORT_SYMBOL(iov_iter_get_pages2);
 
@@ -1100,7 +1096,7 @@ ssize_t iov_iter_get_pages_alloc2(struct iov_iter *i,
 
 	*pages = NULL;
 
-	len = __iov_iter_get_pages_alloc(i, pages, maxsize, ~0U, start, 0);
+	len = __iov_iter_get_pages_alloc(i, pages, maxsize, ~0U, start);
 	if (len <= 0) {
 		kvfree(*pages);
 		*pages = NULL;
