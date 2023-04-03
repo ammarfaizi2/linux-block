@@ -1093,30 +1093,21 @@ ssize_t iov_iter_get_pages2(struct iov_iter *i, struct page **pages,
 }
 EXPORT_SYMBOL(iov_iter_get_pages2);
 
-ssize_t iov_iter_get_pages_alloc(struct iov_iter *i,
-		   struct page ***pages, size_t maxsize,
-		   size_t *start, iov_iter_extraction_t extraction_flags)
+ssize_t iov_iter_get_pages_alloc2(struct iov_iter *i,
+		struct page ***pages, size_t maxsize, size_t *start)
 {
 	ssize_t len;
 
 	*pages = NULL;
 
-	len = __iov_iter_get_pages_alloc(i, pages, maxsize, ~0U, start,
-					 extraction_flags);
+	len = __iov_iter_get_pages_alloc(i, pages, maxsize, ~0U, start, 0);
 	if (len <= 0) {
 		kvfree(*pages);
 		*pages = NULL;
 	}
 	return len;
 }
-EXPORT_SYMBOL_GPL(iov_iter_get_pages_alloc);
-
-ssize_t iov_iter_get_pages_alloc2(struct iov_iter *i,
-		struct page ***pages, size_t maxsize, size_t *start)
-{
-	return iov_iter_get_pages_alloc(i, pages, maxsize, start, 0);
-}
-EXPORT_SYMBOL(iov_iter_get_pages_alloc2);
+EXPORT_SYMBOL_GPL(iov_iter_get_pages_alloc2);
 
 size_t csum_and_copy_from_iter(void *addr, size_t bytes, __wsum *csum,
 			       struct iov_iter *i)
