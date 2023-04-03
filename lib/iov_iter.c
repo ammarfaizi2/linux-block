@@ -1081,23 +1081,15 @@ static ssize_t __iov_iter_get_pages_alloc(struct iov_iter *i,
 	return -EFAULT;
 }
 
-ssize_t iov_iter_get_pages(struct iov_iter *i,
-		   struct page **pages, size_t maxsize, unsigned maxpages,
-		   size_t *start, iov_iter_extraction_t extraction_flags)
+ssize_t iov_iter_get_pages2(struct iov_iter *i, struct page **pages,
+		size_t maxsize, unsigned maxpages, size_t *start)
 {
 	if (!maxpages)
 		return 0;
 	BUG_ON(!pages);
 
 	return __iov_iter_get_pages_alloc(i, &pages, maxsize, maxpages,
-					  start, extraction_flags);
-}
-EXPORT_SYMBOL_GPL(iov_iter_get_pages);
-
-ssize_t iov_iter_get_pages2(struct iov_iter *i, struct page **pages,
-		size_t maxsize, unsigned maxpages, size_t *start)
-{
-	return iov_iter_get_pages(i, pages, maxsize, maxpages, start, 0);
+					  start, 0);
 }
 EXPORT_SYMBOL(iov_iter_get_pages2);
 
