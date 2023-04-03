@@ -2367,10 +2367,12 @@ void vma_adjust_trans_huge(struct vm_area_struct *vma,
 
 static void unmap_folio(struct folio *folio)
 {
-	enum ttu_flags ttu_flags = TTU_RMAP_LOCKED | TTU_SPLIT_HUGE_PMD |
-		TTU_SYNC;
+	enum ttu_flags ttu_flags = TTU_RMAP_LOCKED | TTU_SYNC;
 
 	VM_BUG_ON_FOLIO(!folio_test_large(folio), folio);
+
+	if (folio_test_pmd_mappable(folio))
+		ttu_flags |= TTU_SPLIT_HUGE_PMD;
 
 	/*
 	 * Anon pages need migration entries to preserve them, but file
@@ -2403,7 +2405,6 @@ static void lru_add_page_tail(struct page *head, struct page *tail,
 		struct lruvec *lruvec, struct list_head *list)
 {
 	VM_BUG_ON_PAGE(!PageHead(head), head);
-	VM_BUG_ON_PAGE(PageCompound(tail), head);
 	VM_BUG_ON_PAGE(PageLRU(tail), head);
 	lockdep_assert_held(&lruvec->lru_lock);
 
@@ -2424,7 +2425,7 @@ static void lru_add_page_tail(struct page *head, struct page *tail,
 }
 
 static void __split_huge_page_tail(struct page *head, int tail,
-		struct lruvec *lruvec, struct list_head *list)
+		struct lruvec *lruvec, struct list_head *list, unsigned int new_order)
 {
 	struct page *page_tail = head + tail;
 
@@ -2491,10 +2492,15 @@ static void __split_huge_page_tail(struct page *head, int tail,
 	 * which needs correct compound_head().
 	 */
 	clear_compound_head(page_tail);
+	if (new_order) {
+		prep_compound_page(page_tail, new_order);
+		prep_transhuge_page(page_tail);
+	}
 
 	/* Finally unfreeze refcount. Additional reference from page cache. */
-	page_ref_unfreeze(page_tail, 1 + (!PageAnon(head) ||
-					  PageSwapCache(head)));
+	page_ref_unfreeze(page_tail, 1 + ((!PageAnon(head) ||
+					   PageSwapCache(head)) ?
+						thp_nr_pages(page_tail) : 0));
 
 	if (page_is_young(head))
 		set_page_young(page_tail);
@@ -2512,7 +2518,7 @@ static void __split_huge_page_tail(struct page *head, int tail,
 }
 
 static void __split_huge_page(struct page *page, struct list_head *list,
-		pgoff_t end)
+		pgoff_t end, unsigned int new_order)
 {
 	struct folio *folio = page_folio(page);
 	struct page *head = &folio->page;
@@ -2520,11 +2526,12 @@ static void __split_huge_page(struct page *page, struct list_head *list,
 	struct address_space *swap_cache = NULL;
 	unsigned long offset = 0;
 	unsigned int nr = thp_nr_pages(head);
+	unsigned int new_nr = 1 << new_order;
 	int order = folio_order(folio);
 	int i;
 
 	/* complete memcg works before add pages to LRU */
-	split_page_memcg(head, order, 0);
+	split_page_memcg(head, order, new_order);
 
 	if (PageAnon(head) && PageSwapCache(head)) {
 		swp_entry_t entry = { .val = page_private(head) };
@@ -2539,14 +2546,14 @@ static void __split_huge_page(struct page *page, struct list_head *list,
 
 	ClearPageHasHWPoisoned(head);
 
-	for (i = nr - 1; i >= 1; i--) {
-		__split_huge_page_tail(head, i, lruvec, list);
+	for (i = nr - new_nr; i >= new_nr; i -= new_nr) {
+		__split_huge_page_tail(head, i, lruvec, list, new_order);
 		/* Some pages can be beyond EOF: drop them from page cache */
 		if (head[i].index >= end) {
 			struct folio *tail = page_folio(head + i);
 
 			if (shmem_mapping(head->mapping))
-				shmem_uncharge(head->mapping->host, 1);
+				shmem_uncharge(head->mapping->host, new_nr);
 			else if (folio_test_clear_dirty(tail))
 				folio_account_cleaned(tail,
 					inode_to_wb(folio->mapping->host));
@@ -2556,29 +2563,38 @@ static void __split_huge_page(struct page *page, struct list_head *list,
 			__xa_store(&head->mapping->i_pages, head[i].index,
 					head + i, 0);
 		} else if (swap_cache) {
+			/*
+			 * split anonymous THPs (including swapped out ones) to
+			 * non-zero order not supported
+			 */
+			VM_WARN_ONCE(new_order,
+				"Split swap-cached anon folio to non-0 order not supported");
 			__xa_store(&swap_cache->i_pages, offset + i,
 					head + i, 0);
 		}
 	}
 
-	ClearPageCompound(head);
+	if (!new_order)
+		ClearPageCompound(head);
+	else
+		set_compound_order(head, new_order);
 	unlock_page_lruvec(lruvec);
 	/* Caller disabled irqs, so they are still disabled here */
 
-	split_page_owner(head, order, 0);
+	split_page_owner(head, order, new_order);
 
 	/* See comment in __split_huge_page_tail() */
 	if (PageAnon(head)) {
 		/* Additional pin to swap cache */
 		if (PageSwapCache(head)) {
-			page_ref_add(head, 2);
+			page_ref_add(head, 1 + new_nr);
 			xa_unlock(&swap_cache->i_pages);
 		} else {
 			page_ref_inc(head);
 		}
 	} else {
 		/* Additional pin to page cache */
-		page_ref_add(head, 2);
+		page_ref_add(head, 1 + new_nr);
 		xa_unlock(&head->mapping->i_pages);
 	}
 	local_irq_enable();
@@ -2591,7 +2607,15 @@ static void __split_huge_page(struct page *page, struct list_head *list,
 		split_swap_cluster(entry);
 	}
 
-	for (i = 0; i < nr; i++) {
+	/*
+	 * set page to its compound_head when split to non order-0 pages, so
+	 * we can skip unlocking it below, since PG_locked is transferred to
+	 * the compound_head of the page and the caller will unlock it.
+	 */
+	if (new_order)
+		page = compound_head(page);
+
+	for (i = 0; i < nr; i += new_nr) {
 		struct page *subpage = head + i;
 		if (subpage == page)
 			continue;
@@ -2625,29 +2649,31 @@ bool can_split_folio(struct folio *folio, int *pextra_pins)
 }
 
 /*
- * This function splits huge page into normal pages. @page can point to any
- * subpage of huge page to split. Split doesn't change the position of @page.
+ * This function splits huge page into pages in @new_order. @page can point to
+ * any subpage of huge page to split. Split doesn't change the position of
+ * @page.
  *
  * Only caller must hold pin on the @page, otherwise split fails with -EBUSY.
  * The huge page must be locked.
  *
  * If @list is null, tail pages will be added to LRU list, otherwise, to @list.
  *
- * Both head page and tail pages will inherit mapping, flags, and so on from
- * the hugepage.
+ * Pages in new_order will inherit mapping, flags, and so on from the hugepage.
  *
- * GUP pin and PG_locked transferred to @page. Rest subpages can be freed if
- * they are not mapped.
+ * GUP pin and PG_locked transferred to @page or the compound page @page belongs
+ * to. Rest subpages can be freed if they are not mapped.
  *
  * Returns 0 if the hugepage is split successfully.
  * Returns -EBUSY if the page is pinned or if anon_vma disappeared from under
  * us.
  */
-int split_huge_page_to_list(struct page *page, struct list_head *list)
+int split_huge_page_to_list_to_order(struct page *page, struct list_head *list,
+				     unsigned int new_order)
 {
 	struct folio *folio = page_folio(page);
 	struct deferred_split *ds_queue = get_deferred_split_queue(folio);
-	XA_STATE(xas, &folio->mapping->i_pages, folio->index);
+	/* reset xarray order to new order after split */
+	XA_STATE_ORDER(xas, &folio->mapping->i_pages, folio->index, new_order);
 	struct anon_vma *anon_vma = NULL;
 	struct address_space *mapping = NULL;
 	int extra_pins, ret;
@@ -2656,6 +2682,18 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
 
 	VM_BUG_ON_FOLIO(!folio_test_locked(folio), folio);
 	VM_BUG_ON_FOLIO(!folio_test_large(folio), folio);
+
+	/* Cannot split THP to order-1 (no order-1 THPs) */
+	if (new_order == 1) {
+		VM_WARN_ONCE(1, "Cannot split to order-1 folio");
+		return -EINVAL;
+	}
+
+	/* Split anonymous folio to non-zero order not support */
+	if (folio_test_anon(folio) && new_order) {
+		VM_WARN_ONCE(1, "Split anon folio to non-0 order not support");
+		return -EINVAL;
+	}
 
 	is_hzp = is_huge_zero_page(&folio->page);
 	if (is_hzp) {
@@ -2753,7 +2791,13 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
 	if (folio_ref_freeze(folio, 1 + extra_pins)) {
 		if (!list_empty(&folio->_deferred_list)) {
 			ds_queue->split_queue_len--;
-			list_del(&folio->_deferred_list);
+			/*
+			 * Reinitialize page_deferred_list after removing the
+			 * page from the split_queue, otherwise a subsequent
+			 * split will see list corruption when checking the
+			 * page_deferred_list.
+			 */
+			list_del_init(&folio->_deferred_list);
 		}
 		spin_unlock(&ds_queue->split_queue_lock);
 		if (mapping) {
@@ -2763,14 +2807,18 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
 			if (folio_test_swapbacked(folio)) {
 				__lruvec_stat_mod_folio(folio, NR_SHMEM_THPS,
 							-nr);
-			} else {
+			} else if (!new_order) {
+				/*
+				 * Decrease THP stats only if split to normal
+				 * pages
+				 */
 				__lruvec_stat_mod_folio(folio, NR_FILE_THPS,
 							-nr);
 				filemap_nr_thps_dec(mapping);
 			}
 		}
 
-		__split_huge_page(page, list, end);
+		__split_huge_page(page, list, end, new_order);
 		ret = 0;
 	} else {
 		spin_unlock(&ds_queue->split_queue_lock);
