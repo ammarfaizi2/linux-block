@@ -273,6 +273,12 @@ config SAMPLE_CORESIGHT_SYSCFG
 	  This demonstrates how a user may create their own CoreSight
 	  configurations and easily load them into the system at runtime.
 
+config SAMPLE_NET
+	bool "Build example programs that drive network protocols"
+	depends on NET
+	help
+	  Build example userspace programs that drive network protocols.
+
 source "samples/rust/Kconfig"
 
 endif # SAMPLES
