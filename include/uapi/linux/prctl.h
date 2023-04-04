@@ -292,4 +292,7 @@ struct prctl_mm_map {
 
 #define PR_SET_MEMORY_MERGE		67
 #define PR_GET_MEMORY_MERGE		68
+
+#define PR_GET_AUXV			0x41555856
+
 #endif /* _LINUX_PRCTL_H */
