@@ -58,6 +58,9 @@ def lookup(root, index):
         offset = (index >> node['shift']) & constants.LX_RADIX_TREE_MAP_MASK
         slot = node['slots'][offset]
 
+        if slot == 0:
+            return None
+
         node = slot.cast(node.type.pointer()).dereference()
         if node == 0:
             return None
