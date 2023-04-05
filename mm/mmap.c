@@ -861,8 +861,9 @@ can_vma_merge_after(struct vm_area_struct *vma, unsigned long vm_flags,
  *
  * The following mprotect cases have to be considered, where AAAA is
  * the area passed down from mprotect_fixup, never extending beyond one
- * vma, PPPPPP is the prev vma specified, NNNN is a vma that overlaps
- * the area AAAA and XXXXXX the next vma after AAAA:
+ * vma, PPPP is the previous vma, NNNN is a vma that starts at the same
+ * address as AAAA and is of the same or larger span, and XXXX the next
+ * vma after AAAA:
  *
  *     AAAA             AAAA                   AAAA
  *    PPPPPPXXXXXX    PPPPPPXXXXXX       PPPPPPNNNNNN
@@ -933,6 +934,7 @@ struct vm_area_struct *vma_merge(struct vma_iterator *vmi, struct mm_struct *mm,
 	else
 		next = mid;
 
+	/* In cases 1 - 4 there's no NNNN vma */
 	if (mid && end <= mid->vm_start)
 		mid = NULL;
 
