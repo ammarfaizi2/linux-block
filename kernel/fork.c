@@ -753,6 +753,7 @@ static __latent_entropy int dup_mmap(struct mm_struct *mm,
 		if (vma_iter_bulk_store(&vmi, tmp))
 			goto fail_nomem_vmi_store;
 
+		ksm_add_vma(tmp);
 		mm->map_count++;
 		if (!(tmp->vm_flags & VM_WIPEONFORK))
 			retval = copy_page_range(tmp, mpnt);
