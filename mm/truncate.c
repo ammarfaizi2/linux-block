@@ -213,7 +213,7 @@ bool truncate_inode_partial_folio(struct folio *folio, loff_t start, loff_t end)
 {
 	loff_t pos = folio_pos(folio);
 	unsigned int offset, length, remaining;
-	unsigned int new_order = folio_order(folio);
+	unsigned int new_order;
 
 	if (pos < start)
 		offset = start - pos;
