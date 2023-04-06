@@ -46,6 +46,7 @@
 #include <linux/pkeys.h>
 #include <linux/oom.h>
 #include <linux/sched/mm.h>
+#include <linux/ksm.h>
 
 #include <linux/uaccess.h>
 #include <asm/cacheflush.h>
@@ -2243,6 +2244,8 @@ int __split_vma(struct vma_iterator *vmi, struct vm_area_struct *vma,
 	/* vma_complete stores the new vma */
 	vma_complete(&vp, vmi, vma->vm_mm);
 
+	ksm_add_vma(new);
+
 	/* Success. */
 	if (new_below)
 		vma_next(vmi);
@@ -2691,6 +2694,7 @@ unmap_writable:
 	if (file && vm_flags & VM_SHARED)
 		mapping_unmap_writable(file->f_mapping);
 	file = vma->vm_file;
+	ksm_add_vma(vma);
 expanded:
 	perf_event_mmap(vma);
 
@@ -2963,6 +2967,7 @@ static int do_brk_flags(struct vma_iterator *vmi, struct vm_area_struct *vma,
 		goto mas_store_fail;
 
 	mm->map_count++;
+	ksm_add_vma(vma);
 out:
 	perf_event_mmap(vma);
 	mm->total_vm += len >> PAGE_SHIFT;
@@ -3209,6 +3214,7 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
 		if (vma_link(mm, new_vma))
 			goto out_vma_link;
 		*need_rmap_locks = false;
+		ksm_add_vma(new_vma);
 	}
 	validate_mm_mt(mm);
 	return new_vma;
@@ -3385,6 +3391,7 @@ static struct vm_area_struct *__install_special_mapping(
 	vm_stat_account(mm, vma->vm_flags, len >> PAGE_SHIFT);
 
 	perf_event_mmap(vma);
+	ksm_add_vma(vma);
 
 	validate_mm_mt(mm);
 	return vma;

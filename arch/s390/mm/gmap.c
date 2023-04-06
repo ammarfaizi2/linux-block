@@ -2591,6 +2591,7 @@ int gmap_mark_unmergeable(void)
 	int ret;
 	VMA_ITERATOR(vmi, mm, 0);
 
+	clear_bit(MMF_VM_MERGE_ANY, &mm->flags);
 	for_each_vma(vmi, vma) {
 		/* Copy vm_flags to avoid partial modifications in ksm_madvise */
 		vm_flags = vma->vm_flags;
