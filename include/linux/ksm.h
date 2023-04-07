@@ -62,15 +62,7 @@ void folio_migrate_ksm(struct folio *newfolio, struct folio *folio);
 
 #else  /* !CONFIG_KSM */
 
-static inline int ksm_add_mm(struct mm_struct *mm)
-{
-}
-
 static inline void ksm_add_vma(struct vm_area_struct *vma)
-{
-}
-
-static inline void ksm_add_vmas(struct mm_struct *mm)
 {
 }
 
