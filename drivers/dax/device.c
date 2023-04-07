@@ -448,7 +448,8 @@ int dev_dax_probe(struct dev_dax *dev_dax)
 	}
 
 	pgmap->type = MEMORY_DEVICE_GENERIC;
-	if (dev_dax->align > PAGE_SIZE)
+	if (dev_dax->align > PAGE_SIZE &&
+	    IS_ENABLED(CONFIG_ARCH_WANT_OPTIMIZE_VMEMMAP))
 		pgmap->vmemmap_shift =
 			order_base_2(dev_dax->align >> PAGE_SHIFT);
 	addr = devm_memremap_pages(dev, pgmap);
