@@ -764,7 +764,6 @@ release_init_lock:
 	return ret;
 }
 
-#if PAGE_SIZE != 4096
 struct zram_work {
 	struct work_struct work;
 	struct zram *zram;
@@ -775,7 +774,7 @@ struct zram_work {
 static void zram_sync_read(struct work_struct *work)
 {
 	struct zram_work *zw = container_of(work, struct zram_work, work);
-	struct bio_bvec bv;
+	struct bio_vec bv;
 	struct bio bio;
 
 	bio_init(&bio, zw->zram->bdev, &bv, 1, REQ_OP_READ);
@@ -794,6 +793,9 @@ static int read_from_bdev_sync(struct zram *zram, struct page *page,
 {
 	struct zram_work work;
 
+	if (WARN_ON_ONCE(PAGE_SIZE != 4096))
+		return -EIO;
+
 	work.page = page;
 	work.zram = zram;
 	work.entry = entry;
@@ -805,14 +807,6 @@ static int read_from_bdev_sync(struct zram *zram, struct page *page,
 
 	return 1;
 }
-#else
-static int read_from_bdev_sync(struct zram *zram, struct page *page,
-				unsigned long entry)
-{
-	WARN_ON(1);
-	return -EIO;
-}
-#endif
 
 static int read_from_bdev(struct zram *zram, struct page *page,
 			unsigned long entry, struct bio *parent)
