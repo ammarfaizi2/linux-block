@@ -565,7 +565,8 @@ void dump_mapping(const struct address_space *mapping)
 	 * If mapping is an invalid pointer, we don't want to crash
 	 * accessing it, so probe everything depending on it carefully.
 	 */
-	if (get_kernel_nofault(host, &mapping->host) ||
+	if (get_kernel_nofault(mapping, &mapping) ||
+	    get_kernel_nofault(host, &mapping->host) ||
 	    get_kernel_nofault(a_ops, &mapping->a_ops)) {
 		pr_warn("invalid mapping:%px\n", mapping);
 		return;
