@@ -1580,7 +1580,8 @@ static bool try_to_unmap_one(struct folio *folio, struct vm_area_struct *vma,
 				 */
 				pteval = ptep_get_and_clear(mm, address, pvmw.pte);
 
-				set_tlb_ubc_flush_pending(mm, pte_dirty(pteval));
+				if (pte_accessible(mm, pteval))
+					set_tlb_ubc_flush_pending(mm, pte_dirty(pteval));
 			} else {
 				pteval = ptep_clear_flush(vma, address, pvmw.pte);
 			}
@@ -1961,7 +1962,8 @@ static bool try_to_migrate_one(struct folio *folio, struct vm_area_struct *vma,
 				 */
 				pteval = ptep_get_and_clear(mm, address, pvmw.pte);
 
-				set_tlb_ubc_flush_pending(mm, pte_dirty(pteval));
+				if (pte_accessible(mm, pteval))
+					set_tlb_ubc_flush_pending(mm, pte_dirty(pteval));
 			} else {
 				pteval = ptep_clear_flush(vma, address, pvmw.pte);
 			}
