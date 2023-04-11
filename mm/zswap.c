@@ -760,13 +760,22 @@ static void zswap_pool_put(struct zswap_pool *pool)
 * param callbacks
 **********************************/
 
+static bool zswap_pool_changed(const char *s, const struct kernel_param *kp)
+{
+	/* no change required */
+	if (!strcmp(s, *(char **)kp->arg) && zswap_has_pool)
+		return false;
+	return true;
+}
+
 /* val must be a null-terminated string */
 static int __zswap_param_set(const char *val, const struct kernel_param *kp,
 			     char *type, char *compressor)
 {
 	struct zswap_pool *pool, *put_pool = NULL;
 	char *s = strstrip((char *)val);
-	int ret;
+	int ret = 0;
+	bool new_pool = false;
 
 	mutex_lock(&zswap_init_lock);
 	switch (zswap_init_state) {
@@ -775,21 +784,19 @@ static int __zswap_param_set(const char *val, const struct kernel_param *kp,
 		 * don't create a pool; that's done during init.
 		 */
 		ret = param_set_charp(s, kp);
-		mutex_unlock(&zswap_init_lock);
-		return ret;
+		break;
 	case ZSWAP_INIT_SUCCEED:
-		/* no change required */
-		if (!strcmp(s, *(char **)kp->arg) && zswap_has_pool) {
-			mutex_unlock(&zswap_init_lock);
-			return 0;
-		}
+		new_pool = zswap_pool_changed(s, kp);
 		break;
 	case ZSWAP_INIT_FAILED:
 		pr_err("can't set param, initialization failed\n");
-		mutex_unlock(&zswap_init_lock);
-		return -ENODEV;
+		ret = -ENODEV;
 	}
 	mutex_unlock(&zswap_init_lock);
+
+	/* no need to create a new pool, return directly */
+	if (!new_pool)
+		return ret;
 
 	if (!type) {
 		if (!zpool_has_pool(s)) {
@@ -881,7 +888,7 @@ static int zswap_enabled_param_set(const char *val,
 {
 	int ret = -ENODEV;
 
-	/*if this is load-time (pre-init) param setting, only set param.*/
+	/* if this is load-time (pre-init) param setting, only set param. */
 	if (system_state != SYSTEM_RUNNING)
 		return param_set_bool(val, kp);
 
