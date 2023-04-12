@@ -60,7 +60,6 @@ static void register_region_with_uffd(char *addr, size_t len)
 {
 	long uffd; /* userfaultfd file descriptor */
 	struct uffdio_api uffdio_api;
-	struct uffdio_register uffdio_register;
 
 	/* Create and enable userfaultfd object. */
 
@@ -96,11 +95,7 @@ static void register_region_with_uffd(char *addr, size_t len)
 	 * handling by the userfaultfd object. In mode, we request to track
 	 * missing pages (i.e., pages that have not yet been faulted in).
 	 */
-
-	uffdio_register.range.start = (unsigned long)addr;
-	uffdio_register.range.len = len;
-	uffdio_register.mode = UFFDIO_REGISTER_MODE_MISSING;
-	if (ioctl(uffd, UFFDIO_REGISTER, &uffdio_register) == -1) {
+	if (uffd_register(uffd, addr, len, true, false, false)) {
 		perror("ioctl-UFFDIO_REGISTER");
 		exit(1);
 	}
