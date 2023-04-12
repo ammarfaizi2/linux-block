@@ -98,4 +98,17 @@ static inline void ep_take_care_of_epollwakeup(struct epoll_event *epev)
 	epev->events &= ~EPOLLWAKEUP;
 }
 #endif
+
+#define EPOLL_PWAIT_TIMEOUT		(1U << 0)
+#define EPOLL_PWAIT_MINWAIT		(1U << 1)
+#define EPOLL_PWAIT_SIGMASK		(1U << 2)
+
+struct epoll_pwait_data {
+	struct __kernel_timespec	timeout;
+	__u32				min_wait_ts;
+	__u32				sigmask_sz;
+	__u64				unused[2];
+	sigset_t			sigmask;
+};
+
 #endif /* _UAPI_LINUX_EVENTPOLL_H */

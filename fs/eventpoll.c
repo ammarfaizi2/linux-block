@@ -2449,6 +2449,42 @@ SYSCALL_DEFINE6(epoll_pwait2, int, epfd, struct epoll_event __user *, events,
 			      sigmask, sigsetsize, 0);
 }
 
+#define EPOLL_PWAIT_FLAGS	(EPOLL_PWAIT_TIMEOUT | EPOLL_PWAIT_SIGMASK | \
+				 EPOLL_PWAIT_MINWAIT)
+
+SYSCALL_DEFINE5(epoll_pwait3, int, epfd, struct epoll_event __user *, events,
+		int, maxevents, int, flags,
+		struct epoll_pwait_data __user *, data)
+{
+	struct timespec64 ts, *to = NULL;
+	const sigset_t __user *sigmask = NULL;
+	unsigned int min_wait_ts = 0;
+	size_t sigmask_sz;
+
+	if (flags & ~EPOLL_PWAIT_FLAGS)
+		return -EINVAL;
+
+	if (flags & EPOLL_PWAIT_TIMEOUT) {
+		if (get_timespec64(&ts, &data->timeout))
+			return -EFAULT;
+		to = &ts;
+		if (poll_select_set_timeout(to, ts.tv_sec, ts.tv_nsec))
+			return -EINVAL;
+	}
+	if (flags & EPOLL_PWAIT_SIGMASK) {
+		sigmask = &data->sigmask;
+		if (get_user(sigmask_sz, &data->sigmask_sz))
+			return -EFAULT;
+	}
+	if (flags & EPOLL_PWAIT_MINWAIT) {
+		if (get_user(min_wait_ts, &data->min_wait_ts))
+			return -EFAULT;
+	}
+
+	return do_epoll_pwait(epfd, events, maxevents, to, sigmask, sigmask_sz,
+				min_wait_ts);
+}
+
 #ifdef CONFIG_COMPAT
 static int do_compat_epoll_pwait(int epfd, struct epoll_event __user *events,
 				 int maxevents, struct timespec64 *timeout,
