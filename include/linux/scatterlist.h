@@ -6,6 +6,7 @@
 #include <linux/types.h>
 #include <linux/bug.h>
 #include <linux/mm.h>
+#include <linux/bvec.h>
 #include <asm/io.h>
 
 struct scatterlist {
