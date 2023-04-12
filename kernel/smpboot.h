@@ -20,4 +20,6 @@ int smpboot_unpark_threads(unsigned int cpu);
 
 void __init cpuhp_threads_init(void);
 
+bool cpuhp_cpu_goes_down(unsigned int cpu);
+
 #endif

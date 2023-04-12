@@ -2297,7 +2297,7 @@ static inline bool is_cpu_allowed(struct task_struct *p, int cpu)
 		return cpu_online(cpu);
 
 	/* Regular kernel threads don't get to stay during offline. */
-	if (cpu_dying(cpu))
+	if (cpuhp_cpu_goes_down(cpu))
 		return false;
 
 	/* But are allowed during online. */
@@ -9344,7 +9344,7 @@ static void balance_push(struct rq *rq)
 	 * Only active while going offline and when invoked on the outgoing
 	 * CPU.
 	 */
-	if (!cpu_dying(rq->cpu) || rq != this_rq())
+	if (!cpuhp_cpu_goes_down(rq->cpu) || rq != this_rq())
 		return;
 
 	/*

@@ -53,6 +53,9 @@
  * @rollback:	Perform a rollback
  * @single:	Single callback invocation
  * @bringup:	Single callback bringup or teardown selector
+ * @goes_down:	Indicator for direction of cpu_up()/cpu_down() operations
+ *		including eventual rollbacks. Not affected by state or
+ *		instance add/remove operations. See cpuhp_cpu_goes_down().
  * @cpu:	CPU number
  * @node:	Remote CPU node; for multi-instance, do a
  *		single entry callback for install/remove
@@ -72,6 +75,7 @@ struct cpuhp_cpu_state {
 	bool			rollback;
 	bool			single;
 	bool			bringup;
+	bool			goes_down;
 	struct hlist_node	*node;
 	struct hlist_node	*last;
 	enum cpuhp_state	cb_state;
@@ -295,6 +299,37 @@ void cpu_maps_update_done(void)
 	mutex_unlock(&cpu_add_remove_lock);
 }
 
+/**
+ * cpuhp_cpu_goes_down - Query the current/last CPU hotplug direction of a CPU
+ * @cpu:	The CPU to query
+ *
+ * The direction indicator is modified by the hotplug core on
+ * cpu_up()/cpu_down() operations including eventual rollback operations.
+ * The indicator is not affected by state or instance install/remove
+ * operations.
+ *
+ * The indicator is sticky after the hotplug operation completes, whether
+ * the operation was a full up/down or just a partial bringup/teardown.
+ *
+ *				goes_down
+ *   cpu_up(target) enter	-> False
+ *	rollback on fail	-> True
+ *   cpu_up(target) exit	Last state
+ *
+ *   cpu_down(target) enter	-> True
+ *	rollback on fail	-> False
+ *   cpu_down(target) exit	Last state
+ *
+ * The return value is a racy snapshot and not protected against concurrent
+ * CPU hotplug operations which modify the indicator.
+ *
+ * Returns: True if cached direction is down, false otherwise
+ */
+bool cpuhp_cpu_goes_down(unsigned int cpu)
+{
+	return data_race(per_cpu(cpuhp_state.goes_down, cpu));
+}
+
 /*
  * If set, cpu_up and cpu_down will return -EBUSY and do nothing.
  * Should always be manipulated under cpu_add_remove_lock
@@ -486,8 +521,7 @@ cpuhp_set_state(int cpu, struct cpuhp_cpu_state *st, enum cpuhp_state target)
 	st->target = target;
 	st->single = false;
 	st->bringup = bringup;
-	if (cpu_dying(cpu) != !bringup)
-		set_cpu_dying(cpu, !bringup);
+	st->goes_down = !bringup;
 
 	return prev_state;
 }
@@ -521,8 +555,7 @@ cpuhp_reset_state(int cpu, struct cpuhp_cpu_state *st,
 	}
 
 	st->bringup = bringup;
-	if (cpu_dying(cpu) != !bringup)
-		set_cpu_dying(cpu, !bringup);
+	st->goes_down = !bringup;
 }
 
 /* Regular hotplug invocation of the AP hotplug thread */
@@ -2643,8 +2676,6 @@ struct cpumask __cpu_present_mask __read_mostly;
 EXPORT_SYMBOL(__cpu_present_mask);
 
 struct cpumask __cpu_active_mask __read_mostly;
-
-struct cpumask __cpu_dying_mask __read_mostly;
 
 atomic_t __num_online_cpus __read_mostly;
 EXPORT_SYMBOL(__num_online_cpus);
