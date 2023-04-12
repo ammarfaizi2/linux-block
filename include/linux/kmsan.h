@@ -289,6 +289,7 @@ static inline int kmsan_vmap_pages_range_noflush(unsigned long start,
 						 struct page **pages,
 						 unsigned int page_shift)
 {
+	return 0;
 }
 
 static inline void kmsan_vunmap_range_noflush(unsigned long start,
