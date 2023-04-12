@@ -393,6 +393,9 @@ asmlinkage long sys_epoll_pwait2(int epfd, struct epoll_event __user *events,
 				 const struct __kernel_timespec __user *timeout,
 				 const sigset_t __user *sigmask,
 				 size_t sigsetsize);
+asmlinkage long sys_epoll_pwait3(int epfd, struct epoll_event __user *events,
+				 int maxevents, int flags,
+				 struct epoll_pwait_data __user *data);
 
 /* fs/fcntl.c */
 asmlinkage long sys_dup(unsigned int fildes);
