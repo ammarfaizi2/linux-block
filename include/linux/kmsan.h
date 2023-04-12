@@ -302,6 +302,7 @@ static inline int kmsan_ioremap_page_range(unsigned long start,
 					   phys_addr_t phys_addr, pgprot_t prot,
 					   unsigned int page_shift)
 {
+	return 0;
 }
 
 static inline void kmsan_iounmap_page_range(unsigned long start,
