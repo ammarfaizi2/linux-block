@@ -1866,7 +1866,8 @@ static void ep_schedule(struct eventpoll *ep, struct epoll_wq *ewq, ktime_t *to,
  *          error code, in case of error.
  */
 static int ep_poll(struct eventpoll *ep, struct epoll_event __user *events,
-		   int maxevents, struct timespec64 *timeout)
+		   int maxevents, struct timespec64 *timeout,
+		   unsigned int min_wait_ts)
 {
 	int res, eavail;
 	u64 slack = 0;
@@ -1898,9 +1899,10 @@ static int ep_poll(struct eventpoll *ep, struct epoll_event __user *events,
 	 * time. Ensure the lowest bit is set in ewq.min_wait_ts, that's
 	 * the state bit for whether or not min_wait is enabled.
 	 */
-	if (!ewq.timed_out && ep->min_wait_ts) {
-		ewq.min_wait_ts = ktime_add_us(ktime_get_ns(),
-						ep->min_wait_ts);
+	if (!ewq.timed_out && (ep->min_wait_ts || min_wait_ts)) {
+		if (!min_wait_ts)
+			min_wait_ts = ep->min_wait_ts;
+		ewq.min_wait_ts = ktime_add_us(ktime_get_ns(), min_wait_ts);
 		ewq.min_wait_ts |= (u64) 1;
 		to = &ewq.min_wait_ts;
 	}
@@ -2341,7 +2343,8 @@ SYSCALL_DEFINE4(epoll_ctl, int, epfd, int, op, int, fd,
  * part of the user space epoll_wait(2).
  */
 static int do_epoll_wait(int epfd, struct epoll_event __user *events,
-			 int maxevents, struct timespec64 *to)
+			 int maxevents, struct timespec64 *to,
+			 unsigned int min_wait_ts)
 {
 	int error;
 	struct fd f;
@@ -2375,7 +2378,7 @@ static int do_epoll_wait(int epfd, struct epoll_event __user *events,
 	ep = f.file->private_data;
 
 	/* Time to fish for events ... */
-	error = ep_poll(ep, events, maxevents, to);
+	error = ep_poll(ep, events, maxevents, to, min_wait_ts);
 
 error_fput:
 	fdput(f);
@@ -2388,7 +2391,7 @@ SYSCALL_DEFINE4(epoll_wait, int, epfd, struct epoll_event __user *, events,
 	struct timespec64 to;
 
 	return do_epoll_wait(epfd, events, maxevents,
-			     ep_timeout_to_timespec(&to, timeout));
+			     ep_timeout_to_timespec(&to, timeout), 0);
 }
 
 /*
@@ -2397,7 +2400,8 @@ SYSCALL_DEFINE4(epoll_wait, int, epfd, struct epoll_event __user *, events,
  */
 static int do_epoll_pwait(int epfd, struct epoll_event __user *events,
 			  int maxevents, struct timespec64 *to,
-			  const sigset_t __user *sigmask, size_t sigsetsize)
+			  const sigset_t __user *sigmask, size_t sigsetsize,
+			  unsigned int min_wait_ts)
 {
 	int error;
 
@@ -2409,7 +2413,7 @@ static int do_epoll_pwait(int epfd, struct epoll_event __user *events,
 	if (error)
 		return error;
 
-	error = do_epoll_wait(epfd, events, maxevents, to);
+	error = do_epoll_wait(epfd, events, maxevents, to, min_wait_ts);
 
 	restore_saved_sigmask_unless(error == -EINTR);
 
@@ -2424,7 +2428,7 @@ SYSCALL_DEFINE6(epoll_pwait, int, epfd, struct epoll_event __user *, events,
 
 	return do_epoll_pwait(epfd, events, maxevents,
 			      ep_timeout_to_timespec(&to, timeout),
-			      sigmask, sigsetsize);
+			      sigmask, sigsetsize, 0);
 }
 
 SYSCALL_DEFINE6(epoll_pwait2, int, epfd, struct epoll_event __user *, events,
@@ -2442,7 +2446,7 @@ SYSCALL_DEFINE6(epoll_pwait2, int, epfd, struct epoll_event __user *, events,
 	}
 
 	return do_epoll_pwait(epfd, events, maxevents, to,
-			      sigmask, sigsetsize);
+			      sigmask, sigsetsize, 0);
 }
 
 #ifdef CONFIG_COMPAT
@@ -2461,7 +2465,7 @@ static int do_compat_epoll_pwait(int epfd, struct epoll_event __user *events,
 	if (err)
 		return err;
 
-	err = do_epoll_wait(epfd, events, maxevents, timeout);
+	err = do_epoll_wait(epfd, events, maxevents, timeout, 0);
 
 	restore_saved_sigmask_unless(err == -EINTR);
 
