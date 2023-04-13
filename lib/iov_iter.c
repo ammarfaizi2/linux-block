@@ -634,8 +634,8 @@ EXPORT_SYMBOL_GPL(_copy_mc_to_iter);
 static void *memcpy_from_iter(struct iov_iter *i, void *to, const void *from,
 				 size_t size)
 {
-       if (iov_iter_is_copy_mc(i))
-               return (void *)copy_mc_to_kernel(to, from, size);
+	if (iov_iter_is_copy_mc(i))
+		return (void *)copy_mc_to_kernel(to, from, size);
 	return memcpy(to, from, size);
 }
 
