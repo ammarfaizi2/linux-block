@@ -42,6 +42,7 @@ struct iov_iter_state {
 
 struct iov_iter {
 	u8 iter_type;
+	bool copy_mc;
 	bool nofault;
 	bool data_source;
 	bool user_backed;
@@ -125,6 +126,30 @@ static inline bool user_backed_iter(const struct iov_iter *i)
 {
 	return i->user_backed;
 }
+
+#ifdef CONFIG_ARCH_HAS_COPY_MC
+static inline void iov_iter_set_copy_mc(struct iov_iter *i)
+{
+	i->copy_mc = true;
+}
+
+static inline void iov_iter_clear_copy_mc(struct iov_iter *i)
+{
+	i->copy_mc = false;
+}
+
+static inline bool iov_iter_is_copy_mc(const struct iov_iter *i)
+{
+	return i->copy_mc;
+}
+#else
+static inline void iov_iter_set_copy_mc(struct iov_iter *i) { }
+static inline void iov_iter_clear_copy_mc(struct iov_iter *i) {}
+static inline bool iov_iter_is_copy_mc(const struct iov_iter *i)
+{
+	return false;
+}
+#endif
 
 /*
  * Total number of bytes covered by an iovec.
@@ -360,6 +385,7 @@ static inline void iov_iter_ubuf(struct iov_iter *i, unsigned int direction,
 		.iter_type = ITER_UBUF,
 		.user_backed = true,
 		.data_source = direction,
+		.copy_mc = false,
 		.ubuf = buf,
 		.count = count
 	};
