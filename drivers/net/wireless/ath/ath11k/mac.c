@@ -9382,6 +9382,25 @@ err_cleanup:
 	return ret;
 }
 
+static struct device_node *ath11k_mac_find_radio_node(struct ath11k_base *ab, int i)
+{
+	struct device_node *np;
+
+	for_each_child_of_node(ab->dev->of_node, np) {
+		u32 reg;
+		int err;
+
+		if (strcmp(np->name, "radio"))
+			continue;
+
+		err = of_property_read_u32(np, "reg", &reg);
+		if (!err && reg == i)
+			return np;
+	}
+
+	return NULL;
+}
+
 int ath11k_mac_allocate(struct ath11k_base *ab)
 {
 	struct ieee80211_hw *hw;
@@ -9407,6 +9426,7 @@ int ath11k_mac_allocate(struct ath11k_base *ab)
 		ar->ab = ab;
 		ar->pdev = pdev;
 		ar->pdev_idx = i;
+		ar->np = ath11k_mac_find_radio_node(ab, i);
 		ar->lmac_id = ath11k_hw_get_mac_from_pdev_id(&ab->hw_params, i);
 
 		ar->wmi = &ab->wmi_ab.wmi[i];
