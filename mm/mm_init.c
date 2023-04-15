@@ -1754,7 +1754,7 @@ static void __init free_area_init_memoryless_node(int nid)
  */
 static bool arch_has_descending_max_zone_pfns(void)
 {
-	return !IS_ENABLED(CONFIG_ARC_HAS_PAE40);
+	return IS_ENABLED(CONFIG_ARC) && !IS_ENABLED(CONFIG_ARC_HAS_PAE40);
 }
 
 /**
