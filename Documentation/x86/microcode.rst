@@ -218,6 +218,10 @@ a fault happens, the whole core will see it either before the microcode
 patch has been applied or after. In either case, T0 and T1 will have the
 same microcode revision and nothing intermediate.
 
+In addition, microcode patches which modify software-visible features
+like CPUID bits, MSRs, chicken bits, etc are not released for late
+loading.
+
 Builtin microcode
 =================
 
