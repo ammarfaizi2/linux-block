@@ -675,8 +675,9 @@ __attribute__((optimize("O0")))
 static int smash_stack(void)
 {
 	char buf[100];
+	size_t i;
 
-	for (size_t i = 0; i < 200; i++)
+	for (i = 0; i < 200; i++)
 		buf[i] = 'P';
 
 	return 1;
