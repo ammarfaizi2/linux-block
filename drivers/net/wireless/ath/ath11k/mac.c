@@ -8,6 +8,7 @@
 #include <linux/etherdevice.h>
 #include <linux/bitfield.h>
 #include <linux/inetdevice.h>
+#include <linux/of_net.h>
 #include <net/if_inet6.h>
 #include <net/ipv6.h>
 
@@ -9330,7 +9331,7 @@ int ath11k_mac_register(struct ath11k_base *ab)
 	struct ath11k_pdev *pdev;
 	int i;
 	int ret;
-	u8 mac_addr[ETH_ALEN] = {0};
+	u8 device_mac_addr[ETH_ALEN] = {0};
 
 	if (test_bit(ATH11K_FLAG_REGISTERED, &ab->dev_flags))
 		return 0;
@@ -9343,18 +9344,22 @@ int ath11k_mac_register(struct ath11k_base *ab)
 	if (ret)
 		return ret;
 
-	device_get_mac_address(ab->dev, mac_addr);
+	device_get_mac_address(ab->dev, device_mac_addr);
 
 	for (i = 0; i < ab->num_radios; i++) {
+		u8 radio_mac_addr[ETH_ALEN];
+
 		pdev = &ab->pdevs[i];
 		ar = pdev->ar;
-		if (ab->pdevs_macaddr_valid) {
+		if (!of_get_mac_address(ar->np, radio_mac_addr)) {
+			ether_addr_copy(ar->mac_addr, radio_mac_addr);
+		} else if (ab->pdevs_macaddr_valid) {
 			ether_addr_copy(ar->mac_addr, pdev->mac_addr);
 		} else {
-			if (is_zero_ether_addr(mac_addr))
+			if (is_zero_ether_addr(device_mac_addr))
 				ether_addr_copy(ar->mac_addr, ab->mac_addr);
 			else
-				ether_addr_copy(ar->mac_addr, mac_addr);
+				ether_addr_copy(ar->mac_addr, device_mac_addr);
 			ar->mac_addr[4] += i;
 		}
 
@@ -9382,6 +9387,25 @@ err_cleanup:
 	return ret;
 }
 
+static struct device_node *ath11k_mac_find_radio_node(struct ath11k_base *ab, int i)
+{
+	struct device_node *np;
+
+	for_each_child_of_node(ab->dev->of_node, np) {
+		u32 reg;
+		int err;
+
+		if (strcmp(np->name, "radio"))
+			continue;
+
+		err = of_property_read_u32(np, "reg", &reg);
+		if (!err && reg == i)
+			return np;
+	}
+
+	return NULL;
+}
+
 int ath11k_mac_allocate(struct ath11k_base *ab)
 {
 	struct ieee80211_hw *hw;
@@ -9407,6 +9431,7 @@ int ath11k_mac_allocate(struct ath11k_base *ab)
 		ar->ab = ab;
 		ar->pdev = pdev;
 		ar->pdev_idx = i;
+		ar->np = ath11k_mac_find_radio_node(ab, i);
 		ar->lmac_id = ath11k_hw_get_mac_from_pdev_id(&ab->hw_params, i);
 
 		ar->wmi = &ab->wmi_ab.wmi[i];
