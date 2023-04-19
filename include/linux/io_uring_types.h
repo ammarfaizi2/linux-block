@@ -535,6 +535,9 @@ struct io_kiocb {
 	 * and after selection it points to the buffer ID itself.
 	 */
 	u16				buf_index;
+
+	atomic_t			poll_refs;
+
 	u64				flags;
 
 	struct io_cqe			cqe;
@@ -565,9 +568,8 @@ struct io_kiocb {
 		__poll_t apoll_events;
 	};
 	atomic_t			refs;
-	atomic_t			poll_refs;
-	struct io_task_work		io_task_work;
 	unsigned			nr_tw;
+	struct io_task_work		io_task_work;
 	/* for polled requests, i.e. IORING_OP_POLL_ADD and async armed poll */
 	union {
 		struct hlist_node	hash_node;
