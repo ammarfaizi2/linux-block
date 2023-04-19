@@ -1948,7 +1948,7 @@ static int io_issue_sqe(struct io_kiocb *req, unsigned int issue_flags)
 		return -EBADF;
 
 	if (req->flags & REQ_F_NO_OFFLOAD &&
-	    (!req->file || !file_can_poll(req->file)))
+	    (!req->file || !file_can_poll(req->file) || def->always_iowq))
 		issue_flags &= ~IO_URING_F_NONBLOCK;
 
 	if (unlikely((req->flags & REQ_F_CREDS) && req->creds != current_cred()))

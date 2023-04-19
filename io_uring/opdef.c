@@ -82,6 +82,7 @@ const struct io_issue_def io_issue_defs[] = {
 	[IORING_OP_FSYNC] = {
 		.needs_file		= 1,
 		.audit_skip		= 1,
+		.always_iowq		= 1,
 		.prep			= io_fsync_prep,
 		.issue			= io_fsync,
 	},
@@ -125,6 +126,7 @@ const struct io_issue_def io_issue_defs[] = {
 	[IORING_OP_SYNC_FILE_RANGE] = {
 		.needs_file		= 1,
 		.audit_skip		= 1,
+		.always_iowq		= 1,
 		.prep			= io_sfr_prep,
 		.issue			= io_sync_file_range,
 	},
@@ -202,6 +204,7 @@ const struct io_issue_def io_issue_defs[] = {
 	},
 	[IORING_OP_FALLOCATE] = {
 		.needs_file		= 1,
+		.always_iowq		= 1,
 		.prep			= io_fallocate_prep,
 		.issue			= io_fallocate,
 	},
@@ -221,6 +224,7 @@ const struct io_issue_def io_issue_defs[] = {
 	},
 	[IORING_OP_STATX] = {
 		.audit_skip		= 1,
+		.always_iowq		= 1,
 		.prep			= io_statx_prep,
 		.issue			= io_statx,
 	},
@@ -253,11 +257,13 @@ const struct io_issue_def io_issue_defs[] = {
 	[IORING_OP_FADVISE] = {
 		.needs_file		= 1,
 		.audit_skip		= 1,
+		.always_iowq		= 1,
 		.prep			= io_fadvise_prep,
 		.issue			= io_fadvise,
 	},
 	[IORING_OP_MADVISE] = {
 		.audit_skip		= 1,
+		.always_iowq		= 1,
 		.prep			= io_madvise_prep,
 		.issue			= io_madvise,
 	},
@@ -308,6 +314,7 @@ const struct io_issue_def io_issue_defs[] = {
 		.hash_reg_file		= 1,
 		.unbound_nonreg_file	= 1,
 		.audit_skip		= 1,
+		.always_iowq		= 1,
 		.prep			= io_splice_prep,
 		.issue			= io_splice,
 	},
@@ -328,11 +335,13 @@ const struct io_issue_def io_issue_defs[] = {
 		.hash_reg_file		= 1,
 		.unbound_nonreg_file	= 1,
 		.audit_skip		= 1,
+		.always_iowq		= 1,
 		.prep			= io_tee_prep,
 		.issue			= io_tee,
 	},
 	[IORING_OP_SHUTDOWN] = {
 		.needs_file		= 1,
+		.always_iowq		= 1,
 #if defined(CONFIG_NET)
 		.prep			= io_shutdown_prep,
 		.issue			= io_shutdown,
@@ -343,22 +352,27 @@ const struct io_issue_def io_issue_defs[] = {
 	[IORING_OP_RENAMEAT] = {
 		.prep			= io_renameat_prep,
 		.issue			= io_renameat,
+		.always_iowq		= 1,
 	},
 	[IORING_OP_UNLINKAT] = {
 		.prep			= io_unlinkat_prep,
 		.issue			= io_unlinkat,
+		.always_iowq		= 1,
 	},
 	[IORING_OP_MKDIRAT] = {
 		.prep			= io_mkdirat_prep,
 		.issue			= io_mkdirat,
+		.always_iowq		= 1,
 	},
 	[IORING_OP_SYMLINKAT] = {
 		.prep			= io_symlinkat_prep,
 		.issue			= io_symlinkat,
+		.always_iowq		= 1,
 	},
 	[IORING_OP_LINKAT] = {
 		.prep			= io_linkat_prep,
 		.issue			= io_linkat,
+		.always_iowq		= 1,
 	},
 	[IORING_OP_MSG_RING] = {
 		.needs_file		= 1,
@@ -367,20 +381,24 @@ const struct io_issue_def io_issue_defs[] = {
 		.issue			= io_msg_ring,
 	},
 	[IORING_OP_FSETXATTR] = {
-		.needs_file = 1,
+		.needs_file		= 1,
+		.always_iowq		= 1,
 		.prep			= io_fsetxattr_prep,
 		.issue			= io_fsetxattr,
 	},
 	[IORING_OP_SETXATTR] = {
+		.always_iowq		= 1,
 		.prep			= io_setxattr_prep,
 		.issue			= io_setxattr,
 	},
 	[IORING_OP_FGETXATTR] = {
-		.needs_file = 1,
+		.needs_file		= 1,
+		.always_iowq		= 1,
 		.prep			= io_fgetxattr_prep,
 		.issue			= io_fgetxattr,
 	},
 	[IORING_OP_GETXATTR] = {
+		.always_iowq		= 1,
 		.prep			= io_getxattr_prep,
 		.issue			= io_getxattr,
 	},
