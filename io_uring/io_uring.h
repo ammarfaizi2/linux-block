@@ -76,7 +76,7 @@ int io_uring_alloc_task_context(struct task_struct *task,
 				struct io_ring_ctx *ctx);
 
 int io_poll_issue(struct io_kiocb *req, struct io_tw_state *ts);
-int io_submit_sqes(struct io_ring_ctx *ctx, unsigned int nr);
+int io_submit_sqes(struct io_ring_ctx *ctx, unsigned int nr, bool no_offload);
 int io_do_iopoll(struct io_ring_ctx *ctx, bool force_nonspin);
 void io_free_batch_list(struct io_ring_ctx *ctx, struct io_wq_work_node *node);
 int io_req_prep_async(struct io_kiocb *req);

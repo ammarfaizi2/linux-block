@@ -173,6 +173,12 @@ enum {
  */
 #define IORING_SETUP_DEFER_TASKRUN	(1U << 13)
 
+/*
+ * Don't attempt non-blocking issue on file types that would otherwise
+ * punt to io-wq if they cannot be completed non-blocking.
+ */
+#define IORING_SETUP_NO_OFFLOAD		(1U << 14)
+
 enum io_uring_op {
 	IORING_OP_NOP,
 	IORING_OP_READV,
@@ -443,6 +449,7 @@ struct io_cqring_offsets {
 #define IORING_ENTER_SQ_WAIT		(1U << 2)
 #define IORING_ENTER_EXT_ARG		(1U << 3)
 #define IORING_ENTER_REGISTERED_RING	(1U << 4)
+#define IORING_ENTER_NO_OFFLOAD		(1U << 5)
 
 /*
  * Passed in for io_uring_setup(2). Copied back with updated info on success

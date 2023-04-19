@@ -166,6 +166,7 @@ static inline bool io_sqd_events_pending(struct io_sq_data *sqd)
 
 static int __io_sq_thread(struct io_ring_ctx *ctx, bool cap_entries)
 {
+	bool no_offload = ctx->flags & IORING_SETUP_NO_OFFLOAD;
 	unsigned int to_submit;
 	int ret = 0;
 
@@ -190,7 +191,7 @@ static int __io_sq_thread(struct io_ring_ctx *ctx, bool cap_entries)
 		 */
 		if (to_submit && likely(!percpu_ref_is_dying(&ctx->refs)) &&
 		    !(ctx->flags & IORING_SETUP_R_DISABLED))
-			ret = io_submit_sqes(ctx, to_submit);
+			ret = io_submit_sqes(ctx, to_submit, no_offload);
 		mutex_unlock(&ctx->uring_lock);
 
 		if (to_submit && wq_has_sleeper(&ctx->sqo_sq_wait))
