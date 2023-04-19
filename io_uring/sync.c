@@ -32,8 +32,6 @@ int io_sfr_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	sync->off = READ_ONCE(sqe->off);
 	sync->len = READ_ONCE(sqe->len);
 	sync->flags = READ_ONCE(sqe->sync_range_flags);
-	req->flags |= REQ_F_FORCE_ASYNC;
-
 	return 0;
 }
 
@@ -43,7 +41,8 @@ int io_sync_file_range(struct io_kiocb *req, unsigned int issue_flags)
 	int ret;
 
 	/* sync_file_range always requires a blocking context */
-	WARN_ON_ONCE(issue_flags & IO_URING_F_NONBLOCK);
+	if (issue_flags & IO_URING_F_NONBLOCK)
+		return -EAGAIN;
 
 	ret = sync_file_range(req->file, sync->off, sync->len, sync->flags);
 	io_req_set_res(req, ret, 0);
@@ -63,7 +62,6 @@ int io_fsync_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 
 	sync->off = READ_ONCE(sqe->off);
 	sync->len = READ_ONCE(sqe->len);
-	req->flags |= REQ_F_FORCE_ASYNC;
 	return 0;
 }
 
@@ -74,7 +72,8 @@ int io_fsync(struct io_kiocb *req, unsigned int issue_flags)
 	int ret;
 
 	/* fsync always requires a blocking context */
-	WARN_ON_ONCE(issue_flags & IO_URING_F_NONBLOCK);
+	if (issue_flags & IO_URING_F_NONBLOCK)
+		return -EAGAIN;
 
 	ret = vfs_fsync_range(req->file, sync->off, end > 0 ? end : LLONG_MAX,
 				sync->flags & IORING_FSYNC_DATASYNC);
@@ -92,7 +91,6 @@ int io_fallocate_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	sync->off = READ_ONCE(sqe->off);
 	sync->len = READ_ONCE(sqe->addr);
 	sync->mode = READ_ONCE(sqe->len);
-	req->flags |= REQ_F_FORCE_ASYNC;
 	return 0;
 }
 
@@ -102,8 +100,8 @@ int io_fallocate(struct io_kiocb *req, unsigned int issue_flags)
 	int ret;
 
 	/* fallocate always requiring blocking context */
-	WARN_ON_ONCE(issue_flags & IO_URING_F_NONBLOCK);
-
+	if (issue_flags & IO_URING_F_NONBLOCK)
+		return -EAGAIN;
 	ret = vfs_fallocate(req->file, sync->mode, sync->off, sync->len);
 	if (ret >= 0)
 		fsnotify_modify(req->file);

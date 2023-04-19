@@ -48,7 +48,6 @@ int io_statx_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	}
 
 	req->flags |= REQ_F_NEED_CLEANUP;
-	req->flags |= REQ_F_FORCE_ASYNC;
 	return 0;
 }
 
@@ -57,7 +56,8 @@ int io_statx(struct io_kiocb *req, unsigned int issue_flags)
 	struct io_statx *sx = io_kiocb_to_cmd(req, struct io_statx);
 	int ret;
 
-	WARN_ON_ONCE(issue_flags & IO_URING_F_NONBLOCK);
+	if (issue_flags & IO_URING_F_NONBLOCK)
+		return -EAGAIN;
 
 	ret = do_statx(sx->dfd, sx->filename, sx->flags, sx->mask, sx->buffer);
 	io_req_set_res(req, ret, 0);
