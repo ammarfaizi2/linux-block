@@ -166,7 +166,7 @@ static inline bool io_sqd_events_pending(struct io_sq_data *sqd)
 
 static int __io_sq_thread(struct io_ring_ctx *ctx, bool cap_entries)
 {
-	unsigned int to_submit;
+	unsigned int to_submit, aux_issue_flags = 0;
 	int ret = 0;
 
 	to_submit = io_sqring_entries(ctx);
@@ -179,6 +179,8 @@ static int __io_sq_thread(struct io_ring_ctx *ctx, bool cap_entries)
 
 		if (ctx->sq_creds != current_cred())
 			creds = override_creds(ctx->sq_creds);
+		if (ctx->flags & IORING_SETUP_NO_OFFLOAD)
+			aux_issue_flags = IO_URING_F_NO_OFFLOAD;
 
 		mutex_lock(&ctx->uring_lock);
 		if (!wq_list_empty(&ctx->iopoll_list))
@@ -190,7 +192,7 @@ static int __io_sq_thread(struct io_ring_ctx *ctx, bool cap_entries)
 		 */
 		if (to_submit && likely(!percpu_ref_is_dying(&ctx->refs)) &&
 		    !(ctx->flags & IORING_SETUP_R_DISABLED))
-			ret = io_submit_sqes(ctx, to_submit);
+			ret = io_submit_sqes(ctx, to_submit, aux_issue_flags);
 		mutex_unlock(&ctx->uring_lock);
 
 		if (to_submit && wq_has_sleeper(&ctx->sqo_sq_wait))
