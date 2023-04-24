@@ -305,6 +305,11 @@ int iwl_mvm_mac_setup_register(struct iwl_mvm *mvm)
 	ieee80211_hw_set(hw, BUFF_MMPDU_TXQ);
 	ieee80211_hw_set(hw, STA_MMPDU_TXQ);
 
+	/* Set this early since we need to have it for the check below */
+	if (mvm->mld_api_is_used &&
+	    mvm->trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_BZ)
+		hw->wiphy->flags |= WIPHY_FLAG_SUPPORTS_MLO;
+
 	/* With MLD FW API, it tracks timing by itself,
 	 * no need for any timing from the host
 	 */
@@ -413,6 +418,8 @@ int iwl_mvm_mac_setup_register(struct iwl_mvm *mvm)
 
 	wiphy_ext_feature_set(hw->wiphy,
 			      NL80211_EXT_FEATURE_BEACON_RATE_LEGACY);
+	wiphy_ext_feature_set(hw->wiphy,
+			      NL80211_EXT_FEATURE_SCAN_MIN_PREQ_CONTENT);
 
 	if (fw_has_capa(&mvm->fw->ucode_capa,
 			IWL_UCODE_TLV_CAPA_FTM_CALIBRATED)) {
@@ -3312,8 +3319,8 @@ void iwl_mvm_sta_pre_rcu_remove(struct ieee80211_hw *hw,
 						     lockdep_is_held(&mvm->mutex));
 		sta_id = link_sta->sta_id;
 		if (sta == rcu_access_pointer(mvm->fw_id_to_mac_id[sta_id])) {
-			rcu_assign_pointer(mvm->fw_id_to_mac_id[sta_id],
-					   ERR_PTR(-ENOENT));
+			RCU_INIT_POINTER(mvm->fw_id_to_mac_id[sta_id],
+					 ERR_PTR(-ENOENT));
 			RCU_INIT_POINTER(mvm->fw_id_to_link_sta[sta_id], NULL);
 		}
 	}
@@ -3575,24 +3582,22 @@ static int iwl_mvm_mac_sta_state(struct ieee80211_hw *hw,
  */
 static void iwl_mvm_rs_rate_init_all_links(struct iwl_mvm *mvm,
 					   struct ieee80211_vif *vif,
-					   struct ieee80211_sta *sta,
-					   bool update)
+					   struct ieee80211_sta *sta)
 {
 	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
 	unsigned int link_id;
 
 	for_each_mvm_vif_valid_link(mvmvif, link_id) {
 		struct ieee80211_bss_conf *conf =
-			link_conf_dereference_protected(vif, link_id);
+			link_conf_dereference_check(vif, link_id);
 		struct ieee80211_link_sta *link_sta =
-			link_sta_dereference_protected(sta, link_id);
+			link_sta_dereference_check(sta, link_id);
 
 		if (!conf || !link_sta || !mvmvif->link[link_id]->phy_ctxt)
 			continue;
 
-		iwl_mvm_rs_rate_init(mvm, sta, conf, link_sta,
-				     mvmvif->link[link_id]->phy_ctxt->channel->band,
-				     update);
+		iwl_mvm_rs_rate_init(mvm, vif, sta, conf, link_sta,
+				     mvmvif->link[link_id]->phy_ctxt->channel->band);
 	}
 }
 
@@ -3764,7 +3769,7 @@ iwl_mvm_sta_state_auth_to_assoc(struct ieee80211_hw *hw,
 	}
 
 out:
-	iwl_mvm_rs_rate_init_all_links(mvm, vif, sta, false);
+	iwl_mvm_rs_rate_init_all_links(mvm, vif, sta);
 
 	return callbacks->update_sta(mvm, vif, sta);
 }
@@ -3797,7 +3802,9 @@ iwl_mvm_sta_state_assoc_to_authorized(struct iwl_mvm *mvm,
 		iwl_mvm_mei_host_associated(mvm, vif, mvm_sta);
 	}
 
-	iwl_mvm_rs_rate_init_all_links(mvm, vif, sta, true);
+	mvm_sta->authorized = true;
+
+	iwl_mvm_rs_rate_init_all_links(mvm, vif, sta);
 
 	return 0;
 }
@@ -3809,14 +3816,17 @@ iwl_mvm_sta_state_authorized_to_assoc(struct iwl_mvm *mvm,
 				      struct iwl_mvm_sta_state_ops *callbacks)
 {
 	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
+	struct iwl_mvm_sta *mvmsta = iwl_mvm_sta_from_mac80211(sta);
 	int ret;
 
 	lockdep_assert_held(&mvm->mutex);
 
+	mvmsta->authorized = false;
+
 	/* once we move into assoc state, need to update rate scale to
 	 * disable using wide bandwidth
 	 */
-	iwl_mvm_rs_rate_init_all_links(mvm, vif, sta, false);
+	iwl_mvm_rs_rate_init_all_links(mvm, vif, sta);
 
 	if (!sta->tdls) {
 		/* Set this but don't call iwl_mvm_mac_ctxt_changed()
@@ -3981,15 +3991,11 @@ void iwl_mvm_sta_rc_update(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 			   struct ieee80211_sta *sta, u32 changed)
 {
 	struct iwl_mvm *mvm = IWL_MAC80211_GET_MVM(hw);
-	struct iwl_mvm_vif *mvmvif = iwl_mvm_vif_from_mac80211(vif);
 
 	if (changed & (IEEE80211_RC_BW_CHANGED |
 		       IEEE80211_RC_SUPP_RATES_CHANGED |
 		       IEEE80211_RC_NSS_CHANGED))
-		iwl_mvm_rs_rate_init(mvm, sta,
-				     &vif->bss_conf, &sta->deflink,
-				     mvmvif->deflink.phy_ctxt->channel->band,
-				     true);
+		iwl_mvm_rs_rate_init_all_links(mvm, vif, sta);
 
 	if (vif->type == NL80211_IFTYPE_STATION &&
 	    changed & IEEE80211_RC_NSS_CHANGED)
