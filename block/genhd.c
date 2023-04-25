@@ -57,12 +57,7 @@ static DEFINE_IDA(ext_devt_ida);
 
 void set_capacity(struct gendisk *disk, sector_t sectors)
 {
-	struct block_device *bdev = disk->part0;
-
-	spin_lock(&bdev->bd_size_lock);
-	i_size_write(bdev->bd_inode, (loff_t)sectors << SECTOR_SHIFT);
-	bdev->bd_nr_sectors = sectors;
-	spin_unlock(&bdev->bd_size_lock);
+	bdev_set_nr_sectors(disk->part0, sectors);
 }
 EXPORT_SYMBOL(set_capacity);
 
@@ -425,6 +420,9 @@ int __must_check device_add_disk(struct device *parent, struct gendisk *disk,
 	 * registration.
 	 */
 	elevator_init_mq(disk->queue);
+
+	/* Mark bdev as having a submit_bio, if needed */
+	disk->part0->bd_has_submit_bio = disk->fops->submit_bio != NULL;
 
 	/*
 	 * If the driver provides an explicit major number it also must provide
