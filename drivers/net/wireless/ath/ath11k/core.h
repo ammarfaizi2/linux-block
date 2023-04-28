@@ -13,6 +13,7 @@
 #include <linux/bitfield.h>
 #include <linux/dmi.h>
 #include <linux/ctype.h>
+#include <linux/of.h>
 #include <linux/rhashtable.h>
 #include <linux/average.h>
 #include "qmi.h"
@@ -592,6 +593,7 @@ struct ath11k_per_peer_tx_stats {
 struct ath11k {
 	struct ath11k_base *ab;
 	struct ath11k_pdev *pdev;
+	struct device_node *np;
 	struct ieee80211_hw *hw;
 	struct ieee80211_ops *ops;
 	struct ath11k_pdev_wmi *wmi;
