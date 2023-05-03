@@ -96,83 +96,6 @@ retry:
 	return folio;
 }
 
-/*
- * Used in the GUP-fast path to determine whether a pin is permitted for a
- * specific folio.
- *
- * This call assumes the caller has pinned the folio, that the lowest page table
- * level still points to this folio, and that interrupts have been disabled.
- *
- * Writing to pinned file-backed dirty tracked folios is inherently problematic
- * (see comment describing the writable_file_mapping_allowed() function). We
- * therefore try to avoid the most egregious case of a long-term mapping doing
- * so.
- *
- * This function cannot be as thorough as that one as the VMA is not available
- * in the fast path, so instead we whitelist known good cases and if in doubt,
- * fall back to the slow path.
- */
-static bool folio_fast_pin_allowed(struct folio *folio, unsigned int flags)
-{
-	struct address_space *mapping;
-	unsigned long mapping_flags;
-
-	/*
-	 * If we aren't pinning then no problematic write can occur. A long term
-	 * pin is the most egregious case so this is the one we disallow.
-	 */
-	if ((flags & (FOLL_PIN | FOLL_LONGTERM | FOLL_WRITE)) !=
-	    (FOLL_PIN | FOLL_LONGTERM | FOLL_WRITE))
-		return true;
-
-	/* The folio is pinned, so we can safely access folio fields. */
-
-	/* Neither of these should be possible, but check to be sure. */
-	if (unlikely(folio_test_slab(folio) || folio_test_swapcache(folio)))
-		return false;
-
-	/* hugetlb mappings do not require dirty-tracking. */
-	if (folio_test_hugetlb(folio))
-		return true;
-
-	/*
-	 * GUP-fast disables IRQs. When IRQS are disabled, RCU grace periods
-	 * cannot proceed, which means no actions performed under RCU can
-	 * proceed either.
-	 *
-	 * inodes and thus their mappings are freed under RCU, which means the
-	 * mapping cannot be freed beneath us and thus we can safely dereference
-	 * it.
-	 */
-	lockdep_assert_irqs_disabled();
-
-	/*
-	 * However, there may be operations which _alter_ the mapping, so ensure
-	 * we read it once and only once.
-	 */
-	mapping = READ_ONCE(folio->mapping);
-
-	/*
-	 * The mapping may have been truncated, in any case we cannot determine
-	 * if this mapping is safe - fall back to slow path to determine how to
-	 * proceed.
-	 */
-	if (!mapping)
-		return false;
-
-	/* Anonymous folios are fine, other non-file backed cases are not. */
-	mapping_flags = (unsigned long)mapping & PAGE_MAPPING_FLAGS;
-	if (mapping_flags)
-		return mapping_flags == PAGE_MAPPING_ANON;
-
-	/*
-	 * At this point, we know the mapping is non-null and points to an
-	 * address_space object. The only remaining whitelisted file system is
-	 * shmem.
-	 */
-	return shmem_mapping(mapping);
-}
-
 /**
  * try_grab_folio() - Attempt to get or pin a folio.
  * @page:  pointer to page to be grabbed
@@ -2473,6 +2396,83 @@ static void __maybe_unused undo_dev_pagemap(int *nr, int nr_start,
 }
 
 #ifdef CONFIG_ARCH_HAS_PTE_SPECIAL
+/*
+ * Used in the GUP-fast path to determine whether a pin is permitted for a
+ * specific folio.
+ *
+ * This call assumes the caller has pinned the folio, that the lowest page table
+ * level still points to this folio, and that interrupts have been disabled.
+ *
+ * Writing to pinned file-backed dirty tracked folios is inherently problematic
+ * (see comment describing the writable_file_mapping_allowed() function). We
+ * therefore try to avoid the most egregious case of a long-term mapping doing
+ * so.
+ *
+ * This function cannot be as thorough as that one as the VMA is not available
+ * in the fast path, so instead we whitelist known good cases and if in doubt,
+ * fall back to the slow path.
+ */
+static bool folio_fast_pin_allowed(struct folio *folio, unsigned int flags)
+{
+	struct address_space *mapping;
+	unsigned long mapping_flags;
+
+	/*
+	 * If we aren't pinning then no problematic write can occur. A long term
+	 * pin is the most egregious case so this is the one we disallow.
+	 */
+	if ((flags & (FOLL_PIN | FOLL_LONGTERM | FOLL_WRITE)) !=
+	    (FOLL_PIN | FOLL_LONGTERM | FOLL_WRITE))
+		return true;
+
+	/* The folio is pinned, so we can safely access folio fields. */
+
+	/* Neither of these should be possible, but check to be sure. */
+	if (unlikely(folio_test_slab(folio) || folio_test_swapcache(folio)))
+		return false;
+
+	/* hugetlb mappings do not require dirty-tracking. */
+	if (folio_test_hugetlb(folio))
+		return true;
+
+	/*
+	 * GUP-fast disables IRQs. When IRQS are disabled, RCU grace periods
+	 * cannot proceed, which means no actions performed under RCU can
+	 * proceed either.
+	 *
+	 * inodes and thus their mappings are freed under RCU, which means the
+	 * mapping cannot be freed beneath us and thus we can safely dereference
+	 * it.
+	 */
+	lockdep_assert_irqs_disabled();
+
+	/*
+	 * However, there may be operations which _alter_ the mapping, so ensure
+	 * we read it once and only once.
+	 */
+	mapping = READ_ONCE(folio->mapping);
+
+	/*
+	 * The mapping may have been truncated, in any case we cannot determine
+	 * if this mapping is safe - fall back to slow path to determine how to
+	 * proceed.
+	 */
+	if (!mapping)
+		return false;
+
+	/* Anonymous folios are fine, other non-file backed cases are not. */
+	mapping_flags = (unsigned long)mapping & PAGE_MAPPING_FLAGS;
+	if (mapping_flags)
+		return mapping_flags == PAGE_MAPPING_ANON;
+
+	/*
+	 * At this point, we know the mapping is non-null and points to an
+	 * address_space object. The only remaining whitelisted file system is
+	 * shmem.
+	 */
+	return shmem_mapping(mapping);
+}
+
 /*
  * Fast-gup relies on pte change detection to avoid concurrent pgtable
  * operations.
