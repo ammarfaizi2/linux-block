@@ -3298,7 +3298,7 @@ retry_find:
 	}
 
 	if (!lock_folio_maybe_drop_mmap(vmf, folio, &fpin))
-		goto out_retry;
+		goto out_retry_put_folio;
 
 	/* Did it get truncated? */
 	if (unlikely(folio->mapping != mapping)) {
@@ -3334,7 +3334,7 @@ retry_find:
 	 */
 	if (fpin) {
 		folio_unlock(folio);
-		goto out_retry;
+		goto out_retry_put_folio;
 	}
 	if (mapping_locked)
 		filemap_invalidate_unlock_shared(mapping);
@@ -3363,7 +3363,7 @@ page_not_uptodate:
 	fpin = maybe_unlock_mmap_for_io(vmf, fpin);
 	error = filemap_read_folio(file, mapping->a_ops->read_folio, folio);
 	if (fpin)
-		goto out_retry;
+		goto out_retry_put_folio;
 	folio_put(folio);
 
 	if (!error || error == AOP_TRUNCATED_PAGE)
@@ -3372,14 +3372,14 @@ page_not_uptodate:
 
 	return VM_FAULT_SIGBUS;
 
+out_retry_put_folio:
+	folio_put(folio);
 out_retry:
 	/*
 	 * We dropped the mmap_lock, we need to return to the fault handler to
 	 * re-find the vma and come back and find our hopefully still populated
 	 * page.
 	 */
-	if (folio)
-		folio_put(folio);
 	if (mapping_locked)
 		filemap_invalidate_unlock_shared(mapping);
 	if (fpin)
