@@ -724,6 +724,9 @@ int ath11k_wmi_vdev_create(struct ath11k *ar, u8 *macaddr,
 	cmd->vdev_subtype = param->subtype;
 	cmd->num_cfg_txrx_streams = WMI_NUM_SUPPORTED_BAND_MAX;
 	cmd->pdev_id = param->pdev_id;
+	cmd->mbssid_flags = param->mbssid_flags;
+	cmd->mbssid_tx_vdev_id = param->mbssid_tx_vdev_id;
+
 	ether_addr_copy(cmd->vdev_macaddr.addr, macaddr);
 
 	ptr = skb->data + sizeof(*cmd);
@@ -941,6 +944,8 @@ int ath11k_wmi_vdev_start(struct ath11k *ar, struct wmi_vdev_start_req_arg *arg,
 	cmd->cac_duration_ms = arg->cac_duration_ms;
 	cmd->regdomain = arg->regdomain;
 	cmd->he_ops = arg->he_ops;
+	cmd->mbssid_flags = arg->mbssid_flags;
+	cmd->mbssid_tx_vdev_id = arg->mbssid_tx_vdev_id;
 
 	if (!restart) {
 		if (arg->ssid) {
@@ -996,7 +1001,8 @@ int ath11k_wmi_vdev_start(struct ath11k *ar, struct wmi_vdev_start_req_arg *arg,
 	return ret;
 }
 
-int ath11k_wmi_vdev_up(struct ath11k *ar, u32 vdev_id, u32 aid, const u8 *bssid)
+int ath11k_wmi_vdev_up(struct ath11k *ar, u32 vdev_id, u32 aid, const u8 *bssid,
+		       u8 *tx_bssid, u32 nontx_profile_idx, u32 nontx_profile_cnt)
 {
 	struct ath11k_pdev_wmi *wmi = ar->wmi;
 	struct wmi_vdev_up_cmd *cmd;
@@ -1020,14 +1026,19 @@ int ath11k_wmi_vdev_up(struct ath11k *ar, u32 vdev_id, u32 aid, const u8 *bssid)
 
 	ether_addr_copy(cmd->vdev_bssid.addr, bssid);
 
+	cmd->nontx_profile_idx = nontx_profile_idx;
+	cmd->nontx_profile_cnt = nontx_profile_cnt;
+	if (tx_bssid)
+		ether_addr_copy(cmd->tx_vdev_bssid.addr, tx_bssid);
+
 	if (arvif && arvif->vif->type == NL80211_IFTYPE_STATION) {
 		bss_conf = &arvif->vif->bss_conf;
 
 		if (bss_conf->nontransmitted) {
-			ether_addr_copy(cmd->trans_bssid.addr,
+			ether_addr_copy(cmd->tx_vdev_bssid.addr,
 					bss_conf->transmitter_bssid);
-			cmd->profile_idx = bss_conf->bssid_index;
-			cmd->profile_num = bss_conf->bssid_indicator;
+			cmd->nontx_profile_idx = bss_conf->bssid_index;
+			cmd->nontx_profile_cnt = bss_conf->bssid_indicator;
 		}
 	}
 
@@ -1688,7 +1699,7 @@ int ath11k_wmi_send_bcn_offload_control_cmd(struct ath11k *ar,
 
 int ath11k_wmi_bcn_tmpl(struct ath11k *ar, u32 vdev_id,
 			struct ieee80211_mutable_offsets *offs,
-			struct sk_buff *bcn)
+			struct sk_buff *bcn, u32 ema_params)
 {
 	struct ath11k_pdev_wmi *wmi = ar->wmi;
 	struct wmi_bcn_tmpl_cmd *cmd;
@@ -1726,6 +1737,8 @@ int ath11k_wmi_bcn_tmpl(struct ath11k *ar, u32 vdev_id,
 	}
 
 	cmd->buf_len = bcn->len;
+	cmd->mbssid_ie_offset = offs->mbssid_off;
+	cmd->ema_params = ema_params;
 
 	ptr = skb->data + sizeof(*cmd);
 
@@ -3987,6 +4000,9 @@ ath11k_wmi_copy_resource_config(struct wmi_resource_config *wmi_cfg,
 		~(1 << WMI_CFG_HOST_SERVICE_FLAG_REG_CC_EXT);
 	wmi_cfg->host_service_flags |= (tg_cfg->is_reg_cc_ext_event_supported <<
 					WMI_CFG_HOST_SERVICE_FLAG_REG_CC_EXT);
+	wmi_cfg->flags2 = WMI_RSRC_CFG_FLAG2_CALC_NEXT_DTIM_COUNT_SET;
+	wmi_cfg->ema_max_vap_cnt = tg_cfg->ema_max_vap_cnt;
+	wmi_cfg->ema_max_profile_period = tg_cfg->ema_max_profile_period;
 }
 
 static int ath11k_init_cmd_send(struct ath11k_pdev_wmi *wmi,
