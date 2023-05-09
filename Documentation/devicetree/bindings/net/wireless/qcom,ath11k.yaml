@@ -78,6 +78,34 @@ properties:
     items:
       - const: wlan-smp2p-out
 
+  "#address-cells":
+    const: 1
+
+  "#size-cells":
+    const: 0
+
+patternProperties:
+  "^radio@[0-2]$":
+    type: object
+
+    allOf:
+      - $ref: ieee80211.yaml#
+
+    properties:
+      reg:
+        maxItems: 1
+        description: Radio index
+
+      nvmem-cells:
+        items:
+          - description: NVMEM cell with the MAC address
+
+      nvmem-cell-names:
+        items:
+          - const: mac-address
+
+    unevaluatedProperties: false
+
 required:
   - compatible
   - reg
@@ -378,6 +406,14 @@ examples:
                           "wbm2host-tx-completions-ring1",
                           "tcl2host-status-ring";
         qcom,rproc = <&q6v5_wcss>;
+        #address-cells = <1>;
+        #size-cells = <0>;
+
+        radio@0 {
+            reg = <0x0>;
+            nvmem-cells = <&mac>;
+            nvmem-cell-names = "mac-address";
+        };
     };
 
   - |
