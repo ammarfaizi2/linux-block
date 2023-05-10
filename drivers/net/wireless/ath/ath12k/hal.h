@@ -1064,6 +1064,7 @@ struct hal_ops {
 	bool (*rx_desc_mac_addr2_valid)(struct hal_rx_desc *desc);
 	u8* (*rx_desc_mpdu_start_addr2)(struct hal_rx_desc *desc);
 	bool (*rx_desc_is_mcbc)(struct hal_rx_desc *desc);
+	bool (*rx_desc_is_da_mcbc)(struct hal_rx_desc *desc);
 	void (*rx_desc_get_dot11_hdr)(struct hal_rx_desc *desc,
 				      struct ieee80211_hdr *hdr);
 	u16 (*rx_desc_get_mpdu_frame_ctl)(struct hal_rx_desc *desc);
