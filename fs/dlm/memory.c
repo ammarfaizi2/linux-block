@@ -51,7 +51,7 @@ int __init dlm_memory_init(void)
 	cb_cache = kmem_cache_create("dlm_cb", sizeof(struct dlm_callback),
 				     __alignof__(struct dlm_callback), 0,
 				     NULL);
-	if (!rsb_cache)
+	if (!cb_cache)
 		goto cb;
 
 	return 0;
@@ -118,7 +118,7 @@ struct dlm_lkb *dlm_allocate_lkb(struct dlm_ls *ls)
 
 void dlm_free_lkb(struct dlm_lkb *lkb)
 {
-	if (lkb->lkb_flags & DLM_IFL_USER) {
+	if (test_bit(DLM_DFL_USER_BIT, &lkb->lkb_dflags)) {
 		struct dlm_user_args *ua;
 		ua = lkb->lkb_ua;
 		if (ua) {

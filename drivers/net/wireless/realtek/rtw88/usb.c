@@ -118,6 +118,22 @@ static void rtw_usb_write32(struct rtw_dev *rtwdev, u32 addr, u32 val)
 	rtw_usb_write(rtwdev, addr, val, 4);
 }
 
+static int dma_mapping_to_ep(enum rtw_dma_mapping dma_mapping)
+{
+	switch (dma_mapping) {
+	case RTW_DMA_MAPPING_HIGH:
+		return 0;
+	case RTW_DMA_MAPPING_NORMAL:
+		return 1;
+	case RTW_DMA_MAPPING_LOW:
+		return 2;
+	case RTW_DMA_MAPPING_EXTRA:
+		return 3;
+	default:
+		return -EINVAL;
+	}
+}
+
 static int rtw_usb_parse(struct rtw_dev *rtwdev,
 			 struct usb_interface *interface)
 {
@@ -129,6 +145,8 @@ static int rtw_usb_parse(struct rtw_dev *rtwdev,
 	int num_out_pipes = 0;
 	int i;
 	u8 num;
+	const struct rtw_chip_info *chip = rtwdev->chip;
+	const struct rtw_rqpn *rqpn;
 
 	for (i = 0; i < interface_desc->bNumEndpoints; i++) {
 		endpoint = &host_interface->endpoint[i].desc;
@@ -183,30 +201,33 @@ static int rtw_usb_parse(struct rtw_dev *rtwdev,
 
 	rtwdev->hci.bulkout_num = num_out_pipes;
 
-	switch (num_out_pipes) {
-	case 4:
-	case 3:
-		rtwusb->qsel_to_ep[TX_DESC_QSEL_TID0] = 2;
-		rtwusb->qsel_to_ep[TX_DESC_QSEL_TID1] = 2;
-		rtwusb->qsel_to_ep[TX_DESC_QSEL_TID2] = 2;
-		rtwusb->qsel_to_ep[TX_DESC_QSEL_TID3] = 2;
-		rtwusb->qsel_to_ep[TX_DESC_QSEL_TID4] = 1;
-		rtwusb->qsel_to_ep[TX_DESC_QSEL_TID5] = 1;
-		rtwusb->qsel_to_ep[TX_DESC_QSEL_TID6] = 0;
-		rtwusb->qsel_to_ep[TX_DESC_QSEL_TID7] = 0;
-		break;
-	case 2:
-		rtwusb->qsel_to_ep[TX_DESC_QSEL_TID0] = 1;
-		rtwusb->qsel_to_ep[TX_DESC_QSEL_TID1] = 1;
-		rtwusb->qsel_to_ep[TX_DESC_QSEL_TID2] = 1;
-		rtwusb->qsel_to_ep[TX_DESC_QSEL_TID3] = 1;
-		break;
-	case 1:
-		break;
-	default:
-		rtw_err(rtwdev, "failed to get out_pipes(%d)\n", num_out_pipes);
+	if (num_out_pipes < 1 || num_out_pipes > 4) {
+		rtw_err(rtwdev, "invalid number of endpoints %d\n", num_out_pipes);
 		return -EINVAL;
 	}
+
+	rqpn = &chip->rqpn_table[num_out_pipes];
+
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_TID0] = dma_mapping_to_ep(rqpn->dma_map_be);
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_TID1] = dma_mapping_to_ep(rqpn->dma_map_bk);
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_TID2] = dma_mapping_to_ep(rqpn->dma_map_bk);
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_TID3] = dma_mapping_to_ep(rqpn->dma_map_be);
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_TID4] = dma_mapping_to_ep(rqpn->dma_map_vi);
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_TID5] = dma_mapping_to_ep(rqpn->dma_map_vi);
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_TID6] = dma_mapping_to_ep(rqpn->dma_map_vo);
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_TID7] = dma_mapping_to_ep(rqpn->dma_map_vo);
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_TID8] = -EINVAL;
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_TID9] = -EINVAL;
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_TID10] = -EINVAL;
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_TID11] = -EINVAL;
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_TID12] = -EINVAL;
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_TID13] = -EINVAL;
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_TID14] = -EINVAL;
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_TID15] = -EINVAL;
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_BEACON] = dma_mapping_to_ep(rqpn->dma_map_hi);
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_HIGH] = dma_mapping_to_ep(rqpn->dma_map_hi);
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_MGMT] = dma_mapping_to_ep(rqpn->dma_map_mg);
+	rtwusb->qsel_to_ep[TX_DESC_QSEL_H2C] = dma_mapping_to_ep(rqpn->dma_map_hi);
 
 	return 0;
 }
@@ -250,7 +271,7 @@ static void rtw_usb_write_port_tx_complete(struct urb *urb)
 static int qsel_to_ep(struct rtw_usb *rtwusb, unsigned int qsel)
 {
 	if (qsel >= ARRAY_SIZE(rtwusb->qsel_to_ep))
-		return 0;
+		return -EINVAL;
 
 	return rtwusb->qsel_to_ep[qsel];
 }
@@ -265,12 +286,16 @@ static int rtw_usb_write_port(struct rtw_dev *rtwdev, u8 qsel, struct sk_buff *s
 	int ret;
 	int ep = qsel_to_ep(rtwusb, qsel);
 
+	if (ep < 0)
+		return ep;
+
 	pipe = usb_sndbulkpipe(usbd, rtwusb->out_ep[ep]);
 	urb = usb_alloc_urb(0, GFP_ATOMIC);
 	if (!urb)
 		return -ENOMEM;
 
 	usb_fill_bulk_urb(urb, usbd, pipe, skb->data, skb->len, cb, context);
+	urb->transfer_flags |= URB_ZERO_PACKET;
 	ret = usb_submit_urb(urb, GFP_ATOMIC);
 
 	usb_free_urb(urb);
@@ -413,24 +438,11 @@ static int rtw_usb_write_data_rsvd_page(struct rtw_dev *rtwdev, u8 *buf,
 					u32 size)
 {
 	const struct rtw_chip_info *chip = rtwdev->chip;
-	struct rtw_usb *rtwusb;
 	struct rtw_tx_pkt_info pkt_info = {0};
-	u32 len, desclen;
-
-	rtwusb = rtw_get_usb_priv(rtwdev);
 
 	pkt_info.tx_pkt_size = size;
 	pkt_info.qsel = TX_DESC_QSEL_BEACON;
-
-	desclen = chip->tx_pkt_desc_sz;
-	len = desclen + size;
-	if (len % rtwusb->bulkout_size == 0) {
-		len += RTW_USB_PACKET_OFFSET_SZ;
-		pkt_info.offset = desclen + RTW_USB_PACKET_OFFSET_SZ;
-		pkt_info.pkt_offset = 1;
-	} else {
-		pkt_info.offset = desclen;
-	}
+	pkt_info.offset = chip->tx_pkt_desc_sz;
 
 	return rtw_usb_write_data(rtwdev, &pkt_info, buf);
 }
@@ -471,9 +483,9 @@ static int rtw_usb_tx_write(struct rtw_dev *rtwdev,
 	u8 *pkt_desc;
 	int ep;
 
+	pkt_info->qsel = rtw_usb_tx_queue_mapping_to_qsel(skb);
 	pkt_desc = skb_push(skb, chip->tx_pkt_desc_sz);
 	memset(pkt_desc, 0, chip->tx_pkt_desc_sz);
-	pkt_info->qsel = rtw_usb_tx_queue_mapping_to_qsel(skb);
 	ep = qsel_to_ep(rtwusb, pkt_info->qsel);
 	rtw_tx_fill_tx_desc(pkt_info, skb);
 	rtw_tx_fill_txdesc_checksum(rtwdev, pkt_info, skb->data);
@@ -792,6 +804,7 @@ static void rtw_usb_intf_deinit(struct rtw_dev *rtwdev,
 	struct rtw_usb *rtwusb = rtw_get_usb_priv(rtwdev);
 
 	usb_put_dev(rtwusb->udev);
+	kfree(rtwusb->usb_data);
 	usb_set_intfdata(intf, NULL);
 }
 
@@ -820,7 +833,7 @@ int rtw_usb_probe(struct usb_interface *intf, const struct usb_device_id *id)
 
 	ret = rtw_usb_alloc_rx_bufs(rtwusb);
 	if (ret)
-		return ret;
+		goto err_release_hw;
 
 	ret = rtw_core_init(rtwdev);
 	if (ret)

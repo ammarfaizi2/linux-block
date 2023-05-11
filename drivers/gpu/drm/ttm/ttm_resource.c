@@ -26,8 +26,9 @@
 #include <linux/io-mapping.h>
 #include <linux/scatterlist.h>
 
+#include <drm/ttm/ttm_bo.h>
+#include <drm/ttm/ttm_placement.h>
 #include <drm/ttm/ttm_resource.h>
-#include <drm/ttm/ttm_bo_driver.h>
 
 /**
  * ttm_lru_bulk_move_init - initialize a bulk move structure
@@ -360,7 +361,6 @@ bool ttm_resource_compat(struct ttm_resource *res,
 
 	return false;
 }
-EXPORT_SYMBOL(ttm_resource_compat);
 
 void ttm_resource_set_bo(struct ttm_resource *res,
 			 struct ttm_buffer_object *bo)
