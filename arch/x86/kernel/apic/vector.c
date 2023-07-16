@@ -885,7 +885,7 @@ static int apic_retrigger_irq(struct irq_data *irqd)
 void apic_ack_irq(struct irq_data *irqd)
 {
 	irq_move_irq(irqd);
-	ack_APIC_irq();
+	apic_eoi();
 }
 
 void apic_ack_edge(struct irq_data *irqd)
@@ -940,7 +940,7 @@ DEFINE_IDTENTRY_SYSVEC(sysvec_irq_move_cleanup)
 	struct apic_chip_data *apicd;
 	struct hlist_node *tmp;
 
-	ack_APIC_irq();
+	apic_eoi();
 	/* Prevent vectors vanishing under us */
 	raw_spin_lock(&vector_lock);
 
