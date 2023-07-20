@@ -173,9 +173,19 @@ void iomap_dio_bio_end_io(struct bio *bio)
 	}
 
 	/*
-	 * Flagged with IOMAP_DIO_INLINE_COMP, we can complete it inline
+	 * Flagged with IOMAP_DIO_INLINE_COMP, we can complete it inline.
+	 * Ditto for polled requests - if the flag is still at completion
+	 * time, then we know the request was actually polled and completion
+	 * is called from the task itself. This is why we need to check it
+	 * here rather than flag it at issue time.
 	 */
-	if (dio->flags & IOMAP_DIO_INLINE_COMP) {
+	if ((dio->flags & IOMAP_DIO_INLINE_COMP) || (bio->bi_opf & REQ_POLLED)) {
+		/*
+		 * For polled IO, we need to clear ->private as it points to
+		 * the bio being polled for. The completion side uses it to
+		 * know if a given request has been found yet or not. For
+		 * non-polled IO, ->private isn't applicable.
+		 */
 		WRITE_ONCE(iocb->private, NULL);
 		iomap_dio_complete_work(&dio->aio.work);
 		goto release_bio;
