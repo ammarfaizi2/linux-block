@@ -20,12 +20,12 @@
  * Private flags for iomap_dio, must not overlap with the public ones in
  * iomap.h:
  */
-#define IOMAP_DIO_CALLER_COMP	(1 << 26)
-#define IOMAP_DIO_INLINE_COMP	(1 << 27)
-#define IOMAP_DIO_WRITE_THROUGH	(1 << 28)
-#define IOMAP_DIO_NEED_SYNC	(1 << 29)
-#define IOMAP_DIO_WRITE		(1 << 30)
-#define IOMAP_DIO_DIRTY		(1 << 31)
+#define IOMAP_DIO_CALLER_COMP	(1U << 26)
+#define IOMAP_DIO_INLINE_COMP	(1U << 27)
+#define IOMAP_DIO_WRITE_THROUGH	(1U << 28)
+#define IOMAP_DIO_NEED_SYNC	(1U << 29)
+#define IOMAP_DIO_WRITE		(1U << 30)
+#define IOMAP_DIO_DIRTY		(1U << 31)
 
 struct iomap_dio {
 	struct kiocb		*iocb;
