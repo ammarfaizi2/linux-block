@@ -76,7 +76,7 @@ bool arch_match_cpu_phys_id(int cpu, u64 phys_id)
 #ifdef CONFIG_SMP
 static void cpu_mark_primary_thread(unsigned int cpu, unsigned int apicid)
 {
-	if (!(apicid & (smp_num_siblings - 1)))
+	if (!(apicid & (__max_threads_per_core - 1)))
 		cpumask_set_cpu(cpu, &__cpu_primary_thread_mask);
 }
 #else
@@ -426,8 +426,8 @@ void __init topology_init_possible_cpus(void)
 
 	cnta = domain_weight(TOPO_CORE_DOMAIN);
 	cntb = domain_weight(TOPO_SMT_DOMAIN);
-	smp_num_siblings = 1U << (get_count_order(cntb) - get_count_order(cnta));
-	pr_info("Max. threads per core: %3u\n", smp_num_siblings);
+	__max_threads_per_core = 1U << (get_count_order(cntb) - get_count_order(cnta));
+	pr_info("Max. threads per core: %3u\n", __max_threads_per_core);
 
 	pr_info("Allowing %u present CPUs plus %u hotplug CPUs\n", assigned, disabled);
 	if (topo_info.nr_rejected_cpus)
