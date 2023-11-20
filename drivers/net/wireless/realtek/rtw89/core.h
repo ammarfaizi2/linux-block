@@ -2815,10 +2815,10 @@ struct rtw89_ra_info {
 	u8 csi_bw:3;
 };
 
-#define RTW89_PPDU_MAX_USR 4
 #define RTW89_PPDU_MAC_INFO_USR_SIZE 4
 #define RTW89_PPDU_MAC_INFO_SIZE 8
 #define RTW89_PPDU_MAC_RX_CNT_SIZE 96
+#define RTW89_PPDU_MAC_RX_CNT_SIZE_V1 128
 
 #define RTW89_MAX_RX_AGG_NUM 64
 #define RTW89_MAX_TX_AGG_NUM 128
@@ -3064,6 +3064,7 @@ struct rtw89_hci_ops {
 	void (*write32)(struct rtw89_dev *rtwdev, u32 addr, u32 data);
 
 	int (*mac_pre_init)(struct rtw89_dev *rtwdev);
+	int (*mac_pre_deinit)(struct rtw89_dev *rtwdev);
 	int (*mac_post_init)(struct rtw89_dev *rtwdev);
 	int (*deinit)(struct rtw89_dev *rtwdev);
 
@@ -3644,6 +3645,7 @@ struct rtw89_chip_info {
 	u8 bacam_num;
 	u8 bacam_dynamic_num;
 	enum rtw89_bacam_ver bacam_ver;
+	u8 ppdu_max_usr;
 
 	u8 sec_ctrl_efuse_size;
 	u32 physical_efuse_size;
@@ -4800,6 +4802,11 @@ static inline u32 rtw89_hci_check_and_reclaim_tx_resource(struct rtw89_dev *rtwd
 static inline void rtw89_hci_tx_kick_off(struct rtw89_dev *rtwdev, u8 txch)
 {
 	return rtwdev->hci.ops->tx_kick_off(rtwdev, txch);
+}
+
+static inline int rtw89_hci_mac_pre_deinit(struct rtw89_dev *rtwdev)
+{
+	return rtwdev->hci.ops->mac_pre_deinit(rtwdev);
 }
 
 static inline void rtw89_hci_flush_queues(struct rtw89_dev *rtwdev, u32 queues,
