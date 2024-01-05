@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -14,6 +14,7 @@
 #include "dp_rx.h"
 #include "debug.h"
 #include "hif.h"
+#include "fw.h"
 
 unsigned int ath12k_debug_mask;
 module_param_named(debug_mask, ath12k_debug_mask, uint, 0644);
@@ -1104,6 +1105,12 @@ int ath12k_core_pre_init(struct ath12k_base *ab)
 		return ret;
 	}
 
+	ret = ath12k_fw_map(ab);
+	if (ret) {
+		ath12k_err(ab, "failed to map firmware: %d", ret);
+		return ret;
+	}
+
 	return 0;
 }
 
@@ -1132,6 +1139,7 @@ void ath12k_core_deinit(struct ath12k_base *ab)
 	ath12k_hif_power_down(ab);
 	ath12k_mac_destroy(ab);
 	ath12k_core_soc_destroy(ab);
+	ath12k_fw_unmap(ab);
 }
 
 void ath12k_core_free(struct ath12k_base *ab)
