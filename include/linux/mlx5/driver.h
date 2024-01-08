@@ -150,6 +150,7 @@ enum {
 	MLX5_REG_MTPPSE		 = 0x9054,
 	MLX5_REG_MTUTC		 = 0x9055,
 	MLX5_REG_MPEGC		 = 0x9056,
+	MLX5_REG_MPIR		 = 0x9059,
 	MLX5_REG_MCQS		 = 0x9060,
 	MLX5_REG_MCQI		 = 0x9061,
 	MLX5_REG_MCC		 = 0x9062,
@@ -678,6 +679,9 @@ struct mlx5e_resources {
 		struct mlx5_td             td;
 		u32			   mkey;
 		struct mlx5_sq_bfreg       bfreg;
+#define MLX5_MAX_NUM_TC 8
+		u32                        tisn[MLX5_MAX_PORTS][MLX5_MAX_NUM_TC];
+		bool			   tisn_valid;
 	} hw_objs;
 	struct net_device *uplink_netdev;
 	struct mutex uplink_netdev_lock;
@@ -818,6 +822,7 @@ struct mlx5_core_dev {
 	struct blocking_notifier_head macsec_nh;
 #endif
 	u64 num_ipsec_offloads;
+	struct mlx5_sd          *sd;
 };
 
 struct mlx5_db {
@@ -1217,6 +1222,14 @@ static inline bool mlx5_core_is_vf(const struct mlx5_core_dev *dev)
 static inline bool mlx5_core_is_ecpf(const struct mlx5_core_dev *dev)
 {
 	return dev->caps.embedded_cpu;
+}
+
+static inline bool mlx5_core_is_mgmt_pf(const struct mlx5_core_dev *dev)
+{
+	if (!MLX5_CAP_GEN_2(dev, local_mng_port_valid))
+		return false;
+
+	return MLX5_CAP_GEN_2(dev, local_mng_port);
 }
 
 static inline bool
