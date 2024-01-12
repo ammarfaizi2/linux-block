@@ -622,8 +622,7 @@ static void ath12k_core_soc_destroy(struct ath12k_base *ab)
 
 static int ath12k_core_mac_register(struct ath12k_base *ab)
 {
-	struct ath12k *ar;
-	struct ath12k_pdev *pdev;
+	struct ath12k_hw *ah;
 	int i;
 	int ret;
 
@@ -634,22 +633,23 @@ static int ath12k_core_mac_register(struct ath12k_base *ab)
 	ab->cc_freq_hz = 320000;
 	ab->free_vdev_map = (1LL << (ab->num_radios * TARGET_NUM_VDEVS)) - 1;
 
-	for (i = 0; i < ab->num_radios; i++) {
-		pdev = &ab->pdevs[i];
-		ar = pdev->ar;
+	for (i = 0; i < ab->num_hw; i++) {
+		ah = ab->ah[i];
 
-		ret = ath12k_mac_hw_register(ar);
+		ret = ath12k_mac_hw_register(ah);
 		if (ret)
-			goto err_cleanup;
+			goto err;
 	}
 
 	return 0;
 
-err_cleanup:
+err:
 	for (i = i - 1; i >= 0; i--) {
-		pdev = &ab->pdevs[i];
-		ar = pdev->ar;
-		ath12k_mac_hw_unregister(ar);
+		ah = ab->ah[i];
+		if (!ah)
+			continue;
+
+		ath12k_mac_hw_unregister(ah);
 	}
 
 	return ret;
@@ -657,17 +657,15 @@ err_cleanup:
 
 static void ath12k_core_mac_unregister(struct ath12k_base *ab)
 {
-	struct ath12k *ar;
-	struct ath12k_pdev *pdev;
+	struct ath12k_hw *ah;
 	int i;
 
-	for (i = 0; i < ab->num_radios; i++) {
-		pdev = &ab->pdevs[i];
-		ar = pdev->ar;
-		if (!ar)
+	for (i = ab->num_hw - 1; i >= 0; i--) {
+		ah = ab->ah[i];
+		if (!ah)
 			continue;
 
-		ath12k_mac_hw_unregister(ar);
+		ath12k_mac_hw_unregister(ah);
 	}
 }
 
@@ -704,23 +702,69 @@ static void ath12k_core_pdev_destroy(struct ath12k_base *ab)
 
 static void ath12k_core_mac_destroy(struct ath12k_base *ab)
 {
-	ath12k_mac_hw_destroy(ab);
+	struct ath12k_pdev *pdev;
+	int i;
+
+	for (i = 0; i < ab->num_radios; i++) {
+		pdev = &ab->pdevs[i];
+		if (!pdev->ar)
+			continue;
+
+		pdev->ar = NULL;
+	}
+
+	for (i = 0; i < ab->num_hw; i++) {
+		if (!ab->ah[i])
+			continue;
+
+		ath12k_mac_hw_destroy(ab->ah[i]);
+		ab->ah[i] = NULL;
+	}
 }
 
 static int ath12k_core_mac_allocate(struct ath12k_base *ab)
 {
-	int ret;
+	struct ath12k_hw *ah;
+	struct ath12k_pdev_map pdev_map[MAX_RADIOS];
+	int ret, i, j;
+	u8 radio_per_hw;
 
 	if (test_bit(ATH12K_FLAG_REGISTERED, &ab->dev_flags))
 		return 0;
 
-	ret = ath12k_mac_hw_allocate(ab);
-	if (ret)
-		return ret;
+	ab->num_hw = ab->num_radios;
+	radio_per_hw = 1;
+
+	for (i = 0; i < ab->num_hw; i++) {
+		for (j = 0; j < radio_per_hw; j++) {
+			pdev_map[j].ab = ab;
+			pdev_map[j].pdev_idx = (i * radio_per_hw) + j;
+		}
+
+		ah = ath12k_mac_hw_allocate(ab, pdev_map, radio_per_hw);
+		if (!ah) {
+			ath12k_warn(ab, "failed to allocate mac80211 hw device for hw_idx %d\n",
+				    i);
+			goto err;
+		}
+
+		ab->ah[i] = ah;
+	}
 
 	ath12k_dp_pdev_pre_alloc(ab);
 
 	return 0;
+
+err:
+	for (i = i - 1; i >= 0; i--) {
+		if (!ab->ah[i])
+			continue;
+
+		ath12k_mac_hw_destroy(ab->ah[i]);
+		ab->ah[i] = NULL;
+	}
+
+	return ret;
 }
 
 static int ath12k_core_start(struct ath12k_base *ab,
@@ -995,6 +1039,7 @@ static void ath12k_core_pre_reconfigure_recovery(struct ath12k_base *ab)
 {
 	struct ath12k *ar;
 	struct ath12k_pdev *pdev;
+	struct ath12k_hw *ah;
 	int i;
 
 	spin_lock_bh(&ab->base_lock);
@@ -1004,13 +1049,20 @@ static void ath12k_core_pre_reconfigure_recovery(struct ath12k_base *ab)
 	if (ab->is_reset)
 		set_bit(ATH12K_FLAG_CRASH_FLUSH, &ab->dev_flags);
 
+	for (i = 0; i < ab->num_hw; i++) {
+		if (!ab->ah[i])
+			continue;
+
+		ah = ab->ah[i];
+		ieee80211_stop_queues(ah->hw);
+	}
+
 	for (i = 0; i < ab->num_radios; i++) {
 		pdev = &ab->pdevs[i];
 		ar = pdev->ar;
 		if (!ar || ar->state == ATH12K_STATE_OFF)
 			continue;
 
-		ieee80211_stop_queues(ath12k_ar_to_hw(ar));
 		ath12k_mac_drain_tx(ar);
 		complete(&ar->scan.started);
 		complete(&ar->scan.completed);

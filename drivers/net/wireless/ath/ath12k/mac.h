@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-3-Clause-Clear */
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef ATH12K_MAC_H
@@ -12,6 +12,8 @@
 
 struct ath12k;
 struct ath12k_base;
+struct ath12k_hw;
+struct ath12k_pdev_map;
 
 struct ath12k_generic_iter {
 	struct ath12k *ar;
@@ -48,10 +50,12 @@ enum ath12k_supported_bw {
 
 extern const struct htt_rx_ring_tlv_filter ath12k_mac_mon_status_filter_default;
 
-void ath12k_mac_hw_destroy(struct ath12k_base *ab);
-void ath12k_mac_hw_unregister(struct ath12k *ar);
-int ath12k_mac_hw_register(struct ath12k *ar);
-int ath12k_mac_hw_allocate(struct ath12k_base *ab);
+void ath12k_mac_hw_destroy(struct ath12k_hw *ah);
+void ath12k_mac_hw_unregister(struct ath12k_hw *ah);
+int ath12k_mac_hw_register(struct ath12k_hw *ah);
+struct ath12k_hw *ath12k_mac_hw_allocate(struct ath12k_base *ab,
+					 struct ath12k_pdev_map *pdev_map,
+					 u8 num_pdev_map);
 int ath12k_mac_hw_ratecode_to_legacy_rate(u8 hw_rc, u8 preamble, u8 *rateidx,
 					  u16 *rate);
 u8 ath12k_mac_bitrate_to_idx(const struct ieee80211_supported_band *sband,
