@@ -5043,12 +5043,11 @@ static struct mount *listmnt_next(struct mount *curr)
 }
 
 static ssize_t do_listmount(struct mount *first, struct path *orig, u64 mnt_id,
-			    u64 __user *buf, size_t bufsize,
+			    u64 __user *buf, size_t count,
 			    const struct path *root)
 {
 	struct mount *r;
-	ssize_t ctr;
-	int err;
+	ssize_t ret;
 
 	/*
 	 * Don't trigger audit denials. We just want to determine what
@@ -5058,36 +5057,43 @@ static ssize_t do_listmount(struct mount *first, struct path *orig, u64 mnt_id,
 	    !ns_capable_noaudit(&init_user_ns, CAP_SYS_ADMIN))
 		return -EPERM;
 
-	err = security_sb_statfs(orig->dentry);
-	if (err)
-		return err;
+	ret = security_sb_statfs(orig->dentry);
+	if (ret)
+		return ret;
 
-	for (ctr = 0, r = first; r && ctr < bufsize; r = listmnt_next(r)) {
+	for (ret = 0, r = first; r && count; r = listmnt_next(r)) {
 		if (r->mnt_id_unique == mnt_id)
 			continue;
 		if (!is_path_reachable(r, r->mnt.mnt_root, orig))
 			continue;
-		ctr = array_index_nospec(ctr, bufsize);
-		if (put_user(r->mnt_id_unique, buf + ctr))
+		if (put_user(r->mnt_id_unique, buf))
 			return -EFAULT;
-		if (check_add_overflow(ctr, 1, &ctr))
-			return -ERANGE;
+		buf++;
+		ret++;
+		count--;
 	}
-	return ctr;
+	return ret;
 }
 
 SYSCALL_DEFINE4(listmount, const struct mnt_id_req __user *, req,
-		u64 __user *, buf, size_t, bufsize, unsigned int, flags)
+		u64 __user *, buf, size_t, count, unsigned int, flags)
 {
 	struct mnt_namespace *ns = current->nsproxy->mnt_ns;
 	struct mnt_id_req kreq;
 	struct mount *first;
 	struct path root, orig;
 	u64 mnt_id, last_mnt_id;
+	const size_t maxcount = (size_t)-1 >> 3;
 	ssize_t ret;
 
 	if (flags)
 		return -EINVAL;
+
+	if (unlikely(count > maxcount))
+		return -EFAULT;
+
+	if (!access_ok(buf, count * sizeof(*buf)))
+		return -EFAULT;
 
 	ret = copy_mnt_id_req(req, &kreq);
 	if (ret)
@@ -5111,7 +5117,7 @@ SYSCALL_DEFINE4(listmount, const struct mnt_id_req __user *, req,
 	else
 		first = mnt_find_id_at(ns, last_mnt_id + 1);
 
-	ret = do_listmount(first, &orig, mnt_id, buf, bufsize, &root);
+	ret = do_listmount(first, &orig, mnt_id, buf, count, &root);
 err:
 	path_put(&root);
 	up_read(&namespace_sem);
