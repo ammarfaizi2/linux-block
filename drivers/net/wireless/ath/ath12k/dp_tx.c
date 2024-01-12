@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include "core.h"
@@ -403,7 +403,7 @@ ath12k_dp_tx_htt_tx_complete_buf(struct ath12k_base *ab,
 		}
 	}
 
-	ieee80211_tx_status_skb(ar->hw, msdu);
+	ieee80211_tx_status_skb(ath12k_ar_to_hw(ar), msdu);
 }
 
 static void
@@ -602,7 +602,7 @@ static void ath12k_dp_tx_complete_msdu(struct ath12k *ar,
 
 	ath12k_dp_tx_update(ar, ts);
 
-	ieee80211_tx_status_skb(ar->hw, msdu);
+	ieee80211_tx_status_skb(ath12k_ar_to_hw(ar), msdu);
 
 exit:
 	rcu_read_unlock();
