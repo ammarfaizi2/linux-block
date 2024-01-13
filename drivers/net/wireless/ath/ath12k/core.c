@@ -620,11 +620,62 @@ static void ath12k_core_soc_destroy(struct ath12k_base *ab)
 	ath12k_qmi_deinit_service(ab);
 }
 
+static int ath12k_core_mac_register(struct ath12k_base *ab)
+{
+	struct ath12k *ar;
+	struct ath12k_pdev *pdev;
+	int i;
+	int ret;
+
+	if (test_bit(ATH12K_FLAG_REGISTERED, &ab->dev_flags))
+		return 0;
+
+	/* Initialize channel counters frequency value in hertz */
+	ab->cc_freq_hz = 320000;
+	ab->free_vdev_map = (1LL << (ab->num_radios * TARGET_NUM_VDEVS)) - 1;
+
+	for (i = 0; i < ab->num_radios; i++) {
+		pdev = &ab->pdevs[i];
+		ar = pdev->ar;
+
+		ret = ath12k_mac_hw_register(ar);
+		if (ret)
+			goto err_cleanup;
+	}
+
+	return 0;
+
+err_cleanup:
+	for (i = i - 1; i >= 0; i--) {
+		pdev = &ab->pdevs[i];
+		ar = pdev->ar;
+		ath12k_mac_hw_unregister(ar);
+	}
+
+	return ret;
+}
+
+static void ath12k_core_mac_unregister(struct ath12k_base *ab)
+{
+	struct ath12k *ar;
+	struct ath12k_pdev *pdev;
+	int i;
+
+	for (i = 0; i < ab->num_radios; i++) {
+		pdev = &ab->pdevs[i];
+		ar = pdev->ar;
+		if (!ar)
+			continue;
+
+		ath12k_mac_hw_unregister(ar);
+	}
+}
+
 static int ath12k_core_pdev_create(struct ath12k_base *ab)
 {
 	int ret;
 
-	ret = ath12k_mac_register(ab);
+	ret = ath12k_core_mac_register(ab);
 	if (ret) {
 		ath12k_err(ab, "failed register the radio with mac80211: %d\n", ret);
 		return ret;
@@ -633,22 +684,43 @@ static int ath12k_core_pdev_create(struct ath12k_base *ab)
 	ret = ath12k_dp_pdev_alloc(ab);
 	if (ret) {
 		ath12k_err(ab, "failed to attach DP pdev: %d\n", ret);
-		goto err_mac_unregister;
+		goto err_core_mac_unregister;
 	}
 
 	return 0;
 
-err_mac_unregister:
-	ath12k_mac_unregister(ab);
+err_core_mac_unregister:
+	ath12k_core_mac_unregister(ab);
 
 	return ret;
 }
 
 static void ath12k_core_pdev_destroy(struct ath12k_base *ab)
 {
-	ath12k_mac_unregister(ab);
+	ath12k_core_mac_unregister(ab);
 	ath12k_hif_irq_disable(ab);
 	ath12k_dp_pdev_free(ab);
+}
+
+static void ath12k_core_mac_destroy(struct ath12k_base *ab)
+{
+	ath12k_mac_hw_destroy(ab);
+}
+
+static int ath12k_core_mac_allocate(struct ath12k_base *ab)
+{
+	int ret;
+
+	if (test_bit(ATH12K_FLAG_REGISTERED, &ab->dev_flags))
+		return 0;
+
+	ret = ath12k_mac_hw_allocate(ab);
+	if (ret)
+		return ret;
+
+	ath12k_dp_pdev_pre_alloc(ab);
+
+	return 0;
 }
 
 static int ath12k_core_start(struct ath12k_base *ab,
@@ -705,7 +777,7 @@ static int ath12k_core_start(struct ath12k_base *ab,
 		goto err_hif_stop;
 	}
 
-	ret = ath12k_mac_allocate(ab);
+	ret = ath12k_core_mac_allocate(ab);
 	if (ret) {
 		ath12k_err(ab, "failed to create new hw device with mac80211 :%d\n",
 			   ret);
@@ -714,12 +786,10 @@ static int ath12k_core_start(struct ath12k_base *ab,
 
 	ath12k_dp_cc_config(ab);
 
-	ath12k_dp_pdev_pre_alloc(ab);
-
 	ret = ath12k_dp_rx_pdev_reo_setup(ab);
 	if (ret) {
 		ath12k_err(ab, "failed to initialize reo destination rings: %d\n", ret);
-		goto err_mac_destroy;
+		goto err_core_mac_destroy;
 	}
 
 	ret = ath12k_wmi_cmd_init(ab);
@@ -755,8 +825,8 @@ static int ath12k_core_start(struct ath12k_base *ab,
 
 err_reo_cleanup:
 	ath12k_dp_rx_pdev_reo_cleanup(ab);
-err_mac_destroy:
-	ath12k_mac_destroy(ab);
+err_core_mac_destroy:
+	ath12k_core_mac_destroy(ab);
 err_hif_stop:
 	ath12k_hif_stop(ab);
 err_wmi_detach:
@@ -831,7 +901,7 @@ err_core_pdev_destroy:
 	ath12k_core_pdev_destroy(ab);
 err_core_stop:
 	ath12k_core_stop(ab);
-	ath12k_mac_destroy(ab);
+	ath12k_core_mac_destroy(ab);
 err_dp_free:
 	ath12k_dp_free(ab);
 	mutex_unlock(&ab->core_lock);
@@ -1127,7 +1197,7 @@ void ath12k_core_deinit(struct ath12k_base *ab)
 	mutex_unlock(&ab->core_lock);
 
 	ath12k_hif_power_down(ab);
-	ath12k_mac_destroy(ab);
+	ath12k_core_mac_destroy(ab);
 	ath12k_core_soc_destroy(ab);
 }
 
