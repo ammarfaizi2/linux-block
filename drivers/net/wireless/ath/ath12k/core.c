@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -620,11 +620,60 @@ static void ath12k_core_soc_destroy(struct ath12k_base *ab)
 	ath12k_qmi_deinit_service(ab);
 }
 
+static int ath12k_core_mac_register(struct ath12k_base *ab)
+{
+	struct ath12k_hw *ah;
+	int i;
+	int ret;
+
+	if (test_bit(ATH12K_FLAG_REGISTERED, &ab->dev_flags))
+		return 0;
+
+	/* Initialize channel counters frequency value in hertz */
+	ab->cc_freq_hz = 320000;
+	ab->free_vdev_map = (1LL << (ab->num_radios * TARGET_NUM_VDEVS)) - 1;
+
+	for (i = 0; i < ab->num_hw; i++) {
+		ah = ab->ah[i];
+
+		ret = ath12k_mac_hw_register(ah);
+		if (ret)
+			goto err;
+	}
+
+	return 0;
+
+err:
+	for (i = i - 1; i >= 0; i--) {
+		ah = ab->ah[i];
+		if (!ah)
+			continue;
+
+		ath12k_mac_hw_unregister(ah);
+	}
+
+	return ret;
+}
+
+static void ath12k_core_mac_unregister(struct ath12k_base *ab)
+{
+	struct ath12k_hw *ah;
+	int i;
+
+	for (i = ab->num_hw - 1; i >= 0; i--) {
+		ah = ab->ah[i];
+		if (!ah)
+			continue;
+
+		ath12k_mac_hw_unregister(ah);
+	}
+}
+
 static int ath12k_core_pdev_create(struct ath12k_base *ab)
 {
 	int ret;
 
-	ret = ath12k_mac_register(ab);
+	ret = ath12k_core_mac_register(ab);
 	if (ret) {
 		ath12k_err(ab, "failed register the radio with mac80211: %d\n", ret);
 		return ret;
@@ -633,22 +682,89 @@ static int ath12k_core_pdev_create(struct ath12k_base *ab)
 	ret = ath12k_dp_pdev_alloc(ab);
 	if (ret) {
 		ath12k_err(ab, "failed to attach DP pdev: %d\n", ret);
-		goto err_mac_unregister;
+		goto err_core_mac_unregister;
 	}
 
 	return 0;
 
-err_mac_unregister:
-	ath12k_mac_unregister(ab);
+err_core_mac_unregister:
+	ath12k_core_mac_unregister(ab);
 
 	return ret;
 }
 
 static void ath12k_core_pdev_destroy(struct ath12k_base *ab)
 {
-	ath12k_mac_unregister(ab);
+	ath12k_core_mac_unregister(ab);
 	ath12k_hif_irq_disable(ab);
 	ath12k_dp_pdev_free(ab);
+}
+
+static void ath12k_core_mac_destroy(struct ath12k_base *ab)
+{
+	struct ath12k_pdev *pdev;
+	int i;
+
+	for (i = 0; i < ab->num_radios; i++) {
+		pdev = &ab->pdevs[i];
+		if (!pdev->ar)
+			continue;
+
+		pdev->ar = NULL;
+	}
+
+	for (i = 0; i < ab->num_hw; i++) {
+		if (!ab->ah[i])
+			continue;
+
+		ath12k_mac_hw_destroy(ab->ah[i]);
+		ab->ah[i] = NULL;
+	}
+}
+
+static int ath12k_core_mac_allocate(struct ath12k_base *ab)
+{
+	struct ath12k_hw *ah;
+	struct ath12k_pdev_map pdev_map[MAX_RADIOS];
+	int ret, i, j;
+	u8 radio_per_hw;
+
+	if (test_bit(ATH12K_FLAG_REGISTERED, &ab->dev_flags))
+		return 0;
+
+	ab->num_hw = ab->num_radios;
+	radio_per_hw = 1;
+
+	for (i = 0; i < ab->num_hw; i++) {
+		for (j = 0; j < radio_per_hw; j++) {
+			pdev_map[j].ab = ab;
+			pdev_map[j].pdev_idx = (i * radio_per_hw) + j;
+		}
+
+		ah = ath12k_mac_hw_allocate(ab, pdev_map, radio_per_hw);
+		if (!ah) {
+			ath12k_warn(ab, "failed to allocate mac80211 hw device for hw_idx %d\n",
+				    i);
+			goto err;
+		}
+
+		ab->ah[i] = ah;
+	}
+
+	ath12k_dp_pdev_pre_alloc(ab);
+
+	return 0;
+
+err:
+	for (i = i - 1; i >= 0; i--) {
+		if (!ab->ah[i])
+			continue;
+
+		ath12k_mac_hw_destroy(ab->ah[i]);
+		ab->ah[i] = NULL;
+	}
+
+	return ret;
 }
 
 static int ath12k_core_start(struct ath12k_base *ab,
@@ -705,7 +821,7 @@ static int ath12k_core_start(struct ath12k_base *ab,
 		goto err_hif_stop;
 	}
 
-	ret = ath12k_mac_allocate(ab);
+	ret = ath12k_core_mac_allocate(ab);
 	if (ret) {
 		ath12k_err(ab, "failed to create new hw device with mac80211 :%d\n",
 			   ret);
@@ -714,12 +830,10 @@ static int ath12k_core_start(struct ath12k_base *ab,
 
 	ath12k_dp_cc_config(ab);
 
-	ath12k_dp_pdev_pre_alloc(ab);
-
 	ret = ath12k_dp_rx_pdev_reo_setup(ab);
 	if (ret) {
 		ath12k_err(ab, "failed to initialize reo destination rings: %d\n", ret);
-		goto err_mac_destroy;
+		goto err_core_mac_destroy;
 	}
 
 	ret = ath12k_wmi_cmd_init(ab);
@@ -755,8 +869,8 @@ static int ath12k_core_start(struct ath12k_base *ab,
 
 err_reo_cleanup:
 	ath12k_dp_rx_pdev_reo_cleanup(ab);
-err_mac_destroy:
-	ath12k_mac_destroy(ab);
+err_core_mac_destroy:
+	ath12k_core_mac_destroy(ab);
 err_hif_stop:
 	ath12k_hif_stop(ab);
 err_wmi_detach:
@@ -831,7 +945,7 @@ err_core_pdev_destroy:
 	ath12k_core_pdev_destroy(ab);
 err_core_stop:
 	ath12k_core_stop(ab);
-	ath12k_mac_destroy(ab);
+	ath12k_core_mac_destroy(ab);
 err_dp_free:
 	ath12k_dp_free(ab);
 	mutex_unlock(&ab->core_lock);
@@ -881,6 +995,7 @@ static void ath12k_rfkill_work(struct work_struct *work)
 {
 	struct ath12k_base *ab = container_of(work, struct ath12k_base, rfkill_work);
 	struct ath12k *ar;
+	struct ieee80211_hw *hw;
 	bool rfkill_radio_on;
 	int i;
 
@@ -893,8 +1008,9 @@ static void ath12k_rfkill_work(struct work_struct *work)
 		if (!ar)
 			continue;
 
+		hw = ath12k_ar_to_hw(ar);
 		ath12k_mac_rfkill_enable_radio(ar, rfkill_radio_on);
-		wiphy_rfkill_set_hw_state(ar->hw->wiphy, !rfkill_radio_on);
+		wiphy_rfkill_set_hw_state(hw->wiphy, !rfkill_radio_on);
 	}
 }
 
@@ -923,6 +1039,7 @@ static void ath12k_core_pre_reconfigure_recovery(struct ath12k_base *ab)
 {
 	struct ath12k *ar;
 	struct ath12k_pdev *pdev;
+	struct ath12k_hw *ah;
 	int i;
 
 	spin_lock_bh(&ab->base_lock);
@@ -932,13 +1049,20 @@ static void ath12k_core_pre_reconfigure_recovery(struct ath12k_base *ab)
 	if (ab->is_reset)
 		set_bit(ATH12K_FLAG_CRASH_FLUSH, &ab->dev_flags);
 
+	for (i = 0; i < ab->num_hw; i++) {
+		if (!ab->ah[i])
+			continue;
+
+		ah = ab->ah[i];
+		ieee80211_stop_queues(ah->hw);
+	}
+
 	for (i = 0; i < ab->num_radios; i++) {
 		pdev = &ab->pdevs[i];
 		ar = pdev->ar;
 		if (!ar || ar->state == ATH12K_STATE_OFF)
 			continue;
 
-		ieee80211_stop_queues(ar->hw);
 		ath12k_mac_drain_tx(ar);
 		complete(&ar->scan.started);
 		complete(&ar->scan.completed);
@@ -978,7 +1102,7 @@ static void ath12k_core_post_reconfigure_recovery(struct ath12k_base *ab)
 		case ATH12K_STATE_ON:
 			ar->state = ATH12K_STATE_RESTARTING;
 			ath12k_core_halt(ar);
-			ieee80211_restart_hw(ar->hw);
+			ieee80211_restart_hw(ath12k_ar_to_hw(ar));
 			break;
 		case ATH12K_STATE_OFF:
 			ath12k_warn(ab,
@@ -1127,7 +1251,7 @@ void ath12k_core_deinit(struct ath12k_base *ab)
 	mutex_unlock(&ab->core_lock);
 
 	ath12k_hif_power_down(ab);
-	ath12k_mac_destroy(ab);
+	ath12k_core_mac_destroy(ab);
 	ath12k_core_soc_destroy(ab);
 }
 
@@ -1176,6 +1300,7 @@ struct ath12k_base *ath12k_core_alloc(struct device *dev, size_t priv_size,
 
 	ab->dev = dev;
 	ab->hif.bus = bus;
+	ab->qmi.num_radios = U8_MAX;
 
 	return ab;
 
