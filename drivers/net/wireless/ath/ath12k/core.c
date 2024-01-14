@@ -651,6 +651,27 @@ static void ath12k_core_pdev_destroy(struct ath12k_base *ab)
 	ath12k_dp_pdev_free(ab);
 }
 
+static void ath12k_core_mac_destroy(struct ath12k_base *ab)
+{
+	ath12k_mac_hw_destroy(ab);
+}
+
+static int ath12k_core_mac_allocate(struct ath12k_base *ab)
+{
+	int ret;
+
+	if (test_bit(ATH12K_FLAG_REGISTERED, &ab->dev_flags))
+		return 0;
+
+	ret = ath12k_mac_hw_allocate(ab);
+	if (ret)
+		return ret;
+
+	ath12k_dp_pdev_pre_alloc(ab);
+
+	return 0;
+}
+
 static int ath12k_core_start(struct ath12k_base *ab,
 			     enum ath12k_firmware_mode mode)
 {
@@ -705,7 +726,7 @@ static int ath12k_core_start(struct ath12k_base *ab,
 		goto err_hif_stop;
 	}
 
-	ret = ath12k_mac_allocate(ab);
+	ret = ath12k_core_mac_allocate(ab);
 	if (ret) {
 		ath12k_err(ab, "failed to create new hw device with mac80211 :%d\n",
 			   ret);
@@ -717,7 +738,7 @@ static int ath12k_core_start(struct ath12k_base *ab,
 	ret = ath12k_dp_rx_pdev_reo_setup(ab);
 	if (ret) {
 		ath12k_err(ab, "failed to initialize reo destination rings: %d\n", ret);
-		goto err_mac_destroy;
+		goto err_core_mac_destroy;
 	}
 
 	ret = ath12k_wmi_cmd_init(ab);
@@ -753,8 +774,8 @@ static int ath12k_core_start(struct ath12k_base *ab,
 
 err_reo_cleanup:
 	ath12k_dp_rx_pdev_reo_cleanup(ab);
-err_mac_destroy:
-	ath12k_mac_destroy(ab);
+err_core_mac_destroy:
+	ath12k_core_mac_destroy(ab);
 err_hif_stop:
 	ath12k_hif_stop(ab);
 err_wmi_detach:
@@ -829,7 +850,7 @@ err_core_pdev_destroy:
 	ath12k_core_pdev_destroy(ab);
 err_core_stop:
 	ath12k_core_stop(ab);
-	ath12k_mac_destroy(ab);
+	ath12k_core_mac_destroy(ab);
 err_dp_free:
 	ath12k_dp_free(ab);
 	mutex_unlock(&ab->core_lock);
@@ -1125,7 +1146,7 @@ void ath12k_core_deinit(struct ath12k_base *ab)
 	mutex_unlock(&ab->core_lock);
 
 	ath12k_hif_power_down(ab);
-	ath12k_mac_destroy(ab);
+	ath12k_core_mac_destroy(ab);
 	ath12k_core_soc_destroy(ab);
 }
 
