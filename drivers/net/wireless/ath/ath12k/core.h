@@ -24,6 +24,7 @@
 #include "hal_rx.h"
 #include "reg.h"
 #include "dbring.h"
+#include "acpi.h"
 
 #define SM(_v, _f) (((_v) << _f##_LSB) & _f##_MASK)
 
@@ -805,6 +806,18 @@ struct ath12k_base {
 		u32 subsystem_vendor;
 		u32 subsystem_device;
 	} id;
+
+	struct {
+		u32 func_bit;
+		bool acpi_tas_enable;
+		bool acpi_bios_sar_enable;
+		u8 tas_cfg[ATH12K_ACPI_DSM_TAS_CFG_SIZE];
+		u8 tas_sar_power_table[ATH12K_ACPI_DSM_TAS_DATA_SIZE];
+		u8 bios_sar_data[ATH12K_ACPI_DSM_BIOS_SAR_DATA_SIZE];
+		u8 geo_offset_data[ATH12K_ACPI_DSM_GEO_OFFSET_DATA_SIZE];
+		u8 cca_data[ATH12K_ACPI_DSM_CCA_DATA_SIZE];
+		u8 band_edge_power[ATH12K_ACPI_DSM_BAND_EDGE_DATA_SIZE];
+	} acpi;
 
 	/* must be last */
 	u8 drv_priv[] __aligned(sizeof(void *));
