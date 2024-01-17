@@ -150,7 +150,7 @@ struct ath12k_pdev_dp {
 
 #define DP_RX_HASH_ENABLE	1 /* Enable hash based Rx steering */
 
-#define DP_BA_WIN_SZ_MAX	256
+#define DP_BA_WIN_SZ_MAX	1024
 
 #define DP_TCL_NUM_RING_MAX	4
 
@@ -170,6 +170,7 @@ struct ath12k_pdev_dp {
 #define DP_REO_CMD_RING_SIZE		128
 #define DP_REO_STATUS_RING_SIZE		2048
 #define DP_RXDMA_BUF_RING_SIZE		4096
+#define DP_RX_MAC_BUF_RING_SIZE		2048
 #define DP_RXDMA_REFILL_RING_SIZE	2048
 #define DP_RXDMA_ERR_DST_RING_SIZE	1024
 #define DP_RXDMA_MON_STATUS_RING_SIZE	1024
@@ -321,8 +322,6 @@ struct ath12k_dp {
 	struct dp_link_desc_bank link_desc_banks[DP_LINK_DESC_BANKS_MAX];
 	struct dp_srng wbm_idle_ring;
 	struct dp_srng wbm_desc_rel_ring;
-	struct dp_srng tcl_cmd_ring;
-	struct dp_srng tcl_status_ring;
 	struct dp_srng reo_reinject_ring;
 	struct dp_srng rx_rel_ring;
 	struct dp_srng reo_except_ring;

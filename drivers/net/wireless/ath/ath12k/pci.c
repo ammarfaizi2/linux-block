@@ -1480,6 +1480,9 @@ qmi_fail:
 
 	ath12k_hal_srng_deinit(ab);
 	ath12k_ce_free_pipes(ab);
+
+	ath12k_acpi_unregister(ab);
+
 	ath12k_core_free(ab);
 }
 
