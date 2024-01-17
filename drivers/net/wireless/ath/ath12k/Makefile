@@ -21,6 +21,8 @@ ath12k-y += core.o \
 	    pci.o \
 	    dp_mon.o
 
+ath12k-$(CONFIG_ACPI) += acpi.o
+
 ath12k-$(CONFIG_ATH12K_TRACING) += trace.o
 
 # for tracing framework to find trace.h
