@@ -6927,14 +6927,14 @@ void ath10k_wmi_put_start_scan_common(struct wmi_start_scan_common *cmn,
 }
 
 static void
-ath10k_wmi_put_start_scan_tlvs(struct wmi_start_scan_tlvs *tlvs,
+ath10k_wmi_put_start_scan_tlvs(u8 *tlvs,
 			       const struct wmi_start_scan_arg *arg)
 {
 	struct wmi_ie_data *ie;
 	struct wmi_chan_list *channels;
 	struct wmi_ssid_list *ssids;
 	struct wmi_bssid_list *bssids;
-	void *ptr = tlvs->tlvs;
+	void *ptr = tlvs;
 	int i;
 
 	if (arg->n_channels) {
@@ -7012,7 +7012,7 @@ ath10k_wmi_op_gen_start_scan(struct ath10k *ar,
 	cmd = (struct wmi_start_scan_cmd *)skb->data;
 
 	ath10k_wmi_put_start_scan_common(&cmd->common, arg);
-	ath10k_wmi_put_start_scan_tlvs(&cmd->tlvs, arg);
+	ath10k_wmi_put_start_scan_tlvs(cmd->tlvs, arg);
 
 	cmd->burst_duration_ms = __cpu_to_le32(0);
 
@@ -7041,7 +7041,7 @@ ath10k_wmi_10x_op_gen_start_scan(struct ath10k *ar,
 	cmd = (struct wmi_10x_start_scan_cmd *)skb->data;
 
 	ath10k_wmi_put_start_scan_common(&cmd->common, arg);
-	ath10k_wmi_put_start_scan_tlvs(&cmd->tlvs, arg);
+	ath10k_wmi_put_start_scan_tlvs(cmd->tlvs, arg);
 
 	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi 10x start scan\n");
 	return skb;
@@ -8917,8 +8917,6 @@ ath10k_wmi_10_4_gen_tdls_peer_update(struct ath10k *ar,
 	skb = ath10k_wmi_alloc_skb(ar, len);
 	if (!skb)
 		return ERR_PTR(-ENOMEM);
-
-	memset(skb->data, 0, sizeof(*cmd));
 
 	cmd = (struct wmi_10_4_tdls_peer_update_cmd *)skb->data;
 	cmd->vdev_id = __cpu_to_le32(arg->vdev_id);
