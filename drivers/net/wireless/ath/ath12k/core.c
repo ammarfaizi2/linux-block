@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -14,6 +14,7 @@
 #include "dp_rx.h"
 #include "debug.h"
 #include "hif.h"
+#include "fw.h"
 
 unsigned int ath12k_debug_mask;
 module_param_named(debug_mask, ath12k_debug_mask, uint, 0644);
@@ -879,6 +880,7 @@ static void ath12k_rfkill_work(struct work_struct *work)
 {
 	struct ath12k_base *ab = container_of(work, struct ath12k_base, rfkill_work);
 	struct ath12k *ar;
+	struct ieee80211_hw *hw;
 	bool rfkill_radio_on;
 	int i;
 
@@ -891,8 +893,9 @@ static void ath12k_rfkill_work(struct work_struct *work)
 		if (!ar)
 			continue;
 
+		hw = ath12k_ar_to_hw(ar);
 		ath12k_mac_rfkill_enable_radio(ar, rfkill_radio_on);
-		wiphy_rfkill_set_hw_state(ar->hw->wiphy, !rfkill_radio_on);
+		wiphy_rfkill_set_hw_state(hw->wiphy, !rfkill_radio_on);
 	}
 }
 
@@ -921,6 +924,7 @@ static void ath12k_core_pre_reconfigure_recovery(struct ath12k_base *ab)
 {
 	struct ath12k *ar;
 	struct ath12k_pdev *pdev;
+	struct ath12k_hw *ah;
 	int i;
 
 	spin_lock_bh(&ab->base_lock);
@@ -930,13 +934,20 @@ static void ath12k_core_pre_reconfigure_recovery(struct ath12k_base *ab)
 	if (ab->is_reset)
 		set_bit(ATH12K_FLAG_CRASH_FLUSH, &ab->dev_flags);
 
+	for (i = 0; i < ab->num_hw; i++) {
+		if (!ab->ah[i])
+			continue;
+
+		ah = ab->ah[i];
+		ieee80211_stop_queues(ah->hw);
+	}
+
 	for (i = 0; i < ab->num_radios; i++) {
 		pdev = &ab->pdevs[i];
 		ar = pdev->ar;
 		if (!ar || ar->state == ATH12K_STATE_OFF)
 			continue;
 
-		ieee80211_stop_queues(ar->hw);
 		ath12k_mac_drain_tx(ar);
 		complete(&ar->scan.started);
 		complete(&ar->scan.completed);
@@ -976,7 +987,7 @@ static void ath12k_core_post_reconfigure_recovery(struct ath12k_base *ab)
 		case ATH12K_STATE_ON:
 			ar->state = ATH12K_STATE_RESTARTING;
 			ath12k_core_halt(ar);
-			ieee80211_restart_hw(ar->hw);
+			ieee80211_restart_hw(ath12k_ar_to_hw(ar));
 			break;
 		case ATH12K_STATE_OFF:
 			ath12k_warn(ab,
@@ -1099,6 +1110,12 @@ int ath12k_core_pre_init(struct ath12k_base *ab)
 		return ret;
 	}
 
+	ret = ath12k_fw_map(ab);
+	if (ret) {
+		ath12k_err(ab, "failed to map firmware: %d", ret);
+		return ret;
+	}
+
 	return 0;
 }
 
@@ -1127,6 +1144,7 @@ void ath12k_core_deinit(struct ath12k_base *ab)
 	ath12k_hif_power_down(ab);
 	ath12k_mac_destroy(ab);
 	ath12k_core_soc_destroy(ab);
+	ath12k_fw_unmap(ab);
 }
 
 void ath12k_core_free(struct ath12k_base *ab)
