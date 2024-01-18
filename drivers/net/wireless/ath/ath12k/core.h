@@ -13,6 +13,7 @@
 #include <linux/bitfield.h>
 #include <linux/dmi.h>
 #include <linux/ctype.h>
+#include <linux/firmware.h>
 #include "qmi.h"
 #include "htc.h"
 #include "wmi.h"
@@ -22,6 +23,7 @@
 #include "mac.h"
 #include "hw.h"
 #include "hal_rx.h"
+#include "fw.h"
 #include "reg.h"
 #include "dbring.h"
 
@@ -816,6 +818,18 @@ struct ath12k_base {
 	struct work_struct rfkill_work;
 	/* true means radio is on */
 	bool rfkill_radio_on;
+
+	struct {
+		u32 api_version;
+
+		const struct firmware *fw;
+		const u8 *amss_data;
+		size_t amss_len;
+		const u8 *m3_data;
+		size_t m3_len;
+
+		DECLARE_BITMAP(fw_features, ATH12K_FW_FEATURE_COUNT);
+	} fw;
 
 	struct {
 		enum ath12k_bdf_search bdf_search;
