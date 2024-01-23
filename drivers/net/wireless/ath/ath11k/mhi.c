@@ -423,7 +423,7 @@ int ath11k_mhi_register(struct ath11k_pci *ab_pci)
 			goto free_controller;
 	} else {
 		mhi_ctrl->iova_start = 0;
-		mhi_ctrl->iova_stop = 0xFFFFFFFF;
+		mhi_ctrl->iova_stop = ab_pci->dma_mask;
 	}
 
 	mhi_ctrl->rddm_size = RDDM_DUMP_SIZE;
