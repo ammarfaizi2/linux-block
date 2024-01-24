@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-3-Clause-Clear */
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef ATH12K_WMI_H
@@ -167,10 +167,6 @@ struct wmi_tlv {
 #define WLAN_SCAN_MAX_HINT_S_SSID        10
 #define WLAN_SCAN_MAX_HINT_BSSID         10
 #define MAX_RNR_BSS                    5
-
-#define WLAN_SCAN_PARAMS_MAX_SSID    16
-#define WLAN_SCAN_PARAMS_MAX_BSSID   4
-#define WLAN_SCAN_PARAMS_MAX_IE_LEN  256
 
 #define WMI_APPEND_TO_EXISTING_CHAN_LIST_FLAG 1
 
@@ -2716,6 +2712,9 @@ struct wmi_vdev_create_cmd {
 	struct ath12k_wmi_mac_addr_params vdev_macaddr;
 	__le32 num_cfg_txrx_streams;
 	__le32 pdev_id;
+	__le32 mbssid_flags;
+	__le32 mbssid_tx_vdev_id;
+	__le32 vdev_stats_id_valid;
 	__le32 vdev_stats_id;
 } __packed;
 
@@ -3146,7 +3145,7 @@ struct ath12k_wmi_element_info_arg {
 
 #define WLAN_SCAN_PARAMS_MAX_SSID    16
 #define WLAN_SCAN_PARAMS_MAX_BSSID   4
-#define WLAN_SCAN_PARAMS_MAX_IE_LEN  256
+#define WLAN_SCAN_PARAMS_MAX_IE_LEN  512
 
 /* Values lower than this may be refused by some firmware revisions with a scan
  * completion with a timedout reason.
@@ -3489,6 +3488,37 @@ struct wmi_get_pdev_temperature_cmd {
 	__le32 pdev_id;
 } __packed;
 
+#define WMI_P2P_MAX_NOA_DESCRIPTORS		4
+
+struct wmi_p2p_noa_event {
+	__le32 vdev_id;
+} __packed;
+
+struct ath12k_wmi_p2p_noa_descriptor {
+	__le32 type_count; /* 255: continuous schedule, 0: reserved */
+	__le32 duration;  /* Absent period duration in micro seconds */
+	__le32 interval;   /* Absent period interval in micro seconds */
+	__le32 start_time; /* 32 bit tsf time when in starts */
+} __packed;
+
+#define WMI_P2P_NOA_INFO_CHANGED_FLAG		BIT(0)
+#define WMI_P2P_NOA_INFO_INDEX			GENMASK(15, 8)
+#define WMI_P2P_NOA_INFO_OPP_PS			BIT(16)
+#define WMI_P2P_NOA_INFO_CTWIN_TU		GENMASK(23, 17)
+#define WMI_P2P_NOA_INFO_DESC_NUM		GENMASK(31, 24)
+
+struct ath12k_wmi_p2p_noa_info {
+	/* Bit 0 - Flag to indicate an update in NOA schedule
+	 * Bits 7-1 - Reserved
+	 * Bits 15-8 - Index (identifies the instance of NOA sub element)
+	 * Bit  16 - Opp PS state of the AP
+	 * Bits 23-17 -  Ctwindow in TUs
+	 * Bits 31-24 -  Number of NOA descriptors
+	 */
+	__le32 noa_attr;
+	struct ath12k_wmi_p2p_noa_descriptor descriptors[WMI_P2P_MAX_NOA_DESCRIPTORS];
+} __packed;
+
 #define WMI_BEACON_TX_BUFFER_SIZE	512
 
 struct wmi_bcn_tmpl_cmd {
@@ -3501,6 +3531,12 @@ struct wmi_bcn_tmpl_cmd {
 	__le32 csa_event_bitmap;
 	__le32 mbssid_ie_offset;
 	__le32 esp_ie_offset;
+} __packed;
+
+struct wmi_p2p_go_set_beacon_ie_cmd {
+	__le32 tlv_header;
+	__le32 vdev_id;
+	__le32 ie_buf_len;
 } __packed;
 
 struct wmi_vdev_install_key_cmd {
@@ -4806,6 +4842,8 @@ int ath12k_wmi_cmd_send(struct ath12k_wmi_pdev *wmi, struct sk_buff *skb,
 struct sk_buff *ath12k_wmi_alloc_skb(struct ath12k_wmi_base *wmi_sc, u32 len);
 int ath12k_wmi_mgmt_send(struct ath12k *ar, u32 vdev_id, u32 buf_id,
 			 struct sk_buff *frame);
+int ath12k_wmi_p2p_go_bcn_ie(struct ath12k *ar, u32 vdev_id,
+			     const u8 *p2p_ie);
 int ath12k_wmi_bcn_tmpl(struct ath12k *ar, u32 vdev_id,
 			struct ieee80211_mutable_offsets *offs,
 			struct sk_buff *bcn);
