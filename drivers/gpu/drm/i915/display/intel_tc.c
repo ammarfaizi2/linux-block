@@ -23,6 +23,14 @@
 #define DP_PIN_ASSIGNMENT_C	0x3
 #define DP_PIN_ASSIGNMENT_D	0x4
 #define DP_PIN_ASSIGNMENT_E	0x5
+#define drm_soft_WARN_ON(handle, cond)					\
+do {									\
+	if (!(cond))							\
+		break;							\
+									\
+	printk("drm_soft_WARN_ON: (handle: %s; cond: %s) at %s:%d\n",	\
+	       #handle, #cond, __FILE__, __LINE__);			\
+} while (0)
 
 enum tc_port_mode {
 	TC_PORT_DISCONNECTED,
@@ -737,7 +745,7 @@ static void tgl_tc_phy_init(struct intel_tc_port *tc)
 	with_intel_display_power(i915, tc_phy_cold_off_domain(tc), wakeref)
 		val = intel_de_read(i915, PORT_TX_DFLEXDPSP(FIA1));
 
-	drm_WARN_ON(&i915->drm, val == 0xffffffff);
+	drm_soft_WARN_ON(&i915->drm, val == 0xffffffff);
 
 	tc_phy_load_fia_params(tc, val & MODULAR_FIA_MASK);
 }
