@@ -437,7 +437,8 @@ static int vfio_pci_igd_cfg_init(struct vfio_pci_core_device *vdev)
 
 bool vfio_pci_is_intel_display(struct pci_dev *pdev)
 {
-	return (pdev->vendor == PCI_VENDOR_ID_INTEL) && pci_is_display(pdev);
+	return (pdev->vendor == PCI_VENDOR_ID_INTEL) &&
+	       ((pdev->class >> 16) == PCI_BASE_CLASS_DISPLAY);
 }
 
 int vfio_pci_igd_init(struct vfio_pci_core_device *vdev)

@@ -341,6 +341,7 @@ void pci_bus_add_device(struct pci_dev *dev)
 {
 	struct device_node *dn = dev->dev.of_node;
 	struct platform_device *pdev;
+	int retval;
 
 	/*
 	 * Can not put in pci_device_add yet because resources
@@ -371,7 +372,9 @@ void pci_bus_add_device(struct pci_dev *dev)
 	if (!dn || of_device_is_available(dn))
 		pci_dev_allow_binding(dev);
 
-	device_initial_probe(&dev->dev);
+	retval = device_attach(&dev->dev);
+	if (retval < 0 && retval != -EPROBE_DEFER)
+		pci_warn(dev, "device attach failed (%d)\n", retval);
 
 	pci_dev_assign_added(dev);
 }
