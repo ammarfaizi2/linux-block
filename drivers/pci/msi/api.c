@@ -265,6 +265,7 @@ int pci_alloc_irq_vectors_affinity(struct pci_dev *dev, unsigned int min_vecs,
 	}
 
 	if (flags & PCI_IRQ_MSIX) {
+		pci_err(dev, "%s:%d msix\n", __func__, __LINE__);
 		nvecs = __pci_enable_msix_range(dev, NULL, min_vecs, max_vecs,
 						affd, flags);
 		if (nvecs > 0)
@@ -272,6 +273,7 @@ int pci_alloc_irq_vectors_affinity(struct pci_dev *dev, unsigned int min_vecs,
 	}
 
 	if (flags & PCI_IRQ_MSI) {
+		pci_err(dev, "%s:%d msi\n", __func__, __LINE__);
 		nvecs = __pci_enable_msi_range(dev, min_vecs, max_vecs, affd);
 		if (nvecs > 0)
 			return nvecs;
@@ -279,6 +281,7 @@ int pci_alloc_irq_vectors_affinity(struct pci_dev *dev, unsigned int min_vecs,
 
 	/* use INTx IRQ if allowed */
 	if (flags & PCI_IRQ_INTX) {
+		pci_err(dev, "%s:%d INTx\n", __func__, __LINE__);
 		if (min_vecs == 1 && dev->irq) {
 			/*
 			 * Invoke the affinity spreading logic to ensure that

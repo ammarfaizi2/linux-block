@@ -316,11 +316,14 @@ int msi_setup_device_data(struct device *dev)
 		return 0;
 
 	md = devres_alloc(msi_device_data_release, sizeof(*md), GFP_KERNEL);
-	if (!md)
+	if (!md) {
+		dev_err(dev, "%s:%d err=ENOMEM\n", __func__, __LINE__);
 		return -ENOMEM;
+	}
 
 	ret = msi_sysfs_create_group(dev);
 	if (ret) {
+		dev_err(dev, "%s:%d err=%d\n", __func__, __LINE__, ret);
 		devres_free(md);
 		return ret;
 	}
@@ -1035,16 +1038,22 @@ bool msi_create_device_irq_domain(struct device *dev, unsigned int domid,
 	const struct msi_parent_ops *pops;
 	struct fwnode_handle *fwnode;
 
-	if (!irq_domain_is_msi_parent(parent))
+	if (!irq_domain_is_msi_parent(parent)) {
+		dev_err(dev, "%s:%d err=not parent\n", __func__, __LINE__);
 		return false;
+	}
 
-	if (domid >= MSI_MAX_DEVICE_IRQDOMAINS)
+	if (domid >= MSI_MAX_DEVICE_IRQDOMAINS) {
+		dev_err(dev, "%s:%d err=max domain\n", __func__, __LINE__);
 		return false;
+	}
 
 	struct msi_domain_template *bundle __free(kfree) =
 		kmemdup(template, sizeof(*bundle), GFP_KERNEL);
-	if (!bundle)
+	if (!bundle) {
+		dev_err(dev, "%s:%d err=mem\n", __func__, __LINE__);
 		return false;
+	}
 
 	bundle->info.hwsize = hwsize;
 	bundle->info.chip = &bundle->chip;
@@ -1077,23 +1086,32 @@ bool msi_create_device_irq_domain(struct device *dev, unsigned int domid,
 	if (!fwnode)
 		return false;
 
-	if (msi_setup_device_data(dev))
+	if (msi_setup_device_data(dev)) {
+		dev_err(dev, "%s:%d err=setup\n", __func__, __LINE__);
 		return false;
+	}
 
 	guard(msi_descs_lock)(dev);
-	if (WARN_ON_ONCE(msi_get_device_domain(dev, domid)))
+	if (WARN_ON_ONCE(msi_get_device_domain(dev, domid))) {
+		dev_err(dev, "%s:%d err=get domain\n", __func__, __LINE__);
 		return false;
+	}
 
-	if (!pops->init_dev_msi_info(dev, parent, parent, &bundle->info))
+	if (!pops->init_dev_msi_info(dev, parent, parent, &bundle->info)) {
+		dev_err(dev, "%s:%d err=init_msi_info\n", __func__, __LINE__);
 		return false;
+	}
 
 	domain = __msi_create_irq_domain(fwnode, &bundle->info, IRQ_DOMAIN_FLAG_MSI_DEVICE, parent);
-	if (!domain)
+	if (!domain) {
+		dev_err(dev, "%s:%d err=create domain\n", __func__, __LINE__);
 		return false;
+	}
 
 	dev->msi.data->__domains[domid].domain = domain;
 
 	if (msi_domain_prepare_irqs(domain, dev, hwsize, &bundle->alloc_info)) {
+		pr_err("%s:%d\n err=prepare_irqs", __func__, __LINE__);
 		dev->msi.data->__domains[domid].domain = NULL;
 		irq_domain_remove(domain);
 		return false;

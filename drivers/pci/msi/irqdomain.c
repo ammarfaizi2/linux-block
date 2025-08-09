@@ -13,8 +13,10 @@ int pci_msi_setup_msi_irqs(struct pci_dev *dev, int nvec, int type)
 	struct irq_domain *domain;
 
 	domain = dev_get_msi_domain(&dev->dev);
-	if (domain && irq_domain_is_hierarchy(domain))
+	if (domain && irq_domain_is_hierarchy(domain)) {
+		pci_err(dev, "%s:%d err=\n", __func__, __LINE__);
 		return msi_domain_alloc_irqs_all_locked(&dev->dev, MSI_DEFAULT_DOMAIN, nvec);
+	}
 
 	return pci_msi_legacy_setup_msi_irqs(dev, nvec, type);
 }
@@ -355,6 +357,7 @@ bool pci_msi_domain_supports(struct pci_dev *pdev, unsigned int feature_mask,
 	if (!domain || !irq_domain_is_hierarchy(domain)) {
 		if (IS_ENABLED(CONFIG_PCI_MSI_ARCH_FALLBACKS))
 			return mode == ALLOW_LEGACY;
+		pci_err(pdev, "%s:%d err\n", __func__, __LINE__);
 		return false;
 	}
 
@@ -364,6 +367,7 @@ bool pci_msi_domain_supports(struct pci_dev *pdev, unsigned int feature_mask,
 		 * msi_domain_info::flags is the authoritative source of
 		 * information.
 		 */
+		pci_err(pdev, "%s:%d not msi parent\n", __func__, __LINE__);
 		info = domain->host_data;
 		supported = info->flags;
 	} else {
@@ -374,6 +378,7 @@ bool pci_msi_domain_supports(struct pci_dev *pdev, unsigned int feature_mask,
 		 * per device domain because the parent is never
 		 * expanding the PCI/MSI functionality.
 		 */
+		pci_err(pdev, "%s:%d is msi parent\n", __func__, __LINE__);
 		supported = domain->msi_parent_ops->supported_flags;
 	}
 

@@ -31,19 +31,25 @@ static int pci_msi_supported(struct pci_dev *dev, int nvec)
 	struct pci_bus *bus;
 
 	/* MSI must be globally enabled and supported by the device */
-	if (!pci_msi_enable)
+	if (!pci_msi_enable) {
+		pci_err(dev, "%s:%d err=pci_msi_enable\n", __func__, __LINE__);
 		return 0;
+	}
 
-	if (!dev || dev->no_msi)
+	if (!dev || dev->no_msi) {
+		pci_err(dev, "%s:%d err=no_msi\n", __func__, __LINE__);
 		return 0;
+	}
 
 	/*
 	 * You can't ask to have 0 or less MSIs configured.
 	 *  a) it's stupid ..
 	 *  b) the list manipulation code assumes nvec >= 1.
 	 */
-	if (nvec < 1)
+	if (nvec < 1) {
+		pci_err(dev, "%s:%d err=nvec\n", __func__, __LINE__);
 		return 0;
+	}
 
 	/*
 	 * Any bridge which does NOT route MSI transactions from its
@@ -60,8 +66,10 @@ static int pci_msi_supported(struct pci_dev *dev, int nvec)
 	 * at probe time.
 	 */
 	for (bus = dev->bus; bus; bus = bus->parent)
-		if (bus->bus_flags & PCI_BUS_FLAGS_NO_MSI)
+		if (bus->bus_flags & PCI_BUS_FLAGS_NO_MSI) {
+			pci_err(dev, "%s:%d bus_flags\n", __func__, __LINE__);
 			return 0;
+		}
 
 	return 1;
 }
@@ -86,8 +94,10 @@ static int pcim_setup_msi_release(struct pci_dev *dev)
 		return 0;
 
 	ret = devm_add_action(&dev->dev, pcim_msi_release, dev);
-	if (ret)
+	if (ret) {
+		pci_err(dev, "%s:%d err=%d\n", __func__, __LINE__, ret);
 		return ret;
+	}
 
 	dev->is_msi_managed = true;
 	return 0;
@@ -671,17 +681,23 @@ static int __msix_setup_interrupts(struct pci_dev *__dev, struct msix_entry *ent
 	struct pci_dev *dev __free(free_msi_irqs) = __dev;
 
 	int ret = msix_setup_msi_descs(dev, entries, nvec, masks);
-	if (ret)
+	if (ret) {
+		pci_err(dev, "%s:%d err=%d\n", __func__, __LINE__, ret);
 		return ret;
+	}
 
 	ret = pci_msi_setup_msi_irqs(dev, nvec, PCI_CAP_ID_MSIX);
-	if (ret)
+	if (ret) {
+		pci_err(dev, "%s:%d err=%d\n", __func__, __LINE__, ret);
 		return ret;
+	}
 
 	/* Check if all MSI entries honor device restrictions */
 	ret = msi_verify_entries(dev);
-	if (ret)
+	if (ret) {
+		pci_err(dev, "%s:%d err=%d\n", __func__, __LINE__, ret);
 		return ret;
+	}
 
 	msix_update_entries(dev, entries);
 	retain_and_null_ptr(dev);
@@ -736,8 +752,10 @@ static int msix_capability_init(struct pci_dev *dev, struct msix_entry *entries,
 	}
 
 	ret = msix_setup_interrupts(dev, entries, nvec, affd);
-	if (ret)
+	if (ret) {
+		pci_err(dev, "%s:%d err=setup irqs\n", __func__, __LINE__);
 		goto out_disable;
+	}
 
 	/* Disable INTX */
 	pci_intx_for_msi(dev, 0);
@@ -793,30 +811,40 @@ int __pci_enable_msix_range(struct pci_dev *dev, struct msix_entry *entries, int
 {
 	int hwsize, rc, nvec = maxvec;
 
-	if (maxvec < minvec)
+	if (maxvec < minvec) {
+		pci_err(dev, "%s:%d err=%d\n", __func__, __LINE__, -ERANGE);
 		return -ERANGE;
+	}
 
 	if (dev->msi_enabled) {
-		pci_info(dev, "can't enable MSI-X (MSI already enabled)\n");
+		pci_err(dev, "can't enable MSI-X (MSI already enabled)\n");
 		return -EINVAL;
 	}
 
-	if (WARN_ON_ONCE(dev->msix_enabled))
+	if (WARN_ON_ONCE(dev->msix_enabled)) {
+		pci_err(dev, "%s:%d err=%d\n", __func__, __LINE__, -EINVAL);
 		return -EINVAL;
+	}
 
 	/* Check MSI-X early on irq domain enabled architectures */
-	if (!pci_msi_domain_supports(dev, MSI_FLAG_PCI_MSIX, ALLOW_LEGACY))
+	if (!pci_msi_domain_supports(dev, MSI_FLAG_PCI_MSIX, ALLOW_LEGACY)) {
+		pci_err(dev, "%s:%d err=ENOTSUPP\n", __func__, __LINE__);
 		return -ENOTSUPP;
+	}
 
 	if (!pci_msi_supported(dev, nvec) || dev->current_state != PCI_D0)
 		return -EINVAL;
 
 	hwsize = pci_msix_vec_count(dev);
-	if (hwsize < 0)
+	if (hwsize < 0) {
+		pci_err(dev, "%s:%d err=hwsize\n", __func__, __LINE__);
 		return hwsize;
+	}
 
-	if (!pci_msix_validate_entries(dev, entries, nvec))
+	if (!pci_msix_validate_entries(dev, entries, nvec)) {
+		pci_err(dev, "%s:%d err=validate entries\n", __func__, __LINE__);
 		return -EINVAL;
+	}
 
 	if (hwsize < nvec) {
 		/* Keep the IRQ virtual hackery working */
@@ -826,21 +854,27 @@ int __pci_enable_msix_range(struct pci_dev *dev, struct msix_entry *entries, int
 			nvec = hwsize;
 	}
 
-	if (nvec < minvec)
+	if (nvec < minvec) {
+		pci_err(dev, "%s:%d err=ENOSPC\n", __func__, __LINE__);
 		return -ENOSPC;
+	}
 
 	rc = pci_setup_msi_context(dev);
 	if (rc)
 		return rc;
 
-	if (!pci_setup_msix_device_domain(dev, hwsize))
+	if (!pci_setup_msix_device_domain(dev, hwsize)) {
+		pci_err(dev, "%s:%d err=%d\n", __func__, __LINE__, -ENODEV);
 		return -ENODEV;
+	}
 
 	for (;;) {
 		if (affd) {
 			nvec = irq_calc_affinity_vectors(minvec, nvec, affd);
-			if (nvec < minvec)
+			if (nvec < minvec) {
+				pci_err(dev, "%s:%d err=%d\n", __func__, __LINE__, -ENOSPC);
 				return -ENOSPC;
+			}
 		}
 
 		rc = msix_capability_init(dev, entries, nvec, affd);

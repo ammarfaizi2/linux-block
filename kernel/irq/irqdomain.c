@@ -229,13 +229,17 @@ static struct irq_domain *__irq_domain_create(const struct irq_domain_info *info
 
 	if (WARN_ON((info->size && info->direct_max) ||
 		    (!IS_ENABLED(CONFIG_IRQ_DOMAIN_NOMAP) && info->direct_max) ||
-		    (info->direct_max && info->direct_max != info->hwirq_max)))
+		    (info->direct_max && info->direct_max != info->hwirq_max))) {
+		pr_err("%s:%d\n err", __func__, __LINE__);
 		return ERR_PTR(-EINVAL);
+	}
 
 	domain = kzalloc_node(struct_size(domain, revmap, info->size),
 			      GFP_KERNEL, of_node_to_nid(to_of_node(info->fwnode)));
-	if (!domain)
+	if (!domain) {
+		pr_err("%s:%d\n err", __func__, __LINE__);
 		return ERR_PTR(-ENOMEM);
+	}
 
 	err = irq_domain_set_name(domain, info);
 	if (err) {
@@ -328,14 +332,18 @@ static struct irq_domain *__irq_domain_instantiate(const struct irq_domain_info 
 
 	if (info->dgc_info) {
 		err = irq_domain_alloc_generic_chips(domain, info->dgc_info);
-		if (err)
+		if (err) {
+			pr_err("%s:%d\n err=%d", __func__, __LINE__, err);
 			goto err_domain_free;
+		}
 	}
 
 	if (info->init) {
 		err = info->init(domain);
-		if (err)
+		if (err) {
+			pr_err("%s:%d\n err=%d", __func__, __LINE__, err);
 			goto err_domain_gc_remove;
+		}
 	}
 
 	__irq_domain_publish(domain);

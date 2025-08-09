@@ -306,11 +306,14 @@ static bool vmd_init_dev_msi_info(struct device *dev, struct irq_domain *domain,
 				  struct irq_domain *real_parent,
 				  struct msi_domain_info *info)
 {
+	pr_err("%s: bus_token=%d\n", __func__, (int)info->bus_token);
 	if (WARN_ON_ONCE(info->bus_token != DOMAIN_BUS_PCI_DEVICE_MSIX))
 		return false;
 
-	if (!msi_lib_init_dev_msi_info(dev, domain, real_parent, info))
+	if (!msi_lib_init_dev_msi_info(dev, domain, real_parent, info)) {
+		pr_err("%s:%d err=msi_lib_init\n", __func__, __LINE__);
 		return false;
+	}
 
 	info->chip->irq_enable		= vmd_pci_msi_enable;
 	info->chip->irq_disable		= vmd_pci_msi_disable;

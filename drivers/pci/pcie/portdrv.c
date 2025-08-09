@@ -190,6 +190,7 @@ static int pcie_init_service_irqs(struct pci_dev *dev, int *irqs, int mask)
 		goto intx_irq;
 
 	/* Try to use MSI-X or MSI if supported */
+	pr_err("%s:%d\n", __func__, __LINE__);
 	if (pcie_port_enable_irq_vec(dev, irqs, mask) == 0)
 		return 0;
 
