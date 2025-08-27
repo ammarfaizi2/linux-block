@@ -189,23 +189,33 @@ struct srcu_struct {
  *	init_srcu_struct(&my_srcu);
  *
  * See include/linux/percpu-defs.h for the rules on per-CPU variables.
+ *
+ * DEFINE_SRCU_FAST() creates an srcu_struct and associated structures
+ * whose readers must be of the SRCU-fast variety.  DEFINE_SRCU_FAST()
+ * cannot be used within modules due to there being no place to
+ * put the desired ->srcu_reader_flavor value.  If in-module use of
+ * DEFINE_SRCU_FAST() becomes necessary, the srcu_struct structure will
+ * need to grow in order to store this value.
  */
 #ifdef MODULE
-# define __DEFINE_SRCU(name, is_static)								\
+# define __DEFINE_SRCU(name, fast, is_static)							\
 	static struct srcu_usage name##_srcu_usage = __SRCU_USAGE_INIT(name##_srcu_usage);	\
 	is_static struct srcu_struct name = __SRCU_STRUCT_INIT_MODULE(name, name##_srcu_usage);	\
 	extern struct srcu_struct * const __srcu_struct_##name;					\
 	struct srcu_struct * const __srcu_struct_##name						\
 		__section("___srcu_struct_ptrs") = &name
 #else
-# define __DEFINE_SRCU(name, is_static)								\
-	static DEFINE_PER_CPU(struct srcu_data, name##_srcu_data);				\
+# define __DEFINE_SRCU(name, fast, is_static)							\
+	static DEFINE_PER_CPU(struct srcu_data, name##_srcu_data) = {				\
+		.srcu_reader_flavor = fast,							\
+	};											\
 	static struct srcu_usage name##_srcu_usage = __SRCU_USAGE_INIT(name##_srcu_usage);	\
 	is_static struct srcu_struct name =							\
 		__SRCU_STRUCT_INIT(name, name##_srcu_usage, name##_srcu_data)
+#define DEFINE_SRCU_FAST(name)		__DEFINE_SRCU(name, SRCU_READ_FLAVOR_FAST, /* not static */)
 #endif
-#define DEFINE_SRCU(name)		__DEFINE_SRCU(name, /* not static */)
-#define DEFINE_STATIC_SRCU(name)	__DEFINE_SRCU(name, static)
+#define DEFINE_SRCU(name)		__DEFINE_SRCU(name, 0, /* not static */)
+#define DEFINE_STATIC_SRCU(name)	__DEFINE_SRCU(name, 0, static)
 
 int __srcu_read_lock(struct srcu_struct *ssp) __acquires(ssp);
 void synchronize_srcu_expedited(struct srcu_struct *ssp);
@@ -232,23 +242,40 @@ static inline struct srcu_ctr __percpu *__srcu_ctr_to_ptr(struct srcu_struct *ss
  * srcu_read_unlock_fast().
  *
  * Note that both this_cpu_inc() and atomic_long_inc() are RCU read-side
- * critical sections either because they disables interrupts, because they
- * are a single instruction, or because they are a read-modify-write atomic
- * operation, depending on the whims of the architecture.
+ * critical sections either because they disables interrupts, because
+ * they are a single instruction, or because they are read-modify-write
+ * atomic operations, depending on the whims of the architecture.
+ * This matters because the SRCU-fast grace-period mechanism uses either
+ * synchronize_rcu() or synchronize_rcu_expedited(), that is, RCU,
+ * *not* SRCU, in order to eliminate the need for the read-side smp_mb()
+ * invocations that are used by srcu_read_lock() and srcu_read_unlock().
+ * The __srcu_read_unlock_fast() function also relies on this same RCU
+ * (again, *not* SRCU) trick to eliminate the need for smp_mb().
+ *
+ * The key point behind this RCU trick is that if any part of a given
+ * RCU reader precedes the beginning of a given RCU grace period, then
+ * the entirety of that RCU reader and everything preceding it happens
+ * before the end of that same RCU grace period.  Similarly, if any part
+ * of a given RCU reader follows the end of a given RCU grace period,
+ * then the entirety of that RCU reader and everything following it
+ * happens after the beginning of that same RCU grace period.  Therefore,
+ * the operations labeled Y in __srcu_read_lock_fast() and those labeled Z
+ * in __srcu_read_unlock_fast() are ordered against the corresponding SRCU
+ * read-side critical section from the viewpoint of the SRCU grace period.
+ * This is all the ordering that is required, hence no calls to smp_mb().
  *
  * This means that __srcu_read_lock_fast() is not all that fast
  * on architectures that support NMIs but do not supply NMI-safe
  * implementations of this_cpu_inc().
  */
-static inline struct srcu_ctr __percpu *__srcu_read_lock_fast(struct srcu_struct *ssp)
+static inline struct srcu_ctr __percpu notrace *__srcu_read_lock_fast(struct srcu_struct *ssp)
 {
 	struct srcu_ctr __percpu *scp = READ_ONCE(ssp->srcu_ctrp);
 
-	RCU_LOCKDEP_WARN(!rcu_is_watching(), "RCU must be watching srcu_read_lock_fast().");
 	if (!IS_ENABLED(CONFIG_NEED_SRCU_NMI_SAFE))
-		this_cpu_inc(scp->srcu_locks.counter); /* Y */
+		this_cpu_inc(scp->srcu_locks.counter); // Y, and implicit RCU reader.
 	else
-		atomic_long_inc(raw_cpu_ptr(&scp->srcu_locks));  /* Z */
+		atomic_long_inc(raw_cpu_ptr(&scp->srcu_locks));  // Y, and implicit RCU reader.
 	barrier(); /* Avoid leaking the critical section. */
 	return scp;
 }
@@ -259,23 +286,17 @@ static inline struct srcu_ctr __percpu *__srcu_read_lock_fast(struct srcu_struct
  * different CPU than that which was incremented by the corresponding
  * srcu_read_lock_fast(), but it must be within the same task.
  *
- * Note that both this_cpu_inc() and atomic_long_inc() are RCU read-side
- * critical sections either because they disables interrupts, because they
- * are a single instruction, or because they are a read-modify-write atomic
- * operation, depending on the whims of the architecture.
- *
- * This means that __srcu_read_unlock_fast() is not all that fast
- * on architectures that support NMIs but do not supply NMI-safe
- * implementations of this_cpu_inc().
+ * Please see the __srcu_read_lock_fast() function's header comment for
+ * information on implicit RCU readers and NMI safety.
  */
-static inline void __srcu_read_unlock_fast(struct srcu_struct *ssp, struct srcu_ctr __percpu *scp)
+static inline void notrace
+__srcu_read_unlock_fast(struct srcu_struct *ssp, struct srcu_ctr __percpu *scp)
 {
 	barrier();  /* Avoid leaking the critical section. */
 	if (!IS_ENABLED(CONFIG_NEED_SRCU_NMI_SAFE))
-		this_cpu_inc(scp->srcu_unlocks.counter);  /* Z */
+		this_cpu_inc(scp->srcu_unlocks.counter);  // Z, and implicit RCU reader.
 	else
-		atomic_long_inc(raw_cpu_ptr(&scp->srcu_unlocks));  /* Z */
-	RCU_LOCKDEP_WARN(!rcu_is_watching(), "RCU must be watching srcu_read_unlock_fast().");
+		atomic_long_inc(raw_cpu_ptr(&scp->srcu_unlocks));  // Z, and implicit RCU reader.
 }
 
 void __srcu_check_read_flavor(struct srcu_struct *ssp, int read_flavor);

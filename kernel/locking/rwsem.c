@@ -1279,6 +1279,11 @@ static __always_inline int __down_read_interruptible(struct rw_semaphore *sem)
 	return __down_read_common(sem, TASK_INTERRUPTIBLE);
 }
 
+static __always_inline int __down_read_idle(struct rw_semaphore *sem)
+{
+	return __down_read_common(sem, TASK_IDLE);
+}
+
 static __always_inline int __down_read_killable(struct rw_semaphore *sem)
 {
 	return __down_read_common(sem, TASK_KILLABLE);
@@ -1471,6 +1476,11 @@ static inline int __down_read_interruptible(struct rw_semaphore *sem)
 	return rwbase_read_lock(&sem->rwbase, TASK_INTERRUPTIBLE);
 }
 
+static inline int __down_read_idle(struct rw_semaphore *sem)
+{
+	return rwbase_read_lock(&sem->rwbase, TASK_IDLE);
+}
+
 static inline int __down_read_killable(struct rw_semaphore *sem)
 {
 	return rwbase_read_lock(&sem->rwbase, TASK_KILLABLE);
@@ -1553,6 +1563,20 @@ int __sched down_read_interruptible(struct rw_semaphore *sem)
 	return 0;
 }
 EXPORT_SYMBOL(down_read_interruptible);
+
+int __sched down_read_idle(struct rw_semaphore *sem)
+{
+	might_sleep();
+	rwsem_acquire_read(&sem->dep_map, 0, 0, _RET_IP_);
+
+	if (LOCK_CONTENDED_RETURN(sem, __down_read_trylock, __down_read_idle)) {
+		rwsem_release(&sem->dep_map, _RET_IP_);
+		return -EINTR;
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(down_read_idle);
 
 int __sched down_read_killable(struct rw_semaphore *sem)
 {
