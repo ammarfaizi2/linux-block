@@ -15,6 +15,18 @@
 #include <asm/kvm_nacl.h>
 #include <asm/sbi.h>
 
+DEFINE_STATIC_KEY_FALSE(kvm_riscv_vsstage_tlb_no_gpa);
+
+static void kvm_riscv_setup_vendor_features(void)
+{
+	/* Andes AX66: split two-stage TLBs */
+	if (riscv_cached_mvendorid(0) == ANDES_VENDOR_ID &&
+	    (riscv_cached_marchid(0) & 0xFFFF) == 0x8A66) {
+		static_branch_enable(&kvm_riscv_vsstage_tlb_no_gpa);
+		kvm_info("VS-stage TLB does not cache guest physical address and VMID\n");
+	}
+}
+
 long kvm_arch_dev_ioctl(struct file *filp,
 			unsigned int ioctl, unsigned long arg)
 {
@@ -93,6 +105,23 @@ static int __init riscv_kvm_init(void)
 		return rc;
 
 	kvm_riscv_gstage_mode_detect();
+	switch (kvm_riscv_gstage_mode) {
+	case HGATP_MODE_SV32X4:
+		str = "Sv32x4";
+		break;
+	case HGATP_MODE_SV39X4:
+		str = "Sv39x4";
+		break;
+	case HGATP_MODE_SV48X4:
+		str = "Sv48x4";
+		break;
+	case HGATP_MODE_SV57X4:
+		str = "Sv57x4";
+		break;
+	default:
+		kvm_riscv_nacl_exit();
+		return -ENODEV;
+	}
 
 	kvm_riscv_gstage_vmid_detect();
 
@@ -135,22 +164,6 @@ static int __init riscv_kvm_init(void)
 			 (rc) ? slist : "no features");
 	}
 
-	switch (kvm_riscv_gstage_mode) {
-	case HGATP_MODE_SV32X4:
-		str = "Sv32x4";
-		break;
-	case HGATP_MODE_SV39X4:
-		str = "Sv39x4";
-		break;
-	case HGATP_MODE_SV48X4:
-		str = "Sv48x4";
-		break;
-	case HGATP_MODE_SV57X4:
-		str = "Sv57x4";
-		break;
-	default:
-		return -ENODEV;
-	}
 	kvm_info("using %s G-stage page table format\n", str);
 
 	kvm_info("VMID %ld bits available\n", kvm_riscv_gstage_vmid_bits());
@@ -158,6 +171,8 @@ static int __init riscv_kvm_init(void)
 	if (kvm_riscv_aia_available())
 		kvm_info("AIA available with %d guest external interrupts\n",
 			 kvm_riscv_aia_nr_hgei);
+
+	kvm_riscv_setup_vendor_features();
 
 	kvm_register_perf_callbacks(NULL);
 

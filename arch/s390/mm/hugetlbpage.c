@@ -6,8 +6,7 @@
  *    Author(s): Gerald Schaefer <gerald.schaefer@de.ibm.com>
  */
 
-#define KMSG_COMPONENT "hugetlb"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define pr_fmt(fmt) "hugetlb: " fmt
 
 #include <linux/cpufeature.h>
 #include <linux/mm.h>
@@ -155,7 +154,7 @@ static void clear_huge_pte_skeys(struct mm_struct *mm, unsigned long rste)
 		paddr = rste & PMD_MASK;
 	}
 
-	if (!test_and_set_bit(PG_arch_1, &folio->flags))
+	if (!test_and_set_bit(PG_arch_1, &folio->flags.f))
 		__storage_key_init_range(paddr, paddr + size);
 }
 

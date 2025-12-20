@@ -29,6 +29,7 @@ enum {
 	LINK_CAPA_200000FD,
 	LINK_CAPA_400000FD,
 	LINK_CAPA_800000FD,
+	LINK_CAPA_1600000FD,
 
 	__LINK_CAPA_MAX,
 };
@@ -41,7 +42,7 @@ struct link_capabilities {
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(linkmodes);
 };
 
-int phy_caps_init(void);
+int __init phy_caps_init(void);
 
 size_t phy_caps_speeds(unsigned int *speeds, size_t size,
 		       unsigned long *linkmodes);

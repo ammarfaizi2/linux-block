@@ -334,7 +334,7 @@ xfs_reinit_inode(
 	dev_t			dev = inode->i_rdev;
 	kuid_t			uid = inode->i_uid;
 	kgid_t			gid = inode->i_gid;
-	unsigned long		state = inode->i_state;
+	unsigned long		state = inode_state_read_once(inode);
 
 	error = inode_init_always(mp->m_super, inode);
 
@@ -345,7 +345,7 @@ xfs_reinit_inode(
 	inode->i_rdev = dev;
 	inode->i_uid = uid;
 	inode->i_gid = gid;
-	inode->i_state = state;
+	inode_state_assign_raw(inode, state);
 	mapping_set_folio_min_order(inode->i_mapping,
 				    M_IGEO(mp)->min_folio_order);
 	return error;
@@ -358,27 +358,13 @@ xfs_reinit_inode(
 static int
 xfs_iget_recycle(
 	struct xfs_perag	*pag,
-	struct xfs_inode	*ip) __releases(&ip->i_flags_lock)
+	struct xfs_inode	*ip)
 {
 	struct xfs_mount	*mp = ip->i_mount;
 	struct inode		*inode = VFS_I(ip);
 	int			error;
 
 	trace_xfs_iget_recycle(ip);
-
-	if (!xfs_ilock_nowait(ip, XFS_ILOCK_EXCL))
-		return -EAGAIN;
-
-	/*
-	 * We need to make it look like the inode is being reclaimed to prevent
-	 * the actual reclaim workers from stomping over us while we recycle
-	 * the inode.  We can't clear the radix tree tag yet as it requires
-	 * pag_ici_lock to be held exclusive.
-	 */
-	ip->i_flags |= XFS_IRECLAIM;
-
-	spin_unlock(&ip->i_flags_lock);
-	rcu_read_unlock();
 
 	ASSERT(!rwsem_is_locked(&inode->i_rwsem));
 	error = xfs_reinit_inode(mp, inode);
@@ -411,7 +397,7 @@ xfs_iget_recycle(
 	ip->i_flags |= XFS_INEW;
 	xfs_perag_clear_inode_tag(pag, XFS_INO_TO_AGINO(mp, ip->i_ino),
 			XFS_ICI_RECLAIM_TAG);
-	inode->i_state = I_NEW;
+	inode_state_assign_raw(inode, I_NEW);
 	spin_unlock(&ip->i_flags_lock);
 	spin_unlock(&pag->pag_ici_lock);
 
@@ -576,10 +562,19 @@ xfs_iget_cache_hit(
 
 	/* The inode fits the selection criteria; process it. */
 	if (ip->i_flags & XFS_IRECLAIMABLE) {
-		/* Drops i_flags_lock and RCU read lock. */
-		error = xfs_iget_recycle(pag, ip);
-		if (error == -EAGAIN)
+		/*
+		 * We need to make it look like the inode is being reclaimed to
+		 * prevent the actual reclaim workers from stomping over us
+		 * while we recycle the inode.  We can't clear the radix tree
+		 * tag yet as it requires pag_ici_lock to be held exclusive.
+		 */
+		if (!xfs_ilock_nowait(ip, XFS_ILOCK_EXCL))
 			goto out_skip;
+		ip->i_flags |= XFS_IRECLAIM;
+		spin_unlock(&ip->i_flags_lock);
+		rcu_read_unlock();
+
+		error = xfs_iget_recycle(pag, ip);
 		if (error)
 			return error;
 	} else {
@@ -646,8 +641,7 @@ xfs_iget_cache_miss(
 		goto out_destroy;
 
 	/*
-	 * For version 5 superblocks, if we are initialising a new inode and we
-	 * are not utilising the XFS_FEAT_IKEEP inode cluster mode, we can
+	 * For version 5 superblocks, if we are initialising a new inode, we
 	 * simply build the new inode core with a random generation number.
 	 *
 	 * For version 4 (and older) superblocks, log recovery is dependent on
@@ -655,8 +649,7 @@ xfs_iget_cache_miss(
 	 * value and hence we must also read the inode off disk even when
 	 * initializing new inodes.
 	 */
-	if (xfs_has_v3inodes(mp) &&
-	    (flags & XFS_IGET_CREATE) && !xfs_has_ikeep(mp)) {
+	if (xfs_has_v3inodes(mp) && (flags & XFS_IGET_CREATE)) {
 		VFS_I(ip)->i_generation = get_random_u32();
 	} else {
 		struct xfs_buf		*bp;

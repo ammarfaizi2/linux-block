@@ -817,6 +817,40 @@ void drm_crtc_load_palette_8(struct drm_crtc *crtc, const struct drm_color_lut *
 }
 EXPORT_SYMBOL(drm_crtc_load_palette_8);
 
+static void fill_palette_332(struct drm_crtc *crtc, u16 r, u16 g, u16 b,
+			     drm_crtc_set_lut_func set_palette)
+{
+	unsigned int i = (r << 5) | (g << 2) | b; /* 8-bit palette index */
+
+	/* Expand R (3-bit) G (3-bit) and B (2-bit) values to 16-bit values */
+	r = (r << 13) | (r << 10) | (r << 7) | (r << 4) | (r << 1) | (r >> 2);
+	g = (g << 13) | (g << 10) | (g << 7) | (g << 4) | (g << 1) | (g >> 2);
+	b = (b << 14) | (b << 12) | (b << 10) | (b << 8) | (b << 6) | (b << 4) | (b << 2) | b;
+
+	set_palette(crtc, i, r, g, b);
+}
+
+/**
+ * drm_crtc_fill_palette_332 - Programs a default palette for R332-like formats
+ * @crtc: The displaying CRTC
+ * @set_palette: Callback for programming the hardware gamma LUT
+ *
+ * Programs an RGB332 palette to hardware.
+ */
+void drm_crtc_fill_palette_332(struct drm_crtc *crtc, drm_crtc_set_lut_func set_palette)
+{
+	unsigned int r, g, b;
+
+	/* Limits of 8-8-4 are the maximum number of values for each channel. */
+	for (r = 0; r < 8; ++r) {
+		for (g = 0; g < 8; ++g) {
+			for (b = 0; b < 4; ++b)
+				fill_palette_332(crtc, r, g, b, set_palette);
+		}
+	}
+}
+EXPORT_SYMBOL(drm_crtc_fill_palette_332);
+
 static void fill_palette_8(struct drm_crtc *crtc, unsigned int i,
 			   drm_crtc_set_lut_func set_palette)
 {
@@ -840,3 +874,46 @@ void drm_crtc_fill_palette_8(struct drm_crtc *crtc, drm_crtc_set_lut_func set_pa
 		fill_palette_8(crtc, i, set_palette);
 }
 EXPORT_SYMBOL(drm_crtc_fill_palette_8);
+
+/**
+ * drm_color_lut32_check - check validity of extended lookup table
+ * @lut: property blob containing extended LUT to check
+ * @tests: bitmask of tests to run
+ *
+ * Helper to check whether a userspace-provided extended lookup table is valid and
+ * satisfies hardware requirements.  Drivers pass a bitmask indicating which of
+ * the tests in &drm_color_lut_tests should be performed.
+ *
+ * Returns 0 on success, -EINVAL on failure.
+ */
+int drm_color_lut32_check(const struct drm_property_blob *lut, u32 tests)
+{
+	const struct drm_color_lut32 *entry;
+	int i;
+
+	if (!lut || !tests)
+		return 0;
+
+	entry = lut->data;
+	for (i = 0; i < drm_color_lut32_size(lut); i++) {
+		if (tests & DRM_COLOR_LUT_EQUAL_CHANNELS) {
+			if (entry[i].red != entry[i].blue ||
+			    entry[i].red != entry[i].green) {
+				DRM_DEBUG_KMS("All LUT entries must have equal r/g/b\n");
+				return -EINVAL;
+			}
+		}
+
+		if (i > 0 && tests & DRM_COLOR_LUT_NON_DECREASING) {
+			if (entry[i].red < entry[i - 1].red ||
+			    entry[i].green < entry[i - 1].green ||
+			    entry[i].blue < entry[i - 1].blue) {
+				DRM_DEBUG_KMS("LUT entries must never decrease.\n");
+				return -EINVAL;
+			}
+		}
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(drm_color_lut32_check);

@@ -50,6 +50,7 @@
 #include "intel_gmbus.h"
 #include "intel_hotplug.h"
 #include "intel_hotplug_irq.h"
+#include "intel_link_bw.h"
 #include "intel_load_detect.h"
 #include "intel_pch_display.h"
 #include "intel_pch_refclk.h"
@@ -421,7 +422,7 @@ static int pch_crt_compute_config(struct intel_encoder *encoder,
 		return -EINVAL;
 
 	crtc_state->has_pch_encoder = true;
-	if (!intel_fdi_compute_pipe_bpp(crtc_state))
+	if (!intel_link_bw_compute_pipe_bpp(crtc_state))
 		return -EINVAL;
 
 	crtc_state->output_format = INTEL_OUTPUT_FORMAT_RGB;
@@ -446,7 +447,7 @@ static int hsw_crt_compute_config(struct intel_encoder *encoder,
 		return -EINVAL;
 
 	crtc_state->has_pch_encoder = true;
-	if (!intel_fdi_compute_pipe_bpp(crtc_state))
+	if (!intel_link_bw_compute_pipe_bpp(crtc_state))
 		return -EINVAL;
 
 	crtc_state->output_format = INTEL_OUTPUT_FORMAT_RGB;
@@ -497,10 +498,10 @@ static bool ilk_crt_detect_hotplug(struct drm_connector *connector)
 
 		intel_de_write(display, crt->adpa_reg, adpa);
 
-		if (intel_de_wait_for_clear(display,
-					    crt->adpa_reg,
-					    ADPA_CRT_HOTPLUG_FORCE_TRIGGER,
-					    1000))
+		if (intel_de_wait_for_clear_ms(display,
+					       crt->adpa_reg,
+					       ADPA_CRT_HOTPLUG_FORCE_TRIGGER,
+					       1000))
 			drm_dbg_kms(display->drm,
 				    "timed out waiting for FORCE_TRIGGER");
 
@@ -552,8 +553,8 @@ static bool valleyview_crt_detect_hotplug(struct drm_connector *connector)
 
 	intel_de_write(display, crt->adpa_reg, adpa);
 
-	if (intel_de_wait_for_clear(display, crt->adpa_reg,
-				    ADPA_CRT_HOTPLUG_FORCE_TRIGGER, 1000)) {
+	if (intel_de_wait_for_clear_ms(display, crt->adpa_reg,
+				       ADPA_CRT_HOTPLUG_FORCE_TRIGGER, 1000)) {
 		drm_dbg_kms(display->drm,
 			    "timed out waiting for FORCE_TRIGGER");
 		intel_de_write(display, crt->adpa_reg, save_adpa);
@@ -603,8 +604,8 @@ static bool intel_crt_detect_hotplug(struct drm_connector *connector)
 					      CRT_HOTPLUG_FORCE_DETECT,
 					      CRT_HOTPLUG_FORCE_DETECT);
 		/* wait for FORCE_DETECT to go off */
-		if (intel_de_wait_for_clear(display, PORT_HOTPLUG_EN(display),
-					    CRT_HOTPLUG_FORCE_DETECT, 1000))
+		if (intel_de_wait_for_clear_ms(display, PORT_HOTPLUG_EN(display),
+					       CRT_HOTPLUG_FORCE_DETECT, 1000))
 			drm_dbg_kms(display->drm,
 				    "timed out waiting for FORCE_DETECT to go off");
 	}

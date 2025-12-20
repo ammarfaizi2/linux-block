@@ -86,6 +86,12 @@ static const struct hw_sequencer_funcs dcn35_funcs = {
 	.set_cursor_position = dcn10_set_cursor_position,
 	.set_cursor_attribute = dcn10_set_cursor_attribute,
 	.set_cursor_sdr_white_level = dcn10_set_cursor_sdr_white_level,
+	.abort_cursor_offload_update = dcn35_abort_cursor_offload_update,
+	.begin_cursor_offload_update = dcn35_begin_cursor_offload_update,
+	.commit_cursor_offload_update = dcn35_commit_cursor_offload_update,
+	.update_cursor_offload_pipe = dcn35_update_cursor_offload_pipe,
+	.notify_cursor_offload_drr_update = dcn35_notify_cursor_offload_drr_update,
+	.program_cursor_offload_now = dcn35_program_cursor_offload_now,
 	.setup_periodic_interrupt = dcn10_setup_periodic_interrupt,
 	.set_clock = dcn10_set_clock,
 	.get_clock = dcn10_get_clock,
@@ -127,6 +133,7 @@ static const struct hw_sequencer_funcs dcn35_funcs = {
 	.enable_plane = dcn20_enable_plane,
 	.update_dchubp_dpp = dcn20_update_dchubp_dpp,
 	.post_unlock_reset_opp = dcn20_post_unlock_reset_opp,
+	.get_underflow_debug_data = dcn30_get_underflow_debug_data,
 };
 
 static const struct hwseq_private_funcs dcn35_private_funcs = {

@@ -11,12 +11,83 @@
 #include "alloc_cache.h"
 #include "io-wq.h"
 #include "slist.h"
-#include "filetable.h"
 #include "opdef.h"
 
 #ifndef CREATE_TRACE_POINTS
 #include <trace/events/io_uring.h>
 #endif
+
+struct io_rings_layout {
+	/* size of CQ + headers + SQ offset array */
+	size_t rings_size;
+	size_t sq_size;
+
+	size_t sq_array_offset;
+};
+
+struct io_ctx_config {
+	struct io_uring_params p;
+	struct io_rings_layout layout;
+	struct io_uring_params __user *uptr;
+};
+
+#define IORING_FEAT_FLAGS (IORING_FEAT_SINGLE_MMAP |\
+			IORING_FEAT_NODROP |\
+			IORING_FEAT_SUBMIT_STABLE |\
+			IORING_FEAT_RW_CUR_POS |\
+			IORING_FEAT_CUR_PERSONALITY |\
+			IORING_FEAT_FAST_POLL |\
+			IORING_FEAT_POLL_32BITS |\
+			IORING_FEAT_SQPOLL_NONFIXED |\
+			IORING_FEAT_EXT_ARG |\
+			IORING_FEAT_NATIVE_WORKERS |\
+			IORING_FEAT_RSRC_TAGS |\
+			IORING_FEAT_CQE_SKIP |\
+			IORING_FEAT_LINKED_FILE |\
+			IORING_FEAT_REG_REG_RING |\
+			IORING_FEAT_RECVSEND_BUNDLE |\
+			IORING_FEAT_MIN_TIMEOUT |\
+			IORING_FEAT_RW_ATTR |\
+			IORING_FEAT_NO_IOWAIT)
+
+#define IORING_SETUP_FLAGS (IORING_SETUP_IOPOLL |\
+			IORING_SETUP_SQPOLL |\
+			IORING_SETUP_SQ_AFF |\
+			IORING_SETUP_CQSIZE |\
+			IORING_SETUP_CLAMP |\
+			IORING_SETUP_ATTACH_WQ |\
+			IORING_SETUP_R_DISABLED |\
+			IORING_SETUP_SUBMIT_ALL |\
+			IORING_SETUP_COOP_TASKRUN |\
+			IORING_SETUP_TASKRUN_FLAG |\
+			IORING_SETUP_SQE128 |\
+			IORING_SETUP_CQE32 |\
+			IORING_SETUP_SINGLE_ISSUER |\
+			IORING_SETUP_DEFER_TASKRUN |\
+			IORING_SETUP_NO_MMAP |\
+			IORING_SETUP_REGISTERED_FD_ONLY |\
+			IORING_SETUP_NO_SQARRAY |\
+			IORING_SETUP_HYBRID_IOPOLL |\
+			IORING_SETUP_CQE_MIXED |\
+			IORING_SETUP_SQE_MIXED)
+
+#define IORING_ENTER_FLAGS (IORING_ENTER_GETEVENTS |\
+			IORING_ENTER_SQ_WAKEUP |\
+			IORING_ENTER_SQ_WAIT |\
+			IORING_ENTER_EXT_ARG |\
+			IORING_ENTER_REGISTERED_RING |\
+			IORING_ENTER_ABS_TIMER |\
+			IORING_ENTER_EXT_ARG_REG |\
+			IORING_ENTER_NO_IOWAIT)
+
+
+#define SQE_VALID_FLAGS (IOSQE_FIXED_FILE |\
+			IOSQE_IO_DRAIN |\
+			IOSQE_IO_LINK |\
+			IOSQE_IO_HARDLINK |\
+			IOSQE_ASYNC |\
+			IOSQE_BUFFER_SELECT |\
+			IOSQE_CQE_SKIP_SUCCESS)
 
 enum {
 	IOU_COMPLETE		= 0,
@@ -37,6 +108,11 @@ enum {
 	 * valid error code, yet less than -MAX_ERRNO and valid internally.
 	 */
 	IOU_REQUEUE		= -3072,
+};
+
+struct io_defer_entry {
+	struct list_head	list;
+	struct io_kiocb		*req;
 };
 
 struct io_wait_queue {
@@ -72,11 +148,11 @@ static inline bool io_should_wake(struct io_wait_queue *iowq)
 #define IORING_MAX_ENTRIES	32768
 #define IORING_MAX_CQ_ENTRIES	(2 * IORING_MAX_ENTRIES)
 
-unsigned long rings_size(unsigned int flags, unsigned int sq_entries,
-			 unsigned int cq_entries, size_t *sq_offset);
-int io_uring_fill_params(unsigned entries, struct io_uring_params *p);
-bool io_cqe_cache_refill(struct io_ring_ctx *ctx, bool overflow);
+int io_prepare_config(struct io_ctx_config *config);
+
+bool io_cqe_cache_refill(struct io_ring_ctx *ctx, bool overflow, bool cqe32);
 int io_run_task_work_sig(struct io_ring_ctx *ctx);
+int io_run_local_work(struct io_ring_ctx *ctx, int min_events, int max_events);
 void io_req_defer_failed(struct io_kiocb *req, s32 res);
 bool io_post_aux_cqe(struct io_ring_ctx *ctx, u64 user_data, s32 res, u32 cflags);
 void io_add_aux_cqe(struct io_ring_ctx *ctx, u64 user_data, s32 res, u32 cflags);
@@ -84,6 +160,7 @@ bool io_req_post_cqe(struct io_kiocb *req, s32 res, u32 cflags);
 bool io_req_post_cqe32(struct io_kiocb *req, struct io_uring_cqe src_cqe[2]);
 void __io_commit_cqring_flush(struct io_ring_ctx *ctx);
 
+unsigned io_linked_nr(struct io_kiocb *req);
 void io_req_track_inflight(struct io_kiocb *req);
 struct file *io_file_get_normal(struct io_kiocb *req, int fd);
 struct file *io_file_get_fixed(struct io_kiocb *req, int fd,
@@ -92,13 +169,13 @@ struct file *io_file_get_fixed(struct io_kiocb *req, int fd,
 void __io_req_task_work_add(struct io_kiocb *req, unsigned flags);
 void io_req_task_work_add_remote(struct io_kiocb *req, unsigned flags);
 void io_req_task_queue(struct io_kiocb *req);
-void io_req_task_complete(struct io_kiocb *req, io_tw_token_t tw);
+void io_req_task_complete(struct io_tw_req tw_req, io_tw_token_t tw);
 void io_req_task_queue_fail(struct io_kiocb *req, int ret);
-void io_req_task_submit(struct io_kiocb *req, io_tw_token_t tw);
+void io_req_task_submit(struct io_tw_req tw_req, io_tw_token_t tw);
 struct llist_node *io_handle_tw_list(struct llist_node *node, unsigned int *count, unsigned int max_entries);
 struct llist_node *tctx_task_work_run(struct io_uring_task *tctx, unsigned int max_entries, unsigned int *count);
 void tctx_task_work(struct callback_head *cb);
-__cold void io_uring_cancel_generic(bool cancel_all, struct io_sq_data *sqd);
+__cold void io_uring_drop_tctx_refs(struct task_struct *task);
 
 int io_ring_add_registered_file(struct io_uring_task *tctx, struct file *file,
 				     int start, int end);
@@ -107,6 +184,7 @@ void io_req_queue_iowq(struct io_kiocb *req);
 int io_poll_issue(struct io_kiocb *req, io_tw_token_t tw);
 int io_submit_sqes(struct io_ring_ctx *ctx, unsigned int nr);
 int io_do_iopoll(struct io_ring_ctx *ctx, bool force_nonspin);
+__cold void io_iopoll_try_reap_events(struct io_ring_ctx *ctx);
 void __io_submit_flush_completions(struct io_ring_ctx *ctx);
 
 struct io_wq_work *io_wq_free_work(struct io_wq_work *work);
@@ -116,9 +194,6 @@ void io_free_req(struct io_kiocb *req);
 void io_queue_next(struct io_kiocb *req);
 void io_task_refs_refill(struct io_uring_task *tctx);
 bool __io_alloc_req_refill(struct io_ring_ctx *ctx);
-
-bool io_match_task_safe(struct io_kiocb *head, struct io_uring_task *tctx,
-			bool cancel_all);
 
 void io_activate_pollwq(struct io_ring_ctx *ctx);
 
@@ -169,25 +244,31 @@ static inline void io_submit_flush_completions(struct io_ring_ctx *ctx)
 
 static inline bool io_get_cqe_overflow(struct io_ring_ctx *ctx,
 					struct io_uring_cqe **ret,
-					bool overflow)
+					bool overflow, bool cqe32)
 {
 	io_lockdep_assert_cq_locked(ctx);
 
-	if (unlikely(ctx->cqe_cached >= ctx->cqe_sentinel)) {
-		if (unlikely(!io_cqe_cache_refill(ctx, overflow)))
+	if (unlikely(ctx->cqe_sentinel - ctx->cqe_cached < (cqe32 + 1))) {
+		if (unlikely(!io_cqe_cache_refill(ctx, overflow, cqe32)))
 			return false;
 	}
 	*ret = ctx->cqe_cached;
 	ctx->cached_cq_tail++;
 	ctx->cqe_cached++;
-	if (ctx->flags & IORING_SETUP_CQE32)
+	if (ctx->flags & IORING_SETUP_CQE32) {
 		ctx->cqe_cached++;
+	} else if (cqe32 && ctx->flags & IORING_SETUP_CQE_MIXED) {
+		ctx->cqe_cached++;
+		ctx->cached_cq_tail++;
+	}
+	WARN_ON_ONCE(ctx->cqe_cached > ctx->cqe_sentinel);
 	return true;
 }
 
-static inline bool io_get_cqe(struct io_ring_ctx *ctx, struct io_uring_cqe **ret)
+static inline bool io_get_cqe(struct io_ring_ctx *ctx, struct io_uring_cqe **ret,
+				bool cqe32)
 {
-	return io_get_cqe_overflow(ctx, ret, false);
+	return io_get_cqe_overflow(ctx, ret, false, cqe32);
 }
 
 static inline bool io_defer_get_uncommited_cqe(struct io_ring_ctx *ctx,
@@ -196,25 +277,24 @@ static inline bool io_defer_get_uncommited_cqe(struct io_ring_ctx *ctx,
 	io_lockdep_assert_cq_locked(ctx);
 
 	ctx->submit_state.cq_flush = true;
-	return io_get_cqe(ctx, cqe_ret);
+	return io_get_cqe(ctx, cqe_ret, ctx->flags & IORING_SETUP_CQE_MIXED);
 }
 
 static __always_inline bool io_fill_cqe_req(struct io_ring_ctx *ctx,
 					    struct io_kiocb *req)
 {
+	bool is_cqe32 = req->cqe.flags & IORING_CQE_F_32;
 	struct io_uring_cqe *cqe;
 
 	/*
-	 * If we can't get a cq entry, userspace overflowed the
-	 * submission (by quite a lot). Increment the overflow count in
-	 * the ring.
+	 * If we can't get a cq entry, userspace overflowed the submission
+	 * (by quite a lot).
 	 */
-	if (unlikely(!io_get_cqe(ctx, &cqe)))
+	if (unlikely(!io_get_cqe(ctx, &cqe, is_cqe32)))
 		return false;
 
-
 	memcpy(cqe, &req->cqe, sizeof(*cqe));
-	if (ctx->flags & IORING_SETUP_CQE32) {
+	if (ctx->flags & IORING_SETUP_CQE32 || is_cqe32) {
 		memcpy(cqe->big_cqe, &req->big_cqe, sizeof(*cqe));
 		memset(&req->big_cqe, 0, sizeof(req->big_cqe));
 	}
@@ -239,6 +319,22 @@ static inline void io_req_set_res(struct io_kiocb *req, s32 res, u32 cflags)
 	req->cqe.flags = cflags;
 }
 
+static inline u32 ctx_cqe32_flags(struct io_ring_ctx *ctx)
+{
+	if (ctx->flags & IORING_SETUP_CQE_MIXED)
+		return IORING_CQE_F_32;
+	return 0;
+}
+
+static inline void io_req_set_res32(struct io_kiocb *req, s32 res, u32 cflags,
+				    __u64 extra1, __u64 extra2)
+{
+	req->cqe.res = res;
+	req->cqe.flags = cflags | ctx_cqe32_flags(req->ctx);
+	req->big_cqe.extra1 = extra1;
+	req->big_cqe.extra2 = extra2;
+}
+
 static inline void *io_uring_alloc_async_data(struct io_alloc_cache *cache,
 					      struct io_kiocb *req)
 {
@@ -258,6 +354,19 @@ static inline void *io_uring_alloc_async_data(struct io_alloc_cache *cache,
 static inline bool req_has_async_data(struct io_kiocb *req)
 {
 	return req->flags & REQ_F_ASYNC_DATA;
+}
+
+static inline void io_req_async_data_clear(struct io_kiocb *req,
+					   io_req_flags_t extra_flags)
+{
+	req->flags &= ~(REQ_F_ASYNC_DATA|extra_flags);
+	req->async_data = NULL;
+}
+
+static inline void io_req_async_data_free(struct io_kiocb *req)
+{
+	kfree(req->async_data);
+	io_req_async_data_clear(req, 0);
 }
 
 static inline void io_put_file(struct io_kiocb *req)
@@ -468,35 +577,11 @@ static inline bool io_allowed_run_tw(struct io_ring_ctx *ctx)
 		      ctx->submitter_task == current);
 }
 
-/*
- * Terminate the request if either of these conditions are true:
- *
- * 1) It's being executed by the original task, but that task is marked
- *    with PF_EXITING as it's exiting.
- * 2) PF_KTHREAD is set, in which case the invoker of the task_work is
- *    our fallback task_work.
- */
-static inline bool io_should_terminate_tw(void)
-{
-	return current->flags & (PF_KTHREAD | PF_EXITING);
-}
-
 static inline void io_req_queue_tw_complete(struct io_kiocb *req, s32 res)
 {
 	io_req_set_res(req, res, 0);
 	req->io_task_work.func = io_req_task_complete;
 	io_req_task_work_add(req);
-}
-
-/*
- * IORING_SETUP_SQE128 contexts allocate twice the normal SQE size for each
- * slot.
- */
-static inline size_t uring_sqe_size(struct io_ring_ctx *ctx)
-{
-	if (ctx->flags & IORING_SETUP_SQE128)
-		return 2 * sizeof(struct io_uring_sqe);
-	return sizeof(struct io_uring_sqe);
 }
 
 static inline bool io_file_can_poll(struct io_kiocb *req)

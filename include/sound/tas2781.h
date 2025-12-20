@@ -49,9 +49,11 @@
 #define TASDEVICE_REG(book, page, reg)	(((book * 256 * 128) + \
 					(page * 128)) + reg)
 
-/* Software Reset */
+/* Software Reset, compatble with new device (TAS5825). */
 #define TASDEVICE_REG_SWRESET		TASDEVICE_REG(0x0, 0x0, 0x01)
 #define TASDEVICE_REG_SWRESET_RESET	BIT(0)
+
+#define TAS5825_REG_SWRESET_RESET	(BIT(0) | BIT(4))
 
 /* Checksum */
 #define TASDEVICE_CHECKSUM_REG		TASDEVICE_REG(0x0, 0x0, 0x7e)
@@ -110,8 +112,26 @@
 #define TAS2781_RUNTIME_RE_REG		TASDEVICE_REG(0x64, 0x63, 0x44)
 
 enum audio_device {
+	TAS2020,
+	TAS2118,
+	TAS2120,
+	TAS2320,
 	TAS2563,
+	TAS2568,
+	TAS2570,
+	TAS2572,
+	TAS2574,
 	TAS2781,
+	TAS5802,
+	TAS5806M,
+	TAS5806MD,
+	TAS5815,
+	TAS5822,
+	TAS5825,
+	TAS5827,
+	TAS5828,
+	TAS5830,
+	TAS_OTHERS,
 };
 
 enum dspbin_type {
@@ -183,7 +203,6 @@ struct tasdevice_priv {
 	struct acoustic_data acou_data;
 #endif
 	struct tasdevice_fw *fmw;
-	struct gpio_desc *speaker_id;
 	struct gpio_desc *reset;
 	struct mutex codec_lock;
 	struct regmap *regmap;
@@ -194,12 +213,14 @@ struct tasdevice_priv {
 	unsigned char coef_binaryname[64];
 	unsigned char rca_binaryname[64];
 	unsigned char dev_name[32];
+	const unsigned char (*dvc_tlv_table)[4];
 	const char *name_prefix;
 	unsigned char ndev;
 	unsigned int dspbin_typ;
 	unsigned int magic_num;
 	unsigned int chip_id;
 	unsigned int sysclk;
+	int speaker_id;
 
 	int irq;
 	int cur_prog;

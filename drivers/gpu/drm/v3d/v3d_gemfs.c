@@ -5,12 +5,9 @@
 #include <linux/mount.h>
 #include <linux/fs_context.h>
 
-#include "v3d_drv.h"
+#include <drm/drm_print.h>
 
-static int add_param(struct fs_context *fc, const char *key, const char *val)
-{
-	return vfs_parse_fs_string(fc, key, val, strlen(val));
-}
+#include "v3d_drv.h"
 
 void v3d_gemfs_init(struct v3d_dev *v3d)
 {
@@ -38,9 +35,9 @@ void v3d_gemfs_init(struct v3d_dev *v3d)
 	fc = fs_context_for_mount(type, SB_KERNMOUNT);
 	if (IS_ERR(fc))
 		goto err;
-	ret = add_param(fc, "source", "tmpfs");
+	ret = vfs_parse_fs_string(fc, "source", "tmpfs");
 	if (!ret)
-		ret = add_param(fc, "huge", "within_size");
+		ret = vfs_parse_fs_string(fc, "huge", "within_size");
 	if (!ret)
 		gemfs = fc_mount_longterm(fc);
 	put_fs_context(fc);

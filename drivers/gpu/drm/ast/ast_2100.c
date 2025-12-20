@@ -27,9 +27,45 @@
  */
 
 #include <linux/delay.h>
+#include <linux/pci.h>
+
+#include <drm/drm_drv.h>
 
 #include "ast_drv.h"
 #include "ast_post.h"
+
+/*
+ * DRAM type
+ */
+
+static enum ast_dram_layout ast_2100_get_dram_layout_p2a(struct ast_device *ast)
+{
+	u32 mcr_cfg;
+	enum ast_dram_layout dram_layout;
+
+	ast_write32(ast, 0xf004, 0x1e6e0000);
+	ast_write32(ast, 0xf000, 0x1);
+	mcr_cfg = ast_read32(ast, 0x10004);
+
+	switch (mcr_cfg & 0x0c) {
+	case 0:
+	case 4:
+	default:
+		dram_layout = AST_DRAM_512Mx16;
+		break;
+	case 8:
+		if (mcr_cfg & 0x40)
+			dram_layout = AST_DRAM_1Gx16;
+		else
+			dram_layout = AST_DRAM_512Mx32;
+		break;
+	case 0xc:
+		dram_layout = AST_DRAM_1Gx32;
+		break;
+	}
+
+	return dram_layout;
+}
 
 /*
  * POST
@@ -266,6 +302,7 @@ static void ast_post_chip_2100(struct ast_device *ast)
 	u8 j;
 	u32 data, temp, i;
 	const struct ast_dramstruct *dram_reg_info;
+	enum ast_dram_layout dram_layout  = ast_2100_get_dram_layout_p2a(ast);
 
 	j = ast_get_index_reg_mask(ast, AST_IO_VGACRI, 0xd0, 0xff);
 
@@ -292,11 +329,17 @@ static void ast_post_chip_2100(struct ast_device *ast)
 				for (i = 0; i < 15; i++)
 					udelay(dram_reg_info->data);
 			} else if (AST_DRAMSTRUCT_IS(dram_reg_info, DRAM_TYPE)) {
-				data = dram_reg_info->data;
-				if (ast->dram_type == AST_DRAM_1Gx16)
+				switch (dram_layout) {
+				case AST_DRAM_1Gx16:
 					data = 0x00000d89;
-				else if (ast->dram_type == AST_DRAM_1Gx32)
+					break;
+				case AST_DRAM_1Gx32:
 					data = 0x00000c8d;
+					break;
+				default:
+					data = dram_reg_info->data;
+					break;
+				}
 
 				temp = ast_read32(ast, 0x12070);
 				temp &= 0xc;
@@ -345,4 +388,93 @@ int ast_2100_post(struct ast_device *ast)
 	}
 
 	return 0;
+}
+
+/*
+ * Widescreen detection
+ */
+
+/* Try to detect WSXGA+ on Gen2+ */
+bool __ast_2100_detect_wsxga_p(struct ast_device *ast)
+{
+	u8 vgacrd0 = ast_get_index_reg(ast, AST_IO_VGACRI, 0xd0);
+
+	if (!(vgacrd0 & AST_IO_VGACRD0_VRAM_INIT_BY_BMC))
+		return true;
+	if (vgacrd0 & AST_IO_VGACRD0_IKVM_WIDESCREEN)
+		return true;
+
+	return false;
+}
+
+/* Try to detect WUXGA on Gen2+ */
+bool __ast_2100_detect_wuxga(struct ast_device *ast)
+{
+	u8 vgacrd1;
+
+	if (ast->support_fullhd) {
+		vgacrd1 = ast_get_index_reg(ast, AST_IO_VGACRI, 0xd1);
+		if (!(vgacrd1 & AST_IO_VGACRD1_SUPPORTS_WUXGA))
+			return true;
+	}
+
+	return false;
+}
+
+static void ast_2100_detect_widescreen(struct ast_device *ast)
+{
+	if (__ast_2100_detect_wsxga_p(ast)) {
+		ast->support_wsxga_p = true;
+		if (ast->chip == AST2100)
+			ast->support_fullhd = true;
+	}
+	if (__ast_2100_detect_wuxga(ast))
+		ast->support_wuxga = true;
+}
+
+static const struct ast_device_quirks ast_2100_device_quirks = {
+	.crtc_mem_req_threshold_low = 47,
+	.crtc_mem_req_threshold_high = 63,
+};
+
+struct drm_device *ast_2100_device_create(struct pci_dev *pdev,
+					  const struct drm_driver *drv,
+					  enum ast_chip chip,
+					  enum ast_config_mode config_mode,
+					  void __iomem *regs,
+					  void __iomem *ioregs,
+					  bool need_post)
+{
+	struct drm_device *dev;
+	struct ast_device *ast;
+	int ret;
+
+	ast = devm_drm_dev_alloc(&pdev->dev, drv, struct ast_device, base);
+	if (IS_ERR(ast))
+		return ERR_CAST(ast);
+	dev = &ast->base;
+
+	ast_device_init(ast, chip, config_mode, regs, ioregs, &ast_2100_device_quirks);
+
+	ast->dclk_table = ast_2000_dclk_table;
+
+	ast_2000_detect_tx_chip(ast, need_post);
+
+	if (need_post) {
+		ret = ast_post_gpu(ast);
+		if (ret)
+			return ERR_PTR(ret);
+	}
+
+	ret = ast_mm_init(ast);
+	if (ret)
+		return ERR_PTR(ret);
+
+	ast_2100_detect_widescreen(ast);
+
+	ret = ast_mode_config_init(ast);
+	if (ret)
+		return ERR_PTR(ret);
+
+	return dev;
 }

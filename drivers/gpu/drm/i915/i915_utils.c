@@ -6,6 +6,7 @@
 #include <linux/device.h>
 
 #include <drm/drm_drv.h>
+#include <drm/drm_print.h>
 
 #include "i915_drv.h"
 #include "i915_reg.h"
@@ -46,36 +47,6 @@ bool i915_error_injected(void)
 }
 
 #endif
-
-void cancel_timer(struct timer_list *t)
-{
-	if (!timer_active(t))
-		return;
-
-	timer_delete(t);
-	WRITE_ONCE(t->expires, 0);
-}
-
-void set_timer_ms(struct timer_list *t, unsigned long timeout)
-{
-	if (!timeout) {
-		cancel_timer(t);
-		return;
-	}
-
-	timeout = msecs_to_jiffies(timeout);
-
-	/*
-	 * Paranoia to make sure the compiler computes the timeout before
-	 * loading 'jiffies' as jiffies is volatile and may be updated in
-	 * the background by a timer tick. All to reduce the complexity
-	 * of the addition and reduce the risk of losing a jiffy.
-	 */
-	barrier();
-
-	/* Keep t->expires = 0 reserved to indicate a canceled timer. */
-	mod_timer(t, jiffies + timeout ?: 1);
-}
 
 bool i915_vtd_active(struct drm_i915_private *i915)
 {

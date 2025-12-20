@@ -38,6 +38,12 @@ struct dpll_device_ops {
 					void *dpll_priv,
 					enum dpll_feature_state *state,
 					struct netlink_ext_ack *extack);
+	int (*phase_offset_avg_factor_set)(const struct dpll_device *dpll,
+					   void *dpll_priv, u32 factor,
+					   struct netlink_ext_ack *extack);
+	int (*phase_offset_avg_factor_get)(const struct dpll_device *dpll,
+					   void *dpll_priv, u32 *factor,
+					   struct netlink_ext_ack *extack);
 };
 
 struct dpll_pin_ops {
@@ -157,6 +163,7 @@ struct dpll_pin_properties {
 	u32 freq_supported_num;
 	struct dpll_pin_frequency *freq_supported;
 	struct dpll_pin_phase_adjust_range phase_range;
+	u32 phase_gran;
 };
 
 #if IS_ENABLED(CONFIG_DPLL)

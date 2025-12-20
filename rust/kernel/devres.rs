@@ -13,8 +13,8 @@ use crate::{
     ffi::c_void,
     prelude::*,
     revocable::{Revocable, RevocableGuard},
-    sync::{rcu, Completion},
-    types::{ARef, ForeignOwnable, Opaque, ScopeGuard},
+    sync::{aref::ARef, rcu, Completion},
+    types::{ForeignOwnable, Opaque, ScopeGuard},
 };
 
 use pin_init::Wrapper;
@@ -52,8 +52,20 @@ struct Inner<T: Send> {
 /// # Examples
 ///
 /// ```no_run
-/// # use kernel::{bindings, device::{Bound, Device}, devres::Devres, io::{Io, IoRaw}};
-/// # use core::ops::Deref;
+/// use kernel::{
+///     bindings,
+///     device::{
+///         Bound,
+///         Device,
+///     },
+///     devres::Devres,
+///     io::{
+///         Io,
+///         IoRaw,
+///         PhysAddr,
+///     },
+/// };
+/// use core::ops::Deref;
 ///
 /// // See also [`pci::Bar`] for a real example.
 /// struct IoMem<const SIZE: usize>(IoRaw<SIZE>);
@@ -66,7 +78,7 @@ struct Inner<T: Send> {
 ///     unsafe fn new(paddr: usize) -> Result<Self>{
 ///         // SAFETY: By the safety requirements of this function [`paddr`, `paddr` + `SIZE`) is
 ///         // valid for `ioremap`.
-///         let addr = unsafe { bindings::ioremap(paddr as bindings::phys_addr_t, SIZE) };
+///         let addr = unsafe { bindings::ioremap(paddr as PhysAddr, SIZE) };
 ///         if addr.is_null() {
 ///             return Err(ENOMEM);
 ///         }
@@ -103,7 +115,7 @@ struct Inner<T: Send> {
 ///
 /// # Invariants
 ///
-/// [`Self::inner`] is guaranteed to be initialized and is always accessed read-only.
+/// `Self::inner` is guaranteed to be initialized and is always accessed read-only.
 #[pin_data(PinnedDrop)]
 pub struct Devres<T: Send> {
     dev: ARef<Device>,
@@ -135,11 +147,9 @@ impl<T: Send> Devres<T> {
         T: 'a,
         Error: From<E>,
     {
-        let callback = Self::devres_callback;
-
         try_pin_init!(&this in Self {
             dev: dev.into(),
-            callback,
+            callback: Self::devres_callback,
             // INVARIANT: `inner` is properly initialized.
             inner <- Opaque::pin_init(try_pin_init!(Inner {
                     devm <- Completion::new(),
@@ -160,7 +170,7 @@ impl<T: Send> Devres<T> {
                 //    properly initialized, because we require `dev` (i.e. the *bound* device) to
                 //    live at least as long as the returned `impl PinInit<Self, Error>`.
                 to_result(unsafe {
-                    bindings::devm_add_action(dev.as_raw(), Some(callback), inner.cast())
+                    bindings::devm_add_action(dev.as_raw(), Some(*callback), inner.cast())
                 }).inspect_err(|_| {
                     let inner = Opaque::cast_into(inner);
 

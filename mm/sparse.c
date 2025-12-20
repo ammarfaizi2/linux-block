@@ -43,11 +43,11 @@ static u8 section_to_node_table[NR_MEM_SECTIONS] __cacheline_aligned;
 static u16 section_to_node_table[NR_MEM_SECTIONS] __cacheline_aligned;
 #endif
 
-int page_to_nid(const struct page *page)
+int memdesc_nid(memdesc_flags_t mdf)
 {
-	return section_to_node_table[page_to_section(page)];
+	return section_to_node_table[memdesc_section(mdf)];
 }
-EXPORT_SYMBOL(page_to_nid);
+EXPORT_SYMBOL(memdesc_nid);
 
 static void set_section_nid(unsigned long section_nr, int nid)
 {
@@ -951,8 +951,7 @@ int __meminit sparse_add_section(int nid, unsigned long start_pfn,
 	 * Poison uninitialized struct pages in order to catch invalid flags
 	 * combinations.
 	 */
-	if (!altmap || !altmap->inaccessible)
-		page_init_poison(memmap, sizeof(struct page) * nr_pages);
+	page_init_poison(memmap, sizeof(struct page) * nr_pages);
 
 	ms = __nr_to_section(section_nr);
 	set_section_nid(section_nr, nid);

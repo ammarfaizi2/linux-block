@@ -315,6 +315,10 @@ attribute-sets:
           If enabled, dpll device shall monitor and notify all currently
           available inputs for changes of their phase offset against the
           dpll device.
+      -
+        name: phase-offset-avg-factor
+        type: u32
+        doc: Averaging factor applied to calculation of reported phase offset.
   -
     name: pin
     enum-name: dpll_a_pin
@@ -436,6 +440,12 @@ attribute-sets:
         doc: |
           Capable pin provides list of pins that can be bound to create a
           reference-sync pin pair.
+      -
+        name: phase-adjust-gran
+        type: u32
+        doc: |
+          Granularity of phase adjustment, in picoseconds. The value of
+          phase adjustment must be a multiple of this granularity.
 
   -
     name: pin-parent-device
@@ -523,6 +533,7 @@ operations:
             - clock-id
             - type
             - phase-offset-monitor
+            - phase-offset-avg-factor
 
       dump:
         reply: *dev-attrs
@@ -540,6 +551,7 @@ operations:
           attributes:
             - id
             - phase-offset-monitor
+            - phase-offset-avg-factor
     -
       name: device-create-ntf
       doc: Notification about device appearing
@@ -599,6 +611,8 @@ operations:
         reply: &pin-attrs
           attributes:
             - id
+            - module-name
+            - clock-id
             - board-label
             - panel-label
             - package-label
@@ -608,6 +622,7 @@ operations:
             - capabilities
             - parent-device
             - parent-pin
+            - phase-adjust-gran
             - phase-adjust-min
             - phase-adjust-max
             - phase-adjust

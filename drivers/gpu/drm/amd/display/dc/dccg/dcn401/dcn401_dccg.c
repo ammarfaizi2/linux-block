@@ -619,7 +619,7 @@ void dccg401_set_dp_dto(
 		dto_integer = div_u64(params->pixclk_hz, dto_modulo_hz);
 		dto_phase_hz = params->pixclk_hz - dto_integer * dto_modulo_hz;
 
-		if (dto_phase_hz <= 0) {
+		if (dto_phase_hz <= 0 && dto_integer <= 0) {
 			/* negative pixel rate should never happen */
 			BREAK_TO_DEBUGGER();
 			return;
@@ -886,6 +886,7 @@ static const struct dccg_funcs dccg401_funcs = {
 	.enable_symclk_se = dccg401_enable_symclk_se,
 	.disable_symclk_se = dccg401_disable_symclk_se,
 	.set_dtbclk_p_src = dccg401_set_dtbclk_p_src,
+	.dccg_read_reg_state = dccg31_read_reg_state
 };
 
 struct dccg *dccg401_create(

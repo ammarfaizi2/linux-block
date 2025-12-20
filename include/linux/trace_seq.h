@@ -21,10 +21,10 @@
 	(sizeof(struct seq_buf) + sizeof(size_t) + sizeof(int)))
 
 struct trace_seq {
-	char			buffer[TRACE_SEQ_BUFFER_SIZE];
 	struct seq_buf		seq;
 	size_t			readpos;
 	int			full;
+	char                    buffer[TRACE_SEQ_BUFFER_SIZE];
 };
 
 static inline void
@@ -78,6 +78,19 @@ trace_seq_buffer_ptr(struct trace_seq *s)
 static inline bool trace_seq_has_overflowed(struct trace_seq *s)
 {
 	return s->full || seq_buf_has_overflowed(&s->seq);
+}
+
+/**
+ * trace_seq_pop - pop off the last written character
+ * @s: trace sequence descriptor
+ *
+ * Removes the last written character to the trace_seq @s.
+ *
+ * Returns the last character or -1 if it is empty.
+ */
+static inline int trace_seq_pop(struct trace_seq *s)
+{
+	return seq_buf_pop(&s->seq);
 }
 
 /*

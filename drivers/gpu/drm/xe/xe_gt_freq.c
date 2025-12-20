@@ -29,24 +29,26 @@
  * PCODE is the ultimate decision maker of the actual running frequency, based
  * on thermal and other running conditions.
  *
- * Xe's Freq provides a sysfs API for frequency management:
+ * Xe's Freq provides a sysfs API for frequency management under
+ * ``<device>/tile#/gt#/freq0/`` directory.
  *
- * device/tile#/gt#/freq0/<item>_freq *read-only* files:
+ * **Read-only** attributes:
  *
- * - act_freq: The actual resolved frequency decided by PCODE.
- * - cur_freq: The current one requested by GuC PC to the PCODE.
- * - rpn_freq: The Render Performance (RP) N level, which is the minimal one.
- * - rpa_freq: The Render Performance (RP) A level, which is the achiveable one.
- *   Calculated by PCODE at runtime based on multiple running conditions
- * - rpe_freq: The Render Performance (RP) E level, which is the efficient one.
- *   Calculated by PCODE at runtime based on multiple running conditions
- * - rp0_freq: The Render Performance (RP) 0 level, which is the maximum one.
+ * - ``act_freq``: The actual resolved frequency decided by PCODE.
+ * - ``cur_freq``: The current one requested by GuC PC to the PCODE.
+ * - ``rpn_freq``: The Render Performance (RP) N level, which is the minimal one.
+ * - ``rpa_freq``: The Render Performance (RP) A level, which is the achievable one.
+ *                 Calculated by PCODE at runtime based on multiple running conditions
+ * - ``rpe_freq``: The Render Performance (RP) E level, which is the efficient one.
+ *                 Calculated by PCODE at runtime based on multiple running conditions
+ * - ``rp0_freq``: The Render Performance (RP) 0 level, which is the maximum one.
  *
- * device/tile#/gt#/freq0/<item>_freq *read-write* files:
+ * **Read-write** attributes:
  *
- * - min_freq: Min frequency request.
- * - max_freq: Max frequency request.
- *             If max <= min, then freq_min becomes a fixed frequency request.
+ * - ``min_freq``: Min frequency request.
+ * - ``max_freq``: Max frequency request.
+ *                 If max <= min, then freq_min becomes a fixed frequency
+ *                 request.
  */
 
 static struct xe_guc_pc *
@@ -99,13 +101,8 @@ static ssize_t rp0_freq_show(struct kobject *kobj,
 {
 	struct device *dev = kobj_to_dev(kobj);
 	struct xe_guc_pc *pc = dev_to_pc(dev);
-	u32 freq;
 
-	xe_pm_runtime_get(dev_to_xe(dev));
-	freq = xe_guc_pc_get_rp0_freq(pc);
-	xe_pm_runtime_put(dev_to_xe(dev));
-
-	return sysfs_emit(buf, "%d\n", freq);
+	return sysfs_emit(buf, "%d\n", xe_guc_pc_get_rp0_freq(pc));
 }
 static struct kobj_attribute attr_rp0_freq = __ATTR_RO(rp0_freq);
 
@@ -227,6 +224,33 @@ static ssize_t max_freq_store(struct kobject *kobj,
 }
 static struct kobj_attribute attr_max_freq = __ATTR_RW(max_freq);
 
+static ssize_t power_profile_show(struct kobject *kobj,
+				  struct kobj_attribute *attr,
+				  char *buff)
+{
+	struct device *dev = kobj_to_dev(kobj);
+
+	xe_guc_pc_get_power_profile(dev_to_pc(dev), buff);
+
+	return strlen(buff);
+}
+
+static ssize_t power_profile_store(struct kobject *kobj,
+				   struct kobj_attribute *attr,
+				   const char *buff, size_t count)
+{
+	struct device *dev = kobj_to_dev(kobj);
+	struct xe_guc_pc *pc = dev_to_pc(dev);
+	int err;
+
+	xe_pm_runtime_get(dev_to_xe(dev));
+	err = xe_guc_pc_set_power_profile(pc, buff);
+	xe_pm_runtime_put(dev_to_xe(dev));
+
+	return err ?: count;
+}
+static struct kobj_attribute attr_power_profile = __ATTR_RW(power_profile);
+
 static const struct attribute *freq_attrs[] = {
 	&attr_act_freq.attr,
 	&attr_cur_freq.attr,
@@ -236,6 +260,7 @@ static const struct attribute *freq_attrs[] = {
 	&attr_rpn_freq.attr,
 	&attr_min_freq.attr,
 	&attr_max_freq.attr,
+	&attr_power_profile.attr,
 	NULL
 };
 

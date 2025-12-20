@@ -4,7 +4,6 @@
  *
  * Copyright 2025 Google LLC
  */
-#include <asm/neon.h>
 #include <asm/simd.h>
 #include <linux/cpufeature.h>
 
@@ -20,9 +19,9 @@ static void sha1_blocks(struct sha1_block_state *state,
 		do {
 			size_t rem;
 
-			kernel_neon_begin();
-			rem = __sha1_ce_transform(state, data, nblocks);
-			kernel_neon_end();
+			scoped_ksimd()
+				rem = __sha1_ce_transform(state, data, nblocks);
+
 			data += (nblocks - rem) * SHA1_BLOCK_SIZE;
 			nblocks = rem;
 		} while (nblocks);
@@ -32,7 +31,7 @@ static void sha1_blocks(struct sha1_block_state *state,
 }
 
 #define sha1_mod_init_arch sha1_mod_init_arch
-static inline void sha1_mod_init_arch(void)
+static void sha1_mod_init_arch(void)
 {
 	if (cpu_have_named_feature(SHA1))
 		static_branch_enable(&have_ce);

@@ -66,6 +66,7 @@
 #include "lib/devcom.h"
 #include "lib/geneve.h"
 #include "lib/fs_chains.h"
+#include "lib/mlx5.h"
 #include "diag/en_tc_tracepoint.h"
 #include <asm/div64.h>
 #include "lag/lag.h"
@@ -757,11 +758,11 @@ static int mlx5e_hairpin_create_indirect_rqt(struct mlx5e_hairpin *hp)
 	struct mlx5e_priv *priv = hp->func_priv;
 	struct mlx5_core_dev *mdev = priv->mdev;
 	struct mlx5e_rss_params_indir indir;
+	u32 rqt_size;
 	int err;
 
-	err = mlx5e_rss_params_indir_init(&indir, mdev,
-					  mlx5e_rqt_size(mdev, hp->num_channels),
-					  mlx5e_rqt_size(mdev, hp->num_channels));
+	rqt_size = mlx5e_rqt_size(mdev, hp->num_channels);
+	err = mlx5e_rss_params_indir_init(&indir, rqt_size, rqt_size);
 	if (err)
 		return err;
 
@@ -837,6 +838,9 @@ static void mlx5e_hairpin_set_ttc_params(struct mlx5e_hairpin *hp,
 
 	ttc_params->ns_type = MLX5_FLOW_NAMESPACE_KERNEL;
 	for (tt = 0; tt < MLX5_NUM_TT; tt++) {
+		if (mlx5_ttc_is_decrypted_esp_tt(tt))
+			continue;
+
 		ttc_params->dests[tt].type = MLX5_FLOW_DESTINATION_TYPE_TIR;
 		ttc_params->dests[tt].tir_num =
 			tt == MLX5_TT_ANY ?
@@ -3610,15 +3614,11 @@ static bool same_port_devs(struct mlx5e_priv *priv, struct mlx5e_priv *peer_priv
 bool mlx5e_same_hw_devs(struct mlx5e_priv *priv, struct mlx5e_priv *peer_priv)
 {
 	struct mlx5_core_dev *fmdev, *pmdev;
-	u64 fsystem_guid, psystem_guid;
 
 	fmdev = priv->mdev;
 	pmdev = peer_priv->mdev;
 
-	fsystem_guid = mlx5_query_nic_system_image_guid(fmdev);
-	psystem_guid = mlx5_query_nic_system_image_guid(pmdev);
-
-	return (fsystem_guid == psystem_guid);
+	return mlx5_same_hw_devs(fmdev, pmdev);
 }
 
 static int
@@ -5233,10 +5233,11 @@ static void mlx5e_tc_nic_destroy_miss_table(struct mlx5e_priv *priv)
 int mlx5e_tc_nic_init(struct mlx5e_priv *priv)
 {
 	struct mlx5e_tc_table *tc = mlx5e_fs_get_tc(priv->fs);
+	u8 mapping_id[MLX5_SW_IMAGE_GUID_MAX_BYTES];
 	struct mlx5_core_dev *dev = priv->mdev;
 	struct mapping_ctx *chains_mapping;
 	struct mlx5_chains_attr attr = {};
-	u64 mapping_id;
+	u8 id_len;
 	int err;
 
 	mlx5e_mod_hdr_tbl_init(&tc->mod_hdr);
@@ -5252,11 +5253,13 @@ int mlx5e_tc_nic_init(struct mlx5e_priv *priv)
 	lockdep_set_class(&tc->ht.mutex, &tc_ht_lock_key);
 	lockdep_init_map(&tc->ht.run_work.lockdep_map, "tc_ht_wq_key", &tc_ht_wq_key, 0);
 
-	mapping_id = mlx5_query_nic_system_image_guid(dev);
+	mlx5_query_nic_sw_system_image_guid(dev, mapping_id, &id_len);
 
-	chains_mapping = mapping_create_for_id(mapping_id, MAPPING_TYPE_CHAIN,
+	chains_mapping = mapping_create_for_id(mapping_id, id_len,
+					       MAPPING_TYPE_CHAIN,
 					       sizeof(struct mlx5_mapped_obj),
-					       MLX5E_TC_TABLE_CHAIN_TAG_MASK, true);
+					       MLX5E_TC_TABLE_CHAIN_TAG_MASK,
+					       true);
 
 	if (IS_ERR(chains_mapping)) {
 		err = PTR_ERR(chains_mapping);
@@ -5387,13 +5390,15 @@ void mlx5e_tc_ht_cleanup(struct rhashtable *tc_ht)
 int mlx5e_tc_esw_init(struct mlx5_rep_uplink_priv *uplink_priv)
 {
 	const size_t sz_enc_opts = sizeof(struct tunnel_match_enc_opts);
+	u8 mapping_id[MLX5_SW_IMAGE_GUID_MAX_BYTES];
+	struct mlx5_devcom_match_attr attr = {};
 	struct netdev_phys_item_id ppid;
 	struct mlx5e_rep_priv *rpriv;
 	struct mapping_ctx *mapping;
 	struct mlx5_eswitch *esw;
 	struct mlx5e_priv *priv;
-	u64 mapping_id, key;
 	int err = 0;
+	u8 id_len;
 
 	rpriv = container_of(uplink_priv, struct mlx5e_rep_priv, uplink_priv);
 	priv = netdev_priv(rpriv->netdev);
@@ -5411,9 +5416,9 @@ int mlx5e_tc_esw_init(struct mlx5_rep_uplink_priv *uplink_priv)
 
 	uplink_priv->tc_psample = mlx5e_tc_sample_init(esw, uplink_priv->post_act);
 
-	mapping_id = mlx5_query_nic_system_image_guid(esw->dev);
+	mlx5_query_nic_sw_system_image_guid(esw->dev, mapping_id, &id_len);
 
-	mapping = mapping_create_for_id(mapping_id, MAPPING_TYPE_TUNNEL,
+	mapping = mapping_create_for_id(mapping_id, id_len, MAPPING_TYPE_TUNNEL,
 					sizeof(struct tunnel_match_key),
 					TUNNEL_INFO_BITS_MASK, true);
 
@@ -5426,8 +5431,10 @@ int mlx5e_tc_esw_init(struct mlx5_rep_uplink_priv *uplink_priv)
 	/* Two last values are reserved for stack devices slow path table mark
 	 * and bridge ingress push mark.
 	 */
-	mapping = mapping_create_for_id(mapping_id, MAPPING_TYPE_TUNNEL_ENC_OPTS,
-					sz_enc_opts, ENC_OPTS_BITS_MASK - 2, true);
+	mapping = mapping_create_for_id(mapping_id, id_len,
+					MAPPING_TYPE_TUNNEL_ENC_OPTS,
+					sz_enc_opts, ENC_OPTS_BITS_MASK - 2,
+					true);
 	if (IS_ERR(mapping)) {
 		err = PTR_ERR(mapping);
 		goto err_enc_opts_mapping;
@@ -5448,8 +5455,10 @@ int mlx5e_tc_esw_init(struct mlx5_rep_uplink_priv *uplink_priv)
 
 	err = netif_get_port_parent_id(priv->netdev, &ppid, false);
 	if (!err) {
-		memcpy(&key, &ppid.id, sizeof(key));
-		mlx5_esw_offloads_devcom_init(esw, key);
+		memcpy(&attr.key.buf, &ppid.id, ppid.id_len);
+		attr.flags = MLX5_DEVCOM_MATCH_FLAGS_NS;
+		attr.net = mlx5_core_net(esw->dev);
+		mlx5_esw_offloads_devcom_init(esw, &attr);
 	}
 
 	return 0;

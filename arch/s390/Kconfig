@@ -49,6 +49,13 @@ config KASAN_SHADOW_OFFSET
 	depends on KASAN
 	default 0x1C000000000000
 
+config CC_HAS_BUILTIN_FFS
+	def_bool !(CC_IS_GCC && GCC_VERSION < 160000)
+	help
+	  GCC versions before 16.0.0 generate library calls to ffs()
+	  for __builtin_ffs() even when __has_builtin(__builtin_ffs)
+	  is true.
+
 config CC_ASM_FLAG_OUTPUT_BROKEN
 	def_bool CC_IS_GCC && GCC_VERSION < 140200
 	help
@@ -61,6 +68,9 @@ config CC_HAS_ASM_AOR_FORMAT_FLAGS
 	help
 	  Clang versions before 19.1.0 do not support A,
 	  O, and R inline assembly format flags.
+
+config CC_HAS_STACKPROTECTOR_GLOBAL
+	def_bool $(cc-option, -mstack-protector-guard=global -mstack-protector-guard-record)
 
 config S390
 	def_bool y
@@ -133,7 +143,6 @@ config S390
 	select ARCH_INLINE_WRITE_UNLOCK_IRQ
 	select ARCH_INLINE_WRITE_UNLOCK_IRQRESTORE
 	select ARCH_MHP_MEMMAP_ON_MEMORY_ENABLE
-	select ARCH_MODULE_NEEDS_WEAK_PER_CPU
 	select ARCH_STACKWALK
 	select ARCH_SUPPORTS_ATOMIC_RMW
 	select ARCH_SUPPORTS_DEBUG_PAGEALLOC
@@ -151,7 +160,6 @@ config S390
 	select ARCH_WANT_IRQS_OFF_ACTIVATE_MM
 	select ARCH_WANT_KERNEL_PMD_MKWRITE
 	select ARCH_WANT_LD_ORPHAN_WARN
-	select ARCH_WANT_OPTIMIZE_HUGETLB_VMEMMAP
 	select ARCH_WANTS_THP_SWAP
 	select BUILDTIME_TABLE_SORT
 	select CLONE_BACKWARDS2
@@ -167,8 +175,6 @@ config S390
 	select GENERIC_GETTIMEOFDAY
 	select GENERIC_SMP_IDLE_THREAD
 	select GENERIC_TIME_VSYSCALL
-	select GENERIC_VDSO_DATA_STORE
-	select GENERIC_VDSO_TIME_NS
 	select GENERIC_IOREMAP if PCI
 	select HAVE_ALIGNED_STRUCT_PAGE
 	select HAVE_ARCH_AUDITSYSCALL
@@ -199,6 +205,7 @@ config S390
 	select HAVE_DYNAMIC_FTRACE_WITH_REGS
 	select HAVE_EBPF_JIT if HAVE_MARCH_Z196_FEATURES
 	select HAVE_EFFICIENT_UNALIGNED_ACCESS
+	select HAVE_GENERIC_TIF_BITS
 	select HAVE_GUP_FAST
 	select HAVE_FENTRY
 	select HAVE_FTRACE_GRAPH_FUNC
@@ -231,6 +238,7 @@ config S390
 	select HAVE_PERF_EVENTS
 	select HAVE_PERF_REGS
 	select HAVE_PERF_USER_STACK_DUMP
+	select HAVE_POSIX_CPU_TIMERS_TASK_WORK
 	select HAVE_PREEMPT_DYNAMIC_KEY
 	select HAVE_REGS_AND_STACK_ACCESS_API
 	select HAVE_RELIABLE_STACKTRACE
@@ -240,12 +248,14 @@ config S390
 	select HAVE_SAMPLE_FTRACE_DIRECT_MULTI
 	select HAVE_SETUP_PER_CPU_AREA
 	select HAVE_SOFTIRQ_ON_OWN_STACK
+	select HAVE_STACKPROTECTOR if CC_HAS_STACKPROTECTOR_GLOBAL
 	select HAVE_SYSCALL_TRACEPOINTS
 	select HAVE_VIRT_CPU_ACCOUNTING
 	select HAVE_VIRT_CPU_ACCOUNTING_IDLE
 	select HOTPLUG_SMT
 	select IOMMU_HELPER		if PCI
 	select IOMMU_SUPPORT		if PCI
+	select IRQ_MSI_LIB		if PCI
 	select KASAN_VMALLOC if KASAN
 	select LOCK_MM_AND_FIND_VMA
 	select MMU_GATHER_MERGE_VMAS
@@ -499,22 +509,6 @@ config COMMAND_LINE_SIZE
 	  This allows you to specify the maximum length of the kernel command
 	  line.
 
-config COMPAT
-	def_bool n
-	prompt "Kernel support for 31 bit emulation"
-	select ARCH_WANT_OLD_COMPAT_IPC
-	select COMPAT_OLD_SIGACTION
-	select HAVE_UID16
-	depends on MULTIUSER
-	depends on !CC_IS_CLANG && !LD_IS_LLD
-	help
-	  Select this option if you want to enable your system kernel to
-	  handle system-calls from ELF binaries for 31 bit ESA.  This option
-	  (and some other stuff like libraries and such) is needed for
-	  executing 31 bit applications.
-
-	  If unsure say N.
-
 config SMP
 	def_bool y
 
@@ -547,15 +541,11 @@ config NODES_SHIFT
 	depends on NUMA
 	default "1"
 
-config SCHED_SMT
-	def_bool n
-
-config SCHED_MC
-	def_bool n
-
 config SCHED_TOPOLOGY
 	def_bool y
 	prompt "Topology scheduler support"
+	select ARCH_SUPPORTS_SCHED_SMT
+	select ARCH_SUPPORTS_SCHED_MC
 	select SCHED_SMT
 	select SCHED_MC
 	help
@@ -710,7 +700,6 @@ menu "Memory setup"
 config ARCH_SPARSEMEM_ENABLE
 	def_bool y
 	select SPARSEMEM_VMEMMAP_ENABLE
-	select SPARSEMEM_VMEMMAP
 
 config ARCH_SPARSEMEM_DEFAULT
 	def_bool y

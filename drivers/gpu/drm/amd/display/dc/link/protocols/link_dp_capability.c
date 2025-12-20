@@ -357,7 +357,9 @@ bool dp_should_enable_fec(const struct dc_link *link)
 {
 	bool force_disable = false;
 
-	if (link->fec_state == dc_link_fec_enabled)
+	if (link->dc->debug.disable_fec)
+		force_disable = true;
+	else if (link->fec_state == dc_link_fec_enabled)
 		force_disable = false;
 	else if (link->connector_signal != SIGNAL_TYPE_DISPLAY_PORT_MST &&
 			link->local_sink &&
@@ -424,6 +426,21 @@ static enum dc_link_rate get_link_rate_from_max_link_bw(
 	return link_rate;
 }
 
+static enum dc_lane_count get_lttpr_max_lane_count(struct dc_link *link)
+{
+	enum dc_lane_count lttpr_max_lane_count = LANE_COUNT_UNKNOWN;
+
+	if (link->dpcd_caps.lttpr_caps.max_lane_count <= LANE_COUNT_DP_MAX)
+		lttpr_max_lane_count = link->dpcd_caps.lttpr_caps.max_lane_count;
+
+	/* if bw_allocation is enabled and nrd_max_lane_count is set, use it */
+	if (link->dpia_bw_alloc_config.bw_alloc_enabled &&
+			link->dpia_bw_alloc_config.nrd_max_lane_count > 0)
+		lttpr_max_lane_count = link->dpia_bw_alloc_config.nrd_max_lane_count;
+
+	return lttpr_max_lane_count;
+}
+
 static enum dc_link_rate get_lttpr_max_link_rate(struct dc_link *link)
 {
 
@@ -437,6 +454,11 @@ static enum dc_link_rate get_lttpr_max_link_rate(struct dc_link *link)
 		lttpr_max_link_rate = link->dpcd_caps.lttpr_caps.max_link_rate;
 		break;
 	}
+
+	/* if bw_allocation is enabled and nrd_max_link_rate is set, use it */
+	if (link->dpia_bw_alloc_config.bw_alloc_enabled &&
+			link->dpia_bw_alloc_config.nrd_max_link_rate > 0)
+		lttpr_max_link_rate = link->dpia_bw_alloc_config.nrd_max_link_rate;
 
 	if (link->dpcd_caps.lttpr_caps.supported_128b_132b_rates.bits.UHBR20)
 		lttpr_max_link_rate = LINK_RATE_UHBR20;
@@ -1525,8 +1547,8 @@ bool read_is_mst_supported(struct dc_link *link)
 		return false;
 	}
 
-	rev.raw  = 0;
-	cap.raw  = 0;
+	rev.raw = 0;
+	cap.raw = 0;
 
 	st = core_link_read_dpcd(link, DP_DPCD_REV, &rev.raw,
 			sizeof(rev));
@@ -1691,7 +1713,7 @@ static bool retrieve_link_cap(struct dc_link *link)
 	union edp_configuration_cap edp_config_cap;
 	union dp_downstream_port_present ds_port = { 0 };
 	enum dc_status status = DC_ERROR_UNEXPECTED;
-	uint32_t read_dpcd_retry_cnt = 3;
+	uint32_t read_dpcd_retry_cnt = 20;
 	int i;
 	struct dp_sink_hw_fw_revision dp_hw_fw_revision;
 	const uint32_t post_oui_delay = 30; // 30ms
@@ -1734,12 +1756,13 @@ static bool retrieve_link_cap(struct dc_link *link)
 	}
 
 	dpcd_set_source_specific_data(link);
-	/* Sink may need to configure internals based on vendor, so allow some
-	 * time before proceeding with possibly vendor specific transactions
-	 */
-	msleep(post_oui_delay);
 
 	for (i = 0; i < read_dpcd_retry_cnt; i++) {
+		/*
+		 * Sink may need to configure internals based on vendor, so allow some
+		 * time before proceeding with possibly vendor specific transactions
+		 */
+		msleep(post_oui_delay);
 		status = core_link_read_dpcd(
 				link,
 				DP_DPCD_REV,
@@ -1844,6 +1867,12 @@ static bool retrieve_link_cap(struct dc_link *link)
 	/* TODO - decouple raw mst capability from policy decision */
 	link->dpcd_caps.is_mst_capable = read_is_mst_supported(link);
 	DC_LOG_DC("%s: MST_Support: %s\n", __func__, str_yes_no(link->dpcd_caps.is_mst_capable));
+
+	/* Some MST docks seem to NAK I2C writes to segment pointer with mot=0. */
+	if (link->dpcd_caps.is_mst_capable)
+		link->wa_flags.dp_mot_reset_segment = true;
+	else
+		link->wa_flags.dp_mot_reset_segment = false;
 
 	get_active_converter_info(ds_port.byte, link);
 
@@ -2063,6 +2092,11 @@ static bool retrieve_link_cap(struct dc_link *link)
 			link->dpcd_caps.max_uncompressed_pixel_rate_cap.raw,
 			sizeof(link->dpcd_caps.max_uncompressed_pixel_rate_cap.raw));
 
+	core_link_read_dpcd(link,
+			DP_PANEL_REPLAY_CAPABILITY_SUPPORT,
+			&link->dpcd_caps.pr_caps_supported.raw,
+			sizeof(link->dpcd_caps.pr_caps_supported.raw));
+
 	/* Read DP tunneling information. */
 	status = dpcd_get_tunneling_device_data(link);
 	if (status != DC_OK)
@@ -2125,13 +2159,13 @@ void detect_edp_sink_caps(struct dc_link *link)
 						&backlight_adj_cap, sizeof(backlight_adj_cap));
 
 	link->dpcd_caps.dynamic_backlight_capable_edp =
-				(backlight_adj_cap & DP_EDP_DYNAMIC_BACKLIGHT_CAP) ? true:false;
+				(backlight_adj_cap & DP_EDP_DYNAMIC_BACKLIGHT_CAP) ? true : false;
 
 	core_link_read_dpcd(link, DP_EDP_GENERAL_CAP_1,
 						&general_edp_cap, sizeof(general_edp_cap));
 
 	link->dpcd_caps.set_power_state_capable_edp =
-				(general_edp_cap & DP_EDP_SET_POWER_CAP) ? true:false;
+				(general_edp_cap & DP_EDP_SET_POWER_CAP) ? true : false;
 
 	set_default_brightness_aux(link);
 
@@ -2195,6 +2229,12 @@ void detect_edp_sink_caps(struct dc_link *link)
 			DP_EDP_MSO_LINK_CAPABILITIES,
 			(uint8_t *)&link->dpcd_caps.mso_cap_sst_links_supported,
 			sizeof(link->dpcd_caps.mso_cap_sst_links_supported));
+	/*
+	 * Read eDP general capability 2
+	 */
+	core_link_read_dpcd(link, DP_EDP_GENERAL_CAP_2,
+			(uint8_t *)&link->dpcd_caps.dp_edp_general_cap_2,
+			sizeof(link->dpcd_caps.dp_edp_general_cap_2));
 }
 
 bool dp_get_max_link_enc_cap(const struct dc_link *link, struct dc_link_settings *max_link_enc_cap)
@@ -2235,6 +2275,7 @@ const struct dc_link_settings *dp_get_verified_link_cap(
 struct dc_link_settings dp_get_max_link_cap(struct dc_link *link)
 {
 	struct dc_link_settings max_link_cap = {0};
+	enum dc_lane_count lttpr_max_lane_count;
 	enum dc_link_rate lttpr_max_link_rate;
 	enum dc_link_rate cable_max_link_rate;
 	struct resource_context *res_ctx = &link->dc->current_state->res_ctx;
@@ -2299,8 +2340,11 @@ struct dc_link_settings dp_get_max_link_cap(struct dc_link *link)
 
 		/* Some LTTPR devices do not report valid DPCD revisions, if so, do not take it's link cap into consideration. */
 		if (link->dpcd_caps.lttpr_caps.revision.raw >= DPCD_REV_14) {
-			if (link->dpcd_caps.lttpr_caps.max_lane_count < max_link_cap.lane_count)
-				max_link_cap.lane_count = link->dpcd_caps.lttpr_caps.max_lane_count;
+			lttpr_max_lane_count = get_lttpr_max_lane_count(link);
+
+			if (lttpr_max_lane_count < max_link_cap.lane_count)
+				max_link_cap.lane_count = lttpr_max_lane_count;
+
 			lttpr_max_link_rate = get_lttpr_max_link_rate(link);
 
 			if (lttpr_max_link_rate < max_link_cap.link_rate)
@@ -2406,6 +2450,11 @@ bool dp_verify_link_cap_with_retries(
 
 	dp_trace_detect_lt_init(link);
 
+	DC_LOG_HW_LINK_TRAINING("%s: Link[%d]  LinkRate=0x%x LaneCount=%d",
+		__func__, link->link_index,
+		known_limit_link_setting->link_rate,
+		known_limit_link_setting->lane_count);
+
 	if (link->link_enc && link->link_enc->features.flags.bits.DP_IS_USB_C &&
 			link->dc->debug.usbc_combo_phy_reset_wa)
 		apply_usbc_combo_phy_reset_wa(link, known_limit_link_setting);
@@ -2441,6 +2490,11 @@ bool dp_verify_link_cap_with_retries(
 
 	dp_trace_lt_fail_count_update(link, fail_count, true);
 	dp_trace_set_lt_end_timestamp(link, true);
+
+	DC_LOG_HW_LINK_TRAINING("%s: Link[%d]  Exit. is_success=%d  fail_count=%d",
+		__func__, link->link_index,
+		success,
+		fail_count);
 
 	return success;
 }
@@ -2505,4 +2559,41 @@ bool dp_is_sink_present(struct dc_link *link)
 	dal_ddc_close(ddc);
 
 	return present;
+}
+
+uint8_t dp_get_lttpr_count(struct dc_link *link)
+{
+	if (dp_is_lttpr_present(link))
+		return dp_parse_lttpr_repeater_count(link->dpcd_caps.lttpr_caps.phy_repeater_cnt);
+
+	return 0;
+}
+
+void edp_get_alpm_support(struct dc_link *link,
+	bool *auxless_support,
+	bool *auxwake_support)
+{
+	bool lttpr_present = dp_is_lttpr_present(link);
+
+	if (auxless_support == NULL || auxwake_support == NULL)
+		return;
+
+	*auxless_support = false;
+	*auxwake_support = false;
+
+	if (!dc_is_embedded_signal(link->connector_signal))
+		return;
+
+	if (link->dpcd_caps.alpm_caps.bits.AUX_LESS_ALPM_CAP) {
+		if (lttpr_present) {
+			if (link->dpcd_caps.lttpr_caps.alpm.bits.AUX_LESS_ALPM_SUPPORTED)
+				*auxless_support = true;
+		} else
+			*auxless_support = true;
+	}
+
+	if (link->dpcd_caps.alpm_caps.bits.AUX_WAKE_ALPM_CAP) {
+		if (!lttpr_present)
+			*auxwake_support = true;
+	}
 }

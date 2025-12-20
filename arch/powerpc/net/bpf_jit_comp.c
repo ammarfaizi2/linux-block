@@ -204,6 +204,8 @@ struct bpf_prog *bpf_int_jit_compile(struct bpf_prog *fp)
 
 	/* Make sure that the stack is quadword aligned. */
 	cgctx.stack_size = round_up(fp->aux->stack_depth, 16);
+	cgctx.arena_vm_start = bpf_arena_get_kern_vm_start(fp->aux->arena);
+	cgctx.user_vm_start = bpf_arena_get_user_vm_start(fp->aux->arena);
 
 	/* Scouting faux-generate pass 0 */
 	if (bpf_jit_build_body(fp, NULL, NULL, &cgctx, addrs, 0, false)) {
@@ -326,7 +328,7 @@ out:
  */
 int bpf_add_extable_entry(struct bpf_prog *fp, u32 *image, u32 *fimage, int pass,
 			  struct codegen_context *ctx, int insn_idx, int jmp_off,
-			  int dst_reg)
+			  int dst_reg, u32 code)
 {
 	off_t offset;
 	unsigned long pc;
@@ -355,6 +357,9 @@ int bpf_add_extable_entry(struct bpf_prog *fp, u32 *image, u32 *fimage, int pass
 		(ctx->exentry_idx * BPF_FIXUP_LEN * 4);
 
 	fixup[0] = PPC_RAW_LI(dst_reg, 0);
+	if (BPF_CLASS(code) == BPF_ST || BPF_CLASS(code) == BPF_STX)
+		fixup[0] = PPC_RAW_NOP();
+
 	if (IS_ENABLED(CONFIG_PPC32))
 		fixup[1] = PPC_RAW_LI(dst_reg - 1, 0); /* clear higher 32-bit register too */
 
@@ -435,9 +440,30 @@ bool bpf_jit_supports_kfunc_call(void)
 	return true;
 }
 
+bool bpf_jit_supports_arena(void)
+{
+	return IS_ENABLED(CONFIG_PPC64);
+}
+
 bool bpf_jit_supports_far_kfunc_call(void)
 {
 	return IS_ENABLED(CONFIG_PPC64);
+}
+
+bool bpf_jit_supports_insn(struct bpf_insn *insn, bool in_arena)
+{
+	if (!in_arena)
+		return true;
+	switch (insn->code) {
+	case BPF_STX | BPF_ATOMIC | BPF_H:
+	case BPF_STX | BPF_ATOMIC | BPF_B:
+	case BPF_STX | BPF_ATOMIC | BPF_W:
+	case BPF_STX | BPF_ATOMIC | BPF_DW:
+		if (bpf_atomic_is_load_store(insn))
+			return false;
+		return IS_ENABLED(CONFIG_PPC64);
+	}
+	return true;
 }
 
 void *arch_alloc_bpf_trampoline(unsigned int size)
@@ -579,7 +605,7 @@ static void bpf_trampoline_setup_tail_call_cnt(u32 *image, struct codegen_contex
 {
 	if (IS_ENABLED(CONFIG_PPC64)) {
 		/* See bpf_jit_stack_tailcallcnt() */
-		int tailcallcnt_offset = 6 * 8;
+		int tailcallcnt_offset = 7 * 8;
 
 		EMIT(PPC_RAW_LL(_R3, _R1, func_frame_offset - tailcallcnt_offset));
 		EMIT(PPC_RAW_STL(_R3, _R1, -tailcallcnt_offset));
@@ -594,7 +620,7 @@ static void bpf_trampoline_restore_tail_call_cnt(u32 *image, struct codegen_cont
 {
 	if (IS_ENABLED(CONFIG_PPC64)) {
 		/* See bpf_jit_stack_tailcallcnt() */
-		int tailcallcnt_offset = 6 * 8;
+		int tailcallcnt_offset = 7 * 8;
 
 		EMIT(PPC_RAW_LL(_R3, _R1, -tailcallcnt_offset));
 		EMIT(PPC_RAW_STL(_R3, _R1, func_frame_offset - tailcallcnt_offset));
@@ -1081,8 +1107,9 @@ static void do_isync(void *info __maybe_unused)
  * execute isync (or some CSI) so that they don't go back into the
  * trampoline again.
  */
-int bpf_arch_text_poke(void *ip, enum bpf_text_poke_type poke_type,
-		       void *old_addr, void *new_addr)
+int bpf_arch_text_poke(void *ip, enum bpf_text_poke_type old_t,
+		       enum bpf_text_poke_type new_t, void *old_addr,
+		       void *new_addr)
 {
 	unsigned long bpf_func, bpf_func_end, size, offset;
 	ppc_inst_t old_inst, new_inst;
@@ -1093,7 +1120,6 @@ int bpf_arch_text_poke(void *ip, enum bpf_text_poke_type poke_type,
 		return -EOPNOTSUPP;
 
 	bpf_func = (unsigned long)ip;
-	branch_flags = poke_type == BPF_MOD_CALL ? BRANCH_SET_LINK : 0;
 
 	/* We currently only support poking bpf programs */
 	if (!__bpf_address_lookup(bpf_func, &size, &offset, name)) {
@@ -1106,7 +1132,7 @@ int bpf_arch_text_poke(void *ip, enum bpf_text_poke_type poke_type,
 	 * an unconditional branch instruction at im->ip_after_call
 	 */
 	if (offset) {
-		if (poke_type != BPF_MOD_JUMP) {
+		if (old_t == BPF_MOD_CALL || new_t == BPF_MOD_CALL) {
 			pr_err("%s (0x%lx): calls are not supported in bpf prog body\n", __func__,
 			       bpf_func);
 			return -EOPNOTSUPP;
@@ -1140,6 +1166,7 @@ int bpf_arch_text_poke(void *ip, enum bpf_text_poke_type poke_type,
 	}
 
 	old_inst = ppc_inst(PPC_RAW_NOP());
+	branch_flags = old_t == BPF_MOD_CALL ? BRANCH_SET_LINK : 0;
 	if (old_addr) {
 		if (is_offset_in_branch_range(ip - old_addr))
 			create_branch(&old_inst, ip, (unsigned long)old_addr, branch_flags);
@@ -1148,6 +1175,7 @@ int bpf_arch_text_poke(void *ip, enum bpf_text_poke_type poke_type,
 				      branch_flags);
 	}
 	new_inst = ppc_inst(PPC_RAW_NOP());
+	branch_flags = new_t == BPF_MOD_CALL ? BRANCH_SET_LINK : 0;
 	if (new_addr) {
 		if (is_offset_in_branch_range(ip - new_addr))
 			create_branch(&new_inst, ip, (unsigned long)new_addr, branch_flags);

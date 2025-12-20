@@ -200,20 +200,12 @@ qat_uclo_cleanup_batch_init_list(struct icp_qat_fw_loader_handle *handle,
 
 static int qat_uclo_parse_num(char *str, unsigned int *num)
 {
-	char buf[16] = {0};
-	unsigned long ae = 0;
-	int i;
+	unsigned long long ae;
+	char *end;
 
-	strscpy(buf, str, sizeof(buf));
-	for (i = 0; i < 16; i++) {
-		if (!isdigit(buf[i])) {
-			buf[i] = '\0';
-			break;
-		}
-	}
-	if ((kstrtoul(buf, 10, &ae)))
-		return -EFAULT;
-
+	ae = simple_strtoull(str, &end, 10);
+	if (ae > UINT_MAX || str == end || (end - str) > 19)
+		return -EINVAL;
 	*num = (unsigned int)ae;
 	return 0;
 }
@@ -1900,7 +1892,7 @@ static int qat_uclo_map_objs_from_mof(struct icp_qat_mof_handle *mobj_handle)
 	if (sobj_hdr)
 		sobj_chunk_num = sobj_hdr->num_chunks;
 
-	mobj_hdr = kzalloc((uobj_chunk_num + sobj_chunk_num) *
+	mobj_hdr = kcalloc(size_add(uobj_chunk_num, sobj_chunk_num),
 			   sizeof(*mobj_hdr), GFP_KERNEL);
 	if (!mobj_hdr)
 		return -ENOMEM;

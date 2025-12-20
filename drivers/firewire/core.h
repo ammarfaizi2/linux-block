@@ -27,6 +27,11 @@ struct fw_packet;
 
 /* -card */
 
+// This is the arbitrary value we use to indicate a mismatched gap count.
+#define GAP_COUNT_MISMATCHED	0
+
+#define isoc_cycles_to_jiffies(cycles) usecs_to_jiffies((u32)div_u64((u64)cycles * USEC_PER_SEC, 8000))
+
 extern __printf(2, 3)
 void fw_err(const struct fw_card *card, const char *fmt, ...);
 extern __printf(2, 3)
@@ -59,6 +64,9 @@ struct fw_card_driver {
 	 */
 	int (*enable)(struct fw_card *card,
 		      const __be32 *config_rom, size_t length);
+
+	// After returning the call, any function is no longer triggered to handle hardware event.
+	void (*disable)(struct fw_card *card);
 
 	int (*read_phy_reg)(struct fw_card *card, int address);
 	int (*update_phy_reg)(struct fw_card *card, int address,
@@ -167,6 +175,9 @@ static inline void fw_iso_context_init_work(struct fw_iso_context *ctx, work_fun
 
 /* -topology */
 
+// The initial value of BUS_MANAGER_ID register, to express nothing registered.
+#define BUS_MANAGER_ID_NOT_REGISTERED	0x3f
+
 enum {
 	FW_NODE_CREATED,
 	FW_NODE_UPDATED,
@@ -194,8 +205,8 @@ struct fw_node {
 	/* For serializing node topology into a list. */
 	struct list_head link;
 
-	/* Upper layer specific data. */
-	void *data;
+	// The device when already associated, else NULL.
+	struct fw_device *device;
 
 	struct fw_node *ports[] __counted_by(port_count);
 };
@@ -217,6 +228,16 @@ static void release_node(struct kref *kref)
 static inline void fw_node_put(struct fw_node *node)
 {
 	kref_put(&node->kref, release_node);
+}
+
+static inline struct fw_device *fw_node_get_device(struct fw_node *node)
+{
+	return node->device;
+}
+
+static inline void fw_node_set_device(struct fw_node *node, struct fw_device *device)
+{
+	node->device = device;
 }
 
 void fw_core_handle_bus_reset(struct fw_card *card, int node_id,
@@ -265,6 +286,8 @@ void fw_fill_response(struct fw_packet *response, u32 *request_header,
 
 void fw_request_get(struct fw_request *request);
 void fw_request_put(struct fw_request *request);
+
+void fw_cancel_pending_transactions(struct fw_card *card);
 
 // Convert the value of IEEE 1394 CYCLE_TIME register to the format of timeStamp field in
 // descriptors of 1394 OHCI.

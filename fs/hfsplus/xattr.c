@@ -64,7 +64,7 @@ static void hfsplus_init_header_node(struct inode *attr_file,
 	u32 used_bmp_bytes;
 	u64 tmp;
 
-	hfs_dbg(ATTR_MOD, "init_hdr_attr_file: clump %u, node_size %u\n",
+	hfs_dbg("clump %u, node_size %u\n",
 		clump_size, node_size);
 
 	/* The end of the node contains list of record offsets */
@@ -132,7 +132,7 @@ static int hfsplus_create_attributes_file(struct super_block *sb)
 	struct page *page;
 	int old_state = HFSPLUS_EMPTY_ATTR_TREE;
 
-	hfs_dbg(ATTR_MOD, "create_attr_file: ino %d\n", HFSPLUS_ATTR_CNID);
+	hfs_dbg("ino %d\n", HFSPLUS_ATTR_CNID);
 
 check_attr_tree_state_again:
 	switch (atomic_read(&sbi->attr_tree_state)) {
@@ -265,10 +265,8 @@ int __hfsplus_setxattr(struct inode *inode, const char *name,
 	struct hfs_find_data cat_fd;
 	hfsplus_cat_entry entry;
 	u16 cat_entry_flags, cat_entry_type;
-	u16 folder_finderinfo_len = sizeof(struct DInfo) +
-					sizeof(struct DXInfo);
-	u16 file_finderinfo_len = sizeof(struct FInfo) +
-					sizeof(struct FXInfo);
+	u16 folder_finderinfo_len = sizeof(DInfo) + sizeof(DXInfo);
+	u16 file_finderinfo_len = sizeof(FInfo) + sizeof(FXInfo);
 
 	if ((!S_ISREG(inode->i_mode) &&
 			!S_ISDIR(inode->i_mode)) ||
@@ -444,11 +442,11 @@ static ssize_t hfsplus_getxattr_finder_info(struct inode *inode,
 	ssize_t res = 0;
 	struct hfs_find_data fd;
 	u16 entry_type;
-	u16 folder_rec_len = sizeof(struct DInfo) + sizeof(struct DXInfo);
-	u16 file_rec_len = sizeof(struct FInfo) + sizeof(struct FXInfo);
+	u16 folder_rec_len = sizeof(DInfo) + sizeof(DXInfo);
+	u16 file_rec_len = sizeof(FInfo) + sizeof(FXInfo);
 	u16 record_len = max(folder_rec_len, file_rec_len);
-	u8 folder_finder_info[sizeof(struct DInfo) + sizeof(struct DXInfo)];
-	u8 file_finder_info[sizeof(struct FInfo) + sizeof(struct FXInfo)];
+	u8 folder_finder_info[sizeof(DInfo) + sizeof(DXInfo)];
+	u8 file_finder_info[sizeof(FInfo) + sizeof(FXInfo)];
 
 	if (size >= record_len) {
 		res = hfs_find_init(HFSPLUS_SB(inode->i_sb)->cat_tree, &fd);
@@ -612,8 +610,8 @@ static ssize_t hfsplus_listxattr_finder_info(struct dentry *dentry,
 	struct inode *inode = d_inode(dentry);
 	struct hfs_find_data fd;
 	u16 entry_type;
-	u8 folder_finder_info[sizeof(struct DInfo) + sizeof(struct DXInfo)];
-	u8 file_finder_info[sizeof(struct FInfo) + sizeof(struct FXInfo)];
+	u8 folder_finder_info[sizeof(DInfo) + sizeof(DXInfo)];
+	u8 file_finder_info[sizeof(FInfo) + sizeof(FXInfo)];
 	unsigned long len, found_bit;
 	int xattr_name_len, symbols_count;
 
@@ -629,14 +627,14 @@ static ssize_t hfsplus_listxattr_finder_info(struct dentry *dentry,
 
 	entry_type = hfs_bnode_read_u16(fd.bnode, fd.entryoffset);
 	if (entry_type == HFSPLUS_FOLDER) {
-		len = sizeof(struct DInfo) + sizeof(struct DXInfo);
+		len = sizeof(DInfo) + sizeof(DXInfo);
 		hfs_bnode_read(fd.bnode, folder_finder_info,
 				fd.entryoffset +
 				offsetof(struct hfsplus_cat_folder, user_info),
 				len);
 		found_bit = find_first_bit((void *)folder_finder_info, len*8);
 	} else if (entry_type == HFSPLUS_FILE) {
-		len = sizeof(struct FInfo) + sizeof(struct FXInfo);
+		len = sizeof(FInfo) + sizeof(FXInfo);
 		hfs_bnode_read(fd.bnode, file_finder_info,
 				fd.entryoffset +
 				offsetof(struct hfsplus_cat_file, user_info),
@@ -735,9 +733,9 @@ ssize_t hfsplus_listxattr(struct dentry *dentry, char *buffer, size_t size)
 			goto end_listxattr;
 
 		xattr_name_len = NLS_MAX_CHARSET_SIZE * HFSPLUS_ATTR_MAX_STRLEN;
-		if (hfsplus_uni2asc(inode->i_sb,
-			(const struct hfsplus_unistr *)&fd.key->attr.key_name,
-					strbuf, &xattr_name_len)) {
+		if (hfsplus_uni2asc_xattr_str(inode->i_sb,
+					      &fd.key->attr.key_name, strbuf,
+					      &xattr_name_len)) {
 			pr_err("unicode conversion failed\n");
 			res = -EIO;
 			goto end_listxattr;

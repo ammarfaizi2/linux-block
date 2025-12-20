@@ -285,7 +285,7 @@ struct mtk_vcodec_dec_dev {
 	/* decoder hardware mutex lock */
 	struct mutex dec_mutex[MTK_VDEC_HW_MAX];
 	struct mutex dev_mutex;
-	struct mutex dev_ctx_lock;
+	spinlock_t dev_ctx_lock;
 	struct workqueue_struct *decode_workqueue;
 
 	spinlock_t irqlock;
@@ -312,6 +312,11 @@ struct mtk_vcodec_dec_dev {
 static inline struct mtk_vcodec_dec_ctx *fh_to_dec_ctx(struct v4l2_fh *fh)
 {
 	return container_of(fh, struct mtk_vcodec_dec_ctx, fh);
+}
+
+static inline struct mtk_vcodec_dec_ctx *file_to_dec_ctx(struct file *filp)
+{
+	return fh_to_dec_ctx(file_to_v4l2_fh(filp));
 }
 
 static inline struct mtk_vcodec_dec_ctx *ctrl_to_dec_ctx(struct v4l2_ctrl *ctrl)

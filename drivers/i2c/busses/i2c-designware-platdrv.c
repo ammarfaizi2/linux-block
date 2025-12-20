@@ -197,15 +197,6 @@ static int i2c_dw_probe_lock_support(struct dw_i2c_dev *dev)
 	return 0;
 }
 
-static void i2c_dw_remove_lock_support(struct dw_i2c_dev *dev)
-{
-	if (dev->semaphore_idx < 0)
-		return;
-
-	if (i2c_dw_semaphore_cb_table[dev->semaphore_idx].remove)
-		i2c_dw_semaphore_cb_table[dev->semaphore_idx].remove(dev);
-}
-
 static int dw_i2c_plat_probe(struct platform_device *pdev)
 {
 	u32 flags = (uintptr_t)device_get_match_data(&pdev->dev);
@@ -238,7 +229,7 @@ static int dw_i2c_plat_probe(struct platform_device *pdev)
 
 	dev->rst = devm_reset_control_get_optional_exclusive(device, NULL);
 	if (IS_ERR(dev->rst))
-		return PTR_ERR(dev->rst);
+		return dev_err_probe(device, PTR_ERR(dev->rst), "failed to acquire reset\n");
 
 	reset_control_deassert(dev->rst);
 
@@ -247,21 +238,23 @@ static int dw_i2c_plat_probe(struct platform_device *pdev)
 		goto exit_reset;
 
 	ret = i2c_dw_probe_lock_support(dev);
-	if (ret)
+	if (ret) {
+		dev_err_probe(device, ret, "failed to probe lock support\n");
 		goto exit_reset;
+	}
 
 	i2c_dw_configure(dev);
 
 	/* Optional interface clock */
 	dev->pclk = devm_clk_get_optional(device, "pclk");
 	if (IS_ERR(dev->pclk)) {
-		ret = PTR_ERR(dev->pclk);
+		ret = dev_err_probe(device, PTR_ERR(dev->pclk), "failed to acquire pclk\n");
 		goto exit_reset;
 	}
 
 	dev->clk = devm_clk_get_optional(device, NULL);
 	if (IS_ERR(dev->clk)) {
-		ret = PTR_ERR(dev->clk);
+		ret = dev_err_probe(device, PTR_ERR(dev->clk), "failed to acquire clock\n");
 		goto exit_reset;
 	}
 
@@ -314,6 +307,7 @@ static int dw_i2c_plat_probe(struct platform_device *pdev)
 
 exit_probe:
 	dw_i2c_plat_pm_cleanup(dev);
+	i2c_dw_prepare_clk(dev, false);
 exit_reset:
 	reset_control_assert(dev->rst);
 	return ret;
@@ -331,10 +325,10 @@ static void dw_i2c_plat_remove(struct platform_device *pdev)
 	i2c_dw_disable(dev);
 
 	pm_runtime_dont_use_autosuspend(device);
-	pm_runtime_put_sync(device);
+	pm_runtime_put_noidle(device);
 	dw_i2c_plat_pm_cleanup(dev);
 
-	i2c_dw_remove_lock_support(dev);
+	i2c_dw_prepare_clk(dev, false);
 
 	reset_control_assert(dev->rst);
 }

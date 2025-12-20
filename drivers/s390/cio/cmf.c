@@ -10,8 +10,7 @@
  * original idea from Natarajan Krishnaswami <nkrishna@us.ibm.com>
  */
 
-#define KMSG_COMPONENT "cio"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define pr_fmt(fmt) "cio: " fmt
 
 #include <linux/memblock.h>
 #include <linux/device.h>
@@ -167,7 +166,7 @@ static inline void cmf_activate(void *area, unsigned int onoff)
 	asm volatile(
 		"	lgr	1,%[r1]\n"
 		"	lgr	2,%[mbo]\n"
-		"	schm\n"
+		"	schm"
 		:
 		: [r1] "d" ((unsigned long)onoff),
 		  [mbo] "d" (virt_to_phys(area))

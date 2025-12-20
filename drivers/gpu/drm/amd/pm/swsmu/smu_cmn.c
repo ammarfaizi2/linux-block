@@ -164,9 +164,13 @@ static void __smu_cmn_reg_print_error(struct smu_context *smu,
 				    msg_index, param, message);
 		break;
 	case SMU_RESP_BUSY_OTHER:
-		dev_err_ratelimited(adev->dev,
-				    "SMU: I'm very busy for your command: index:%d param:0x%08X message:%s",
-				    msg_index, param, message);
+		/* It is normal for SMU_MSG_GetBadPageCount to return busy
+		 * so don't print error at this case.
+		 */
+		if (msg != SMU_MSG_GetBadPageCount)
+			dev_err_ratelimited(adev->dev,
+						"SMU: I'm very busy for your command: index:%d param:0x%08X message:%s",
+						msg_index, param, message);
 		break;
 	case SMU_RESP_DEBUG_END:
 		dev_err_ratelimited(adev->dev,
@@ -256,11 +260,12 @@ static int __smu_cmn_ras_filter_msg(struct smu_context *smu,
 {
 	struct amdgpu_device *adev = smu->adev;
 	uint32_t flags, resp;
-	bool fed_status;
+	bool fed_status, pri;
 
 	flags = __smu_cmn_get_msg_flags(smu, msg);
 	*poll = true;
 
+	pri = !!(flags & SMU_MSG_NO_PRECHECK);
 	/* When there is RAS fatal error, FW won't process non-RAS priority
 	 * messages. Don't allow any messages other than RAS priority messages.
 	 */
@@ -272,15 +277,18 @@ static int __smu_cmn_ras_filter_msg(struct smu_context *smu,
 				smu_get_message_name(smu, msg));
 			return -EACCES;
 		}
+	}
 
+	if (pri || fed_status) {
 		/* FW will ignore non-priority messages when a RAS fatal error
-		 * is detected. Hence it is possible that a previous message
-		 * wouldn't have got response. Allow to continue without polling
-		 * for response status for priority messages.
+		 * or reset condition is detected. Hence it is possible that a
+		 * previous message wouldn't have got response. Allow to
+		 * continue without polling for response status for priority
+		 * messages.
 		 */
 		resp = RREG32(smu->resp_reg);
 		dev_dbg(adev->dev,
-			"Sending RAS priority message %s response status: %x",
+			"Sending priority message %s response status: %x",
 			smu_get_message_name(smu, msg), resp);
 		if (resp == 0)
 			*poll = false;
@@ -965,7 +973,7 @@ int smu_cmn_update_table(struct smu_context *smu,
 						      table_index);
 	uint32_t table_size;
 	int ret = 0;
-	if (!table_data || table_id >= SMU_TABLE_COUNT || table_id < 0)
+	if (!table_data || table_index >= SMU_TABLE_COUNT || table_id < 0)
 		return -EINVAL;
 
 	table_size = smu_table->tables[table_index].size;
@@ -976,7 +984,7 @@ int smu_cmn_update_table(struct smu_context *smu,
 		 * Flush hdp cache: to guard the content seen by
 		 * GPU is consitent with CPU.
 		 */
-		amdgpu_asic_flush_hdp(adev, NULL);
+		amdgpu_hdp_flush(adev, NULL);
 	}
 
 	ret = smu_cmn_send_smc_msg_with_param(smu, drv2smu ?
@@ -988,7 +996,7 @@ int smu_cmn_update_table(struct smu_context *smu,
 		return ret;
 
 	if (!drv2smu) {
-		amdgpu_asic_invalidate_hdp(adev, NULL);
+		amdgpu_hdp_invalidate(adev, NULL);
 		memcpy(table_data, table->cpu_addr, table_size);
 	}
 

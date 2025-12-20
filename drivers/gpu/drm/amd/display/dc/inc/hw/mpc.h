@@ -115,6 +115,16 @@ enum MCM_LUT_ID {
 	MCM_LUT_SHAPER
 };
 
+struct mpc_fl_3dlut_config {
+	bool enabled;
+	uint16_t width;
+	bool select_lut_bank_a;
+	uint16_t bit_depth;
+	int hubp_index;
+	uint16_t bias;
+	uint16_t scale;
+};
+
 union mcm_lut_params {
 	const struct pwl_params *pwl;
 	const struct tetrahedral_params *lut3d;
@@ -340,6 +350,15 @@ struct mpcc_state {
 	struct mpc_rmcm_regs rmcm_regs;
 };
 
+struct dcn_mpc_reg_state {
+	uint32_t mpcc_bot_sel;
+	uint32_t mpcc_control;
+	uint32_t mpcc_status;
+	uint32_t mpcc_top_sel;
+	uint32_t mpcc_opp_id;
+	uint32_t mpcc_ogam_control;
+};
+
 /**
  * struct mpc_funcs - funcs
  */
@@ -363,6 +382,24 @@ struct mpc_funcs {
 			struct mpc *mpc,
 			int mpcc_inst,
 			struct mpcc_state *s);
+	/**
+    * @mpc_read_reg_state:
+    *
+    * Read MPC register state for debugging underflow purposes.
+    *
+    * Parameters:
+    *
+    * - [in] mpc - MPC context
+    * - [out] reg_state - MPC register state structure
+    *
+    * Return:
+    *
+    * void
+    */
+	void (*mpc_read_reg_state)(
+			struct mpc *mpc,
+			int mpcc_inst,
+			struct dcn_mpc_reg_state *mpc_reg_state);
 
 	/**
 	* @insert_plane:
@@ -1059,21 +1096,6 @@ struct mpc_funcs {
 	*/
 	void (*program_lut_mode)(struct mpc *mpc, const enum MCM_LUT_ID id, const enum MCM_LUT_XABLE xable,
 			bool lut_bank_a, int mpcc_id);
-	/**
-	* @program_3dlut_size:
-	*
-	* Program 3D LUT size.
-	*
-	* Parameters:
-	* - [in/out] mpc - MPC context.
-	* - [in] is_17x17x17 - is 3dlut 17x17x17
-	* - [in] mpcc_id
-	*
-	* Return:
-	*
-	* void
-	*/
-	void (*program_3dlut_size)(struct mpc *mpc, bool is_17x17x17, int mpcc_id);
 
 	/**
 	 * @mcm:
@@ -1098,6 +1120,7 @@ struct mpc_funcs {
 	 * MPC RMCM new HW sequential programming functions
 	 */
 	struct {
+		void (*fl_3dlut_configure)(struct mpc *mpc, struct mpc_fl_3dlut_config *cfg, int mpcc_id);
 		void (*enable_3dlut_fl)(struct mpc *mpc, bool enable, int mpcc_id);
 		void (*update_3dlut_fast_load_select)(struct mpc *mpc, int mpcc_id, int hubp_idx);
 		void (*program_lut_read_write_control)(struct mpc *mpc, const enum MCM_LUT_ID id,

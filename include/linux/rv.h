@@ -7,16 +7,14 @@
 #ifndef _LINUX_RV_H
 #define _LINUX_RV_H
 
-#include <linux/types.h>
-#include <linux/list.h>
-
 #define MAX_DA_NAME_LEN			32
 #define MAX_DA_RETRY_RACING_EVENTS	3
 
 #ifdef CONFIG_RV
-#include <linux/bitops.h>
-#include <linux/types.h>
 #include <linux/array_size.h>
+#include <linux/bitops.h>
+#include <linux/list.h>
+#include <linux/types.h>
 
 /*
  * Deterministic automaton per-object variables.
@@ -90,7 +88,7 @@ union rv_task_monitor {
 struct rv_reactor {
 	const char		*name;
 	const char		*description;
-	__printf(1, 2) void	(*react)(const char *msg, ...);
+	__printf(1, 0) void	(*react)(const char *msg, va_list args);
 	struct list_head	list;
 };
 #endif
@@ -104,7 +102,7 @@ struct rv_monitor {
 	void			(*reset)(void);
 #ifdef CONFIG_RV_REACTORS
 	struct rv_reactor	*reactor;
-	__printf(1, 2) void	(*react)(const char *msg, ...);
+	__printf(1, 0) void	(*react)(const char *msg, va_list args);
 #endif
 	struct list_head	list;
 	struct rv_monitor	*parent;
@@ -118,13 +116,14 @@ int rv_get_task_monitor_slot(void);
 void rv_put_task_monitor_slot(int slot);
 
 #ifdef CONFIG_RV_REACTORS
-bool rv_reacting_on(void);
 int rv_unregister_reactor(struct rv_reactor *reactor);
 int rv_register_reactor(struct rv_reactor *reactor);
+__printf(2, 3)
+void rv_react(struct rv_monitor *monitor, const char *msg, ...);
 #else
-static inline bool rv_reacting_on(void)
+__printf(2, 3)
+static inline void rv_react(struct rv_monitor *monitor, const char *msg, ...)
 {
-	return false;
 }
 #endif /* CONFIG_RV_REACTORS */
 

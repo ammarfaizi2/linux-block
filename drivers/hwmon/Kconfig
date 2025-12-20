@@ -175,7 +175,7 @@ config SENSORS_ADT7X10
 	select REGMAP
 	help
 	  This module contains common code shared by the ADT7310/ADT7320 and
-	  ADT7410/ADT7420 temperature monitoring chip drivers.
+	  ADT7410/ADT7420/ADT7422 temperature monitoring chip drivers.
 
 	  If built as a module, the module will be called adt7x10.
 
@@ -191,12 +191,12 @@ config SENSORS_ADT7310
 	  will be called adt7310.
 
 config SENSORS_ADT7410
-	tristate "Analog Devices ADT7410/ADT7420"
+	tristate "Analog Devices ADT7410/ADT7420/ADT7422"
 	depends on I2C
 	select SENSORS_ADT7X10
 	help
 	  If you say yes here you get support for the Analog Devices
-	  ADT7410 and ADT7420 temperature monitoring chips.
+	  ADT7410, ADT7420 and ADT7422 temperature monitoring chips.
 
 	  This driver can also be built as a module. If so, the module
 	  will be called adt7410.
@@ -245,12 +245,12 @@ config SENSORS_ADT7475
 	  will be called adt7475.
 
 config SENSORS_AHT10
-	tristate "Aosong AHT10, AHT20"
+	tristate "Aosong AHT10, AHT20, DHT20"
 	depends on I2C
 	select CRC8
 	help
-	  If you say yes here, you get support for the Aosong AHT10 and AHT20
-	  temperature and humidity sensors
+	  If you say yes here, you get support for the Aosong AHT10, AHT20 and
+	  DHT20 temperature and humidity sensors
 
 	  This driver can also be built as a module. If so, the module
 	  will be called aht10.
@@ -769,6 +769,16 @@ config SENSORS_GL520SM
 	  This driver can also be built as a module. If so, the module
 	  will be called gl520sm.
 
+config SENSORS_GPD
+	tristate "GPD handhelds"
+	depends on X86 && DMI && HAS_IOPORT
+	help
+	  If you say yes here you get support for fan readings and
+	  control over GPD handheld devices.
+
+	  Can also be built as a module. In that case it will be
+	  called gpd-fan.
+
 config SENSORS_G760A
 	tristate "GMT G760A"
 	depends on I2C
@@ -1163,6 +1173,18 @@ config SENSORS_LTQ_CPUTEMP
 	help
 	  If you say yes here you get support for the temperature
 	  sensor inside your CPU.
+
+config SENSORS_MACSMC_HWMON
+	tristate "Apple SMC (Apple Silicon)"
+	depends on MFD_MACSMC && OF
+	help
+	  This driver enables hwmon support for current, power, temperature,
+	  and voltage sensors, as well as fan speed reporting and control
+	  on Apple Silicon devices. Say Y here if you have an Apple Silicon
+	  device.
+
+	  This driver can also be built as a module. If so, the module will
+	  be called macsmc-hwmon.
 
 config SENSORS_MAX1111
 	tristate "Maxim MAX1111 Serial 8-bit ADC chip and compatibles"
@@ -1698,6 +1720,16 @@ config SENSORS_NCT6683
 	  This driver can also be built as a module. If so, the module
 	  will be called nct6683.
 
+config SENSORS_NCT6694
+	tristate "Nuvoton NCT6694 Hardware Monitor support"
+	depends on MFD_NCT6694
+	help
+	  Say Y here to support Nuvoton NCT6694 hardware monitoring
+	  functionality.
+
+	  This driver can also be built as a module. If so, the module
+	  will be called nct6694-hwmon.
+
 config SENSORS_NCT6775_CORE
 	tristate
 	select REGMAP
@@ -1895,6 +1927,16 @@ config SENSORS_RASPBERRYPI_HWMON
 	  This driver can also be built as a module. If so, the module
 	  will be called raspberrypi-hwmon.
 
+config SENSORS_SA67MCU
+	tristate "Kontron sa67mcu hardware monitoring driver"
+	depends on MFD_SL28CPLD || COMPILE_TEST
+	help
+	  If you say yes here you get support for the voltage and temperature
+	  monitor of the sa67 board management controller.
+
+	  This driver can also be built as a module.  If so, the module
+	  will be called sa67mcu-hwmon.
+
 config SENSORS_SL28CPLD
 	tristate "Kontron sl28cpld hardware monitoring driver"
 	depends on MFD_SL28CPLD || COMPILE_TEST
@@ -1930,8 +1972,8 @@ config SENSORS_SHT21
 	tristate "Sensiron humidity and temperature sensors. SHT21 and compat."
 	depends on I2C
 	help
-	  If you say yes here you get support for the Sensiron SHT21, SHT25
-	  humidity and temperature sensors.
+	  If you say yes here you get support for the Sensiron SHT20, SHT21,
+	  SHT25 humidity and temperature sensors.
 
 	  This driver can also be built as a module. If so, the module
 	  will be called sht21.
@@ -2252,13 +2294,14 @@ config SENSORS_INA2XX
 	  will be called ina2xx.
 
 config SENSORS_INA238
-	tristate "Texas Instruments INA238"
+	tristate "Texas Instruments INA238 and compatibles"
 	depends on I2C
 	select REGMAP_I2C
 	help
-	  If you say yes here you get support for the INA238 power monitor
-	  chip. This driver supports voltage, current, power and temperature
-	  measurements as well as alarm configuration.
+	  If you say yes here you get support for INA228, INA237, INA238,
+	  INA700, INA780, and SQ52206 power monitor chips. This driver supports
+	  voltage, current, power, energy, and temperature measurements as well
+	  as alarm configuration.
 
 	  This driver can also be built as a module. If so, the module
 	  will be called ina238.
@@ -2402,6 +2445,18 @@ config SENSORS_TMP513
 
 	  This driver can also be built as a module. If so, the module
 	  will be called tmp513.
+
+config SENSORS_TSC1641
+	tristate "ST Microelectronics TSC1641 Power Monitor"
+	depends on I2C
+	select REGMAP_I2C
+	help
+	  If you say yes here you get support for TSC1641 power  monitor chip.
+	  The TSC1641 driver is configured for the default configuration of
+	  the part except temperature is enabled by default.
+
+	  This driver can also be built as a module. If so, the module
+	  will be called tsc1641.
 
 config SENSORS_VEXPRESS
 	tristate "Versatile Express"
@@ -2673,9 +2728,10 @@ config SENSORS_ASUS_EC
 	depends on ACPI_EC
 	help
 	  If you say yes here you get support for the ACPI embedded controller
-	  hardware monitoring interface found in ASUS motherboards. The driver
-	  currently supports B550/X570 boards, although other ASUS boards might
-	  provide this monitoring interface as well.
+	  hardware monitoring interface found in some ASUS motherboards. This is
+	  where such sensors as water flow and temperature, optional fans, and
+	  additional temperature sensors (T_Sensor, chipset temperatures)
+	  find themselves.
 
 	  This driver can also be built as a module. If so, the module
 	  will be called asus_ec_sensors.

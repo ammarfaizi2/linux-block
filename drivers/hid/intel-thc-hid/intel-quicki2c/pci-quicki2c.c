@@ -23,6 +23,7 @@
 
 static struct quicki2c_ddata ptl_ddata = {
 	.max_detect_size = MAX_RX_DETECT_SIZE_PTL,
+	.max_interrupt_delay = MAX_RX_INTERRUPT_DELAY,
 };
 
 /* THC QuickI2C ACPI method to get device properties */
@@ -200,6 +201,21 @@ static int quicki2c_get_acpi_resources(struct quicki2c_device *qcdev)
 		return -EOPNOTSUPP;
 	}
 
+	if (qcdev->ddata) {
+		qcdev->i2c_max_frame_size_enable = i2c_config.FSEN;
+		qcdev->i2c_int_delay_enable = i2c_config.INDE;
+
+		if (i2c_config.FSVL <= qcdev->ddata->max_detect_size)
+			qcdev->i2c_max_frame_size = i2c_config.FSVL;
+		else
+			qcdev->i2c_max_frame_size = qcdev->ddata->max_detect_size;
+
+		if (i2c_config.INDV <= qcdev->ddata->max_interrupt_delay)
+			qcdev->i2c_int_delay = i2c_config.INDV;
+		else
+			qcdev->i2c_int_delay = qcdev->ddata->max_interrupt_delay;
+	}
+
 	return 0;
 }
 
@@ -328,7 +344,6 @@ exit:
 		if (try_recover(qcdev))
 			qcdev->state = QUICKI2C_DISABLED;
 
-	pm_runtime_mark_last_busy(qcdev->dev);
 	pm_runtime_put_autosuspend(qcdev->dev);
 
 	return IRQ_HANDLED;
@@ -441,17 +456,24 @@ static void quicki2c_dma_adv_enable(struct quicki2c_device *qcdev)
 	 * max input length <= THC detect capability, enable the feature with device
 	 * max input length.
 	 */
-	if (qcdev->ddata->max_detect_size >=
-	    le16_to_cpu(qcdev->dev_desc.max_input_len)) {
-		thc_i2c_set_rx_max_size(qcdev->thc_hw,
-					le16_to_cpu(qcdev->dev_desc.max_input_len));
+	if (qcdev->i2c_max_frame_size_enable) {
+		if (qcdev->i2c_max_frame_size >=
+		    le16_to_cpu(qcdev->dev_desc.max_input_len)) {
+			thc_i2c_set_rx_max_size(qcdev->thc_hw,
+						le16_to_cpu(qcdev->dev_desc.max_input_len));
+		} else {
+			dev_warn(qcdev->dev,
+				 "Max frame size is smaller than hid max input length!");
+			thc_i2c_set_rx_max_size(qcdev->thc_hw,
+						qcdev->i2c_max_frame_size);
+		}
 		thc_i2c_rx_max_size_enable(qcdev->thc_hw, true);
 	}
 
 	/* If platform supports interrupt delay feature, enable it with given delay */
-	if (qcdev->ddata->interrupt_delay) {
+	if (qcdev->i2c_int_delay_enable) {
 		thc_i2c_set_rx_int_delay(qcdev->thc_hw,
-					 qcdev->ddata->interrupt_delay);
+					 qcdev->i2c_int_delay * 10);
 		thc_i2c_rx_int_delay_enable(qcdev->thc_hw, true);
 	}
 }
@@ -464,10 +486,10 @@ static void quicki2c_dma_adv_enable(struct quicki2c_device *qcdev)
  */
 static void quicki2c_dma_adv_disable(struct quicki2c_device *qcdev)
 {
-	if (qcdev->ddata->max_detect_size)
+	if (qcdev->i2c_max_frame_size_enable)
 		thc_i2c_rx_max_size_enable(qcdev->thc_hw, false);
 
-	if (qcdev->ddata->interrupt_delay)
+	if (qcdev->i2c_int_delay_enable)
 		thc_i2c_rx_int_delay_enable(qcdev->thc_hw, false);
 }
 
@@ -712,7 +734,6 @@ static int quicki2c_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	/* Enable runtime power management */
 	pm_runtime_use_autosuspend(qcdev->dev);
 	pm_runtime_set_autosuspend_delay(qcdev->dev, DEFAULT_AUTO_SUSPEND_DELAY_MS);
-	pm_runtime_mark_last_busy(qcdev->dev);
 	pm_runtime_put_noidle(qcdev->dev);
 	pm_runtime_put_autosuspend(qcdev->dev);
 
@@ -997,6 +1018,8 @@ static const struct pci_device_id quicki2c_pci_tbl[] = {
 	{ PCI_DEVICE_DATA(INTEL, THC_PTL_H_DEVICE_ID_I2C_PORT2, &ptl_ddata) },
 	{ PCI_DEVICE_DATA(INTEL, THC_PTL_U_DEVICE_ID_I2C_PORT1, &ptl_ddata) },
 	{ PCI_DEVICE_DATA(INTEL, THC_PTL_U_DEVICE_ID_I2C_PORT2, &ptl_ddata) },
+	{ PCI_DEVICE_DATA(INTEL, THC_WCL_DEVICE_ID_I2C_PORT1, &ptl_ddata) },
+	{ PCI_DEVICE_DATA(INTEL, THC_WCL_DEVICE_ID_I2C_PORT2, &ptl_ddata) },
 	{ }
 };
 MODULE_DEVICE_TABLE(pci, quicki2c_pci_tbl);

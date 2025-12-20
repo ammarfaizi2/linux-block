@@ -11,26 +11,27 @@
 #include <linux/mm.h>
 #include <linux/hugetlb.h>
 #include <linux/swap.h>
-#include <linux/swapops.h>
+#include <linux/leafops.h>
 #include <linux/pagewalk.h>
 #include <linux/ksm.h>
 #include <asm/gmap_helpers.h>
+#include <asm/pgtable.h>
 
 /**
- * ptep_zap_swap_entry() - discard a swap entry.
+ * ptep_zap_softleaf_entry() - discard a software leaf entry.
  * @mm: the mm
- * @entry: the swap entry that needs to be zapped
+ * @entry: the software leaf entry that needs to be zapped
  *
- * Discards the given swap entry. If the swap entry was an actual swap
- * entry (and not a migration entry, for example), the actual swapped
+ * Discards the given software leaf entry. If the leaf entry was an actual
+ * swap entry (and not a migration entry, for example), the actual swapped
  * page is also discarded from swap.
  */
-static void ptep_zap_swap_entry(struct mm_struct *mm, swp_entry_t entry)
+static void ptep_zap_softleaf_entry(struct mm_struct *mm, softleaf_t entry)
 {
-	if (!non_swap_entry(entry))
+	if (softleaf_is_swap(entry))
 		dec_mm_counter(mm, MM_SWAPENTS);
-	else if (is_migration_entry(entry))
-		dec_mm_counter(mm, mm_counter(pfn_swap_entry_folio(entry)));
+	else if (softleaf_is_migration(entry))
+		dec_mm_counter(mm, mm_counter(softleaf_to_folio(entry)));
 	free_swap_and_cache(entry);
 }
 
@@ -46,7 +47,9 @@ static void ptep_zap_swap_entry(struct mm_struct *mm, swp_entry_t entry)
 void gmap_helper_zap_one_page(struct mm_struct *mm, unsigned long vmaddr)
 {
 	struct vm_area_struct *vma;
+	unsigned long pgstev;
 	spinlock_t *ptl;
+	pgste_t pgste;
 	pte_t *ptep;
 
 	mmap_assert_locked(mm);
@@ -60,8 +63,20 @@ void gmap_helper_zap_one_page(struct mm_struct *mm, unsigned long vmaddr)
 	ptep = get_locked_pte(mm, vmaddr, &ptl);
 	if (unlikely(!ptep))
 		return;
-	if (pte_swap(*ptep))
-		ptep_zap_swap_entry(mm, pte_to_swp_entry(*ptep));
+	if (pte_swap(*ptep)) {
+		preempt_disable();
+		pgste = pgste_get_lock(ptep);
+		pgstev = pgste_val(pgste);
+
+		if ((pgstev & _PGSTE_GPS_USAGE_MASK) == _PGSTE_GPS_USAGE_UNUSED ||
+		    (pgstev & _PGSTE_GPS_ZERO)) {
+			ptep_zap_softleaf_entry(mm, softleaf_from_pte(*ptep));
+			pte_clear(mm, vmaddr, ptep);
+		}
+
+		pgste_set_unlock(ptep, pgste);
+		preempt_enable();
+	}
 	pte_unmap_unlock(ptep, ptl);
 }
 EXPORT_SYMBOL_GPL(gmap_helper_zap_one_page);

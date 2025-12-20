@@ -122,6 +122,10 @@ static int __wx_enable_sriov(struct wx *wx, u8 num_vfs)
 	      WX_CFG_PORT_CTL_NUM_VT_MASK,
 	      value);
 
+	/* Disable RSC when in SR-IOV mode */
+	clear_bit(WX_FLAG_RSC_CAPABLE, wx->flags);
+	clear_bit(WX_FLAG_RSC_ENABLED, wx->flags);
+
 	return ret;
 }
 
@@ -150,6 +154,12 @@ static int wx_pci_sriov_enable(struct pci_dev *dev,
 	struct wx *wx = pci_get_drvdata(dev);
 	int err = 0, i;
 
+	if (netif_is_rxfh_configured(wx->netdev)) {
+		wx_err(wx, "Cannot enable SR-IOV while RXFH is configured\n");
+		wx_err(wx, "Run 'ethtool -X <if> default' to reset RSS table\n");
+		return -EBUSY;
+	}
+
 	err = __wx_enable_sriov(wx, num_vfs);
 	if (err)
 		return err;
@@ -173,12 +183,20 @@ err_out:
 	return err;
 }
 
-static void wx_pci_sriov_disable(struct pci_dev *dev)
+static int wx_pci_sriov_disable(struct pci_dev *dev)
 {
 	struct wx *wx = pci_get_drvdata(dev);
 
+	if (netif_is_rxfh_configured(wx->netdev)) {
+		wx_err(wx, "Cannot disable SR-IOV while RXFH is configured\n");
+		wx_err(wx, "Run 'ethtool -X <if> default' to reset RSS table\n");
+		return -EBUSY;
+	}
+
 	wx_disable_sriov(wx);
 	wx_sriov_reinit(wx);
+
+	return 0;
 }
 
 int wx_pci_sriov_configure(struct pci_dev *pdev, int num_vfs)
@@ -187,10 +205,8 @@ int wx_pci_sriov_configure(struct pci_dev *pdev, int num_vfs)
 	int err;
 
 	if (!num_vfs) {
-		if (!pci_vfs_assigned(pdev)) {
-			wx_pci_sriov_disable(pdev);
-			return 0;
-		}
+		if (!pci_vfs_assigned(pdev))
+			return wx_pci_sriov_disable(pdev);
 
 		wx_err(wx, "can't free VFs because some are assigned to VMs.\n");
 		return -EBUSY;

@@ -3,14 +3,19 @@
  * Copyright © 2022-2023 Intel Corporation
  */
 
+#include <linux/iopoll.h>
+
+#include <drm/drm_print.h>
 #include <drm/drm_vblank.h>
 
 #include "i915_drv.h"
 #include "intel_color.h"
 #include "intel_crtc.h"
 #include "intel_de.h"
+#include "intel_display_jiffies.h"
 #include "intel_display_regs.h"
 #include "intel_display_types.h"
+#include "intel_display_utils.h"
 #include "intel_vblank.h"
 #include "intel_vrr.h"
 
@@ -492,9 +497,14 @@ static void wait_for_pipe_scanline_moving(struct intel_crtc *crtc, bool state)
 {
 	struct intel_display *display = to_intel_display(crtc);
 	enum pipe pipe = crtc->pipe;
+	bool is_moving;
+	int ret;
 
 	/* Wait for the display line to settle/start moving */
-	if (wait_for(pipe_scanline_is_moving(display, pipe) == state, 100))
+	ret = poll_timeout_us(is_moving = pipe_scanline_is_moving(display, pipe),
+			      is_moving == state,
+			      500, 100 * 1000, false);
+	if (ret)
 		drm_err(display->drm,
 			"pipe %c scanline %s wait timed out\n",
 			pipe_name(pipe), str_on_off(state));
@@ -673,7 +683,7 @@ void intel_vblank_evade_init(const struct intel_crtc_state *old_crtc_state,
 		else
 			evade->vblank_start = intel_vrr_vmax_vblank_start(crtc_state);
 
-		vblank_delay = intel_vrr_vblank_delay(crtc_state);
+		vblank_delay = crtc_state->set_context_latency;
 	} else {
 		evade->vblank_start = intel_mode_vblank_start(adjusted_mode);
 
@@ -724,9 +734,9 @@ int intel_vblank_evade(struct intel_vblank_evade_ctx *evade)
 			break;
 
 		if (!timeout) {
-			drm_err(display->drm,
-				"Potential atomic update failure on pipe %c\n",
-				pipe_name(crtc->pipe));
+			drm_dbg_kms(display->drm,
+				    "Potential atomic update failure on pipe %c\n",
+				    pipe_name(crtc->pipe));
 			break;
 		}
 
@@ -758,4 +768,14 @@ int intel_vblank_evade(struct intel_vblank_evade_ctx *evade)
 		scanline = intel_get_crtc_scanline(crtc);
 
 	return scanline;
+}
+
+int intel_crtc_vblank_length(const struct intel_crtc_state *crtc_state)
+{
+	const struct drm_display_mode *adjusted_mode = &crtc_state->hw.adjusted_mode;
+
+	if (crtc_state->vrr.enable)
+		return crtc_state->vrr.guardband;
+	else
+		return adjusted_mode->crtc_vtotal - adjusted_mode->crtc_vblank_start;
 }

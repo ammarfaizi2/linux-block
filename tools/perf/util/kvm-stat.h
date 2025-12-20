@@ -10,6 +10,7 @@
 #include "symbol.h"
 #include "record.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <linux/zalloc.h>
 
@@ -189,6 +190,16 @@ static inline struct kvm_info *kvm_info__new(void)
 // We use this unconditionally in hists__findnew_entry() and hist_entry__delete()
 #define kvm_info__zput(ki) do { } while (0)
 #endif /* HAVE_KVM_STAT_SUPPORT */
+
+#define STRDUP_FAIL_EXIT(s)		\
+	({	char *_p;		\
+		_p = strdup(s);		\
+		if (!_p) {		\
+			ret = -ENOMEM;	\
+			goto EXIT;	\
+		}			\
+		_p;			\
+	})
 
 extern int kvm_add_default_arch_event(int *argc, const char **argv);
 #endif /* __PERF_KVM_STAT_H */

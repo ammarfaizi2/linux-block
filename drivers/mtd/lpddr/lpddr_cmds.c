@@ -79,7 +79,7 @@ struct mtd_info *lpddr_cmdset(struct map_info *map)
 		mutex_init(&shared[i].lock);
 		for (j = 0; j < lpddr->qinfo->HWPartsNum; j++) {
 			*chip = lpddr->chips[i];
-			chip->start += j << lpddr->chipshift;
+			chip->start += (unsigned long)j << lpddr->chipshift;
 			chip->oldstate = chip->state = FL_READY;
 			chip->priv = &shared[i];
 			/* those should be reset too since
@@ -142,7 +142,7 @@ static int wait_for_ready(struct map_info *map, struct flchip *chip,
 		if (dsr & DSR_READY_STATUS)
 			break;
 		if (!timeo) {
-			printk(KERN_ERR "%s: Flash timeout error state %d \n",
+			printk(KERN_ERR "%s: Flash timeout error state %d\n",
 							map->name, chip_state);
 			ret = -ETIME;
 			break;
@@ -186,7 +186,7 @@ static int wait_for_ready(struct map_info *map, struct flchip *chip,
 	if (dsr & DSR_ERR) {
 		/* Clear DSR*/
 		map_write(map, CMD(~(DSR_ERR)), map->pfow_base + PFOW_DSR);
-		printk(KERN_WARNING"%s: Bad status on wait: 0x%x \n",
+		printk(KERN_WARNING"%s: Bad status on wait: 0x%x\n",
 				map->name, dsr);
 		print_drs_error(dsr);
 		ret = -EIO;
@@ -321,7 +321,7 @@ static int chip_ready(struct map_info *map, struct flchip *chip, int mode)
 			/* Resume and pretend we weren't here.  */
 			put_chip(map, chip);
 			printk(KERN_ERR "%s: suspend operation failed."
-					"State may be wrong \n", map->name);
+					"State may be wrong\n", map->name);
 			return -EIO;
 		}
 		chip->erase_suspended = 1;
@@ -468,7 +468,7 @@ static int do_write_buffer(struct map_info *map, struct flchip *chip,
 	chip->state = FL_WRITING;
 	ret = wait_for_ready(map, chip, (1<<lpddr->qinfo->ProgBufferTime));
 	if (ret)	{
-		printk(KERN_WARNING"%s Buffer program error: %d at %lx; \n",
+		printk(KERN_WARNING"%s Buffer program error: %d at %lx\n",
 			map->name, ret, adr);
 		goto out;
 	}
@@ -559,7 +559,7 @@ static int lpddr_point(struct mtd_info *mtd, loff_t adr, size_t len,
 			break;
 
 		if ((len + ofs - 1) >> lpddr->chipshift)
-			thislen = (1<<lpddr->chipshift) - ofs;
+			thislen = (1UL << lpddr->chipshift) - ofs;
 		else
 			thislen = len;
 		/* get the chip */
@@ -575,7 +575,7 @@ static int lpddr_point(struct mtd_info *mtd, loff_t adr, size_t len,
 		len -= thislen;
 
 		ofs = 0;
-		last_end += 1 << lpddr->chipshift;
+		last_end += 1UL << lpddr->chipshift;
 		chipnum++;
 		chip = &lpddr->chips[chipnum];
 	}
@@ -601,7 +601,7 @@ static int lpddr_unpoint (struct mtd_info *mtd, loff_t adr, size_t len)
 			break;
 
 		if ((len + ofs - 1) >> lpddr->chipshift)
-			thislen = (1<<lpddr->chipshift) - ofs;
+			thislen = (1UL << lpddr->chipshift) - ofs;
 		else
 			thislen = len;
 
@@ -736,7 +736,7 @@ static int do_xxlock(struct mtd_info *mtd, loff_t adr, uint32_t len, int thunk)
 
 	ret = wait_for_ready(map, chip, 1);
 	if (ret)	{
-		printk(KERN_ERR "%s: block unlock error status %d \n",
+		printk(KERN_ERR "%s: block unlock error status %d\n",
 				map->name, ret);
 		goto out;
 	}

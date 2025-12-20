@@ -46,11 +46,19 @@
 #define DIVCA55C2	CONF_PACK(SCKCR2, 10, 1)
 #define DIVCA55C3	CONF_PACK(SCKCR2, 11, 1)
 #define DIVCA55S	CONF_PACK(SCKCR2, 12, 1)
+#define DIVSPI3ASYNC	CONF_PACK(SCKCR2, 16, 2)
+#define DIVSCI5ASYNC	CONF_PACK(SCKCR2, 18, 2)
 
+#define DIVSPI0ASYNC	CONF_PACK(SCKCR3, 0, 2)
+#define DIVSPI1ASYNC	CONF_PACK(SCKCR3, 2, 2)
+#define DIVSPI2ASYNC	CONF_PACK(SCKCR3, 4, 2)
 #define DIVSCI0ASYNC	CONF_PACK(SCKCR3, 6, 2)
+#define DIVSCI1ASYNC	CONF_PACK(SCKCR3, 8, 2)
+#define DIVSCI2ASYNC	CONF_PACK(SCKCR3, 10, 2)
+#define DIVSCI3ASYNC	CONF_PACK(SCKCR3, 12, 2)
+#define DIVSCI4ASYNC	CONF_PACK(SCKCR3, 14, 2)
 
 #define SEL_PLL		CONF_PACK(SCKCR, 22, 1)
-
 
 enum rzt2h_clk_types {
 	CLK_TYPE_RZT2H_DIV = CLK_TYPE_CUSTOM,	/* Clock with divider */
@@ -67,7 +75,7 @@ enum rzt2h_clk_types {
 
 enum clk_ids {
 	/* Core Clock Outputs exported to DT */
-	LAST_DT_CORE_CLK = R9A09G077_SDHI_CLKHS,
+	LAST_DT_CORE_CLK = R9A09G077_ETCLKE,
 
 	/* External Input Clocks */
 	CLK_EXTAL,
@@ -84,6 +92,15 @@ enum clk_ids {
 	CLK_SEL_CLK_PLL4,
 	CLK_PLL4D1,
 	CLK_SCI0ASYNC,
+	CLK_SCI1ASYNC,
+	CLK_SCI2ASYNC,
+	CLK_SCI3ASYNC,
+	CLK_SCI4ASYNC,
+	CLK_SCI5ASYNC,
+	CLK_SPI0ASYNC,
+	CLK_SPI1ASYNC,
+	CLK_SPI2ASYNC,
+	CLK_SPI3ASYNC,
 
 	/* Module Clocks */
 	MOD_CLK_BASE,
@@ -133,6 +150,25 @@ static const struct cpg_core_clk r9a09g077_core_clks[] __initconst = {
 	DEF_FIXED(".pll4d1", CLK_PLL4D1, CLK_SEL_CLK_PLL4, 1, 1),
 	DEF_DIV(".sci0async", CLK_SCI0ASYNC, CLK_PLL4D1, DIVSCI0ASYNC,
 		dtable_24_25_30_32),
+	DEF_DIV(".sci1async", CLK_SCI1ASYNC, CLK_PLL4D1, DIVSCI1ASYNC,
+		dtable_24_25_30_32),
+	DEF_DIV(".sci2async", CLK_SCI2ASYNC, CLK_PLL4D1, DIVSCI2ASYNC,
+		dtable_24_25_30_32),
+	DEF_DIV(".sci3async", CLK_SCI3ASYNC, CLK_PLL4D1, DIVSCI3ASYNC,
+		dtable_24_25_30_32),
+	DEF_DIV(".sci4async", CLK_SCI4ASYNC, CLK_PLL4D1, DIVSCI4ASYNC,
+		dtable_24_25_30_32),
+	DEF_DIV(".sci5async", CLK_SCI5ASYNC, CLK_PLL4D1, DIVSCI5ASYNC,
+		dtable_24_25_30_32),
+
+	DEF_DIV(".spi0async", CLK_SPI0ASYNC, CLK_PLL4D1, DIVSPI0ASYNC,
+		dtable_24_25_30_32),
+	DEF_DIV(".spi1async", CLK_SPI1ASYNC, CLK_PLL4D1, DIVSPI1ASYNC,
+		dtable_24_25_30_32),
+	DEF_DIV(".spi2async", CLK_SPI2ASYNC, CLK_PLL4D1, DIVSPI2ASYNC,
+		dtable_24_25_30_32),
+	DEF_DIV(".spi3async", CLK_SPI3ASYNC, CLK_PLL4D1, DIVSPI3ASYNC,
+		dtable_24_25_30_32),
 
 	/* Core output clk */
 	DEF_DIV("CA55C0", R9A09G077_CLK_CA55C0, CLK_SEL_CLK_PLL0, DIVCA55C0,
@@ -146,17 +182,44 @@ static const struct cpg_core_clk r9a09g077_core_clks[] __initconst = {
 	DEF_DIV("CA55S", R9A09G077_CLK_CA55S, CLK_SEL_CLK_PLL0, DIVCA55S,
 		dtable_1_2),
 	DEF_FIXED("PCLKGPTL", R9A09G077_CLK_PCLKGPTL, CLK_SEL_CLK_PLL1, 2, 1),
+	DEF_FIXED("PCLKH", R9A09G077_CLK_PCLKH, CLK_SEL_CLK_PLL1, 4, 1),
 	DEF_FIXED("PCLKM", R9A09G077_CLK_PCLKM, CLK_SEL_CLK_PLL1, 8, 1),
 	DEF_FIXED("PCLKL", R9A09G077_CLK_PCLKL, CLK_SEL_CLK_PLL1, 16, 1),
+	DEF_FIXED("PCLKAH", R9A09G077_CLK_PCLKAH, CLK_PLL4D1, 6, 1),
 	DEF_FIXED("PCLKAM", R9A09G077_CLK_PCLKAM, CLK_PLL4D1, 12, 1),
 	DEF_FIXED("SDHI_CLKHS", R9A09G077_SDHI_CLKHS, CLK_SEL_CLK_PLL2, 1, 1),
+	DEF_FIXED("USB_CLK", R9A09G077_USB_CLK, CLK_PLL4D1, 48, 1),
+	DEF_FIXED("ETCLKA", R9A09G077_ETCLKA, CLK_SEL_CLK_PLL1, 5, 1),
+	DEF_FIXED("ETCLKB", R9A09G077_ETCLKB, CLK_SEL_CLK_PLL1, 8, 1),
+	DEF_FIXED("ETCLKC", R9A09G077_ETCLKC, CLK_SEL_CLK_PLL1, 10, 1),
+	DEF_FIXED("ETCLKD", R9A09G077_ETCLKD, CLK_SEL_CLK_PLL1, 20, 1),
+	DEF_FIXED("ETCLKE", R9A09G077_ETCLKE, CLK_SEL_CLK_PLL1, 40, 1),
 };
 
 static const struct mssr_mod_clk r9a09g077_mod_clks[] __initconst = {
 	DEF_MOD("sci0fck", 8, CLK_SCI0ASYNC),
+	DEF_MOD("sci1fck", 9, CLK_SCI1ASYNC),
+	DEF_MOD("sci2fck", 10, CLK_SCI2ASYNC),
+	DEF_MOD("sci3fck", 11, CLK_SCI3ASYNC),
+	DEF_MOD("sci4fck", 12, CLK_SCI4ASYNC),
 	DEF_MOD("iic0", 100, R9A09G077_CLK_PCLKL),
 	DEF_MOD("iic1", 101, R9A09G077_CLK_PCLKL),
+	DEF_MOD("spi0", 104, CLK_SPI0ASYNC),
+	DEF_MOD("spi1", 105, CLK_SPI1ASYNC),
+	DEF_MOD("spi2", 106, CLK_SPI2ASYNC),
+	DEF_MOD("adc0", 206, R9A09G077_CLK_PCLKH),
+	DEF_MOD("adc1", 207, R9A09G077_CLK_PCLKH),
+	DEF_MOD("adc2", 225, R9A09G077_CLK_PCLKM),
+	DEF_MOD("tsu", 307, R9A09G077_CLK_PCLKL),
+	DEF_MOD("gmac0", 400, R9A09G077_CLK_PCLKM),
+	DEF_MOD("ethsw", 401, R9A09G077_CLK_PCLKM),
+	DEF_MOD("ethss", 403, R9A09G077_CLK_PCLKM),
+	DEF_MOD("usb", 408, R9A09G077_CLK_PCLKAM),
+	DEF_MOD("gmac1", 416, R9A09G077_CLK_PCLKAM),
+	DEF_MOD("gmac2", 417, R9A09G077_CLK_PCLKAM),
+	DEF_MOD("sci5fck", 600, CLK_SCI5ASYNC),
 	DEF_MOD("iic2", 601, R9A09G077_CLK_PCLKL),
+	DEF_MOD("spi3", 602, CLK_SPI3ASYNC),
 	DEF_MOD("sdhi0", 1212, R9A09G077_CLK_PCLKAM),
 	DEF_MOD("sdhi1", 1213, R9A09G077_CLK_PCLKAM),
 };
@@ -177,27 +240,28 @@ r9a09g077_cpg_div_clk_register(struct device *dev,
 	parent_name = __clk_get_name(parent);
 
 	if (core->dtable)
-		clk_hw = clk_hw_register_divider_table(dev, core->name,
-						       parent_name, 0,
-						       addr,
-						       GET_SHIFT(core->conf),
-						       GET_WIDTH(core->conf),
-						       core->flag,
-						       core->dtable,
-						       &pub->rmw_lock);
+		clk_hw = devm_clk_hw_register_divider_table(dev, core->name,
+							    parent_name,
+							    CLK_SET_RATE_PARENT,
+							    addr,
+							    GET_SHIFT(core->conf),
+							    GET_WIDTH(core->conf),
+							    core->flag,
+							    core->dtable,
+							    &pub->rmw_lock);
 	else
-		clk_hw = clk_hw_register_divider(dev, core->name,
-						 parent_name, 0,
-						 addr,
-						 GET_SHIFT(core->conf),
-						 GET_WIDTH(core->conf),
-						 core->flag, &pub->rmw_lock);
+		clk_hw = devm_clk_hw_register_divider(dev, core->name,
+						      parent_name,
+						      CLK_SET_RATE_PARENT,
+						      addr,
+						      GET_SHIFT(core->conf),
+						      GET_WIDTH(core->conf),
+						      core->flag, &pub->rmw_lock);
 
 	if (IS_ERR(clk_hw))
 		return ERR_CAST(clk_hw);
 
 	return clk_hw->clk;
-
 }
 
 static struct clk * __init

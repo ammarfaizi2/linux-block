@@ -35,7 +35,11 @@ static int ucsi_cmd(void *data, u64 val)
 	case UCSI_SET_SINK_PATH:
 	case UCSI_SET_NEW_CAM:
 	case UCSI_SET_USB:
-		ret = ucsi_send_command(ucsi, val, NULL, 0);
+	case UCSI_SET_POWER_LEVEL:
+	case UCSI_READ_POWER_LEVEL:
+	case UCSI_SET_PDOS:
+		ucsi->message_in_size = 0;
+		ret = ucsi_send_command(ucsi, val);
 		break;
 	case UCSI_GET_CAPABILITY:
 	case UCSI_GET_CONNECTOR_CAPABILITY:
@@ -50,9 +54,9 @@ static int ucsi_cmd(void *data, u64 val)
 	case UCSI_GET_ATTENTION_VDO:
 	case UCSI_GET_CAM_CS:
 	case UCSI_GET_LPM_PPM_INFO:
-		ret = ucsi_send_command(ucsi, val,
-					&ucsi->debugfs->response,
-					sizeof(ucsi->debugfs->response));
+		ucsi->message_in_size = sizeof(ucsi->debugfs->response);
+		ret = ucsi_send_command(ucsi, val);
+		memcpy(&ucsi->debugfs->response, ucsi->message_in, sizeof(ucsi->debugfs->response));
 		break;
 	default:
 		ret = -EOPNOTSUPP;
@@ -80,6 +84,57 @@ static int ucsi_resp_show(struct seq_file *s, void *not_used)
 }
 DEFINE_SHOW_ATTRIBUTE(ucsi_resp);
 
+static int ucsi_peak_curr_show(struct seq_file *m, void *v)
+{
+	struct ucsi *ucsi = m->private;
+
+	seq_printf(m, "%u mA\n", ucsi->connector->peak_current);
+	return 0;
+}
+DEFINE_SHOW_ATTRIBUTE(ucsi_peak_curr);
+
+static int ucsi_avg_curr_show(struct seq_file *m, void *v)
+{
+	struct ucsi *ucsi = m->private;
+
+	seq_printf(m, "%u mA\n", ucsi->connector->avg_current);
+	return 0;
+}
+DEFINE_SHOW_ATTRIBUTE(ucsi_avg_curr);
+
+static int ucsi_vbus_volt_show(struct seq_file *m, void *v)
+{
+	struct ucsi *ucsi = m->private;
+
+	seq_printf(m, "%u mV\n", ucsi->connector->vbus_voltage);
+	return 0;
+}
+DEFINE_SHOW_ATTRIBUTE(ucsi_vbus_volt);
+
+static ssize_t ucsi_message_out_write(struct file *file,
+				      const char __user *data, size_t count, loff_t *ppos)
+{
+	struct ucsi *ucsi = file->private_data;
+	int ret;
+
+	char *buf __free(kfree) = memdup_user_nul(data, count);
+	if (IS_ERR(buf))
+		return PTR_ERR(buf);
+
+	ucsi->message_out_size = min(count / 2, UCSI_MAX_MESSAGE_OUT_LENGTH);
+	ret = hex2bin(ucsi->message_out, buf, ucsi->message_out_size);
+	if (ret)
+		return ret;
+
+	return count;
+}
+
+static const struct file_operations ucsi_message_out_fops = {
+	.open = simple_open,
+	.write = ucsi_message_out_write,
+	.llseek = generic_file_llseek,
+};
+
 void ucsi_debugfs_register(struct ucsi *ucsi)
 {
 	ucsi->debugfs = kzalloc(sizeof(*ucsi->debugfs), GFP_KERNEL);
@@ -89,6 +144,11 @@ void ucsi_debugfs_register(struct ucsi *ucsi)
 	ucsi->debugfs->dentry = debugfs_create_dir(dev_name(ucsi->dev), ucsi_debugfs_root);
 	debugfs_create_file("command", 0200, ucsi->debugfs->dentry, ucsi, &ucsi_cmd_fops);
 	debugfs_create_file("response", 0400, ucsi->debugfs->dentry, ucsi, &ucsi_resp_fops);
+	debugfs_create_file("peak_current", 0400, ucsi->debugfs->dentry, ucsi, &ucsi_peak_curr_fops);
+	debugfs_create_file("avg_current", 0400, ucsi->debugfs->dentry, ucsi, &ucsi_avg_curr_fops);
+	debugfs_create_file("vbus_voltage", 0400, ucsi->debugfs->dentry, ucsi, &ucsi_vbus_volt_fops);
+	debugfs_create_file("message_out", 0200, ucsi->debugfs->dentry, ucsi,
+			    &ucsi_message_out_fops);
 }
 
 void ucsi_debugfs_unregister(struct ucsi *ucsi)

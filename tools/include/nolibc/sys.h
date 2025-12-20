@@ -106,7 +106,7 @@ static __attribute__((unused))
 void *sbrk(intptr_t inc)
 {
 	/* first call to find current end */
-	void *ret = sys_brk(0);
+	void *ret = sys_brk(NULL);
 
 	if (ret && sys_brk(ret + inc) == ret + inc)
 		return ret + inc;
@@ -118,6 +118,7 @@ void *sbrk(intptr_t inc)
 
 /*
  * int chdir(const char *path);
+ * int fchdir(int fildes);
  */
 
 static __attribute__((unused))
@@ -132,6 +133,18 @@ int chdir(const char *path)
 	return __sysret(sys_chdir(path));
 }
 
+static __attribute__((unused))
+int sys_fchdir(int fildes)
+{
+	return my_syscall1(__NR_fchdir, fildes);
+}
+
+static __attribute__((unused))
+int fchdir(int fildes)
+{
+	return __sysret(sys_fchdir(fildes));
+}
+
 
 /*
  * int chmod(const char *path, mode_t mode);
@@ -142,10 +155,8 @@ int sys_chmod(const char *path, mode_t mode)
 {
 #if defined(__NR_fchmodat)
 	return my_syscall4(__NR_fchmodat, AT_FDCWD, path, mode, 0);
-#elif defined(__NR_chmod)
-	return my_syscall2(__NR_chmod, path, mode);
 #else
-	return __nolibc_enosys(__func__, path, mode);
+	return my_syscall2(__NR_chmod, path, mode);
 #endif
 }
 
@@ -165,10 +176,8 @@ int sys_chown(const char *path, uid_t owner, gid_t group)
 {
 #if defined(__NR_fchownat)
 	return my_syscall5(__NR_fchownat, AT_FDCWD, path, owner, group, 0);
-#elif defined(__NR_chown)
-	return my_syscall3(__NR_chown, path, owner, group);
 #else
-	return __nolibc_enosys(__func__, path, owner, group);
+	return my_syscall3(__NR_chown, path, owner, group);
 #endif
 }
 
@@ -238,11 +247,22 @@ static __attribute__((unused))
 int sys_dup2(int old, int new)
 {
 #if defined(__NR_dup3)
-	return my_syscall3(__NR_dup3, old, new, 0);
-#elif defined(__NR_dup2)
-	return my_syscall2(__NR_dup2, old, new);
+	int ret, nr_fcntl;
+
+#ifdef __NR_fcntl64
+	nr_fcntl = __NR_fcntl64;
 #else
-	return __nolibc_enosys(__func__, old, new);
+	nr_fcntl = __NR_fcntl;
+#endif
+
+	if (old == new) {
+		ret = my_syscall2(nr_fcntl, old, F_GETFD);
+		return ret < 0 ? ret : old;
+	}
+
+	return my_syscall3(__NR_dup3, old, new, 0);
+#else
+	return my_syscall2(__NR_dup2, old, new);
 #endif
 }
 
@@ -327,10 +347,8 @@ pid_t sys_fork(void)
 	 * will not use the rest with no other flag.
 	 */
 	return my_syscall5(__NR_clone, SIGCHLD, 0, 0, 0, 0);
-#elif defined(__NR_fork)
-	return my_syscall0(__NR_fork);
 #else
-	return __nolibc_enosys(__func__);
+	return my_syscall0(__NR_fork);
 #endif
 }
 #endif
@@ -347,7 +365,7 @@ pid_t sys_vfork(void)
 {
 #if defined(__NR_vfork)
 	return my_syscall0(__NR_vfork);
-#elif defined(__NR_clone3)
+#else
 	/*
 	 * clone() could be used but has different argument orders per
 	 * architecture.
@@ -358,8 +376,6 @@ pid_t sys_vfork(void)
 	};
 
 	return my_syscall2(__NR_clone3, &args, sizeof(args));
-#else
-	return __nolibc_enosys(__func__);
 #endif
 }
 #endif
@@ -509,6 +525,7 @@ pid_t gettid(void)
 	return sys_gettid();
 }
 
+#ifndef NOLIBC_NO_RUNTIME
 static unsigned long getauxval(unsigned long key);
 
 /*
@@ -520,7 +537,7 @@ int getpagesize(void)
 {
 	return __sysret((int)getauxval(AT_PAGESZ) ?: -ENOENT);
 }
-
+#endif /* NOLIBC_NO_RUNTIME */
 
 /*
  * uid_t getuid(void);
@@ -569,10 +586,8 @@ int sys_link(const char *old, const char *new)
 {
 #if defined(__NR_linkat)
 	return my_syscall5(__NR_linkat, AT_FDCWD, old, AT_FDCWD, new, 0);
-#elif defined(__NR_link)
-	return my_syscall2(__NR_link, old, new);
 #else
-	return __nolibc_enosys(__func__, old, new);
+	return my_syscall2(__NR_link, old, new);
 #endif
 }
 
@@ -590,44 +605,27 @@ int link(const char *old, const char *new)
 static __attribute__((unused))
 off_t sys_lseek(int fd, off_t offset, int whence)
 {
-#if defined(__NR_lseek)
-	return my_syscall3(__NR_lseek, fd, offset, whence);
-#else
-	return __nolibc_enosys(__func__, fd, offset, whence);
-#endif
-}
-
-static __attribute__((unused))
-int sys_llseek(int fd, unsigned long offset_high, unsigned long offset_low,
-	       __kernel_loff_t *result, int whence)
-{
 #if defined(__NR_llseek)
-	return my_syscall5(__NR_llseek, fd, offset_high, offset_low, result, whence);
+	__kernel_loff_t loff = 0;
+	off_t result;
+	int ret;
+
+	ret = my_syscall5(__NR_llseek, fd, offset >> 32, (uint32_t)offset, &loff, whence);
+	if (ret < 0)
+		result = ret;
+	else
+		result = loff;
+
+	return result;
 #else
-	return __nolibc_enosys(__func__, fd, offset_high, offset_low, result, whence);
+	return my_syscall3(__NR_lseek, fd, offset, whence);
 #endif
 }
 
 static __attribute__((unused))
 off_t lseek(int fd, off_t offset, int whence)
 {
-	__kernel_loff_t loff = 0;
-	off_t result;
-	int ret;
-
-	result = sys_lseek(fd, offset, whence);
-	if (result == -ENOSYS) {
-		/* Only exists on 32bit where nolibc off_t is also 32bit */
-		ret = sys_llseek(fd, 0, offset, &loff, whence);
-		if (ret < 0)
-			result = ret;
-		else if (loff != (off_t)loff)
-			result = -EOVERFLOW;
-		else
-			result = loff;
-	}
-
-	return __sysret(result);
+	return __sysret(sys_lseek(fd, offset, whence));
 }
 
 
@@ -640,10 +638,8 @@ int sys_mkdir(const char *path, mode_t mode)
 {
 #if defined(__NR_mkdirat)
 	return my_syscall3(__NR_mkdirat, AT_FDCWD, path, mode);
-#elif defined(__NR_mkdir)
-	return my_syscall2(__NR_mkdir, path, mode);
 #else
-	return __nolibc_enosys(__func__, path, mode);
+	return my_syscall2(__NR_mkdir, path, mode);
 #endif
 }
 
@@ -662,10 +658,8 @@ int sys_rmdir(const char *path)
 {
 #if defined(__NR_rmdir)
 	return my_syscall1(__NR_rmdir, path);
-#elif defined(__NR_unlinkat)
-	return my_syscall3(__NR_unlinkat, AT_FDCWD, path, AT_REMOVEDIR);
 #else
-	return __nolibc_enosys(__func__, path);
+	return my_syscall3(__NR_unlinkat, AT_FDCWD, path, AT_REMOVEDIR);
 #endif
 }
 
@@ -685,10 +679,8 @@ long sys_mknod(const char *path, mode_t mode, dev_t dev)
 {
 #if defined(__NR_mknodat)
 	return my_syscall4(__NR_mknodat, AT_FDCWD, path, mode, dev);
-#elif defined(__NR_mknod)
-	return my_syscall3(__NR_mknod, path, mode, dev);
 #else
-	return __nolibc_enosys(__func__, path, mode, dev);
+	return my_syscall3(__NR_mknod, path, mode, dev);
 #endif
 }
 
@@ -775,53 +767,6 @@ int sched_yield(void)
 
 
 /*
- * int select(int nfds, fd_set *read_fds, fd_set *write_fds,
- *            fd_set *except_fds, struct timeval *timeout);
- */
-
-static __attribute__((unused))
-int sys_select(int nfds, fd_set *rfds, fd_set *wfds, fd_set *efds, struct timeval *timeout)
-{
-#if defined(__ARCH_WANT_SYS_OLD_SELECT) && !defined(__NR__newselect)
-	struct sel_arg_struct {
-		unsigned long n;
-		fd_set *r, *w, *e;
-		struct timeval *t;
-	} arg = { .n = nfds, .r = rfds, .w = wfds, .e = efds, .t = timeout };
-	return my_syscall1(__NR_select, &arg);
-#elif defined(__NR__newselect)
-	return my_syscall5(__NR__newselect, nfds, rfds, wfds, efds, timeout);
-#elif defined(__NR_select)
-	return my_syscall5(__NR_select, nfds, rfds, wfds, efds, timeout);
-#elif defined(__NR_pselect6)
-	struct timespec t;
-
-	if (timeout) {
-		t.tv_sec  = timeout->tv_sec;
-		t.tv_nsec = timeout->tv_usec * 1000;
-	}
-	return my_syscall6(__NR_pselect6, nfds, rfds, wfds, efds, timeout ? &t : NULL, NULL);
-#elif defined(__NR_pselect6_time64)
-	struct __kernel_timespec t;
-
-	if (timeout) {
-		t.tv_sec  = timeout->tv_sec;
-		t.tv_nsec = timeout->tv_usec * 1000;
-	}
-	return my_syscall6(__NR_pselect6_time64, nfds, rfds, wfds, efds, timeout ? &t : NULL, NULL);
-#else
-	return __nolibc_enosys(__func__, nfds, rfds, wfds, efds, timeout);
-#endif
-}
-
-static __attribute__((unused))
-int select(int nfds, fd_set *rfds, fd_set *wfds, fd_set *efds, struct timeval *timeout)
-{
-	return __sysret(sys_select(nfds, rfds, wfds, efds, timeout));
-}
-
-
-/*
  * int setpgid(pid_t pid, pid_t pgid);
  */
 
@@ -874,10 +819,8 @@ int sys_symlink(const char *old, const char *new)
 {
 #if defined(__NR_symlinkat)
 	return my_syscall3(__NR_symlinkat, old, AT_FDCWD, new);
-#elif defined(__NR_symlink)
-	return my_syscall2(__NR_symlink, old, new);
 #else
-	return __nolibc_enosys(__func__, old, new);
+	return my_syscall2(__NR_symlink, old, new);
 #endif
 }
 
@@ -931,10 +874,8 @@ int sys_unlink(const char *path)
 {
 #if defined(__NR_unlinkat)
 	return my_syscall3(__NR_unlinkat, AT_FDCWD, path, 0);
-#elif defined(__NR_unlink)
-	return my_syscall1(__NR_unlink, path);
 #else
-	return __nolibc_enosys(__func__, path);
+	return my_syscall1(__NR_unlink, path);
 #endif
 }
 

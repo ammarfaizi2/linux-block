@@ -4,10 +4,11 @@
  *
  */
 
+#include <linux/iopoll.h>
+
 #include <drm/drm_print.h>
 #include <drm/drm_vblank.h>
 
-#include "i915_utils.h"
 #include "intel_crtc.h"
 #include "intel_de.h"
 #include "intel_display_regs.h"
@@ -112,24 +113,6 @@ static bool pre_commit_is_vrr_active(struct intel_atomic_state *state,
 
 	/* VRR will have been disabled during intel_pre_plane_update() */
 	return old_crtc_state->vrr.enable && !intel_crtc_vrr_disabling(state, crtc);
-}
-
-static int dsb_vblank_delay(struct intel_atomic_state *state,
-			    struct intel_crtc *crtc)
-{
-	const struct intel_crtc_state *crtc_state =
-		intel_pre_commit_crtc_state(state, crtc);
-
-	if (pre_commit_is_vrr_active(state, crtc))
-		/*
-		 * When the push is sent during vblank it will trigger
-		 * on the next scanline, hence we have up to one extra
-		 * scanline until the delayed vblank occurs after
-		 * TRANS_PUSH has been written.
-		 */
-		return intel_vrr_vblank_delay(crtc_state) + 1;
-	else
-		return intel_mode_vblank_delay(&crtc_state->hw.adjusted_mode);
 }
 
 static int dsb_vtotal(struct intel_atomic_state *state,
@@ -722,7 +705,7 @@ void intel_dsb_vblank_evade(struct intel_atomic_state *state,
 		intel_dsb_emit_wait_dsl(dsb, DSB_OPCODE_WAIT_DSL_OUT, 0, 0);
 
 	if (pre_commit_is_vrr_active(state, crtc)) {
-		int vblank_delay = intel_vrr_vblank_delay(crtc_state);
+		int vblank_delay = crtc_state->set_context_latency;
 
 		end = intel_vrr_vmin_vblank_start(crtc_state);
 		start = end - vblank_delay - latency;
@@ -814,16 +797,43 @@ void intel_dsb_chain(struct intel_atomic_state *state,
 			 wait_for_vblank ? DSB_WAIT_FOR_VBLANK : 0);
 }
 
-void intel_dsb_wait_vblank_delay(struct intel_atomic_state *state,
-				 struct intel_dsb *dsb)
+void intel_dsb_wait_for_delayed_vblank(struct intel_atomic_state *state,
+				       struct intel_dsb *dsb)
 {
 	struct intel_crtc *crtc = dsb->crtc;
 	const struct intel_crtc_state *crtc_state =
 		intel_pre_commit_crtc_state(state, crtc);
-	int usecs = intel_scanlines_to_usecs(&crtc_state->hw.adjusted_mode,
-					     dsb_vblank_delay(state, crtc));
+	const struct drm_display_mode *adjusted_mode =
+		&crtc_state->hw.adjusted_mode;
+	int wait_scanlines;
 
-	intel_dsb_wait_usec(dsb, usecs);
+	if (pre_commit_is_vrr_active(state, crtc)) {
+		/*
+		 * If the push happened before the vmin decision boundary
+		 * we don't know how far we are from the undelayed vblank.
+		 * Wait until we're past the vmin safe window, at which
+		 * point we're SCL lines away from the delayed vblank.
+		 *
+		 * If the push happened after the vmin decision boundary
+		 * the hardware itself guarantees that we're SCL lines
+		 * away from the delayed vblank, and we won't be inside
+		 * the vmin safe window so this extra wait does nothing.
+		 */
+		intel_dsb_wait_scanline_out(state, dsb,
+					    intel_vrr_safe_window_start(crtc_state),
+					    intel_vrr_vmin_safe_window_end(crtc_state));
+		/*
+		 * When the push is sent during vblank it will trigger
+		 * on the next scanline, hence we have up to one extra
+		 * scanline until the delayed vblank occurs after
+		 * TRANS_PUSH has been written.
+		 */
+		wait_scanlines = crtc_state->set_context_latency + 1;
+	} else {
+		wait_scanlines = intel_mode_vblank_delay(adjusted_mode);
+	}
+
+	intel_dsb_wait_usec(dsb, intel_scanlines_to_usecs(adjusted_mode, wait_scanlines));
 }
 
 /**
@@ -871,8 +881,13 @@ void intel_dsb_wait(struct intel_dsb *dsb)
 	struct intel_crtc *crtc = dsb->crtc;
 	struct intel_display *display = to_intel_display(crtc->base.dev);
 	enum pipe pipe = crtc->pipe;
+	bool is_busy;
+	int ret;
 
-	if (wait_for(!is_dsb_busy(display, pipe, dsb->id), 1)) {
+	ret = poll_timeout_us(is_busy = is_dsb_busy(display, pipe, dsb->id),
+			      !is_busy,
+			      100, 1000, false);
+	if (ret) {
 		u32 offset = intel_dsb_buffer_ggtt_offset(&dsb->dsb_buf);
 
 		intel_de_write_fw(display, DSB_CTRL(pipe, dsb->id),

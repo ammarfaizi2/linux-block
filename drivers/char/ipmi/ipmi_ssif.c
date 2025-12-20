@@ -1068,8 +1068,7 @@ static void start_next_msg(struct ssif_info *ssif_info, unsigned long *flags)
 	}
 }
 
-static void sender(void                *send_info,
-		   struct ipmi_smi_msg *msg)
+static int sender(void *send_info, struct ipmi_smi_msg *msg)
 {
 	struct ssif_info *ssif_info = send_info;
 	unsigned long oflags, *flags;
@@ -1084,11 +1083,10 @@ static void sender(void                *send_info,
 		struct timespec64 t;
 
 		ktime_get_real_ts64(&t);
-		dev_dbg(&ssif_info->client->dev,
-			"**Enqueue %02x %02x: %lld.%6.6ld\n",
-			msg->data[0], msg->data[1],
-			(long long)t.tv_sec, (long)t.tv_nsec / NSEC_PER_USEC);
+		dev_dbg(&ssif_info->client->dev, "**Enqueue %02x %02x: %ptSp\n",
+			msg->data[0], msg->data[1], &t);
 	}
+	return IPMI_CC_NO_ERROR;
 }
 
 static int get_smi_info(void *send_info, struct ipmi_smi_info *data)

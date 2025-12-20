@@ -36,7 +36,6 @@ struct request_sock_ops {
 				      struct sk_buff *skb,
 				      enum sk_rst_reason reason);
 	void		(*destructor)(struct request_sock *req);
-	void		(*syn_ack_timeout)(const struct request_sock *req);
 };
 
 struct saved_syn {
@@ -185,8 +184,8 @@ struct fastopen_queue {
 struct request_sock_queue {
 	spinlock_t		rskq_lock;
 	u8			rskq_defer_accept;
+	u8			synflood_warned;
 
-	u32			synflood_warned;
 	atomic_t		qlen;
 	atomic_t		young;
 

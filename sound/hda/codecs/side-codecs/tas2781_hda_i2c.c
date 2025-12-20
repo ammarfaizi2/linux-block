@@ -26,6 +26,7 @@
 #include <sound/tlv.h>
 #include <sound/tas2770-tlv.h>
 #include <sound/tas2781-tlv.h>
+#include <sound/tas5825-tlv.h>
 
 #include "hda_local.h"
 #include "hda_auto_parser.h"
@@ -50,6 +51,7 @@ enum device_chip_id {
 	HDA_TAS2563,
 	HDA_TAS2770,
 	HDA_TAS2781,
+	HDA_TAS5825,
 	HDA_OTHERS
 };
 
@@ -85,6 +87,7 @@ static const struct acpi_gpio_mapping tas2781_speaker_id_gpios[] = {
 
 static int tas2781_read_acpi(struct tasdevice_priv *p, const char *hid)
 {
+	struct gpio_desc *speaker_id;
 	struct acpi_device *adev;
 	struct device *physdev;
 	LIST_HEAD(resources);
@@ -117,19 +120,31 @@ static int tas2781_read_acpi(struct tasdevice_priv *p, const char *hid)
 	/* Speaker id was needed for ASUS projects. */
 	ret = kstrtou32(sub, 16, &subid);
 	if (!ret && upper_16_bits(subid) == PCI_VENDOR_ID_ASUSTEK) {
-		ret = devm_acpi_dev_add_driver_gpios(p->dev,
-			tas2781_speaker_id_gpios);
-		if (ret < 0)
+		ret = acpi_dev_add_driver_gpios(adev, tas2781_speaker_id_gpios);
+		if (ret < 0) {
 			dev_err(p->dev, "Failed to add driver gpio %d.\n",
 				ret);
-		p->speaker_id = devm_gpiod_get(p->dev, "speakerid", GPIOD_IN);
-		if (IS_ERR(p->speaker_id)) {
-			dev_err(p->dev, "Failed to get Speaker id.\n");
-			ret = PTR_ERR(p->speaker_id);
-			goto err;
+			p->speaker_id = -1;
+			goto end_2563;
 		}
+
+		speaker_id = fwnode_gpiod_get_index(acpi_fwnode_handle(adev),
+			"speakerid", 0, GPIOD_IN, NULL);
+		if (!IS_ERR(speaker_id)) {
+			p->speaker_id = gpiod_get_value_cansleep(speaker_id);
+			dev_dbg(p->dev, "Got speaker id gpio from ACPI: %d.\n",
+				p->speaker_id);
+			gpiod_put(speaker_id);
+		} else {
+			p->speaker_id = -1;
+			ret = PTR_ERR(speaker_id);
+			dev_err(p->dev, "Get speaker id gpio failed %d.\n",
+				ret);
+		}
+
+		acpi_dev_remove_driver_gpios(adev);
 	} else {
-		p->speaker_id = NULL;
+		p->speaker_id = -1;
 	}
 
 end_2563:
@@ -156,16 +171,16 @@ static void tas2781_hda_playback_hook(struct device *dev, int action)
 	switch (action) {
 	case HDA_GEN_PCM_ACT_OPEN:
 		pm_runtime_get_sync(dev);
-		mutex_lock(&tas_hda->priv->codec_lock);
-		tasdevice_tuning_switch(tas_hda->priv, 0);
-		tas_hda->priv->playback_started = true;
-		mutex_unlock(&tas_hda->priv->codec_lock);
+		scoped_guard(mutex, &tas_hda->priv->codec_lock) {
+			tasdevice_tuning_switch(tas_hda->priv, 0);
+			tas_hda->priv->playback_started = true;
+		}
 		break;
 	case HDA_GEN_PCM_ACT_CLOSE:
-		mutex_lock(&tas_hda->priv->codec_lock);
-		tasdevice_tuning_switch(tas_hda->priv, 1);
-		tas_hda->priv->playback_started = false;
-		mutex_unlock(&tas_hda->priv->codec_lock);
+		scoped_guard(mutex, &tas_hda->priv->codec_lock) {
+			tasdevice_tuning_switch(tas_hda->priv, 1);
+			tas_hda->priv->playback_started = false;
+		}
 
 		pm_runtime_put_autosuspend(dev);
 		break;
@@ -182,14 +197,12 @@ static int tas2781_amp_getvol(struct snd_kcontrol *kcontrol,
 		(struct soc_mixer_control *)kcontrol->private_value;
 	int ret;
 
-	mutex_lock(&tas_priv->codec_lock);
+	guard(mutex)(&tas_priv->codec_lock);
 
 	ret = tasdevice_amp_getvol(tas_priv, ucontrol, mc);
 
 	dev_dbg(tas_priv->dev, "%s: kcontrol %s: %ld\n",
 		__func__, kcontrol->id.name, ucontrol->value.integer.value[0]);
-
-	mutex_unlock(&tas_priv->codec_lock);
 
 	return ret;
 }
@@ -200,19 +213,14 @@ static int tas2781_amp_putvol(struct snd_kcontrol *kcontrol,
 	struct tasdevice_priv *tas_priv = snd_kcontrol_chip(kcontrol);
 	struct soc_mixer_control *mc =
 		(struct soc_mixer_control *)kcontrol->private_value;
-	int ret;
 
-	mutex_lock(&tas_priv->codec_lock);
+	guard(mutex)(&tas_priv->codec_lock);
 
 	dev_dbg(tas_priv->dev, "%s: kcontrol %s: -> %ld\n",
 		__func__, kcontrol->id.name, ucontrol->value.integer.value[0]);
 
 	/* The check of the given value is in tasdevice_amp_putvol. */
-	ret = tasdevice_amp_putvol(tas_priv, ucontrol, mc);
-
-	mutex_unlock(&tas_priv->codec_lock);
-
-	return ret;
+	return tasdevice_amp_putvol(tas_priv, ucontrol, mc);
 }
 
 static int tas2781_force_fwload_get(struct snd_kcontrol *kcontrol,
@@ -220,13 +228,11 @@ static int tas2781_force_fwload_get(struct snd_kcontrol *kcontrol,
 {
 	struct tasdevice_priv *tas_priv = snd_kcontrol_chip(kcontrol);
 
-	mutex_lock(&tas_priv->codec_lock);
+	guard(mutex)(&tas_priv->codec_lock);
 
 	ucontrol->value.integer.value[0] = (int)tas_priv->force_fwload_status;
 	dev_dbg(tas_priv->dev, "%s: kcontrol %s: %d\n",
 		__func__, kcontrol->id.name, tas_priv->force_fwload_status);
-
-	mutex_unlock(&tas_priv->codec_lock);
 
 	return 0;
 }
@@ -237,7 +243,7 @@ static int tas2781_force_fwload_put(struct snd_kcontrol *kcontrol,
 	struct tasdevice_priv *tas_priv = snd_kcontrol_chip(kcontrol);
 	bool change, val = (bool)ucontrol->value.integer.value[0];
 
-	mutex_lock(&tas_priv->codec_lock);
+	guard(mutex)(&tas_priv->codec_lock);
 
 	dev_dbg(tas_priv->dev, "%s: kcontrol %s: %d -> %d\n",
 		__func__, kcontrol->id.name,
@@ -249,8 +255,6 @@ static int tas2781_force_fwload_put(struct snd_kcontrol *kcontrol,
 		change = true;
 		tas_priv->force_fwload_status = val;
 	}
-
-	mutex_unlock(&tas_priv->codec_lock);
 
 	return change;
 }
@@ -268,6 +272,17 @@ static const struct snd_kcontrol_new tas2781_snd_controls[] = {
 	ACARD_SINGLE_RANGE_EXT_TLV("Speaker Analog Volume", TAS2781_AMP_LEVEL,
 		1, 0, 20, 0, tas2781_amp_getvol,
 		tas2781_amp_putvol, tas2781_amp_tlv),
+	ACARD_SINGLE_BOOL_EXT("Speaker Force Firmware Load", 0,
+		tas2781_force_fwload_get, tas2781_force_fwload_put),
+};
+
+static const struct snd_kcontrol_new tas5825_snd_controls[] = {
+	ACARD_SINGLE_RANGE_EXT_TLV("Speaker Analog Volume", TAS5825_AMP_LEVEL,
+		0, 0, 31, 1, tas2781_amp_getvol,
+		tas2781_amp_putvol, tas5825_amp_tlv),
+	ACARD_SINGLE_RANGE_EXT_TLV("Speaker Digital Volume", TAS5825_DVC_LEVEL,
+		0, 0, 254, 1, tas2781_amp_getvol,
+		tas2781_amp_putvol, tas5825_dvc_tlv),
 	ACARD_SINGLE_BOOL_EXT("Speaker Force Firmware Load", 0,
 		tas2781_force_fwload_get, tas2781_force_fwload_put),
 };
@@ -315,6 +330,11 @@ static int tas2563_save_calibration(struct tas2781_hda *h)
 	unsigned int attr;
 	int ret, i, j, k;
 
+	if (!efi_rt_services_supported(EFI_RT_SUPPORTED_GET_VARIABLE)) {
+		dev_err(p->dev, "%s: NO EFI FOUND!\n", __func__);
+		return -EINVAL;
+	}
+
 	cd->cali_dat_sz_per_dev = TAS2563_CAL_DATA_SIZE * TASDEV_CALIB_N;
 
 	/* extra byte for each device is the device number */
@@ -359,7 +379,7 @@ static int tas2563_save_calibration(struct tas2781_hda *h)
 	}
 
 	if (cd->total_sz != offset) {
-		dev_err(p->dev, "%s: tot_size(%lu) and offset(%u) dismatch\n",
+		dev_err(p->dev, "%s: tot_size(%lu) and offset(%u) mismatch\n",
 			__func__, cd->total_sz, offset);
 		return -EINVAL;
 	}
@@ -425,23 +445,16 @@ static void tasdevice_dspfw_init(void *context)
 	struct tas2781_hda *tas_hda = dev_get_drvdata(tas_priv->dev);
 	struct tas2781_hda_i2c_priv *hda_priv = tas_hda->hda_priv;
 	struct hda_codec *codec = tas_priv->codec;
-	int ret, spk_id;
+	int ret;
 
 	tasdevice_dsp_remove(tas_priv);
 	tas_priv->fw_state = TASDEVICE_DSP_FW_PENDING;
-	if (tas_priv->speaker_id != NULL) {
-		// Speaker id need to be checked for ASUS only.
-		spk_id = gpiod_get_value(tas_priv->speaker_id);
-		if (spk_id < 0) {
-			// Speaker id is not valid, use default.
-			dev_dbg(tas_priv->dev, "Wrong spk_id = %d\n", spk_id);
-			spk_id = 0;
-		}
+	if (tas_priv->speaker_id >= 0) {
 		snprintf(tas_priv->coef_binaryname,
 			  sizeof(tas_priv->coef_binaryname),
 			  "TAS2XXX%04X%d.bin",
 			  lower_16_bits(codec->core.subsystem_id),
-			  spk_id);
+			  tas_priv->speaker_id);
 	} else {
 		snprintf(tas_priv->coef_binaryname,
 			  sizeof(tas_priv->coef_binaryname),
@@ -466,6 +479,12 @@ static void tasdevice_dspfw_init(void *context)
 		tas_priv->cur_prog = 0;
 	if (tas_priv->fmw->nr_configurations > 0)
 		tas_priv->cur_conf = 0;
+
+	/* Init common setting for different audio profiles */
+	if (tas_priv->rcabin.init_profile_id >= 0)
+		tasdevice_select_cfg_blk(tas_priv,
+			tas_priv->rcabin.init_profile_id,
+			TASDEVICE_BIN_BLK_PRE_POWER_UP);
 
 	/* If calibrated data occurs error, dsp will still works with default
 	 * calibrated data inside algo.
@@ -502,6 +521,12 @@ static void tasdev_fw_ready(const struct firmware *fmw, void *context)
 		tasdev_add_kcontrols(tas_priv, hda_priv->snd_ctls, codec,
 				     &tas2781_snd_controls[0],
 				     ARRAY_SIZE(tas2781_snd_controls));
+		tasdevice_dspfw_init(context);
+		break;
+	case HDA_TAS5825:
+		tasdev_add_kcontrols(tas_priv, hda_priv->snd_ctls, codec,
+				     &tas5825_snd_controls[0],
+				     ARRAY_SIZE(tas5825_snd_controls));
 		tasdevice_dspfw_init(context);
 		break;
 	case HDA_TAS2563:
@@ -631,6 +656,7 @@ static int tas2781_hda_i2c_probe(struct i2c_client *clt)
 	} else if (strstarts(dev_name(&clt->dev),
 			     "i2c-TXNW2781:00-tas2781-hda.0")) {
 		device_name = "TXNW2781";
+		hda_priv->hda_chip_id = HDA_TAS2781;
 		hda_priv->save_calibration = tas2781_save_calibration;
 		tas_hda->priv->global_addr = TAS2781_GLOBAL_ADDR;
 	} else if (strstr(dev_name(&clt->dev), "INT8866")) {
@@ -642,6 +668,14 @@ static int tas2781_hda_i2c_probe(struct i2c_client *clt)
 		hda_priv->hda_chip_id = HDA_TAS2563;
 		hda_priv->save_calibration = tas2563_save_calibration;
 		tas_hda->priv->global_addr = TAS2563_GLOBAL_ADDR;
+	} else if (strstarts(dev_name(&clt->dev), "i2c-TXNW5825")) {
+		/*
+		 * TAS5825, integrated on-chip DSP without
+		 * global I2C address and calibration supported.
+		 */
+		device_name = "TXNW5825";
+		hda_priv->hda_chip_id = HDA_TAS5825;
+		tas_hda->priv->chip_id = TAS5825;
 	} else {
 		return -ENODEV;
 	}
@@ -687,7 +721,7 @@ static int tas2781_runtime_suspend(struct device *dev)
 
 	dev_dbg(tas_hda->dev, "Runtime Suspend\n");
 
-	mutex_lock(&tas_hda->priv->codec_lock);
+	guard(mutex)(&tas_hda->priv->codec_lock);
 
 	/* The driver powers up the amplifiers at module load time.
 	 * Stop the playback if it's unused.
@@ -696,8 +730,6 @@ static int tas2781_runtime_suspend(struct device *dev)
 		tasdevice_tuning_switch(tas_hda->priv, 1);
 		tas_hda->priv->playback_started = false;
 	}
-
-	mutex_unlock(&tas_hda->priv->codec_lock);
 
 	return 0;
 }
@@ -708,11 +740,9 @@ static int tas2781_runtime_resume(struct device *dev)
 
 	dev_dbg(tas_hda->dev, "Runtime Resume\n");
 
-	mutex_lock(&tas_hda->priv->codec_lock);
+	guard(mutex)(&tas_hda->priv->codec_lock);
 
 	tasdevice_prmg_load(tas_hda->priv, tas_hda->priv->cur_prog);
-
-	mutex_unlock(&tas_hda->priv->codec_lock);
 
 	return 0;
 }
@@ -723,13 +753,11 @@ static int tas2781_system_suspend(struct device *dev)
 
 	dev_dbg(tas_hda->priv->dev, "System Suspend\n");
 
-	mutex_lock(&tas_hda->priv->codec_lock);
+	guard(mutex)(&tas_hda->priv->codec_lock);
 
 	/* Shutdown chip before system suspend */
 	if (tas_hda->priv->playback_started)
 		tasdevice_tuning_switch(tas_hda->priv, 1);
-
-	mutex_unlock(&tas_hda->priv->codec_lock);
 
 	/*
 	 * Reset GPIO may be shared, so cannot reset here.
@@ -745,7 +773,7 @@ static int tas2781_system_resume(struct device *dev)
 
 	dev_dbg(tas_hda->priv->dev, "System Resume\n");
 
-	mutex_lock(&tas_hda->priv->codec_lock);
+	guard(mutex)(&tas_hda->priv->codec_lock);
 
 	for (i = 0; i < tas_hda->priv->ndev; i++) {
 		tas_hda->priv->tasdevice[i].cur_book = -1;
@@ -755,10 +783,14 @@ static int tas2781_system_resume(struct device *dev)
 	tasdevice_reset(tas_hda->priv);
 	tasdevice_prmg_load(tas_hda->priv, tas_hda->priv->cur_prog);
 
+	/* Init common setting for different audio profiles */
+	if (tas_hda->priv->rcabin.init_profile_id >= 0)
+		tasdevice_select_cfg_blk(tas_hda->priv,
+			tas_hda->priv->rcabin.init_profile_id,
+			TASDEVICE_BIN_BLK_PRE_POWER_UP);
+
 	if (tas_hda->priv->playback_started)
 		tasdevice_tuning_switch(tas_hda->priv, 0);
-
-	mutex_unlock(&tas_hda->priv->codec_lock);
 
 	return 0;
 }
@@ -778,6 +810,7 @@ static const struct acpi_device_id tas2781_acpi_hda_match[] = {
 	{"TIAS2781", 0 },
 	{"TXNW2770", 0 },
 	{"TXNW2781", 0 },
+	{"TXNW5825", 0 },
 	{}
 };
 MODULE_DEVICE_TABLE(acpi, tas2781_acpi_hda_match);

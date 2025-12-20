@@ -578,6 +578,14 @@ static const struct config_entry config_table[] = {
 
 #endif
 
+	/* Nova Lake */
+#if IS_ENABLED(CONFIG_SND_SOC_SOF_NOVALAKE)
+	{
+		.flags = FLAG_SOF | FLAG_SOF_ONLY_IF_DMIC_OR_SOUNDWIRE,
+		.device = PCI_DEVICE_ID_INTEL_HDA_NVL_S,
+	},
+#endif
+
 };
 
 static const struct config_entry *snd_intel_dsp_find_config
@@ -650,6 +658,8 @@ static int snd_intel_dsp_check_soundwire(struct pci_dev *pci)
 	int ret;
 
 	handle = ACPI_HANDLE(&pci->dev);
+	if (!handle)
+		return -ENODEV;
 
 	ret = sdw_intel_acpi_scan(handle, &info);
 	if (ret < 0)
@@ -708,7 +718,8 @@ int snd_intel_dsp_driver_probe(struct pci_dev *pci)
 	/* find the configuration for the specific device */
 	cfg = snd_intel_dsp_find_config(pci, config_table, ARRAY_SIZE(config_table));
 	if (!cfg)
-		return SND_INTEL_DSP_DRIVER_ANY;
+		return IS_ENABLED(CONFIG_SND_HDA_INTEL) ?
+			SND_INTEL_DSP_DRIVER_LEGACY : SND_INTEL_DSP_DRIVER_ANY;
 
 	if (cfg->flags & FLAG_SOF) {
 		if (cfg->flags & FLAG_SOF_ONLY_IF_SOUNDWIRE &&

@@ -58,7 +58,6 @@ static void tiles_fini(void *arg)
 static void mmio_multi_tile_setup(struct xe_device *xe, size_t tile_mmio_size)
 {
 	struct xe_tile *tile;
-	struct xe_gt *gt;
 	u8 id;
 
 	/*
@@ -67,38 +66,6 @@ static void mmio_multi_tile_setup(struct xe_device *xe, size_t tile_mmio_size)
 	 */
 	if (xe->info.tile_count == 1)
 		return;
-
-	/* Possibly override number of tile based on configuration register */
-	if (!xe->info.skip_mtcfg) {
-		struct xe_mmio *mmio = xe_root_tile_mmio(xe);
-		u8 tile_count, gt_count;
-		u32 mtcfg;
-
-		/*
-		 * Although the per-tile mmio regs are not yet initialized, this
-		 * is fine as it's going to the root tile's mmio, that's
-		 * guaranteed to be initialized earlier in xe_mmio_probe_early()
-		 */
-		mtcfg = xe_mmio_read32(mmio, XEHP_MTCFG_ADDR);
-		tile_count = REG_FIELD_GET(TILE_COUNT, mtcfg) + 1;
-
-		if (tile_count < xe->info.tile_count) {
-			drm_info(&xe->drm, "tile_count: %d, reduced_tile_count %d\n",
-				 xe->info.tile_count, tile_count);
-			xe->info.tile_count = tile_count;
-
-			/*
-			 * We've already setup gt_count according to the full
-			 * tile count.  Re-calculate it to only include the GTs
-			 * that belong to the remaining tile(s).
-			 */
-			gt_count = 0;
-			for_each_gt(gt, xe, id)
-				if (gt->info.id < tile_count * xe->info.max_gt_per_tile)
-					gt_count++;
-			xe->info.gt_count = gt_count;
-		}
-	}
 
 	for_each_remote_tile(tile, xe, id)
 		xe_mmio_init(&tile->mmio, tile, xe->mmio.regs + id * tile_mmio_size, SZ_4M);
@@ -412,3 +379,32 @@ int xe_mmio_wait32_not(struct xe_mmio *mmio, struct xe_reg reg, u32 mask, u32 va
 {
 	return __xe_mmio_wait32(mmio, reg, mask, val, timeout_us, out_val, atomic, false);
 }
+
+#ifdef CONFIG_PCI_IOV
+static size_t vf_regs_stride(struct xe_device *xe)
+{
+	return GRAPHICS_VERx100(xe) > 1200 ? 0x400 : 0x1000;
+}
+
+/**
+ * xe_mmio_init_vf_view() - Initialize an MMIO instance for accesses like the VF
+ * @mmio: the target &xe_mmio to initialize as VF's view
+ * @base: the source &xe_mmio to initialize from
+ * @vfid: the VF identifier
+ */
+void xe_mmio_init_vf_view(struct xe_mmio *mmio, const struct xe_mmio *base, unsigned int vfid)
+{
+	struct xe_tile *tile = base->tile;
+	struct xe_device *xe = tile->xe;
+	size_t offset = vf_regs_stride(xe) * vfid;
+
+	xe_assert(xe, IS_SRIOV_PF(xe));
+	xe_assert(xe, vfid);
+	xe_assert(xe, !base->sriov_vf_gt);
+	xe_assert(xe, base->regs_size > offset);
+
+	*mmio = *base;
+	mmio->regs += offset;
+	mmio->regs_size -= offset;
+}
+#endif

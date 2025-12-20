@@ -84,6 +84,7 @@ DEFINE_RANGE_EVENT(iomap_release_folio);
 DEFINE_RANGE_EVENT(iomap_invalidate_folio);
 DEFINE_RANGE_EVENT(iomap_dio_invalidate_fail);
 DEFINE_RANGE_EVENT(iomap_dio_rw_queued);
+DEFINE_RANGE_EVENT(iomap_zero_iter);
 
 #define IOMAP_TYPE_STRINGS \
 	{ IOMAP_HOLE,		"HOLE" }, \
@@ -121,9 +122,10 @@ DEFINE_RANGE_EVENT(iomap_dio_rw_queued);
 
 
 #define IOMAP_DIO_STRINGS \
-	{IOMAP_DIO_FORCE_WAIT,	"DIO_FORCE_WAIT" }, \
-	{IOMAP_DIO_OVERWRITE_ONLY, "DIO_OVERWRITE_ONLY" }, \
-	{IOMAP_DIO_PARTIAL,	"DIO_PARTIAL" }
+	{IOMAP_DIO_FORCE_WAIT,		"DIO_FORCE_WAIT" }, \
+	{IOMAP_DIO_OVERWRITE_ONLY,	"DIO_OVERWRITE_ONLY" }, \
+	{IOMAP_DIO_PARTIAL,		"DIO_PARTIAL" }, \
+	{IOMAP_DIO_FSBLOCK_ALIGNED,	"DIO_FSBLOCK_ALIGNED" }
 
 DECLARE_EVENT_CLASS(iomap_class,
 	TP_PROTO(struct inode *inode, struct iomap *iomap),

@@ -395,6 +395,8 @@ static int sparx5_create_port(struct sparx5 *sparx5,
 
 	spx5_port->phylink = phylink;
 
+	spx5_port->ndev->dev.of_node = spx5_port->of_node;
+
 	return 0;
 }
 
@@ -707,6 +709,11 @@ static int sparx5_start(struct sparx5 *sparx5)
 
 	/* Init masks */
 	sparx5_update_fwd(sparx5);
+
+	/* Init flood masks */
+	for (int pgid = sparx5_get_pgid(sparx5, PGID_UC_FLOOD);
+	     pgid <= sparx5_get_pgid(sparx5, PGID_BCAST); pgid++)
+		sparx5_pgid_clear(sparx5, pgid);
 
 	/* CPU copy CPU pgids */
 	spx5_wr(ANA_AC_PGID_MISC_CFG_PGID_CPU_COPY_ENA_SET(1), sparx5,

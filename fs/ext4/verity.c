@@ -302,7 +302,7 @@ static int ext4_get_verity_descriptor_location(struct inode *inode,
 
 	end_lblk = le32_to_cpu(last_extent->ee_block) +
 		   ext4_ext_get_actual_len(last_extent);
-	desc_size_pos = (u64)end_lblk << inode->i_blkbits;
+	desc_size_pos = EXT4_LBLK_TO_B(inode, end_lblk);
 	ext4_free_ext_path(path);
 
 	if (desc_size_pos < sizeof(desc_size_disk))
@@ -389,6 +389,8 @@ static int ext4_write_merkle_tree_block(struct inode *inode, const void *buf,
 }
 
 const struct fsverity_operations ext4_verityops = {
+	.inode_info_offs	= (int)offsetof(struct ext4_inode_info, i_verity_info) -
+				  (int)offsetof(struct ext4_inode_info, vfs_inode),
 	.begin_enable_verity	= ext4_begin_enable_verity,
 	.end_enable_verity	= ext4_end_enable_verity,
 	.get_verity_descriptor	= ext4_get_verity_descriptor,

@@ -4,7 +4,6 @@
 #define BTRFS_MESSAGES_H
 
 #include <linux/types.h>
-#include <linux/types.h>
 #include <linux/printk.h>
 #include <linux/bug.h>
 
@@ -169,7 +168,8 @@ do {										\
 #endif
 
 #else
-#define ASSERT(cond, args...)			(void)(cond)
+/* Compile check the @cond expression but don't generate any code. */
+#define ASSERT(cond, args...)			BUILD_BUG_ON_INVALID(cond)
 #endif
 
 #ifdef CONFIG_BTRFS_DEBUG

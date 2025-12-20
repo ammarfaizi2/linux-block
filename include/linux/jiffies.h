@@ -61,7 +61,7 @@
 
 extern void register_refined_jiffies(long clock_tick_rate);
 
-/* TICK_USEC is the time between ticks in usec assuming SHIFTED_HZ */
+/* TICK_USEC is the time between ticks in usec */
 #define TICK_USEC ((USEC_PER_SEC + HZ/2) / HZ)
 
 /* USER_TICK_USEC is the time between ticks in usec assuming fake USER_HZ */
@@ -610,5 +610,17 @@ extern u64 nsecs_to_jiffies64(u64 n);
 extern unsigned long nsecs_to_jiffies(u64 n);
 
 #define TIMESTAMP_SIZE	30
+
+struct ctl_table;
+int proc_dointvec_jiffies(const struct ctl_table *table, int dir, void *buffer,
+			  size_t *lenp, loff_t *ppos);
+int proc_dointvec_ms_jiffies_minmax(const struct ctl_table *table, int dir,
+				    void *buffer, size_t *lenp, loff_t *ppos);
+int proc_dointvec_userhz_jiffies(const struct ctl_table *table, int dir,
+				 void *buffer, size_t *lenp, loff_t *ppos);
+int proc_dointvec_ms_jiffies(const struct ctl_table *table, int dir, void *buffer,
+			     size_t *lenp, loff_t *ppos);
+int proc_doulongvec_ms_jiffies_minmax(const struct ctl_table *table, int dir,
+				      void *buffer, size_t *lenp, loff_t *ppos);
 
 #endif

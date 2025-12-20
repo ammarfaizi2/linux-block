@@ -100,6 +100,12 @@ void bnxt_set_dflt_ulp_stat_ctxs(struct bnxt *bp)
 		if (BNXT_PF(bp) && !bp->pf.port_id &&
 		    bp->port_count > 1)
 			bp->edev->ulp_num_ctxs++;
+
+		/* Reserve one additional stat_ctx when the device is capable
+		 * of supporting port mirroring on RDMA device.
+		 */
+		if (BNXT_MIRROR_ON_ROCE_CAP(bp))
+			bp->edev->ulp_num_ctxs++;
 	}
 }
 
@@ -136,7 +142,6 @@ int bnxt_register_dev(struct bnxt_en_dev *edev,
 	edev->ulp_tbl->msix_requested = bnxt_get_ulp_msix_num(bp);
 
 	bnxt_fill_msix_vecs(bp, bp->edev->msix_entries);
-	edev->flags |= BNXT_EN_FLAG_MSIX_REQUESTED;
 exit:
 	mutex_unlock(&edev->en_dev_lock);
 	netdev_unlock(dev);
@@ -153,8 +158,6 @@ void bnxt_unregister_dev(struct bnxt_en_dev *edev)
 	ulp = edev->ulp_tbl;
 	netdev_lock(dev);
 	mutex_lock(&edev->en_dev_lock);
-	if (ulp->msix_requested)
-		edev->flags &= ~BNXT_EN_FLAG_MSIX_REQUESTED;
 	edev->ulp_tbl->msix_requested = 0;
 
 	if (ulp->max_async_event_id)
@@ -292,7 +295,7 @@ void bnxt_ulp_irq_stop(struct bnxt *bp)
 	struct bnxt_ulp_ops *ops;
 	bool reset = false;
 
-	if (!edev || !(edev->flags & BNXT_EN_FLAG_MSIX_REQUESTED))
+	if (!edev)
 		return;
 
 	if (bnxt_ulp_registered(bp->edev)) {
@@ -315,7 +318,7 @@ void bnxt_ulp_irq_restart(struct bnxt *bp, int err)
 	struct bnxt_en_dev *edev = bp->edev;
 	struct bnxt_ulp_ops *ops;
 
-	if (!edev || !(edev->flags & BNXT_EN_FLAG_MSIX_REQUESTED))
+	if (!edev)
 		return;
 
 	if (bnxt_ulp_registered(bp->edev)) {

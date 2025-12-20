@@ -34,7 +34,7 @@ struct btrfs_zoned_device_info;
 #define BTRFS_MAX_DATA_CHUNK_SIZE	(10ULL * SZ_1G)
 
 /*
- * Arbitratry maximum size of one discard request to limit potentially long time
+ * Arbitrary maximum size of one discard request to limit potentially long time
  * spent in blkdev_issue_discard().
  */
 #define BTRFS_MAX_DISCARD_CHUNK_SIZE	(SZ_1G)
@@ -45,7 +45,7 @@ extern struct mutex uuid_mutex;
 #define BTRFS_STRIPE_LEN_SHIFT		(16)
 #define BTRFS_STRIPE_LEN_MASK		(BTRFS_STRIPE_LEN - 1)
 
-static_assert(const_ilog2(BTRFS_STRIPE_LEN) == BTRFS_STRIPE_LEN_SHIFT);
+static_assert(ilog2(BTRFS_STRIPE_LEN) == BTRFS_STRIPE_LEN_SHIFT);
 
 /* Used by sanity check for btrfs_raid_types. */
 #define const_ffs(n) (__builtin_ctzll(n) + 1)
@@ -58,8 +58,7 @@ static_assert(const_ilog2(BTRFS_STRIPE_LEN) == BTRFS_STRIPE_LEN_SHIFT);
  */
 static_assert(const_ffs(BTRFS_BLOCK_GROUP_RAID0) <
 	      const_ffs(BTRFS_BLOCK_GROUP_PROFILE_MASK & ~BTRFS_BLOCK_GROUP_RAID0));
-static_assert(const_ilog2(BTRFS_BLOCK_GROUP_RAID0) >
-	      ilog2(BTRFS_BLOCK_GROUP_TYPE_MASK));
+static_assert(ilog2(BTRFS_BLOCK_GROUP_RAID0) > ilog2(BTRFS_BLOCK_GROUP_TYPE_MASK));
 
 /* ilog2() can handle both constants and variables */
 #define BTRFS_BG_FLAG_TO_INDEX(profile)					\
@@ -495,7 +494,7 @@ struct btrfs_discard_stripe {
 };
 
 /*
- * Context for IO subsmission for device stripe.
+ * Context for IO submission for device stripe.
  *
  * - Track the unfinished mirrors for mirror based profiles
  *   Mirror based profiles are SINGLE/DUP/RAID1/RAID10.
@@ -662,6 +661,11 @@ struct btrfs_dev_lookup_args {
 	u64 devid;
 	u8 *uuid;
 	u8 *fsid;
+	/*
+	 * If devt is specified, all other members will be ignored as it is
+	 * enough to uniquely locate a device.
+	 */
+	dev_t devt;
 	bool missing;
 };
 

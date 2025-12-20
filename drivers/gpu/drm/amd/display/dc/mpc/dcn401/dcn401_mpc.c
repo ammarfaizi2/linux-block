@@ -287,13 +287,6 @@ void mpc401_program_lut_read_write_control(struct mpc *mpc, const enum MCM_LUT_I
 	}
 }
 
-void mpc401_program_3dlut_size(struct mpc *mpc, bool is_17x17x17, int mpcc_id)
-{
-	struct dcn401_mpc *mpc401 = TO_DCN401_MPC(mpc);
-
-	REG_UPDATE(MPCC_MCM_3DLUT_MODE[mpcc_id], MPCC_MCM_3DLUT_SIZE, is_17x17x17 ? 0 : 1);
-}
-
 void mpc_program_gamut_remap(
 	struct mpc *mpc,
 	unsigned int mpcc_id,
@@ -605,13 +598,13 @@ static const struct mpc_funcs dcn401_mpc_funcs = {
 	.release_rmu = NULL,
 	.power_on_mpc_mem_pwr = mpc3_power_on_ogam_lut,
 	.get_mpc_out_mux = mpc1_get_mpc_out_mux,
+	.mpc_read_reg_state = mpc3_read_reg_state,
 	.set_bg_color = mpc1_set_bg_color,
 	.set_movable_cm_location = mpc401_set_movable_cm_location,
 	.update_3dlut_fast_load_select = mpc401_update_3dlut_fast_load_select,
 	.populate_lut = mpc401_populate_lut,
 	.program_lut_read_write_control = mpc401_program_lut_read_write_control,
 	.program_lut_mode = mpc401_program_lut_mode,
-	.program_3dlut_size = mpc401_program_3dlut_size,
 };
 
 

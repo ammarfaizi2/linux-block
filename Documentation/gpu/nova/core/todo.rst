@@ -44,25 +44,6 @@ automatically generates the corresponding mappings between a value and a number.
 | Complexity: Beginner
 | Link: https://docs.rs/num/latest/num/trait.FromPrimitive.html
 
-Conversion from byte slices for types implementing FromBytes [TRSM]
--------------------------------------------------------------------
-
-We retrieve several structures from byte streams coming from the BIOS or loaded
-firmware. At the moment converting the bytes slice into the proper type require
-an inelegant `unsafe` operation; this will go away once `FromBytes` implements
-a proper `from_bytes` method.
-
-| Complexity: Beginner
-
-CoherentAllocation improvements [COHA]
---------------------------------------
-
-`CoherentAllocation` needs a safe way to write into the allocation, and to
-obtain slices within the allocation.
-
-| Complexity: Beginner
-| Contact: Abdiel Janulgue
-
 Generic register abstraction [REGA]
 -----------------------------------
 
@@ -131,8 +112,6 @@ crate so it can be used by other components as well.
 
 Features desired before this happens:
 
-* Relative register with build-time base address validation,
-* Arrays of registers with build-time index validation,
 * Make I/O optional I/O (for field values that are not registers),
 * Support other sizes than `u32`,
 * Allow visibility control for registers and individual fields,
@@ -147,7 +126,6 @@ Numerical operations [NUMM]
 Nova uses integer operations that are not part of the standard library (or not
 implemented in an optimized way for the kernel). These include:
 
-- Aligning up and down to a power of two,
 - The "Find Last Set Bit" (`fls` function of the C part of the kernel)
   operation.
 
@@ -155,17 +133,6 @@ A `num` core kernel module is being designed to provide these operations.
 
 | Complexity: Intermediate
 | Contact: Alexandre Courbot
-
-Delay / Sleep abstractions [DLAY]
----------------------------------
-
-Rust abstractions for the kernel's delay() and sleep() functions.
-
-FUJITA Tomonori plans to work on abstractions for read_poll_timeout_atomic()
-(and friends) [1].
-
-| Complexity: Beginner
-| Link: https://lore.kernel.org/netdev/20250228.080550.354359820929821928.fujita.tomonori@gmail.com/ [1]
 
 IRQ abstractions
 ----------------
@@ -231,23 +198,6 @@ Rust abstraction for debugfs APIs.
 
 GPU (general)
 =============
-
-Parse firmware headers
-----------------------
-
-Parse ELF headers from the firmware files loaded from the filesystem.
-
-| Reference: ELF utils
-| Complexity: Beginner
-| Contact: Abdiel Janulgue
-
-Build radix3 page table
------------------------
-
-Build the radix3 page table to map the firmware.
-
-| Complexity: Intermediate
-| Contact: Abdiel Janulgue
 
 Initial Devinit support
 -----------------------

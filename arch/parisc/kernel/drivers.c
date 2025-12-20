@@ -995,6 +995,7 @@ static __init int qemu_print_iodc_data(struct device *lin_dev, void *data)
 	struct pdc_system_map_mod_info pdc_mod_info;
 	struct pdc_module_path mod_path;
 
+	memset(&iodc_data, 0, sizeof(iodc_data));
 	status = pdc_iodc_read(&count, hpa, 0,
 		&iodc_data, sizeof(iodc_data));
 	if (status != PDC_OK) {
@@ -1012,6 +1013,11 @@ static __init int qemu_print_iodc_data(struct device *lin_dev, void *data)
 
 	mod_index = 0;
 	do {
+		/* initialize device path for old machines */
+		memset(&mod_path, 0xff, sizeof(mod_path));
+		get_node_path(dev->dev.parent, &mod_path.path);
+		mod_path.path.mod = dev->hw_path;
+		memset(&pdc_mod_info, 0, sizeof(pdc_mod_info));
 		status = pdc_system_map_find_mods(&pdc_mod_info,
 				&mod_path, mod_index++);
 	} while (status == PDC_OK && pdc_mod_info.mod_addr != hpa);
@@ -1037,11 +1043,7 @@ static __init int qemu_print_iodc_data(struct device *lin_dev, void *data)
 		(unsigned char)mod_path.path.bc[3],
 		(unsigned char)mod_path.path.bc[4],
 		(unsigned char)mod_path.path.bc[5]);
-	pr_cont(".mod = 0x%x ", mod_path.path.mod);
-	pr_cont(" },\n");
-	pr_cont("\t.layers = { 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x }\n",
-		mod_path.layers[0], mod_path.layers[1], mod_path.layers[2],
-		mod_path.layers[3], mod_path.layers[4], mod_path.layers[5]);
+	pr_cont(".mod = 0x%x }\n", mod_path.path.mod);
 	pr_cont("};\n");
 
 	pr_info("static struct pdc_iodc iodc_data_hpa_%08lx = {\n", hpa);
@@ -1061,8 +1063,6 @@ static __init int qemu_print_iodc_data(struct device *lin_dev, void *data)
 	DO(checksum);
 	DO(length);
 	#undef DO
-	pr_cont("\t/* pad: 0x%04x, 0x%04x */\n",
-		iodc_data.pad[0], iodc_data.pad[1]);
 	pr_cont("};\n");
 
 	pr_info("#define HPA_%08lx_num_addr %d\n", hpa, dev->num_addrs);

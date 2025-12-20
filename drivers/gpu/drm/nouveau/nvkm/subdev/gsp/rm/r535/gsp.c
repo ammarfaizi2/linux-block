@@ -582,10 +582,13 @@ struct nv_gsp_registry_entries {
  * RMSecBusResetEnable - enables PCI secondary bus reset
  * RMForcePcieConfigSave - forces GSP-RM to preserve PCI configuration
  *   registers on any PCI reset.
+ * RMDevidCheckIgnore - allows GSP-RM to boot even if the PCI dev ID
+ *   is not found in the internal product name database.
  */
 static const struct nv_gsp_registry_entries r535_registry_entries[] = {
 	{ "RMSecBusResetEnable", 1 },
 	{ "RMForcePcieConfigSave", 1 },
+	{ "RMDevidCheckIgnore", 1 },
 };
 #define NV_GSP_REG_NUM_ENTRIES ARRAY_SIZE(r535_registry_entries)
 
@@ -1814,12 +1817,16 @@ r535_gsp_rm_boot_ctor(struct nvkm_gsp *gsp)
 	RM_RISCV_UCODE_DESC *desc;
 	int ret;
 
+	ret = nvkm_gsp_fwsec_sb_ctor(gsp);
+	if (ret)
+		return ret;
+
 	hdr = nvfw_bin_hdr(&gsp->subdev, fw->data);
 	desc = (void *)fw->data + hdr->header_offset;
 
 	ret = nvkm_gsp_mem_ctor(gsp, hdr->data_size, &gsp->boot.fw);
 	if (ret)
-		return ret;
+		goto dtor_fwsec;
 
 	memcpy(gsp->boot.fw.data, fw->data + hdr->data_offset, hdr->data_size);
 
@@ -1828,6 +1835,9 @@ r535_gsp_rm_boot_ctor(struct nvkm_gsp *gsp)
 	gsp->boot.manifest_offset = desc->manifestOffset;
 	gsp->boot.app_version = desc->appVersion;
 	return 0;
+dtor_fwsec:
+	nvkm_gsp_fwsec_sb_dtor(gsp);
+	return ret;
 }
 
 static const struct nvkm_firmware_func
@@ -2098,6 +2108,7 @@ r535_gsp_dtor(struct nvkm_gsp *gsp)
 	mutex_destroy(&gsp->cmdq.mutex);
 
 	nvkm_gsp_dtor_fws(gsp);
+	nvkm_gsp_fwsec_sb_dtor(gsp);
 
 	nvkm_gsp_mem_dtor(&gsp->rmargs);
 	nvkm_gsp_mem_dtor(&gsp->wpr_meta);

@@ -333,8 +333,7 @@ static int _ub913_set_routing(struct v4l2_subdev *sd,
 		.quantization = V4L2_QUANTIZATION_LIM_RANGE,
 		.xfer_func = V4L2_XFER_FUNC_SRGB,
 	};
-	struct v4l2_subdev_stream_configs *stream_configs;
-	unsigned int i;
+	struct v4l2_subdev_route *route;
 	int ret;
 
 	ret = v4l2_subdev_routing_validate(sd, routing,
@@ -346,13 +345,15 @@ static int _ub913_set_routing(struct v4l2_subdev *sd,
 	if (ret)
 		return ret;
 
-	stream_configs = &state->stream_configs;
+	for_each_active_route(&state->routing, route) {
+		struct v4l2_mbus_framefmt *fmt;
 
-	for (i = 0; i < stream_configs->num_configs; i++) {
-		if (stream_configs->configs[i].pad == UB913_PAD_SINK)
-			stream_configs->configs[i].fmt = in_format;
-		else
-			stream_configs->configs[i].fmt = out_format;
+		fmt = v4l2_subdev_state_get_format(state, route->sink_pad,
+						   route->sink_stream);
+		*fmt = in_format;
+		fmt = v4l2_subdev_state_get_format(state, route->source_pad,
+						   route->source_stream);
+		*fmt = out_format;
 	}
 
 	return 0;
@@ -621,7 +622,7 @@ static int ub913_v4l2_notifier_register(struct ub913_data *priv)
 	fwnode_handle_put(ep_fwnode);
 
 	if (IS_ERR(asd)) {
-		dev_err(dev, "Failed to add subdev: %ld", PTR_ERR(asd));
+		dev_err(dev, "Failed to add subdev: %pe", asd);
 		v4l2_async_nf_cleanup(&priv->notifier);
 		return PTR_ERR(asd);
 	}

@@ -9,6 +9,7 @@
 #include <linux/stdarg.h>
 #include <linux/types.h>
 #include <asm/bug.h>
+#include <asm/percpu.h>
 
 struct device;
 struct device_node;
@@ -80,6 +81,8 @@ void devm_kfree(struct device *dev, const void *p);
 
 void * __realloc_size(3)
 devm_kmemdup(struct device *dev, const void *src, size_t len, gfp_t gfp);
+const void *
+devm_kmemdup_const(struct device *dev, const void *src, size_t len, gfp_t gfp);
 static inline void *devm_kmemdup_array(struct device *dev, const void *src,
 				       size_t n, size_t size, gfp_t flags)
 {
@@ -93,6 +96,22 @@ char * __printf(3, 0) __malloc
 devm_kvasprintf(struct device *dev, gfp_t gfp, const char *fmt, va_list ap);
 char * __printf(3, 4) __malloc
 devm_kasprintf(struct device *dev, gfp_t gfp, const char *fmt, ...);
+
+/**
+ * devm_alloc_percpu - Resource-managed alloc_percpu
+ * @dev: Device to allocate per-cpu memory for
+ * @type: Type to allocate per-cpu memory for
+ *
+ * Managed alloc_percpu. Per-cpu memory allocated with this function is
+ * automatically freed on driver detach.
+ *
+ * RETURNS:
+ * Pointer to allocated memory on success, NULL on failure.
+ */
+#define devm_alloc_percpu(dev, type)      \
+	((typeof(type) __percpu *)__devm_alloc_percpu((dev), sizeof(type), __alignof__(type)))
+
+void __percpu *__devm_alloc_percpu(struct device *dev, size_t size, size_t align);
 
 unsigned long devm_get_free_pages(struct device *dev, gfp_t gfp_mask, unsigned int order);
 void devm_free_pages(struct device *dev, unsigned long addr);

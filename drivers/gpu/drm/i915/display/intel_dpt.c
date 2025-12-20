@@ -3,6 +3,8 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <drm/drm_print.h>
+
 #include "gem/i915_gem_domain.h"
 #include "gem/i915_gem_internal.h"
 #include "gem/i915_gem_lmem.h"
@@ -32,8 +34,6 @@ i915_vm_to_dpt(struct i915_address_space *vm)
 	drm_WARN_ON(&vm->i915->drm, !i915_is_dpt(vm));
 	return container_of(vm, struct i915_dpt, vm);
 }
-
-#define dpt_total_entries(dpt) ((dpt)->vm.total >> PAGE_SHIFT)
 
 static void gen8_set_pte(void __iomem *addr, gen8_pte_t pte)
 {
@@ -322,5 +322,5 @@ void intel_dpt_destroy(struct i915_address_space *vm)
 
 u64 intel_dpt_offset(struct i915_vma *dpt_vma)
 {
-	return dpt_vma->node.start;
+	return i915_vma_offset(dpt_vma);
 }

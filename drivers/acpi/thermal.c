@@ -924,7 +924,7 @@ static int acpi_thermal_suspend(struct device *dev)
 static int acpi_thermal_resume(struct device *dev)
 {
 	struct acpi_thermal *tz;
-	int i, j, power_state;
+	int i, j;
 
 	if (!dev)
 		return -EINVAL;
@@ -939,10 +939,8 @@ static int acpi_thermal_resume(struct device *dev)
 		if (!acpi_thermal_trip_valid(acpi_trip))
 			break;
 
-		for (j = 0; j < acpi_trip->devices.count; j++) {
-			acpi_bus_update_power(acpi_trip->devices.handles[j],
-					      &power_state);
-		}
+		for (j = 0; j < acpi_trip->devices.count; j++)
+			acpi_bus_update_power(acpi_trip->devices.handles[j], NULL);
 	}
 
 	acpi_queue_thermal_check(tz);
@@ -1062,7 +1060,8 @@ static int __init acpi_thermal_init(void)
 	}
 
 	acpi_thermal_pm_queue = alloc_workqueue("acpi_thermal_pm",
-						WQ_HIGHPRI | WQ_MEM_RECLAIM, 0);
+						WQ_HIGHPRI | WQ_MEM_RECLAIM | WQ_PERCPU,
+						0);
 	if (!acpi_thermal_pm_queue)
 		return -ENODEV;
 
