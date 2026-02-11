@@ -1304,9 +1304,8 @@ static struct snd_soc_acpi_mach *hda_sdw_machine_select(struct snd_sof_dev *sdev
 	int i;
 
 	hdev = pdata->hw_pdata;
-	link_mask = hdev->info.link_mask;
 
-	if (!link_mask) {
+	if (!hdev->info.link_mask) {
 		dev_info(sdev->dev, "SoundWire links not enabled\n");
 		return NULL;
 	}
@@ -1337,7 +1336,7 @@ static struct snd_soc_acpi_mach *hda_sdw_machine_select(struct snd_sof_dev *sdev
 		 * link_mask supported by hw and then go on searching
 		 * link_adr
 		 */
-		if (~link_mask & mach->link_mask)
+		if (~hdev->info.link_mask & mach->link_mask)
 			continue;
 
 		/* No need to match adr if there is no links defined */
@@ -1549,6 +1548,7 @@ struct snd_soc_acpi_mach *hda_machine_select(struct snd_sof_dev *sdev)
 	 * name string if quirk flag is set.
 	 */
 	if (mach) {
+		const struct sof_intel_dsp_desc *chip = get_chip_info(sdev->pdata);
 		bool tplg_fixup = false;
 		bool dmic_fixup = false;
 
@@ -1598,6 +1598,18 @@ struct snd_soc_acpi_mach *hda_machine_select(struct snd_sof_dev *sdev)
 			sof_pdata->tplg_filename = tplg_filename;
 		}
 
+		if (tplg_fixup && mach->mach_params.bt_link_mask &&
+		    chip->hw_ip_version >= SOF_INTEL_ACE_4_0) {
+			int bt_port = fls(mach->mach_params.bt_link_mask) - 1;
+
+			tplg_filename = devm_kasprintf(sdev->dev, GFP_KERNEL, "%s-ssp%d-bt",
+						       sof_pdata->tplg_filename, bt_port);
+			if (!tplg_filename)
+				return NULL;
+
+			sof_pdata->tplg_filename = tplg_filename;
+		}
+
 		if (mach->link_mask) {
 			mach->mach_params.links = mach->links;
 			mach->mach_params.link_mask = mach->link_mask;
@@ -1609,7 +1621,6 @@ struct snd_soc_acpi_mach *hda_machine_select(struct snd_sof_dev *sdev)
 		if (tplg_fixup &&
 		    mach->tplg_quirk_mask & SND_SOC_ACPI_TPLG_INTEL_SSP_NUMBER &&
 		    mach->mach_params.i2s_link_mask) {
-			const struct sof_intel_dsp_desc *chip = get_chip_info(sdev->pdata);
 			int ssp_num;
 			int mclk_mask;
 

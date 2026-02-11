@@ -190,7 +190,7 @@ static void do_abort_log_replay(struct walk_control *wc, const char *function,
 
 	btrfs_abort_transaction(wc->trans, error);
 
-	if (wc->subvol_path->nodes[0]) {
+	if (wc->subvol_path && wc->subvol_path->nodes[0]) {
 		btrfs_crit(fs_info,
 			   "subvolume (root %llu) leaf currently being processed:",
 			   btrfs_root_id(wc->root));
@@ -2798,7 +2798,7 @@ static int replay_one_buffer(struct extent_buffer *eb,
 
 	nritems = btrfs_header_nritems(eb);
 	for (wc->log_slot = 0; wc->log_slot < nritems; wc->log_slot++) {
-		struct btrfs_inode_item *inode_item;
+		struct btrfs_inode_item *inode_item = NULL;
 
 		btrfs_item_key_to_cpu(eb, &wc->log_key, wc->log_slot);
 
@@ -5160,7 +5160,7 @@ static int log_one_extent(struct btrfs_trans_handle *trans,
 	if (ctx->logged_before) {
 		drop_args.path = path;
 		drop_args.start = em->start;
-		drop_args.end = em->start + em->len;
+		drop_args.end = btrfs_extent_map_end(em);
 		drop_args.replace_extent = true;
 		drop_args.extent_item_size = sizeof(fi);
 		ret = btrfs_drop_extents(trans, log, inode, &drop_args);
@@ -6341,10 +6341,8 @@ again:
 			 * and no keys greater than that, so bail out.
 			 */
 			break;
-		} else if ((min_key->type == BTRFS_INODE_REF_KEY ||
-			    min_key->type == BTRFS_INODE_EXTREF_KEY) &&
-			   (inode->generation == trans->transid ||
-			    ctx->logging_conflict_inodes)) {
+		} else if (min_key->type == BTRFS_INODE_REF_KEY ||
+			   min_key->type == BTRFS_INODE_EXTREF_KEY) {
 			u64 other_ino = 0;
 			u64 other_parent = 0;
 

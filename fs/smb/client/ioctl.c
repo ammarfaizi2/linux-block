@@ -13,7 +13,6 @@
 #include <linux/mount.h>
 #include <linux/mm.h>
 #include <linux/pagemap.h>
-#include "cifspdu.h"
 #include "cifsglob.h"
 #include "cifsproto.h"
 #include "cifs_debug.h"
@@ -588,6 +587,9 @@ long cifs_ioctl(struct file *filep, unsigned int command, unsigned long arg)
 			break;
 		default:
 			cifs_dbg(FYI, "unsupported ioctl\n");
+			trace_smb3_unsupported_ioctl(xid,
+				pSMBFile ? pSMBFile->fid.persistent_fid : 0,
+				command);
 			break;
 	}
 cifs_ioc_exit:
