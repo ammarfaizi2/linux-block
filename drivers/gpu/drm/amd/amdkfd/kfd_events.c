@@ -331,6 +331,12 @@ static int kfd_event_page_set(struct kfd_process *p, void *kernel_address,
 	if (p->signal_page)
 		return -EBUSY;
 
+	if (size < KFD_SIGNAL_EVENT_LIMIT * 8) {
+		pr_err("Event page size %llu is too small, need at least %lu bytes\n",
+				size, (unsigned long)(KFD_SIGNAL_EVENT_LIMIT * 8));
+		return -EINVAL;
+	}
+
 	page = kzalloc(sizeof(*page), GFP_KERNEL);
 	if (!page)
 		return -ENOMEM;
@@ -1379,4 +1385,33 @@ void kfd_signal_poison_consumed_event(struct kfd_node *dev, u32 pasid)
 	send_sig(SIGBUS, p->lead_thread, 0);
 
 	kfd_unref_process(p);
+}
+
+/* signal KFD_EVENT_TYPE_SIGNAL events from process p
+ * send signal SIGBUS to correspondent user space process
+ */
+void kfd_signal_process_terminate_event(struct kfd_process *p)
+{
+	struct kfd_event *ev;
+	u32 id;
+
+	rcu_read_lock();
+
+	/* iterate from id 1 for KFD_EVENT_TYPE_SIGNAL events */
+	id = 1;
+	idr_for_each_entry_continue(&p->event_idr, ev, id)
+		if (ev->type == KFD_EVENT_TYPE_SIGNAL) {
+			spin_lock(&ev->lock);
+			set_event(ev);
+			spin_unlock(&ev->lock);
+		}
+
+	/* Send SIGBUS to p->lead_thread */
+	dev_notice(kfd_device,
+		   "Sending SIGBUS to process %d",
+		   p->lead_thread->pid);
+
+	send_sig(SIGBUS, p->lead_thread, 0);
+
+	rcu_read_unlock();
 }

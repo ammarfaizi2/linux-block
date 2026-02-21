@@ -57,7 +57,7 @@
 #include "dce/dce_clock_source.h"
 #include "dce/dce_audio.h"
 #include "dce/dce_hwseq.h"
-#include "virtual/virtual_stream_encoder.h"
+#include "dio/virtual/virtual_stream_encoder.h"
 #include "dml/display_mode_vba.h"
 #include "dcn20/dcn20_dccg.h"
 #include "dcn21/dcn21_dccg.h"
@@ -785,9 +785,7 @@ bool dcn21_fast_validate_bw(struct dc *dc,
 
 	dcn20_merge_pipes_for_validate(dc, context);
 
-	DC_FP_START();
 	pipe_cnt = dc->res_pool->funcs->populate_dml_pipes(dc, context, pipes, validate_mode);
-	DC_FP_END();
 
 	*pipe_cnt_out = pipe_cnt;
 

@@ -34,7 +34,6 @@
 #include <linux/sched/mm.h>
 #include <linux/iomap.h>
 #include <linux/unaligned.h>
-#include <linux/fsverity.h>
 #include "misc.h"
 #include "ctree.h"
 #include "disk-io.h"
@@ -5616,11 +5615,8 @@ void btrfs_evict_inode(struct inode *inode)
 
 	trace_btrfs_inode_evict(inode);
 
-	if (!root) {
-		fsverity_cleanup_inode(inode);
-		clear_inode(inode);
-		return;
-	}
+	if (!root)
+		goto clear_inode;
 
 	fs_info = inode_to_fs_info(inode);
 	evict_inode_truncate_pages(inode);
@@ -5720,7 +5716,7 @@ out:
 	 * to retry these periodically in the future.
 	 */
 	btrfs_remove_delayed_node(BTRFS_I(inode));
-	fsverity_cleanup_inode(inode);
+clear_inode:
 	clear_inode(inode);
 }
 
@@ -6150,9 +6146,18 @@ static int btrfs_set_inode_index_count(struct btrfs_inode *inode)
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
 	if (ret < 0)
 		return ret;
-	/* FIXME: we should be able to handle this */
-	if (ret == 0)
-		return ret;
+
+	if (unlikely(ret == 0)) {
+		/*
+		 * Key with offset -1 found, there would have to exist a dir
+		 * index item with such offset, but this is out of the valid
+		 * range.
+		 */
+		btrfs_err(root->fs_info,
+			  "unexpected exact match for DIR_INDEX key, inode %llu",
+			  btrfs_ino(inode));
+		return -EUCLEAN;
+	}
 
 	if (path->slots[0] == 0) {
 		inode->index_cnt = BTRFS_DIR_START_INDEX;
@@ -8151,9 +8156,6 @@ static void init_once(void *foo)
 	struct btrfs_inode *ei = foo;
 
 	inode_init_once(&ei->vfs_inode);
-#ifdef CONFIG_FS_VERITY
-	ei->i_verity_info = NULL;
-#endif
 }
 
 void __cold btrfs_destroy_cachep(void)
