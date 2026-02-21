@@ -128,6 +128,10 @@ For 32-bit we have the following conventions - kernel is built with
 	CLEAR_REGS clear_callee=\clear_callee
 .endm
 
+.macro PUSH_AND_REGS_NO_CLEAR rdx=%rdx rcx=%rcx rax=%rax save_ret=0 clear_callee=1 unwind_hint=1
+	PUSH_REGS rdx=\rdx, rcx=\rcx, rax=\rax, save_ret=\save_ret unwind_hint=\unwind_hint
+.endm
+
 .macro POP_REGS pop_rdi=1
 	popq %r15
 	popq %r14
