@@ -4628,6 +4628,19 @@ static inline void intel_pmu_set_acr_caused_constr(struct perf_event *event,
 		event->hw.dyn_constraint &= hybrid(event->pmu, acr_cause_mask64);
 }
 
+static inline int intel_set_branch_counter_constr(struct perf_event *event,
+						  int *num)
+{
+	if (branch_sample_call_stack(event))
+		return -EINVAL;
+	if (branch_sample_counters(event)) {
+		(*num)++;
+		event->hw.dyn_constraint &= x86_pmu.lbr_counters;
+	}
+
+	return 0;
+}
+
 static int intel_pmu_hw_config(struct perf_event *event)
 {
 	int ret = x86_pmu_hw_config(event);
@@ -4698,21 +4711,19 @@ static int intel_pmu_hw_config(struct perf_event *event)
 		 * group, which requires the extra space to store the counters.
 		 */
 		leader = event->group_leader;
-		if (branch_sample_call_stack(leader))
+		if (intel_set_branch_counter_constr(leader, &num))
 			return -EINVAL;
-		if (branch_sample_counters(leader)) {
-			num++;
-			leader->hw.dyn_constraint &= x86_pmu.lbr_counters;
-		}
 		leader->hw.flags |= PERF_X86_EVENT_BRANCH_COUNTERS;
 
 		for_each_sibling_event(sibling, leader) {
-			if (branch_sample_call_stack(sibling))
+			if (intel_set_branch_counter_constr(sibling, &num))
 				return -EINVAL;
-			if (branch_sample_counters(sibling)) {
-				num++;
-				sibling->hw.dyn_constraint &= x86_pmu.lbr_counters;
-			}
+		}
+
+		/* event isn't installed as a sibling yet. */
+		if (event != leader) {
+			if (intel_set_branch_counter_constr(event, &num))
+				return -EINVAL;
 		}
 
 		if (num > fls(x86_pmu.lbr_counters))
@@ -7378,9 +7389,8 @@ static __always_inline int intel_pmu_init_hybrid(enum hybrid_pmu_type pmus)
 	int idx = 0, bit;
 
 	x86_pmu.num_hybrid_pmus = hweight_long(pmus_mask);
-	x86_pmu.hybrid_pmu = kcalloc(x86_pmu.num_hybrid_pmus,
-				     sizeof(struct x86_hybrid_pmu),
-				     GFP_KERNEL);
+	x86_pmu.hybrid_pmu = kzalloc_objs(struct x86_hybrid_pmu,
+					  x86_pmu.num_hybrid_pmus);
 	if (!x86_pmu.hybrid_pmu)
 		return -ENOMEM;
 

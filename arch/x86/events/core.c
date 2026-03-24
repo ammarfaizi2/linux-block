@@ -1372,14 +1372,17 @@ static void x86_pmu_enable(struct pmu *pmu)
 			else if (i < n_running)
 				continue;
 
-			if (hwc->state & PERF_HES_ARCH)
+			cpuc->events[hwc->idx] = event;
+
+			if (hwc->state & PERF_HES_ARCH) {
+				static_call(x86_pmu_set_period)(event);
 				continue;
+			}
 
 			/*
 			 * if cpuc->enabled = 0, then no wrmsr as
 			 * per x86_pmu_enable_event()
 			 */
-			cpuc->events[hwc->idx] = event;
 			x86_pmu_start(event, PERF_EF_RELOAD);
 		}
 		cpuc->n_added = 0;
@@ -2389,7 +2392,7 @@ static struct cpu_hw_events *allocate_fake_cpuc(struct pmu *event_pmu)
 	struct cpu_hw_events *cpuc;
 	int cpu;
 
-	cpuc = kzalloc(sizeof(*cpuc), GFP_KERNEL);
+	cpuc = kzalloc_obj(*cpuc);
 	if (!cpuc)
 		return ERR_PTR(-ENOMEM);
 	cpuc->is_fake = 1;

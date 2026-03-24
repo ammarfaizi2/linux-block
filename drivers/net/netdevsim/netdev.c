@@ -109,8 +109,11 @@ static int nsim_forward_skb(struct net_device *tx_dev,
 	int ret;
 
 	ret = __dev_forward_skb(rx_dev, skb);
-	if (ret)
+	if (ret) {
+		if (psp_ext)
+			__skb_ext_put(psp_ext);
 		return ret;
+	}
 
 	nsim_psp_handle_ext(skb, psp_ext);
 
@@ -723,7 +726,7 @@ static struct nsim_rq *nsim_queue_alloc(void)
 {
 	struct nsim_rq *rq;
 
-	rq = kzalloc(sizeof(*rq), GFP_KERNEL_ACCOUNT);
+	rq = kzalloc_obj(*rq, GFP_KERNEL_ACCOUNT);
 	if (!rq)
 		return NULL;
 
@@ -997,8 +1000,7 @@ static int nsim_queue_init(struct netdevsim *ns)
 	struct net_device *dev = ns->netdev;
 	int i;
 
-	ns->rq = kcalloc(dev->num_rx_queues, sizeof(*ns->rq),
-			 GFP_KERNEL_ACCOUNT);
+	ns->rq = kzalloc_objs(*ns->rq, dev->num_rx_queues, GFP_KERNEL_ACCOUNT);
 	if (!ns->rq)
 		return -ENOMEM;
 

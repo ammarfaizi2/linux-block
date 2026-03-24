@@ -781,7 +781,7 @@ static int add_async_extent(struct async_chunk *cow, u64 start, u64 ram_size,
 {
 	struct async_extent *async_extent;
 
-	async_extent = kmalloc(sizeof(*async_extent), GFP_NOFS);
+	async_extent = kmalloc_obj(*async_extent, GFP_NOFS);
 	if (!async_extent)
 		return -ENOMEM;
 	ASSERT(ram_size < U32_MAX);
@@ -1392,10 +1392,25 @@ static int cow_one_range(struct btrfs_inode *inode, struct folio *locked_folio,
 	return ret;
 
 free_reserved:
+	/*
+	 * If we have reserved an extent for the current range and failed to
+	 * create the respective extent map or ordered extent, it means that
+	 * when we reserved the extent we decremented the extent's size from
+	 * the data space_info's bytes_may_use counter and
+	 * incremented the space_info's bytes_reserved counter by the same
+	 * amount.
+	 *
+	 * We must make sure extent_clear_unlock_delalloc() does not try
+	 * to decrement again the data space_info's bytes_may_use counter, which
+	 * will be handled by btrfs_free_reserved_extent().
+	 *
+	 * Therefore we do not pass it the flag EXTENT_CLEAR_DATA_RESV, but only
+	 * EXTENT_CLEAR_META_RESV.
+	 */
 	extent_clear_unlock_delalloc(inode, file_offset, cur_end, locked_folio, cached,
 				     EXTENT_LOCKED | EXTENT_DELALLOC |
 				     EXTENT_DELALLOC_NEW |
-				     EXTENT_DEFRAG | EXTENT_DO_ACCOUNTING,
+				     EXTENT_DEFRAG | EXTENT_CLEAR_META_RESV,
 				     PAGE_UNLOCK | PAGE_START_WRITEBACK |
 				     PAGE_END_WRITEBACK);
 	btrfs_qgroup_free_data(inode, NULL, file_offset, cur_len, NULL);
@@ -1692,7 +1707,7 @@ static bool run_delalloc_compressed(struct btrfs_inode *inode,
 	const blk_opf_t write_flags = wbc_to_write_flags(wbc);
 
 	nofs_flag = memalloc_nofs_save();
-	ctx = kvmalloc(struct_size(ctx, chunks, num_chunks), GFP_KERNEL);
+	ctx = kvmalloc_flex(*ctx, chunks, num_chunks);
 	memalloc_nofs_restore(nofs_flag);
 	if (!ctx)
 		return false;
@@ -1997,6 +2012,13 @@ static int can_nocow_file_extent(struct btrfs_path *path,
 	 */
 
 	csum_root = btrfs_csum_root(root->fs_info, io_start);
+	if (unlikely(!csum_root)) {
+		btrfs_err(root->fs_info,
+			  "missing csum root for extent at bytenr %llu", io_start);
+		ret = -EUCLEAN;
+		goto out;
+	}
+
 	ret = btrfs_lookup_csums_list(csum_root, io_start,
 				      io_start + args->file_extent.num_bytes - 1,
 				      NULL, nowait);
@@ -2734,10 +2756,17 @@ static int add_pending_csums(struct btrfs_trans_handle *trans,
 	int ret;
 
 	list_for_each_entry(sum, list, list) {
-		trans->adding_csums = true;
-		if (!csum_root)
+		if (!csum_root) {
 			csum_root = btrfs_csum_root(trans->fs_info,
 						    sum->logical);
+			if (unlikely(!csum_root)) {
+				btrfs_err(trans->fs_info,
+				  "missing csum root for extent at bytenr %llu",
+					  sum->logical);
+				return -EUCLEAN;
+			}
+		}
+		trans->adding_csums = true;
 		ret = btrfs_csum_file_blocks(trans, csum_root, sum);
 		trans->adding_csums = false;
 		if (ret)
@@ -2991,7 +3020,7 @@ int btrfs_writepage_cow_fixup(struct folio *folio)
 	if (folio_test_checked(folio))
 		return -EAGAIN;
 
-	fixup = kzalloc(sizeof(*fixup), GFP_NOFS);
+	fixup = kzalloc_obj(*fixup, GFP_NOFS);
 	if (!fixup)
 		return -EAGAIN;
 
@@ -3967,7 +3996,7 @@ static int btrfs_init_file_extent_tree(struct btrfs_inode *inode)
 	if (btrfs_is_free_space_inode(inode))
 		return 0;
 
-	inode->file_extent_tree = kmalloc(sizeof(struct extent_io_tree), GFP_KERNEL);
+	inode->file_extent_tree = kmalloc_obj(struct extent_io_tree);
 	if (!inode->file_extent_tree)
 		return -ENOMEM;
 
@@ -4764,7 +4793,7 @@ int btrfs_delete_subvolume(struct btrfs_inode *dir, struct dentry *dentry)
 		spin_unlock(&dest->root_item_lock);
 		btrfs_warn(fs_info,
 			   "attempt to delete subvolume %llu with active swapfile",
-			   btrfs_root_id(root));
+			   btrfs_root_id(dest));
 		ret = -EPERM;
 		goto out_up_write;
 	}
@@ -6221,7 +6250,7 @@ static int btrfs_opendir(struct inode *inode, struct file *file)
 	if (ret)
 		return ret;
 
-	private = kzalloc(sizeof(struct btrfs_file_private), GFP_KERNEL);
+	private = kzalloc_obj(struct btrfs_file_private);
 	if (!private)
 		return -ENOMEM;
 	private->last_index = last_index;
@@ -6596,6 +6625,25 @@ int btrfs_create_new_inode(struct btrfs_trans_handle *trans,
 	unsigned long ptr;
 	int ret;
 	bool xa_reserved = false;
+
+	if (!args->orphan && !args->subvol) {
+		/*
+		 * Before anything else, check if we can add the name to the
+		 * parent directory. We want to avoid a dir item overflow in
+		 * case we have an existing dir item due to existing name
+		 * hash collisions. We do this check here before we call
+		 * btrfs_add_link() down below so that we can avoid a
+		 * transaction abort (which could be exploited by malicious
+		 * users).
+		 *
+		 * For subvolumes we already do this in btrfs_mksubvol().
+		 */
+		ret = btrfs_check_dir_item_collision(BTRFS_I(dir)->root,
+						     btrfs_ino(BTRFS_I(dir)),
+						     name);
+		if (ret < 0)
+			return ret;
+	}
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -8839,7 +8887,7 @@ static struct btrfs_delalloc_work *btrfs_alloc_delalloc_work(struct inode *inode
 {
 	struct btrfs_delalloc_work *work;
 
-	work = kmalloc(sizeof(*work), GFP_NOFS);
+	work = kmalloc_obj(*work, GFP_NOFS);
 	if (!work)
 		return NULL;
 
@@ -9538,7 +9586,7 @@ int btrfs_encoded_read_regular_fill_pages(struct btrfs_inode *inode,
 	 * needs longer time span.
 	 */
 	if (uring_ctx) {
-		priv = kmalloc(sizeof(struct btrfs_encoded_read_private), GFP_NOFS);
+		priv = kmalloc_obj(struct btrfs_encoded_read_private, GFP_NOFS);
 		if (!priv)
 			return -ENOMEM;
 	} else {
@@ -9608,7 +9656,7 @@ ssize_t btrfs_encoded_read_regular(struct kiocb *iocb, struct iov_iter *iter,
 	ssize_t ret;
 
 	nr_pages = DIV_ROUND_UP(disk_io_size, PAGE_SIZE);
-	pages = kcalloc(nr_pages, sizeof(struct page *), GFP_NOFS);
+	pages = kzalloc_objs(struct page *, nr_pages, GFP_NOFS);
 	if (!pages)
 		return -ENOMEM;
 	ret = btrfs_alloc_page_array(nr_pages, pages, false);
@@ -9840,6 +9888,7 @@ ssize_t btrfs_do_encoded_write(struct kiocb *iocb, struct iov_iter *from,
 	int compression;
 	size_t orig_count;
 	const u32 min_folio_size = btrfs_min_folio_size(fs_info);
+	const u32 blocksize = fs_info->sectorsize;
 	u64 start, end;
 	u64 num_bytes, ram_bytes, disk_num_bytes;
 	struct btrfs_key ins;
@@ -9950,9 +9999,9 @@ ssize_t btrfs_do_encoded_write(struct kiocb *iocb, struct iov_iter *from,
 			ret = -EFAULT;
 			goto out_cb;
 		}
-		if (bytes < min_folio_size)
-			folio_zero_range(folio, bytes, min_folio_size - bytes);
-		ret = bio_add_folio(&cb->bbio.bio, folio, folio_size(folio), 0);
+		if (!IS_ALIGNED(bytes, blocksize))
+			folio_zero_range(folio, bytes, round_up(bytes, blocksize) - bytes);
+		ret = bio_add_folio(&cb->bbio.bio, folio, round_up(bytes, blocksize), 0);
 		if (unlikely(!ret)) {
 			folio_put(folio);
 			ret = -EINVAL;
@@ -10092,7 +10141,7 @@ static int btrfs_add_swapfile_pin(struct inode *inode, void *ptr,
 	struct rb_node **p;
 	struct rb_node *parent = NULL;
 
-	sp = kmalloc(sizeof(*sp), GFP_NOFS);
+	sp = kmalloc_obj(*sp, GFP_NOFS);
 	if (!sp)
 		return -ENOMEM;
 	sp->ptr = ptr;

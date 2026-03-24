@@ -272,6 +272,7 @@ static int io_poll_check_events(struct io_kiocb *req, io_tw_token_t tw)
 				atomic_andnot(IO_POLL_RETRY_FLAG, &req->poll_refs);
 				v &= ~IO_POLL_RETRY_FLAG;
 			}
+			v &= IO_POLL_REF_MASK;
 		}
 
 		/* the mask was stashed in __io_poll_execute */
@@ -304,8 +305,13 @@ static int io_poll_check_events(struct io_kiocb *req, io_tw_token_t tw)
 				return IOU_POLL_REMOVE_POLL_USE_RES;
 			}
 		} else {
-			int ret = io_poll_issue(req, tw);
+			int ret;
 
+			/* multiple refs and HUP, ensure we loop once more */
+			if ((req->cqe.res & (POLLHUP | POLLRDHUP)) && v != 1)
+				v--;
+
+			ret = io_poll_issue(req, tw);
 			if (ret == IOU_COMPLETE)
 				return IOU_POLL_REMOVE_POLL_USE_RES;
 			else if (ret == IOU_REQUEUE)
@@ -321,7 +327,6 @@ static int io_poll_check_events(struct io_kiocb *req, io_tw_token_t tw)
 		 * Release all references, retry if someone tried to restart
 		 * task_work while we were executing it.
 		 */
-		v &= IO_POLL_REF_MASK;
 	} while (atomic_sub_return(v, &req->poll_refs) & IO_POLL_REF_MASK);
 
 	io_napi_add(req);
@@ -478,7 +483,7 @@ static void __io_queue_proc(struct io_poll *poll, struct io_poll_table *pt,
 			return;
 		}
 
-		poll = kmalloc(sizeof(*poll), GFP_ATOMIC);
+		poll = kmalloc_obj(*poll, GFP_ATOMIC);
 		if (!poll) {
 			pt->error = -ENOMEM;
 			return;
@@ -655,7 +660,7 @@ static struct async_poll *io_req_alloc_apoll(struct io_kiocb *req,
 		if (!(issue_flags & IO_URING_F_UNLOCKED))
 			apoll = io_cache_alloc(&ctx->apoll_cache, GFP_ATOMIC);
 		else
-			apoll = kmalloc(sizeof(*apoll), GFP_ATOMIC);
+			apoll = kmalloc_obj(*apoll, GFP_ATOMIC);
 		if (!apoll)
 			return NULL;
 		apoll->poll.retries = APOLL_MAX_RETRY;

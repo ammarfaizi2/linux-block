@@ -390,7 +390,7 @@ static int hidpp_send_fap_command_sync(struct hidpp_device *hidpp,
 		return -EINVAL;
 	}
 
-	message = kzalloc(sizeof(struct hidpp_report), GFP_KERNEL);
+	message = kzalloc_obj(struct hidpp_report);
 	if (!message)
 		return -ENOMEM;
 
@@ -443,7 +443,7 @@ static int hidpp_send_rap_command_sync(struct hidpp_device *hidpp_dev,
 	if (param_count > max_count)
 		return -EINVAL;
 
-	message = kzalloc(sizeof(struct hidpp_report), GFP_KERNEL);
+	message = kzalloc_obj(struct hidpp_report);
 	if (!message)
 		return -ENOMEM;
 	message->report_id = report_id;
@@ -2527,7 +2527,7 @@ out:
 
 static int hidpp_ff_queue_work(struct hidpp_ff_private_data *data, int effect_id, u8 command, u8 *params, u8 size)
 {
-	struct hidpp_ff_work_data *wd = kzalloc(sizeof(*wd), GFP_KERNEL);
+	struct hidpp_ff_work_data *wd = kzalloc_obj(*wd);
 	int s;
 
 	if (!wd)
@@ -2853,7 +2853,7 @@ static int hidpp_ff_init(struct hidpp_device *hidpp,
 	data = kmemdup(data, sizeof(*data), GFP_KERNEL);
 	if (!data)
 		return -ENOMEM;
-	data->effect_ids = kcalloc(num_slots, sizeof(int), GFP_KERNEL);
+	data->effect_ids = kzalloc_objs(int, num_slots);
 	if (!data->effect_ids) {
 		kfree(data);
 		return -ENOMEM;
@@ -4487,10 +4487,12 @@ static int hidpp_probe(struct hid_device *hdev, const struct hid_device_id *id)
 		if (!ret)
 			ret = hidpp_ff_init(hidpp, &data);
 
-		if (ret)
+		if (ret) {
 			hid_warn(hidpp->hid_dev,
 		     "Unable to initialize force feedback support, errno %d\n",
 				 ret);
+			ret = 0;
+		}
 	}
 
 	/*
@@ -4668,6 +4670,8 @@ static const struct hid_device_id hidpp_devices[] = {
 	  HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_LOGITECH, 0xb038) },
 	{ /* Slim Solar+ K980 Keyboard over Bluetooth */
 	  HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_LOGITECH, 0xb391) },
+	{ /* MX Master 4 mouse over Bluetooth */
+	  HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_LOGITECH, 0xb042) },
 	{}
 };
 

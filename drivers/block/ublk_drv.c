@@ -710,7 +710,7 @@ static DEFINE_MUTEX(ublk_ctl_mutex);
 static struct ublk_batch_fetch_cmd *
 ublk_batch_alloc_fcmd(struct io_uring_cmd *cmd)
 {
-	struct ublk_batch_fetch_cmd *fcmd = kzalloc(sizeof(*fcmd), GFP_NOIO);
+	struct ublk_batch_fetch_cmd *fcmd = kzalloc_obj(*fcmd, GFP_NOIO);
 
 	if (fcmd) {
 		fcmd->cmd = cmd;
@@ -4443,7 +4443,9 @@ static int ublk_ctrl_start_dev(struct ublk_device *ub,
 
 	/* Skip partition scan if disabled by user */
 	if (ub->dev_info.flags & UBLK_F_NO_AUTO_PART_SCAN) {
-		clear_bit(GD_SUPPRESS_PART_SCAN, &disk->state);
+		/* Not clear for unprivileged daemons, see comment above */
+		if (!ub->unprivileged_daemons)
+			clear_bit(GD_SUPPRESS_PART_SCAN, &disk->state);
 	} else {
 		/* Schedule async partition scan for trusted daemons */
 		if (!ub->unprivileged_daemons)
@@ -4613,7 +4615,7 @@ static int ublk_ctrl_add_dev(const struct ublksrv_ctrl_cmd *header)
 		goto out_unlock;
 
 	ret = -ENOMEM;
-	ub = kzalloc(struct_size(ub, queues, info.nr_hw_queues), GFP_KERNEL);
+	ub = kzalloc_flex(*ub, queues, info.nr_hw_queues);
 	if (!ub)
 		goto out_unlock;
 	mutex_init(&ub->mutex);
@@ -5006,15 +5008,22 @@ static int ublk_ctrl_get_features(const struct ublksrv_ctrl_cmd *header)
 	return 0;
 }
 
-static void ublk_ctrl_set_size(struct ublk_device *ub, const struct ublksrv_ctrl_cmd *header)
+static int ublk_ctrl_set_size(struct ublk_device *ub, const struct ublksrv_ctrl_cmd *header)
 {
 	struct ublk_param_basic *p = &ub->params.basic;
 	u64 new_size = header->data[0];
+	int ret = 0;
 
 	mutex_lock(&ub->mutex);
+	if (!ub->ub_disk) {
+		ret = -ENODEV;
+		goto out;
+	}
 	p->dev_sectors = new_size;
 	set_capacity_and_notify(ub->ub_disk, p->dev_sectors);
+out:
 	mutex_unlock(&ub->mutex);
+	return ret;
 }
 
 struct count_busy {
@@ -5335,8 +5344,7 @@ static int ublk_ctrl_uring_cmd(struct io_uring_cmd *cmd,
 		ret = ublk_ctrl_end_recovery(ub, &header);
 		break;
 	case UBLK_CMD_UPDATE_SIZE:
-		ublk_ctrl_set_size(ub, &header);
-		ret = 0;
+		ret = ublk_ctrl_set_size(ub, &header);
 		break;
 	case UBLK_CMD_QUIESCE_DEV:
 		ret = ublk_ctrl_quiesce_dev(ub, &header);

@@ -1611,8 +1611,7 @@ int ieee80211_txq_setup_flows(struct ieee80211_local *local)
 	local->cparams.target = MS2TIME(20);
 	local->cparams.ecn = true;
 
-	local->cvars = kvcalloc(fq->flows_cnt, sizeof(local->cvars[0]),
-				GFP_KERNEL);
+	local->cvars = kvzalloc_objs(local->cvars[0], fq->flows_cnt);
 	if (!local->cvars) {
 		spin_lock_bh(&fq->lock);
 		fq_reset(fq, fq_skb_free_func);
@@ -1900,8 +1899,10 @@ bool ieee80211_tx_prepare_skb(struct ieee80211_hw *hw,
 	struct ieee80211_tx_data tx;
 	struct sk_buff *skb2;
 
-	if (ieee80211_tx_prepare(sdata, &tx, NULL, skb) == TX_DROP)
+	if (ieee80211_tx_prepare(sdata, &tx, NULL, skb) == TX_DROP) {
+		kfree_skb(skb);
 		return false;
+	}
 
 	info->band = band;
 	info->control.vif = vif;
@@ -5549,8 +5550,7 @@ ieee80211_beacon_get_ap_ema_list(struct ieee80211_hw *hw,
 	if (!beacon->mbssid_ies || !beacon->mbssid_ies->cnt)
 		return NULL;
 
-	ema = kzalloc(struct_size(ema, bcn, beacon->mbssid_ies->cnt),
-		      GFP_ATOMIC);
+	ema = kzalloc_flex(*ema, bcn, beacon->mbssid_ies->cnt, GFP_ATOMIC);
 	if (!ema)
 		return NULL;
 

@@ -452,7 +452,7 @@ static int io_zcrx_create_area(struct io_zcrx_ifq *ifq,
 	}
 
 	ret = -ENOMEM;
-	area = kzalloc(sizeof(*area), GFP_KERNEL);
+	area = kzalloc_obj(*area);
 	if (!area)
 		goto err;
 	area->ifq = ifq;
@@ -471,8 +471,8 @@ static int io_zcrx_create_area(struct io_zcrx_ifq *ifq,
 	area->nia.num_niovs = nr_iovs;
 
 	ret = -ENOMEM;
-	area->nia.niovs = kvmalloc_array(nr_iovs, sizeof(area->nia.niovs[0]),
-					 GFP_KERNEL_ACCOUNT | __GFP_ZERO);
+	area->nia.niovs = kvmalloc_objs(area->nia.niovs[0], nr_iovs,
+					GFP_KERNEL_ACCOUNT | __GFP_ZERO);
 	if (!area->nia.niovs)
 		goto err;
 
@@ -481,7 +481,7 @@ static int io_zcrx_create_area(struct io_zcrx_ifq *ifq,
 	if (!area->freelist)
 		goto err;
 
-	area->user_refs = kvmalloc_array(nr_iovs, sizeof(area->user_refs[0]),
+	area->user_refs = kvmalloc_objs(area->user_refs[0], nr_iovs,
 					GFP_KERNEL_ACCOUNT | __GFP_ZERO);
 	if (!area->user_refs)
 		goto err;
@@ -514,7 +514,7 @@ static struct io_zcrx_ifq *io_zcrx_ifq_alloc(struct io_ring_ctx *ctx)
 {
 	struct io_zcrx_ifq *ifq;
 
-	ifq = kzalloc(sizeof(*ifq), GFP_KERNEL);
+	ifq = kzalloc_obj(*ifq);
 	if (!ifq)
 		return NULL;
 
@@ -837,7 +837,8 @@ int io_register_zcrx_ifq(struct io_ring_ctx *ctx,
 	if (ret)
 		goto netdev_put_unlock;
 
-	mp_param.rx_page_size = 1U << ifq->niov_shift;
+	if (reg.rx_buf_len)
+		mp_param.rx_page_size = 1U << ifq->niov_shift;
 	mp_param.mp_ops = &io_uring_pp_zc_ops;
 	mp_param.mp_priv = ifq;
 	ret = __net_mp_open_rxq(ifq->netdev, reg.if_rxq, &mp_param, NULL);
@@ -926,11 +927,12 @@ static inline bool io_parse_rqe(struct io_uring_zcrx_rqe *rqe,
 				struct io_zcrx_ifq *ifq,
 				struct net_iov **ret_niov)
 {
+	__u64 off = READ_ONCE(rqe->off);
 	unsigned niov_idx, area_idx;
 	struct io_zcrx_area *area;
 
-	area_idx = rqe->off >> IORING_ZCRX_AREA_SHIFT;
-	niov_idx = (rqe->off & ~IORING_ZCRX_AREA_MASK) >> ifq->niov_shift;
+	area_idx = off >> IORING_ZCRX_AREA_SHIFT;
+	niov_idx = (off & ~IORING_ZCRX_AREA_MASK) >> ifq->niov_shift;
 
 	if (unlikely(rqe->__pad || area_idx))
 		return false;

@@ -875,13 +875,18 @@ void amd_clear_bank(struct mce *m)
 {
 	amd_reset_thr_limit(m->bank);
 
-	/* Clear MCA_DESTAT for all deferred errors even those logged in MCA_STATUS. */
-	if (m->status & MCI_STATUS_DEFERRED)
-		mce_wrmsrq(MSR_AMD64_SMCA_MCx_DESTAT(m->bank), 0);
+	if (mce_flags.smca) {
+		/*
+		 * Clear MCA_DESTAT for all deferred errors even those
+		 * logged in MCA_STATUS.
+		 */
+		if (m->status & MCI_STATUS_DEFERRED)
+			mce_wrmsrq(MSR_AMD64_SMCA_MCx_DESTAT(m->bank), 0);
 
-	/* Don't clear MCA_STATUS if MCA_DESTAT was used exclusively. */
-	if (m->kflags & MCE_CHECK_DFR_REGS)
-		return;
+		/* Don't clear MCA_STATUS if MCA_DESTAT was used exclusively. */
+		if (m->kflags & MCE_CHECK_DFR_REGS)
+			return;
+	}
 
 	mce_wrmsrq(mca_msr_reg(m->bank, MCA_STATUS), 0);
 }
@@ -1088,7 +1093,7 @@ static int allocate_threshold_blocks(unsigned int cpu, struct threshold_bank *tb
 	     (high & MASK_LOCKED_HI))
 		goto recurse;
 
-	b = kzalloc(sizeof(struct threshold_block), GFP_KERNEL);
+	b = kzalloc_obj(struct threshold_block);
 	if (!b)
 		return -ENOMEM;
 
@@ -1147,7 +1152,7 @@ static int threshold_create_bank(struct threshold_bank **bp, unsigned int cpu,
 	if (!dev)
 		return -ENODEV;
 
-	b = kzalloc(sizeof(struct threshold_bank), GFP_KERNEL);
+	b = kzalloc_obj(struct threshold_bank);
 	if (!b) {
 		err = -ENOMEM;
 		goto out;
@@ -1250,7 +1255,7 @@ void mce_threshold_create_device(unsigned int cpu)
 		return;
 
 	numbanks = this_cpu_read(mce_num_banks);
-	bp = kcalloc(numbanks, sizeof(*bp), GFP_KERNEL);
+	bp = kzalloc_objs(*bp, numbanks);
 	if (!bp)
 		return;
 

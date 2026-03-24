@@ -976,7 +976,7 @@ static int cache_mod(struct trace_array *tr, const char *mod, int set,
 	if (!set)
 		return remove_cache_mod(tr, mod, match, system, event);
 
-	event_mod = kzalloc(sizeof(*event_mod), GFP_KERNEL);
+	event_mod = kzalloc_obj(*event_mod);
 	if (!event_mod)
 		return -ENOMEM;
 
@@ -1039,6 +1039,7 @@ event_filter_pid_sched_process_exit(void *data, struct task_struct *task)
 	struct trace_pid_list *pid_list;
 	struct trace_array *tr = data;
 
+	guard(preempt)();
 	pid_list = rcu_dereference_raw(tr->filtered_pids);
 	trace_filter_add_remove_task(pid_list, NULL, task);
 
@@ -1054,6 +1055,7 @@ event_filter_pid_sched_process_fork(void *data,
 	struct trace_pid_list *pid_list;
 	struct trace_array *tr = data;
 
+	guard(preempt)();
 	pid_list = rcu_dereference_sched(tr->filtered_pids);
 	trace_filter_add_remove_task(pid_list, self, task);
 
@@ -1648,7 +1650,7 @@ static void *s_start(struct seq_file *m, loff_t *pos)
 	struct set_event_iter *iter;
 	loff_t l;
 
-	iter = kzalloc(sizeof(*iter), GFP_KERNEL);
+	iter = kzalloc_obj(*iter);
 	mutex_lock(&event_mutex);
 	if (!iter)
 		return NULL;
@@ -2206,7 +2208,7 @@ event_filter_read(struct file *filp, char __user *ubuf, size_t cnt,
 	if (*ppos)
 		return 0;
 
-	s = kmalloc(sizeof(*s), GFP_KERNEL);
+	s = kmalloc_obj(*s);
 
 	if (!s)
 		return -ENOMEM;
@@ -2320,7 +2322,7 @@ static int system_tr_open(struct inode *inode, struct file *filp)
 	int ret;
 
 	/* Make a temporary dir that has no system but points to tr */
-	dir = kzalloc(sizeof(*dir), GFP_KERNEL);
+	dir = kzalloc_obj(*dir);
 	if (!dir)
 		return -ENOMEM;
 
@@ -2366,7 +2368,7 @@ subsystem_filter_read(struct file *filp, char __user *ubuf, size_t cnt,
 	if (*ppos)
 		return 0;
 
-	s = kmalloc(sizeof(*s), GFP_KERNEL);
+	s = kmalloc_obj(*s);
 	if (!s)
 		return -ENOMEM;
 
@@ -2416,7 +2418,7 @@ show_header_page_file(struct file *filp, char __user *ubuf, size_t cnt, loff_t *
 	if (*ppos)
 		return 0;
 
-	s = kmalloc(sizeof(*s), GFP_KERNEL);
+	s = kmalloc_obj(*s);
 	if (!s)
 		return -ENOMEM;
 
@@ -2440,7 +2442,7 @@ show_header_event_file(struct file *filp, char __user *ubuf, size_t cnt, loff_t 
 	if (*ppos)
 		return 0;
 
-	s = kmalloc(sizeof(*s), GFP_KERNEL);
+	s = kmalloc_obj(*s);
 	if (!s)
 		return -ENOMEM;
 
@@ -2881,7 +2883,7 @@ create_new_subsystem(const char *name)
 	struct event_subsystem *system;
 
 	/* need to create new entry */
-	system = kmalloc(sizeof(*system), GFP_KERNEL);
+	system = kmalloc_obj(*system);
 	if (!system)
 		return NULL;
 
@@ -2892,7 +2894,7 @@ create_new_subsystem(const char *name)
 	if (!system->name)
 		goto out_free;
 
-	system->filter = kzalloc(sizeof(struct event_filter), GFP_KERNEL);
+	system->filter = kzalloc_obj(struct event_filter);
 	if (!system->filter)
 		goto out_free;
 
@@ -2960,7 +2962,7 @@ event_subsystem_dir(struct trace_array *tr, const char *name,
 		}
 	}
 
-	dir = kmalloc(sizeof(*dir), GFP_KERNEL);
+	dir = kmalloc_obj(*dir);
 	if (!dir)
 		goto out_fail;
 
@@ -3403,7 +3405,7 @@ static void add_str_to_module(struct module *module, char *str)
 {
 	struct module_string *modstr;
 
-	modstr = kmalloc(sizeof(*modstr), GFP_KERNEL);
+	modstr = kmalloc_obj(*modstr);
 
 	/*
 	 * If we failed to allocate memory here, then we'll just
@@ -4365,7 +4367,7 @@ event_enable_func(struct trace_array *tr, struct ftrace_hash *hash,
 		goto out_put;
 
 	ret = -ENOMEM;
-	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	data = kzalloc_obj(*data);
 	if (!data)
 		goto out_put;
 
@@ -4491,7 +4493,11 @@ static char bootup_event_buf[COMMAND_LINE_SIZE] __initdata;
 
 static __init int setup_trace_event(char *str)
 {
-	strscpy(bootup_event_buf, str, COMMAND_LINE_SIZE);
+	if (bootup_event_buf[0] != '\0')
+		strlcat(bootup_event_buf, ",", COMMAND_LINE_SIZE);
+
+	strlcat(bootup_event_buf, str, COMMAND_LINE_SIZE);
+
 	trace_set_ring_buffer_expanded(NULL);
 	disable_tracing_selftest("running event tracing");
 
@@ -4668,32 +4674,54 @@ static __init int event_trace_memsetup(void)
 	return 0;
 }
 
-__init void
-early_enable_events(struct trace_array *tr, char *buf, bool disable_first)
+/*
+ * Helper function to enable or disable a comma-separated list of events
+ * from the bootup buffer.
+ */
+static __init void __early_set_events(struct trace_array *tr, char *buf, bool enable)
 {
 	char *token;
-	int ret;
 
-	while (true) {
-		token = strsep(&buf, ",");
-
-		if (!token)
-			break;
-
+	while ((token = strsep(&buf, ","))) {
 		if (*token) {
-			/* Restarting syscalls requires that we stop them first */
-			if (disable_first)
+			if (enable) {
+				if (ftrace_set_clr_event(tr, token, 1))
+					pr_warn("Failed to enable trace event: %s\n", token);
+			} else {
 				ftrace_set_clr_event(tr, token, 0);
-
-			ret = ftrace_set_clr_event(tr, token, 1);
-			if (ret)
-				pr_warn("Failed to enable trace event: %s\n", token);
+			}
 		}
 
 		/* Put back the comma to allow this to be called again */
 		if (buf)
 			*(buf - 1) = ',';
 	}
+}
+
+/**
+ * early_enable_events - enable events from the bootup buffer
+ * @tr: The trace array to enable the events in
+ * @buf: The buffer containing the comma separated list of events
+ * @disable_first: If true, disable all events in @buf before enabling them
+ *
+ * This function enables events from the bootup buffer. If @disable_first
+ * is true, it will first disable all events in the buffer before enabling
+ * them.
+ *
+ * For syscall events, which rely on a global refcount to register the
+ * SYSCALL_WORK_SYSCALL_TRACEPOINT flag (especially for pid 1), we must
+ * ensure the refcount hits zero before re-enabling them. A simple
+ * "disable then enable" per-event is not enough if multiple syscalls are
+ * used, as the refcount will stay above zero. Thus, we need a two-phase
+ * approach: disable all, then enable all.
+ */
+__init void
+early_enable_events(struct trace_array *tr, char *buf, bool disable_first)
+{
+	if (disable_first)
+		__early_set_events(tr, buf, false);
+
+	__early_set_events(tr, buf, true);
 }
 
 static __init int event_trace_enable(void)

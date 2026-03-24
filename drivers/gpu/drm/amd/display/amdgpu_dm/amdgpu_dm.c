@@ -545,13 +545,15 @@ static void schedule_dc_vmin_vmax(struct amdgpu_device *adev,
 	struct dc_stream_state *stream,
 	struct dc_crtc_timing_adjust *adjust)
 {
-	struct vupdate_offload_work *offload_work = kzalloc(sizeof(*offload_work), GFP_NOWAIT);
+	struct vupdate_offload_work *offload_work = kzalloc_obj(*offload_work,
+								GFP_NOWAIT);
 	if (!offload_work) {
 		drm_dbg_driver(adev_to_drm(adev), "Failed to allocate vupdate_offload_work\n");
 		return;
 	}
 
-	struct dc_crtc_timing_adjust *adjust_copy = kzalloc(sizeof(*adjust_copy), GFP_NOWAIT);
+	struct dc_crtc_timing_adjust *adjust_copy = kzalloc_obj(*adjust_copy,
+								GFP_NOWAIT);
 	if (!adjust_copy) {
 		drm_dbg_driver(adev_to_drm(adev), "Failed to allocate adjust_copy\n");
 		kfree(offload_work);
@@ -1023,7 +1025,8 @@ static void dm_dmub_outbox1_low_irq(void *interrupt_params)
 				continue;
 			}
 			if (dm->dmub_thread_offload[notify.type] == true) {
-				dmub_hpd_wrk = kzalloc(sizeof(*dmub_hpd_wrk), GFP_ATOMIC);
+				dmub_hpd_wrk = kzalloc_obj(*dmub_hpd_wrk,
+							   GFP_ATOMIC);
 				if (!dmub_hpd_wrk) {
 					drm_err(adev_to_drm(adev), "Failed to allocate dmub_hpd_wrk");
 					return;
@@ -1647,7 +1650,7 @@ static struct hpd_rx_irq_offload_work_queue *hpd_rx_irq_create_workqueue(struct 
 	int i = 0;
 	struct hpd_rx_irq_offload_work_queue *hpd_rx_offload_wq = NULL;
 
-	hpd_rx_offload_wq = kcalloc(max_caps, sizeof(*hpd_rx_offload_wq), GFP_KERNEL);
+	hpd_rx_offload_wq = kzalloc_objs(*hpd_rx_offload_wq, max_caps);
 
 	if (!hpd_rx_offload_wq)
 		return NULL;
@@ -1720,7 +1723,7 @@ dm_allocate_gpu_mem(
 		AMDGPU_GEM_DOMAIN_GTT : AMDGPU_GEM_DOMAIN_VRAM;
 	int ret;
 
-	da = kzalloc(sizeof(struct dal_allocation), GFP_KERNEL);
+	da = kzalloc_obj(struct dal_allocation);
 	if (!da)
 		return NULL;
 
@@ -2126,7 +2129,7 @@ static int amdgpu_dm_init(struct amdgpu_device *adev)
 	}
 	if (dc_is_dmub_outbox_supported(adev->dm.dc)) {
 		init_completion(&adev->dm.dmub_aux_transfer_done);
-		adev->dm.dmub_notify = kzalloc(sizeof(struct dmub_notification), GFP_KERNEL);
+		adev->dm.dmub_notify = kzalloc_obj(struct dmub_notification);
 		if (!adev->dm.dmub_notify) {
 			drm_info(adev_to_drm(adev), "fail to allocate adev->dm.dmub_notify");
 			goto error;
@@ -2521,7 +2524,7 @@ static int dm_dmub_sw_init(struct amdgpu_device *adev)
 	}
 
 
-	adev->dm.dmub_srv = kzalloc(sizeof(*adev->dm.dmub_srv), GFP_KERNEL);
+	adev->dm.dmub_srv = kzalloc_obj(*adev->dm.dmub_srv);
 	dmub_srv = adev->dm.dmub_srv;
 
 	if (!dmub_srv) {
@@ -2551,7 +2554,7 @@ static int dm_dmub_sw_init(struct amdgpu_device *adev)
 	fw_meta_info_params.fw_inst_const = adev->dm.dmub_fw->data +
 					    le32_to_cpu(hdr->header.ucode_array_offset_bytes) +
 					    PSP_HEADER_BYTES_256;
-	fw_meta_info_params.fw_bss_data = region_params.bss_data_size ? adev->dm.dmub_fw->data +
+	fw_meta_info_params.fw_bss_data = fw_meta_info_params.bss_data_size ? adev->dm.dmub_fw->data +
 					  le32_to_cpu(hdr->header.ucode_array_offset_bytes) +
 					  le32_to_cpu(hdr->inst_const_bytes) : NULL;
 	fw_meta_info_params.custom_psp_footer_size = 0;
@@ -2602,8 +2605,7 @@ static int dm_dmub_sw_init(struct amdgpu_device *adev)
 	memory_params.region_info = &region_info;
 	memory_params.window_memory_type = window_memory_type;
 
-	adev->dm.dmub_fb_info =
-		kzalloc(sizeof(*adev->dm.dmub_fb_info), GFP_KERNEL);
+	adev->dm.dmub_fb_info = kzalloc_obj(*adev->dm.dmub_fb_info);
 	fb_info = adev->dm.dmub_fb_info;
 
 	if (!fb_info) {
@@ -3359,7 +3361,7 @@ static void dm_gpureset_commit_state(struct dc_state *dc_state,
 	} *bundle __free(kfree);
 	int k, m;
 
-	bundle = kzalloc(sizeof(*bundle), GFP_KERNEL);
+	bundle = kzalloc_obj(*bundle);
 
 	if (!bundle) {
 		drm_err(dm->ddev, "Failed to allocate update bundle\n");
@@ -3927,7 +3929,7 @@ void amdgpu_dm_update_connector_after_detect(
 
 		if (!aconnector->timing_requested) {
 			aconnector->timing_requested =
-				kzalloc(sizeof(struct dc_crtc_timing), GFP_KERNEL);
+				kzalloc_obj(struct dc_crtc_timing);
 			if (!aconnector->timing_requested)
 				drm_err(dev,
 					"failed to create aconnector->requested_timing\n");
@@ -4156,8 +4158,7 @@ static void handle_hpd_irq(void *param)
 static void schedule_hpd_rx_offload_work(struct amdgpu_device *adev, struct hpd_rx_irq_offload_work_queue *offload_wq,
 							union hpd_irq_data hpd_irq_data)
 {
-	struct hpd_rx_irq_offload_work *offload_work =
-				kzalloc(sizeof(*offload_work), GFP_KERNEL);
+	struct hpd_rx_irq_offload_work *offload_work = kzalloc_obj(*offload_work);
 
 	if (!offload_work) {
 		drm_err(adev_to_drm(adev), "Failed to allocate hpd_rx_irq_offload_work.\n");
@@ -4878,7 +4879,7 @@ dm_atomic_duplicate_state(struct drm_private_obj *obj)
 {
 	struct dm_atomic_state *old_state, *new_state;
 
-	new_state = kzalloc(sizeof(*new_state), GFP_KERNEL);
+	new_state = kzalloc_obj(*new_state);
 	if (!new_state)
 		return NULL;
 
@@ -4935,7 +4936,7 @@ static int amdgpu_dm_mode_config_init(struct amdgpu_device *adev)
 	/* indicates support for immediate flip */
 	adev_to_drm(adev)->mode_config.async_page_flip = true;
 
-	state = kzalloc(sizeof(*state), GFP_KERNEL);
+	state = kzalloc_obj(*state);
 	if (!state)
 		return -ENOMEM;
 
@@ -5363,7 +5364,7 @@ static int initialize_plane(struct amdgpu_display_manager *dm,
 	unsigned long possible_crtcs;
 	int ret = 0;
 
-	plane = kzalloc(sizeof(struct drm_plane), GFP_KERNEL);
+	plane = kzalloc_obj(struct drm_plane);
 	if (!plane) {
 		drm_err(adev_to_drm(dm->adev), "KMS: Failed to allocate plane\n");
 		return -ENOMEM;
@@ -5602,7 +5603,7 @@ static int amdgpu_dm_initialize_drm_device(struct amdgpu_device *adev)
 		link = dc_get_link_at_index(dm->dc, i);
 
 		if (link->connector_signal == SIGNAL_TYPE_VIRTUAL) {
-			struct amdgpu_dm_wb_connector *wbcon = kzalloc(sizeof(*wbcon), GFP_KERNEL);
+			struct amdgpu_dm_wb_connector *wbcon = kzalloc_obj(*wbcon);
 
 			if (!wbcon) {
 				drm_err(adev_to_drm(adev), "KMS: Failed to allocate writeback connector\n");
@@ -5621,11 +5622,11 @@ static int amdgpu_dm_initialize_drm_device(struct amdgpu_device *adev)
 			continue;
 		}
 
-		aconnector = kzalloc(sizeof(*aconnector), GFP_KERNEL);
+		aconnector = kzalloc_obj(*aconnector);
 		if (!aconnector)
 			goto fail;
 
-		aencoder = kzalloc(sizeof(*aencoder), GFP_KERNEL);
+		aencoder = kzalloc_obj(*aencoder);
 		if (!aencoder)
 			goto fail;
 
@@ -7819,7 +7820,7 @@ void amdgpu_dm_connector_funcs_reset(struct drm_connector *connector)
 
 	kfree(state);
 
-	state = kzalloc(sizeof(*state), GFP_KERNEL);
+	state = kzalloc_obj(*state);
 
 	if (state) {
 		state->scaling = RMX_OFF;
@@ -9094,7 +9095,7 @@ static int amdgpu_dm_i2c_xfer(struct i2c_adapter *i2c_adap,
 	if (!ddc_service->ddc_pin)
 		return result;
 
-	cmd.payloads = kcalloc(num, sizeof(struct i2c_payload), GFP_KERNEL);
+	cmd.payloads = kzalloc_objs(struct i2c_payload, num);
 
 	if (!cmd.payloads)
 		return result;
@@ -9143,7 +9144,7 @@ create_i2c(struct ddc_service *ddc_service, bool oem)
 	struct amdgpu_device *adev = ddc_service->ctx->driver_context;
 	struct amdgpu_i2c_adapter *i2c;
 
-	i2c = kzalloc(sizeof(struct amdgpu_i2c_adapter), GFP_KERNEL);
+	i2c = kzalloc_obj(struct amdgpu_i2c_adapter);
 	if (!i2c)
 		return NULL;
 	i2c->base.owner = THIS_MODULE;
@@ -9944,7 +9945,7 @@ static void amdgpu_dm_commit_planes(struct drm_atomic_state *state,
 		struct dc_stream_update stream_update;
 	} *bundle;
 
-	bundle = kzalloc(sizeof(*bundle), GFP_KERNEL);
+	bundle = kzalloc_obj(*bundle);
 
 	if (!bundle) {
 		drm_err(dev, "Failed to allocate update bundle\n");
@@ -10619,7 +10620,7 @@ static void dm_set_writeback(struct amdgpu_display_manager *dm,
 	struct amdgpu_framebuffer *afb;
 	int i = 0;
 
-	wb_info = kzalloc(sizeof(*wb_info), GFP_KERNEL);
+	wb_info = kzalloc_obj(*wb_info);
 	if (!wb_info) {
 		drm_err(adev_to_drm(adev), "Failed to allocate wb_info\n");
 		return;
@@ -13118,7 +13119,7 @@ static void parse_edid_displayid_vrr(struct drm_connector *connector,
 	u16 min_vfreq;
 	u16 max_vfreq;
 
-	if (edid == NULL || edid->extensions == 0)
+	if (!edid || !edid->extensions)
 		return;
 
 	/* Find DisplayID extension */
@@ -13128,7 +13129,7 @@ static void parse_edid_displayid_vrr(struct drm_connector *connector,
 			break;
 	}
 
-	if (edid_ext == NULL)
+	if (i == edid->extensions)
 		return;
 
 	while (j < EDID_LENGTH) {

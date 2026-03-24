@@ -739,6 +739,12 @@ static int load_extent_tree_free(struct btrfs_caching_control *caching_ctl)
 
 	last = max_t(u64, block_group->start, BTRFS_SUPER_INFO_OFFSET);
 	extent_root = btrfs_extent_root(fs_info, last);
+	if (unlikely(!extent_root)) {
+		btrfs_err(fs_info,
+			  "missing extent root for block group at offset %llu",
+			  block_group->start);
+		return -EUCLEAN;
+	}
 
 #ifdef CONFIG_BTRFS_DEBUG
 	/*
@@ -947,7 +953,7 @@ int btrfs_cache_block_group(struct btrfs_block_group *cache, bool wait)
 	if (cache->flags & BTRFS_BLOCK_GROUP_REMAPPED)
 		return 0;
 
-	caching_ctl = kzalloc(sizeof(*caching_ctl), GFP_NOFS);
+	caching_ctl = kzalloc_obj(*caching_ctl, GFP_NOFS);
 	if (!caching_ctl)
 		return -ENOMEM;
 
@@ -1061,6 +1067,11 @@ static int remove_block_group_item(struct btrfs_trans_handle *trans,
 	int ret;
 
 	root = btrfs_block_group_root(fs_info);
+	if (unlikely(!root)) {
+		btrfs_err(fs_info, "missing block group root");
+		return -EUCLEAN;
+	}
+
 	key.objectid = block_group->start;
 	key.type = BTRFS_BLOCK_GROUP_ITEM_KEY;
 	key.offset = block_group->length;
@@ -1348,6 +1359,11 @@ struct btrfs_trans_handle *btrfs_start_trans_remove_block_group(
 	struct btrfs_root *root = btrfs_block_group_root(fs_info);
 	struct btrfs_chunk_map *map;
 	unsigned int num_items;
+
+	if (unlikely(!root)) {
+		btrfs_err(fs_info, "missing block group root");
+		return ERR_PTR(-EUCLEAN);
+	}
 
 	map = btrfs_find_chunk_map(fs_info, chunk_offset, 1);
 	ASSERT(map != NULL);
@@ -2140,6 +2156,11 @@ static int find_first_block_group(struct btrfs_fs_info *fs_info,
 	int ret;
 	struct btrfs_key found_key;
 
+	if (unlikely(!root)) {
+		btrfs_err(fs_info, "missing block group root");
+		return -EUCLEAN;
+	}
+
 	btrfs_for_each_slot(root, key, &found_key, path, ret) {
 		if (found_key.objectid >= key->objectid &&
 		    found_key.type == BTRFS_BLOCK_GROUP_ITEM_KEY) {
@@ -2312,12 +2333,11 @@ static struct btrfs_block_group *btrfs_create_block_group(
 {
 	struct btrfs_block_group *cache;
 
-	cache = kzalloc(sizeof(*cache), GFP_NOFS);
+	cache = kzalloc_obj(*cache, GFP_NOFS);
 	if (!cache)
 		return NULL;
 
-	cache->free_space_ctl = kzalloc(sizeof(*cache->free_space_ctl),
-					GFP_NOFS);
+	cache->free_space_ctl = kzalloc_obj(*cache->free_space_ctl, GFP_NOFS);
 	if (!cache->free_space_ctl) {
 		kfree(cache);
 		return NULL;
@@ -2714,6 +2734,11 @@ static int insert_block_group_item(struct btrfs_trans_handle *trans,
 	size_t size;
 	int ret;
 
+	if (unlikely(!root)) {
+		btrfs_err(fs_info, "missing block group root");
+		return -EUCLEAN;
+	}
+
 	spin_lock(&block_group->lock);
 	btrfs_set_stack_block_group_v2_used(&bgi, block_group->used);
 	btrfs_set_stack_block_group_v2_chunk_objectid(&bgi, block_group->global_root_id);
@@ -3049,6 +3074,11 @@ int btrfs_inc_block_group_ro(struct btrfs_block_group *cache,
 	int ret;
 	bool dirty_bg_running;
 
+	if (unlikely(!root)) {
+		btrfs_err(fs_info, "missing block group root");
+		return -EUCLEAN;
+	}
+
 	/*
 	 * This can only happen when we are doing read-only scrub on read-only
 	 * mount.
@@ -3192,6 +3222,11 @@ static int update_block_group_item(struct btrfs_trans_handle *trans,
 	u32 old_last_identity_remap_count;
 	u64 used, remap_bytes;
 	u32 identity_remap_count;
+
+	if (unlikely(!root)) {
+		btrfs_err(fs_info, "missing block group root");
+		return -EUCLEAN;
+	}
 
 	/*
 	 * Block group items update can be triggered out of commit transaction
@@ -3341,7 +3376,6 @@ again:
 		btrfs_abort_transaction(trans, ret);
 		goto out_put;
 	}
-	WARN_ON(ret);
 
 	/* We've already setup this transaction, go ahead and exit */
 	if (block_group->cache_generation == trans->transid &&

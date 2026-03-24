@@ -470,7 +470,7 @@ static int ceph_init_request(struct netfs_io_request *rreq, struct file *file)
 	if (rreq->origin != NETFS_READAHEAD)
 		return 0;
 
-	priv = kzalloc(sizeof(*priv), GFP_NOFS);
+	priv = kzalloc_obj(*priv, GFP_NOFS);
 	if (!priv)
 		return -ENOMEM;
 
@@ -1186,9 +1186,7 @@ static inline
 void __ceph_allocate_page_array(struct ceph_writeback_ctl *ceph_wbc,
 				unsigned int max_pages)
 {
-	ceph_wbc->pages = kmalloc_array(max_pages,
-					sizeof(*ceph_wbc->pages),
-					GFP_NOFS);
+	ceph_wbc->pages = kmalloc_objs(*ceph_wbc->pages, max_pages, GFP_NOFS);
 	if (!ceph_wbc->pages) {
 		ceph_wbc->from_pool = true;
 		ceph_wbc->pages = mempool_alloc(ceph_wb_pagevec_pool, GFP_NOFS);
@@ -1328,7 +1326,6 @@ void ceph_process_folio_batch(struct address_space *mapping,
 			continue;
 		} else if (rc == -E2BIG) {
 			folio_unlock(folio);
-			ceph_wbc->fbatch.folios[i] = NULL;
 			break;
 		}
 
@@ -2506,7 +2503,7 @@ static int __ceph_pool_perm_get(struct ceph_inode_info *ci,
 	}
 
 	pool_ns_len = pool_ns ? pool_ns->len : 0;
-	perm = kmalloc(struct_size(perm, pool_ns, pool_ns_len + 1), GFP_NOFS);
+	perm = kmalloc_flex(*perm, pool_ns, pool_ns_len + 1, GFP_NOFS);
 	if (!perm) {
 		err = -ENOMEM;
 		goto out_unlock;

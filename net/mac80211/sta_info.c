@@ -644,7 +644,7 @@ __sta_info_alloc(struct ieee80211_sub_if_data *sdata,
 	wiphy_work_init(&sta->ampdu_mlme.work, ieee80211_ba_session_work);
 #ifdef CONFIG_MAC80211_MESH
 	if (ieee80211_vif_is_mesh(&sdata->vif)) {
-		sta->mesh = kzalloc(sizeof(*sta->mesh), gfp);
+		sta->mesh = kzalloc_obj(*sta->mesh, gfp);
 		if (!sta->mesh)
 			goto free;
 		sta->mesh->plink_sta = sta;
@@ -903,7 +903,7 @@ static int sta_info_insert_finish(struct sta_info *sta) __acquires(RCU)
 		goto out_cleanup;
 	}
 
-	sinfo = kzalloc(sizeof(struct station_info), GFP_KERNEL);
+	sinfo = kzalloc_obj(struct station_info);
 	if (!sinfo) {
 		err = -ENOMEM;
 		goto out_cleanup;
@@ -1545,7 +1545,7 @@ static void __sta_info_destroy_part2(struct sta_info *sta, bool recalc)
 		}
 	}
 
-	sinfo = kzalloc(sizeof(*sinfo), GFP_KERNEL);
+	sinfo = kzalloc_obj(*sinfo);
 	if (sinfo)
 		sta_set_sinfo(sta, sinfo, true);
 
@@ -2782,7 +2782,9 @@ static void sta_set_link_sinfo(struct sta_info *sta,
 	}
 
 	link_sinfo->inactive_time =
-		jiffies_to_msecs(jiffies - ieee80211_sta_last_active(sta, link_id));
+		jiffies_delta_to_msecs(jiffies -
+				       ieee80211_sta_last_active(sta,
+								 link_id));
 
 	if (!(link_sinfo->filled & (BIT_ULL(NL80211_STA_INFO_TX_BYTES64) |
 				    BIT_ULL(NL80211_STA_INFO_TX_BYTES)))) {
@@ -3015,7 +3017,8 @@ void sta_set_sinfo(struct sta_info *sta, struct station_info *sinfo,
 	sinfo->connected_time = ktime_get_seconds() - sta->last_connected;
 	sinfo->assoc_at = sta->assoc_at;
 	sinfo->inactive_time =
-		jiffies_to_msecs(jiffies - ieee80211_sta_last_active(sta, -1));
+		jiffies_delta_to_msecs(jiffies -
+				       ieee80211_sta_last_active(sta, -1));
 
 	if (!(sinfo->filled & (BIT_ULL(NL80211_STA_INFO_TX_BYTES64) |
 			       BIT_ULL(NL80211_STA_INFO_TX_BYTES)))) {
@@ -3306,7 +3309,7 @@ int ieee80211_sta_allocate_link(struct sta_info *sta, unsigned int link_id)
 		    sta->link[link_id]))
 		return -EBUSY;
 
-	alloc = kzalloc(sizeof(*alloc), GFP_KERNEL);
+	alloc = kzalloc_obj(*alloc);
 	if (!alloc)
 		return -ENOMEM;
 

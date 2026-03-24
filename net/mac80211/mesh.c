@@ -79,6 +79,9 @@ bool mesh_matches_local(struct ieee80211_sub_if_data *sdata,
 	 *   - MDA enabled
 	 * - Power management control on fc
 	 */
+	if (!ie->mesh_config)
+		return false;
+
 	if (!(ifmsh->mesh_id_len == ie->mesh_id_len &&
 	     memcmp(ifmsh->mesh_id, ie->mesh_id, ie->mesh_id_len) == 0 &&
 	     (ifmsh->mesh_pp_id == ie->mesh_config->meshconf_psel) &&
@@ -178,7 +181,7 @@ int mesh_rmc_init(struct ieee80211_sub_if_data *sdata)
 {
 	int i;
 
-	sdata->u.mesh.rmc = kmalloc(sizeof(struct mesh_rmc), GFP_KERNEL);
+	sdata->u.mesh.rmc = kmalloc_obj(struct mesh_rmc);
 	if (!sdata->u.mesh.rmc)
 		return -ENOMEM;
 	sdata->u.mesh.rmc->idx_mask = RMC_BUCKETS - 1;
@@ -1560,8 +1563,7 @@ int ieee80211_mesh_csa_beacon(struct ieee80211_sub_if_data *sdata,
 
 	lockdep_assert_wiphy(sdata->local->hw.wiphy);
 
-	tmp_csa_settings = kmalloc(sizeof(*tmp_csa_settings),
-				   GFP_ATOMIC);
+	tmp_csa_settings = kmalloc_obj(*tmp_csa_settings, GFP_ATOMIC);
 	if (!tmp_csa_settings)
 		return -ENOMEM;
 
@@ -1634,6 +1636,9 @@ static void mesh_rx_csa_frame(struct ieee80211_sub_if_data *sdata,
 		return;
 
 	if (!mesh_matches_local(sdata, elems))
+		goto free;
+
+	if (!elems->mesh_chansw_params_ie)
 		goto free;
 
 	ifmsh->chsw_ttl = elems->mesh_chansw_params_ie->mesh_ttl;

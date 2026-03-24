@@ -83,7 +83,7 @@ void amdgpu_driver_unload_kms(struct drm_device *dev)
 {
 	struct amdgpu_device *adev = drm_to_adev(dev);
 
-	if (adev == NULL)
+	if (adev == NULL || !adev->num_ip_blocks)
 		return;
 
 	amdgpu_unregister_gpu_instance(adev);
@@ -942,7 +942,7 @@ out:
 		uint64_t vm_size;
 		uint32_t pcie_gen_mask, pcie_width_mask;
 
-		dev_info = kzalloc(sizeof(*dev_info), GFP_KERNEL);
+		dev_info = kzalloc_obj(*dev_info);
 		if (!dev_info)
 			return -ENOMEM;
 
@@ -1329,7 +1329,7 @@ out:
 			return -EINVAL;
 		}
 
-		caps = kzalloc(sizeof(*caps), GFP_KERNEL);
+		caps = kzalloc_obj(*caps);
 		if (!caps)
 			return -ENOMEM;
 

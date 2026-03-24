@@ -2243,7 +2243,7 @@ static int bpf_event_notify(struct notifier_block *nb, unsigned long op,
 
 	switch (op) {
 	case MODULE_STATE_COMING:
-		btm = kzalloc(sizeof(*btm), GFP_KERNEL);
+		btm = kzalloc_obj(*btm);
 		if (btm) {
 			btm->module = module;
 			list_add(&btm->list, &bpf_trace_modules);
@@ -2454,8 +2454,10 @@ static void bpf_kprobe_multi_show_fdinfo(const struct bpf_link *link,
 					 struct seq_file *seq)
 {
 	struct bpf_kprobe_multi_link *kmulti_link;
+	bool has_cookies;
 
 	kmulti_link = container_of(link, struct bpf_kprobe_multi_link, link);
+	has_cookies = !!kmulti_link->cookies;
 
 	seq_printf(seq,
 		   "kprobe_cnt:\t%u\n"
@@ -2467,7 +2469,7 @@ static void bpf_kprobe_multi_show_fdinfo(const struct bpf_link *link,
 	for (int i = 0; i < kmulti_link->cnt; i++) {
 		seq_printf(seq,
 			   "%llu\t %pS\n",
-			   kmulti_link->cookies[i],
+			   has_cookies ? kmulti_link->cookies[i] : 0,
 			   (void *)kmulti_link->addrs[i]);
 	}
 }
@@ -2819,7 +2821,7 @@ int bpf_kprobe_multi_link_attach(const union bpf_attr *attr, struct bpf_prog *pr
 		goto error;
 	}
 
-	link = kzalloc(sizeof(*link), GFP_KERNEL);
+	link = kzalloc_obj(*link);
 	if (!link) {
 		err = -ENOMEM;
 		goto error;
@@ -3238,8 +3240,8 @@ int bpf_uprobe_multi_link_attach(const union bpf_attr *attr, struct bpf_prog *pr
 
 	err = -ENOMEM;
 
-	link = kzalloc(sizeof(*link), GFP_KERNEL);
-	uprobes = kvcalloc(cnt, sizeof(*uprobes), GFP_KERNEL);
+	link = kzalloc_obj(*link);
+	uprobes = kvzalloc_objs(*uprobes, cnt);
 
 	if (!uprobes || !link)
 		goto error_free;

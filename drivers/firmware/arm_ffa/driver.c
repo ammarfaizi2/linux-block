@@ -205,12 +205,12 @@ static int ffa_rxtx_map(phys_addr_t tx_buf, phys_addr_t rx_buf, u32 pg_cnt)
 	return 0;
 }
 
-static int ffa_rxtx_unmap(u16 vm_id)
+static int ffa_rxtx_unmap(void)
 {
 	ffa_value_t ret;
 
 	invoke_ffa_fn((ffa_value_t){
-		      .a0 = FFA_RXTX_UNMAP, .a1 = PACK_TARGET_INFO(vm_id, 0),
+		      .a0 = FFA_RXTX_UNMAP,
 		      }, &ret);
 
 	if (ret.a0 == FFA_ERROR)
@@ -410,7 +410,7 @@ ffa_partition_probe(const uuid_t *uuid, struct ffa_partition_info **buffer)
 	if (count <= 0)
 		return count;
 
-	pbuf = kcalloc(count, sizeof(*pbuf), GFP_KERNEL);
+	pbuf = kzalloc_objs(*pbuf, count);
 	if (!pbuf)
 		return -ENOMEM;
 
@@ -1376,7 +1376,7 @@ static int __ffa_notify_request(struct ffa_device *dev, bool is_per_vcpu,
 	if (notify_id >= FFA_MAX_NOTIFICATIONS)
 		return -EINVAL;
 
-	cb_info = kzalloc(sizeof(*cb_info), GFP_KERNEL);
+	cb_info = kzalloc_obj(*cb_info);
 	if (!cb_info)
 		return -ENOMEM;
 
@@ -1647,7 +1647,7 @@ static int ffa_xa_add_partition_info(struct ffa_device *dev)
 		}
 	}
 
-	info = kzalloc(sizeof(*info), GFP_KERNEL);
+	info = kzalloc_obj(*info);
 	if (!info)
 		return ret;
 
@@ -1655,7 +1655,7 @@ static int ffa_xa_add_partition_info(struct ffa_device *dev)
 	info->dev = dev;
 
 	if (!phead) {
-		phead = kzalloc(sizeof(*phead), GFP_KERNEL);
+		phead = kzalloc_obj(*phead);
 		if (!phead)
 			goto free_out;
 
@@ -2039,7 +2039,7 @@ static int __init ffa_init(void)
 	if (ret)
 		return ret;
 
-	drv_info = kzalloc(sizeof(*drv_info), GFP_KERNEL);
+	drv_info = kzalloc_obj(*drv_info);
 	if (!drv_info)
 		return -ENOMEM;
 
@@ -2097,7 +2097,7 @@ static int __init ffa_init(void)
 
 	pr_err("failed to setup partitions\n");
 	ffa_notifications_cleanup();
-	ffa_rxtx_unmap(drv_info->vm_id);
+	ffa_rxtx_unmap();
 free_pages:
 	if (drv_info->tx_buffer)
 		free_pages_exact(drv_info->tx_buffer, rxtx_bufsz);
@@ -2112,7 +2112,7 @@ static void __exit ffa_exit(void)
 {
 	ffa_notifications_cleanup();
 	ffa_partitions_cleanup();
-	ffa_rxtx_unmap(drv_info->vm_id);
+	ffa_rxtx_unmap();
 	free_pages_exact(drv_info->tx_buffer, drv_info->rxtx_bufsz);
 	free_pages_exact(drv_info->rx_buffer, drv_info->rxtx_bufsz);
 	kfree(drv_info);

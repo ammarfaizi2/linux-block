@@ -172,7 +172,7 @@ kprobe_opcode_t *__get_insn_slot(struct kprobe_insn_cache *c)
 	} while (c->nr_garbage && collect_garbage_slots(c) == 0);
 
 	/* All out of space.  Need to allocate a new page. */
-	kip = kmalloc(struct_size(kip, slot_used, slots_per_page(c)), GFP_KERNEL);
+	kip = kmalloc_flex(*kip, slot_used, slots_per_page(c));
 	if (!kip)
 		return NULL;
 
@@ -900,7 +900,7 @@ static struct kprobe *alloc_aggr_kprobe(struct kprobe *p)
 {
 	struct optimized_kprobe *op;
 
-	op = kzalloc(sizeof(struct optimized_kprobe), GFP_KERNEL);
+	op = kzalloc_obj(struct optimized_kprobe);
 	if (!op)
 		return NULL;
 
@@ -1117,7 +1117,7 @@ static void free_aggr_kprobe(struct kprobe *p)
 
 static struct kprobe *alloc_aggr_kprobe(struct kprobe *p)
 {
-	return kzalloc(sizeof(struct kprobe), GFP_KERNEL);
+	return kzalloc_obj(struct kprobe);
 }
 #endif /* CONFIG_OPTPROBES */
 
@@ -1144,12 +1144,12 @@ static int __arm_kprobe_ftrace(struct kprobe *p, struct ftrace_ops *ops,
 	lockdep_assert_held(&kprobe_mutex);
 
 	ret = ftrace_set_filter_ip(ops, (unsigned long)p->addr, 0, 0);
-	if (WARN_ONCE(ret < 0, "Failed to arm kprobe-ftrace at %pS (error %d)\n", p->addr, ret))
+	if (ret < 0)
 		return ret;
 
 	if (*cnt == 0) {
 		ret = register_ftrace_function(ops);
-		if (WARN(ret < 0, "Failed to register kprobe-ftrace (error %d)\n", ret)) {
+		if (ret < 0) {
 			/*
 			 * At this point, sinec ops is not registered, we should be sefe from
 			 * registering empty filter.
@@ -1178,6 +1178,10 @@ static int __disarm_kprobe_ftrace(struct kprobe *p, struct ftrace_ops *ops,
 	int ret;
 
 	lockdep_assert_held(&kprobe_mutex);
+	if (unlikely(kprobe_ftrace_disabled)) {
+		/* Now ftrace is disabled forever, disarm is already done. */
+		return 0;
+	}
 
 	if (*cnt == 1) {
 		ret = unregister_ftrace_function(ops);
@@ -2295,7 +2299,7 @@ int register_kretprobe(struct kretprobe *rp)
 		rp->rh = NULL;
 	}
 #else	/* !CONFIG_KRETPROBE_ON_RETHOOK */
-	rp->rph = kzalloc(sizeof(struct kretprobe_holder), GFP_KERNEL);
+	rp->rph = kzalloc_obj(struct kretprobe_holder);
 	if (!rp->rph)
 		return -ENOMEM;
 
@@ -2499,7 +2503,7 @@ int kprobe_add_ksym_blacklist(unsigned long entry)
 	    !kallsyms_lookup_size_offset(entry, &size, &offset))
 		return -EINVAL;
 
-	ent = kmalloc(sizeof(*ent), GFP_KERNEL);
+	ent = kmalloc_obj(*ent);
 	if (!ent)
 		return -ENOMEM;
 	ent->start_addr = entry;

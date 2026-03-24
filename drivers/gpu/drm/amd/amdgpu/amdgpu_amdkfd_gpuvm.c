@@ -540,7 +540,7 @@ static uint64_t get_pte_flags(struct amdgpu_device *adev, struct amdgpu_vm *vm,
  */
 static struct sg_table *create_sg_table(uint64_t addr, uint32_t size)
 {
-	struct sg_table *sg = kmalloc(sizeof(*sg), GFP_KERNEL);
+	struct sg_table *sg = kmalloc_obj(*sg);
 
 	if (!sg)
 		return NULL;
@@ -573,7 +573,7 @@ kfd_mem_dmamap_userptr(struct kgd_mem *mem,
 	if (WARN_ON(ttm->num_pages != src_ttm->num_pages))
 		return -EINVAL;
 
-	ttm->sg = kmalloc(sizeof(*ttm->sg), GFP_KERNEL);
+	ttm->sg = kmalloc_obj(*ttm->sg);
 	if (unlikely(!ttm->sg))
 		return -ENOMEM;
 
@@ -1409,7 +1409,7 @@ static int init_kfd_vm(struct amdgpu_vm *vm, void **process_info,
 
 	process = container_of(process_info, struct kfd_process, kgd_process_info);
 	if (!*process_info) {
-		info = kzalloc(sizeof(*info), GFP_KERNEL);
+		info = kzalloc_obj(*info);
 		if (!info)
 			return -ENOMEM;
 
@@ -1439,7 +1439,10 @@ static int init_kfd_vm(struct amdgpu_vm *vm, void **process_info,
 		*process_info = info;
 	}
 
-	vm->process_info = *process_info;
+	if (cmpxchg(&vm->process_info, NULL, *process_info) != NULL) {
+		ret = -EINVAL;
+		goto already_acquired;
+	}
 
 	/* Validate page directory and attach eviction fence */
 	ret = amdgpu_bo_reserve(vm->root.bo, true);
@@ -1479,6 +1482,7 @@ validate_pd_fail:
 	amdgpu_bo_unreserve(vm->root.bo);
 reserve_pd_fail:
 	vm->process_info = NULL;
+already_acquired:
 	if (info) {
 		dma_fence_put(&info->eviction_fence->base);
 		*process_info = NULL;
@@ -1773,7 +1777,7 @@ int amdgpu_amdkfd_gpuvm_alloc_memory_of_gpu(
 	if (flags & KFD_IOC_ALLOC_MEM_FLAGS_UNCACHED)
 		alloc_flags |= AMDGPU_GEM_CREATE_UNCACHED;
 
-	*mem = kzalloc(sizeof(struct kgd_mem), GFP_KERNEL);
+	*mem = kzalloc_obj(struct kgd_mem);
 	if (!*mem) {
 		ret = -ENOMEM;
 		goto err;
@@ -2374,7 +2378,7 @@ static int import_obj_create(struct amdgpu_device *adev,
 		/* Only VRAM and GTT BOs are supported */
 		return -EINVAL;
 
-	*mem = kzalloc(sizeof(struct kgd_mem), GFP_KERNEL);
+	*mem = kzalloc_obj(struct kgd_mem);
 	if (!*mem)
 		return -ENOMEM;
 
@@ -3129,7 +3133,7 @@ int amdgpu_amdkfd_add_gws_to_process(void *info, void *gws, struct kgd_mem **mem
 	if (!info || !gws)
 		return -EINVAL;
 
-	*mem = kzalloc(sizeof(struct kgd_mem), GFP_KERNEL);
+	*mem = kzalloc_obj(struct kgd_mem);
 	if (!*mem)
 		return -ENOMEM;
 

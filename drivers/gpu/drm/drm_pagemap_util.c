@@ -65,18 +65,14 @@ static void drm_pagemap_cache_fini(void *arg)
 	drm_dbg(cache->shrinker->drm, "Destroying dpagemap cache.\n");
 	spin_lock(&cache->lock);
 	dpagemap = cache->dpagemap;
-	if (!dpagemap) {
-		spin_unlock(&cache->lock);
-		goto out;
-	}
+	cache->dpagemap = NULL;
+	if (dpagemap && !drm_pagemap_shrinker_cancel(dpagemap))
+		dpagemap = NULL;
+	spin_unlock(&cache->lock);
 
-	if (drm_pagemap_shrinker_cancel(dpagemap)) {
-		cache->dpagemap = NULL;
-		spin_unlock(&cache->lock);
+	if (dpagemap)
 		drm_pagemap_destroy(dpagemap, false);
-	}
 
-out:
 	mutex_destroy(&cache->lookup_mutex);
 	kfree(cache);
 }
@@ -94,7 +90,7 @@ out:
  */
 struct drm_pagemap_cache *drm_pagemap_cache_create_devm(struct drm_pagemap_shrinker *shrinker)
 {
-	struct drm_pagemap_cache *cache = kzalloc(sizeof(*cache), GFP_KERNEL);
+	struct drm_pagemap_cache *cache = kzalloc_obj(*cache);
 	int err;
 
 	if (!cache)
@@ -424,7 +420,7 @@ struct drm_pagemap_shrinker *drm_pagemap_shrinker_create_devm(struct drm_device 
 	struct shrinker *shrink;
 	int err;
 
-	shrinker = kzalloc(sizeof(*shrinker), GFP_KERNEL);
+	shrinker = kzalloc_obj(*shrinker);
 	if (!shrinker)
 		return ERR_PTR(-ENOMEM);
 
@@ -548,7 +544,7 @@ int drm_pagemap_acquire_owner(struct drm_pagemap_peer *peer,
 	}
 
 	if (!interconnect) {
-		owner = kmalloc(sizeof(*owner), GFP_KERNEL);
+		owner = kmalloc_obj(*owner);
 		if (!owner) {
 			mutex_unlock(&owner_list->lock);
 			return -ENOMEM;

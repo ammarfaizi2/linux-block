@@ -984,6 +984,13 @@ static noinline int replay_one_extent(struct walk_control *wc)
 
 		sums = list_first_entry(&ordered_sums, struct btrfs_ordered_sum, list);
 		csum_root = btrfs_csum_root(fs_info, sums->logical);
+		if (unlikely(!csum_root)) {
+			btrfs_err(fs_info,
+				  "missing csum root for extent at bytenr %llu",
+				  sums->logical);
+			ret = -EUCLEAN;
+		}
+
 		if (!ret) {
 			ret = btrfs_del_csums(trans, csum_root, sums->logical,
 					      sums->len);
@@ -4890,6 +4897,13 @@ static noinline int copy_items(struct btrfs_trans_handle *trans,
 		}
 
 		csum_root = btrfs_csum_root(trans->fs_info, disk_bytenr);
+		if (unlikely(!csum_root)) {
+			btrfs_err(trans->fs_info,
+				  "missing csum root for extent at bytenr %llu",
+				  disk_bytenr);
+			return -EUCLEAN;
+		}
+
 		disk_bytenr += extent_offset;
 		ret = btrfs_lookup_csums_list(csum_root, disk_bytenr,
 					      disk_bytenr + extent_num_bytes - 1,
@@ -5086,6 +5100,13 @@ static int log_extent_csums(struct btrfs_trans_handle *trans,
 	/* block start is already adjusted for the file extent offset. */
 	block_start = btrfs_extent_map_block_start(em);
 	csum_root = btrfs_csum_root(trans->fs_info, block_start);
+	if (unlikely(!csum_root)) {
+		btrfs_err(trans->fs_info,
+			  "missing csum root for extent at bytenr %llu",
+			  block_start);
+		return -EUCLEAN;
+	}
+
 	ret = btrfs_lookup_csums_list(csum_root, block_start + csum_offset,
 				      block_start + csum_offset + csum_len - 1,
 				      &ordered_sums, false);
@@ -5928,7 +5949,7 @@ again:
 			if (ret)
 				goto out;
 			if (ctx->log_new_dentries) {
-				dir_elem = kmalloc(sizeof(*dir_elem), GFP_NOFS);
+				dir_elem = kmalloc_obj(*dir_elem, GFP_NOFS);
 				if (!dir_elem) {
 					ret = -ENOMEM;
 					goto out;
@@ -6122,7 +6143,7 @@ static int add_conflicting_inode(struct btrfs_trans_handle *trans,
 			return ret;
 
 		/* Conflicting inode is a directory, so we'll log its parent. */
-		ino_elem = kmalloc(sizeof(*ino_elem), GFP_NOFS);
+		ino_elem = kmalloc_obj(*ino_elem, GFP_NOFS);
 		if (!ino_elem)
 			return -ENOMEM;
 		ino_elem->ino = ino;
@@ -6180,7 +6201,7 @@ static int add_conflicting_inode(struct btrfs_trans_handle *trans,
 
 	btrfs_add_delayed_iput(inode);
 
-	ino_elem = kmalloc(sizeof(*ino_elem), GFP_NOFS);
+	ino_elem = kmalloc_obj(*ino_elem, GFP_NOFS);
 	if (!ino_elem)
 		return -ENOMEM;
 	ino_elem->ino = ino;
@@ -6195,6 +6216,7 @@ static int log_conflicting_inodes(struct btrfs_trans_handle *trans,
 				  struct btrfs_root *root,
 				  struct btrfs_log_ctx *ctx)
 {
+	const bool orig_log_new_dentries = ctx->log_new_dentries;
 	int ret = 0;
 
 	/*
@@ -6256,7 +6278,11 @@ static int log_conflicting_inodes(struct btrfs_trans_handle *trans,
 			 * dir index key range logged for the directory. So we
 			 * must make sure the deletion is recorded.
 			 */
+			ctx->log_new_dentries = false;
 			ret = btrfs_log_inode(trans, inode, LOG_INODE_ALL, ctx);
+			if (!ret && ctx->log_new_dentries)
+				ret = log_new_dir_dentries(trans, inode, ctx);
+
 			btrfs_add_delayed_iput(inode);
 			if (ret)
 				break;
@@ -6291,6 +6317,7 @@ static int log_conflicting_inodes(struct btrfs_trans_handle *trans,
 			break;
 	}
 
+	ctx->log_new_dentries = orig_log_new_dentries;
 	ctx->logging_conflict_inodes = false;
 	if (ret)
 		free_conflicting_inodes(ctx);

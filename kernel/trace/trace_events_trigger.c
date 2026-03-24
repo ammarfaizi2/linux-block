@@ -50,6 +50,9 @@ static int trigger_kthread_fn(void *ignore)
 
 void trigger_data_free(struct event_trigger_data *data)
 {
+	if (!data)
+		return;
+
 	if (data->cmd_ops->set_filter)
 		data->cmd_ops->set_filter(NULL, data, NULL);
 
@@ -914,7 +917,7 @@ struct event_trigger_data *trigger_data_alloc(struct event_command *cmd_ops,
 {
 	struct event_trigger_data *trigger_data;
 
-	trigger_data = kzalloc(sizeof(*trigger_data), GFP_KERNEL);
+	trigger_data = kzalloc_obj(*trigger_data);
 	if (!trigger_data)
 		return NULL;
 
@@ -1724,7 +1727,7 @@ int event_enable_trigger_parse(struct event_command *cmd_ops,
 #endif
 	ret = -ENOMEM;
 
-	enable_data = kzalloc(sizeof(*enable_data), GFP_KERNEL);
+	enable_data = kzalloc_obj(*enable_data);
 	if (!enable_data)
 		return ret;
 

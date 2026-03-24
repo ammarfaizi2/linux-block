@@ -555,7 +555,7 @@ static bool update_marker_trace(struct trace_array *tr, int enabled)
 	lockdep_assert_held(&event_mutex);
 
 	if (enabled) {
-		if (!list_empty(&tr->marker_list))
+		if (tr->trace_flags & TRACE_ITER(COPY_MARKER))
 			return false;
 
 		list_add_rcu(&tr->marker_list, &marker_copies);
@@ -563,10 +563,10 @@ static bool update_marker_trace(struct trace_array *tr, int enabled)
 		return true;
 	}
 
-	if (list_empty(&tr->marker_list))
+	if (!(tr->trace_flags & TRACE_ITER(COPY_MARKER)))
 		return false;
 
-	list_del_init(&tr->marker_list);
+	list_del_rcu(&tr->marker_list);
 	tr->trace_flags &= ~TRACE_ITER(COPY_MARKER);
 	return true;
 }
@@ -1064,7 +1064,7 @@ int tracing_snapshot_cond_enable(struct trace_array *tr, void *cond_data,
 				 cond_update_fn_t update)
 {
 	struct cond_snapshot *cond_snapshot __free(kfree) =
-		kzalloc(sizeof(*cond_snapshot), GFP_KERNEL);
+		kzalloc_obj(*cond_snapshot);
 	int ret;
 
 	if (!cond_snapshot)
@@ -3903,8 +3903,7 @@ __tracing_open(struct inode *inode, struct file *file, bool snapshot)
 	if (!iter)
 		return ERR_PTR(-ENOMEM);
 
-	iter->buffer_iter = kcalloc(nr_cpu_ids, sizeof(*iter->buffer_iter),
-				    GFP_KERNEL);
+	iter->buffer_iter = kzalloc_objs(*iter->buffer_iter, nr_cpu_ids);
 	if (!iter->buffer_iter)
 		goto release;
 
@@ -5132,7 +5131,7 @@ trace_insert_eval_map_file(struct module *mod, struct trace_eval_map **start,
 	 * where the head holds the module and length of array, and the
 	 * tail holds a pointer to the next list.
 	 */
-	map_array = kmalloc_array(len + 2, sizeof(*map_array), GFP_KERNEL);
+	map_array = kmalloc_objs(*map_array, len + 2);
 	if (!map_array) {
 		pr_warn("Unable to allocate trace eval mapping\n");
 		return;
@@ -5809,7 +5808,7 @@ static int tracing_open_pipe(struct inode *inode, struct file *filp)
 		goto fail_pipe_on_cpu;
 
 	/* create a buffer to store the information to pass to userspace */
-	iter = kzalloc(sizeof(*iter), GFP_KERNEL);
+	iter = kzalloc_obj(*iter);
 	if (!iter) {
 		ret = -ENOMEM;
 		goto fail_alloc_iter;
@@ -6628,7 +6627,7 @@ static int user_buffer_init(struct trace_user_buf_info **tinfo, size_t size)
 
 	if (!*tinfo) {
 		alloc = true;
-		*tinfo = kzalloc(sizeof(**tinfo), GFP_KERNEL);
+		*tinfo = kzalloc_obj(**tinfo);
 		if (!*tinfo)
 			return -ENOMEM;
 	}
@@ -6784,6 +6783,23 @@ char *trace_user_fault_read(struct trace_user_buf_info *tinfo,
 	 */
 
 	do {
+		/*
+		 * It is possible that something is trying to migrate this
+		 * task. What happens then, is when preemption is enabled,
+		 * the migration thread will preempt this task, try to
+		 * migrate it, fail, then let it run again. That will
+		 * cause this to loop again and never succeed.
+		 * On failures, enabled and disable preemption with
+		 * migration enabled, to allow the migration thread to
+		 * migrate this task.
+		 */
+		if (trys) {
+			preempt_enable_notrace();
+			preempt_disable_notrace();
+			cpu = smp_processor_id();
+			buffer = per_cpu_ptr(tinfo->tbuf, cpu)->buf;
+		}
+
 		/*
 		 * If for some reason, copy_from_user() always causes a context
 		 * switch, this would then cause an infinite loop.
@@ -7153,10 +7169,10 @@ static int tracing_snapshot_open(struct inode *inode, struct file *file)
 	} else {
 		/* Writes still need the seq_file to hold the private data */
 		ret = -ENOMEM;
-		m = kzalloc(sizeof(*m), GFP_KERNEL);
+		m = kzalloc_obj(*m);
 		if (!m)
 			goto out;
-		iter = kzalloc(sizeof(*iter), GFP_KERNEL);
+		iter = kzalloc_obj(*iter);
 		if (!iter) {
 			kfree(m);
 			goto out;
@@ -7545,7 +7561,7 @@ static struct tracing_log_err *alloc_tracing_log_err(int len)
 {
 	struct tracing_log_err *err;
 
-	err = kzalloc(sizeof(*err), GFP_KERNEL);
+	err = kzalloc_obj(*err);
 	if (!err)
 		return ERR_PTR(-ENOMEM);
 
@@ -7804,7 +7820,7 @@ static int tracing_buffers_open(struct inode *inode, struct file *filp)
 	if (ret)
 		return ret;
 
-	info = kvzalloc(sizeof(*info), GFP_KERNEL);
+	info = kvzalloc_obj(*info);
 	if (!info) {
 		trace_array_put(tr);
 		return -ENOMEM;
@@ -8065,7 +8081,7 @@ tracing_buffers_splice_read(struct file *file, loff_t *ppos,
 		struct page *page;
 		int r;
 
-		ref = kzalloc(sizeof(*ref), GFP_KERNEL);
+		ref = kzalloc_obj(*ref);
 		if (!ref) {
 			ret = -ENOMEM;
 			break;
@@ -8214,6 +8230,18 @@ static inline int get_snapshot_map(struct trace_array *tr) { return 0; }
 static inline void put_snapshot_map(struct trace_array *tr) { }
 #endif
 
+/*
+ * This is called when a VMA is duplicated (e.g., on fork()) to increment
+ * the user_mapped counter without remapping pages.
+ */
+static void tracing_buffers_mmap_open(struct vm_area_struct *vma)
+{
+	struct ftrace_buffer_info *info = vma->vm_file->private_data;
+	struct trace_iterator *iter = &info->iter;
+
+	ring_buffer_map_dup(iter->array_buffer->buffer, iter->cpu_file);
+}
+
 static void tracing_buffers_mmap_close(struct vm_area_struct *vma)
 {
 	struct ftrace_buffer_info *info = vma->vm_file->private_data;
@@ -8233,6 +8261,7 @@ static int tracing_buffers_may_split(struct vm_area_struct *vma, unsigned long a
 }
 
 static const struct vm_operations_struct tracing_buffers_vmops = {
+	.open		= tracing_buffers_mmap_open,
 	.close		= tracing_buffers_mmap_close,
 	.may_split      = tracing_buffers_may_split,
 };
@@ -8284,7 +8313,7 @@ tracing_stats_read(struct file *filp, char __user *ubuf,
 	unsigned long long t;
 	unsigned long usec_rem;
 
-	s = kmalloc(sizeof(*s), GFP_KERNEL);
+	s = kmalloc_obj(*s);
 	if (!s)
 		return -ENOMEM;
 
@@ -8878,7 +8907,7 @@ create_trace_option_files(struct trace_array *tr, struct tracer *tracer,
 	for (cnt = 0; opts[cnt].name; cnt++)
 		;
 
-	topts = kcalloc(cnt + 1, sizeof(*topts), GFP_KERNEL);
+	topts = kzalloc_objs(*topts, cnt + 1);
 	if (!topts)
 		return 0;
 
@@ -8950,7 +8979,7 @@ static int add_tracer(struct trace_array *tr, struct tracer *tracer)
 	if (!trace_ok_for_array(tracer, tr))
 		return 0;
 
-	t = kmalloc(sizeof(*t), GFP_KERNEL);
+	t = kmalloc_obj(*t);
 	if (!t)
 		return -ENOMEM;
 
@@ -8967,7 +8996,7 @@ static int add_tracer(struct trace_array *tr, struct tracer *tracer)
 		 * If the tracer defines default flags, it means the flags are
 		 * per trace instance.
 		 */
-		flags = kmalloc(sizeof(*flags), GFP_KERNEL);
+		flags = kmalloc_obj(*flags);
 		if (!flags)
 			return -ENOMEM;
 
@@ -9310,7 +9339,7 @@ static void setup_trace_scratch(struct trace_array *tr,
 	       mod_addr_comp, NULL, NULL);
 
 	if (IS_ENABLED(CONFIG_MODULES)) {
-		module_delta = kzalloc(struct_size(module_delta, delta, nr_entries), GFP_KERNEL);
+		module_delta = kzalloc_flex(*module_delta, delta, nr_entries);
 		if (!module_delta) {
 			pr_info("module_delta allocation failed. Not able to decode module address.");
 			goto reset;
@@ -9338,7 +9367,7 @@ static void setup_trace_scratch(struct trace_array *tr,
 }
 
 static int
-allocate_trace_buffer(struct trace_array *tr, struct array_buffer *buf, int size)
+allocate_trace_buffer(struct trace_array *tr, struct array_buffer *buf, unsigned long size)
 {
 	enum ring_buffer_flags rb_flags;
 	struct trace_scratch *tscratch;
@@ -9393,7 +9422,7 @@ static void free_trace_buffer(struct array_buffer *buf)
 	}
 }
 
-static int allocate_trace_buffers(struct trace_array *tr, int size)
+static int allocate_trace_buffers(struct trace_array *tr, unsigned long size)
 {
 	int ret;
 
@@ -9537,7 +9566,7 @@ trace_array_create_systems(const char *name, const char *systems,
 	int ret;
 
 	ret = -ENOMEM;
-	tr = kzalloc(sizeof(*tr), GFP_KERNEL);
+	tr = kzalloc_obj(*tr);
 	if (!tr)
 		return ERR_PTR(ret);
 
@@ -9732,17 +9761,18 @@ static int __remove_instance(struct trace_array *tr)
 
 	list_del(&tr->list);
 
+	if (printk_trace == tr)
+		update_printk_trace(&global_trace);
+
+	/* Must be done before disabling all the flags */
+	if (update_marker_trace(tr, 0))
+		synchronize_rcu();
+
 	/* Disable all the flags that were enabled coming in */
 	for (i = 0; i < TRACE_FLAGS_MAX_SIZE; i++) {
 		if ((1ULL << i) & ZEROED_TRACE_FLAGS)
 			set_tracer_flag(tr, 1ULL << i, 0);
 	}
-
-	if (printk_trace == tr)
-		update_printk_trace(&global_trace);
-
-	if (update_marker_trace(tr, 0))
-		synchronize_rcu();
 
 	tracing_set_nop(tr);
 	clear_ftrace_function_probes(tr);
@@ -10757,7 +10787,7 @@ __init static void enable_instances(void)
 
 __init static int tracer_alloc_buffers(void)
 {
-	int ring_buf_size;
+	unsigned long ring_buf_size;
 	int ret = -ENOMEM;
 
 
@@ -10928,8 +10958,7 @@ void __init ftrace_boot_snapshot(void)
 void __init early_trace_init(void)
 {
 	if (tracepoint_printk) {
-		tracepoint_print_iter =
-			kzalloc(sizeof(*tracepoint_print_iter), GFP_KERNEL);
+		tracepoint_print_iter = kzalloc_obj(*tracepoint_print_iter);
 		if (MEM_FAIL(!tracepoint_print_iter,
 			     "Failed to allocate trace iterator\n"))
 			tracepoint_printk = 0;

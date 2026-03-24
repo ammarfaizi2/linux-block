@@ -109,22 +109,8 @@ bool aa_rawdata_eq(struct aa_loaddata *l, struct aa_loaddata *r)
 	return memcmp(l->data, r->data, r->compressed_size ?: r->size) == 0;
 }
 
-/*
- * need to take the ns mutex lock which is NOT safe most places that
- * put_loaddata is called, so we have to delay freeing it
- */
-static void do_loaddata_free(struct work_struct *work)
+static void do_loaddata_free(struct aa_loaddata *d)
 {
-	struct aa_loaddata *d = container_of(work, struct aa_loaddata, work);
-	struct aa_ns *ns = aa_get_ns(d->ns);
-
-	if (ns) {
-		mutex_lock_nested(&ns->lock, ns->level);
-		__aa_fs_remove_rawdata(d);
-		mutex_unlock(&ns->lock);
-		aa_put_ns(ns);
-	}
-
 	kfree_sensitive(d->hash);
 	kfree_sensitive(d->name);
 	kvfree(d->data);
@@ -133,10 +119,38 @@ static void do_loaddata_free(struct work_struct *work)
 
 void aa_loaddata_kref(struct kref *kref)
 {
-	struct aa_loaddata *d = container_of(kref, struct aa_loaddata, count);
+	struct aa_loaddata *d = container_of(kref, struct aa_loaddata,
+					     count.count);
+
+	do_loaddata_free(d);
+}
+
+/*
+ * need to take the ns mutex lock which is NOT safe most places that
+ * put_loaddata is called, so we have to delay freeing it
+ */
+static void do_ploaddata_rmfs(struct work_struct *work)
+{
+	struct aa_loaddata *d = container_of(work, struct aa_loaddata, work);
+	struct aa_ns *ns = aa_get_ns(d->ns);
+
+	if (ns) {
+		mutex_lock_nested(&ns->lock, ns->level);
+		/* remove fs ref to loaddata */
+		__aa_fs_remove_rawdata(d);
+		mutex_unlock(&ns->lock);
+		aa_put_ns(ns);
+	}
+	/* called by dropping last pcount, so drop its associated icount */
+	aa_put_i_loaddata(d);
+}
+
+void aa_ploaddata_kref(struct kref *kref)
+{
+	struct aa_loaddata *d = container_of(kref, struct aa_loaddata, pcount);
 
 	if (d) {
-		INIT_WORK(&d->work, do_loaddata_free);
+		INIT_WORK(&d->work, do_ploaddata_rmfs);
 		schedule_work(&d->work);
 	}
 }
@@ -145,7 +159,7 @@ struct aa_loaddata *aa_loaddata_alloc(size_t size)
 {
 	struct aa_loaddata *d;
 
-	d = kzalloc(sizeof(*d), GFP_KERNEL);
+	d = kzalloc_obj(*d);
 	if (d == NULL)
 		return ERR_PTR(-ENOMEM);
 	d->data = kvzalloc(size, GFP_KERNEL);
@@ -153,7 +167,9 @@ struct aa_loaddata *aa_loaddata_alloc(size_t size)
 		kfree(d);
 		return ERR_PTR(-ENOMEM);
 	}
-	kref_init(&d->count);
+	kref_init(&d->count.count);
+	d->count.reftype = REF_RAWDATA;
+	kref_init(&d->pcount);
 	INIT_LIST_HEAD(&d->list);
 
 	return d;
@@ -528,8 +544,7 @@ static int unpack_strs_table(struct aa_ext *e, const char *name, bool multi,
 			 * for size check here
 			 */
 			goto fail;
-		table = kcalloc(size, sizeof(struct aa_str_table_ent),
-				GFP_KERNEL);
+		table = kzalloc_objs(struct aa_str_table_ent, size);
 		if (!table) {
 			error = -ENOMEM;
 			goto fail;
@@ -612,8 +627,7 @@ static bool unpack_secmark(struct aa_ext *e, struct aa_ruleset *rules)
 		if (!aa_unpack_array(e, NULL, &size))
 			goto fail;
 
-		rules->secmark = kcalloc(size, sizeof(struct aa_secmark),
-					   GFP_KERNEL);
+		rules->secmark = kzalloc_objs(struct aa_secmark, size);
 		if (!rules->secmark)
 			goto fail;
 
@@ -810,7 +824,7 @@ static int unpack_tag_headers(struct aa_ext *e, struct aa_tags_struct *tags)
 
 	if (!aa_unpack_array(e, "hdrs", &size))
 		goto fail_reset;
-	hdrs = kcalloc(size, sizeof(struct aa_tags_header), GFP_KERNEL);
+	hdrs = kzalloc_objs(struct aa_tags_header, size);
 	if (!hdrs) {
 		error = -ENOMEM;
 		goto fail_reset;
@@ -923,7 +937,7 @@ static ssize_t unpack_perms_table(struct aa_ext *e, struct aa_perms **perms)
 			goto fail_reset;
 		if (!aa_unpack_array(e, NULL, &size))
 			goto fail_reset;
-		*perms = kcalloc(size, sizeof(struct aa_perms), GFP_KERNEL);
+		*perms = kzalloc_objs(struct aa_perms, size);
 		if (!*perms) {
 			e->pos = pos;
 			return -ENOMEM;
@@ -1012,7 +1026,17 @@ static int unpack_pdb(struct aa_ext *e, struct aa_policydb **policy,
 		if (!aa_unpack_u32(e, &pdb->start[AA_CLASS_FILE], "dfa_start")) {
 			/* default start state for xmatch and file dfa */
 			pdb->start[AA_CLASS_FILE] = DFA_START;
-		}	/* setup class index */
+		}
+
+		size_t state_count = pdb->dfa->tables[YYTD_ID_BASE]->td_lolen;
+
+		if (pdb->start[0] >= state_count ||
+		    pdb->start[AA_CLASS_FILE] >= state_count) {
+			*info = "invalid dfa start state";
+			goto fail;
+		}
+
+		/* setup class index */
 		for (i = AA_CLASS_FILE + 1; i <= AA_CLASS_LAST; i++) {
 			pdb->start[i] = aa_dfa_next(pdb->dfa, pdb->start[0],
 						    i);
@@ -1321,7 +1345,7 @@ static struct aa_profile *unpack_profile(struct aa_ext *e, char **ns_name)
 	error = -EPROTO;
 	if (aa_unpack_nameX(e, AA_STRUCT, "data")) {
 		info = "out of memory";
-		profile->data = kzalloc(sizeof(*profile->data), GFP_KERNEL);
+		profile->data = kzalloc_obj(*profile->data);
 		if (!profile->data) {
 			error = -ENOMEM;
 			goto fail;
@@ -1339,7 +1363,7 @@ static struct aa_profile *unpack_profile(struct aa_ext *e, char **ns_name)
 		}
 
 		while (aa_unpack_strdup(e, &key, NULL)) {
-			data = kzalloc(sizeof(*data), GFP_KERNEL);
+			data = kzalloc_obj(*data);
 			if (!data) {
 				kfree_sensitive(key);
 				error = -ENOMEM;
@@ -1411,7 +1435,6 @@ static int verify_header(struct aa_ext *e, int required, const char **ns)
 {
 	int error = -EPROTONOSUPPORT;
 	const char *name = NULL;
-	*ns = NULL;
 
 	/* get the interface version */
 	if (!aa_unpack_u32(e, &e->version, "version")) {
@@ -1584,7 +1607,7 @@ void aa_load_ent_free(struct aa_load_ent *ent)
 
 struct aa_load_ent *aa_load_ent_alloc(void)
 {
-	struct aa_load_ent *ent = kzalloc(sizeof(*ent), GFP_KERNEL);
+	struct aa_load_ent *ent = kzalloc_obj(*ent);
 	if (ent)
 		INIT_LIST_HEAD(&ent->list);
 	return ent;
