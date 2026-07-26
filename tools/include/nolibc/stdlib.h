@@ -32,22 +32,28 @@ static __attribute__((unused)) char itoa_buffer[21];
  * As much as possible, please keep functions alphabetically sorted.
  */
 
+/*
+ * The absolute value of the smallest negative value is not representable in
+ * the result type. Negate in the unsigned type so that the overflow is
+ * defined and return it unchanged, like the other libcs do.
+ */
+
 static __inline__
 int abs(int j)
 {
-	return j >= 0 ? j : -j;
+	return j >= 0 ? j : (int)-(unsigned int)j;
 }
 
 static __inline__
 long labs(long j)
 {
-	return j >= 0 ? j : -j;
+	return j >= 0 ? j : (long)-(unsigned long)j;
 }
 
 static __inline__
 long long llabs(long long j)
 {
-	return j >= 0 ? j : -j;
+	return j >= 0 ? j : (long long)-(unsigned long long)j;
 }
 
 /* must be exported, as it's used by libgcc for various divide functions */
