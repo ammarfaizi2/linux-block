@@ -1728,6 +1728,52 @@ int test_alloca(void)
 	return *x - 0x1234;
 }
 
+/* abs(), labs() and llabs() over the whole range of their argument type */
+int test_abs_range(void)
+{
+	int i, ri;
+	long l, rl;
+	long long ll, rll;
+
+	/*
+	 * Both the inputs and the results have to stay opaque: the compiler
+	 * knows abs() and friends never return a negative value and would
+	 * otherwise fold the comparisons below at build time, which would also
+	 * hide the undefined behavior that is being tested for.
+	 */
+	i = INT_MIN; l = LONG_MIN; ll = LLONG_MIN;
+	__asm__ ("" : "+r" (i), "+r" (l), "+r" (ll));
+	ri = abs(i); rl = labs(l); rll = llabs(ll);
+	__asm__ ("" : "+r" (ri), "+r" (rl), "+r" (rll));
+	/* the absolute value is not representable, the input is returned */
+	if (ri != INT_MIN || rl != LONG_MIN || rll != LLONG_MIN)
+		return 1;
+
+	i = INT_MIN + 1; l = LONG_MIN + 1; ll = LLONG_MIN + 1;
+	__asm__ ("" : "+r" (i), "+r" (l), "+r" (ll));
+	ri = abs(i); rl = labs(l); rll = llabs(ll);
+	__asm__ ("" : "+r" (ri), "+r" (rl), "+r" (rll));
+	if (ri != INT_MAX || rl != LONG_MAX || rll != LLONG_MAX)
+		return 2;
+
+	i = -42; l = -42; ll = -42;
+	__asm__ ("" : "+r" (i), "+r" (l), "+r" (ll));
+	if (abs(i) != 42 || labs(l) != 42 || llabs(ll) != 42)
+		return 3;
+
+	i = 0; l = 0; ll = 0;
+	__asm__ ("" : "+r" (i), "+r" (l), "+r" (ll));
+	if (abs(i) != 0 || labs(l) != 0 || llabs(ll) != 0)
+		return 4;
+
+	i = INT_MAX; l = LONG_MAX; ll = LLONG_MAX;
+	__asm__ ("" : "+r" (i), "+r" (l), "+r" (ll));
+	if (abs(i) != INT_MAX || labs(l) != LONG_MAX || llabs(ll) != LLONG_MAX)
+		return 5;
+
+	return 0;
+}
+
 int test_difftime(void)
 {
 	if (difftime(200., 100.) != 100.)
@@ -1943,6 +1989,7 @@ int run_stdlib(int min, int max)
 		CASE_TEST(toupper_noop);            EXPECT_EQ(1, toupper('A'), 'A'); break;
 		CASE_TEST(abs);                     EXPECT_EQ(1, abs(-10), 10); break;
 		CASE_TEST(abs_noop);                EXPECT_EQ(1, abs(10), 10); break;
+		CASE_TEST(abs_range);               EXPECT_ZR(1, test_abs_range()); break;
 		CASE_TEST(alloca);                  EXPECT_ZR(1, test_alloca()); break;
 		CASE_TEST(difftime);                EXPECT_ZR(1, test_difftime()); break;
 		CASE_TEST(memchr_foobar6_o);        EXPECT_STREQ(1, memchr("foobar", 'o', 6), "oobar"); break;
