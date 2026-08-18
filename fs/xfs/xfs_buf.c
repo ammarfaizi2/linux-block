@@ -80,7 +80,7 @@ xfs_buf_stale(
 
 	spin_lock(&bp->b_lockref.lock);
 	atomic_set(&bp->b_lru_ref, 0);
-	if (!__lockref_is_dead(&bp->b_lockref))
+	if (!lockref_is_dead(&bp->b_lockref))
 		list_lru_del_obj(&bp->b_target->bt_lru, &bp->b_lru);
 	spin_unlock(&bp->b_lockref.lock);
 }
@@ -841,7 +841,7 @@ static void
 xfs_buf_destroy(
 	struct xfs_buf		*bp)
 {
-	ASSERT(__lockref_is_dead(&bp->b_lockref));
+	ASSERT(lockref_is_dead(&bp->b_lockref));
 	ASSERT(!(bp->b_flags & _XBF_DELWRI_Q));
 
 	if (bp->b_pag)
@@ -1631,7 +1631,7 @@ xfs_free_buftarg(
 	fs_put_dax(btp->bt_daxdev, btp->bt_mount);
 	/* the main block device is closed by kill_block_super */
 	if (btp->bt_bdev != btp->bt_mount->m_super->s_bdev)
-		bdev_fput(btp->bt_file);
+		fs_bdev_file_release(btp->bt_file, btp->bt_mount->m_super);
 	kfree(btp);
 }
 
