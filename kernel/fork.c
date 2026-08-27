@@ -143,7 +143,7 @@
 unsigned long total_forks;	/* Handle normal Linux uptimes. */
 int nr_threads;			/* The idle threads do not count.. */
 
-static int max_threads;		/* tunable limit on nr_threads */
+static int max_threads __read_mostly;		/* tunable limit on nr_threads */
 
 #define NAMED_ARRAY_INDEX(x)	[x] = __stringify(x)
 
@@ -537,6 +537,7 @@ void free_task(struct task_struct *tsk)
 #endif
 	release_user_cpus_ptr(tsk);
 	scs_release(tsk);
+	smp_task_ipi_mask_free(tsk);
 
 #ifndef CONFIG_THREAD_INFO_IN_TASK
 	/*
@@ -935,9 +936,13 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
 #endif
 	account_kernel_stack(tsk, 1);
 
-	err = scs_prepare(tsk, node);
+	err = smp_task_ipi_mask_alloc(tsk);
 	if (err)
 		goto free_stack;
+
+	err = scs_prepare(tsk, node);
+	if (err)
+		goto free_ipi_mask;
 
 #ifdef CONFIG_SECCOMP
 	/*
@@ -1016,6 +1021,8 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
 #endif
 	return tsk;
 
+free_ipi_mask:
+	smp_task_ipi_mask_free(tsk);
 free_stack:
 	exit_task_stack_account(tsk);
 	free_thread_stack(tsk);
@@ -1069,7 +1076,6 @@ static void mm_init_uprobes_state(struct mm_struct *mm)
 {
 #ifdef CONFIG_UPROBES
 	mm->uprobes_state.xol_area = NULL;
-	arch_uprobe_init_state(mm);
 #endif
 }
 
@@ -1502,15 +1508,9 @@ static void mm_release(struct task_struct *tsk, struct mm_struct *mm)
 		complete_vfork_done(tsk);
 }
 
-void exit_mm_release(struct task_struct *tsk, struct mm_struct *mm)
+void mm_exit_exec_release(struct task_struct *tsk, struct mm_struct *mm)
 {
-	futex_exit_release(tsk);
-	mm_release(tsk, mm);
-}
-
-void exec_mm_release(struct task_struct *tsk, struct mm_struct *mm)
-{
-	futex_exec_release(tsk);
+	futex_exit_exec_release(tsk);
 	mm_release(tsk, mm);
 }
 
