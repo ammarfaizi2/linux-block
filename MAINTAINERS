@@ -21907,7 +21907,7 @@ F:	tools/lib/perf/
 F:	tools/perf/
 
 PERFORMANCE EVENTS TOOLING ARM64
-R:	John Garry <john.g.garry@oracle.com>
+R:	John Garry <john.garry@linux.dev>
 R:	Will Deacon <will@kernel.org>
 R:	James Clark <james.clark@linaro.org>
 R:	Mike Leach <mike.leach@arm.com>
@@ -30302,6 +30302,15 @@ S:	Maintained
 W:	https://x86-cpuid.org
 F:	arch/x86/include/asm/cpuid/leaf_types.h
 F:	tools/arch/x86/kcpuid/
+
+X86 ENERGY PERF POLICY UTILITY
+M:	Len Brown <lenb@kernel.org>
+L:	linux-pm@vger.kernel.org
+S:	Supported
+Q:	https://patchwork.kernel.org/project/linux-pm/list/
+B:	https://bugzilla.kernel.org
+T:	git git://git.kernel.org/pub/scm/linux/kernel/git/lenb/linux.git x86_energy_perf_policy
+F:	tools/power/x86/x86_energy_perf_policy/
 
 X86 ENTRY CODE
 M:	Andy Lutomirski <luto@kernel.org>
